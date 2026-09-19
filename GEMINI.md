@@ -117,8 +117,9 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 1. **Quản lý mã nguồn Git**:
    - Tệp `.gitignore` chuẩn hóa: Bỏ qua `backups/*.zip` (tránh phình dung lượng git), cache python `__pycache__/`, cache IDE, tệp nháp `scratch/`, nhưng lưu giữ 100% mã nguồn, bundle, dữ liệu gốc và công cụ kiểm thử.
    - Luôn sử dụng nhánh chính `main` làm nhánh mặc định (`init.defaultBranch = main`).
-   - Cung cấp launcher `DAY_LEN_GITHUB.bat` cho phép người dùng đẩy code cập nhật lên GitHub trong 1 cú nhấp đúp chuột.
+   - **Lệnh trực tiếp từ chủ sở hữu (`SirPhuong`)**: Tuyệt đối KHÔNG tạo các file batch trung gian như `DAY_LEN_GITHUB.bat`. Mọi thao tác commit và push lên GitHub đều do AI trực tiếp thực hiện trong console qua tài khoản và credential đã lưu trong Windows Credential Manager.
 2. **Cấu hình tĩnh Vercel (`vercel.json`)**:
+   - Tên định danh dự án: `tinh-toan-bo-truyen-dong`.
    - `cleanUrls: false` để bảo toàn tuyệt đối cơ chế liên kết tương đối `.html` cục bộ và trên web.
    - Thiết lập các header an ninh (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`) và MIME type chuẩn UTF-8 cho file `.js` và `.css`.
    - Cơ chế Zero-Build: Tự động deploy chỉ trong 5-10 giây không cần cài đặt package npm.
