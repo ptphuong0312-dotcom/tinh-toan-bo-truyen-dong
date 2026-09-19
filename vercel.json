@@ -1,6 +1,7 @@
 {
   "version": 2,
   "name": "tinh-toan-bo-truyen-dong",
+  "framework": null,
   "cleanUrls": false,
   "headers": [
     {

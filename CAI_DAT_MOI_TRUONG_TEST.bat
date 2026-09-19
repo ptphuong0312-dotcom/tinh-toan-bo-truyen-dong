@@ -8,7 +8,7 @@ echo     CÀI ĐẶT THƯ VIỆN PYTHON PHỤC VỤ KIỂM THỬ TỰ ĐỘNG & 
 echo ===============================================================================
 echo.
 
-pip install -r "%~dp0requirements.txt"
+pip install -r "%~dp0tests\requirements.txt"
 playwright install chromium
 
 echo.

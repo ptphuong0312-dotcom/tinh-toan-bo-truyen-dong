@@ -1,0 +1,16 @@
+# Tests & Tools
+tests/
+tools/
+reference_data/
+legacy_monolithic/
+docs/
+backups/
+.agents/
+
+# Batch files & configs
+*.bat
+*.py
+requirements*.txt
+*.png
+helical_ref.json
+spur_ref.json
