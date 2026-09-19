@@ -11,6 +11,5 @@ backups/
 *.bat
 *.py
 requirements*.txt
-*.png
 helical_ref.json
 spur_ref.json
