@@ -70,9 +70,13 @@ MITCalc-WebApp/
      Góc pha chuẩn xác: $\theta_{\text{phase}} = \pi + \frac{\pi}{z_2}$, góc quay theo thời gian: $\theta_2 = \theta_{\text{phase}} - \theta_1 \cdot \frac{z_1}{z_2}$.
      Được kiểm chứng bằng thuật toán Point-in-Polygon: Đạt **0.0000 mm** xuyên thân răng xuyên suốt 100% chu trình quay 50 bước ($0/50$ va chạm).
 2. **Bánh răng côn**:
-   * Mô hình hóa chính xác hai nón chia ăn khớp, đỉnh nón chung $V$, trục hợp góc $\Sigma$.
-   * Hiển thị đường sinh tiếp xúc (Pitch generator line), các cung kích thước $R_e, R_m, R_i$ và bề rộng vành răng $b$.
-   * Tương tác mượt mà: Phóng to/thu nhỏ (Zoom), dịch chuyển góc nhìn (Pan), và mô phỏng chuyển động quay ăn khớp liên hợp.
+   * **Mặt cắt trục kỹ thuật ăn khớp (Tab 2 Canvas CAD)**:
+     - Mô hình hóa chính xác hai nón chia ăn khớp, đỉnh nón chung $V$, trục hợp góc $\Sigma$.
+     - Hiển thị đường sinh tiếp xúc (Pitch generator line), các cung kích thước $R_e, R_m, R_i$ và bề rộng vành răng $b$.
+     - Tương tác mượt mà: Phóng to/thu nhỏ (Zoom), dịch chuyển góc nhìn (Pan), và mô phỏng chuyển động quay ăn khớp liên hợp.
+   * **Đồ thị Tọa độ Mặt Cắt Trục Ăn Khớp 2D Động Section 4.0 (Dynamic Chart 4181 Engine)**:
+     - Dựng từ đúng 18 điểm hình học thực thể cho Bánh 1 (`Data1!C70:D87`) và 18 điểm cho Bánh 2 (`Data1!C35:D52`) xoay góc $\Sigma$ quanh Apex $(0, 0)$ theo công thức cực: $r = \sqrt{h^2 + i^2}, \theta = \phi + \Sigma_{\text{rad}}, X = r \cos\theta, Y = r \sin\theta$.
+     - Thuật toán co dãn khung hình chuẩn Excel `Data1!C13:C24` với tỷ lệ `Coef a:b = 1.7`, kết hợp nấc chia đẹp (Nice step ticks) độc lập cho trục X và Y nhằm bảo toàn tỷ lệ 1:1 đẳng cự (Isometric 1:1), phản ứng tức thì khi thay đổi bất kỳ thông số nào ($\Sigma = 60^\circ \to 120^\circ, m_{mn}, m_{et}, b, x_1$).
 
 ### Quy Chuẩn 3: Quy Trình Kiểm Soát Chất Lượng Kép (Dual Persona QC Protocol)
 Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc đóng vai trò kép:

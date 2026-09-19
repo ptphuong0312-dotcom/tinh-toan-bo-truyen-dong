@@ -318,3 +318,38 @@
   - **Bevel Gear QC Suite (`qc_bevel_multi_case_suite.py`)**: **120 / 120 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
   - **CORS-Free Bundler (`tools/bundle_all.py`)**: Đóng gói thành công `bevel-engine.bundle.js` (130,945 ký tự) và `mitcalc-engine.bundle.js` chạy 100% offline.
 
+---
+
+### [2026-09-19 23:05] Hoàn Thiện Đồ Thị Tọa Độ Mặt Cắt Trục Ăn Khớp 2D Động Section 4.0 Chuẩn 1-to-1 Excel Chart 4181
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  - *"Tọa Độ Mặt Cắt Trục Ăn Khớp 2D (Axial Section Plot) là hình ảnh động, khi thay đổi thông số thì kích thước trên đây cũng sẽ thay đổi theo"*.
+  - Khắc phục hình ảnh tĩnh: Toàn bộ đồ thị Descartes 2D nhúng trong Section 4.0 (`#bevelSec4ChartCanvas`) phải phản ứng động theo thời gian thực khi người dùng thay đổi bất kỳ thông số nào ($\Sigma, z_1, z_2, m_{mn}, m_{et}, b, x_1$).
+* **Giải pháp kỹ thuật & Thuật toán thực hiện**:
+  1. **Giải mã đảo ngược toàn diện Chart 4181 từ `Gear2_01.xlsb` (`Data1` sheet)**:
+     - Series 1 `wheel1`: Tọa độ $X, Y$ tại `Data1!$C$70:$D$87` gồm đúng 18 điểm khép kín hình học mặt cắt trục Bánh dẫn (Pinion 1), tích hợp cả moay-ơ $H_{1in} = 0.6 \cdot b \cdot \cos\delta_1$ và $H_{1out} = 1.5 \cdot b \cdot \cos\delta_1$.
+     - Series 2 `wheel2`: Tọa độ $X, Y$ tại `Data1!$C$35:$D$52` gồm đúng 18 điểm mặt cắt trục Bánh bị dẫn (Gear 2). Được tính toán trong hệ trục tọa độ cục bộ $(H, I)$, sau đó quay góc $\Sigma$ quanh Đỉnh nón chung Apex $(0, 0)$ theo công thức chuyển hệ trục cực:
+       $$r = \sqrt{h^2 + i^2}, \quad \phi = \text{atan2}(i, h) \pmod{2\pi}, \quad \theta = \phi + \Sigma_{\text{rad}}$$
+       $$X = r \cos\theta, \quad Y = r \sin\theta$$
+       Khớp 100% với giá trị số thực của Excel từ $\Sigma = 60^\circ$ đến $120^\circ$ với sai số $\Delta = 0.0000\text{ mm}$.
+     - Series 4 `axis`: 2 đường sinh nón chia màu đỏ nét đứt từ Apex $(0, 0)$ đến vòng chia ngoài $R_e$.
+     - Series 5 & 6 `thinlines1`, `thinlines2`: 4 đường đỏ nét đứt nối Apex $(0, 0)$ tới các góc đỉnh và đáy răng trong nón trong $R_i$.
+  2. **Thuật toán co dãn khung hình chuẩn Excel (Dynamic Box Bounds & Nice-Scale Engine)**:
+     - Dải bounding box ảo từ `Data1!C13:C24` với hệ số khung hình `Coef a:b = 1.7`:
+       $$W = \max(X) - \min(X), \quad H = \max(Y) - \min(Y)$$
+       $$W_{\text{box}} = \begin{cases} H \cdot 1.7 & \text{nếu } W / H < 1.7 \\ W & \text{ngược lại} \end{cases}, \quad H_{\text{box}} = \frac{W_{\text{box}}}{1.7}$$
+       $$w_{\text{half}} = \max(W_{\text{box}} / 2, |\min(X)|, |\max(X)|), \quad h_{\text{half}} = \max(H_{\text{box}} / 2, |\min(Y)|, |\max(Y)|)$$
+     - Phân loại bước chia đẹp (Nice step ticks) độc lập cho trục X và trục Y để bảo toàn tỉ lệ 1:1 đẳng cự (Isometric 1:1), triệt tiêu hoàn toàn méo hình:
+       * Mặc định ($\Sigma = 90^\circ, m_{mn} = 10$): $X \in [-400, 400]$ (step 100), $Y \in [-250, 250]$ (step 50).
+       * Góc nhọn ($\Sigma = 60^\circ$): Bánh 2 chúc xuống $Y \approx -430$, khung dãn $X \in [-600, 600]$ (step 200), $Y \in [-500, 500]$ (step 100).
+       * Mô-đun ngang ngoài ($m_{et} = 10$): Kích thước thu gọn $X \in [-300, 300]$ (step 100), $Y \in [-150, 150]$ (step 50).
+  3. **Hỗ trợ đồng bộ hai chiều kiểu mô đun ($m_{mn} \leftrightarrow m_{et}$)**:
+     - Bổ sung logic tính toán hình học theo $m_{et}$ (Outer transverse module) trong `BevelCalcEngine`:
+       $d_{e2} = z_2 \cdot m_{et}$, $R_e = d_{e2} / (2 \sin\delta_2)$, $R_m = R_e - b/2$, $R_i = R_e - b$, $m_{mn} = (m_{et} \cos\beta) \cdot (R_m / R_e)$.
+     - Khớp chính xác 100% với Excel Cell `P197` và `N198` down to 14 chữ số thập phân.
+* **Kết quả nghiệm thu**:
+  - **Headless Browser Automated Playwright Test**: 0 console errors, kiểm tra trực quan chụp màn hình canvas khớp 100% với ảnh chụp gốc MITCalc 1.74 của người dùng ở cả 3 kịch bản ($\Sigma = 60^\circ, \Sigma = 90^\circ, m_{et} = 10$).
+  - **Bevel Gear QC Multi-Case Suite (`qc_bevel_multi_case_suite.py`)**: **120 / 120 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
+  - **Spur Gear QC Multi-Case Suite (`qc_gear_multi_case_suite.py`)**: **110 / 110 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
+  - **CORS-Free Single Bundle**: Đóng gói tự động thành công `bevel-engine.bundle.js` (138,307 ký tự) chạy 100% offline.
+
+

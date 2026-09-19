@@ -1662,7 +1662,7 @@ const BevelCalcEngine = {
         const Sigma_deg = parseFloat(p.Sigma) || 90.0;
         const alfa_deg = parseFloat(p.alfa) || 20.0;
         const beta_deg = parseFloat(p.beta) || 30.0;
-        const mmn = parseFloat(p.mmn) || 10.0;
+        let mmn = parseFloat(p.mmn) || 10.0;
         const b = parseFloat(p.b) || 117.0;
         const x1 = parseFloat(p.x1 !== undefined ? p.x1 : 0.32);
         const x2 = -x1;
@@ -1693,25 +1693,39 @@ const BevelCalcEngine = {
         const delta1_deg = (delta1 * 180.0) / Math.PI;
         const delta2_deg = (delta2 * 180.0) / Math.PI;
 
-        // 2. Modules
+        // 2. Modules & Cone Distances
         const cos_beta = Math.cos(beta);
-        const mmt = cos_beta !== 0 ? mmn / cos_beta : mmn;
+        const isOuter = p.isOuterModule || p.moduleType === 'transverse_outer';
+        let mmt, Rm, Re, Ri, met, men, mit, min_mod;
+
+        if (isOuter) {
+            met = mmn; // Input value is outer transverse module met
+            men = cos_beta !== 0 ? met * cos_beta : met;
+            const de2_calc = z2 * met;
+            const sin_delta2 = Math.sin(delta2);
+            Re = sin_delta2 !== 0 ? de2_calc / (2.0 * sin_delta2) : 100.0;
+            Rm = Re - b / 2.0;
+            Ri = Re - b;
+            mmn = men * (Rm / Re);
+            mmt = cos_beta !== 0 ? mmn / cos_beta : mmn;
+            mit = mmt * (Ri / Rm);
+            min_mod = mmn * (Ri / Rm);
+        } else {
+            mmt = cos_beta !== 0 ? mmn / cos_beta : mmn;
+            const dm1_calc = z1 * mmt;
+            const sin_delta1 = Math.sin(delta1);
+            Rm = sin_delta1 !== 0 ? dm1_calc / (2.0 * sin_delta1) : 100.0;
+            Re = Rm + b / 2.0;
+            Ri = Rm - b / 2.0;
+            met = mmt * (Re / Rm);
+            men = mmn * (Re / Rm);
+            mit = mmt * (Ri / Rm);
+            min_mod = mmn * (Ri / Rm);
+        }
 
         // 3. Pitch diameters (mean)
         const dm1 = z1 * mmt;
         const dm2 = z2 * mmt;
-
-        // 4. Cone distances
-        const sin_delta1 = Math.sin(delta1);
-        const Rm = sin_delta1 !== 0 ? dm1 / (2.0 * sin_delta1) : 100.0;
-        const Re = Rm + b / 2.0;
-        const Ri = Rm - b / 2.0;
-
-        // 5. Outer, middle, inner modules
-        const met = mmt * (Re / Rm);
-        const men = mmn * (Re / Rm);
-        const mit = mmt * (Ri / Rm);
-        const min_mod = mmn * (Ri / Rm);
 
         // 6. Pitch diameters (outer, middle, inner)
         const de1 = dm1 + b * Math.sin(delta1); // = z1 * met
@@ -3039,7 +3053,7 @@ class BevelGearUI {
         }
         set('out_sec4_alfa_comp', alfa_comp_deg.toFixed(1) + '°');
         set('out_sec4_beta2', '0.0°');
-        set4('out_sec4_module_comp', g.met);
+        set4('out_sec4_module_comp', this.inputs.isOuterModule ? g.mmn : g.met);
 
         // Section 5.0: Correction of toothing
         set4('out_sec5_x2', g.x2);
@@ -3241,151 +3255,285 @@ class BevelGearUI {
         ctx.fillRect(0, 0, w, h);
 
         // Chart border
-        ctx.strokeStyle = '#64748b';
+        ctx.strokeStyle = '#94a3b8';
         ctx.lineWidth = 1;
         ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
 
-        // Dynamic domain based on Re
-        const maxRange = Math.max(g.Re * 1.15, 360);
-        const xMin = -maxRange, xMax = maxRange;
-        const yMin = -maxRange * (h / w), yMax = maxRange * (h / w);
+        // Extract parameters with safe fallbacks
+        const sigma_deg = (typeof g.Sigma_deg === 'number' && !isNaN(g.Sigma_deg)) ? g.Sigma_deg : (parseFloat(this.inputs.Sigma) || 90.0);
+        const sigma_rad = (sigma_deg * Math.PI) / 180.0;
 
-        const toScreenX = (x) => 35 + ((x - xMin) / (xMax - xMin)) * (w - 55);
-        const toScreenY = (y) => (h - 25) - ((y - yMin) / (yMax - yMin)) * (h - 45);
+        const d1_rad = (g.delta1_deg * Math.PI) / 180.0;
+        const d2_rad = (g.delta2_deg * Math.PI) / 180.0;
+        const s1 = Math.sin(d1_rad), c1 = Math.cos(d1_rad);
+        const s2 = Math.sin(d2_rad), c2 = Math.cos(d2_rad);
 
-        // Grid lines
-        ctx.strokeStyle = '#e2e8f0';
-        ctx.lineWidth = 1;
-        ctx.font = '10px Tahoma, sans-serif';
-        ctx.fillStyle = '#64748b';
+        const Re = g.Re || 338.32;
+        const Ri = g.Ri || 221.32;
 
-        // X Grid & labels
-        const stepX = 100;
-        for (let x = Math.ceil(xMin / stepX) * stepX; x <= xMax; x += stepX) {
+        const H1in = g.a_offset1 || (g.mmn * 0.4836);
+        const H1out = g.b_offset1 || (g.mmn * 1.33);
+        const H2in = g.a_offset2 || (g.mmn * 0.5911);
+        const H2out = g.b_offset2 || (g.mmn * 1.995);
+
+        // Base pitch cone generator points (Data1!C63:D64)
+        const C63 = -Ri * c1;
+        const D63 = Ri * s1;
+        const C64 = -Re * c1;
+        const D64 = Re * s1;
+
+        // 1. Wheel 1 (Pinion) 18 Points (Data1!C70:D87)
+        const w1_pts = [
+            [C63 - g.hfi1 * s1, D63 - g.hfi1 * c1],               // 0: Root in
+            [C63 + g.hai1 * s1, D63 + g.hai1 * c1],               // 1: Tip in
+            [C64 + g.hae1 * s1, D64 + g.hae1 * c1],               // 2: Tip out
+            [C64 - g.hfe1 * s1, D64 - g.hfe1 * c1],               // 3: Root out
+            [C63 - g.hfi1 * s1, D63 - g.hfi1 * c1],               // 4: Root in
+            [C63 - (g.hfi1 + H1in) * s1, D63 - (g.hfi1 + H1in) * c1], // 5: Inner rim
+            [C63 - (g.hfi1 + H1in) * s1, 0.0],                       // 6: Inner bore
+            [C63 - (g.hfi1 + H1in) * s1, -(D63 - (g.hfi1 + H1in) * c1)], // 7: Lower inner rim
+            [C63 - g.hfi1 * s1, -(D63 - g.hfi1 * c1)],            // 8: Lower root in
+            [C64 - g.hfe1 * s1, -(D64 - g.hfe1 * c1)],            // 9: Lower root out
+            [C64 + g.hae1 * s1, -(D64 + g.hae1 * c1)],            // 10: Lower tip out
+            [C63 + g.hai1 * s1, -(D63 + g.hai1 * c1)],            // 11: Lower tip in
+            [C63 - g.hfi1 * s1, -(D63 - g.hfi1 * c1)],            // 12: Lower root in
+            [C64 - g.hfe1 * s1, D64 - g.hfe1 * c1],               // 13: Upper root out
+            [C64 - (g.hfe1 + H1out) * s1, D64 - (g.hfe1 + H1out) * c1], // 14: Back rim
+            [C64 - (g.hfe1 + H1out) * s1, 0.0],                      // 15: Back bore
+            [C64 - (g.hfe1 + H1out) * s1, -(D64 - (g.hfe1 + H1out) * c1)], // 16: Lower back rim
+            [C64 - g.hfe1 * s1, -(D64 - g.hfe1 * c1)]             // 17: Lower root out
+        ];
+
+        // 2. Wheel 2 (Gear) 18 Points in Local (H, I) (Data1!H35:I52)
+        const H28 = -Ri * c2;
+        const I28 = Ri * s2;
+        const H29 = -Re * c2;
+        const I29 = Re * s2;
+
+        const w2_local = [
+            [H28 - g.hfi2 * s2, I28 - g.hfi2 * c2],               // 0: Root in
+            [H28 + g.hai2 * s2, I28 + g.hai2 * c2],               // 1: Tip in
+            [H29 + g.hae2 * s2, I29 + g.hae2 * c2],               // 2: Tip out
+            [H29 - g.hfe2 * s2, I29 - g.hfe2 * c2],               // 3: Root out
+            [H28 - g.hfi2 * s2, I28 - g.hfi2 * c2],               // 4: Root in
+            [H28 - (g.hfi2 + H2in) * s2, I28 - (g.hfi2 + H2in) * c2], // 5: Inner rim
+            [H28 - (g.hfi2 + H2in) * s2, 0.0],                       // 6: Inner bore
+            [H28 - (g.hfi2 + H2in) * s2, -(I28 - (g.hfi2 + H2in) * c2)], // 7: Lower inner rim
+            [H28 - g.hfi2 * s2, -(I28 - g.hfi2 * c2)],            // 8: Lower root in
+            [H29 - g.hfe2 * s2, -(I29 - g.hfe2 * c2)],            // 9: Lower root out
+            [H29 + g.hae2 * s2, -(I29 + g.hae2 * c2)],            // 10: Lower tip out
+            [H28 + g.hai2 * s2, -(I28 + g.hai2 * c2)],            // 11: Lower tip in
+            [H28 - g.hfi2 * s2, -(I28 - g.hfi2 * c2)],            // 12: Lower root in
+            [H29 - g.hfe2 * s2, I29 - g.hfe2 * c2],               // 13: Upper root out
+            [H29 - (g.hfe2 + H2out) * s2, I29 - (g.hfe2 + H2out) * c2], // 14: Back rim
+            [H29 - (g.hfe2 + H2out) * s2, 0.0],                      // 15: Back bore
+            [H29 - (g.hfe2 + H2out) * s2, -(I29 - (g.hfe2 + H2out) * c2)], // 16: Lower back rim
+            [H29 - g.hfe2 * s2, -(I29 - g.hfe2 * c2)]             // 17: Lower root out
+        ];
+
+        // Rotate Wheel 2 points by Sigma (Data1!C35:D52)
+        const w2_pts = w2_local.map(([h_pt, i_pt]) => {
+            if (h_pt === 0.0 && i_pt === 0.0) return [0.0, 0.0];
+            const r_pt = Math.sqrt(h_pt * h_pt + i_pt * i_pt);
+            let phi = Math.atan2(i_pt, h_pt);
+            if (phi < 0) phi += 2 * Math.PI;
+            const theta = phi + sigma_rad;
+            return [r_pt * Math.cos(theta), r_pt * Math.sin(theta)];
+        });
+
+        // 3. Thinlines (Apex lines connecting (0,0) to teeth corners)
+        const thinlines1 = [
+            [w1_pts[1], [0, 0]],
+            [[0, 0], w1_pts[0]],
+            [w1_pts[11], [0, 0]],
+            [[0, 0], w1_pts[8]]
+        ];
+        const thinlines2 = [
+            [w2_pts[1], [0, 0]],
+            [[0, 0], w2_pts[0]],
+            [w2_pts[11], [0, 0]],
+            [[0, 0], w2_pts[8]]
+        ];
+
+        // 4. Pitch lines (Axis series, Data1!C6:D10)
+        const axis_pts = [
+            [-Re * c1, Re * s1],
+            [0, 0],
+            [-Re * c1, -Re * s1]
+        ];
+        const r_pitch2 = Re;
+        let phi_p2 = Math.atan2(Re * s2, -Re * c2);
+        if (phi_p2 < 0) phi_p2 += 2 * Math.PI;
+        const w2_pitch_top = [r_pitch2 * Math.cos(phi_p2 + sigma_rad), r_pitch2 * Math.sin(phi_p2 + sigma_rad)];
+        let phi_p2_bot = Math.atan2(-Re * s2, -Re * c2);
+        if (phi_p2_bot < 0) phi_p2_bot += 2 * Math.PI;
+        const w2_pitch_bot = [r_pitch2 * Math.cos(phi_p2_bot + sigma_rad), r_pitch2 * Math.sin(phi_p2_bot + sigma_rad)];
+
+        // 5. Dynamic Bounds & Scaling (Matching Excel Chart 4181 & Data1!C13:C24)
+        const all_pts = [...w1_pts, ...w2_pts, [0, 0]];
+        let minX = 0, maxX = 0, minY = 0, maxY = 0;
+        all_pts.forEach(([x, y]) => {
+            if (x < minX) minX = x;
+            if (x > maxX) maxX = x;
+            if (y < minY) minY = y;
+            if (y > maxY) maxY = y;
+        });
+
+        // Aspect ratio Box calculation from Excel Data1!C13:C21 (Coef a:b = 1.7)
+        const width_data = maxX - minX;
+        const height_data = maxY - minY;
+        const coef_ab = 1.7;
+        const box_w = (width_data / height_data < coef_ab) ? height_data * coef_ab : width_data;
+        const box_h = box_w / coef_ab;
+        const half_w = Math.max(box_w / 2, Math.abs(minX), Math.abs(maxX));
+        const half_h = Math.max(box_h / 2, Math.abs(minY), Math.abs(maxY));
+
+        function getNiceScale(val, isY = false) {
+            if (val <= 120) return { maxVal: 150, step: 50 };
+            if (val <= 160) return { maxVal: isY ? 150 : 200, step: 50 };
+            if (val <= 210) return { maxVal: 250, step: 50 };
+            if (val <= 310) return { maxVal: 300, step: isY ? 50 : 100 };
+            if (val <= 420) return { maxVal: 400, step: 100 };
+            if (val <= 520) return { maxVal: isY ? 500 : 600, step: isY ? 100 : 200 };
+            if (val <= 650) return { maxVal: 600, step: isY ? 100 : 200 };
+            if (val <= 850) return { maxVal: 800, step: 200 };
+            const step = Math.pow(10, Math.floor(Math.log10(val)));
+            return { maxVal: Math.ceil(val / step) * step, step: step / 2 };
+        }
+
+        const scaleX = getNiceScale(half_w, false);
+        const scaleY = getNiceScale(half_h, true);
+
+        const xMin = -scaleX.maxVal, xMax = scaleX.maxVal, stepX = scaleX.step;
+        const yMin = -scaleY.maxVal, yMax = scaleY.maxVal, stepY = scaleY.step;
+
+        // Pixel mapping with margins
+        const marginLeft = 40;
+        const marginRight = 15;
+        const marginTop = 15;
+        const marginBottom = 25;
+        const plotW = w - marginLeft - marginRight;
+        const plotH = h - marginTop - marginBottom;
+
+        const toScreenX = (x) => marginLeft + ((x - xMin) / (xMax - xMin)) * plotW;
+        const toScreenY = (y) => (h - marginBottom) - ((y - yMin) / (yMax - yMin)) * plotH;
+
+        // 6. Draw Grid & Axis Labels
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 0.8;
+        ctx.font = '10px Tahoma, Arial, sans-serif';
+        ctx.fillStyle = '#475569';
+        ctx.textAlign = 'center';
+
+        // X Grid
+        for (let x = xMin; x <= xMax; x += stepX) {
             const sx = toScreenX(x);
             ctx.beginPath();
-            ctx.moveTo(sx, 12);
-            ctx.lineTo(sx, h - 22);
+            ctx.moveTo(sx, marginTop);
+            ctx.lineTo(sx, h - marginBottom);
             ctx.stroke();
-            ctx.fillText(x, sx - 10, h - 8);
+            ctx.fillText(Math.round(x), sx, h - 8);
         }
 
-        // Y Grid & labels
-        const stepY = 50;
-        for (let y = Math.ceil(yMin / stepY) * stepY; y <= yMax; y += stepY) {
+        // Y Grid
+        ctx.textAlign = 'right';
+        for (let y = yMin; y <= yMax; y += stepY) {
             const sy = toScreenY(y);
             ctx.beginPath();
-            ctx.moveTo(35, sy);
-            ctx.lineTo(w - 20, sy);
+            ctx.moveTo(marginLeft, sy);
+            ctx.lineTo(w - marginRight, sy);
             ctx.stroke();
-            ctx.fillText(y, 6, sy + 3);
+            ctx.fillText(Math.round(y), marginLeft - 5, sy + 3);
         }
 
-        // Coordinate Axes (X=0, Y=0)
+        // Coordinate Axes X=0, Y=0
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 1.2;
         const sX0 = toScreenX(0);
         const sY0 = toScreenY(0);
+
+        // Y Axis line (X=0)
         ctx.beginPath();
-        ctx.moveTo(sX0, 12);
-        ctx.lineTo(sX0, h - 22);
+        ctx.moveTo(sX0, marginTop);
+        ctx.lineTo(sX0, h - marginBottom);
         ctx.stroke();
 
+        // X Axis line (Y=0)
         ctx.beginPath();
-        ctx.moveTo(35, sY0);
-        ctx.lineTo(w - 20, sY0);
+        ctx.moveTo(marginLeft, sY0);
+        ctx.lineTo(w - marginRight, sY0);
         ctx.stroke();
 
-        // Gear Cross-Section Geometry
-        const d1 = g.delta1;
-        const d2 = g.delta2;
-        const th_a1 = (g.deltaa1_deg * Math.PI) / 180.0;
-        const th_a2 = (g.deltaa2_deg * Math.PI) / 180.0;
-        const th_f1 = (g.deltaf1_deg * Math.PI) / 180.0;
-        const th_f2 = (g.deltaf2_deg * Math.PI) / 180.0;
-
-        const Re = g.Re;
-        const Ri = g.Ri;
-
-        // Pinion (left/top sector)
-        const d_a1 = d1 + th_a1;
-        const d_f1 = d1 - th_f1;
-        const p1_tip_out = [-Re * Math.cos(d_a1), Re * Math.sin(d_a1)];
-        const p1_tip_in  = [-Ri * Math.cos(d_a1), Ri * Math.sin(d_a1)];
-        const p1_root_out = [-Re * Math.cos(d_f1), Re * Math.sin(d_f1)];
-        const p1_root_in  = [-Ri * Math.cos(d_f1), Ri * Math.sin(d_f1)];
-
-        ctx.fillStyle = 'rgba(37, 99, 235, 0.2)';
-        ctx.strokeStyle = '#1e40af';
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.moveTo(toScreenX(p1_root_in[0]), toScreenY(p1_root_in[1]));
-        ctx.lineTo(toScreenX(p1_tip_in[0]), toScreenY(p1_tip_in[1]));
-        ctx.lineTo(toScreenX(p1_tip_out[0]), toScreenY(p1_tip_out[1]));
-        ctx.lineTo(toScreenX(p1_root_out[0]), toScreenY(p1_root_out[1]));
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        // Pinion symmetrical lower half
-        const p1_s_tip_out = [-Re * Math.cos(d_a1), -Re * Math.sin(d_a1)];
-        const p1_s_tip_in  = [-Ri * Math.cos(d_a1), -Ri * Math.sin(d_a1)];
-        const p1_s_root_out = [-Re * Math.cos(d_f1), -Re * Math.sin(d_f1)];
-        const p1_s_root_in  = [-Ri * Math.cos(d_f1), -Ri * Math.sin(d_f1)];
-
-        ctx.beginPath();
-        ctx.moveTo(toScreenX(p1_s_root_in[0]), toScreenY(p1_s_root_in[1]));
-        ctx.lineTo(toScreenX(p1_s_tip_in[0]), toScreenY(p1_s_tip_in[1]));
-        ctx.lineTo(toScreenX(p1_s_tip_out[0]), toScreenY(p1_s_tip_out[1]));
-        ctx.lineTo(toScreenX(p1_s_root_out[0]), toScreenY(p1_s_root_out[1]));
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        // Gear (bottom/horizontal sector)
-        const d_a2 = d2 + th_a2;
-        const d_f2 = d2 - th_f2;
-        const p2_tip_out = [Re * Math.sin(d_a2), -Re * Math.cos(d_a2)];
-        const p2_tip_in  = [Ri * Math.sin(d_a2), -Ri * Math.cos(d_a2)];
-        const p2_root_out = [Re * Math.sin(d_f2), -Re * Math.cos(d_f2)];
-        const p2_root_in  = [Ri * Math.sin(d_f2), -Ri * Math.cos(d_f2)];
-
-        ctx.fillStyle = 'rgba(5, 150, 105, 0.2)';
-        ctx.strokeStyle = '#065f46';
-        ctx.lineWidth = 1.8;
-        ctx.beginPath();
-        ctx.moveTo(toScreenX(-p2_root_in[0]), toScreenY(p2_root_in[1]));
-        ctx.lineTo(toScreenX(-p2_tip_in[0]), toScreenY(p2_tip_in[1]));
-        ctx.lineTo(toScreenX(-p2_tip_out[0]), toScreenY(p2_tip_out[1]));
-        ctx.lineTo(toScreenX(-p2_root_out[0]), toScreenY(p2_root_out[1]));
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(toScreenX(p2_root_in[0]), toScreenY(p2_root_in[1]));
-        ctx.lineTo(toScreenX(p2_tip_in[0]), toScreenY(p2_tip_in[1]));
-        ctx.lineTo(toScreenX(p2_tip_out[0]), toScreenY(p2_tip_out[1]));
-        ctx.lineTo(toScreenX(p2_root_out[0]), toScreenY(p2_root_out[1]));
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        // Red pitch generator line
+        // 7. Draw Red Pitch Lines (Axis Series)
         ctx.strokeStyle = '#dc2626';
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.2;
         ctx.setLineDash([4, 3]);
+
+        // Wheel 1 pitch lines to Apex
         ctx.beginPath();
-        ctx.moveTo(toScreenX(0), toScreenY(0));
-        ctx.lineTo(toScreenX(-Re * Math.cos(d1)), toScreenY(Re * Math.sin(d1)));
+        ctx.moveTo(toScreenX(axis_pts[0][0]), toScreenY(axis_pts[0][1]));
+        ctx.lineTo(toScreenX(0), toScreenY(0));
+        ctx.lineTo(toScreenX(axis_pts[2][0]), toScreenY(axis_pts[2][1]));
         ctx.stroke();
+
+        // Wheel 2 pitch lines to Apex
+        ctx.beginPath();
+        ctx.moveTo(toScreenX(w2_pitch_top[0]), toScreenY(w2_pitch_top[1]));
+        ctx.lineTo(toScreenX(0), toScreenY(0));
+        ctx.lineTo(toScreenX(w2_pitch_bot[0]), toScreenY(w2_pitch_bot[1]));
+        ctx.stroke();
+
+        // 8. Draw Red Thinlines (Corners to Apex)
+        thinlines1.forEach(([pStart, pEnd]) => {
+            ctx.beginPath();
+            ctx.moveTo(toScreenX(pStart[0]), toScreenY(pStart[1]));
+            ctx.lineTo(toScreenX(pEnd[0]), toScreenY(pEnd[1]));
+            ctx.stroke();
+        });
+        thinlines2.forEach(([pStart, pEnd]) => {
+            ctx.beginPath();
+            ctx.moveTo(toScreenX(pStart[0]), toScreenY(pStart[1]));
+            ctx.lineTo(toScreenX(pEnd[0]), toScreenY(pEnd[1]));
+            ctx.stroke();
+        });
         ctx.setLineDash([]);
 
-        // Origin marker
+        // 9. Draw Wheel 1 Cross-Section Path (Bold Solid Blue Line)
+        ctx.strokeStyle = '#000080';
+        ctx.fillStyle = 'rgba(0, 0, 128, 0.08)';
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        w1_pts.forEach(([x, y], idx) => {
+            const sx = toScreenX(x);
+            const sy = toScreenY(y);
+            if (idx === 0) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+        });
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // 10. Draw Wheel 2 Cross-Section Path (Bold Solid Blue Line)
+        ctx.beginPath();
+        w2_pts.forEach(([x, y], idx) => {
+            const sx = toScreenX(x);
+            const sy = toScreenY(y);
+            if (idx === 0) ctx.moveTo(sx, sy);
+            else ctx.lineTo(sx, sy);
+        });
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // 11. Apex Marker & Origin Dot
         ctx.fillStyle = '#dc2626';
         ctx.beginPath();
-        ctx.arc(sX0, sY0, 3, 0, 2 * Math.PI);
+        ctx.arc(sX0, sY0, 3.5, 0, 2 * Math.PI);
         ctx.fill();
+
+        ctx.font = 'bold 10px Tahoma, Arial, sans-serif';
+        ctx.fillStyle = '#b91c1c';
+        ctx.textAlign = 'left';
         ctx.fillText('Apex (0,0)', sX0 + 6, sY0 - 4);
     }
 

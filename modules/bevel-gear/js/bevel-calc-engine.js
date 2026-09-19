@@ -19,7 +19,7 @@ const BevelCalcEngine = {
         const Sigma_deg = parseFloat(p.Sigma) || 90.0;
         const alfa_deg = parseFloat(p.alfa) || 20.0;
         const beta_deg = parseFloat(p.beta) || 30.0;
-        const mmn = parseFloat(p.mmn) || 10.0;
+        let mmn = parseFloat(p.mmn) || 10.0;
         const b = parseFloat(p.b) || 117.0;
         const x1 = parseFloat(p.x1 !== undefined ? p.x1 : 0.32);
         const x2 = -x1;
@@ -50,25 +50,39 @@ const BevelCalcEngine = {
         const delta1_deg = (delta1 * 180.0) / Math.PI;
         const delta2_deg = (delta2 * 180.0) / Math.PI;
 
-        // 2. Modules
+        // 2. Modules & Cone Distances
         const cos_beta = Math.cos(beta);
-        const mmt = cos_beta !== 0 ? mmn / cos_beta : mmn;
+        const isOuter = p.isOuterModule || p.moduleType === 'transverse_outer';
+        let mmt, Rm, Re, Ri, met, men, mit, min_mod;
+
+        if (isOuter) {
+            met = mmn; // Input value is outer transverse module met
+            men = cos_beta !== 0 ? met * cos_beta : met;
+            const de2_calc = z2 * met;
+            const sin_delta2 = Math.sin(delta2);
+            Re = sin_delta2 !== 0 ? de2_calc / (2.0 * sin_delta2) : 100.0;
+            Rm = Re - b / 2.0;
+            Ri = Re - b;
+            mmn = men * (Rm / Re);
+            mmt = cos_beta !== 0 ? mmn / cos_beta : mmn;
+            mit = mmt * (Ri / Rm);
+            min_mod = mmn * (Ri / Rm);
+        } else {
+            mmt = cos_beta !== 0 ? mmn / cos_beta : mmn;
+            const dm1_calc = z1 * mmt;
+            const sin_delta1 = Math.sin(delta1);
+            Rm = sin_delta1 !== 0 ? dm1_calc / (2.0 * sin_delta1) : 100.0;
+            Re = Rm + b / 2.0;
+            Ri = Rm - b / 2.0;
+            met = mmt * (Re / Rm);
+            men = mmn * (Re / Rm);
+            mit = mmt * (Ri / Rm);
+            min_mod = mmn * (Ri / Rm);
+        }
 
         // 3. Pitch diameters (mean)
         const dm1 = z1 * mmt;
         const dm2 = z2 * mmt;
-
-        // 4. Cone distances
-        const sin_delta1 = Math.sin(delta1);
-        const Rm = sin_delta1 !== 0 ? dm1 / (2.0 * sin_delta1) : 100.0;
-        const Re = Rm + b / 2.0;
-        const Ri = Rm - b / 2.0;
-
-        // 5. Outer, middle, inner modules
-        const met = mmt * (Re / Rm);
-        const men = mmn * (Re / Rm);
-        const mit = mmt * (Ri / Rm);
-        const min_mod = mmn * (Ri / Rm);
 
         // 6. Pitch diameters (outer, middle, inner)
         const de1 = dm1 + b * Math.sin(delta1); // = z1 * met
