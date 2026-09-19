@@ -113,4 +113,15 @@ Khi phát triển các mô-đun cơ khí tiếp theo:
 6. Module 8: Ổ lăn (Rolling Bearings - ISO 281).
 Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm thử chéo Excel COM $\Delta = 0.000000$, giao diện Accordion 3 Master Blocks, mô phỏng Canvas 2D) trước khi chuyển sang module tiếp theo!
 
+### Quy Tắc 9: Quy Chuẩn Đưa Lên GitHub & Triển Khai Vercel (CI/CD Deployment Protocol)
+1. **Quản lý mã nguồn Git**:
+   - Tệp `.gitignore` chuẩn hóa: Bỏ qua `backups/*.zip` (tránh phình dung lượng git), cache python `__pycache__/`, cache IDE, tệp nháp `scratch/`, nhưng lưu giữ 100% mã nguồn, bundle, dữ liệu gốc và công cụ kiểm thử.
+   - Luôn sử dụng nhánh chính `main` làm nhánh mặc định (`init.defaultBranch = main`).
+   - Cung cấp launcher `DAY_LEN_GITHUB.bat` cho phép người dùng đẩy code cập nhật lên GitHub trong 1 cú nhấp đúp chuột.
+2. **Cấu hình tĩnh Vercel (`vercel.json`)**:
+   - `cleanUrls: false` để bảo toàn tuyệt đối cơ chế liên kết tương đối `.html` cục bộ và trên web.
+   - Thiết lập các header an ninh (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`) và MIME type chuẩn UTF-8 cho file `.js` và `.css`.
+   - Cơ chế Zero-Build: Tự động deploy chỉ trong 5-10 giây không cần cài đặt package npm.
+
 ---
+

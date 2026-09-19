@@ -316,6 +316,21 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 | `KIEM_TRA_CHEO_QC_BANH_RANG_CON.bat` | Chạy bộ kiểm thử chéo QC Bánh răng côn vs MITCalc gốc (120 checks PASS 100%) |
 | `RA_SOAT_SONG_SONG_BANH_RANG_TRU.bat` | Chạy bộ rà soát song song từng dòng 155 ô tính Bánh răng trụ (Delta = 0.000000 PASS 100%) |
 | `RA_SOAT_SONG_SONG_BANH_RANG_CON.bat` | Chạy bộ rà soát song song từng dòng 109 ô tính Bánh răng côn (Delta = 0.000000 PASS 100%) |
+| `DONG_GOI_BUNDLE_JS.bat` | Tự động đóng gói tất cả các mô-đun thành classic bundle thuần (Zero-CORS) |
+| `DAY_LEN_GITHUB.bat` | 1-Click đẩy toàn bộ mã nguồn cập nhật lên GitHub và kích hoạt CI/CD Vercel |
+
+---
+
+### Quy Chuẩn 15: Xuất Bản Lên GitHub & Triển Khai Toàn Cầu Qua Vercel (CI/CD Architecture)
+1. **Kiến trúc Zero-Build Static Web App**:
+   - Vercel phục vụ trực tiếp các file tĩnh từ Cổng Trung Tâm (`index.html`) và các thư mục con (`modules/spur-gear/`, `modules/bevel-gear/`, `shared/`).
+   - Cấu hình `vercel.json` với `cleanUrls: false` đảm bảo toàn bộ đường dẫn relative (`.html`) không bị phân giải sai lệch.
+   - Thêm các HTTP Security Headers (`nosniff`, `SAMEORIGIN`, `1; mode=block`) và MIME UTF-8 cho bundle JS và CSS.
+2. **Cấu hình Quản lý mã nguồn Git**:
+   - Tệp `.gitignore`: Loại trừ các file nén `backups/*.zip`, cache `__pycache__/`, tệp tạm `scratch/` để duy trì kích thước repository siêu gọn nhẹ (~1.2MB).
+   - Tích hợp Git Portable (MinGit) hoạt động 100% không đòi hỏi quyền Administrator.
+   - Cung cấp launcher `DAY_LEN_GITHUB.bat` tự động commit và push lên nhánh `main`.
+
 
 ---
 

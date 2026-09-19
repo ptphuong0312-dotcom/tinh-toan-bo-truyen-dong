@@ -192,3 +192,26 @@
     * Tải file DXF thành công (`Banh_Rang_Con_MITCalc_18x45_m10.dxf`, 6,100 bytes).
   - **CORS-Free Single Bundle**: Đóng gói thành công `modules/bevel-gear/js/bevel-engine.bundle.js` (113,640 ký tự) khởi động tức thì qua giao thức `file:///`.
 
+---
+
+## Giai Đoạn 10: Thiết Lập Quản Lý Mã Nguồn Git, Xuất Bản GitHub & Cấu Hình Triển Khai Toàn Cầu Vercel (CI/CD)
+* **Bối cảnh & Yêu cầu người dùng**:
+  1. Đưa toàn bộ dự án Web App Tính Toán Cơ Khí lên **GitHub** để quản lý phiên bản chuyên nghiệp.
+  2. Triển khai ứng dụng lên nền tảng đám mây **Vercel** để biến ứng dụng thành một Web App trực tuyến toàn cầu (Zero-Build, miễn phí tên miền, tự động deploy CI/CD).
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Cài đặt Git Portable (MinGit) 100% Non-Admin**:
+     - Do môi trường máy tính Windows chặn quyền UAC khi chạy installer thông thường, hệ thống đã tích hợp giải pháp tải và giải nén trực tiếp bản phát hành chính thức `MinGit-2.55.0.5-64-bit` từ Git for Windows vào `%LOCALAPPDATA%\Programs\Git`.
+     - Tạo wrapper shim `C:\Users\AD\.gemini\antigravity\bin\git.bat` cho phép mọi terminal và script gọi trực tiếp lệnh `git` toàn cục.
+  2. **Vệ sinh kho chứa & File `.gitignore` chuẩn hóa**:
+     - Thiết lập `.gitignore` loại trừ các file nén nặng `backups/*.zip`, cache Python (`__pycache__/`), cache test và tệp tạm `scratch/`.
+     - Giữ nguyên 100% mã nguồn, bundle, tài liệu và dữ liệu tham chiếu gốc.
+  3. **Cấu hình Vercel (`vercel.json`)**:
+     - Đặt `cleanUrls: false` để bảo toàn tuyệt đối toàn bộ liên kết HTML tương đối (`modules/spur-gear/index.html`, `modules/bevel-gear/index.html`).
+     - Bổ sung HTTP Security Headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`) và MIME UTF-8 cho script và style.
+  4. **Launcher 1-Click Đẩy Code Lên GitHub (`DAY_LEN_GITHUB.bat`)**:
+     - Cho phép người dùng nhấp đúp để tự động commit và đẩy mã nguồn lên nhánh `main` trên GitHub, kích hoạt Vercel tự động build & deploy phiên bản mới nhất chỉ trong 5-10 giây.
+* **Kết quả kiểm chứng thực nghiệm**:
+  - `git status` sạch hoàn toàn (`nothing to commit, working tree clean`).
+  - Kiểm thử mô phỏng máy chủ web tĩnh (`http://localhost:8089`): Cả 5 tuyến đường (`/`, Spur Gear, Bevel Gear, Spur Bundle, Bevel Bundle) đều trả về mã phản hồi `HTTP 200 OK`.
+
+
