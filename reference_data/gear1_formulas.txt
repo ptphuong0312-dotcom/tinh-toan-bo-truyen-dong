@@ -1,0 +1,2130 @@
+﻿=== CALCULATION SHEET: 568 rows x 58 cols ===
+Format: CellAddress | TYPE: FORMULA/VALUE | Content | NumberFormat
+
+A1 | VALUE | MC_aw | General
+B1 | VALUE | MC_z1 | General
+C1 | VALUE | MC_b1 | General
+D1 | VALUE | MC_Pitch1 | General
+E1 | VALUE | MC_da1 | General
+F1 | VALUE | MC_d1 | General
+G1 | VALUE | MC_db1 | General
+H1 | VALUE | MC_sa1 | General
+I1 | VALUE | MC_s1 | General
+J1 | VALUE | MC_sb1 | General
+K1 | VALUE | MC_z2 | General
+L1 | VALUE | MC_b2 | General
+M1 | VALUE | MC_Pitch2 | General
+N1 | VALUE | MC_da2 | General
+O1 | VALUE | MC_d2 | General
+P1 | VALUE | MC_db2 | General
+Q1 | VALUE | MC_sa2 | General
+R1 | VALUE | MC_s2 | General
+S1 | VALUE | MC_sb2 | General
+J2 | FORMULA | =_sb1_2 | General
+L2 | FORMULA | =_b2 | General
+M2 | FORMULA | =_Pitch2X | General
+O2 | FORMULA | =_dx2 | General
+P2 | FORMULA | =_df2 | General
+Q2 | FORMULA | =_sa2_2 | General
+R2 | FORMULA | =_sx2_2 | General
+B3 | VALUE | ul | General
+K3 | VALUE | ul | General
+A4 | VALUE | Axis distance | m/d/yyyy h:mm
+K100 | VALUE | Spur gearing, Helical gearing [mm/ISO] | General
+L100 | FORMULA | ="          " & XM_CalcName | General
+F101 | VALUE | Calculation without errors. | General
+G101 | VALUE | Check lines: | General
+J101 | VALUE | i | General
+L101 | FORMULA | =IF(E101="",XM_ErrMsg1,XM_ErrMsg2 & E101) | General
+O101 | VALUE | Pinion | General
+P101 | VALUE | Gear | General
+J102 | VALUE | ii | General
+L102 | VALUE |      Project information | General
+J103 | VALUE | Author | General
+M103 | VALUE | Date | General
+P103 | VALUE | Project No. | General
+V103 | VALUE | Calculation identificator | General
+W103 | VALUE | GEARS_01 | General
+J104 | VALUE | John Doe | General
+M104 | VALUE | 8/8/2018 | m/d/yyyy
+P104 | VALUE | 111-111 | General
+V104 | VALUE | Current basic info | General
+W104 | FORMULA | =XM_0500 & " Beta=" & _beta & ";  mn=" & _mn & ";  b1=" & _b1 & ";  b2=" & _b2& ";  z1=" & _z1 & ";  z2=" & _z2 & ";  n1=" & ROUND(_n1,1) & ";  n2=" & ROUND(_n2,1) & ";  i=" & ROUND(_i,2)& ";  P=" & ROUND(_Pw1,2) & " [kW]" | General
+J105 | VALUE | File name | General
+W105 | VALUE | Spur gearing: | General
+J106 | VALUE | Gear1_01.xls | General
+J107 | VALUE | Project Name | General
+J108 | VALUE | Spur Gear | General
+J109 | VALUE | Basic Info | General
+J110 | VALUE | Spur gearing: Beta=0;  mn=6;  b1=120;  b2=117;  z1=19;  z2=48;  n1=1000;  n2=395.8;  i=2.53;  P=100 [kW] | General
+J111 | VALUE | Project Notes | General
+J112 | VALUE | Comments | General
+J115 | VALUE | ? | General
+L115 | VALUE | Input section | General
+J116 | VALUE | 1.0 | General
+L116 | VALUE |      Options of basic input parameters | General
+J117 | VALUE | 1.1 | General
+L117 | VALUE | Transferred power | General
+M117 | FORMULA | =IF(S_Units,"Pw [kW]","Pw [HP]") | General
+O117 | VALUE | 100.000 | 0.000
+P117 | FORMULA | =_Pw1*_eta | 0.000
+U117 | VALUE | Circular constant | General
+J118 | VALUE | 1.2 | General
+L118 | VALUE | Speed (Pinion / Gear) | General
+M118 | VALUE | n [/min] | General
+O118 | VALUE | 1000.00 | 0.00
+P118 | FORMULA | =_n1/_i | 0.0
+R118 | VALUE | [/min] | General
+J119 | VALUE | 1.3 | General
+L119 | VALUE | Torsional moment (Pinion / Gear) | General
+M119 | VALUE | Mk [Nm] | General
+O119 | FORMULA | =_Pw1*9550/_n1 | 0.00
+P119 | FORMULA | =_Mk1*_i*_eta | 0.00
+R119 | VALUE | [Nm] | General
+J120 | VALUE | 1.4 | General
+L120 | VALUE | Transmission ratio / from table | General
+M120 | VALUE | i | General
+O120 | VALUE | 2.500 | 0.000
+U120 | VALUE | Transmition ratio from table | General
+J121 | VALUE | 1.5 | General
+L121 | VALUE | Actual transmission ratio / deviation | General
+M121 | VALUE | i | General
+O121 | FORMULA | =_z2/_z1 | 0.000
+P121 | FORMULA | =(_i-_iin)/_i | 0.00%
+J123 | VALUE | 2.0 | General
+L123 | VALUE |      Options of material, loading conditions, operational and production parameters | General
+J124 | VALUE | 2.1 | General
+L124 | FORMULA | =XM_MatIDStd | General
+J125 | VALUE | 2.2 | General
+L125 | VALUE | Material of the pinion : | General
+U125 | VALUE | Support calculation for yd | General
+J126 | VALUE | 2.3 | General
+L126 | VALUE | Material of the gear : | General
+U126 | VALUE | Type mat 1 | General
+J127 | VALUE | 2.4 | General
+L127 | VALUE | Loading of the gearbox, driving machine - examples | General
+U127 | VALUE | Type mat 2 | General
+J128 | VALUE | 2.5 | General
+L128 | VALUE | Loading of gearbox, driven machine - examples | General
+U128 | VALUE | Sumary | General
+J129 | VALUE | 2.6 | General
+L129 | VALUE | Type of gearing mounting | General
+U129 | VALUE | Assembly type | General
+J130 | VALUE | 2.7 | General
+L130 | VALUE | Accuracy grade - ISO1328 |Ra max|v max | General
+U130 | VALUE | Accuracy grade | General
+J131 | VALUE | 2.8 | General
+L131 | VALUE | Coefficient of one-off overloading | General
+M131 | VALUE | KAS | General
+O131 | VALUE | 2.00 | 0.00
+J132 | VALUE | 2.9 | General
+L132 | VALUE | Desired service life | General
+M132 | VALUE | Lh | General
+O132 | VALUE | 20000 | 0
+R132 | VALUE | [h] | General
+J133 | VALUE | 2.10 | General
+L133 | VALUE | Coefficient of safety (contact/bend) | General
+M133 | VALUE | SH / SF | General
+O133 | VALUE | 1.30 | 0.00
+P133 | VALUE | 1.60 | 0.00
+J134 | VALUE | 2.11 | General
+L134 | VALUE | Automatic design | General
+J136 | VALUE | 3.0 | General
+L136 | VALUE |      Parameters of the cutting tool and tooth profile | General
+J137 | VALUE | 3.1 | General
+L137 | VALUE | Standardized tool | General
+U137 | VALUE | Tool normal module | General
+X137 | VALUE | mnv | General
+J138 | VALUE | 3.2 | General
+L138 | VALUE | Addendum of tool | General
+M138 | VALUE | ha0* | General
+O138 | VALUE | 1.250 | 0.000
+P138 | VALUE | 1.250 | 0.000
+R138 | VALUE | [modul] | General
+U138 | VALUE | Tool normal presure angle | General
+X138 | VALUE | anv | General
+J139 | VALUE | 3.3 | General
+L139 | VALUE | Dedendum of tool | General
+M139 | VALUE | hf0* | General
+O139 | VALUE | 1.000 | 0.000
+P139 | VALUE | 1.000 | 0.000
+R139 | VALUE | [modul] | General
+U139 | VALUE | Jednotkový dokončovací přídavek | General
+X139 | VALUE | dd0* | General
+J140 | VALUE | 3.4 | General
+L140 | VALUE | Fillet radius of tool | General
+M140 | VALUE | ra0* | General
+O140 | VALUE | 0.380 | 0.000
+P140 | VALUE | 0.380 | 0.000
+R140 | VALUE | [modul] | General
+U140 | VALUE | High of tip radius | General
+X140 | VALUE | c0* | General
+J141 | VALUE | 3.5 | General
+L141 | VALUE | Root fillet radius of tool | General
+M141 | VALUE | rf0* | General
+O141 | VALUE | 0.000 | 0.000
+P141 | VALUE | 0.000 | 0.000
+R141 | VALUE | [modul] | General
+U141 | VALUE | Manufacturing helix angle | General
+X141 | VALUE | bv | General
+J142 | VALUE | 3.6 | General
+L142 | VALUE | Chamfer of root | General
+M142 | VALUE | cha* | General
+O142 | VALUE | 0.000 | 0.000
+P142 | VALUE | 0.000 | 0.000
+R142 | VALUE | [modul] | General
+U142 | VALUE | working depth of the tool hv* | General
+X142 | VALUE | hv | General
+J143 | VALUE | 3.7 | General
+L143 | FORMULA | =XM_2006 | General
+M143 | VALUE | chb* | General
+O143 | VALUE | 0.000 | 0.000
+P143 | VALUE | 0.000 | 0.000
+R143 | VALUE | [modul] | General
+J144 | VALUE | 3.8 | General
+L144 | VALUE | Protuberance hight | General
+M144 | VALUE | d0* | General
+O144 | VALUE | 0.000 | 0.000
+P144 | VALUE | 0.000 | 0.000
+R144 | VALUE | [modul] | General
+J145 | VALUE | 3.9 | General
+L145 | VALUE | Protuberance angle | General
+M145 | VALUE | anp | General
+O145 | VALUE | 0.000 | 0.000
+P145 | VALUE | 0.000 | 0.000
+R145 | VALUE | [°] | General
+J146 | VALUE | 3.10 | General
+L146 | VALUE | Min. unit head clearance | General
+M146 | VALUE | ca*min | General
+O146 | FORMULA | =MAX(0.1,ROUND((_aw-_damax1/2-_df2/2)/_mn,4)) | 0.0000
+P146 | FORMULA | =MAX(0.1,ROUND((_aw-_damax2/2-_df1/2)/_mn,4)) | 0.0000
+R146 | VALUE | [modul] | General
+J147 | VALUE | 3.11 | General
+L147 | VALUE | Unit head clearance | General
+M147 | VALUE | ca* | General
+O147 | VALUE | 0.2500 | 0.0000
+P147 | VALUE | 0.2500 | 0.0000
+R147 | VALUE | [modul] | General
+U149 | VALUE | - Addendum - Coefficient of the height of the tooth head | General
+X149 | VALUE | ha* | General
+U150 | VALUE | - Recommended coefficient of the root radius | General
+U151 | VALUE | - Coefficient of the root radius | General
+X151 | VALUE | rf* | General
+U152 | VALUE | Výrobní úhel záběru | General
+X152 | VALUE | atv | General
+U153 | VALUE | Výrobní průměr | General
+X153 | VALUE | dv | General
+U154 | VALUE | Patní průměr | General
+X154 | VALUE | df | General
+U155 | VALUE | Průměr nástroje | General
+X155 | VALUE | d0 | General
+U156 | VALUE | Základní průměr nástroje | General
+X156 | VALUE | db0 | General
+U157 | VALUE | Výrobní jednotkové posunutí ??? | General
+X157 | VALUE | x0 | General
+U158 | VALUE | Hlavový průměr nástroje ??? | General
+X158 | VALUE | da0 | General
+U159 | VALUE | Výrobní osová vzdálenost | General
+X159 | VALUE | av | General
+J163 | VALUE | 4.0 | General
+L163 | VALUE |      Design of a module and geometry of toothing | General
+J170 | VALUE | 4.1 | General
+L170 | VALUE | Number of teeth Pinion / Gear | General
+M170 | VALUE | z | General
+O170 | VALUE | 19 | General
+P170 | FORMULA | =INT(_iin*_z1+0.5) | General
+J171 | VALUE | 4.2 | General
+L171 | VALUE | Normal pressure angle | General
+M171 | VALUE | a | General
+O171 | VALUE | 20 | General
+R171 | VALUE | [°] | General
+J172 | VALUE | 4.3 | General
+L172 | VALUE | Base helix angle | General
+M172 | VALUE | b | General
+O172 | VALUE | 0 | General
+R172 | VALUE | [°] | General
+J173 | VALUE | 4.4 | General
+L173 | VALUE | Setting of the ratio of the width of the pinion to its diameter | General
+U173 | VALUE | Factor Psi_d max value | General
+W173 | VALUE | Contact | General
+X173 | VALUE | Bending | General
+J174 | VALUE | 4.5 | General
+L174 | VALUE | The ratio of the pinion width to its diameter | General
+M174 | VALUE | yd / max | General
+O174 | FORMULA | =0.1+F173/50 | 0.00
+P174 | FORMULA | ="< " & V173 | 0.00
+U174 | VALUE | Preliminary modul design | General
+J175 | VALUE | 4.6 | General
+L175 | VALUE | Module / Standardized value | General
+M175 | VALUE | mn [mm] | General
+O175 | VALUE | 6 | General
+R175 | VALUE | [mm] | General
+U175 | VALUE | Modul selection from table | General
+J176 | VALUE | 4.7 | General
+L176 | VALUE | Reference diameter Pinion / Gear | General
+M176 | VALUE | d1/d2 | General
+O176 | FORMULA | =_d1 | 0.00
+P176 | FORMULA | =_d2 | 0.00
+R176 | VALUE | [mm] | General
+U176 | VALUE | Min / max b | General
+J177 | VALUE | 4.8 | General
+L177 | VALUE | Recommended width of gearing | General
+O177 | FORMULA | =V176 & " - " &W176 | 0.00
+R177 | VALUE | [mm] | General
+J178 | VALUE | 4.9 | General
+L178 | VALUE | Face width (Pinion / Gear) | General
+M178 | VALUE | b1/b2 | General
+O178 | VALUE | 120.00 | 0.00
+P178 | VALUE | 117.00 | 0.00
+R178 | VALUE | [mm] | General
+U178 | VALUE | Min. value of b1/b2 | General
+J179 | VALUE | 4.10 | General
+L179 | VALUE | Working face width | General
+M179 | VALUE | bw | General
+O179 | VALUE | 117 | General
+R179 | VALUE | [mm] | General
+J180 | VALUE | 4.11 | General
+L180 | FORMULA | =XM_0019 | General
+M180 | VALUE | yd / max | General
+O180 | FORMULA | =_b1/_d1 | 0.00
+P180 | FORMULA | =P174 | 0.00
+J181 | VALUE | 4.12 | General
+L181 | VALUE | Working center distance | General
+M181 | VALUE | aw | General
+O181 | FORMULA | =_aw | 0.000
+R181 | VALUE | [mm] | General
+J182 | VALUE | 4.13 | General
+L182 | VALUE | Approximate weight of the gearing | General
+M182 | VALUE | m | General
+O182 | FORMULA | =_mass | 0.000
+R182 | VALUE | [kg] | General
+J183 | VALUE | 4.14 | General
+L183 | VALUE | Minimum coefficient of safety | General
+M183 | VALUE | SH / SF | General
+O183 | FORMULA | =MIN(_SH1,_SH2) | 0.00
+P183 | FORMULA | =MIN(_SF1,_SF2) | 0.00
+J193 | VALUE | 4.15 | General
+L193 | VALUE | Normal backlash | General
+U193 | VALUE | jtb | General
+J194 | VALUE | 4.16 | General
+L194 | VALUE | - Recommended min. | max. value | General
+O194 | FORMULA | =6*SQRT(_aw)*0.001 | 0.000
+P194 | FORMULA | =24*SQRT(_aw)*0.001 | 0.000
+R194 | VALUE | [mm] | General
+U194 | VALUE | Tangential backlash jw | 0.0000
+J195 | VALUE | 4.17 | General
+L195 | VALUE | - Selected normal backlash | General
+M195 | VALUE | jn | General
+O195 | VALUE | 0.0000 | 0.0000
+R195 | VALUE | [mm] | General
+U195 | VALUE | Centre distance modification | General
+J197 | VALUE | 5.0 | General
+L197 | VALUE |      Correction of toothing (Addendum modification) | General
+J198 | VALUE | 5.1 | General
+L198 | VALUE | Types | General
+J199 | VALUE | 5.2 | General
+L199 | VALUE | - Permissible undercutting of teeth (min. value) | General
+O199 | FORMULA | =(_zmin1P-_z1)/_z1 | 0.000
+P199 | FORMULA | =(_zmin1G-_z2)/_z2 | 0.000
+Q199 | VALUE | S= | General
+R199 | FORMULA | =O199+P199 | 0.000
+J200 | VALUE | 5.3 | General
+L200 | VALUE | - Preventing undercutting of teeth (min. value) | General
+O200 | FORMULA | =(_zmin2P-_z1)/_z1 | 0.000
+P200 | FORMULA | =(_zmin2G-_z2)/_z2 | 0.000
+Q200 | VALUE | S= | General
+R200 | FORMULA | =O200+P200 | 0.000
+U200 | VALUE | Mez podrezani zkracujici delku zaberu x1min | General
+J201 | VALUE | 5.4 | General
+L201 | VALUE | - Prevents tapering of teeth (min. value) | General
+O201 | FORMULA | =(_zmin3P-_z1)/(_zmin3P-180/2/_alfa)/(COS(_alfa*_pi/180)*COS(_alfa*_pi/180)) | 0.000
+P201 | FORMULA | =(_zmin3G-_z2)/(_zmin3G-180/2/_alfa)/(COS(_alfa*_pi/180)*COS(_alfa*_pi/180)) | 0.000
+Q201 | VALUE | S= | General
+R201 | FORMULA | =O201+P201 | 0.000
+J202 | VALUE | 5.5 | General
+L202 | VALUE | Pinion addendum modification coefficient setting | General
+U202 | VALUE | Support numbers for corrections | General
+J203 | VALUE | 5.6 | General
+L203 | VALUE | Addendum modification coefficient Pinion / Gear | General
+M203 | VALUE | x | General
+O203 | VALUE | 0.0000 | 0.0000
+P203 | FORMULA | =_SumX-_x1 | 0.0000
+R203 | VALUE | [modul] | General
+J204 | VALUE | 5.7 | General
+L204 | VALUE | Sum of addendum modification coefficients | min. value | General
+M204 | VALUE | Sx | General
+O204 | VALUE | 0.0000 | 0.0000
+P204 | FORMULA | =">  " & ROUND(_SumXmin,3) | General
+R204 | VALUE | [modul] | General
+U204 | VALUE | minimum value of SumX | General
+J205 | VALUE | 5.8 | General
+L205 | VALUE | Transverse / Total contact ratio | General
+M205 | VALUE | ea/eg | General
+O205 | FORMULA | =_epsilon_A | 0.0000
+P205 | FORMULA | =_epsilon_G | 0.0000
+U205 | VALUE | Range x1 for T1 EQ T2 | General
+J206 | VALUE | 5.9 | General
+L206 | VALUE | Unit tooth thickness on the tip diameter | General
+M206 | VALUE | sa* | General
+O206 | FORMULA | =_sa1x | 0.0000
+P206 | FORMULA | =_sa2x | 0.0000
+J207 | VALUE | 5.10 | General
+L207 | VALUE | Specific sliding on tooth root | General
+M207 | VALUE | JA1/JE2 | General
+O207 | FORMULA | =1-_z1/_z2*((_da2^2-_Db2^2)^0.5)/(2*_aw*SIN(_alfawt*PI()/180)-((_da2^2-_Db2^2)^0.5)) | 0.0000
+P207 | FORMULA | =1-_z2/_z1*((_da1^2-_Db1^2)^0.5)/(2*_aw*SIN(_alfawt*PI()/180)-((_da1^2-_Db1^2)^0.5)) | 0.0000
+U207 | VALUE | Difference of sliding 0-1 | General
+J208 | VALUE | 5.11 | General
+L208 | VALUE | Specific sliding on tooth tip | General
+M208 | VALUE | JE1/JA2 | General
+O208 | FORMULA | =1-_z1/_z2*(2*_aw*SIN(_alfawt*PI()/180)-((_da1^2-_Db1^2)^0.5))/((_da1^2-_Db1^2)^0.5) | 0.0000
+P208 | FORMULA | =1-_z2/_z1*(2*_aw*SIN(_alfawt*PI()/180)-((_da2^2-_Db2^2)^0.5))/((_da2^2-_Db2^2)^0.5) | 0.0000
+J209 | VALUE | 5.12 | General
+L209 | VALUE | Sum of all specific slidings | General
+M209 | VALUE | Sum|J| | General
+O209 | FORMULA | =ABS(_thetaA1)+ABS(_thetaE2)+ABS(_thetaE1)+ABS(_thetaA2) | 0.0000
+J210 | VALUE | 5.13 | General
+L210 | VALUE | Safety coefficient for surface durability | General
+M210 | VALUE | SH | General
+O210 | FORMULA | =_SH1 | 0.00
+P210 | FORMULA | =_SH2 | 0.00
+J211 | VALUE | 5.14 | General
+L211 | VALUE | Safety coefficient for bending durability | General
+M211 | VALUE | SF | General
+O211 | FORMULA | =_SF1 | 0.00
+P211 | FORMULA | =_SF2 | 0.00
+J212 | VALUE | 5.15 | General
+L212 | VALUE | Display of tooth and tool turn for: | General
+P212 | FORMULA | =-50+_ToolAnglePt | General
+Q212 | VALUE | [°] | General
+L230 | VALUE | Results section | General
+J231 | VALUE | 6.0 | General
+L231 | VALUE |      Basic dimensions of gearing | General
+J241 | VALUE | 6.1 | General
+L241 | FORMULA | =XM_0026 | General
+M241 | VALUE | z | General
+O241 | FORMULA | =_z1 | General
+P241 | FORMULA | =_z2 | General
+J242 | VALUE | 6.2 | General
+L242 | FORMULA | =XM_0029 | General
+M242 | VALUE | b | General
+O242 | FORMULA | =_b1 | General
+P242 | FORMULA | =_b2 | General
+R242 | VALUE | [mm] | General
+J243 | VALUE | 6.3 | General
+L243 | VALUE | Normal module | General
+M243 | VALUE | mn | General
+O243 | FORMULA | =_mn | General
+R243 | VALUE | [mm] | General
+J244 | VALUE | 6.4 | General
+L244 | VALUE | Transverse module | General
+M244 | VALUE | mt | General
+O244 | FORMULA | =_mn/COS(_beta*PI()/180) | 0.0000
+R244 | VALUE | [mm] | General
+J245 | VALUE | 6.5 | General
+L245 | VALUE | Circular pitch | General
+M245 | VALUE | p | General
+O245 | FORMULA | =PI()*_mn | 0.000
+R245 | VALUE | [mm] | General
+J246 | VALUE | 6.6 | General
+L246 | VALUE | Transverse circular pitch | General
+M246 | VALUE | pt | General
+O246 | FORMULA | =_p/COS(_beta*_pi/180) | 0.000
+R246 | VALUE | [mm] | General
+J247 | VALUE | 6.7 | General
+L247 | VALUE | Base circular pitch | General
+M247 | VALUE | ptb | General
+O247 | FORMULA | =_pt*COS(_alfat*_pi/180) | 0.000
+R247 | VALUE | [mm] | General
+J248 | VALUE | 6.8 | General
+L248 | VALUE | Center distance (pitch) | General
+M248 | VALUE | a | General
+O248 | FORMULA | =(_z1+_z2)*_mt/2 | 0.0000
+R248 | VALUE | [mm] | General
+J249 | VALUE | 6.9 | General
+L249 | VALUE | Center distance (production) | General
+M249 | VALUE | av | General
+O249 | FORMULA | =_mt*((_z1+_z2)/2)+(_x1+_x2)*_mn | 0.0000
+R249 | VALUE | [mm] | General
+J250 | VALUE | 6.10 | General
+L250 | VALUE | Center distance (working) | General
+M250 | VALUE | aw | General
+O250 | FORMULA | =_mt*(_z1+_z2)/2*COS(_alfat*_pi/180)/COS(_alfawt*_pi/180)+_q | 0.0000
+R250 | VALUE | [mm] | General
+J251 | VALUE | 6.11 | General
+L251 | VALUE | Pressure angle | General
+M251 | VALUE | a | General
+O251 | FORMULA | =_alfa | 0.00
+R251 | VALUE | [°] | General
+U251 | VALUE | damax | General
+J252 | VALUE | 6.12 | General
+L252 | VALUE | Transverse pressure angle | General
+M252 | VALUE | at | General
+O252 | FORMULA | =180/_pi*ATAN(TAN(_alfa*_pi/180)/COS(_beta*_pi/180)) | 0.0000
+R252 | VALUE | [°] | General
+U252 | VALUE | Support number y | General
+J253 | VALUE | 6.13 | General
+L253 | VALUE | Pressure angle at the pitch cylinder | General
+M253 | VALUE | awn | General
+O253 | FORMULA | =invol(2*(_x1+_x2)/(_z1+_z2)*TAN(_alfa*_pi/180)+Inv(_alfa)) | 0.0000
+R253 | VALUE | [°] | General
+J254 | VALUE | 6.14 | General
+L254 | VALUE | Transverse pressure angle at the pitch cylinder | General
+M254 | VALUE | awt | General
+O254 | FORMULA | =invol(2*(_x1+_x2)/(_z1+_z2)*TAN(_alfa*_pi/180)+Inv(_alfat)) | 0.0000
+R254 | VALUE | [°] | General
+U254 | VALUE | Chordal thickness | General
+J255 | VALUE | 6.15 | General
+L255 | VALUE | Helix angle | General
+M255 | VALUE | b | General
+O255 | FORMULA | =_beta | 0.00
+R255 | VALUE | [°] | General
+U255 | VALUE | Angle beta a | General
+J256 | VALUE | 6.16 | General
+L256 | VALUE | Base helix angle | General
+M256 | VALUE | b b | General
+O256 | FORMULA | =ASIN(SIN(_beta*_pi/180)*COS(_alfa*_pi/180))*180/_pi | 0.0000
+R256 | VALUE | [°] | General
+U256 | VALUE | On tip diameter | General
+J257 | VALUE | 6.17 | General
+L257 | VALUE | Tip diameter | General
+M257 | VALUE | da | General
+O257 | FORMULA | =2*(_aw-_df2/2-_caXP*_mn) | 0.0000
+P257 | FORMULA | =2*(_aw-_df1/2-_caXG*_mn) | 0.0000
+R257 | VALUE | [mm] | General
+U257 | VALUE | On reference diameter | General
+J258 | VALUE | 6.18 | General
+L258 | VALUE | Reference diameter | General
+M258 | VALUE | d | General
+O258 | FORMULA | =_z1*_mt | 0.0000
+P258 | FORMULA | =_z2*_mt | 0.0000
+R258 | VALUE | [mm] | General
+J259 | VALUE | 6.19 | General
+L259 | VALUE | Base diameter | General
+M259 | VALUE | db | General
+O259 | FORMULA | =_d1*COS(_alfat*_pi/180) | 0.0000
+P259 | FORMULA | =_d2*COS(_alfat*_pi/180) | 0.0000
+R259 | VALUE | [mm] | General
+U259 | VALUE | Limit root thickness for 3D | General
+J260 | VALUE | 6.20 | General
+L260 | VALUE | Root diameter | General
+M260 | VALUE | df | General
+O260 | FORMULA | =_d1-2*_hf1 | 0.0000
+P260 | FORMULA | =_d2-2*_hf2 | 0.0000
+R260 | VALUE | [mm] | General
+J261 | VALUE | 6.21 | General
+L261 | VALUE | Operating pitch diameter | General
+M261 | VALUE | dw | General
+O261 | FORMULA | =_d1*COS(_alfat*PI()/180)/COS(_alfawt*PI()/180) | 0.0000
+P261 | FORMULA | =_d2*COS(_alfat*PI()/180)/COS(_alfawt*PI()/180) | 0.0000
+R261 | VALUE | [mm] | General
+J262 | VALUE | 6.22 | General
+L262 | VALUE | Addendum | General
+M262 | VALUE | ha | General
+O262 | FORMULA | =(_da1-_d1)/2 | 0.0000
+P262 | FORMULA | =(_da2-_d2)/2 | 0.0000
+R262 | VALUE | [mm] | General
+U262 | VALUE | Calculations for geometric models | General
+J263 | VALUE | 6.23 | General
+L263 | VALUE | Dedendum | General
+M263 | VALUE | hf | General
+O263 | FORMULA | =_mn*(_ha0X1-_x1) | 0.0000
+P263 | FORMULA | =_mn*(_ha0X2-_x2) | 0.0000
+R263 | VALUE | [mm] | General
+U263 | VALUE | Angle alfax | 0.00000
+J264 | VALUE | 6.24 | General
+L264 | VALUE | Tooth thickness on the tip diameter | General
+M264 | VALUE | sna | General
+O264 | FORMULA | =_sta1*COS(_betaa1*PI()/180) | 0.0000
+P264 | FORMULA | =_sta2*COS(_betaa2*PI()/180) | 0.0000
+R264 | VALUE | [mm] | General
+U264 | VALUE | (da+df)/2     …_dx1 | 0.00000
+J265 | VALUE | 6.25 | General
+L265 | VALUE | Tooth thickness on the tip diameter (transverse) | General
+M265 | VALUE | sta | General
+O265 | FORMULA | =_da1*(_st1/_d1+Inv(_alfat)-Inv(ACOS(_d1*COS(_alfat*_pi/180)/_da1)*180/_pi)) | 0.0000
+P265 | FORMULA | =_da2*(_st2/_d2+Inv(_alfat)-Inv(ACOS(_d2*COS(_alfat*_pi/180)/_da2)*180/_pi)) | 0.0000
+R265 | VALUE | [mm] | General
+U265 | VALUE | sa/2 | 0.00000
+J266 | VALUE | 6.26 | General
+L266 | VALUE | Tooth thickness on the pitch diameter | General
+M266 | VALUE | sn | General
+O266 | FORMULA | =_st1*COS(_beta*PI()/180) | 0.0000
+P266 | FORMULA | =_st2*COS(_beta*PI()/180) | 0.0000
+R266 | VALUE | [mm] | General
+U266 | VALUE | sx/2 | 0.00000
+J267 | VALUE | 6.27 | General
+L267 | VALUE | Tooth thickness on the pitch diameter (transverse) | General
+M267 | VALUE | st | General
+O267 | FORMULA | =_pt/2+2*_x1*_mn*TAN(_alfat*_pi/180) | 0.0000
+P267 | FORMULA | =_pt/2+2*_x2*_mn*TAN(_alfat*_pi/180) | 0.0000
+R267 | VALUE | [mm] | General
+U267 | VALUE | st/2 | 0.00000
+J268 | VALUE | 6.28 | General
+L268 | VALUE | Tooth thickness on the root diameter | General
+M268 | VALUE | sb | General
+O268 | FORMULA | =_df1*(_st1/_d1+Inv(_alfat)) | 0.0000
+P268 | FORMULA | =_df2*(_st2/_d2+Inv(_alfat)) | 0.0000
+R268 | VALUE | [mm] | General
+U268 | VALUE | sb/2-temp | General
+J269 | VALUE | 6.29 | General
+L269 | FORMULA | =XM_0051 | General
+M269 | VALUE | sa* | General
+O269 | FORMULA | =_da1*(_st1/_d1+Inv(_alfat)-Inv(ACOS(_d1*COS(_alfat*_pi/180)/_da1)*180/_pi))/_mn | 0.0000
+P269 | FORMULA | =_da2*(_st2/_d2+Inv(_alfat)-Inv(ACOS(_d2*COS(_alfat*_pi/180)/_da2)*180/_pi))/_mn | 0.0000
+R269 | VALUE | [modul] | General
+U269 | VALUE | sb/2 | 0.00000
+J270 | VALUE | 6.30 | General
+L270 | VALUE | Unit correction | General
+M270 | VALUE | dY | General
+O270 | FORMULA | =(_x1+_x2)-_aw/_mn+_a/_mn | 0.0000
+R270 | VALUE | [modul] | General
+U270 | VALUE | Pitch | General
+J271 | VALUE | 6.31 | General
+L271 | VALUE | Total unit correction | General
+M271 | VALUE | x1+x2 | General
+O271 | FORMULA | =_x1+_x2 | 0.0000
+R271 | VALUE | [modul] | General
+J272 | VALUE | 6.32 | General
+L272 | VALUE | Addendum modification coefficient | General
+M272 | VALUE | x | General
+O272 | FORMULA | =_x1 | 0.0000
+P272 | FORMULA | =_x2 | 0.0000
+R272 | VALUE | [modul] | General
+J273 | VALUE | 6.33 | General
+L273 | VALUE | Achieve the requested tip diameter with change the unit head clearance ca* [3.11] | General
+J274 | VALUE | 6.34 | General
+L274 | FORMULA | =XM_0035 | General
+M274 | VALUE | ca* | General
+O274 | FORMULA | =_caXP | 0.0000
+P274 | FORMULA | =_caXG | 0.0000
+R274 | VALUE | [modul] | General
+J275 | VALUE | 6.35 | General
+L275 | VALUE | Tip diameter can be varied from-to | General
+M275 | VALUE | da min/max | General
+O275 | FORMULA | =ROUND(_da1min,_da1round)&"/"&ROUND(_da1max,_da1round) | 0.0000
+P275 | FORMULA | =ROUND(_da2min,_da2round)&"/"&ROUND(_da2max,_da2round) | 0.0000
+R275 | VALUE | [mm] | General
+U275 | VALUE | Calculation of damin/max | General
+V275 | VALUE | da1min | General
+W275 | VALUE | da1max | General
+X275 | VALUE | da2min | General
+Y275 | VALUE | da2max | General
+Z275 | VALUE | ROUND 1 | General
+AA275 | VALUE | ROUND 2 | General
+J276 | VALUE | 6.36 | General
+L276 | VALUE | Requested tip diameter | General
+M276 | VALUE | da req | General
+O276 | VALUE | 124.000 | 0.000
+P276 | VALUE | 298.000 | 0.000
+J278 | VALUE | 7.0 | General
+L278 | VALUE |      Supplemental parameters of gearing | General
+J279 | VALUE | 7.1 | General
+L279 | VALUE | Number of teeth | General
+M279 | VALUE | z | General
+O279 | FORMULA | =_z1 | General
+P279 | FORMULA | =_z2 | General
+J280 | VALUE | 7.2 | General
+L280 | VALUE | Virtual number of teeth of a helical gear | General
+M280 | VALUE | zn | General
+O280 | FORMULA | =_z1/COS(_beta*_pi/180)/(COS(_beta_B*_pi/180))^2 | 0.000
+P280 | FORMULA | =_z2/COS(_beta*_pi/180)/(COS(_beta_B*_pi/180))^2 | 0.000
+L281 | VALUE | Minimum number of teeth: | General
+J282 | VALUE | 7.3 | General
+L282 | VALUE |      - Permissible undercutting | General
+M282 | VALUE | zmin1 | General
+O282 | FORMULA | =INT(_zminP*5/6+0.5) | General
+P282 | FORMULA | =INT(_zminG*5/6+0.5) | General
+U282 | VALUE | Min number of teeth | General
+J283 | VALUE | 7.4 | General
+L283 | VALUE |      - Without undercutting | General
+M283 | VALUE | zmin2 | General
+O283 | FORMULA | =INT(_zminP+0.5) | General
+P283 | FORMULA | =INT(_zminG+0.5) | General
+U283 | VALUE | Min number of teeth gear | General
+J284 | VALUE | 7.5 | General
+L284 | VALUE |      - Without tapering | General
+M284 | VALUE | zmin3 | General
+O284 | FORMULA | =INT((4*_hvX1/(_alfa*_pi/180))*(1+_pi/8*SIN(_alfa*_pi/90))/SIN(_alfa*_pi/90)*POWER(COS(_beta*_pi/180),3)+0.5) | General
+P284 | FORMULA | =INT((4*_hvX2/(_alfa*_pi/180))*(1+_pi/8*SIN(_alfa*_pi/90))/SIN(_alfa*_pi/90)*POWER(COS(_beta*_pi/180),3)+0.5) | General
+J286 | VALUE | 8.0 | General
+L286 | VALUE |      Qualitative indices of gearing | General
+U295 | VALUE | 0% value, 100% value | General
+J297 | VALUE | 8.1 | General
+L297 | VALUE | Transverse contact ratio / overlap ratio | General
+M297 | VALUE | ea  | eb | General
+O297 | FORMULA | =_z1/2/_pi*(TAN(_Alfa_A1)-TAN(_alfawt*_pi/180))+_z2/2/_pi*(TAN(_Alfa_A2)-TAN(_alfawt*_pi/180)) | 0.0000
+P297 | FORMULA | =_bw/_mn/_pi*SIN(_beta*_pi/180) | 0.0000
+U297 | VALUE | Alfa_a1,Alfa_a2,epsilon_alfa_n | General
+J298 | VALUE | 8.2 | General
+L298 | VALUE | Total contact ratio | General
+M298 | VALUE | eg | General
+O298 | FORMULA | =_epsilon_A+_epsilon_B | 0.0000
+J299 | VALUE | 8.3 | General
+L299 | VALUE | Definition of wheel dimensions | General
+U299 | VALUE | Rm for orientation shaft diameter, Round no | General
+J300 | VALUE | 8.4 | General
+L300 | VALUE | Recommended minimum diameter of the shaft | General
+M300 | VALUE | Dsmin | General
+O300 | FORMULA | =ROUND(365*(_Pw1/_n1/_ShaftRm)^0.33,_DsRound) | 0.00
+P300 | FORMULA | =ROUND(365*(_Pw1/_n2/_ShaftRm)^0.33,_DsRound) | 0.00
+R300 | VALUE | [mm] | General
+U300 | VALUE | Ds1, Ds2 proposal; Ds1max, Ds2max | General
+J301 | VALUE | 8.5 | General
+L301 | VALUE | Recommended minimum outer diameter of the hub | General
+M301 | VALUE | Dhmin | General
+O301 | FORMULA | =ROUND(_Dshaft1min+3*_mn,_DsRound) | 0.00
+P301 | FORMULA | =ROUND(_Dshaft2min+3*_mn,_DsRound) | 0.00
+R301 | VALUE | [mm] | General
+U301 | VALUE | Dh proposal | General
+J302 | VALUE | 8.6 | General
+L302 | FORMULA | =XM_3402 & " (max)" | General
+M302 | VALUE | Dsmax | General
+O302 | FORMULA | =_Dshaft1max | 0.00
+P302 | FORMULA | =_Dshaft2max | 0.00
+R302 | VALUE | [mm] | General
+U302 | VALUE | di/df proposal | General
+J303 | VALUE | 8.7 | General
+L303 | VALUE | Shaft diameter | General
+M303 | VALUE | Ds | General
+O303 | VALUE | 0.00 | 0.00
+P303 | VALUE | 0.00 | 0.00
+R303 | VALUE | [mm] | General
+U303 | VALUE | bs proposal | General
+J304 | VALUE | 8.8 | General
+L304 | VALUE | Outer diameter of the hub | General
+M304 | VALUE | Dh | General
+O304 | VALUE | 0.00 | 0.00
+P304 | VALUE | 0.00 | 0.00
+R304 | VALUE | [mm] | General
+U304 | VALUE | Ds1,Ds2,Dh1,Dh2 for next formulas | General
+J305 | VALUE | 8.9 | General
+L305 | VALUE | Coefficient of gear unloading (0 - 100) | General
+M305 | VALUE | di/df | General
+O305 | VALUE | 0% | 0%
+P305 | VALUE | 0% | 0%
+R305 | VALUE | [%df] | General
+U305 | VALUE | Dhub1,2 min; Dhub1,2 max | General
+J306 | VALUE | 8.10 | General
+L306 | VALUE | Central web thickness in % of the gear width (20-100) | General
+M306 | VALUE | bs | General
+O306 | VALUE | 100% | 0%
+P306 | VALUE | 100% | 0%
+R306 | VALUE | [%b] | General
+U306 | VALUE | sR min1, min2, max1, max2 | General
+J307 | VALUE | 8.11 | General
+L307 | VALUE | Gear rim thickness | General
+M307 | VALUE | sR | General
+O307 | FORMULA | =MAX(MIN((_df1-(_df1*_Cdidf1))/2,(_df1-_Dshaft1)/2),_SRmin1) | 0.00
+P307 | FORMULA | =MAX(MIN((_df2-(_df2*_Cdidf2))/2,(_df2-_Dshaft2)/2),_SRmin2) | 0.00
+R307 | VALUE | [mm] | General
+U307 | VALUE | bs1min,max, bs2min,max | General
+J308 | VALUE | 8.12 | General
+L308 | VALUE | Central web thickness | General
+M308 | VALUE | bs | General
+O308 | FORMULA | =_b1*_bs1input | 0.00
+P308 | FORMULA | =_b2*_bs2input | 0.00
+R308 | VALUE | [mm] | General
+U308 | VALUE | Moment of inertia - pinion | wheel old | General
+J309 | VALUE | 8.13 | General
+L309 | VALUE | Gear weight | General
+M309 | VALUE | m | General
+O309 | FORMULA | =MAX(SUM(V315:W317),0) | 0.000
+P309 | FORMULA | =MAX(SUM(Z315:AA317),0) | 0.000
+R309 | VALUE | [kg] | General
+U309 | VALUE | Support value for mred calculation old | General
+J310 | VALUE | 8.14 | General
+L310 | VALUE | Relative individual gear mass per unit face width | General
+M310 | VALUE | m* | General
+O310 | FORMULA | =O312/((_Db1/2)^2) | 0.0000E+00
+P310 | FORMULA | =P312/((_Db2/2)^2) | 0.0000E+00
+R310 | VALUE | [kg/mm] | General
+U310 | VALUE | Weight of pinion / wheel old | General
+J311 | VALUE | 8.15 | General
+L311 | VALUE | Moment of inertia | General
+M311 | VALUE | J | General
+O311 | FORMULA | =MAX(SUM(X315:Y317),0.0000000001) | 0.0000E+00
+P311 | FORMULA | =MAX(SUM(AB315:AC317),0.0000000001) | 0.0000E+00
+R311 | VALUE | [kg*mm²] | General
+J312 | VALUE | 8.16 | General
+L312 | VALUE | Moment of inertia per unit face width | General
+M312 | VALUE | J* | General
+O312 | FORMULA | =_MoI1*1000000/_b1 | 0.0000E+00
+P312 | FORMULA | =_MoI2*1000000/_b2 | 0.0000E+00
+R312 | VALUE | [kg*mm²/mm] | General
+J313 | VALUE | 8.17 | General
+L313 | VALUE | Reduced mass of gear set | General
+M313 | VALUE | mred | General
+O313 | FORMULA | =(_m1*_m2)/(_m1+_m2) | General
+R313 | VALUE | [kg/mm] | General
+J314 | VALUE | 8.18 | General
+L314 | FORMULA | =XM_0136 | General
+M314 | VALUE | v | vmax | General
+O314 | FORMULA | =_v | 0.00
+P314 | FORMULA | ="< " & _Vmax | 0.00
+R314 | VALUE | [m/s] | General
+V314 | VALUE | m1+ | General
+W314 | VALUE | m1- | General
+X314 | VALUE | Ix1+ | General
+Y314 | VALUE | Ix1- | General
+Z314 | VALUE | m2+ | General
+AA314 | VALUE | m2- | General
+AB314 | VALUE | Ix2+ | General
+AC314 | VALUE | Ix2- | General
+J315 | VALUE | 8.19 | General
+L315 | VALUE | Tangential load per unit tooth width | General
+M315 | VALUE | wt | General
+O315 | FORMULA | =_wt | 0.00
+P315 | FORMULA | =_Fm/_b1 | 0.00
+R315 | VALUE | [N/mm] | General
+U315 | VALUE | Mass and Ix of rim + teeth | General
+J316 | VALUE | 8.20 | General
+L316 | VALUE | Resonance speed | General
+M316 | VALUE | nE1 [/min] | General
+O316 | FORMULA | =30*1000/(PI()*_z1)*(_c_gama/_mred)^0.5 | 0.00
+R316 | VALUE | [ /min] | General
+T316 | VALUE | 1-eq(6) | General
+U316 | VALUE | Mass and Ix of Web | General
+J317 | VALUE | 8.21 | General
+L317 | VALUE | Resonance ratio / lover limit | General
+M317 | VALUE | N | NS | General
+O317 | FORMULA | =_n1/_ne1 | 0.000
+P317 | FORMULA | =MIN(0.5+0.35*(_Ft*_KA/(100*_bw))^0.5,0.85) | 0.000
+U317 | VALUE | Mass and Ix of Hub | General
+J318 | VALUE | 8.22 | General
+L318 | FORMULA | =XM_0024 | General
+M318 | VALUE | m | General
+O318 | FORMULA | =_mass1+_mass2 | 0.0000
+R318 | VALUE | [kg] | General
+U318 | VALUE | Mass and Ix of full gear | General
+J319 | VALUE | 8.23 | General
+L319 | VALUE | Efficiency of the gearing | General
+M319 | VALUE | m | General
+O319 | FORMULA | =IF(_beta=0,1-0.5*_Friction_coef*_pi*_epsilon_G*(1/_z1+1/_z2),1-_Friction_coef*_pi*_epsilon_G*(1/_z1+1/_z2)/4/COS(_beta*_pi/180)) | 0.00%
+U319 | VALUE | Friction coefficient | General
+J321 | VALUE | 9.0 | General
+L321 | VALUE |      Coefficients for safety calculation | General
+J322 | VALUE | 9.1 | General
+L322 | VALUE | Setting the parameters for calculation | General
+J323 | VALUE | 9.2 | General
+L323 | VALUE | Dynamic factor KV (max. value) | General
+M323 | VALUE | KVmax | General
+O323 | VALUE | 5.00 | 0.00
+W323 | VALUE | A Coeff | General
+X323 | VALUE | KHb | General
+Y323 | VALUE | q | General
+Z323 | VALUE | q>=1 | General
+AA323 | VALUE | q<1 | General
+J324 | VALUE | 9.3 | General
+L324 | VALUE | Face load factor contact stress KHbeta (max. value) | General
+M324 | VALUE | KHbmax | General
+O324 | VALUE | 5.00 | 0.00
+U324 | VALUE | KHbeta ISO simplified design | General
+J325 | VALUE | 9.4 | General
+L325 | VALUE | Reversals of the load (factor YA) | General
+U325 | VALUE | SPRatio..Coeficient  (v*z1/100)*(u^2/(1+u^2))^0.5 | General
+J326 | VALUE | 9.5 | General
+L326 | VALUE | Calculation of "Work hardening factor ZW" | General
+V326 | VALUE | KFa(C) old | General
+W326 | VALUE | KFa (B) new | General
+X326 | VALUE | KHa(C) old | General
+Y326 | VALUE | KHa(B) new | General
+Z326 | VALUE | eps_G<=2 | General
+AA326 | VALUE | eps_G>2 | General
+AB326 | VALUE | fpb coef | General
+AC326 | VALUE | FtH | General
+AD326 | VALUE | Eq.73 | General
+AE326 | VALUE | Eq.74 | General
+AF326 | VALUE | fpb max | General
+J327 | VALUE | 9.6 | General
+L327 | VALUE | Tooth profile modification (KHalfa, KHbeta) | General
+U327 | VALUE | Coeficients KHalfa, KFalfa | General
+J328 | VALUE | 9.7 | General
+L328 | VALUE | Oil type (ZL) | General
+U328 | VALUE | Size of mn for better Ra (from table T_AG) | General
+J329 | VALUE | 9.8 | General
+L329 | VALUE | Used / Recomended lubricant viscosity | General
+M329 | VALUE | v50 | General
+O329 | VALUE | 178 | 0
+P329 | FORMULA | =MAX(TblAprox("T_Viscosity",_v,MAX(_ContactLimit1,_ContactLimit2),"LILI"),1) | 0
+R329 | VALUE | [mm2/sec] | General
+U329 | VALUE | Coeficient KHbeta, aproximation from tables | General
+J330 | VALUE | 9.9 | General
+L330 | VALUE | Tooth roughness (factor ZR) | General
+M330 | VALUE | Ra | General
+R330 | VALUE | [mm] | General
+U330 | VALUE | KV(C)96 for Ebeta>1 | Ebeta=0 | Ebeta<1 | General
+Y330 | VALUE | Speed coeficient Sc | General
+J331 | VALUE | 9.10 | General
+L331 | VALUE | Roughness in the tooth root fillets (factor YR) | General
+M331 | VALUE | Ra | General
+R331 | VALUE | [mm] | General
+U331 | VALUE | KV(C)2006 for Ebeta>1 | Ebeta=0 | Ebeta<1 | General
+Y331 | VALUE | Service coeficient | General
+J332 | VALUE | 9.11 | General
+L332 | VALUE | Common for the gearing | General
+U332 | VALUE | Teeth Roughness Ra / Rz / Rz10 | General
+J333 | VALUE | 9.12 | General
+L333 | VALUE | Theoretical single stiffness | General
+M333 | VALUE | c'th | General
+O333 | FORMULA | =1/(0.04723+0.15551/_zn1+0.25791/_zn2-0.00635*_x1-0.11654*_x1/_zn1-0.00193*_x2-0.24188*_x2/_zn2+0.00529*_x1^2+0.00182*_x2^2) | 0.000
+R333 | VALUE | [N/(mm*mm)] | General
+U333 | VALUE | CE - Material correction coeficient | General
+J334 | VALUE | 9.13 | General
+L334 | VALUE | Stiffness of a tooth pair (single stiffness) | General
+M334 | VALUE | c' | General
+O334 | FORMULA | =_cc_th*_CM_coef*_CR_coef*_CB_coef*_CE_coef*_CFK_coef*COS(_beta*PI()/180) | 0.000
+R334 | VALUE | [N/(mm*mm)] | General
+T334 | VALUE | 1-Eq(80,81,82) | General
+U334 | VALUE | CM - correction coeficient 1-eq(83) | General
+W334 | VALUE | ratio bs/b | General
+X334 | VALUE | ratio bs/b | General
+Y334 | VALUE | sR/(5*mn) | General
+Z334 | VALUE | sR [mm] | General
+AA334 | VALUE | sR/mn | General
+J335 | VALUE | 9.14 | General
+L335 | VALUE | Meshing stiffness per unit face width | General
+M335 | VALUE | cga | General
+O335 | FORMULA | =IF(AND(_beta=0,_epsilon_A<1.2),_cc*(0.75*_epsilon_A+0.25)*1.1,_cc*(0.75*_epsilon_A+0.25)) | 0.000
+R335 | VALUE | [N/(mm*mm)] | General
+U335 | VALUE | CR - gear blank factor 1-eq(84,85) | General
+J336 | VALUE | 9.15 | General
+L336 | VALUE | Application factor | General
+M336 | VALUE | KA | General
+O336 | FORMULA | =INDEX(T_KAcoef,Calculation!F127,Calculation!F128) | 0.000
+U336 | VALUE | CB - Basic rack factor 1-eq(86,87) | General
+J337 | VALUE | 9.16 | General
+L337 | VALUE | Dynamic factor | General
+M337 | VALUE | KV | General
+O337 | FORMULA | =MIN(IF(_KVmethode=1,_KV_B,IF(_KVmethode=2,_KV_C,_KV_C96)),_Kv_max) | 0.000
+U337 | VALUE | CFK - Coefficient if (Ft*KA/b)<100 eq(90) | General
+W337 | VALUE | Cv2 | General
+X337 | VALUE | Cv3 | General
+Y337 | VALUE | Cv4 | General
+Z337 | VALUE | Cv5 | General
+AA337 | VALUE | Cv6 | General
+AB337 | VALUE | Cv7 | General
+AC337 | VALUE | Cay1 | General
+AD337 | VALUE | Cay2 | General
+AE337 | VALUE | Cay | General
+J338 | VALUE | 9.17 | General
+L338 | VALUE | Number of cycles | General
+M338 | VALUE | NK | General
+O338 | FORMULA | =60*_Lh*_n1 | 0.00E+00
+P338 | FORMULA | =60*_Lh*_n2 | 0.00E+00
+U338 | VALUE | Coeficients Cv1, Cv2, …Cay1,Cay2,Cay | General
+J339 | VALUE | 9.18 | General
+L339 | VALUE | For pitting safety calculation | General
+V339 | VALUE | yp, yf | General
+W339 | VALUE | fpb, ffa | General
+X339 | VALUE | Pinion Eq75 | General
+Y339 | VALUE | Gear Eq75 | General
+Z339 | VALUE | Pin/GearEq76 | General
+AA339 | VALUE | PinGearEq77 | General
+AB339 | VALUE | WhichEqPin | General
+AC339 | VALUE | WhichEqGear | General
+AD339 | VALUE | Pinion selection | General
+AG339 | VALUE | Gear selection | General
+J340 | VALUE | 9.19 | General
+L340 | VALUE | Face load factor (contact stress) | General
+M340 | VALUE | KHb | General
+O340 | FORMULA | =MIN(IF(_KHbetaMethode=1,_KHbetaCalc,IF(_KHbetaMethode=2,_KHbetaSimple,_KHbetaTable)),_KHbeta_max) | 0.000
+U340 | VALUE | Coeficients for KV(B) yp=yalfa->fpb | General
+J341 | VALUE | 9.20 | General
+L341 | VALUE | Transverse load factor (contact stress) | General
+M341 | VALUE | KHa | General
+O341 | FORMULA | =_KHa_B | 0.000
+U341 | VALUE | Coeficients for KV(B) yf=ftalfa->ffa | General
+J342 | VALUE | 9.21 | General
+L342 | VALUE | Total factor of additional loads | General
+M342 | VALUE | KH | General
+O342 | FORMULA | =_KA*_Kv*_KHbeta*_KHalfa | 0.000
+V342 | VALUE | KV(C) | General
+W342 | VALUE | KV(C)1996 | General
+X342 | VALUE | KV(B) | General
+Y342 | VALUE | fpb_eff | General
+Z342 | VALUE | fa_eff | General
+AA342 | VALUE | Bp (Eq15) | General
+AB342 | VALUE | Bf (Eq16) | General
+AC342 | VALUE | Bk (Eq17) | General
+AD342 | VALUE | KV(N<=NS) | General
+AE342 | VALUE | NS<N<=1.15 | General
+AF342 | VALUE | N>=1.5 | General
+AG342 | VALUE | N=1.15 | General
+AH342 | VALUE | 1.15<N<1.5 | General
+J343 | VALUE | 9.22 | General
+L343 | VALUE | Elasticity factor | General
+M343 | VALUE | ZE | General
+O343 | FORMULA | =(_pi*((1-_Poison1^2)/_E1/1000+(1-_Poison2^2)/_E2/1000))^-0.5 | 0.00
+U343 | VALUE | Coeficients for KV(C,B) | General
+J344 | VALUE | 9.23 | General
+L344 | VALUE | Zone factor | General
+M344 | VALUE | ZH | General
+O344 | FORMULA | =(2*COS(_beta_B*PI()/180)/(COS(_alfat*PI()/180)^2*TAN(_alfawt*PI()/180)))^0.5 | 0.000
+U344 | VALUE | Coeficients K1, K2, K3 [for KV(C)] | General
+J345 | VALUE | 9.24 | General
+L345 | VALUE | Helix angle factor | General
+M345 | VALUE | Zb | General
+O345 | FORMULA | =1/(COS(_beta*_pi/180))^0.5 | 0.000
+T345 | VALUE | 2-Eq36 | General
+V345 | VALUE | RZH | General
+W345 | VALUE | Viscosity40 | General
+X345 | VALUE | ZWAuto | General
+Y345 | VALUE | GGG Flag | General
+Z345 | VALUE | Stat.S Y/N | General
+AA345 | VALUE | ZW1Auto | General
+AB345 | VALUE | ZW2Auto | General
+AC345 | VALUE | HB<130 | General
+AD345 | VALUE | 130<HB<470 | General
+AE345 | VALUE | HB>470 | General
+AF345 | VALUE | ZWtype1 | General
+AG345 | VALUE | HB1/HB2 | General
+AH345 | VALUE | coef A | General
+AI345 | VALUE | Ratio_(i-1) | General
+AJ345 | VALUE | ZWtype2 | General
+AK345 | VALUE | ZWold | General
+J346 | VALUE | 9.25 | General
+L346 | VALUE | Contact ratio factor | General
+M346 | VALUE | Ze | General
+O346 | FORMULA | =IF(_epsilon_B<1,((4-_epsilon_A)/3*(1-_epsilon_B)+_epsilon_B/_epsilon_A)^0.5,(1/_epsilon_A)^0.5) | 0.000
+U346 | VALUE | ZW coeficient | General
+J347 | VALUE | 9.26 | General
+L347 | VALUE | Work hardening factor | General
+M347 | VALUE | ZW | General
+O347 | FORMULA | =CHOOSE(_ZWChoice,_ZW1Auto,1,1,1) | 0.000
+P347 | FORMULA | =CHOOSE(_ZWChoice,_ZW2Auto,1,_ZWtype1,_ZWtype2) | 0.000
+J348 | VALUE | 9.27 | General
+L348 | FORMULA | =XM_0119 | General
+M348 | VALUE | ZX | General
+O348 | VALUE | 1.000 | 0.000
+P348 | VALUE | 1.000 | 0.000
+U348 | VALUE | Flag for static load | General
+J349 | VALUE | 9.28 | General
+L349 | VALUE | Lubricant factor | General
+M349 | VALUE | ZL | General
+O349 | FORMULA | =IF(_FlagStLoad1,1,(_CZL_1+4*(1-_CZL_1)/(1.2+80/_Viscosity50)^2)*IF(_OilType=2,1.1,1)) | 0.000
+P349 | FORMULA | =IF(_FlagStLoad2,1,(_CZL_2+4*(1-_CZL_2)/(1.2+80/_Viscosity50)^2)*IF(_OilType=2,1.1,1)) | 0.000
+T349 | VALUE | 2-Eq37 | General
+U349 | VALUE | Coeficient AG_temp, Coeficient Psi | General
+J350 | VALUE | 9.29 | General
+L350 | VALUE | Peripheral speed factor | General
+M350 | VALUE | ZV | General
+O350 | FORMULA | =IF(_FlagStLoad1,1,_CZV_1+2*(1-_CZV_1)/(0.8+32/_v)^0.5) | 0.000
+P350 | FORMULA | =IF(_FlagStLoad2,1,_CZV_2+2*(1-_CZV_2)/(0.8+32/_v)^0.5) | 0.000
+T350 | VALUE | 2-Eq42 | General
+U350 | VALUE | Coeficient CZV, Coeficient CZL for ZL and ZV | General
+J351 | VALUE | 9.30 | General
+L351 | VALUE | Roughness factor affecting surface durability | General
+M351 | VALUE | ZR | General
+O351 | FORMULA | =IF(_FlagStLoad1,1,(3/_Rz10_1)^_CZR_1) | 0.000
+P351 | FORMULA | =IF(_FlagStLoad2,1,(3/_Rz10_2)^_CZR_2) | 0.000
+T351 | VALUE | 2-Eq48 | General
+U351 | VALUE | Coeficient CZR (2-Eq49,50,51) | General
+X351 | VALUE | Rz1 | General
+Y351 | VALUE | Rz2 | General
+Z351 | VALUE | Rz | General
+AA351 | VALUE | Rz10 | General
+AB351 | VALUE | Rz10 | General
+AC351 | VALUE | ROCred | General
+AD351 | VALUE | RadiusOC1 | General
+AE351 | VALUE | RadiusOC2 | General
+J352 | VALUE | 9.31 | General
+L352 | VALUE | Life factor for contact stress | General
+M352 | VALUE | ZNT | General
+O352 | FORMULA | =IF(_NK1<_NHLim1,MIN((_NHLim1/_NK1)^(1/_qH1),_ZNmax1),MAX((_NHLim1/_NK1)^(1/_qHA1),_ZNCoefInfinite)) | 0.000
+P352 | FORMULA | =IF(_NK2<_NHLim2,MIN((_NHLim2/_NK2)^(1/_qH2),_ZNmax2),MAX((_NHLim2/_NK2)^(1/_qHA2),_ZNCoefInfinite)) | 0.000
+T352 | VALUE | 2-Pg26 | General
+U352 | VALUE | Teeth Roughness Ra / Rz / Rz10 | General
+J353 | VALUE | 9.32 | General
+L353 | VALUE | Single pair tooth contact factor | General
+M353 | VALUE | ZB/ZD | General
+O353 | FORMULA | =MAX(IF(_epsilon_B>1,1,IF(_epsilon_B=0,_MM1,_MM1-_epsilon_B*(_MM1-1))),1) | 0.000
+P353 | FORMULA | =MAX(IF(_epsilon_B>1,1,IF(_epsilon_B=0,_MM2,_MM2-_epsilon_B*(_MM2-1))),1) | 0.000
+U353 | VALUE | Coeficient M1/M2 | General
+AC353 | VALUE | old NF | General
+J354 | VALUE | 9.33 | General
+L354 | VALUE | For bending safety calculation | General
+U354 | VALUE | ZNT Life factor, n=infinite; max values | General
+J355 | VALUE | 9.34 | General
+L355 | VALUE | Face load factor (root stress) | General
+M355 | VALUE | KFb | General
+O355 | FORMULA | =_KHbeta^_NF | 0.000
+U355 | VALUE | NF Coeficient | General
+Y355 | VALUE | YX1Flag | General
+Z355 | VALUE | YX2Flag | General
+AA355 | VALUE | Pinion selection | General
+AD355 | VALUE | Gear selection | General
+J356 | VALUE | 9.35 | General
+L356 | VALUE | Transverse load factor (root stress) | General
+M356 | VALUE | KFa | General
+O356 | FORMULA | =_KFa_B | 0.000
+U356 | VALUE | YX coefficents for different materials | General
+J357 | VALUE | 9.36 | General
+L357 | VALUE | Total factor of additional loads | General
+M357 | VALUE | KF | General
+O357 | FORMULA | =_KA*_Kv*_KFbeta*_KFalfa | 0.000
+V357 | VALUE | dn | General
+W357 | VALUE | pbn | General
+X357 | VALUE | dbn | General
+Y357 | VALUE | dan | General
+Z357 | VALUE | den | General
+AA357 | VALUE | alfa_en | General
+AB357 | VALUE | gama_e | General
+AC357 | VALUE | alfa_Fen | General
+AD357 | VALUE | Ecoef | General
+AE357 | VALUE | Gcoef | General
+AF357 | VALUE | Hcoef | General
+AG357 | VALUE | Theta(1) | General
+AH357 | VALUE | Theta(2) | General
+AI357 | VALUE | Theta(3) | General
+AJ357 | VALUE | Theta(4) | General
+AK357 | VALUE | Theta(5) | General
+AL357 | VALUE | Theta(6) | General
+AM357 | VALUE | Theta(7) | General
+AN357 | VALUE | Theta(8) | General
+AO357 | VALUE | Theta(9) | General
+J358 | VALUE | 9.37 | General
+L358 | VALUE | Helix angle factor | General
+M358 | VALUE | Yb | General
+O358 | FORMULA | =1-MIN(_epsilon_B,1)*MIN(_beta,30)/120 | 0.000
+U358 | VALUE | Koeficients and parameters for YF, YS | General
+J359 | VALUE | 9.38 | General
+L359 | VALUE | Rim thickness factor | General
+M359 | VALUE | YB | General
+O359 | FORMULA | =IF(_SR1_ht>=1.2,1,1.6*LN(2.242*(_ha1+_hf1)/_SR1)) | 0.000
+P359 | FORMULA | =IF(_SR2_ht>=1.2,1,1.6*LN(2.242*(_ha2+_hf2)/_SR2)) | 0.000
+T359 | VALUE | 3-Eq(41-44) | 0.000
+U359 | VALUE | Koeficients and parameters for YF,YS | General
+J360 | VALUE | 9.39 | General
+L360 | VALUE | Deep tooth factor | General
+M360 | VALUE | YDT | General
+O360 | FORMULA | =IF(_AG_Glob<=4,IF(_epsilon_AN<=2.05,1,IF(_epsilon_AN<=2.5,-0.666*_epsilon_AN+2.366,0.7)),1) | 0.000
+P360 | FORMULA | =IF(_AG_Glob<=4,IF(_epsilon_AN<=2.05,1,IF(_epsilon_AN<=2.5,-0.666*_epsilon_AN+2.366,0.7)),1) | 0.000
+T360 | VALUE | 3-Eq(45-47) | 0.000
+U360 | VALUE | YB coefficient, SR/ht | General
+J361 | VALUE | 9.40 | General
+L361 | VALUE | Notch sensitivity factor | General
+M361 | VALUE | Yd | General
+O361 | FORMULA | =IF(_FlagStLoadF1=1,_Ydelta1Stat,(1+(_rox1*(0.2*(1+2*_qscoef1)))^0.5)/(1+(_rox1*1.2)^0.5)) | 0.000
+P361 | FORMULA | =IF(_FlagStLoadF2=1,_Ydelta2Stat,(1+(_rox2*(0.2*(1+2*_qscoef2)))^0.5)/(1+(_rox2*1.2)^0.5)) | 0.000
+V361 | VALUE | sFn/mn | General
+W361 | VALUE | rF/mn | General
+X361 | VALUE | hFe/mn | General
+Y361 | VALUE | Lcoef | General
+Z361 | VALUE | qscoef | General
+AA361 | VALUE | YScalc | General
+AB361 | VALUE | hFa/mn | General
+AC361 | VALUE | Lacoef | General
+AD361 | VALUE | dfn2 | General
+AE361 | VALUE | hfp2 | General
+AF361 | VALUE | rfp2 | General
+J362 | VALUE | 9.41 | General
+L362 | VALUE | Size factor | General
+M362 | VALUE | YX | General
+O362 | FORMULA | =IF(_FlagStLoadF1=1,1,IF(_YX1Flag=3,_YXC,IF(_YX1Flag=2,_YXB,_YXA))) | 0.000
+P362 | FORMULA | =IF(_FlagStLoadF2=1,1,IF(_YX2Flag=3,_YXC,IF(_YX2Flag=2,_YXB,_YXA))) | 0.000
+U362 | VALUE | Koeficients and parameters for YF1, YS1 | General
+J363 | VALUE | 9.42 | General
+L363 | VALUE | Tooth-root surface factor | General
+M363 | VALUE | YR | General
+O363 | FORMULA | =IF(_FlagStLoadF1=1,1,IF(_YR1Flag=1,_YR1A,IF(_YR1Flag=3,_YR1C,_YR1B))) | 0.000
+P363 | FORMULA | =IF(_FlagStLoadF2=1,1,IF(_YR2Flag=1,_YR2A,IF(_YR2Flag=3,_YR2C,_YR2B))) | 0.000
+U363 | VALUE | Koeficients and parameters for YF2, YS2 | General
+J364 | VALUE | 9.43 | General
+L364 | VALUE | Alternating load factor | General
+M364 | VALUE | YA | General
+O364 | FORMULA | =INDEX(T_YAcoef,_YAcoef,3) | 0.000
+X364 | VALUE | Ydelta1 Stat. | General
+Y364 | VALUE | Ydelta2 Stat. | General
+Z364 | VALUE | rox1 Flag | General
+AA364 | VALUE | rox2 Flag | General
+AB364 | VALUE | Pinion selection | General
+AF364 | VALUE | Gear selection | General
+AJ364 | VALUE | Pin.Static | General
+AK364 | VALUE | Gear Static | General
+AL364 | VALUE | Ydel1_St | General
+AM364 | VALUE | Ydel2_St | General
+J365 | VALUE | 9.44 | General
+L365 | VALUE | Production technology factor | General
+M365 | VALUE | YT | General
+O365 | VALUE | 1.000 | 0.000
+U365 | VALUE | Koeficient ro* YdRelT | General
+J366 | VALUE | 9.45 | General
+L366 | VALUE | Life factor for bending stress | General
+M366 | VALUE | YNT | General
+O366 | FORMULA | =IF(_NK1<_NFLim1,MIN((_NFLim1/_NK1)^(1/_qF1),_YNmax1),MAX((_NFLim1/_NK1)^(1/_qFA1),_YNCoefInfinite)) | 0.000
+P366 | FORMULA | =IF(_NK2<_NFLim2,MIN((_NFLim2/_NK2)^(1/_qF2),_YNmax2),MAX((_NFLim2/_NK2)^(1/_qFA2),_YNCoefInfinite)) | 0.000
+J367 | VALUE | 9.46 | General
+L367 | VALUE | Stress correction factor | General
+M367 | VALUE | YST | General
+O367 | VALUE | 1.000 | 0.000
+P367 | VALUE | 1.000 | 0.000
+V367 | VALUE | _YR1A | General
+W367 | VALUE | _YR1B | General
+X367 | VALUE | _YR1C | General
+Y367 | VALUE | _YR2A | General
+Z367 | VALUE | _YR2B | General
+AA367 | VALUE | _YR2C | General
+AB367 | VALUE | YR1Flag | General
+AC367 | VALUE | YR2Flag | General
+AD367 | VALUE | Pinion selection | General
+AG367 | VALUE | Gear selection | General
+J368 | VALUE | 9.47 | General
+L368 | VALUE | Form factor (bending) | General
+M368 | VALUE | YF | General
+O368 | FORMULA | =6*_hFe1*COS(_alfa_Fen1*PI()/180)/((_sFn1^2)*COS(_alfa*PI()/180)) | 0.000
+P368 | FORMULA | =6*_hFe2*COS(_alfa_Fen2*PI()/180)/((_sFn2^2)*COS(_alfa*PI()/180)) | 0.000
+U368 | VALUE | YRrelT coeficents for different materials | General
+J369 | VALUE | 9.48 | General
+L369 | VALUE | Stress correction factor | General
+M369 | VALUE | YS | General
+O369 | FORMULA | =IF(_YSgFlag,_YSg1,_YS1Calc) | 0.000
+P369 | FORMULA | =IF(_YSgFlag,_YSg2,_YS2Calc) | 0.000
+T369 | VALUE | 3-Eq36 | General
+U369 | VALUE | Life factor YNT n=infinite; max value | General
+J370 | VALUE | 9.49 | General
+L370 | VALUE | Stress correction factor for gears with notches in fillets | General
+M370 | VALUE | YSg | General
+O370 | FORMULA | =_YSg1Calc | 0.000
+P370 | FORMULA | =_YSg2Calc | 0.000
+J372 | VALUE | 10.0 | General
+L372 | VALUE |      Stress and safety coefficients | General
+J373 | VALUE | 10.1 | General
+L373 | VALUE | Safety coefficient for surface durability | General
+M373 | VALUE | SH | General
+O373 | FORMULA | =_SigmaHG_1/_SigmaH_1 | 0.00
+P373 | FORMULA | =_SigmaHG_2/_SigmaH_2 | 0.00
+U373 | VALUE | Failure probability | General
+Y373 | VALUE | Pinion | General
+Z373 | VALUE | Wheel | General
+J374 | VALUE | 10.2 | General
+L374 | VALUE | Safety coefficient for bending durability | General
+M374 | VALUE | SF | General
+O374 | FORMULA | =_SigmaFG_1/_SigmaF_1 | 0.00
+P374 | FORMULA | =_SigmaFG_2/_SigmaF_2 | 0.00
+U374 | VALUE | Material contact limit | General
+X374 | VALUE | SH | General
+J375 | VALUE | 10.3 | General
+L375 | VALUE | Safety in contact in one-time overloading | General
+M375 | VALUE | SHst | General
+O375 | FORMULA | =_SHmax1/_ZE/_ZH/_ZB1/_Zeps/_Zbeta/(_Ft*_KH*_KAS/_bw/_d1*(_i+1)/_i)^0.5 | 0.00
+P375 | FORMULA | =_SHmax2/_ZE/_ZH/_ZB2/_Zeps/_Zbeta/(_Ft*_KH*_KAS/_bw/_d1*(_i+1)/_i)^0.5 | 0.00
+U375 | VALUE | Material bending limit | General
+X375 | VALUE | SF | General
+J376 | VALUE | 10.4 | General
+L376 | VALUE | Safety in bending in one-time overloading | General
+M376 | VALUE | SFst | General
+O376 | FORMULA | =_SFmax1*_YX1/_YFS1/_Ybeta/_Yeps/(_Ft*_KF*_KAS/_b1/_mn) | 0.00
+P376 | FORMULA | =_SFmax2*_YX2/_YFS2/_Ybeta/_Yeps/(_Ft*_KF*_KAS/_b2/_mn) | 0.00
+X376 | VALUE | SHst | General
+AE376 | VALUE | S | General
+AF376 | VALUE | SF1 | General
+AG376 | VALUE | SF2 | General
+AH376 | VALUE | SH1 | General
+AI376 | VALUE | SH2 | General
+J377 | VALUE | 10.5 | General
+L377 | VALUE | Variability coefficient for calculation of probability of a failure | General
+M377 | VALUE | vH/vF | General
+O377 | VALUE | 0.06 | General
+P377 | VALUE | 0.1 | General
+J378 | VALUE | 10.6 | General
+L378 | VALUE | Probability of a failure | General
+M378 | VALUE | P | General
+O378 | FORMULA | =IF(V373>100,"<100",V373) | 0.00
+R378 | VALUE | [%] | General
+X378 | VALUE | SFst | General
+AB378 | VALUE | Safety validation | General
+J379 | VALUE | 10.7 | General
+L379 | VALUE | Nominal contact stress | General
+M379 | VALUE | SigmaH0 | General
+O379 | FORMULA | =_ZH*_ZE*_Zeps*_Zbeta*(_Ft/(_bw*_d1)*(_i+1)/_i)^0.5 | 0.00
+R379 | VALUE | [MPa] | General
+T379 | FORMULA | ="(_i+1)/_i="&(_i+1)/_i | General
+U379 | VALUE | Docasne pro kontrolu stare verze koeficientu, odstranit vcetne pojmenovani | General
+J380 | VALUE | 10.8 | General
+L380 | VALUE | Contact stress | General
+M380 | VALUE | SigmaH | General
+O380 | FORMULA | =_ZB1*_SigmaH0*(_KA*_Kv*_KHbeta*_KHalfa)^0.5 | 0.00
+P380 | FORMULA | =_ZB2*_SigmaH0*(_KA*_Kv*_KHbeta*_KHalfa)^0.5 | 0.00
+R380 | VALUE | [MPa] | General
+U380 | VALUE | Tip factor, equal (YFa YSa) | General
+J381 | VALUE | 10.9 | General
+L381 | VALUE | Pitting stress limit | General
+M381 | VALUE | SigmaHG | General
+O381 | FORMULA | =_ContactLimit1*_ZNL1*_ZL_1*_ZV_1*_ZR_1*_ZW_1*_ZX1 | 0.00
+P381 | FORMULA | =_ContactLimit2*_ZNL2*_ZL_2*_ZV_2*_ZR_2*_ZW_2*_ZX2 | 0.00
+R381 | VALUE | [MPa] | General
+T381 | FORMULA | ="ZE="&_ZE | General
+U381 | VALUE | Contact ratio factor | General
+J382 | VALUE | 10.10 | General
+L382 | VALUE | Permissible contact stress | General
+M382 | VALUE | SigmaHP | General
+O382 | FORMULA | =_SigmaHG_1/_SH_proposal | 0.00
+P382 | FORMULA | =_SigmaHG_2/_SH_proposal | 0.00
+R382 | VALUE | [MPa] | General
+U382 | VALUE | Součinitel tvaru zubu (ohyb) YFa | General
+J383 | VALUE | 10.11 | General
+L383 | VALUE | Nominal tooth-root stress | General
+M383 | VALUE | SigmaF0 | General
+O383 | FORMULA | =_Ft/(_b1*_mn)*_YF1*_YS1*_Ybeta*_YB1*_YDT1 | 0.00
+P383 | FORMULA | =_Ft/(_b2*_mn)*_YF2*_YS2*_Ybeta*_YB2*_YDT2 | 0.00
+R383 | VALUE | [MPa] | General
+T383 | FORMULA | ="Zbet="&_Zbeta | General
+U383 | VALUE | Součinitel koncentrace napětí YSa | General
+J384 | VALUE | 10.12 | General
+L384 | VALUE | Tooth-root stress | General
+M384 | VALUE | SigmaF | General
+O384 | FORMULA | =_SigmaF0_1*_KA*_Kv*_KFbeta*_KFalfa | 0.00
+P384 | FORMULA | =_SigmaF0_2*_KA*_Kv*_KFbeta*_KFalfa | 0.00
+R384 | VALUE | [MPa] | General
+U384 | VALUE | Součinitel tvaru zubu a koncentrace napětí YFS | General
+J385 | VALUE | 10.13 | General
+L385 | VALUE | Tooth-root stress limit | General
+M385 | VALUE | SigmaFG | General
+O385 | FORMULA | =_BendingLimit1*_YST1*_YN1*_Ydelta1*_YR1*_YX1*_YA*_YT | 0.00
+P385 | FORMULA | =_BendingLimit2*_YST2*_YN2*_Ydelta2*_YR2*_YX2*_YA*_YT | 0.00
+R385 | VALUE | [MPa] | General
+U385 | VALUE | YFS * Yepsilon | General
+J386 | VALUE | 10.14 | General
+L386 | VALUE | Permissible bending stress | General
+M386 | VALUE | SigmaFP | General
+O386 | FORMULA | =_SigmaFG_1/_SF_Proposal | 0.00
+P386 | FORMULA | =_SigmaFG_2/_SF_Proposal | 0.00
+R386 | VALUE | [MPa] | General
+U386 | VALUE | Koeficienty YR ke zruseni | General
+J388 | VALUE | 11.0 | General
+L388 | VALUE |      Check dimensions of gearing, ISO 1328 system of accuracy | General
+J389 | VALUE | 11.1 | General
+L389 | VALUE | Check dimensions of gearing | General
+J390 | VALUE | 11.2 | General
+L390 | FORMULA | =XM_0131 | General
+M390 | VALUE | zw | General
+O390 | FORMULA | =INT((_z1*_alfa/(180*COS(_beta*_pi/180)*COS(_beta_B*_pi/180)^2)+0.5)+0.8) | 0
+P390 | FORMULA | =INT((_z2*_alfa/(180*COS(_beta*_pi/180)*COS(_beta_B*_pi/180)^2)+0.5)+0.8) | 0
+J391 | VALUE | 11.3 | General
+L391 | VALUE | Number of measured teeth | General
+M391 | VALUE | zw | General
+O391 | VALUE | 3 | General
+P391 | VALUE | 6 | General
+J392 | VALUE | 11.4 | General
+L392 | VALUE | Chordal dimension | General
+M392 | VALUE | W | General
+O392 | FORMULA | =_mn*(_pi*COS(_alfa*_pi/180)*(_zw1-0.5)+_z1*COS(_alfa*_pi/180)*Inv(_alfat))+2*_x1*_mn*SIN(_alfa*_pi/180) | 0.0000
+P392 | FORMULA | =_mn*(_pi*COS(_alfa*_pi/180)*(_zw2-0.5)+_z2*COS(_alfa*_pi/180)*Inv(_alfat))+2*_x2*_mn*SIN(_alfa*_pi/180) | 0.0000
+R392 | VALUE | [mm] | General
+J393 | VALUE | 11.5 | General
+L393 | VALUE | Pin/Ball diameter | General
+M393 | VALUE | dt | General
+O393 | FORMULA | =1.75*_mn | 0.0000
+P393 | FORMULA | =1.75*_mn | 0.0000
+R393 | VALUE | [mm] | General
+U393 | VALUE | alfats | General
+J394 | VALUE | 11.6 | General
+L394 | FORMULA | =L393 | General
+M394 | VALUE | dt | General
+O394 | VALUE | 10.5000 | 0.0000
+P394 | VALUE | 10.5000 | 0.0000
+R394 | VALUE | [mm] | General
+U394 | VALUE | ds | General
+J395 | VALUE | 11.7 | General
+L395 | VALUE | Dimension over pins/balls | General
+M395 | VALUE | M | General
+O395 | FORMULA | =IF(INT(_z1/2)*2=_z1,_ds1+_dt1,_ds1*COS(PI()/2/_z1)+_dt1) | 0.0000
+P395 | FORMULA | =IF(INT(_z2/2)*2=_z2,_ds2+_dt2,_ds2*COS(PI()/2/_z2)+_dt2) | 0.0000
+R395 | VALUE | [mm] | General
+V395 | VALUE | W1min | General
+W395 | VALUE | W1max | General
+X395 | VALUE | W2min | General
+Y395 | VALUE | W2max | General
+Z395 | VALUE | ROUND 1 | General
+AA395 | VALUE | ROUND 2 | General
+J396 | VALUE | 11.8 | General
+L396 | VALUE | Achieve the requested W and M with change the addendum modification coefficient x1 and sumX | General
+U396 | VALUE | Vypocet rozsahu Wmin a Wmax | General
+J397 | VALUE | 11.9 | General
+L397 | VALUE | Chordal dimension can be varied from-to | General
+M397 | VALUE | Wmin/max | General
+O397 | FORMULA | =ROUND(_W1min,_W1Round)&"/"&ROUND(_W1max,_W1Round) | 0.0000
+P397 | FORMULA | =ROUND(_W2min,_W2Round)&"/"&ROUND(_W2max,_W2Round) | 0.0000
+R397 | VALUE | [mm] | General
+V397 | VALUE | M1min | General
+W397 | VALUE | M1max | General
+X397 | VALUE | M2min | General
+Y397 | VALUE | M2max | General
+Z397 | VALUE | ROUND 1 | General
+AA397 | VALUE | ROUND 2 | General
+J398 | VALUE | 11.10 | General
+L398 | VALUE | Requested chordal dimension | General
+M398 | VALUE | W req | General
+O398 | VALUE | 77.000 | 0.000
+P398 | VALUE | 260.000 | 0.000
+U398 | VALUE | Vypocet rozsahu Mmin a Mmax | General
+B399 | VALUE | _AG | General
+J399 | VALUE | 11.11 | General
+L399 | VALUE | Dimension over pins/balls can be varied from-to | General
+M399 | VALUE | Mmin/max | General
+O399 | FORMULA | =ROUND(_M1min,_M1Round)&"/"&ROUND(_M1max,_M1Round) | 0.0000
+P399 | FORMULA | =ROUND(_M2min,_M2Round)&"/"&ROUND(_M2max,_M2Round) | 0.0000
+R399 | VALUE | [mm] | General
+U399 | VALUE | ds1/ds2 | General
+J400 | VALUE | 11.12 | General
+L400 | VALUE | Requested dimension over pins/balls | General
+M400 | VALUE | M req | General
+O400 | VALUE | 240.000 | 0.000
+P400 | VALUE | 760.000 | 0.000
+U400 | VALUE | M | General
+J401 | VALUE | 11.13 | General
+L401 | VALUE | Cylindrical gears - ISO 1328 system of accuracy - Part 1 | General
+J402 | VALUE | 11.14 | General
+L402 | VALUE | Accuracy grade | General
+M402 | VALUE | Q | General
+U402 | VALUE | Accuracy grade | General
+J403 | VALUE | 11.15 | General
+L403 | VALUE | Module | General
+M403 | VALUE | mn | General
+O403 | VALUE | 6.000 | 0.000
+R403 | VALUE | [mm] | General
+U403 | VALUE | mn | General
+J404 | VALUE | 11.16 | General
+L404 | VALUE | Reference diameter | General
+M404 | VALUE | d | General
+O404 | VALUE | 114.000 | 0.000
+P404 | VALUE | 288.000 | 0.000
+R404 | VALUE | [mm] | General
+U404 | VALUE | d1 | General
+Z404 | VALUE | d2 | General
+J405 | VALUE | 11.17 | General
+L405 | VALUE | Face width | General
+M405 | VALUE | b | General
+O405 | VALUE | 120.000 | 0.000
+P405 | VALUE | 117.000 | 0.000
+R405 | VALUE | [mm] | General
+U405 | VALUE | b1 | General
+Y405 | VALUE | b2 | General
+J406 | VALUE | 11.18 | General
+L406 | FORMULA | =XM_0050 | General
+M406 | VALUE | eg | General
+O406 | VALUE | 1.6456 | 0.0000
+J407 | VALUE | 11.19 | General
+L407 | VALUE | Single pitch deviation | General
+M407 | VALUE | fpt | General
+O407 | FORMULA | =IF(_fpt1<5,ROUND(_fpt1,1),IF(_fpt1>10,ROUND(_fpt1,0),ROUND(_fpt1*2,0)/2)) | 0.0
+P407 | FORMULA | =IF(_fpt2<5,ROUND(_fpt2,1),IF(_fpt2>10,ROUND(_fpt2,0),ROUND(_fpt2*2,0)/2)) | 0.0
+R407 | VALUE | [mm] | General
+U407 | VALUE | fpt | General
+J408 | VALUE | 11.20 | General
+L408 | VALUE | Number of teeth for cumulative pitch deviation (1…z1,z2) | General
+M408 | VALUE | k | General
+O408 | VALUE | 2 | 0
+P408 | VALUE | 2 | 0
+U408 | VALUE | Coeficient K ISO1328 Anex A | General
+J409 | VALUE | 11.21 | General
+L409 | VALUE | Cumulative pitch deviation | General
+M409 | VALUE | Fpk | General
+O409 | FORMULA | =IF(_Fpk1<5,ROUND(_Fpk1,1),IF(_Fpk1>10,ROUND(_Fpk1,0),ROUND(_Fpk1*2,0)/2)) | 0.0
+P409 | FORMULA | =IF(_Fpk2<5,ROUND(_Fpk2,1),IF(_Fpk2>10,ROUND(_Fpk2,0),ROUND(_Fpk2*2,0)/2)) | 0.0
+R409 | VALUE | [mm] | General
+U409 | VALUE | Fpk | General
+J410 | VALUE | 11.22 | General
+L410 | VALUE | Total cumulative pitch deviation | General
+M410 | VALUE | Fp | General
+O410 | FORMULA | =IF(_Fp1<5,ROUND(_Fp1,1),IF(_Fp1>10,ROUND(_Fp1,0),ROUND(_Fp1*2,0)/2)) | 0.0
+P410 | FORMULA | =IF(_Fp2<5,ROUND(_Fp2,1),IF(_Fp2>10,ROUND(_Fp2,0),ROUND(_Fp2*2,0)/2)) | 0.0
+R410 | VALUE | [mm] | General
+U410 | VALUE | Fp | General
+J411 | VALUE | 11.23 | General
+L411 | VALUE | Total profile deviation | General
+M411 | VALUE | Fa | General
+O411 | FORMULA | =IF(_Fa1<5,ROUND(_Fa1,1),IF(_Fa1>10,ROUND(_Fa1,0),ROUND(_Fa1*2,0)/2)) | 0.0
+P411 | FORMULA | =IF(_Fa2<5,ROUND(_Fa2,1),IF(_Fa2>10,ROUND(_Fa2,0),ROUND(_Fa2*2,0)/2)) | 0.0
+R411 | VALUE | [mm] | General
+U411 | VALUE | Fa | General
+J412 | VALUE | 11.24 | General
+L412 | VALUE | Total helix deviation | General
+M412 | VALUE | Fb | General
+O412 | FORMULA | =IF(_Fb1<5,ROUND(_Fb1,1),IF(_Fb1>10,ROUND(_Fb1,0),ROUND(_Fb1*2,0)/2)) | 0.0
+P412 | FORMULA | =IF(_Fb2<5,ROUND(_Fb2,1),IF(_Fb2>10,ROUND(_Fb2,0),ROUND(_Fb2*2,0)/2)) | 0.0
+R412 | VALUE | [mm] | General
+U412 | VALUE | Fbeta | General
+J413 | VALUE | 11.25 | General
+L413 | VALUE | Tooth-to-tooth tangential composite deviation | General
+M413 | VALUE | f'i | General
+O413 | FORMULA | =IF(_fi1<5,ROUND(_fi1,1),IF(_fi1>10,ROUND(_fi1,0),ROUND(_fi1*2,0)/2)) | 0.0
+P413 | FORMULA | =IF(_fi2<5,ROUND(_fi2,1),IF(_fi2>10,ROUND(_fi2,0),ROUND(_fi2*2,0)/2)) | 0.0
+R413 | VALUE | [mm] | General
+U413 | VALUE | f'i | General
+J414 | VALUE | 11.26 | General
+L414 | VALUE | Total tangential composite deviation | General
+M414 | VALUE | F'i | General
+O414 | FORMULA | =IF(_FFi1<5,ROUND(_FFi1,1),IF(_FFi1>10,ROUND(_FFi1,0),ROUND(_FFi1*2,0)/2)) | 0.0
+P414 | FORMULA | =IF(_FFi2<5,ROUND(_FFi2,1),IF(_FFi2>10,ROUND(_FFi2,0),ROUND(_FFi2*2,0)/2)) | 0.0
+R414 | VALUE | [mm] | General
+U414 | VALUE | F'i | General
+J415 | VALUE | 11.27 | General
+L415 | VALUE | Profile form deviation | General
+M415 | VALUE | ffa | General
+O415 | FORMULA | =IF(_ffa1<5,ROUND(_ffa1,1),IF(_ffa1>10,ROUND(_ffa1,0),ROUND(_ffa1*2,0)/2)) | 0.0
+P415 | FORMULA | =IF(_ffa2<5,ROUND(_ffa2,1),IF(_ffa2>10,ROUND(_ffa2,0),ROUND(_ffa2*2,0)/2)) | 0.0
+R415 | VALUE | [mm] | General
+U415 | VALUE | ffa | General
+J416 | VALUE | 11.28 | General
+L416 | VALUE | Profile slope deviation | General
+M416 | VALUE | fHa | General
+O416 | FORMULA | =IF(_fHa1<5,ROUND(_fHa1,1),IF(_fHa1>10,ROUND(_fHa1,0),ROUND(_fHa1*2,0)/2)) | 0.0
+P416 | FORMULA | =IF(_fHa2<5,ROUND(_fHa2,1),IF(_fHa2>10,ROUND(_fHa2,0),ROUND(_fHa2*2,0)/2)) | 0.0
+R416 | VALUE | [mm] | General
+U416 | VALUE | fHa | General
+J417 | VALUE | 11.29 | General
+L417 | VALUE | Helix form deviation | General
+M417 | VALUE | ffb | General
+O417 | FORMULA | =IF(_ffb1<5,ROUND(_ffb1,1),IF(_ffb1>10,ROUND(_ffb1,0),ROUND(_ffb1*2,0)/2)) | 0.0
+P417 | FORMULA | =IF(_ffb2<5,ROUND(_ffb2,1),IF(_ffb2>10,ROUND(_ffb2,0),ROUND(_ffb2*2,0)/2)) | 0.0
+R417 | VALUE | [mm] | General
+U417 | VALUE | ffb | General
+X417 | VALUE | fHb6 | General
+Y417 | VALUE | fHb6 | General
+Z417 | VALUE | fHb5 | General
+AA417 | VALUE | fHb5 | General
+J418 | VALUE | 11.30 | General
+L418 | VALUE | Helix slope deviation | General
+M418 | VALUE | fHb | General
+O418 | FORMULA | =O417 | 0.0
+P418 | FORMULA | =P417 | 0.0
+R418 | VALUE | [mm] | General
+U418 | VALUE | fHb=ffb | General
+J419 | VALUE | 11.31 | General
+L419 | VALUE | Cylindrical gears ISO1328 - 2 system of accuracy | General
+J420 | VALUE | 11.32 | General
+L420 | VALUE | Tooth-to-tooth radial composite deviation | General
+M420 | VALUE | f''i | General
+O420 | FORMULA | =IF(_fffi1<5,ROUND(_fffi1,1),IF(_fffi1>10,ROUND(_fffi1,0),ROUND(_fffi1*2,0)/2)) | 0.0
+P420 | FORMULA | =IF(_fffi2<5,ROUND(_fffi2,1),IF(_fffi2>10,ROUND(_fffi2,0),ROUND(_fffi2*2,0)/2)) | 0.0
+R420 | VALUE | [mm] | General
+U420 | VALUE | f''i | General
+J421 | VALUE | 11.33 | General
+L421 | VALUE | Total radial composite deviation | General
+M421 | VALUE | F''i | General
+O421 | FORMULA | =IF(_FFFFi1<5,ROUND(_FFFFi1,1),IF(_FFFFi1>10,ROUND(_FFFFi1,0),ROUND(_FFFFi1*2,0)/2)) | 0.0
+P421 | FORMULA | =IF(_FFFFi2<5,ROUND(_FFFFi2,1),IF(_FFFFi2>10,ROUND(_FFFFi2,0),ROUND(_FFFFi2*2,0)/2)) | 0.0
+R421 | VALUE | [mm] | General
+U421 | VALUE | F''i | General
+J422 | VALUE | 11.34 | General
+L422 | VALUE | Run out tolerance | General
+M422 | VALUE | Fr | General
+O422 | FORMULA | =IF(_Fr1<5,ROUND(_Fr1,1),IF(_Fr1>10,ROUND(_Fr1,0),ROUND(_Fr1*2,0)/2)) | 0.0
+P422 | FORMULA | =IF(_Fr2<5,ROUND(_Fr2,1),IF(_Fr2>10,ROUND(_Fr2,0),ROUND(_Fr2*2,0)/2)) | 0.0
+R422 | VALUE | [mm] | General
+U422 | VALUE | Fr | General
+J424 | VALUE | 12.0 | General
+L424 | VALUE |      Force conditions (forces acting on the toothing) | General
+J432 | VALUE | 12.1 | General
+L432 | VALUE | Tangential force | General
+M432 | VALUE | Ft | General
+O432 | FORMULA | =_Mk1*1000/_dw1*2 | 0.00
+R432 | VALUE | [N] | General
+J433 | VALUE | 12.2 | General
+L433 | VALUE | Normal force | General
+M433 | VALUE | Fn | General
+O433 | FORMULA | =(_Ft^2+_Fa^2+_Fr^2)^0.5 | 0.00
+R433 | VALUE | [N] | General
+J434 | VALUE | 12.3 | General
+L434 | VALUE | Axial force | General
+M434 | VALUE | Fa | General
+O434 | FORMULA | =_Ft*TAN(_beta_B*PI()/180)/COS(_alfawt*PI()/180) | 0.00
+R434 | VALUE | [N] | General
+J435 | VALUE | 12.4 | General
+L435 | VALUE | Radial force | General
+M435 | VALUE | Fr | General
+O435 | FORMULA | =_Ft*TAN(_alfawt*PI()/180) | 0.00
+R435 | VALUE | [N] | General
+J436 | VALUE | 12.5 | General
+L436 | VALUE | Bending moment | General
+M436 | VALUE | Mo | General
+O436 | FORMULA | =_Fa*(_dw1/2000) | 0.00
+P436 | FORMULA | =_Fa*(_dw2/2000) | 0.00
+R436 | VALUE | [Nm] | General
+J437 | VALUE | 12.6 | General
+L437 | VALUE | Peripheral speed on the pitch diameter | General
+M437 | VALUE | v | vmax | General
+O437 | FORMULA | =_d1*_n1*3.1416/1000/60 | 0.00
+P437 | FORMULA | ="< " & _Vmax | 0.00
+R437 | VALUE | [m/s] | General
+U437 | VALUE | Vmax | General
+J438 | VALUE | 12.7 | General
+L438 | VALUE | Tangential load per unit tooth width / Unit load | General
+M438 | VALUE | wt | wt* | General
+O438 | FORMULA | =_Ft*_KA/_bw | 0.00
+P438 | FORMULA | =_wt/_mn | 0.00
+R438 | VALUE | [N/mm | MPa] | General
+J440 | VALUE | 13.0 | General
+L440 | VALUE |      Parameters of the chosen material | General
+J441 | VALUE | 13.1 | General
+L441 | FORMULA | =XM_Density | General
+M441 | VALUE | Ro | General
+O441 | FORMULA | =INDEX(Material!AX7:AX57,_MatP) | General
+P441 | FORMULA | =INDEX(Material!AX7:AX57,_MatW) | General
+R441 | VALUE | [kg/m^3] | General
+J442 | VALUE | 13.2 | General
+L442 | FORMULA | =XM_YoungsModulus | General
+M442 | VALUE | E | General
+O442 | FORMULA | =INDEX(Material!BP7:BP57,_MatP) | General
+P442 | FORMULA | =INDEX(Material!BP7:BP57,_MatW) | General
+R442 | VALUE | [GPa] | General
+J443 | VALUE | 13.3 | General
+L443 | FORMULA | =XM_TStrengthUltimate | General
+M443 | VALUE | Rm | General
+O443 | FORMULA | =INDEX(Material!BB7:BB57,_MatP) | General
+P443 | FORMULA | =INDEX(Material!BB7:BB57,_MatW) | General
+R443 | VALUE | [MPa] | General
+J444 | VALUE | 13.4 | General
+L444 | FORMULA | =XM_TStrengthYield | General
+M444 | VALUE | Rp0.2 | General
+O444 | FORMULA | =INDEX(Material!BD7:BD57,_MatP) | General
+P444 | FORMULA | =INDEX(Material!BD7:BD57,_MatW) | General
+R444 | VALUE | [MPa] | General
+J445 | VALUE | 13.5 | General
+L445 | FORMULA | =XM_PoisonsRatio | General
+O445 | FORMULA | =INDEX(Material!BR7:BR57,_MatP) | General
+P445 | FORMULA | =INDEX(Material!BR7:BR57,_MatW) | General
+J446 | VALUE | 13.6 | General
+L446 | FORMULA | =XM_ContactFL | General
+M446 | VALUE | SHlim | General
+O446 | FORMULA | =INDEX(Material!BH7:BH57,_MatP) | General
+P446 | FORMULA | =INDEX(Material!BH7:BH57,_MatW) | General
+R446 | VALUE | [MPa] | General
+J447 | VALUE | 13.7 | General
+L447 | FORMULA | =XM_BendingFL | General
+M447 | VALUE | SFlim | General
+O447 | FORMULA | =INDEX(Material!BJ7:BJ57,_MatP) | General
+P447 | FORMULA | =INDEX(Material!BJ7:BJ57,_MatW) | General
+R447 | VALUE | [MPa] | General
+J448 | VALUE | 13.8 | General
+L448 | FORMULA | =XM_ToothHardnessSide | General
+M448 | VALUE | VHV | General
+O448 | FORMULA | =INDEX(Material!BG7:BG57,_MatP) | General
+P448 | FORMULA | =INDEX(Material!BG7:BG57,_MatW) | General
+R448 | VALUE | [HV] | General
+U448 | VALUE | Hardness from HV to HBW | General
+J449 | VALUE | 13.9 | General
+L449 | FORMULA | =XM_ToothHardnessCore | General
+M449 | VALUE | JHV | General
+O449 | FORMULA | =INDEX(Material!BF7:BF57,_MatP) | General
+P449 | FORMULA | =INDEX(Material!BF7:BF57,_MatW) | General
+R449 | VALUE | [HV] | General
+U449 | VALUE | NL for static load contact (ZN) | General
+J450 | VALUE | 13.10 | General
+L450 | FORMULA | =XM_ContactBN | General
+M450 | VALUE | NHlim | General
+O450 | FORMULA | =INDEX(Material!BL7:BL57,_MatP)*1000000 | 0.00E+00
+P450 | FORMULA | =INDEX(Material!BL7:BL57,_MatW)*1000000 | 0.00E+00
+U450 | VALUE | NL for static load bending (YN) | General
+J451 | VALUE | 13.11 | General
+L451 | FORMULA | =XM_ContactWC | General
+M451 | VALUE | qH | General
+O451 | FORMULA | =INDEX(Material!BN7:BN57,_MatP) | General
+P451 | FORMULA | =INDEX(Material!BN7:BN57,_MatW) | General
+J452 | VALUE | 13.12 | General
+L452 | FORMULA | =XM_BendingBN | General
+M452 | VALUE | NFlim | General
+O452 | FORMULA | =INDEX(Material!BM7:BM57,_MatP)*1000000 | 0.00E+00
+P452 | FORMULA | =INDEX(Material!BM7:BM57,_MatW)*1000000 | 0.00E+00
+J453 | VALUE | 13.13 | General
+L453 | FORMULA | =XM_BendingWC | General
+M453 | VALUE | qF | General
+O453 | FORMULA | =INDEX(Material!BO7:BO57,_MatP) | General
+P453 | FORMULA | =INDEX(Material!BO7:BO57,_MatW) | General
+J454 | VALUE | 13.14 | General
+L454 | VALUE | Abbreviation for material designation | General
+O454 | FORMULA | =INDEX(Material!BS7:BS57,_MatP) | General
+P454 | FORMULA | =INDEX(Material!BS7:BS57,_MatW) | General
+L456 | VALUE | Additions section | General
+J457 | VALUE | 14.0 | General
+L457 | VALUE |      Calculation of gearing for the given axis distance | General
+J458 | VALUE | 14.1 | General
+L458 | VALUE | Required axis distance / Standardized | General
+M458 | VALUE | aw [mm] | General
+O458 | VALUE | 315 | General
+P458 | FORMULA | =_aw | 0.00
+U458 | VALUE | Axis distance from table | General
+X458 | VALUE | Table for diferent combination of number of teeth | General
+J459 | VALUE | 14.2 | General
+L459 | VALUE | List of solutions | General
+O459 | VALUE |  ID.     z1    z2        i          b       Sum X       | General
+X459 | VALUE | Display table | General
+Y459 | VALUE | Sum z1+z2 | General
+AC459 | VALUE | ID | General
+AD459 | VALUE | z1 | General
+AE459 | VALUE | z2 | General
+AF459 | VALUE | i | General
+AG459 | VALUE | beta | General
+AH459 | VALUE | Sum X | General
+AI459 | VALUE | acos | General
+J460 | VALUE | 14.3 | General
+L460 | VALUE | Combination of the teeth number | General
+U460 | VALUE | Support axis distance | General
+J461 | VALUE | 14.4 | General
+L461 | VALUE | Number of teeth Pinion / Gear | General
+M461 | VALUE | z1/z2 | General
+O461 | FORMULA | =INDEX(T_solutions1,_Ptsol,2) | 0
+P461 | FORMULA | =INDEX(T_solutions1,_Ptsol,3) | 0
+U461 | VALUE | z1+z2 | General
+J462 | VALUE | 14.5 | General
+L462 | VALUE | Transmission ratio / Deviation | General
+M462 | VALUE | i | 0.0000
+O462 | FORMULA | =INDEX(T_solutions1,_Ptsol,4) | 0.0000
+P462 | FORMULA | =(_ii-_iin)/_ii | 0.00%
+U462 | VALUE | z1 | General
+J463 | VALUE | 14.6 | General
+L463 | VALUE | A. Change of the addendum modification | General
+U463 | VALUE | z2 | General
+J464 | VALUE | 14.7 | General
+L464 | FORMULA | =XM_0028 | General
+M464 | VALUE | b | General
+O464 | FORMULA | =_beta | 0.0000
+R464 | VALUE | [°] | General
+U464 | VALUE | INT(z1) | General
+J465 | VALUE | 14.8 | General
+L465 | VALUE | Total unit correction | General
+M465 | VALUE | Sum x | General
+O465 | FORMULA | =INDEX(T_solutions1,_Ptsol,6) | 0.00000
+R465 | VALUE | [modul] | General
+U465 | VALUE | INT(z2) | General
+J466 | VALUE | 14.9 | General
+L466 | VALUE | Distribution of correction | General
+U466 | VALUE | Selection from solution table | General
+J467 | VALUE | 14.10 | General
+L467 | VALUE | Type of distribution of corrections to the pinion and gear | General
+M467 | VALUE | x | General
+O467 | FORMULA | =INDEX(T_solutions2,_Ptdiv,1) | 0.0000
+P467 | FORMULA | =INDEX(T_solutions2,_Ptdiv,2) | 0.0000
+R467 | VALUE | [modul] | General
+U467 | VALUE | Selection from SumX dividion table | General
+J468 | VALUE | 14.11 | General
+L468 | VALUE | Press the button for transmitting values in to calculation | General
+U468 | VALUE | Addendum mod. distribution | General
+V468 | VALUE | x1 | General
+W468 | VALUE | x2 | General
+J469 | VALUE | 14.12 | General
+L469 | VALUE | B. By a change of the helix angle | General
+U469 | VALUE | In  transmission ratio | General
+J470 | VALUE | 14.13 | General
+L470 | FORMULA | =XM_0028 | General
+M470 | VALUE | b | General
+O470 | FORMULA | =INDEX(T_solutions1,_Ptsol,5) | 0.0000
+R470 | VALUE | [°] | General
+U470 | VALUE | In reverse  transmission ratio | General
+J471 | VALUE | 14.14 | General
+L471 | FORMULA | =XM_0156 | General
+M471 | VALUE | Sum x | General
+O471 | VALUE | 0.0000 | 0.0000
+R471 | VALUE | [modul] | General
+U471 | VALUE | According to Meritt | General
+J472 | VALUE | 14.15 | General
+L472 | FORMULA | =XM_0153 | General
+U472 | VALUE | Coeficient for Merit distribution | General
+J474 | VALUE | 15.0 | General
+L474 | VALUE |      Power, warming-up, gearbox surface | General
+J475 | VALUE | 15.1 | General
+L475 | VALUE | Ambient air temperature | General
+O475 | VALUE | 20.00 | 0.00
+R475 | VALUE | [°C] | General
+J476 | VALUE | 15.2 | General
+L476 | VALUE | Maximum oil temperature | General
+O476 | VALUE | 60.00 | 0.00
+R476 | VALUE | [°C] | General
+J477 | VALUE | 15.3 | General
+L477 | VALUE | Coefficient of heat dissipation | General
+O477 | VALUE | 10.00 | 0.00
+R477 | VALUE | [W/m2/K] | General
+J478 | VALUE | 15.4 | General
+L478 | VALUE | Power losses | General
+O478 | FORMULA | =_Pw1*(1-_eta) | 0.00
+R478 | VALUE | [kW] | General
+J479 | VALUE | 15.5 | General
+L479 | VALUE | Gearbox surface (min.) | General
+O479 | FORMULA | =_Pw1*(1-_eta)*1000/_tcoef/(_toil-MIN(_tair,_toil-1)) | 0.00
+R479 | VALUE | [m2] | General
+J481 | VALUE | 16.0 | General
+L481 | VALUE |      Preliminary design of shaft diameters (steel) | General
+J482 | VALUE | 16.1 | General
+L482 | VALUE | Recommended shaft diameter for: | General
+U482 | VALUE | Shaft Rm | General
+Y482 | VALUE | Old values | General
+Z482 | VALUE | Old values | General
+J483 | VALUE | 16.2 | General
+L483 | VALUE |      - Main power-transmitting shafts | General
+M483 | VALUE | DA | General
+O483 | FORMULA | =ROUND(365*(1.8*_Pw1/_n1/_ShaftAStress)^0.33,_DsRound) | 0.00
+P483 | FORMULA | =ROUND(365*(1.8*_Pw2/_n2/_ShaftAStress)^0.33,_DsRound) | 0.00
+R483 | VALUE | [mm] | General
+U483 | VALUE | Shaft Allowable stress | General
+J484 | VALUE | 16.3 | General
+L484 | VALUE |      - Small, short shafts | General
+M484 | VALUE | DB | General
+O484 | FORMULA | =ROUND(365*(_Pw1/_n1/_ShaftAStress)^0.33,_DsRound) | 0.00
+P484 | FORMULA | =ROUND(365*(_Pw2/_n2/_ShaftAStress)^0.33,_DsRound) | 0.00
+R484 | VALUE | [mm] | General
+J486 | VALUE | 17.0 | General
+L486 | VALUE |      Approximate module calculation from the existing gear | General
+J487 | VALUE | 17.1 | General
+L487 | VALUE | Number of teeth | General
+M487 | VALUE | z | General
+O487 | VALUE | 20 | 0
+J488 | VALUE | 17.2 | General
+L488 | VALUE | Tip diameter | General
+M488 | VALUE | da | General
+O488 | VALUE | 34.00 | 0.00
+R488 | VALUE | [mm] | General
+J489 | VALUE | 17.3 | General
+L489 | VALUE | Distance between teeth edges | General
+M489 | VALUE | u | General
+O489 | VALUE | 0.00 | 0.00
+R489 | VALUE | [mm] | General
+U489 | VALUE | Odd number of teeth - da | General
+J490 | VALUE | 17.4 | General
+L490 | VALUE | Helix angle | General
+M490 | VALUE | b | General
+O490 | VALUE | 10.00 | 0.00
+R490 | VALUE | [°] | General
+J491 | VALUE | 17.5 | General
+L491 | VALUE | Module of tooth | General
+M491 | VALUE | mn | General
+O491 | FORMULA | =_daxx/(_zx/COS(_betax*_pi/180)+2) | 0.00
+R491 | VALUE | [mm] | General
+J493 | VALUE | 18.0 | General
+L493 | VALUE |      Auxiliary calculations, calculation KHbeta, calculation YSg | General
+J494 | VALUE | 18.1 | General
+L494 | VALUE | Transmission ratio calculation using the number of teeth | General
+M494 | VALUE | z1,z2 = i | General
+O494 | VALUE | 17 | General
+P494 | VALUE | 18 | General
+Q494 | FORMULA | = | General
+R494 | FORMULA | =P494/O494 | 0.000
+J495 | VALUE | 18.2 | General
+L495 | VALUE | Transmission ratio calculation using the speed | General
+M495 | VALUE | n1,n2 = i | General
+O495 | VALUE | 700.0 | 0.0
+P495 | VALUE | 350.0 | 0.0
+Q495 | FORMULA | = | General
+R495 | FORMULA | =_XX_n1/P495 | 0.000
+J496 | VALUE | 18.3 | General
+L496 | VALUE | Power calculation using the pinion speed and torque moment | General
+M496 | VALUE | Mk1,n1=Pw1 | General
+O496 | VALUE | 1600.0 | 0.0
+P496 | VALUE | 760.0 | 0.0
+Q496 | FORMULA | = | General
+R496 | FORMULA | =O496*P496/9550 | 0.00
+J497 | VALUE | 18.4 | General
+L497 | VALUE | Definition of the factor KHbeta (method C) | General
+J498 | VALUE | 18.5 | General
+L498 | VALUE | Mean transverse tangential load at the reference circle | General
+M498 | VALUE | Fm | General
+O498 | FORMULA | =_Ft*_KA*_Kv | 0.00
+P498 | VALUE |       [N] | 0.000
+J499 | VALUE | 18.6 | General
+L499 | VALUE | Shaft diameter (pinion) | General
+M499 | VALUE | dsh | General
+O499 | VALUE | 74.80 | 0.00
+P499 | VALUE |       [mm] | 0.0
+U499 | VALUE | Diameter of the shaft, proposal | General
+J500 | VALUE | 18.7 | General
+L500 | VALUE | Gear type | General
+U500 | VALUE | Constant of the transmitted power | General
+J501 | VALUE | 18.8 | General
+L501 | VALUE | Constant of the pinion position (with/without stiffening) | General
+M501 | VALUE | K' | General
+O501 | FORMULA | =INDEX(T_FactorK,_FactorK,2) | 0.00
+U501 | VALUE | Preliminary design of l and s | General
+J502 | VALUE | 18.9 | General
+L502 | VALUE | Pitch of bearings | General
+M502 | VALUE | l | General
+O502 | VALUE | 168.0 | 0.0
+P502 | VALUE |       [mm] | 0.0
+V502 | VALUE | fsh | General
+W502 | VALUE | Eq57 | General
+X502 | VALUE | Eq58 | General
+J503 | VALUE | 18.10 | General
+L503 | VALUE | Center of pinion distance (s/l < 0.3) | General
+M503 | VALUE | s | General
+O503 | VALUE | 0.0 | 0.0
+P503 | VALUE |       [mm] | 0.0
+U503 | VALUE | fsh calculation | General
+J504 | VALUE | 18.11 | General
+L504 | VALUE | Component of equivalent misatignment (pinion) | General
+M504 | VALUE | fsh | General
+O504 | VALUE | 3.8 | 0.0
+P504 | VALUE |       [mm] | General
+J505 | VALUE | 18.12 | General
+L505 | VALUE | Component of equivalent misatignment (wheel) | General
+M505 | VALUE | fsh2 | General
+O505 | VALUE | 0.0 | 0.0
+P505 | VALUE |       [mm] | General
+U505 | VALUE | fma calculation | General
+J506 | VALUE | 18.13 | General
+L506 | VALUE | Mesh misalignment | General
+M506 | VALUE | fma | General
+O506 | VALUE | 17.6 | 0.0
+P506 | VALUE |       [mm] | General
+V506 | VALUE | Fbx | General
+W506 | VALUE | Eq52 | General
+X506 | VALUE | Eq53 | General
+Y506 | VALUE | Eq54 | General
+Z506 | VALUE | B1 | General
+AA506 | VALUE | B2 | General
+AB506 | VALUE | Fbxmin | General
+J507 | VALUE | 18.14 | General
+L507 | VALUE | Deformation of the gear case | General
+M507 | VALUE | fca | General
+O507 | VALUE | 0.0 | 0.0
+P507 | VALUE |       [mm] | General
+U507 | VALUE | Fbx calculation | General
+J508 | VALUE | 18.15 | General
+L508 | VALUE | Displacements of the bearings | General
+M508 | VALUE | fbe | General
+O508 | VALUE | 0.0 | 0.0
+P508 | VALUE |       [mm] | General
+U508 | VALUE | Coeficient c_gama_beta | General
+J509 | VALUE | 18.16 | General
+L509 | VALUE | Helix modification | General
+M509 | VALUE | B1,B2 | General
+V509 | VALUE | yb | General
+W509 | VALUE | yb1 | General
+X509 | VALUE | yb2 | General
+Y509 | VALUE | yb1Flag | General
+Z509 | VALUE | yb2Flag | General
+AA509 | VALUE | Pinion selection | General
+AD509 | VALUE | Gear selection | General
+J510 | VALUE | 18.17 | General
+L510 | VALUE | Initial equivalent misalignment (before running-in) | General
+M510 | VALUE | Fbx | General
+O510 | VALUE | 11.4 | 0.0
+U510 | VALUE | yb calculation | General
+J511 | VALUE | 18.18 | General
+L511 | VALUE | Running-in allowance (equivalent misalignment) | General
+M511 | VALUE | yb | General
+O511 | VALUE | 1.7 | 0.0
+P511 | VALUE |       [mm] | General
+U511 | VALUE | yb calculation | General
+J512 | VALUE | 18.19 | General
+L512 | VALUE | Effective equivalent misalignment (after running-in) | General
+M512 | VALUE | Fby | General
+O512 | FORMULA | =ABS(_FbetaX-_y_beta) | 0.0
+P512 | VALUE |       [mm] | General
+U512 | VALUE | gapab calculation | General
+Z512 | VALUE | q coef | General
+J513 | VALUE | 18.20 | General
+L513 | FORMULA | =XM_0100 | General
+M513 | VALUE | KHb | General
+O513 | FORMULA | =ROUND(IF(_bcal_to_b>=1,_KHbetaCalc1,_KHbetaCalc2),3) | 0.000
+U513 | VALUE | KHbeta calculation | General
+J514 | VALUE | 18.21 | General
+L514 | FORMULA | =XM_3507 & " YSg" | General
+U514 | FORMULA | ="v="&ROUND(_v,2) | General
+J515 | VALUE | 18.22 | General
+L515 | VALUE | Maximum depth of grinding notch | General
+M515 | VALUE | tg | General
+O515 | VALUE | 0.200 | 0.000
+P515 | VALUE | 0.300 | 0.000
+R515 | VALUE | [mm] | General
+U515 | FORMULA | ="b1="&_b1&"; b2="&_b2 | General
+J516 | VALUE | 18.23 | General
+L516 | VALUE | Radius of grinding notch | General
+M516 | VALUE | rg | General
+O516 | VALUE | 4.000 | 0.000
+P516 | VALUE | 3.000 | 0.000
+R516 | VALUE | [mm] | General
+U516 | FORMULA | ="Fbeta="&ROUND(_Fb1,3) | General
+J517 | VALUE | 18.24 | General
+L517 | VALUE | Valid for ... (tg/rg)^0.5 < 2.0 | General
+M517 | VALUE | (tg/rg)0.5 | General
+O517 | FORMULA | =(_tg1/_rog1)^0.5 | 0.000
+P517 | FORMULA | =(_tg2/_rog2)^0.5 | 0.000
+V517 | VALUE | q | General
+W517 | VALUE | q>=1 | General
+X517 | VALUE | q<1 | General
+J518 | VALUE | 18.25 | General
+L518 | FORMULA | =XM_3507 | General
+M518 | VALUE | YSg | General
+O518 | FORMULA | =MAX(1.3*_YS1Calc/(1.3-0.6*(_tg1/_rog1)^0.5),1) | 0.000
+P518 | FORMULA | =MAX(1.3*_YS2Calc/(1.3-0.6*(_tg2/_rog2)^0.5),1) | 0.000
+J520 | VALUE | 19.0 | General
+L520 | VALUE |      Calculation of SHlim and SFlim based on ISO 6336-5, proposal of material properties | General
+J521 | VALUE | 19.1 | General
+L521 | VALUE | Material type | General
+U521 | VALUE | Rm všeobecně používaný vzorec pro ocel | General
+X521 | VALUE | Rm podle slovenskeho dokumentu | General
+J522 | VALUE | 19.2 | General
+V522 | VALUE | Pointer | General
+W522 | VALUE | HV min | General
+X522 | VALUE | HVmax | General
+Y522 | VALUE | Min | General
+Z522 | VALUE | Max | General
+AA522 | VALUE | Min round | General
+AB522 | VALUE | Max round | General
+AC522 | VALUE | HV average | General
+AD522 | VALUE | HV average | General
+J523 | VALUE | 19.3 | General
+L523 | VALUE | Requirements for material quality and heat treatment | General
+U523 | VALUE | Values from material table | General
+J524 | VALUE | 19.4 | General
+L524 | VALUE | Surface hardness of calculated material (hardness range from - to) | General
+O524 | VALUE | 552 | General
+Q524 | FORMULA | =AA523& " - " &AB523 | General
+U524 | VALUE | Coefficients A,B for SHlim => SHlim | General
+J525 | VALUE | 19.5 | General
+L525 | FORMULA | =XM_ContactFL | General
+M525 | VALUE | SHlim | General
+O525 | VALUE | 1011 | 0
+P525 | VALUE |   [MPa] | General
+U525 | VALUE | Coefficients A,B for SFlim => SFlim | General
+J526 | VALUE | 19.6 | General
+L526 | FORMULA | =XM_BendingFL | General
+M526 | VALUE | SFlim | General
+O526 | VALUE | 244 | 0
+P526 | VALUE |   [MPa] | General
+U526 | VALUE | Hardness for formula for SHlim, SFlim | General
+J527 | VALUE | 19.7 | General
+L527 | FORMULA | =L441 | General
+M527 | VALUE | Ro | General
+O527 | VALUE | 7870 | 0
+P527 | VALUE |   [kg/m^3] | General
+U527 | VALUE | Density | General
+J528 | VALUE | 19.8 | General
+L528 | FORMULA | =L442 | General
+M528 | VALUE | E | General
+O528 | VALUE | 206 | 0
+P528 | VALUE |   [GPa] | General
+U528 | VALUE | Young's Modulus (Modulus of Elasticity) | General
+W528 | VALUE | A | General
+X528 | VALUE | B | General
+Y528 | VALUE | Switch | General
+Z528 | VALUE | Rm=f(HV) | General
+AA528 | VALUE | Rm=f(HBW) | General
+J529 | VALUE | 19.9 | General
+L529 | FORMULA | =L443 | General
+M529 | VALUE | Rm | General
+O529 | VALUE | 762 | 0
+P529 | VALUE |   [MPa] | General
+U529 | VALUE | Tensile Strength, Ultimate Rm | General
+J530 | VALUE | 19.10 | General
+L530 | FORMULA | =XM_TStrengthYield | General
+M530 | VALUE | Rp(0.2) | General
+O530 | VALUE | 419 | 0
+P530 | VALUE |   [MPa] | General
+U530 | VALUE | Tensile Strength, Yield | General
+J531 | VALUE | 19.11 | General
+L531 | FORMULA | =L445 | General
+O531 | VALUE | 0.30 | 0.00
+U531 | VALUE | Poison's Ratio | General
+J532 | VALUE | 19.12 | General
+L532 | FORMULA | =XM_ContactBN | General
+M532 | VALUE | NHlim | General
+O532 | VALUE | 5.00E+07 | 0.00E+00
+U532 | VALUE | NHlim | General
+J533 | VALUE | 19.13 | General
+L533 | FORMULA | =XM_ContactWC | General
+M533 | VALUE | qH | General
+O533 | VALUE | 13.00 | 0.00
+U533 | VALUE | qH | General
+J534 | VALUE | 19.14 | General
+L534 | VALUE | Maximum value | General
+M534 | VALUE | ZNT | General
+O534 | VALUE | 1.60 | 0.00
+U534 | VALUE | ZN max | General
+J535 | VALUE | 19.15 | General
+L535 | FORMULA | =L452 | General
+M535 | VALUE | NFlim | General
+O535 | VALUE | 3.00E+06 | 0.00E+00
+U535 | VALUE | NFlim | General
+J536 | VALUE | 19.16 | General
+L536 | FORMULA | =XM_BendingWC | General
+M536 | VALUE | qF | General
+O536 | VALUE | 8.70 | 0.00
+U536 | VALUE | qF | General
+J537 | VALUE | 19.17 | General
+L537 | FORMULA | =XM_3204 | General
+M537 | VALUE | YNT | General
+O537 | VALUE | 2.50 | 0.00
+U537 | VALUE | YN max | General
+J538 | VALUE | 19.18 | General
+L538 | FORMULA | =L454 | General
+O538 | FORMULA | =INDEX(T_MatAbbrev,_MatAbbrev,1) | General
+U538 | VALUE | Material abbreviation | General
+V538 | FORMULA | =INDEX(T_MatNames2,_MatNames2ID,11) | General
+J539 | VALUE | 19.19 | General
+L539 | VALUE | Material name in the material table | General
+M539 | VALUE | Flame or induction hardened wrought and cast steels (Rm=762 MPa) | 0
+U539 | VALUE | Material name | General
+V539 | FORMULA | =INDEX(T_MatNames2,_MatNames2ID,3) & " (Rm=" & _MatRmPr & " MPa)" | General
+J540 | VALUE | 19.20 | General
+L540 | VALUE | Transfer to a table of materials, to line number: | General
+J542 | VALUE | 20.0 | General
+L542 | VALUE |      Graphical output, CAD systems | General
+J543 | VALUE | 20.1 | 0.0
+L543 | VALUE | 2D drawing output to: | General
+U543 | VALUE | Units | General
+J544 | VALUE | 20.2 | 0.0
+L544 | VALUE | 2D Drawing scale | General
+U544 | VALUE | Drawing scale | General
+J545 | VALUE | 20.3 | 0.0
+L545 | VALUE | Detail: | General
+U545 | VALUE | AutoScale value | General
+L546 | VALUE | a [°]… | General
+M546 | VALUE | 30 | General
+O546 | VALUE | b [°]… | General
+P546 | VALUE | 30 | General
+J547 | VALUE | 20.4 | General
+L547 | VALUE | Detailed drawing of tooth and wheel | General
+O547 | VALUE | a [modul]… | General
+P547 | VALUE | 1 | General
+U547 | VALUE | String for BOM in 3D | General
+V547 | FORMULA | ="ABOM01"&_ABOM01&"ABOM02"&_ABOM02&"ABOM03"&_ABOM03&"BBOM01"&_BBOM01&"BBOM02"&_BBOM02&"BBOM03"&_BBOM03 | General
+J548 | VALUE | 20.5 | General
+L548 | VALUE | Number of drawn teeth | General
+M548 | VALUE | 4 | General
+J549 | VALUE | 20.6 | General
+L549 | VALUE | Number of points of tooth tip | 0.00
+M549 | VALUE | 20 | General
+J550 | VALUE | 20.7 | General
+L550 | VALUE | Number of points of tooth flank | 0.00
+M550 | VALUE | 100 | General
+J551 | VALUE | 20.8 | General
+L551 | VALUE | Rolling (turning) of a tool between the bite | 0.00
+M551 | VALUE | 0.5 | General
+O551 | VALUE | [°] | General
+P551 | VALUE | Drawing without axes | General
+U551 | VALUE | Without axis flag | General
+J552 | VALUE | 20.9 | General
+L552 | VALUE | Number of tooth copies in the picture of engagement check | 0.00
+M552 | VALUE | 20 | General
+J553 | VALUE | 20.10 | General
+L553 | VALUE | Text description (Information for BOM) | General
+M553 | FORMULA | =XM_Pinion | General
+L554 | VALUE | Row 1 (BOM attribute 1) | General
+M554 | VALUE | Spur gear - Pinion | General
+U554 | VALUE | Spur gear - Pinion | General
+L555 | VALUE | Row 2 (BOM attribute 2) | General
+M555 | VALUE | z1=19, mn=6, beta=0 | General
+U555 | FORMULA | ="z1=" & _z1 & ", mn=" & ROUND(_mn,2) & ", beta=" &_beta | General
+L556 | VALUE | Row 3 (BOM attribute 3) | General
+M556 | VALUE | Material: T2(683/7-70) | General
+U556 | FORMULA | =XM_Material & ": " &INDEX(Material!E7:E57,_MatP) | General
+V556 | VALUE | Material | General
+M557 | FORMULA | =XM_Wheel | General
+L558 | FORMULA | =XM_DXF254 | General
+M558 | VALUE | Spur gear - Gear | General
+U558 | VALUE | Spur gear - Gear | General
+L559 | FORMULA | =XM_DXF255 | General
+M559 | VALUE | z2=48, mn=6, beta=0 | General
+U559 | FORMULA | ="z2=" & _z2 & ", mn=" & ROUND(_mn,2) & ", beta=" &_beta | General
+L560 | FORMULA | =XM_DXF256 | General
+M560 | VALUE | Material: T2(683/7-70) | General
+U560 | FORMULA | =XM_Material & ": " &INDEX(Material!E7:E57,_MatW) | General
+J562 | VALUE | 20.11 | General
+L562 | VALUE | Table of parameters | General
+U562 | VALUE | Table name (range name) | General
+V562 | FORMULA | =INDEX(T_DXFTablesList,H562,2) | General
+
+=== SUMMARY ===
+Total formula cells: 402
+Total value cells: 1721

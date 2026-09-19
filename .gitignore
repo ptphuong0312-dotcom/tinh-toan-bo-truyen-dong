@@ -1,0 +1,22 @@
+# Backups (lưu trữ cục bộ, không đưa lên git để tránh phình dung lượng)
+backups/*.zip
+
+# Python & Môi trường kiểm thử
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+venv/
+.env
+
+# Hệ điều hành & IDEs
+Thumbs.db
+.DS_Store
+.vscode/
+.idea/
+
+# Tệp nháp & Tệp tạm thời
+scratch/
+.tempmediaStorage/
+test_*.png
+test_*.dxf

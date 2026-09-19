@@ -1,0 +1,751 @@
+ROW-BY-ROW DUMP OF MITCALC GEAR2_01.XLSB (CALCULATION SHEET)
+========================================================================================================================
+
+Row 117 | [1.0  ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Pw [kW] | Form=Pw [kW]
+        Col P: Val=50.0 | Form=50
+        Col Q: Val=49.15025352395919 | Form==_Pw1*_eta
+
+Row 118 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=n [/min] | Form=n [/min]
+        Col P: Val=1000.0 | Form=1000
+        Col Q: Val=400.0 | Form==_n1/_i
+
+Row 119 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Mk [Nm] | Form=Mk [Nm]
+        Col P: Val=477.5 | Form==_Pw1*9550/_n1
+        Col Q: Val=1173.4623028845256 | Form==_Mk1*_i*_eta
+
+Row 120 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=i | Form=i
+        Col P: Val=2.5 | Form=2.5
+
+Row 121 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=i | Form=i
+        Col P: Val=2.5 | Form==_z2/_z1
+        Col Q: Val=0.0 | Form==(_i-_iin)/_i
+
+Row 131 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=KAS | Form=KAS
+        Col P: Val=2.0 | Form=2
+
+Row 132 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Lh | Form=Lh
+        Col P: Val=20000.0 | Form=20000
+
+Row 133 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SH / SF | Form=SH / SF
+        Col P: Val=1.3 | Form=1.3
+        Col Q: Val=1.6 | Form=1.6
+
+Row 137 | [1.0  ] |                                                         | Sym: 1.0        | Unit:           
+
+Row 138 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=ha* | Form=ha*
+        Col P: Val=1.0 | Form=1
+        Col Q: Val=1.0 | Form=1
+
+Row 139 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=c* | Form=c*
+        Col P: Val=0.2 | Form=0.2
+        Col Q: Val=0.2 | Form=0.2
+
+Row 140 | [1.0  ] |                                                         | Sym:            | Unit:           
+        Col P: Val=0.2859702611606925 | Form==_caXG/(1-SIN(_alfa_n*PI()/180))
+        Col Q: Val=0.2859702611606925 | Form==_caXP/(1-SIN(_alfa_n*PI()/180))
+
+Row 141 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=rf* | Form=rf*
+        Col P: Val=0.2859702611606925 | Form=0.285970261160693
+        Col Q: Val=0.2859702611606925 | Form=0.285970261160693
+
+Row 144 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=z | Form=z
+        Col P: Val=18.0 | Form=18
+        Col Q: Val=45.0 | Form==INT(_iin*_z1+0.5)
+
+Row 145 | [     ] |                                                         | Sym: 6.0        | Unit:           
+        Col N: Val=S | Form=S
+        Col P: Val=90.0 | Form=90
+
+Row 146 | [     ] |                                                         | Sym: 6.0        | Unit:           
+        Col N: Val=a | Form=a
+        Col P: Val=20.0 | Form=20
+
+Row 147 | [     ] |                                                         | Sym: 4.0        | Unit:           
+        Col N: Val=bm | Form=bm
+        Col P: Val=30.0 | Form=30
+
+Row 150 | [     ] |                                                         | Sym: 2.0        | Unit:           
+        Col N: Val=Re/b | Form=Re/b
+        Col P: Val=0.35 | Form==0.09+F149/100
+        Col Q: Val=< 0.35 | Form== "< " & "0.35"
+
+Row 151 | [     ] |                                                         | Sym: 2.0        | Unit:           
+        Col N: Val=mmn | Form==IF(_PtModType=1,"met","mmn")
+        Col P: Val=10.0 | Form=10
+
+Row 152 | [     ] |                                                         | Sym: 4.0        | Unit:           
+        Col N: Val=b | Form=b
+        Col P: Val=117.0 | Form=117
+        Col Q: Val=< 118 | Form=="< " & _b_max
+
+Row 153 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=m | Form=m
+        Col P: Val=134.33115063315293 | Form==_mass
+
+Row 154 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SH / SF | Form=SH / SF
+        Col P: Val=1.413524573599779 | Form==MIN(_SH1,_SH2)
+        Col Q: Val=13.487091622859774 | Form==MIN(_SF1,_SF2)
+
+Row 170 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=x1 / xt1 | Form=x1 / xt1
+        Col P: Val=0.2651001214981079 | Form==INDEX(T_AddendModif,H169,4)
+        Col Q: Val=0.0 | Form==INDEX(T_AddendModif,H169,5)
+
+Row 171 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=x1 / x2 | Form=x1 / x2
+        Col P: Val=-0.5154256710255134 | Form==(_z1p-_zv1)/_z1m
+        Col Q: Val=-7.596410443909457 | Form==(_z2p-_zv2)/_z2m
+
+Row 172 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=x1 / x2 | Form=x1 / x2
+        Col P: Val=-0.3487590043588467 | Form==(_z1m-_zv1)/_z1m
+        Col Q: Val=-7.42974377724279 | Form==(_z2m-_zv2)/_z2m
+
+Row 174 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=x1 / x2 | Form=x1 / x2
+        Col P: Val=0.32 | Form=0.32
+        Col Q: Val=-0.32 | Form==-_x1
+
+Row 175 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=xt1 / xt2 | Form=xt1 / xt2
+        Col P: Val=0.04 | Form=0.04
+        Col Q: Val=-0.04 | Form==-_xTau1
+
+Row 176 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=eg | Form=eg
+        Col P: Val=3.0117200530123416 | Form==_epsilon_G
+
+Row 177 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=sae* | Form=sae*
+        Col P: Val=0.7347263610319887 | Form==_sa1x
+        Col Q: Val=1.118255993104951 | Form==_sa2x
+
+Row 178 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SH | Form=SH
+        Col P: Val=1.6038067277382109 | Form==_SH1
+        Col Q: Val=1.413524573599779 | Form==_SH2
+
+Row 179 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SF | Form=SF
+        Col P: Val=15.143943023732822 | Form==_SF1
+        Col Q: Val=13.487091622859774 | Form==_SF2
+
+Row 195 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=z | Form=z
+        Col P: Val=18.0 | Form==_z1
+        Col Q: Val=45.0 | Form==_z2
+
+Row 196 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=13.96104478009419 | Form==_met
+        Col P: Val=11.547005383792515 | Form==_met*(_Rm/_Re)
+        Col Q: Val=9.132965987490842 | Form==_met*(_Ri/_Re)
+
+Row 197 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=12.0906194429337 | Form==_met*COS(_beta*PI()/180)
+        Col P: Val=10.0 | Form==_men*(_Rm/_Re)
+        Col Q: Val=7.9093805570663 | Form==_men*(_Ri/_Re)
+
+Row 198 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=338.32137159266443 | Form==_de2/(2*SIN(_delta2*PI()/180))
+        Col P: Val=279.82137159266443 | Form==_Re-_b/2
+        Col Q: Val=221.32137159266443 | Form==_Re-_b
+
+Row 199 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=d | Form=d
+        Col P: Val=21.80140948635181 | Form==ATAN(SIN(_deltaSum/180*PI())/(_z2/_z1+COS(_deltaSum/180*PI())))*180/PI()
+        Col Q: Val=68.19859051364818 | Form==_deltaSum-_delta1
+
+Row 200 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=da | Form=da
+        Col P: Val=24.50221834518748 | Form==_delta1+_deltaa1
+        Col Q: Val=69.59067372287166 | Form==_delta2+_deltaa2
+
+Row 201 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=df | Form=df
+        Col P: Val=20.000129141867138 | Form==_delta1-_deltaf1
+        Col Q: Val=65.08931843717032 | Form==_delta2-_deltaf2
+
+Row 202 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=dae | Form=dae
+        Col P: Val=280.9350720358735 | Form==_de1+2*_hae1*COS(_delta1*PI()/180)
+        Col Q: Val=634.3538820363722 | Form==_de2+2*_hae2*COS(_delta2*PI()/180)
+
+Row 203 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=dam | Form=dam
+        Col P: Val=232.3578815476361 | Form==_dm1+2*_ha1*COS(_delta1*PI()/180)
+        Col Q: Val=524.6661554690791 | Form==_dm2+2*_ha2*COS(_delta2*PI()/180)
+
+Row 204 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=dai | Form=dai
+        Col P: Val=183.78069105939872 | Form==_di1+2*_hai1*COS(_delta1*PI()/180)
+        Col Q: Val=414.97842890178583 | Form==_di2+2*_hai2*COS(_delta2*PI()/180)
+
+Row 205 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=de | Form=de
+        Col P: Val=251.2988060416954 | Form==_dm1+_b*SIN(_delta1*PI()/180)
+        Col Q: Val=628.2470151042385 | Form==_z2*_met
+
+Row 206 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=dm | Form=dm
+        Col P: Val=207.84609690826525 | Form==_z1*_mtm
+        Col Q: Val=519.6152422706632 | Form==_z2*_mtm
+
+Row 207 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=di | Form=di
+        Col P: Val=164.3933877748351 | Form==_dm1-_b*SIN(_delta1*PI()/180)
+        Col Q: Val=410.9834694370879 | Form==_dm2-_b*SIN(_delta2*PI()/180)
+
+Row 208 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=dfe | Form=dfe
+        Col P: Val=231.54129537891 | Form==_de1-2*_hfe1*COS(_delta1*PI()/180)
+        Col Q: Val=614.5963713735867 | Form==_de2-2*_hfe2*COS(_delta2*PI()/180)
+
+Row 209 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=dfm | Form=dfm
+        Col P: Val=191.50490714868468 | Form==_dm1-2*_hf1*COS(_delta1*PI()/180)
+        Col Q: Val=508.32496570949843 | Form==_dm2-2*_hf2*COS(_delta2*PI()/180)
+
+Row 210 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=dfi | Form=dfi
+        Col P: Val=151.46851891845935 | Form==_di1-2*_hfi1*COS(_delta1*PI()/180)
+        Col Q: Val=402.0535600454101 | Form==_di2-2*_hfi2*COS(_delta2*PI()/180)
+
+Row 211 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=qa | Form=qa
+        Col P: Val=2.7008088588356687 | Form==CHOOSE(_ToothType,ATAN(_ha1/_Rm)*180/PI(),_deltaf2,0)
+        Col Q: Val=1.39208320922347 | Form==CHOOSE(_ToothType,ATAN(_ha2/_Rm)*180/PI(),_deltaf1,0)
+
+Row 212 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=qf | Form=qf
+        Col P: Val=1.8012803444846728 | Form==CHOOSE(_ToothType,ATAN(_hf1/_Rm)*180/PI(),ATAN(_hf1/_Rm)*180/PI(),0)
+        Col Q: Val=3.109272076477863 | Form==CHOOSE(_ToothType,ATAN(_hf2/_Rm)*180/PI(),ATAN(_hf2/_Rm)*180/PI(),0)
+
+Row 213 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=hae | Form=hae
+        Col P: Val=15.959617664672486 | Form==IF(_ToothType=2,V213,_ha1+_b/2*TAN(_deltaa1*PI()/180))
+        Col Q: Val=8.221621221194916 | Form==IF(_ToothType=2,W213,_ha2+_b/2*TAN(_deltaa2*PI()/180))
+
+Row 214 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=ha | Form=ha
+        Col P: Val=13.200000000000001 | Form==IF(_ToothType=2,V214,_mmn*(_haXP-_x2))
+        Col Q: Val=6.799999999999999 | Form==IF(_ToothType=2,W214,_mmn*(_haXG-_x1))
+
+Row 215 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=hai | Form=hai
+        Col P: Val=10.440382335327516 | Form==_ha1-_b/2*TAN(_deltaa1*PI()/180)
+        Col Q: Val=5.378378778805083 | Form==_ha2-_b/2*TAN(_deltaa2*PI()/180)
+
+Row 216 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=hfe | Form=hfe
+        Col P: Val=10.639745109781655 | Form==IF(_ToothType=2,V216,_hf1+_b/2*TAN(_deltaf1*PI()/180))
+        Col Q: Val=18.377741553259224 | Form==IF(_ToothType=2,W216,_hf2+_b/2*TAN(_deltaf2*PI()/180))
+
+Row 217 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=hf | Form=hf
+        Col P: Val=8.799999999999999 | Form==_mmn*(_haXG+_caXG-_x1)
+        Col Q: Val=15.2 | Form==_mmn*(_haXP+_caXP-_x2)
+
+Row 218 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=hfi | Form=hfi
+        Col P: Val=6.960254890218343 | Form==_hf1-_b/2*TAN(_deltaf1*PI()/180)
+        Col Q: Val=12.022258446740775 | Form==_hf2-_b/2*TAN(_deltaf2*PI()/180)
+
+Row 219 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=an | Form=an
+        Col P: Val=17.49524075699977 | Form==ATAN(TAN(_alfa*PI()/180)*COS(_beta*PI()/180))*180/PI()
+
+Row 220 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=at | Form=at
+        Col P: Val=20.0 | Form==_alfa
+
+Row 221 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=b | Form=b
+        Col P: Val=30.0 | Form==_beta
+
+Row 222 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=bb | Form=bb
+        Col P: Val=28.48123828133947 | Form==ASIN(SIN(_beta*PI()/180)*COS(_alfa_n*PI()/180))*180/PI()
+
+Row 223 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=awn | Form=awn
+        Col P: Val=17.49525841453423 | Form==invol(2*(_x1+_x2)/(_z1+_z2)*TAN(_alfa_n*PI()/180)+Inv(_alfa_n))
+
+Row 224 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=awt | Form=awt
+        Col P: Val=20.000001318125538 | Form==invol(2*(_x1+_x2)/(_z1+_z2)*TAN(_alfa_n*PI()/180)+Inv(_alfa_t))
+
+Row 225 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=pe | Form=pe
+        Col P: Val=37.98380121927043 | Form==PI()*_men
+
+Row 226 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=pte | Form=pte
+        Col P: Val=43.859915717582034 | Form==PI()*_men/COS(_beta*PI()/180)
+
+Row 227 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=sne | Form=sne
+        Col P: Val=22.291925765636137 | Form==_men*(PI()/2+2*_x1*TAN(_alfa_t*PI()/180)+_xTau1)
+        Col Q: Val=15.691875453634294 | Form==_men*(PI()/2+2*_x2*TAN(_alfa_t*PI()/180)+_xTau2)
+
+Row 228 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=sn | Form=sn
+        Col P: Val=18.43737276725266 | Form==_mmn*(PI()/2+2*_x1*TAN(_alfa_t*PI()/180)+_xTau1)
+        Col Q: Val=12.97855376864527 | Form==_mmn*(PI()/2+2*_x2*TAN(_alfa_t*PI()/180)+_xTau2)
+
+Row 229 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=sni | Form=sni
+        Col P: Val=14.58281976886919 | Form==_min*(PI()/2+2*_x1*TAN(_alfa_t*PI()/180)+_xTau1)
+        Col Q: Val=10.265232083656246 | Form==_min*(PI()/2+2*_x2*TAN(_alfa_t*PI()/180)+_xTau2)
+
+Row 230 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=sae | Form=sae
+        Col P: Val=8.883296825929289 | Form==_dae1*(_sne1/_de1+Inv(_alfa_t)-Inv(ACOS(_de1*COS(_alfa_t*PI()/180)/_dae1)*180/PI()))
+        Col Q: Val=13.520407652411853 | Form==_dae2*(_sne2/_de2+Inv(_alfa_t)-Inv(ACOS(_de2*COS(_alfa_t*PI()/180)/_dae2)*180/PI()))
+
+Row 231 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=sa | Form=sa
+        Col P: Val=7.347263610319885 | Form==_dam1*(_sn1/_dm1+Inv(_alfa_t)-Inv(ACOS(_dm1*COS(_alfa_t*PI()/180)/_dam1)*180/PI()))
+        Col Q: Val=11.182559931049507 | Form==_dam2*(_sn2/_dm2+Inv(_alfa_t)-Inv(ACOS(_dm2*COS(_alfa_t*PI()/180)/_dam2)*180/PI()))
+
+Row 232 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=sai | Form=sai
+        Col P: Val=5.811230394710488 | Form==_dai1*(_sni1/_di1+Inv(_alfa_t)-Inv(ACOS(_di1*COS(_alfa_t*PI()/180)/_dai1)*180/PI()))
+        Col Q: Val=8.844712209687186 | Form==_dai2*(_sni2/_di2+Inv(_alfa_t)-Inv(ACOS(_di2*COS(_alfa_t*PI()/180)/_dai2)*180/PI()))
+
+Row 233 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=sae* | Form=sae*
+        Col P: Val=0.7347263610319887 | Form==_sae1/_men
+        Col Q: Val=1.118255993104951 | Form==_sae2/_men
+
+Row 236 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=zvn' | Form=zvn'
+        Col P: Val=19.386593305684215 | Form==_z1/COS(_delta1/180*PI())
+        Col Q: Val=121.16620816052632 | Form==ABS(_z2/COS(_delta2/180*PI()))
+
+Row 237 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=zv | Form=zv
+        Col P: Val=29.8476129698842 | Form==_z1/COS(_delta1/180*PI())/(COS(_beta/180*PI()))/COS(_beta/180*PI())^2
+        Col Q: Val=186.5475810617762 | Form==ABS(_z2/COS(_delta2/180*PI())/(COS(_beta/180*PI()))/COS(_beta/180*PI())^2)
+
+Row 238 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=dv' | Form=dv'
+        Col P: Val=223.85709727413155 | Form==_dm1/COS(_delta1*PI()/180)
+        Col Q: Val=1399.106857963322 | Form==ABS(_dm2/COS(_delta2*PI()/180))
+
+Row 239 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=dva' | Form=dva'
+        Col P: Val=250.25709727413155 | Form==_dv1+2*_ha1
+        Col Q: Val=1412.706857963322 | Form==_dv2+2*_ha2
+
+Row 240 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=dvb' | Form=dvb'
+        Col P: Val=210.3568606576599 | Form==_dv1*COS(_alfawt*PI()/180)
+        Col Q: Val=1314.7303791103743 | Form==_dv2*COS(_alfawt*PI()/180)
+
+Row 241 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=dvf' | Form=dvf'
+        Col P: Val=206.25709727413155 | Form==_dv1-2*_hf1
+        Col Q: Val=1368.706857963322 | Form==_dv2-2*_hf2
+
+Row 242 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=av | Form=av
+        Col P: Val=811.4819776187268 | Form==(_dv1+_dv2)*0.5
+
+Row 243 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=iv | Form=iv
+        Col P: Val=6.249999999999999 | Form==Q236/P236
+
+Row 246 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=ea  | eb | Form=ea  | eb
+        Col P: Val=1.4289241439634428 | Form==_znv1/2/PI()*(TAN(_Alfa_A1)-TAN(_alfawt*PI()/180))+_znv2/2/PI()*(TAN(_Alfa_A2)-TAN(_alfawt*PI()/180))
+        Col Q: Val=1.582795909048899 | Form==_b*0.85/_mmn/PI()*SIN(_beta*PI()/180)
+
+Row 247 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=eg | Form=eg
+        Col P: Val=3.0117200530123416 | Form==_epsilon_A+_epsilon_B
+
+Row 248 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=nE1 | Form=nE1
+        Col P: Val=6188.645601514499 | Form==60*1000/2/PI()/_z1*(_c_gama/_mred)^0.5
+
+Row 249 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=N | Form=N
+        Col P: Val=0.16158624429152607 | Form==_n1/_ne1
+
+Row 250 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=m | Form=m
+        Col P: Val=134.33115063315293 | Form==_mass1+_mass2
+
+Row 251 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=m | Form=m
+        Col P: Val=0.9830050704791837 | Form==IF(_beta=0,1-0.5*_Friction_coef*PI()*_epsilon_G*(1/_z1+1/_z2),1-_Friction_coef*PI()*_epsilon_G*(1/_z1+1/_z2)/4/COS(_beta*PI()/180))
+
+Row 252 | [1.0  ] |                                                         | Sym:            | Unit:           
+        Col N: Val=v50 | Form=v50
+        Col P: Val=56.97210693359375 | Form=56.9721069335937
+        Col Q: Val=56.97210693359375 | Form==TblAprox("T_Viscosity",_v,X268,"LILI")
+
+Row 256 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=c' | Form=c'
+        Col P: Val=12.610648082368394 | Form==1/(0.04723+(0.15551/_zv1)+0.25791/_zv2-0.00635*_x1-0.11654*_x1/_zv1-0.00193*_x2-0.24188*_x2/_zv2+0.00529*_x1*_x1+0.00182*_x2*_x2)*_CM_coef*_CE_coef*_CFK_coef
+
+Row 257 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=cg | Form=cg
+        Col P: Val=16.667406657533967 | Form==_cc*(0.75*_epsilon_A+0.25)
+
+Row 258 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=KA | Form=KA
+        Col P: Val=1.0 | Form==INDEX(T_KAcoef,Calculation!F127,Calculation!F128)
+
+Row 259 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=KV | Form=KV
+        Col P: Val=1.2971912772113106 | Form==IF(_beta=0,_KvAlfa,IF(_epsilon_B>1,_KvBeta,_KvAlBe))
+
+Row 260 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=NK | Form=NK
+        Col P: Val=1200000000.0 | Form==60*_Lh*_n1
+        Col Q: Val=480000000.0 | Form==60*_Lh*_n2
+
+Row 262 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=KHb | Form=KHb
+        Col P: Val=1.5 | Form==MIN((1+(_gapa*INDEX(T_KHBetaA,_PtGboxType,_KHBeta_coef))^1.25)*1.5,2.25)
+
+Row 263 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=KHa | Form=KHa
+        Col P: Val=1.8495147346443062 | Form==INDEX(T_KHalfa,_AG_temp,2)
+
+Row 264 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=KH | Form=KH
+        Col P: Val=3.5987615712815786 | Form==_KA*_Kv*_KHbeta*_KHalfa
+
+Row 265 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=ZE | Form=ZE
+        Col P: Val=189.81170043756651 | Form==(1/(PI()*((1-_Poison1^2)/_E1/1000+(1-_Poison2^2)/_E2/1000)))^0.5
+
+Row 266 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=ZH | Form=ZH
+        Col P: Val=2.338751569679843 | Form==2*(COS(_beta_B*PI()/180)/SIN(2*_alfa_t*PI()/180))^0.5
+
+Row 267 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Zbeta | Form=Zbeta
+        Col P: Val=0.9306048591020997 | Form==(COS(_beta*PI()/180))^0.5
+
+Row 268 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Zeps | Form=Zeps
+        Col P: Val=0.8365567596519525 | Form==IF(_epsilon_B<1,((4-_epsilon_A)/3*(1-_epsilon_B)+_epsilon_B/_epsilon_A)^0.5,(1/_epsilon_A)^0.5)
+
+Row 269 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=ZX | Form=ZX
+        Col P: Val=1.0 | Form==IF(_VHV1>450,IF(_VHV1>600,_ZXB,_ZXA),_ZXC)
+        Col Q: Val=1.0 | Form==IF(_VHV2>450,IF(_VHV2>600,_ZXB,_ZXA),_ZXC)
+
+Row 270 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=ZL | Form=ZL
+        Col P: Val=0.9302678274628082 | Form==(_CZL_1+4*(1-_CZL_1)/(1.2+80/_Viscosity50)^2)*IF(_OilType=2,1.1,1)
+        Col Q: Val=0.9302678274628082 | Form==(_CZL_2+4*(1-_CZL_2)/(1.2+80/_Viscosity50)^2)*IF(_OilType=2,1.1,1)
+
+Row 271 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=ZV | Form=ZV
+        Col P: Val=1.0051175813494428 | Form==_CZV_1+2*(1-_CZV_1)/(0.8+32/_v)^0.5
+        Col Q: Val=1.0051175813494428 | Form==_CZV_2+2*(1-_CZV_2)/(0.8+32/_v)^0.5
+
+Row 272 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=ZR | Form=ZR
+        Col P: Val=0.9325913903251809 | Form==(3/_Rz100)^_CZR_1
+        Col Q: Val=0.9325913903251809 | Form==(3/_Rz100)^_CZR_2
+
+Row 273 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=ZK | Form=ZK
+        Col P: Val=0.85 | Form=0.85
+
+Row 274 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=ZN | Form=ZN
+        Col P: Val=0.85 | Form==MIN(MAX((_NHLim1/_NK1)^(1/_qH1),_ZNCoefInfinite),_ZNmax1)
+        Col Q: Val=0.85 | Form==MIN(MAX((_NHLim2/_NK2)^(1/_qH2),_ZNCoefInfinite),_ZNmax2)
+
+Row 275 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=ZB / ZD | Form=ZB / ZD
+        Col P: Val=1.0 | Form==MAX(IF(_epsilon_B>1,1,IF(_epsilon_B=0,_MM1,_MM1-_epsilon_B*(_MM1-1))),1)
+        Col Q: Val=1.0 | Form==MAX(IF(_epsilon_B>1,1,IF(_epsilon_B=0,_MM2,_MM2-_epsilon_B*(_MM2-1))),1)
+
+Row 277 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=KFb | Form=KFb
+        Col P: Val=1.5 | Form==_KHbeta
+
+Row 278 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=KFa | Form=KFa
+        Col P: Val=1.8495147346443062 | Form==INDEX(T_KHalfa,_AG_temp,3)
+
+Row 279 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=KF | Form=KF
+        Col P: Val=3.5987615712815786 | Form==_KA*_Kv*_KFbeta*_KFalfa
+
+Row 280 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Ybeta | Form=Ybeta
+        Col P: Val=0.75 | Form==1-MIN(_epsilon_B,1)*MIN(_beta,30)/120
+
+Row 281 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Yeps | Form=Yeps
+        Col P: Val=0.6555117734134939 | Form==0.25+0.75/MIN(_epsilon_AN,2)
+
+Row 282 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Ydelta | Form=Ydelta
+        Col P: Val=1.0189768912326076 | Form==MIN(MAX(1+(_Coef_qs1-2.5)*(75/_Mat1Re)/6.5,0.9),1.3)
+        Col Q: Val=0.9939479166664134 | Form==MIN(MAX(1+(_Coef_qs2-2.5)*(75/_Mat2Re)/6.5,0.9),1.3)
+
+Row 283 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=YX | Form=YX
+        Col P: Val=0.97 | Form==IF(_E1<125,_YXC,IF(_VHV1>450,_YXB,_YXA))
+        Col Q: Val=0.97 | Form==IF(_E2<125,_YXC,IF(_VHV2>450,_YXB,_YXA))
+
+Row 284 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=YR | Form=YR
+        Col P: Val=1.00259273543747 | Form==IF(OR(_E1<125,_VHV1>450),_YRC,IF(_E1<190,_YRA,_YRB))
+        Col Q: Val=1.00259273543747 | Form==IF(OR(_E2<125,_VHV2>450),_YRC,IF(_E2<190,_YRA,_YRB))
+
+Row 285 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=YA | Form=YA
+        Col P: Val=1.0 | Form=1
+
+Row 286 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=YT | Form=YT
+        Col P: Val=1.0 | Form=1
+
+Row 287 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=YN | Form=YN
+        Col P: Val=0.85 | Form==MIN(MAX((_NFLim1/_NK1)^(1/_qF1),_YNCoefInfinite),_ZYmax1)
+        Col Q: Val=0.85 | Form==MIN(MAX((_NFLim2/_NK2)^(1/_qF2),_YNCoefInfinite),_ZYmax2)
+
+Row 288 | [1.0  ] |                                                         | Sym:            | Unit:           
+        Col N: Val=YFS | Form=YFS
+        Col P: Val=3.6183331066459514 | Form=3.61833310664595
+        Col Q: Val=3.594793267774786 | Form=3.59479326777479
+
+Row 291 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SH | Form=SH
+        Col P: Val=1.6038067277382109 | Form==_SigmaHG_1/_SigmaH_1
+        Col Q: Val=1.413524573599779 | Form==_SigmaHG_2/_SigmaH_2
+
+Row 292 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SF | Form=SF
+        Col P: Val=15.143943023732822 | Form==_SigmaFG_1/_SigmaF_1
+        Col Q: Val=13.487091622859774 | Form==_SigmaFG_2/_SigmaF_2
+
+Row 293 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SHst | Form=SHst
+        Col P: Val=2.2189251531324055 | Form==_SHmax1/_ZE/_ZH/_ZK/_ZB1/_Zeps/_Zbeta/(_Ft*_KH*_KAS/_bw/_dv1*(_i+1)/_i)^0.5
+        Col Q: Val=1.8884469388360892 | Form==_SHmax2/_ZE/_ZH/_ZK/_ZB2/_Zeps/_Zbeta/(_Ft*_KH*_KAS/_bw/_dv1*(_i+1)/_i)^0.5
+
+Row 294 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SFst | Form=SFst
+        Col P: Val=21.799230613617702 | Form==_SFmax1*_YX1/_YFS1/_Ybeta/_Yeps/(_Ft*_KF*_KAS/_b/_mmn)
+        Col Q: Val=19.90312240238881 | Form==_SFmax2*_YX2/_YFS2/_Ybeta/_Yeps/(_Ft*_KF*_KAS/_b/_mmn)
+
+Row 295 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SigmaH0 | Form=SigmaH0
+        Col P: Val=143.73371218227965 | Form==_ZH*_ZE*_Zeps*_Zbeta*_ZK*(_Ft/(_bw*_dv1)*(_uv+1)/_uv)^0.5
+
+Row 296 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SigmaH | Form=SigmaH
+        Col P: Val=272.6686320319878 | Form==_ZB1*_SigmaH0*(_KA*_Kv*_KHbeta*_KHalfa)^0.5
+        Col Q: Val=272.6686320319878 | Form==_ZB2*_SigmaH0*(_KA*_Kv*_KHbeta*_KHalfa)^0.5
+
+Row 297 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SigmaHG | Form=SigmaHG
+        Col P: Val=437.30778649607663 | Form==_ContactLimit1*_ZNL1*_ZL_1*_ZV_1*_ZR_1*_ZX1
+        Col Q: Val=385.4238118270506 | Form==_ContactLimit2*_ZNL2*_ZL_2*_ZV_2*_ZR_2*_ZX2
+
+Row 298 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SigmaHP | Form=SigmaHP
+        Col P: Val=336.390604996982 | Form==_SigmaHG_1/_SH_proposal
+        Col Q: Val=296.47985525157736 | Form==_SigmaHG_2/_SH_proposal
+
+Row 299 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SigmaF0 | Form=SigmaF0
+        Col P: Val=6.98595754451478 | Form==_Ft/(_b*_mmn)*_YFS1*_Yeps*_Ybeta
+        Col Q: Val=6.940508905566467 | Form==_Ft/(_b*_mmn)*_YFS2*_Yeps*_Ybeta
+
+Row 300 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SigmaF | Form=SigmaF
+        Col P: Val=25.140795549804405 | Form==_SigmaF0_1*_KA*_Kv*_KFbeta*_KFalfa
+        Col Q: Val=24.977236734490166 | Form==_SigmaF0_2*_KA*_Kv*_KFbeta*_KFalfa
+
+Row 301 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SigmaFG | Form=SigmaFG
+        Col P: Val=380.7307753775536 | Form==_BendingLimit1*1*_YN1*_Ydelta1*_YR1*_YX1*_YA*_YT
+        Col Q: Val=336.8702803239277 | Form==_BendingLimit2*1*_YN2*_Ydelta2*_YR2*_YX2*_YA*_YT
+
+Row 302 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SigmaFP | Form=SigmaFP
+        Col P: Val=237.95673461097098 | Form==_SigmaFG_1/_SF_Proposal
+        Col Q: Val=210.5439252024548 | Form==_SigmaFG_2/_SF_Proposal
+
+Row 315 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Ft | Form=Ft
+        Col P: Val=4594.7458923007725 | Form==2*_Mk1*1000/_dm1
+
+Row 316 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Fn | Form=Fn
+        Col P: Val=5562.883851627628 | Form==2*_Mk1*1000/_dm1/COS(_alfa_n*PI()/180)/COS(_beta*PI()/180)
+
+Row 317 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Fa | Form=Fa
+        Col P: Val=3084.137804754622 | Form==_Ft/COS(_beta*PI()/180)*(TAN(_alfa_n*PI()/180)*SIN(_delta1*PI()/180)+_ForceSign*SIN(_beta*PI()/180)*COS(_delta1*PI()/180))
+        Col Q: Val=567.5217468678717 | Form==_Ft/COS(_beta*PI()/180)*(TAN(_alfa_n*PI()/180)*SIN(_delta2*PI()/180)-_ForceSign*SIN(_beta*PI()/180)*COS(_delta2*PI()/180))
+
+Row 318 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Fr | Form=Fr
+        Col P: Val=567.5217468678718 | Form==_Ft/COS(_beta*PI()/180)*(TAN(_alfa_n*PI()/180)*COS(_delta1*PI()/180)-_ForceSign*SIN(_beta*PI()/180)*SIN(_delta1*PI()/180))
+        Col Q: Val=3084.137804754622 | Form==_Ft/COS(_beta*PI()/180)*(TAN(_alfa_n*PI()/180)*COS(_delta2*PI()/180)+_ForceSign*SIN(_beta*PI()/180)*SIN(_delta2*PI()/180))
+
+Row 319 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Fa | Form=Fa
+        Col P: Val=-1841.946860775504 | Form==_Ft/COS(_beta*PI()/180)*(TAN(_alfa_n*PI()/180)*SIN(_delta1*PI()/180)-_ForceSign*SIN(_beta*PI()/180)*COS(_delta1*PI()/180))
+        Col Q: Val=2537.9556130799224 | Form==_Ft/COS(_beta*PI()/180)*(TAN(_alfa_n*PI()/180)*SIN(_delta2*PI()/180)+_ForceSign*SIN(_beta*PI()/180)*COS(_delta2*PI()/180))
+
+Row 320 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Fr | Form=Fr
+        Col P: Val=2537.955613079922 | Form==_Ft/COS(_beta*PI()/180)*(TAN(_alfa_n*PI()/180)*COS(_delta1*PI()/180)+_ForceSign*SIN(_beta*PI()/180)*SIN(_delta1*PI()/180))
+        Col Q: Val=-1841.946860775504 | Form==_Ft/COS(_beta*PI()/180)*(TAN(_alfa_n*PI()/180)*COS(_delta2*PI()/180)-_ForceSign*SIN(_beta*PI()/180)*SIN(_delta2*PI()/180))
+
+Row 321 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=v | vmax | Form=v | vmax
+        Col P: Val=10.882796185405306 | Form==_dm1*_n1*PI()/1000/60
+        Col Q: Val=< 12 | Form=="< " & V321
+
+Row 322 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=wt | wt* | Form=wt | wt*
+        Col P: Val=46.20156754450249 | Form==_Ft*_KA/_bw
+        Col Q: Val=4.620156754450249 | Form==_wt/_mmn
+
+Row 325 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Ro | Form=Ro
+        Col P: Val=7870.0 | Form==INDEX(Material!AX7:AX57,_MatP)
+        Col Q: Val=7870.0 | Form==INDEX(Material!AX7:AX57,_MatW)
+
+Row 326 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=E | Form=E
+        Col P: Val=206.0 | Form==INDEX(Material!BP7:BP57,_MatP)
+        Col Q: Val=206.0 | Form==INDEX(Material!BP7:BP57,_MatW)
+
+Row 327 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Rm | Form=Rm
+        Col P: Val=740.0 | Form==INDEX(Material!BB7:BB57,_MatP)
+        Col Q: Val=660.0 | Form==INDEX(Material!BB7:BB57,_MatW)
+
+Row 328 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=Rp0.2 | Form=Rp0.2
+        Col P: Val=440.0 | Form==INDEX(Material!BD7:BD57,_MatP)
+        Col Q: Val=380.0 | Form==INDEX(Material!BD7:BD57,_MatW)
+
+Row 329 | [     ] |                                                         | Sym:            | Unit:           
+        Col P: Val=0.3 | Form==INDEX(Material!BR7:BR57,_MatP)
+        Col Q: Val=0.3 | Form==INDEX(Material!BR7:BR57,_MatW)
+
+Row 330 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SHlim | Form=SHlim
+        Col P: Val=590.0 | Form==INDEX(Material!BH7:BH57,_MatP)
+        Col Q: Val=520.0 | Form==INDEX(Material!BH7:BH57,_MatW)
+
+Row 331 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=SFlim | Form=SFlim
+        Col P: Val=452.0 | Form==INDEX(Material!BJ7:BJ57,_MatP)
+        Col Q: Val=410.0 | Form==INDEX(Material!BJ7:BJ57,_MatW)
+
+Row 332 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=VHV | Form=VHV
+        Col P: Val=235.0 | Form==INDEX(Material!BG7:BG57,_MatP)
+        Col Q: Val=200.0 | Form==INDEX(Material!BG7:BG57,_MatW)
+
+Row 333 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=JHV | Form=JHV
+        Col P: Val=235.0 | Form==INDEX(Material!BF7:BF57,_MatP)
+        Col Q: Val=200.0 | Form==INDEX(Material!BF7:BF57,_MatW)
+
+Row 334 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=NHlim | Form=NHlim
+        Col P: Val=50000000.0 | Form==INDEX(Material!BL7:BL57,_MatP)*1000000
+        Col Q: Val=50000000.0 | Form==INDEX(Material!BL7:BL57,_MatW)*1000000
+
+Row 335 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=qH | Form=qH
+        Col P: Val=10.0 | Form==INDEX(Material!BN7:BN57,_MatP)
+        Col Q: Val=10.0 | Form==INDEX(Material!BN7:BN57,_MatW)
+
+Row 336 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=NFlim | Form=NFlim
+        Col P: Val=3000000.0 | Form==INDEX(Material!BM7:BM57,_MatP)*1000000
+        Col Q: Val=3000000.0 | Form==INDEX(Material!BM7:BM57,_MatW)*1000000
+
+Row 337 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=qF | Form=qF
+        Col P: Val=6.0 | Form==INDEX(Material!BO7:BO57,_MatP)
+        Col Q: Val=6.0 | Form==INDEX(Material!BO7:BO57,_MatW)
+
+Row 342 | [     ] |                                                         | Sym:            | Unit:           
+        Col P: Val=20.0 | Form=20
+
+Row 343 | [     ] |                                                         | Sym:            | Unit:           
+        Col P: Val=60.0 | Form=60
+
+Row 344 | [     ] |                                                         | Sym:            | Unit:           
+        Col P: Val=10.0 | Form=10
+
+Row 345 | [     ] |                                                         | Sym:            | Unit:           
+        Col P: Val=0.8497464760408135 | Form==_Pw1*(1-_eta)
+
+Row 346 | [     ] |                                                         | Sym:            | Unit:           
+        Col P: Val=2.124366190102034 | Form==_Pw1*(1-_eta)*1000/_tcoef/(_toil-_tair)
+
+Row 349 | [     ] | 1.0                                                     | Sym:            | Unit:           
+
+Row 350 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=DA | Form=DA
+        Col P: Val=95.5723157283968 | Form==(1.77*10000000*_Pw1/_n1)^0.333
+        Col Q: Val=128.93392375461673 | Form==(1.77*10000000*_Pw2/_n2)^0.333
+
+Row 351 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=DB | Form=DB
+        Col P: Val=74.26941723951312 | Form==(0.83*10000000*_Pw1/_n1)^0.333
+        Col Q: Val=100.19478241871231 | Form==(0.83*10000000*_Pw2/_n2)^0.333
+
+Row 354 | [     ] |                                                         | Sym:            | Unit: =         
+        Col N: Val=z1,z2 = i | Form=z1,z2 = i
+        Col P: Val=14.0 | Form=14
+        Col Q: Val=43.0 | Form=43
+
+Row 355 | [     ] |                                                         | Sym:            | Unit: =         
+        Col N: Val=n1,n2 = i | Form=n1,n2 = i
+        Col P: Val=2000.0 | Form=2000
+        Col Q: Val=750.0 | Form=750
+
+Row 356 | [     ] |                                                         | Sym:            | Unit: =         
+        Col N: Val=Mk1,n1=Pw1 | Form=Mk1,n1=Pw1
+        Col P: Val=270.0 | Form=270
+        Col Q: Val=1600.0 | Form=1600
+
+Row 362 | [1.0  ] |                                                         | Sym:            | Unit:           
+        Col N: Val=175.5 | Form=175.5
+        Col Q: Val=     [mm] | Form=     [mm]
+
+Row 364 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=4.836 | Form=4.836
+        Col Q: Val=     [mm] | Form=     [mm]
+
+Row 365 | [     ] |                                                         | Sym:            | Unit:           
+        Col N: Val=13.3 | Form=13.3
+        Col Q: Val=     [mm] | Form=     [mm]
+

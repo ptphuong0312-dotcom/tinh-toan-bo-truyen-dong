@@ -1,0 +1,1481 @@
+﻿=== ALL SHEET NAMES ===
+  Calculation - Rows: 568, Cols: 58
+  Coordinates - Rows: 598, Cols: 5
+  Material - Rows: 80, Cols: 72
+  Tables - Rows: 655, Cols: 22
+  Options - Rows: 35, Cols: 23
+  DXF - Rows: 139, Cols: 40
+  DXFTables - Rows: 43, Cols: 9
+  Data1 - Rows: 498, Cols: 24
+  Data2 - Rows: 73, Cols: 9
+  Dictionary - Rows: 518, Cols: 27
+  VariableDB - Rows: 18, Cols: 2
+
+=== ALL NAMED RANGES (Total: 1522) ===
+  _100Value -> =Calculation!$W$295 = 
+  _a -> =Calculation!$O$248 = 201.0000
+  _Abbreviation1 -> =Calculation!$O$454 = IF
+  _Abbreviation2 -> =Calculation!$P$454 = IF
+  _ABOM01 -> =Calculation!$M$554 = Spur gear - Pinion
+  _ABOM02 -> =Calculation!$M$555 = z1=19, mn=6, beta=0
+  _ABOM03 -> =Calculation!$M$556 = Material: T2(683/7-70)
+  _AcoefZW -> =Calculation!$AH$346 = 
+  _AG -> =Calculation!$F$130 = 
+  _AG_Glob -> =Calculation!$V$130 = 
+  _AG_temp -> =Calculation!$V$349 = 
+  _AGx -> =Calculation!$V$402 = 
+  _AGxtmp -> =Calculation!$G$402 = 
+  _alfa -> =Calculation!$O$171 = 20
+  _Alfa_A1 -> =Calculation!$V$297 = 
+  _Alfa_A2 -> =Calculation!$W$297 = 
+  _alfa_en1 -> =Calculation!$AA$358 = 
+  _alfa_en2 -> =Calculation!$AA$359 = 
+  _alfa_Fen1 -> =Calculation!$AC$358 = 
+  _alfa_Fen2 -> =Calculation!$AC$359 = 
+  _alfanp1 -> =Calculation!$O$145 = 0.000
+  _alfanp2 -> =Calculation!$P$145 = 0.000
+  _alfanv1 -> =Calculation!$V$138 = 
+  _alfanv2 -> =Calculation!$W$138 = 
+  _alfat -> =Calculation!$O$252 = 20.0000
+  _alfata -> =Calculation!$X$262 = 
+  _alfats1 -> =Calculation!$V$393 = 
+  _alfats1max -> =Calculation!$W$398 = 
+  _alfats1min -> =Calculation!$V$398 = 
+  _alfats2 -> =Calculation!$W$393 = 
+  _alfats2max -> =Calculation!$Y$398 = 
+  _alfats2min -> =Calculation!$X$398 = 
+  _alfatv1 -> =Calculation!$V$152 = 
+  _alfatv2 -> =Calculation!$W$152 = 
+  _alfaw -> =Calculation!$O$253 = #NAME?
+  _alfawt -> =Calculation!$O$254 = #NAME?
+  _alx1 -> =Calculation!$V$263 = 
+  _alx2 -> =Calculation!$W$263 = 
+  _apom -> =Calculation!$V$460 = 
+  _av -> =Calculation!$O$249 = 201.0000
+  _aw -> =Calculation!$O$250 = #NAME?
+  _aw_fromtable -> =Calculation!$V$458 = 
+  _aw_rqst -> =Calculation!$O$458 = 315
+  _b1 -> =Calculation!$O$178 = 120.00
+  _B1Coef -> =Calculation!$Z$507 = 
+  _b1x -> =Calculation!$O$405 = 120.000
+  _b2 -> =Calculation!$P$178 = 117.00
+  _B2Coef -> =Calculation!$AA$507 = 
+  _b2x -> =Calculation!$P$405 = 117.000
+  _BBOM01 -> =Calculation!$M$558 = Spur gear - Gear
+  _BBOM02 -> =Calculation!$M$559 = z2=48, mn=6, beta=0
+  _BBOM03 -> =Calculation!$M$560 = Material: T2(683/7-70)
+  _bcal_to_b -> =Calculation!$Z$513 = 
+  _Bconstant -> =Calculation!$V$500 = 
+  _BendingLimit1 -> =Calculation!$O$447 = 450
+  _BendingLimit2 -> =Calculation!$P$447 = 450
+  _beta -> =Calculation!$O$172 = 0
+  _beta_aw -> =Calculation!$O$470 = #NAME?
+  _beta_B -> =Calculation!$O$256 = 0.0000
+  _betaa1 -> =Calculation!$V$255 = 
+  _betaa2 -> =Calculation!$W$255 = 
+  _betav1 -> =Calculation!$V$141 = 
+  _betav2 -> =Calculation!$W$141 = 
+  _betax -> =Calculation!$O$490 = 10.00
+  _Bf -> =Calculation!$AB$343 = 
+  _bh -> =Calculation!$W$355 = 
+  _Bk -> =Calculation!$AC$343 = 
+  _Bp -> =Calculation!$AA$343 = 
+  _bs1 -> =Calculation!$O$308 = 120.00
+  _bs1_prop -> =Calculation!$V$303 = 
+  _bs1input -> =Calculation!$O$306 = 100%
+  _bs2 -> =Calculation!$P$308 = 117.00
+  _bs2_prop -> =Calculation!$W$303 = 
+  _bs2input -> =Calculation!$P$306 = 100%
+  _bw -> =Calculation!$O$179 = 117
+  _bw_pointer -> =Calculation!$B$179 = 
+  _c_gama -> =Calculation!$O$335 = #NAME?
+  _c_gama_beta -> =Calculation!$V$508 = 
+  _c0X1 -> =Calculation!$V$140 = 
+  _c0X2 -> =Calculation!$W$140 = 
+  _ca0X1min -> =Calculation!$O$146 = #NAME?
+  _ca0X2min -> =Calculation!$P$146 = #NAME?
+  _caXG -> =Calculation!$P$147 = 0.2500
+  _caXP -> =Calculation!$O$147 = 0.2500
+  _Cay -> =Calculation!$AE$338 = 
+  _Cay1 -> =Calculation!$AC$338 = 
+  _Cay2 -> =Calculation!$AD$338 = 
+  _CB_coef -> =Calculation!$V$336 = 
+  _cc -> =Calculation!$O$334 = #NAME?
+  _cc_th -> =Calculation!$O$333 = 16.451
+  _Cdidf1 -> =Calculation!$O$305 = 0%
+  _Cdidf2 -> =Calculation!$P$305 = 0%
+  _CE_coef -> =Calculation!$V$333 = 
+  _CFK_coef -> =Calculation!$V$337 = 
+  _cha0X1 -> =Calculation!$O$142 = 0.000
+  _cha0X2 -> =Calculation!$P$142 = 0.000
+  _chb0X1 -> =Calculation!$O$143 = 0.000
+  _chb0X2 -> =Calculation!$P$143 = 0.000
+  _CM_coef -> =Calculation!$V$334 = 
+  _ContactLimit1 -> =Calculation!$O$446 = 1140
+  _ContactLimit2 -> =Calculation!$P$446 = 1140
+  _CR_coef -> =Calculation!$V$335 = 
+  _CutAlfa -> =Calculation!$P$212 = 0
+  _CutToolsDimPt -> =Calculation!$H$137 = 
+  _CuttStepAngle -> =Calculation!$M$551 = 0.5
+  _Cv1 -> =Calculation!$V$338 = 
+  _Cv2 -> =Calculation!$W$338 = 
+  _Cv3 -> =Calculation!$X$338 = 
+  _Cv4 -> =Calculation!$Y$338 = 
+  _Cv5 -> =Calculation!$Z$338 = 
+  _Cv6 -> =Calculation!$AA$338 = 
+  _Cv7 -> =Calculation!$AB$338 = 
+  _CZL_1 -> =Calculation!$X$350 = 
+  _CZL_2 -> =Calculation!$Y$350 = 
+  _CZR_1 -> =Calculation!$V$351 = 
+  _CZR_2 -> =Calculation!$W$351 = 
+  _CZV_1 -> =Calculation!$V$350 = 
+  _CZV_2 -> =Calculation!$W$350 = 
+  _d1 -> =Calculation!$O$258 = 114.0000
+  _d1x -> =Calculation!$O$404 = 114.000
+  _d2 -> =Calculation!$P$258 = 288.0000
+  _d2x -> =Calculation!$P$404 = 288.000
+  _da1 -> =Calculation!$O$257 = #NAME?
+  _da1_request -> =Calculation!$O$276 = 124.000
+  _da1max -> =Calculation!$W$276 = 
+  _da1min -> =Calculation!$V$276 = 
+  _da1round -> =Calculation!$Z$276 = 
+  _da2 -> =Calculation!$P$257 = #NAME?
+  _da2_request -> =Calculation!$P$276 = 298.000
+  _da2max -> =Calculation!$Y$276 = 
+  _da2min -> =Calculation!$X$276 = 
+  _da2round -> =Calculation!$AA$276 = 
+  _damax1 -> =Calculation!$V$251 = 
+  _damax2 -> =Calculation!$W$251 = 
+  _dan1 -> =Calculation!$Y$358 = 
+  _dan2 -> =Calculation!$Y$359 = 
+  _dax -> =Calculation!$O$488 = 34.00
+  _daxx -> =Calculation!$V$489 = 
+  _Db1 -> =Calculation!$O$259 = 107.1250
+  _Db2 -> =Calculation!$P$259 = 270.6315
+  _dbn1 -> =Calculation!$X$358 = 
+  _dbn2 -> =Calculation!$X$359 = 
+  _delta0X1 -> =Calculation!$O$144 = 0.000
+  _delta0X2 -> =Calculation!$P$144 = 0.000
+  _deltad0X1 -> =Calculation!$V$139 = 
+  _deltad0X2 -> =Calculation!$W$139 = 
+  _den1 -> =Calculation!$Z$358 = 
+  _den2 -> =Calculation!$Z$359 = 
+  _DetWheelNo -> =Calculation!$H$211 = 
+  _df1 -> =Calculation!$O$260 = 99.0000
+  _df2 -> =Calculation!$P$260 = 273.0000
+  _Dh1_prop -> =Calculation!$V$301 = 
+  _Dh1Inp -> =Calculation!$O$304 = 0.00
+  _Dh2_prop -> =Calculation!$W$301 = 
+  _Dh2Inp -> =Calculation!$P$304 = 0.00
+  _Dhub1 -> =Calculation!$X$304 = 
+  _Dhub1max -> =Calculation!$X$305 = 
+  _Dhub1min -> =Calculation!$V$305 = 
+  _Dhub2 -> =Calculation!$Y$304 = 
+  _Dhub2max -> =Calculation!$Y$305 = 
+  _Dhub2min -> =Calculation!$W$305 = 
+  _di1_prop -> =Calculation!$V$302 = 
+  _di2_prop -> =Calculation!$W$302 = 
+  _dn1 -> =Calculation!$V$358 = 
+  _dn2 -> =Calculation!$V$359 = 
+  _ds1 -> =Calculation!$V$394 = 
+  _Ds1_prop -> =Calculation!$V$300 = 
+  _Ds1Format -> =Calculation!$F$303 = 
+  _Ds1Inp -> =Calculation!$O$303 = 0.00
+  _ds2 -> =Calculation!$W$394 = 
+  _Ds2_prop -> =Calculation!$W$300 = 
+  _Ds2Inp -> =Calculation!$P$303 = 0.00
+  _dsh1 -> =Calculation!$O$499 = 74.80
+  _dsh2 -> =Calculation!$P$499 =       [mm]
+  _Dshaft1 -> =Calculation!$V$304 = 
+  _Dshaft1max -> =Calculation!$X$300 = 
+  _Dshaft1min -> =Calculation!$O$300 = 56.60
+  _Dshaft1Prop -> =Calculation!$V$499 = 
+  _Dshaft2 -> =Calculation!$W$304 = 
+  _Dshaft2max -> =Calculation!$Y$300 = 
+  _Dshaft2min -> =Calculation!$P$300 = 76.90
+  _dshFlag -> =Calculation!$B$499 = 
+  _DsRound -> =Calculation!$W$299 = 
+  _dt1 -> =Calculation!$O$394 = 10.5000
+  _dt2 -> =Calculation!$P$394 = 10.5000
+  _dw1 -> =Calculation!$O$261 = #NAME?
+  _dw2 -> =Calculation!$P$261 = #NAME?
+  _dx1 -> =Calculation!$V$264 = 
+  _dx2 -> =Calculation!$W$264 = 
+  _DXF_alfa -> =Calculation!$M$546 = 30
+  _DXF_AutoScale -> =Calculation!$V$545 = 
+  _DXF_Beta -> =Calculation!$P$546 = 30
+  _DXF_Modul -> =Calculation!$P$547 = 1
+  _DXF_TblOutName -> =Calculation!$V$562 = T_DXF_Pinion
+  _DXFNoAxis -> =Calculation!$V$551 = 
+  _DXFWheelNo -> =Calculation!$H$545 = 
+  _dY -> =Calculation!$O$270 = #NAME?
+  _E1 -> =Calculation!$O$442 = 206
+  _E2 -> =Calculation!$P$442 = 206
+  _Ecoef1 -> =Calculation!$AD$358 = 
+  _Ecoef2 -> =Calculation!$AD$359 = 
+  _epsilon_A -> =Calculation!$O$297 = #NAME?
+  _epsilon_AN -> =Calculation!$X$297 = 
+  _epsilon_B -> =Calculation!$P$297 = 0.0000
+  _epsilon_G -> =Calculation!$O$298 = #NAME?
+  _epsilon_Gx -> =Calculation!$O$406 = 1.6456
+  _Eq73 -> =Calculation!$AD$327 = 
+  _Eq74 -> =Calculation!$AE$327 = 
+  _Err1 -> =Calculation!$E$120 = 
+  _Err10 -> =Calculation!$E$147 = 
+  _Err11 -> =Calculation!$E$317 = 
+  _Err12 -> =Calculation!$E$337 = 
+  _Err13 -> =Calculation!$E$340 = 
+  _Err2 -> =Calculation!$E$174 = 
+  _Err3 -> =Calculation!$E$170 = 
+  _Err4 -> =Calculation!$E$180 = 
+  _Err5 -> =Calculation!$E$203 = 
+  _Err6 -> =Calculation!$E$206 = 
+  _Err7 -> =Calculation!$E$298 = 
+  _Err8 -> =Calculation!$E$373 = 
+  _Err9 -> =Calculation!$E$437 = 
+  _eta -> =Calculation!$O$319 = #NAME?
+  _Fa -> =Calculation!$O$434 = #NAME?
+  _fa_eff -> =Calculation!$Z$343 = 
+  _Fa1 -> =Calculation!$V$411 = 
+  _Fa2 -> =Calculation!$W$411 = 
+  _FactorK -> =Calculation!$H$501 = 
+  _Fail_SF1 -> =Calculation!$Y$375 = 
+  _Fail_SF2 -> =Calculation!$Z$375 = 
+  _Fail_SFst1 -> =Calculation!$Y$378 = 
+  _Fail_SFst2 -> =Calculation!$Z$378 = 
+  _Fail_SH1 -> =Calculation!$Y$374 = 
+  _Fail_SH2 -> =Calculation!$Z$374 = 
+  _Fail_SHst1 -> =Calculation!$Y$376 = 
+  _Fail_SHst2 -> =Calculation!$Z$376 = 
+  _Fb1 -> =Calculation!$V$412 = 
+  _Fb2 -> =Calculation!$W$412 = 
+  _fbe -> =Calculation!$O$508 = 0.0
+  _FbetaX -> =Calculation!$O$510 = 11.4
+  _FbetaXcalc -> =Calculation!$V$507 = 
+  _FbetaXmin -> =Calculation!$AB$507 = 
+  _FbetaY -> =Calculation!$O$512 = 9.7
+  _fca -> =Calculation!$O$507 = 0.0
+  _ffa -> =Calculation!$W$341 = 
+  _ffa1 -> =Calculation!$V$415 = 
+  _ffa2 -> =Calculation!$W$415 = 
+  _ffb1 -> =Calculation!$V$417 = 
+  _ffb2 -> =Calculation!$W$417 = 
+  _FFFFi1 -> =Calculation!$V$421 = 
+  _FFFFi2 -> =Calculation!$W$421 = 
+  _fffi1 -> =Calculation!$V$420 = 
+  _fffi2 -> =Calculation!$W$420 = 
+  _FFi1 -> =Calculation!$V$414 = 
+  _FFi2 -> =Calculation!$W$414 = 
+  _FH_proposal -> =Calculation!$W$127 = 
+  _fHa1 -> =Calculation!$V$416 = 
+  _fHa2 -> =Calculation!$W$416 = 
+  _FHardness -> =Calculation!$Y$526 = 
+  _fHb1_Q5 -> =Calculation!$Z$418 = 
+  _fHb1_Q6 -> =Calculation!$X$418 = 
+  _fHb2_Q5 -> =Calculation!$AA$418 = 
+  _fHb2_Q6 -> =Calculation!$Y$418 = 
+  _fi1 -> =Calculation!$V$413 = 
+  _fi2 -> =Calculation!$W$413 = 
+  _FlagStLoad1 -> =Calculation!$V$348 = 
+  _FlagStLoad2 -> =Calculation!$W$348 = 
+  _FlagStLoadF1 -> =Calculation!$X$348 = 
+  _FlagStLoadF2 -> =Calculation!$Y$348 = 
+  _Fm -> =Calculation!$O$498 = #NAME?
+  _fma -> =Calculation!$O$506 = 17.6
+  _fma_calc -> =Calculation!$V$505 = 
+  _fmaFlag -> =Calculation!$B$506 = 
+  _Fn -> =Calculation!$O$433 = #NAME?
+  _Fp1 -> =Calculation!$V$410 = 
+  _Fp2 -> =Calculation!$W$410 = 
+  _fpb -> =Calculation!$W$340 = 
+  _fpb_coef -> =Calculation!$AB$327 = 
+  _fpb_eff -> =Calculation!$Y$343 = 
+  _fpb_max -> =Calculation!$AF$327 = 
+  _Fpk1 -> =Calculation!$V$409 = 
+  _Fpk2 -> =Calculation!$W$409 = 
+  _fpt1 -> =Calculation!$V$407 = 
+  _fpt2 -> =Calculation!$W$407 = 
+  _Fr -> =Calculation!$O$435 = #NAME?
+  _Fr1 -> =Calculation!$V$422 = 
+  _Fr2 -> =Calculation!$W$422 = 
+  _Friction_coef -> =Calculation!$V$319 = 
+  _fsh -> =Calculation!$O$504 = 3.8
+  _fsh_calc -> =Calculation!$V$503 = 
+  _fsh2 -> =Calculation!$O$505 = 0.0
+  _fshFlag -> =Calculation!$B$504 = 
+  _Ft -> =Calculation!$O$432 = #NAME?
+  _FtH -> =Calculation!$AC$327 = 
+  _gama_e1 -> =Calculation!$AB$358 = 
+  _gama_e2 -> =Calculation!$AB$359 = 
+  _Gcoef1 -> =Calculation!$AE$358 = 
+  _Gcoef2 -> =Calculation!$AE$359 = 
+  _GearDesignType -> =Calculation!$F$129 = 
+  _GearType -> =Calculation!$H$500 = 
+  _ha0X1 -> =Calculation!$O$138 = 1.250
+  _ha0X2 -> =Calculation!$P$138 = 1.250
+  _ha1 -> =Calculation!$O$262 = #NAME?
+  _ha2 -> =Calculation!$P$262 = #NAME?
+  _Hardness -> =Calculation!$O$524 = 552
+  _HardnessAve -> =Calculation!$AD$523 = 
+  _HardnessHBW -> =Calculation!$W$526 = 
+  _HardnessHRC -> =Calculation!$X$526 = 
+  _HardnessHV -> =Calculation!$V$526 = 
+  _HardType -> =Calculation!$G$524 = 
+  _HardTypeBckp -> =Calculation!$H$524 = 
+  _haXG -> =Calculation!$W$149 = 
+  _haXP -> =Calculation!$V$149 = 
+  _HB1div2 -> =Calculation!$AG$346 = 
+  _Hcoef1 -> =Calculation!$AF$358 = 
+  _Hcoef2 -> =Calculation!$AF$359 = 
+  _HelixModif -> =Calculation!$H$509 = 
+  _hf0X1 -> =Calculation!$O$139 = 1.000
+  _hf0X2 -> =Calculation!$P$139 = 1.000
+  _hf1 -> =Calculation!$O$263 = 7.5000
+  _hf2 -> =Calculation!$P$263 = 7.5000
+  _hFa1 -> =Calculation!$AB$362 = 
+  _hFa2 -> =Calculation!$AB$363 = 
+  _hFe1 -> =Calculation!$X$362 = 
+  _hFe2 -> =Calculation!$X$363 = 
+  _hv1 -> =Calculation!$V$199 = 
+  _hv2 -> =Calculation!$W$199 = 
+  _hvX1 -> =Calculation!$V$142 = 
+  _hvX2 -> =Calculation!$W$142 = 
+  _i -> =Calculation!$O$121 = 2.526
+  _ii -> =Calculation!$O$462 = #NAME?
+  _iin -> =Calculation!$O$120 = 2.500
+  _iin_fromtable -> =Calculation!$V$120 = 
+  _jtw -> =Calculation!$V$194 = 
+  _K -> =Calculation!$V$408 = 
+  _K1_coef -> =Calculation!$V$344 = 
+  _K1_coef0 -> =Calculation!$Y$344 = 
+  _K2_coef -> =Calculation!$W$344 = 
+  _K2_coef0 -> =Calculation!$Z$344 = 
+  _K3_coef -> =Calculation!$X$344 = 
+  _KA -> =Calculation!$O$336 = 1.000
+  _KAS -> =Calculation!$O$131 = 2.00
+  _Kconstant -> =Calculation!$O$501 = -0.48
+  _KF -> =Calculation!$O$357 = #NAME?
+  _KFa_B -> =Calculation!$W$327 = 
+  _KFa_C -> =Calculation!$V$327 = 
+  _KFalfa -> =Calculation!$O$356 = #NAME?
+  _KFbeta -> =Calculation!$O$355 = #NAME?
+  _KH -> =Calculation!$O$342 = #NAME?
+  _KHa_1 -> =Calculation!$Z$327 = 
+  _KHa_2 -> =Calculation!$AA$327 = 
+  _KHa_B -> =Calculation!$Y$327 = 
+  _KHa_C -> =Calculation!$X$327 = 
+  _KHalfa -> =Calculation!$O$341 = #NAME?
+  _KHbeta -> =Calculation!$O$340 = #NAME?
+  _KHbeta_max -> =Calculation!$O$324 = 5.00
+  _KHbetaCalc -> =Calculation!$O$513 = #NAME?
+  _KHbetaCalc1 -> =Calculation!$V$513 = 
+  _KHbetaCalc2 -> =Calculation!$W$513 = 
+  _KHbetaFlag -> =Calculation!$B$340 = 
+  _KHbetaMethode -> =Calculation!$H$324 = 
+  _KHbetaSimple -> =Calculation!$V$324 = 
+  _KHbetaTable -> =Calculation!$V$329 = 
+  _Kv -> =Calculation!$O$337 = #NAME?
+  _KV_B -> =Calculation!$X$343 = 
+  _KV_C -> =Calculation!$V$343 = 
+  _KV_C96 -> =Calculation!$W$343 = 
+  _Kv_max -> =Calculation!$O$323 = 5.00
+  _KvAlBe -> =Calculation!$X$331 = 
+  _KvAlBe96 -> =Calculation!$X$330 = 
+  _KvAlfa -> =Calculation!$W$331 = 
+  _KvAlfa96 -> =Calculation!$W$330 = 
+  _KvBeta -> =Calculation!$V$331 = 
+  _KvBeta96 -> =Calculation!$V$330 = 
+  _KVmethode -> =Calculation!$H$323 = 
+  _l -> =Calculation!$O$502 = 168.0
+  _l_calc -> =Calculation!$V$501 = 
+  _l_s_Flag -> =Calculation!$B$502 = 
+  _Lacoef1 -> =Calculation!$AC$362 = 
+  _Lacoef2 -> =Calculation!$AC$363 = 
+  _Lcoef1 -> =Calculation!$Y$362 = 
+  _Lcoef2 -> =Calculation!$Y$363 = 
+  _Lh -> =Calculation!$O$132 = 20000
+  _LoadTypeIn -> =Calculation!$F$127 = 
+  _LoadTypeOut -> =Calculation!$F$128 = 
+  _m1 -> =Calculation!$O$310 = #NAME?
+  _M1_request -> =Calculation!$O$400 = 240.000
+  _M1max -> =Calculation!$W$400 = 
+  _M1min -> =Calculation!$V$400 = 
+  _M1Round -> =Calculation!$Z$398 = 
+  _M1x -> =Calculation!$O$395 = #NAME?
+  _m2 -> =Calculation!$P$310 = #NAME?
+  _M2_request -> =Calculation!$P$400 = 760.000
+  _M2max -> =Calculation!$Y$400 = 
+  _M2min -> =Calculation!$X$400 = 
+  _M2Round -> =Calculation!$AA$398 = 
+  _M2x -> =Calculation!$P$395 = #NAME?
+  _ManType -> =Calculation!$F$131 = 
+  _mass -> =Calculation!$O$318 = #NAME?
+  _mass1 -> =Calculation!$O$309 = #NAME?
+  _mass2 -> =Calculation!$P$309 = #NAME?
+  _MatAbbrev -> =Calculation!$H$538 = 
+  _MatAbbreviation -> =Calculation!$O$538 = IF
+  _MatDensity -> =Calculation!$O$527 = 7870
+  _MatDensPr -> =Calculation!$V$527 = 
+  _MatE -> =Calculation!$O$528 = 206
+  _MatEPr -> =Calculation!$V$528 = 
+  _MatName -> =Calculation!$M$539 = Flame or induction hardened wrought and cast steels (Rm=762 MPa)
+  _MatNamePr -> =Calculation!$V$539 = Flame or induction hardened wrought and cast steels (Rm=762 MPa)
+  _MatNames2ID -> =Calculation!$H$522 = 
+  _MatNFlim -> =Calculation!$O$535 = 3.00E+06
+  _MatNFlimPr -> =Calculation!$V$535 = 
+  _MatNHlim -> =Calculation!$O$532 = 5.00E+07
+  _MatNHlimPr -> =Calculation!$V$532 = 
+  _MatNumb -> =Calculation!$H$540 = 
+  _MatP -> =Calculation!$F$125 = 
+  _MatPoison -> =Calculation!$O$531 = 0.30
+  _MatPoisonPr -> =Calculation!$V$531 = 
+  _MatqF -> =Calculation!$O$536 = 8.70
+  _MatqFPr -> =Calculation!$V$536 = 
+  _MatqH -> =Calculation!$O$533 = 13.00
+  _MatqHPr -> =Calculation!$V$533 = 
+  _MatQuality -> =Calculation!$H$523 = 
+  _MatRm -> =Calculation!$O$529 = 762
+  _MatRmPr -> =Calculation!$V$529 = 
+  _MatRp -> =Calculation!$O$530 = 419
+  _MatRpPr -> =Calculation!$V$530 = 
+  _MatSFlim -> =Calculation!$O$526 = 244
+  _MatSFlimPr -> =Calculation!$X$525 = 
+  _MatSHlim -> =Calculation!$O$525 = 1011
+  _MatSHlimPr -> =Calculation!$X$524 = 
+  _MatW -> =Calculation!$F$126 = 
+  _MatYNmax -> =Calculation!$O$537 = 2.50
+  _MatYNmaxPr -> =Calculation!$V$537 = 
+  _MatZNmax -> =Calculation!$O$534 = 1.60
+  _MatZNmaxPr -> =Calculation!$V$534 = 
+  _Misalignment -> =Calculation!$H$510 = 
+  _Mk1 -> =Calculation!$O$119 = 955.00
+  _Mk2 -> =Calculation!$P$119 = #NAME?
+  _MM1 -> =Calculation!$V$353 = 
+  _MM2 -> =Calculation!$W$353 = 
+  _mn -> =Calculation!$O$175 = 6
+  _mn_forRa -> =Calculation!$V$328 = 
+  _mn_fromtable -> =Calculation!$V$175 = 
+  _mn_pointer -> =Calculation!$B$175 = 
+  _mn_preliminary -> =Calculation!$V$174 = 
+  _mnv1 -> =Calculation!$V$137 = 
+  _mnv2 -> =Calculation!$W$137 = 
+  _mnx -> =Calculation!$O$403 = 6.000
+  _MoI1 -> =Calculation!$O$311 = #NAME?
+  _MoI2 -> =Calculation!$P$311 = #NAME?
+  _mred -> =Calculation!$O$313 = #NAME?
+  _mRim1 -> =Calculation!$V$315 = 
+  _mt -> =Calculation!$O$244 = 6.0000
+  _N -> =Calculation!$O$317 = #NAME?
+  _n1 -> =Calculation!$O$118 = 1000.00
+  _n2 -> =Calculation!$P$118 = 395.8
+  _ne1 -> =Calculation!$O$316 = #NAME?
+  _NF -> =Calculation!$V$355 = 
+  _NFLim1 -> =Calculation!$O$452 = 3.00E+06
+  _NFLim2 -> =Calculation!$P$452 = 3.00E+06
+  _NFStatLim1 -> =Calculation!$V$450 = 
+  _NFStatLim2 -> =Calculation!$W$450 = 
+  _NHLim1 -> =Calculation!$O$450 = 1.00E+08
+  _NHLim2 -> =Calculation!$P$450 = 1.00E+08
+  _NHStatLim1 -> =Calculation!$V$449 = 
+  _NHStatLim2 -> =Calculation!$W$449 = 
+  _NK1 -> =Calculation!$O$338 = 1.20E+09
+  _NK2 -> =Calculation!$P$338 = 4.75E+08
+  _NoEvPt -> =Calculation!$M$550 = 100
+  _NoHdPt -> =Calculation!$M$549 = 20
+  _NoOfTeeth -> =Calculation!$M$548 = 4
+  _NoTeethCopy -> =Calculation!$M$552 = 20
+  _NS -> =Calculation!$P$317 = #NAME?
+  _OilType -> =Calculation!$H$328 = 
+  _p -> =Calculation!$O$245 = 18.850
+  _pbn -> =Calculation!$W$358 = 
+  _pi -> =Calculation!$V$117 = 
+  _Pitch1X -> =Calculation!$V$270 = 
+  _Pitch2X -> =Calculation!$W$270 = 
+  _Poison1 -> =Calculation!$O$445 = 0.3
+  _Poison2 -> =Calculation!$P$445 = 0.3
+  _ProfileModiff -> =Calculation!$H$327 = 
+  _Psi -> =Calculation!$W$349 = 
+  _Psi_d -> =Calculation!$O$174 = 1.05
+  _Psi_d_max -> =Calculation!$V$173 = 
+  _psi_d_pointer -> =Calculation!$F$173 = 
+  _pt -> =Calculation!$O$246 = 18.850
+  _ptb -> =Calculation!$O$247 = 17.713
+  _Ptdiv -> =Calculation!$V$467 = 
+  _Ptsol -> =Calculation!$V$466 = 
+  _Pw1 -> =Calculation!$O$117 = 100.000
+  _Pw2 -> =Calculation!$P$117 = #NAME?
+  _q -> =Calculation!$V$195 = 
+  _qF1 -> =Calculation!$O$453 = 6
+  _qF2 -> =Calculation!$P$453 = 6
+  _qFA1 -> =Calculation!$Y$369 = 
+  _qFA2 -> =Calculation!$Z$369 = 
+  _qH1 -> =Calculation!$O$451 = 10
+  _qH2 -> =Calculation!$P$451 = 10
+  _qHA1 -> =Calculation!$Y$354 = 
+  _qHA2 -> =Calculation!$Z$354 = 
+  _qscoef1 -> =Calculation!$Z$362 = 
+  _qscoef2 -> =Calculation!$Z$363 = 
+  _Ra -> =Calculation!$AB$348 = 
+  _ra0X1 -> =Calculation!$O$140 = 0.380
+  _ra0X2 -> =Calculation!$P$140 = 0.380
+  _Ra1 -> =Calculation!$V$352 = 
+  _Ra1R -> =Calculation!$V$332 = 
+  _Ra2 -> =Calculation!$W$352 = 
+  _Ra2R -> =Calculation!$W$332 = 
+  _RadiusOC1 -> =Calculation!$AD$352 = 
+  _RadiusOC2 -> =Calculation!$AE$352 = 
+  _RadiusOCred -> =Calculation!$AC$352 = 
+  _Ratio -> =Calculation!$AI$346 = 
+  _rf0X1 -> =Calculation!$O$141 = 0.000
+  _rf0X2 -> =Calculation!$P$141 = 0.000
+  _rf1 -> =Calculation!$W$362 = 
+  _rf2 -> =Calculation!$W$363 = 
+  _Rm1 -> =Calculation!$O$443 = 785
+  _Rm2 -> =Calculation!$P$443 = 785
+  _RmAcoef -> =Calculation!$W$529 = 
+  _RmBcoef -> =Calculation!$X$529 = 
+  _RmSwitch -> =Calculation!$Y$529 = 
+  _Ro1 -> =Calculation!$O$441 = 7870
+  _Ro2 -> =Calculation!$P$441 = 7870
+  _rog1 -> =Calculation!$O$516 = 4.000
+  _rog2 -> =Calculation!$P$516 = 3.000
+  _Roughness -> =Calculation!$G$351 = 
+  _Roughness1 -> =Calculation!$G$330 = 
+  _Roughness2 -> =Calculation!$H$330 = 
+  _RoughnessR1 -> =Calculation!$G$331 = 
+  _RoughnessR2 -> =Calculation!$H$331 = 
+  _rox1 -> =Calculation!$V$365 = 
+  _rox1Flag -> =Calculation!$Z$365 = 
+  _rox2 -> =Calculation!$W$365 = 
+  _rox2Flag -> =Calculation!$AA$365 = 
+  _Rp02_1 -> =Calculation!$O$444 = 539
+  _Rp02_2 -> =Calculation!$P$444 = 539
+  _Rz -> =Calculation!$Z$352 = 
+  _Rz1 -> =Calculation!$X$352 = 
+  _Rz10 -> =Calculation!$AD$348 = 
+  _Rz10_1 -> =Calculation!$AA$352 = 
+  _Rz10_2 -> =Calculation!$AB$352 = 
+  _Rz1R -> =Calculation!$X$332 = 
+  _Rz2 -> =Calculation!$Y$352 = 
+  _Rz2R -> =Calculation!$Y$332 = 
+  _RZH -> =Calculation!$V$346 = 
+  _s -> =Calculation!$O$503 = 0.0
+  _s_calc -> =Calculation!$W$501 = 
+  _S_QCalc_beta -> =Calculation!$E$100 = 
+  _s1_2 -> =Calculation!$V$267 = 
+  _s2_2 -> =Calculation!$W$267 = 
+  _sa1 -> =Calculation!$O$264 = #NAME?
+  _sa1_2 -> =Calculation!$V$265 = 
+  _sa1x -> =Calculation!$O$269 = #NAME?
+  _sa2 -> =Calculation!$P$264 = #NAME?
+  _sa2_2 -> =Calculation!$W$265 = 
+  _sa2x -> =Calculation!$P$269 = #NAME?
+  _SafetyValid -> =Calculation!$AE$378 = 
+  _sb -> =Calculation!$O$195 = 0.0000
+  _sb1 -> =Calculation!$O$268 = #NAME?
+  _sb1_2 -> =Calculation!$V$269 = 
+  _sb2 -> =Calculation!$P$268 = #NAME?
+  _sb2_2 -> =Calculation!$W$269 = 
+  _sbmax -> =Calculation!$P$194 = #NAME?
+  _sbmin -> =Calculation!$O$194 = #NAME?
+  _ServCoef1 -> =Calculation!$AA$331 = 
+  _SF_Proposal -> =Calculation!$P$133 = 1.60
+  _SF1 -> =Calculation!$O$374 = #NAME?
+  _SF2 -> =Calculation!$P$374 = #NAME?
+  _SFmax1 -> =Calculation!$V$375 = 
+  _SFmax2 -> =Calculation!$W$375 = 
+  _sFn1 -> =Calculation!$V$362 = 
+  _sFn2 -> =Calculation!$V$363 = 
+  _SFst1 -> =Calculation!$O$376 = #NAME?
+  _SFst2 -> =Calculation!$P$376 = #NAME?
+  _SH_proposal -> =Calculation!$O$133 = 1.30
+  _SH1 -> =Calculation!$O$373 = #NAME?
+  _SH2 -> =Calculation!$P$373 = #NAME?
+  _ShaftAStress -> =Calculation!$V$483 = 
+  _ShaftMaterial -> =Calculation!$H$482 = 
+  _ShaftRm -> =Calculation!$V$299 = 
+  _SHmax1 -> =Calculation!$V$374 = 
+  _SHmax2 -> =Calculation!$W$374 = 
+  _SHSFPt -> =Calculation!$V$523 = 
+  _SHst1 -> =Calculation!$O$375 = #NAME?
+  _SHst2 -> =Calculation!$P$375 = #NAME?
+  _SigmaF_1 -> =Calculation!$O$384 = #NAME?
+  _SigmaF_2 -> =Calculation!$P$384 = #NAME?
+  _SigmaF0_1 -> =Calculation!$O$383 = #NAME?
+  _SigmaF0_2 -> =Calculation!$P$383 = #NAME?
+  _SigmaFG_1 -> =Calculation!$O$385 = 393.40
+  _SigmaFG_2 -> =Calculation!$P$385 = 402.57
+  _SigmaFP_1 -> =Calculation!$O$386 = 245.87
+  _SigmaFP_2 -> =Calculation!$P$386 = 251.61
+  _SigmaH_1 -> =Calculation!$O$380 = #NAME?
+  _SigmaH_2 -> =Calculation!$P$380 = #NAME?
+  _SigmaH0 -> =Calculation!$O$379 = #NAME?
+  _SigmaHG_1 -> =Calculation!$O$381 = #NAME?
+  _SigmaHG_2 -> =Calculation!$P$381 = #NAME?
+  _SigmaHP_1 -> =Calculation!$O$382 = #NAME?
+  _SigmaHP_2 -> =Calculation!$P$382 = #NAME?
+  _sn1 -> =Calculation!$O$266 = 9.4248
+  _sn2 -> =Calculation!$P$266 = 9.4248
+  _Speed_coef -> =Calculation!$AA$330 = 
+  _SPRatio -> =Calculation!$V$325 = 
+  _SR1 -> =Calculation!$O$307 = #NAME?
+  _SR1_ht -> =Calculation!$V$360 = 
+  _SR1max -> =Calculation!$X$306 = 
+  _SR2 -> =Calculation!$P$307 = #NAME?
+  _SR2_ht -> =Calculation!$W$360 = 
+  _SR2max -> =Calculation!$Y$306 = 
+  _SRFlag -> =Calculation!$H$303 = 
+  _SRmin1 -> =Calculation!$V$306 = 
+  _SRmin2 -> =Calculation!$W$306 = 
+  _st1 -> =Calculation!$O$267 = 9.4248
+  _st2 -> =Calculation!$P$267 = 9.4248
+  _sta1 -> =Calculation!$O$265 = #NAME?
+  _sta2 -> =Calculation!$P$265 = #NAME?
+  _suma -> =Calculation!$V$461 = 
+  _SumX -> =Calculation!$O$204 = 0.0000
+  _SumX_B -> =Calculation!$O$465 = #NAME?
+  _SumXmin -> =Calculation!$V$204 = 
+  _sx1_2 -> =Calculation!$V$266 = 
+  _sx2_2 -> =Calculation!$W$266 = 
+  _tair -> =Calculation!$O$475 = 20.00
+  _tcoef -> =Calculation!$O$477 = 10.00
+  _tg1 -> =Calculation!$O$515 = 0.200
+  _tg2 -> =Calculation!$P$515 = 0.300
+  _THeatT -> =Calculation!$W$538 = 
+  _Theta1 -> =Calculation!$AO$358 = 
+  _Theta2 -> =Calculation!$AO$359 = 
+  _thetaA1 -> =Calculation!$O$207 = #NAME?
+  _thetaA2 -> =Calculation!$P$208 = #NAME?
+  _ThetaDif01 -> =Calculation!$V$207 = 
+  _thetaE1 -> =Calculation!$O$208 = #NAME?
+  _thetaE2 -> =Calculation!$P$207 = #NAME?
+  _thetaSum -> =Calculation!$O$209 = #NAME?
+  _toil -> =Calculation!$O$476 = 60.00
+  _ToleranceFlag -> =Calculation!$B$402 = 
+  _ToleranceModulFlag -> =Calculation!$B$403 = 
+  _ToolAnglePt -> =Calculation!$H$212 = 
+  _ux -> =Calculation!$O$489 = 0.00
+  _v -> =Calculation!$O$437 = 5.97
+  _vF -> =Calculation!$P$377 = 0.1
+  _vH -> =Calculation!$O$377 = 0.06
+  _VHV_HBmax -> =Calculation!$Y$448 = 
+  _VHV_HBmin -> =Calculation!$X$448 = 
+  _VHV1 -> =Calculation!$O$448 = 600
+  _VHV1_HB -> =Calculation!$V$448 = 
+  _VHV2 -> =Calculation!$P$448 = 600
+  _VHV2_HB -> =Calculation!$W$448 = 
+  _Viscosity40 -> =Calculation!$W$346 = 
+  _Viscosity50 -> =Calculation!$O$329 = 178
+  _Viscosity50Prop -> =Calculation!$P$329 = #NAME?
+  _ViscosityFlag -> =Calculation!$B$329 = 
+  _Vmax -> =Calculation!$V$437 = 
+  _W1 -> =Calculation!$O$392 = #NAME?
+  _W1_request -> =Calculation!$O$398 = 77.000
+  _W1max -> =Calculation!$W$396 = 
+  _W1min -> =Calculation!$V$396 = 
+  _W1Round -> =Calculation!$Z$396 = 
+  _W2 -> =Calculation!$P$392 = #NAME?
+  _W2_request -> =Calculation!$P$398 = 260.000
+  _W2max -> =Calculation!$Y$396 = 
+  _W2min -> =Calculation!$X$396 = 
+  _W2Round -> =Calculation!$AA$396 = 
+  _wt -> =Calculation!$O$438 = #NAME?
+  _x_pointer -> =Calculation!$B$201 = 
+  _x01 -> =Calculation!$V$157 = 
+  _x02 -> =Calculation!$W$157 = 
+  _x1 -> =Calculation!$O$203 = 0.0000
+  _x1_SliderVal -> =Calculation!$W$202 = 
+  _x1From -> =Calculation!$V$205 = 
+  _x1min -> =Calculation!$O$199 = -0.263
+  _x1To -> =Calculation!$W$205 = 
+  _x2 -> =Calculation!$P$203 = 0.0000
+  _x2min -> =Calculation!$P$199 = -0.708
+  _XX_i -> =Calculation!$R$495 = 2.000
+  _XX_Mk1 -> =Calculation!$O$496 = 1600.0
+  _XX_n1 -> =Calculation!$O$495 = 700.0
+  _XX_Pw1 -> =Calculation!$R$496 = 127.33
+  _XX_z1 -> =Calculation!$O$494 = 17
+  _xx1 -> =Calculation!$O$467 = #NAME?
+  _XXX_i -> =Calculation!$R$494 = 1.059
+  _XXX_n1 -> =Calculation!$P$496 = 760.0
+  _y -> =Calculation!$V$252 = 
+  _y_beta -> =Calculation!$O$511 = 1.7
+  _y_betacalc -> =Calculation!$V$510 = 
+  _YA -> =Calculation!$O$364 = 1.000
+  _YAcoef -> =Calculation!$H$325 = 
+  _YB1 -> =Calculation!$O$359 = #NAME?
+  _YB2 -> =Calculation!$P$359 = #NAME?
+  _Ybeta -> =Calculation!$O$358 = 1.000
+  _ybetaFlag -> =Calculation!$B$511 = 
+  _ybFlag1 -> =Calculation!$Y$510 = 
+  _ybFlag2 -> =Calculation!$Z$510 = 
+  _Ydel1_St -> =Calculation!$AL$365 = 
+  _Ydel1StFlg -> =Calculation!$AJ$365 = 
+  _Ydel2_St -> =Calculation!$AM$365 = 
+  _Ydel2StFlg -> =Calculation!$AK$365 = 
+  _Ydelta -> =Calculation!#REF! = 
+  _Ydelta1 -> =Calculation!$O$361 = 0.992
+  _Ydelta1Stat -> =Calculation!$X$365 = 
+  _Ydelta2 -> =Calculation!$P$361 = 0.996
+  _Ydelta2Stat -> =Calculation!$Y$365 = 
+  _YDT1 -> =Calculation!$O$360 = 1.000
+  _YDT2 -> =Calculation!$P$360 = 1.000
+  _Yeps -> =Calculation!$V$381 = 
+  _yf -> =Calculation!$V$341 = 
+  _YF1 -> =Calculation!$O$368 = #NAME?
+  _YF2 -> =Calculation!$P$368 = #NAME?
+  _YFS1 -> =Calculation!$V$380 = 
+  _YFS2 -> =Calculation!$W$380 = 
+  _YN1 -> =Calculation!$O$366 = 0.887
+  _YN2 -> =Calculation!$P$366 = 0.904
+  _YNCoef -> =Calculation!$H$366 = 
+  _YNCoefInfinite -> =Calculation!$V$369 = 
+  _YNmax1 -> =Calculation!$W$369 = 
+  _YNmax2 -> =Calculation!$X$369 = 
+  _yp -> =Calculation!$V$340 = 
+  _YR1 -> =Calculation!$O$363 = 1.004
+  _YR1A -> =Calculation!$V$368 = 
+  _YR1B -> =Calculation!$W$368 = 
+  _YR1C -> =Calculation!$X$368 = 
+  _YR1Flag -> =Calculation!$AB$368 = 
+  _YR2 -> =Calculation!$P$363 = 1.004
+  _YR2A -> =Calculation!$Y$368 = 
+  _YR2B -> =Calculation!$Z$368 = 
+  _YR2C -> =Calculation!$AA$368 = 
+  _YR2Flag -> =Calculation!$AC$368 = 
+  _YRA -> =Calculation!$V$386 = 
+  _YRB -> =Calculation!$W$386 = 
+  _YRC -> =Calculation!$X$386 = 
+  _YS1 -> =Calculation!$O$369 = #NAME?
+  _YS1Calc -> =Calculation!$AA$362 = 
+  _YS2 -> =Calculation!$P$369 = #NAME?
+  _YS2Calc -> =Calculation!$AA$363 = 
+  _YSg1 -> =Calculation!$O$370 = #NAME?
+  _YSg1Calc -> =Calculation!$O$518 = #NAME?
+  _YSg2 -> =Calculation!$P$370 = #NAME?
+  _YSg2Calc -> =Calculation!$P$518 = #NAME?
+  _YSgFlag -> =Calculation!$H$370 = 
+  _YST1 -> =Calculation!$O$367 = 1.000
+  _YST2 -> =Calculation!$P$367 = 1.000
+  _YT -> =Calculation!$O$365 = 1.000
+  _YX1 -> =Calculation!$O$362 = 0.990
+  _YX1Flag -> =Calculation!$Y$356 = 
+  _YX2 -> =Calculation!$P$362 = 0.990
+  _YX2Flag -> =Calculation!$Z$356 = 
+  _YXA -> =Calculation!$V$356 = 
+  _YXB -> =Calculation!$W$356 = 
+  _YXC -> =Calculation!$X$356 = 
+  _z1 -> =Calculation!$O$170 = 19
+  _z1a -> =Calculation!$V$464 = 
+  _z1x -> =Calculation!$O$408 = 2
+  _z2 -> =Calculation!$P$170 = 48
+  _z2a -> =Calculation!$V$465 = 
+  _z2x -> =Calculation!$P$408 = 2
+  _ZB1 -> =Calculation!$O$353 = #NAME?
+  _ZB2 -> =Calculation!$P$353 = #NAME?
+  _Zbeta -> =Calculation!$O$345 = 1.000
+  _ZE -> =Calculation!$O$343 = 189.81
+  _Zeps -> =Calculation!$O$346 = #NAME?
+  _ZeroValue -> =Calculation!$V$295 = 
+  _ZH -> =Calculation!$O$344 = #NAME?
+  _ZL_1 -> =Calculation!$O$349 = 1.154
+  _ZL_2 -> =Calculation!$P$349 = 1.154
+  _zmin1G -> =Calculation!$P$282 = 14
+  _zmin1P -> =Calculation!$O$282 = 14
+  _zmin2G -> =Calculation!$P$283 = 17
+  _zmin2P -> =Calculation!$O$283 = 17
+  _zmin3G -> =Calculation!$P$284 = 22
+  _zmin3P -> =Calculation!$O$284 = 22
+  _zminG -> =Calculation!$V$283 = 
+  _zminP -> =Calculation!$V$282 = 
+  _zn1 -> =Calculation!$O$280 = 19.000
+  _zn2 -> =Calculation!$P$280 = 48.000
+  _ZNCoef -> =Calculation!$H$352 = 
+  _ZNCoefInfinite -> =Calculation!$V$354 = 
+  _ZNL1 -> =Calculation!$O$352 = 0.916
+  _ZNL2 -> =Calculation!$P$352 = 0.946
+  _ZNmax1 -> =Calculation!$W$354 = 
+  _ZNmax2 -> =Calculation!$X$354 = 
+  _ZR_1 -> =Calculation!$O$351 = #NAME?
+  _ZR_2 -> =Calculation!$P$351 = #NAME?
+  _ZV_1 -> =Calculation!$O$350 = 0.984
+  _ZV_2 -> =Calculation!$P$350 = 0.984
+  _ZW -> =Calculation!$AK$346 = 
+  _ZW_1 -> =Calculation!$O$347 = #NAME?
+  _ZW_2 -> =Calculation!$P$347 = 1.000
+  _zw1 -> =Calculation!$O$391 = 3
+  _ZW1Auto -> =Calculation!$AA$346 = 
+  _zw2 -> =Calculation!$P$391 = 6
+  _ZW2Auto -> =Calculation!$AB$346 = 
+  _ZWAuto -> =Calculation!$X$346 = 
+  _ZWChoice -> =Calculation!$H$326 = 
+  _ZWFlag -> =Calculation!$Z$346 = 
+  _ZWGGFlag -> =Calculation!$Y$346 = 
+  _ZWHBG130 -> =Calculation!$AD$346 = 
+  _ZWHBG470 -> =Calculation!$AE$346 = 
+  _ZWHBL130 -> =Calculation!$AC$346 = 
+  _ZWtype1 -> =Calculation!$AF$346 = 
+  _ZWtype2 -> =Calculation!$AJ$346 = 
+  _zx -> =Calculation!$O$487 = 20
+  _ZX1 -> =Calculation!$O$348 = 1.000
+  _ZX2 -> =Calculation!$P$348 = 1.000
+  _zz1 -> =Calculation!$O$461 = #NAME?
+  _zz2 -> =Calculation!$P$461 = #NAME?
+  S_BOMInfo -> =Calculation!$V$547 = ABOM01Spur gear - PinionABOM02z1=19, mn=6, beta=0ABOM03Material: T2(683/7-70)BBOM01Spur gear - GearBBOM02z2=48, mn=6, beta=0BBOM03Material: T2(683/7-70)
+  S_DXFOutPt -> =Calculation!$H$543 = 
+  S_DXFScale -> =Calculation!$V$544 = 
+  S_FlagProjectAuthorName -> =Calculation!$H$104 = 
+  S_FlagProjectDate -> =Calculation!$H$105 = 
+  S_FlagProjectInfo -> =Calculation!$H$108 = 
+  S_FlagProjectName -> =Calculation!$H$107 = 
+  S_FlagProjectNotes -> =Calculation!$H$109 = 
+  S_FlagProjectNumber -> =Calculation!$H$106 = 
+  S_HRA00 -> =Calculation!$B$115 = 
+  S_HRA01 -> =Calculation!$B$116 = 
+  S_HRA02 -> =Calculation!$B$123 = 
+  S_HRA03 -> =Calculation!$B$136 = 
+  S_HRA04 -> =Calculation!$B$163 = 
+  S_HRA05 -> =Calculation!$B$197 = 
+  S_HRB00 -> =Calculation!$B$230 = 
+  S_HRB01 -> =Calculation!$B$231 = 
+  S_HRB02 -> =Calculation!$B$278 = 
+  S_HRB03 -> =Calculation!$B$286 = 
+  S_HRB04 -> =Calculation!$B$321 = 
+  S_HRB05 -> =Calculation!$B$372 = 
+  S_HRB06 -> =Calculation!$B$388 = 
+  S_HRB07 -> =Calculation!$B$424 = 
+  S_HRB08 -> =Calculation!$B$440 = 
+  S_HRC00 -> =Calculation!$B$456 = 
+  S_HRC01 -> =Calculation!$B$457 = 
+  S_HRC02 -> =Calculation!$B$474 = 
+  S_HRC03 -> =Calculation!$B$481 = 
+  S_HRC04 -> =Calculation!$B$486 = 
+  S_HRC05 -> =Calculation!$B$493 = 
+  S_HRC06 -> =Calculation!$B$542 = 
+  S_HRC07 -> =Calculation!$B$520 = 
+  S_HRI00 -> =Calculation!$B$102 = 
+  S_ProjectAuthorName -> =Calculation!$J$104 = John Doe
+  S_ProjectDate -> =Calculation!$M$104 = 8/8/2018
+  S_ProjectFileName -> =Calculation!$J$106 = Gear1_01.xls
+  S_ProjectID -> =Calculation!$W$103 = GEARS_01
+  S_ProjectInfo -> =Calculation!$J$110 = Spur gearing: Beta=0;  mn=6;  b1=120;  b2=117;  z1=19;  z2=48;  n1=1000;  n2=395.8;  i=2.53;  P=100 [kW]
+  S_ProjectName -> =Calculation!$J$108 = Spur Gear
+  S_ProjectNotes -> =Calculation!$J$112 = Comments
+  S_ProjectNumber -> =Calculation!$P$104 = 111-111
+  S_Units -> =Calculation!$V$543 = 
+  S_XProjectInfo -> =Calculation!$W$104 = Spur gearing: Beta=0;  mn=6;  b1=120;  b2=117;  z1=19;  z2=48;  n1=1000;  n2=395.8;  i=2.53;  P=100 [kW]
+  T_DXFGearText -> =Calculation!$M$558:$P$560 = 
+  T_DXFPinionText -> =Calculation!$M$554:$P$556 = 
+  T_solutions1 -> =Calculation!$AC$460:$AH$468 = 
+  T_solutions2 -> =Calculation!$V$469:$W$471 = 
+  T_solutions3 -> =Calculation!$X$460:$X$468 = 
+  XC_0001 -> =Calculation!$J$115 = ?
+  XC_0002 -> =Calculation!$J$116 = 1.0
+  XC_0003 -> =Calculation!$J$117 = 1.1
+  XC_0004 -> =Calculation!$J$118 = 1.2
+  XC_0005 -> =Calculation!$J$119 = 1.3
+  XC_0006 -> =Calculation!$J$120 = 1.4
+  XC_0007 -> =Calculation!$J$121 = 1.5
+  XC_0008 -> =Calculation!$J$319 = 8.23
+  XC_0009 -> =Calculation!$J$123 = 2.0
+  XC_0010 -> =Calculation!$J$125 = 2.2
+  XC_0011 -> =Calculation!$J$126 = 2.3
+  XC_0012 -> =Calculation!$J$127 = 2.4
+  XC_0013 -> =Calculation!$J$128 = 2.5
+  XC_0014 -> =Calculation!$J$129 = 2.6
+  XC_0015 -> =Calculation!$J$130 = 2.7
+  XC_0016 -> =Calculation!$J$131 = 2.8
+  XC_0017 -> =Calculation!$J$132 = 2.9
+  XC_0018 -> =Calculation!$J$136 = 3.0
+  XC_0019 -> =Calculation!$J$133 = 2.10
+  XC_0020 -> =Calculation!$J$173 = 4.4
+  XC_0022 -> =Calculation!$J$174 = 4.5
+  XC_0024 -> =Calculation!$J$176 = 4.7
+  XC_0026 -> =Calculation!$J$181 = 4.12
+  XC_0027 -> =Calculation!$J$182 = 4.13
+  XC_0028 -> =Calculation!$J$183 = 4.14
+  XC_0029 -> =Calculation!$J$163 = 4.0
+  XC_0030 -> =Calculation!$J$170 = 4.1
+  XC_0031 -> =Calculation!$J$171 = 4.2
+  XC_0032 -> =Calculation!$J$172 = 4.3
+  XC_0033 -> =Calculation!$J$178 = 4.9
+  XC_0034 -> =Calculation!$J$179 = 4.10
+  XC_0036 -> =Calculation!$J$175 = 4.6
+  XC_0038 -> =Calculation!$J$147 = 3.11
+  XC_0040 -> =Calculation!$J$193 = 4.15
+  XC_0041 -> =Calculation!$J$197 = 5.0
+  XC_0042 -> =Calculation!$J$203 = 5.6
+  XC_0043 -> =Calculation!$J$297 = 8.1
+  XC_0044 -> =Calculation!$J$298 = 8.2
+  XC_0045 -> =Calculation!$J$231 = 6.0
+  XC_0046 -> =Calculation!$J$278 = 7.0
+  XC_0047 -> =Calculation!$J$202 = 5.5
+  XC_0048 -> =Calculation!$J$286 = 8.0
+  XC_0049 -> =Calculation!$J$204 = 5.7
+  XC_0050 -> =Calculation!$J$321 = 9.0
+  XC_0051 -> =Calculation!$J$206 = 5.9
+  XC_0052 -> =Calculation!$J$372 = 10.0
+  XC_0053 -> =Calculation!$J$388 = 11.0
+  XC_0054 -> =Calculation!$J$230 = 
+  XC_0055 -> =Calculation!$J$424 = 12.0
+  XC_0056 -> =Calculation!$J$440 = 13.0
+  XC_0057 -> =Calculation!$J$457 = 14.0
+  XC_0058 -> =Calculation!$J$474 = 15.0
+  XC_0059 -> =Calculation!$J$481 = 16.0
+  XC_0060 -> =Calculation!$J$486 = 17.0
+  XC_0061 -> =Calculation!$J$493 = 18.0
+  XC_0070 -> =Calculation!$J$205 = 5.8
+  XC_0078 -> =Calculation!$J$269 = 6.29
+  XC_0087 -> =Calculation!$J$305 = 8.9
+  XC_0089 -> =Calculation!$J$316 = 8.20
+  XC_0090 -> =Calculation!$J$317 = 8.21
+  XC_0095 -> =Calculation!$J$329 = 9.8
+  XC_0107 -> =Calculation!$J$328 = 9.7
+  XC_0109 -> =Calculation!$J$330 = 9.9
+  XC_0110 -> =Calculation!$J$366 = 9.45
+  XC_0123 -> =Calculation!$J$352 = 9.31
+  XC_0129 -> =Calculation!$J$378 = 10.6
+  XC_0150 -> =Calculation!$J$456 = 
+  XC_0152 -> =Calculation!$J$459 = 14.2
+  XC_0164 -> =Calculation!$J$477 = 15.3
+  XC_0165 -> =Calculation!$J$478 = 15.4
+  XC_0166 -> =Calculation!$J$479 = 15.5
+  XC_0170 -> =Calculation!$J$489 = 17.3
+  XC_0176 -> =Calculation!$J$134 = 2.11
+  XC_0511 -> =Calculation!$J$377 = 10.5
+  XC_0535 -> =Calculation!$J$436 = 12.5
+  XC_1040 -> =Calculation!$J$198 = 5.1
+  XC_1041 -> =Calculation!$J$199 = 5.2
+  XC_1042 -> =Calculation!$J$200 = 5.3
+  XC_1043 -> =Calculation!$J$201 = 5.4
+  XC_1136 -> =Calculation!$J$437 = 12.6
+  XC_1136b -> =Calculation!$J$314 = 8.18
+  XC_1137 -> =Calculation!$J$438 = 12.7
+  XC_1163 -> =Calculation!$J$476 = 15.2
+  XC_2007 -> =Calculation!$J$207 = 5.10
+  XC_2009 -> =Calculation!$J$209 = 5.12
+  XC_2012 -> =Calculation!$J$212 = 5.15
+  XC_2013 -> =Calculation!$J$547 = 20.4
+  XC_2014 -> =Calculation!$J$548 = 20.5
+  XC_2015 -> =Calculation!$J$549 = 20.6
+  XC_2016 -> =Calculation!$J$550 = 20.7
+  XC_2017 -> =Calculation!$J$551 = 20.8
+  XC_2018 -> =Calculation!$J$552 = 20.9
+  XC_2DCAD -> =Calculation!$J$542 = 20.0
+  XC_3013 -> =Calculation!$J$367 = 9.46
+  XC_3100 -> =Calculation!$J$273 = 6.33
+  XC_3103 -> =Calculation!$J$396 = 11.8
+  XC_3108 -> =Calculation!$J$401 = 11.13
+  XC_3125 -> =Calculation!$J$419 = 11.31
+  XC_3129 -> =Calculation!$J$389 = 11.1
+  XC_3200 -> =Calculation!$J$520 = 19.0
+  XC_3201 -> =Calculation!$J$521 = 19.1
+  XC_3202 -> =Calculation!$J$523 = 19.3
+  XC_3203 -> =Calculation!$J$524 = 19.4
+  XC_3205 -> =Calculation!$J$538 = 19.18
+  XC_3206 -> =Calculation!$J$539 = 19.19
+  XC_3230 -> =Calculation!$J$540 = 19.20
+  XC_3300 -> =Calculation!$J$497 = 18.4
+  XC_3302 -> =Calculation!$J$499 = 18.6
+  XC_3304 -> =Calculation!$J$501 = 18.8
+  XC_3305 -> =Calculation!$J$502 = 18.9
+  XC_3307 -> =Calculation!$J$504 = 18.11
+  XC_3312 -> =Calculation!$J$509 = 18.16
+  XC_3313 -> =Calculation!$J$510 = 18.17
+  XC_3316 -> =Calculation!$J$515 = 18.22
+  XC_3319 -> =Calculation!$J$500 = 18.7
+  XC_3321 -> =Calculation!$J$513 = 18.20
+  XC_3400 -> =Calculation!$J$300 = 8.4
+  XC_3401 -> =Calculation!$J$301 = 8.5
+  XC_3407 -> =Calculation!$J$309 = 8.13
+  XC_3413 -> =Calculation!$J$299 = 8.3
+  XC_3500 -> =Calculation!$J$322 = 9.1
+  XC_3501 -> =Calculation!$J$323 = 9.2
+  XC_3502 -> =Calculation!$J$324 = 9.3
+  XC_3503 -> =Calculation!$J$325 = 9.4
+  XC_3504 -> =Calculation!$J$326 = 9.5
+  XC_3505 -> =Calculation!$J$327 = 9.6
+  XC_3507 -> =Calculation!$J$370 = 9.49
+  XC_3507b -> =Calculation!$J$514 = 18.21
+  XC_DXF253 -> =Calculation!$J$553 = 20.10
+  XC_DXF257 -> =Calculation!$J$562 = 20.11
+  XC_ErrMsg -> =Calculation!$J$101 = i
+  XC_PrjInfo -> =Calculation!$J$102 = ii
+  XM_0001 -> =Calculation!$L$115 = Input section
+  XM_0002 -> =Calculation!$L$117 = Transferred power
+  XM_0003 -> =Calculation!$L$118 = Speed (Pinion / Gear)
+  XM_0004 -> =Calculation!$L$119 = Torsional moment (Pinion / Gear)
+  XM_0005 -> =Calculation!$L$120 = Transmission ratio / from table
+  XM_0006 -> =Calculation!$L$121 = Actual transmission ratio / deviation
+  XM_0007 -> =Calculation!$L$319 = Efficiency of the gearing
+  XM_0008 -> =Calculation!$L$125 = Material of the pinion :
+  XM_0009 -> =Calculation!$L$126 = Material of the gear :
+  XM_0010 -> =Calculation!$L$127 = Loading of the gearbox, driving machine - examples
+  XM_0011 -> =Calculation!$L$128 = Loading of gearbox, driven machine - examples
+  XM_0012 -> =Calculation!$L$129 = Type of gearing mounting
+  XM_0013 -> =Calculation!$L$130 = Accuracy grade - ISO1328 |Ra max|v max
+  XM_0014 -> =Calculation!$L$131 = Coefficient of one-off overloading
+  XM_0015 -> =Calculation!$L$133 = Coefficient of safety (contact/bend)
+  XM_0016 -> =Calculation!$L$132 = Desired service life
+  XM_0017 -> =Calculation!$L$173 = Setting of the ratio of the width of the pinion to its diameter
+  XM_0019 -> =Calculation!$L$174 = The ratio of the pinion width to its diameter
+  XM_0021 -> =Calculation!$L$176 = Reference diameter Pinion / Gear
+  XM_0023 -> =Calculation!$L$181 = Working center distance
+  XM_0024 -> =Calculation!$L$182 = Approximate weight of the gearing
+  XM_0025 -> =Calculation!$L$183 = Minimum coefficient of safety
+  XM_0026 -> =Calculation!$L$170 = Number of teeth Pinion / Gear
+  XM_0027 -> =Calculation!$L$171 = Normal pressure angle
+  XM_0028 -> =Calculation!$L$172 = Base helix angle
+  XM_0029 -> =Calculation!$L$178 = Face width (Pinion / Gear)
+  XM_0030 -> =Calculation!$L$179 = Working face width
+  XM_0032 -> =Calculation!$L$175 = Module / Standardized value
+  XM_0034 -> =Calculation!$U$149 = - Addendum - Coefficient of the height of the tooth head
+  XM_0035 -> =Calculation!$L$147 = Unit head clearance
+  XM_0035b -> =Calculation!$U$150 = - Recommended coefficient of the root radius
+  XM_0035c -> =Calculation!$L$146 = Min. unit head clearance
+  XM_0036 -> =Calculation!$U$151 = - Coefficient of the root radius
+  XM_0037 -> =Calculation!$L$193 = Normal backlash
+  XM_0038 -> =Calculation!$L$194 = - Recommended min. | max. value
+  XM_0039 -> =Calculation!$L$195 = - Selected normal backlash
+  XM_0040 -> =Calculation!$L$198 = Types
+  XM_0041 -> =Calculation!$L$199 = - Permissible undercutting of teeth (min. value)
+  XM_0042 -> =Calculation!$L$200 = - Preventing undercutting of teeth (min. value)
+  XM_0043 -> =Calculation!$L$201 = - Prevents tapering of teeth (min. value)
+  XM_0047 -> =Calculation!$L$202 = Pinion addendum modification coefficient setting
+  XM_0048 -> =Calculation!$L$203 = Addendum modification coefficient Pinion / Gear
+  XM_0049 -> =Calculation!$L$204 = Sum of addendum modification coefficients | min. value
+  XM_0050 -> =Calculation!$L$298 = Total contact ratio
+  XM_0051 -> =Calculation!$L$206 = Unit tooth thickness on the tip diameter
+  XM_0052 -> =Calculation!$L$210 = Safety coefficient for surface durability
+  XM_0053 -> =Calculation!$L$211 = Safety coefficient for bending durability
+  XM_0054 -> =Calculation!$L$230 = Results section
+  XM_0055 -> =Calculation!$L$243 = Normal module
+  XM_0056 -> =Calculation!$L$244 = Transverse module
+  XM_0057 -> =Calculation!$L$245 = Circular pitch
+  XM_0058 -> =Calculation!$L$246 = Transverse circular pitch
+  XM_0059 -> =Calculation!$L$247 = Base circular pitch
+  XM_0060 -> =Calculation!$L$248 = Center distance (pitch)
+  XM_0061 -> =Calculation!$L$249 = Center distance (production)
+  XM_0062 -> =Calculation!$L$250 = Center distance (working)
+  XM_0063 -> =Calculation!$L$251 = Pressure angle
+  XM_0064 -> =Calculation!$L$252 = Transverse pressure angle
+  XM_0065 -> =Calculation!$L$253 = Pressure angle at the pitch cylinder
+  XM_0066 -> =Calculation!$L$254 = Transverse pressure angle at the pitch cylinder
+  XM_0067 -> =Calculation!$L$255 = Helix angle
+  XM_0068 -> =Calculation!$L$256 = Base helix angle
+  XM_0069 -> =Calculation!$L$257 = Tip diameter
+  XM_0070 -> =Calculation!$L$258 = Reference diameter
+  XM_0071 -> =Calculation!$L$259 = Base diameter
+  XM_0072 -> =Calculation!$L$260 = Root diameter
+  XM_0073 -> =Calculation!$L$262 = Addendum
+  XM_0074 -> =Calculation!$L$263 = Dedendum
+  XM_0075 -> =Calculation!$L$264 = Tooth thickness on the tip diameter
+  XM_0075c -> =Calculation!$L$265 = Tooth thickness on the tip diameter (transverse)
+  XM_0076 -> =Calculation!$L$266 = Tooth thickness on the pitch diameter
+  XM_0076c -> =Calculation!$L$267 = Tooth thickness on the pitch diameter (transverse)
+  XM_0077 -> =Calculation!$L$268 = Tooth thickness on the root diameter
+  XM_0079 -> =Calculation!$L$270 = Unit correction
+  XM_0080 -> =Calculation!$L$271 = Total unit correction
+  XM_0081 -> =Calculation!$L$272 = Addendum modification coefficient
+  XM_0082 -> =Calculation!$L$279 = Number of teeth
+  XM_0083 -> =Calculation!$L$280 = Virtual number of teeth of a helical gear
+  XM_0084 -> =Calculation!$L$281 = Minimum number of teeth:
+  XM_0085 -> =Calculation!$L$297 = Transverse contact ratio / overlap ratio
+  XM_0087 -> =Calculation!$L$305 = Coefficient of gear unloading (0 - 100)
+  XM_0089 -> =Calculation!$L$316 = Resonance speed
+  XM_0090 -> =Calculation!$L$317 = Resonance ratio / lover limit
+  XM_0092 -> =Calculation!$L$332 = Common for the gearing
+  XM_0093 -> =Calculation!$L$334 = Stiffness of a tooth pair (single stiffness)
+  XM_0094 -> =Calculation!$L$335 = Meshing stiffness per unit face width
+  XM_0095 -> =Calculation!$L$329 = Used / Recomended lubricant viscosity
+  XM_0096 -> =Calculation!$L$336 = Application factor
+  XM_0097 -> =Calculation!$L$337 = Dynamic factor
+  XM_0098 -> =Calculation!$L$338 = Number of cycles
+  XM_0099 -> =Calculation!$L$339 = For pitting safety calculation
+  XM_0100 -> =Calculation!$L$340 = Face load factor (contact stress)
+  XM_0101 -> =Calculation!$L$341 = Transverse load factor (contact stress)
+  XM_0102 -> =Calculation!$L$342 = Total factor of additional loads
+  XM_0103 -> =Calculation!$L$343 = Elasticity factor
+  XM_0104 -> =Calculation!$L$344 = Zone factor
+  XM_0105 -> =Calculation!$L$345 = Helix angle factor
+  XM_0106 -> =Calculation!$L$346 = Contact ratio factor
+  XM_0107 -> =Calculation!$L$349 = Lubricant factor
+  XM_0108 -> =Calculation!$L$350 = Peripheral speed factor
+  XM_0109 -> =Calculation!$L$351 = Roughness factor affecting surface durability
+  XM_0110 -> =Calculation!$L$352 = Life factor for contact stress
+  XM_0111 -> =Calculation!$L$353 = Single pair tooth contact factor
+  XM_0112 -> =Calculation!$L$354 = For bending safety calculation
+  XM_0113 -> =Calculation!$L$355 = Face load factor (root stress)
+  XM_0114 -> =Calculation!$L$356 = Transverse load factor (root stress)
+  XM_0115 -> =Calculation!$L$357 = Total factor of additional loads
+  XM_0116 -> =Calculation!$L$358 = Helix angle factor
+  XM_0117 -> =Calculation!$U$381 = Contact ratio factor
+  XM_0118 -> =Calculation!$L$361 = Notch sensitivity factor
+  XM_0119 -> =Calculation!$L$362 = Size factor
+  XM_0120 -> =Calculation!$L$363 = Tooth-root surface factor
+  XM_0121 -> =Calculation!$L$364 = Alternating load factor
+  XM_0122 -> =Calculation!$L$365 = Production technology factor
+  XM_0123 -> =Calculation!$L$366 = Life factor for bending stress
+  XM_0124 -> =Calculation!$U$380 = Tip factor, equal (YFa YSa)
+  XM_0125 -> =Calculation!$L$373 = Safety coefficient for surface durability
+  XM_0126 -> =Calculation!$L$374 = Safety coefficient for bending durability
+  XM_0127 -> =Calculation!$L$375 = Safety in contact in one-time overloading
+  XM_0128 -> =Calculation!$L$376 = Safety in bending in one-time overloading
+  XM_0129 -> =Calculation!$L$378 = Probability of a failure
+  XM_0130 -> =Calculation!$L$392 = Chordal dimension
+  XM_0131 -> =Calculation!$L$391 = Number of measured teeth
+  XM_0132 -> =Calculation!$L$432 = Tangential force
+  XM_0133 -> =Calculation!$L$433 = Normal force
+  XM_0134 -> =Calculation!$L$434 = Axial force
+  XM_0135 -> =Calculation!$L$435 = Radial force
+  XM_0136 -> =Calculation!$L$437 = Peripheral speed on the pitch diameter
+  XM_0137 -> =Calculation!$L$438 = Tangential load per unit tooth width / Unit load
+  XM_0150 -> =Calculation!$L$456 = Additions section
+  XM_0151 -> =Calculation!$L$458 = Required axis distance / Standardized
+  XM_0152 -> =Calculation!$L$459 = List of solutions
+  XM_0153 -> =Calculation!$L$468 = Press the button for transmitting values in to calculation
+  XM_0154 -> =Calculation!$L$462 = Transmission ratio / Deviation
+  XM_0155 -> =Calculation!$L$461 = Number of teeth Pinion / Gear
+  XM_0156 -> =Calculation!$L$465 = Total unit correction
+  XM_0157 -> =Calculation!$L$466 = Distribution of correction
+  XM_0162 -> =Calculation!$L$475 = Ambient air temperature
+  XM_0163 -> =Calculation!$L$476 = Maximum oil temperature
+  XM_0164 -> =Calculation!$L$477 = Coefficient of heat dissipation
+  XM_0165 -> =Calculation!$L$478 = Power losses
+  XM_0166 -> =Calculation!$L$479 = Gearbox surface (min.)
+  XM_0167 -> =Calculation!$L$482 = Recommended shaft diameter for:
+  XM_0168 -> =Calculation!$L$487 = Number of teeth
+  XM_0169 -> =Calculation!$L$488 = Tip diameter
+  XM_0170 -> =Calculation!$L$489 = Distance between teeth edges
+  XM_0171 -> =Calculation!$L$490 = Helix angle
+  XM_0172 -> =Calculation!$L$491 = Module of tooth
+  XM_0173 -> =Calculation!$L$494 = Transmission ratio calculation using the number of teeth
+  XM_0174 -> =Calculation!$L$495 = Transmission ratio calculation using the speed
+  XM_0175 -> =Calculation!$L$496 = Power calculation using the pinion speed and torque moment
+  XM_0176 -> =Calculation!$L$134 = Automatic design
+  XM_0180 -> =Calculation!$L$463 = A. Change of the addendum modification
+  XM_0181 -> =Calculation!$L$467 = Type of distribution of corrections to the pinion and gear
+  XM_0182 -> =Calculation!$L$469 = B. By a change of the helix angle
+  XM_0190 -> =Calculation!$L$460 = Combination of the teeth number
+  XM_0500 -> =Calculation!$W$105 = Spur gearing:
+  XM_0510 -> =Calculation!$L$177 = Recommended width of gearing
+  XM_0511 -> =Calculation!$L$377 = Variability coefficient for calculation of probability of a failure
+  XM_0535 -> =Calculation!$L$436 = Bending moment
+  XM_1019 -> =Calculation!$J$180 = 4.11
+  XM_2000 -> =Calculation!$L$138 = Addendum of tool
+  XM_2001 -> =Calculation!$L$139 = Dedendum of tool
+  XM_2002 -> =Calculation!$L$140 = Fillet radius of tool
+  XM_2003 -> =Calculation!$L$141 = Root fillet radius of tool
+  XM_2004 -> =Calculation!$L$144 = Protuberance hight
+  XM_2005 -> =Calculation!$L$145 = Protuberance angle
+  XM_2006 -> =Calculation!$L$142 = Chamfer of root
+  XM_2007 -> =Calculation!$L$207 = Specific sliding on tooth root
+  XM_2008 -> =Calculation!$L$208 = Specific sliding on tooth tip
+  XM_2009 -> =Calculation!$L$209 = Sum of all specific slidings
+  XM_2010 -> =Calculation!$L$261 = Operating pitch diameter
+  XM_2011 -> =Calculation!$L$137 = Standardized tool
+  XM_2012 -> =Calculation!$L$212 = Display of tooth and tool turn for:
+  XM_2013 -> =Calculation!$L$547 = Detailed drawing of tooth and wheel
+  XM_2014 -> =Calculation!$L$548 = Number of drawn teeth
+  XM_2015 -> =Calculation!$L$549 = Number of points of tooth tip
+  XM_2016 -> =Calculation!$L$550 = Number of points of tooth flank
+  XM_2017 -> =Calculation!$L$551 = Rolling (turning) of a tool between the bite
+  XM_2018 -> =Calculation!$L$552 = Number of tooth copies in the picture of engagement check
+  XM_2019 -> =Calculation!$L$393 = Pin/Ball diameter
+  XM_2020 -> =Calculation!$L$395 = Dimension over pins/balls
+  XM_2021 -> =Calculation!$L$205 = Transverse / Total contact ratio
+  XM_2023 -> =Calculation!$P$551 = Drawing without axes
+  XM_2029 -> =Calculation!$L$368 = Form factor (bending)
+  XM_2030 -> =Calculation!$L$369 = Stress correction factor
+  XM_2DOut -> =Calculation!$L$543 = 2D drawing output to:
+  XM_3012 -> =Calculation!$L$347 = Work hardening factor
+  XM_3013 -> =Calculation!$L$367 = Stress correction factor
+  XM_3014 -> =Calculation!$L$379 = Nominal contact stress
+  XM_3015 -> =Calculation!$L$380 = Contact stress
+  XM_3016 -> =Calculation!$L$381 = Pitting stress limit
+  XM_3017 -> =Calculation!$L$382 = Permissible contact stress
+  XM_3018 -> =Calculation!$L$383 = Nominal tooth-root stress
+  XM_3019 -> =Calculation!$L$384 = Tooth-root stress
+  XM_3020 -> =Calculation!$L$385 = Tooth-root stress limit
+  XM_3021 -> =Calculation!$L$386 = Permissible bending stress
+  XM_3100 -> =Calculation!$L$273 = Achieve the requested tip diameter with change the unit head clearance ca* [3.11]
+  XM_3101 -> =Calculation!$L$275 = Tip diameter can be varied from-to
+  XM_3102 -> =Calculation!$L$276 = Requested tip diameter
+  XM_3103 -> =Calculation!$L$396 = Achieve the requested W and M with change the addendum modification coefficient x1 and sumX
+  XM_3104 -> =Calculation!$L$397 = Chordal dimension can be varied from-to
+  XM_3105 -> =Calculation!$L$398 = Requested chordal dimension
+  XM_3106 -> =Calculation!$L$399 = Dimension over pins/balls can be varied from-to
+  XM_3107 -> =Calculation!$L$400 = Requested dimension over pins/balls
+  XM_3108 -> =Calculation!$L$401 = Cylindrical gears - ISO 1328 system of accuracy - Part 1
+  XM_3109 -> =Calculation!$L$402 = Accuracy grade
+  XM_3110 -> =Calculation!$L$403 = Module
+  XM_3111 -> =Calculation!$L$404 = Reference diameter
+  XM_3112 -> =Calculation!$L$405 = Face width
+  XM_3113 -> =Calculation!$L$407 = Single pitch deviation
+  XM_3114 -> =Calculation!$L$408 = Number of teeth for cumulative pitch deviation (1…z1,z2)
+  XM_3115 -> =Calculation!$L$409 = Cumulative pitch deviation
+  XM_3116 -> =Calculation!$L$410 = Total cumulative pitch deviation
+  XM_3117 -> =Calculation!$L$411 = Total profile deviation
+  XM_3118 -> =Calculation!$L$412 = Total helix deviation
+  XM_3119 -> =Calculation!$L$413 = Tooth-to-tooth tangential composite deviation
+  XM_3120 -> =Calculation!$L$414 = Total tangential composite deviation
+  XM_3121 -> =Calculation!$L$415 = Profile form deviation
+  XM_3122 -> =Calculation!$L$416 = Profile slope deviation
+  XM_3123 -> =Calculation!$L$417 = Helix form deviation
+  XM_3124 -> =Calculation!$L$418 = Helix slope deviation
+  XM_3125 -> =Calculation!$L$419 = Cylindrical gears ISO1328 - 2 system of accuracy
+  XM_3126 -> =Calculation!$L$420 = Tooth-to-tooth radial composite deviation
+  XM_3127 -> =Calculation!$L$421 = Total radial composite deviation
+  XM_3128 -> =Calculation!$L$422 = Run out tolerance
+  XM_3129 -> =Calculation!$L$389 = Check dimensions of gearing
+  XM_3201 -> =Calculation!$L$521 = Material type
+  XM_3202 -> =Calculation!$L$523 = Requirements for material quality and heat treatment
+  XM_3203 -> =Calculation!$L$524 = Surface hardness of calculated material (hardness range from - to)
+  XM_3204 -> =Calculation!$L$534 = Maximum value
+  XM_3205 -> =Calculation!$L$454 = Abbreviation for material designation
+  XM_3206 -> =Calculation!$L$539 = Material name in the material table
+  XM_3230 -> =Calculation!$L$540 = Transfer to a table of materials, to line number:
+  XM_3300 -> =Calculation!$L$497 = Definition of the factor KHbeta (method C)
+  XM_3301 -> =Calculation!$L$498 = Mean transverse tangential load at the reference circle
+  XM_3302 -> =Calculation!$L$499 = Shaft diameter (pinion)
+  XM_3303 -> =Calculation!$U$500 = Constant of the transmitted power
+  XM_3304 -> =Calculation!$L$501 = Constant of the pinion position (with/without stiffening)
+  XM_3305 -> =Calculation!$L$502 = Pitch of bearings
+  XM_3306 -> =Calculation!$L$503 = Center of pinion distance (s/l < 0.3)
+  XM_3307 -> =Calculation!$L$504 = Component of equivalent misatignment (pinion)
+  XM_3308 -> =Calculation!$L$505 = Component of equivalent misatignment (wheel)
+  XM_3309 -> =Calculation!$L$506 = Mesh misalignment
+  XM_3310 -> =Calculation!$L$507 = Deformation of the gear case
+  XM_3311 -> =Calculation!$L$508 = Displacements of the bearings
+  XM_3312 -> =Calculation!$L$509 = Helix modification
+  XM_3313 -> =Calculation!$L$510 = Initial equivalent misalignment (before running-in)
+  XM_3314 -> =Calculation!$L$511 = Running-in allowance (equivalent misalignment)
+  XM_3315 -> =Calculation!$L$512 = Effective equivalent misalignment (after running-in)
+  XM_3316 -> =Calculation!$L$515 = Maximum depth of grinding notch
+  XM_3317 -> =Calculation!$L$516 = Radius of grinding notch
+  XM_3318 -> =Calculation!$L$517 = Valid for ... (tg/rg)^0.5 < 2.0
+  XM_3319 -> =Calculation!$L$500 = Gear type
+  XM_3320 -> =Calculation!$L$333 = Theoretical single stiffness
+  XM_3400 -> =Calculation!$L$300 = Recommended minimum diameter of the shaft
+  XM_3401 -> =Calculation!$L$301 = Recommended minimum outer diameter of the hub
+  XM_3402 -> =Calculation!$L$303 = Shaft diameter
+  XM_3403 -> =Calculation!$L$304 = Outer diameter of the hub
+  XM_3404 -> =Calculation!$L$306 = Central web thickness in % of the gear width (20-100)
+  XM_3405 -> =Calculation!$L$307 = Gear rim thickness
+  XM_3406 -> =Calculation!$L$308 = Central web thickness
+  XM_3407 -> =Calculation!$L$309 = Gear weight
+  XM_3408 -> =Calculation!$L$310 = Relative individual gear mass per unit face width
+  XM_3409 -> =Calculation!$L$311 = Moment of inertia
+  XM_3410 -> =Calculation!$L$312 = Moment of inertia per unit face width
+  XM_3411 -> =Calculation!$L$313 = Reduced mass of gear set
+  XM_3412 -> =Calculation!$L$315 = Tangential load per unit tooth width
+  XM_3413 -> =Calculation!$L$299 = Definition of wheel dimensions
+  XM_3500 -> =Calculation!$L$322 = Setting the parameters for calculation
+  XM_3501 -> =Calculation!$L$323 = Dynamic factor KV (max. value)
+  XM_3502 -> =Calculation!$L$324 = Face load factor contact stress KHbeta (max. value)
+  XM_3503 -> =Calculation!$L$325 = Reversals of the load (factor YA)
+  XM_3504 -> =Calculation!$L$326 = Calculation of "Work hardening factor ZW"
+  XM_3505 -> =Calculation!$L$327 = Tooth profile modification (KHalfa, KHbeta)
+  XM_3506 -> =Calculation!$L$328 = Oil type (ZL)
+  XM_3507 -> =Calculation!$L$370 = Stress correction factor for gears with notches in fillets
+  XM_3713 -> =Calculation!$L$330 = Tooth roughness (factor ZR)
+  XM_3715 -> =Calculation!$L$359 = Rim thickness factor
+  XM_3716 -> =Calculation!$L$360 = Deep tooth factor
+  XM_3717 -> =Calculation!$L$331 = Roughness in the tooth root fillets (factor YR)
+  XM_BOM1G -> =Calculation!$U$558 = Spur gear - Gear
+  XM_BOM1P -> =Calculation!$U$554 = Spur gear - Pinion
+  XM_CalcName -> =Calculation!$K$100 = Spur gearing, Helical gearing [mm/ISO]
+  XM_DXF253 -> =Calculation!$L$553 = Text description (Information for BOM)
+  XM_DXF254 -> =Calculation!$L$554 = Row 1 (BOM attribute 1)
+  XM_DXF255 -> =Calculation!$L$555 = Row 2 (BOM attribute 2)
+  XM_DXF256 -> =Calculation!$L$556 = Row 3 (BOM attribute 3)
+  XM_DXF257 -> =Calculation!$L$562 = Table of parameters
+  XM_DXFDetail -> =Calculation!$L$545 = Detail:
+  XM_DXFScale -> =Calculation!$L$544 = 2D Drawing scale
+  XM_ErrMsg1 -> =Calculation!$F$101 = Calculation without errors.
+  XM_ErrMsg2 -> =Calculation!$G$101 = Check lines:
+  XM_Help -> =Calculation!$U$100 = 
+  XM_Material -> =Calculation!$V$556 = Material
+  XM_Pinion -> =Calculation!$O$101 = Pinion
+  XM_PrjAuthor -> =Calculation!$J$103 = Author
+  XM_PrjDate -> =Calculation!$M$103 = Date
+  XM_PrjFileName -> =Calculation!$J$105 = File name
+  XM_PrjInfo -> =Calculation!$J$109 = Basic Info
+  XM_PrjName -> =Calculation!$J$107 = Project Name
+  XM_PrjNo -> =Calculation!$P$103 = Project No.
+  XM_PrjNote -> =Calculation!$J$111 = Project Notes
+  XM_Wheel -> =Calculation!$P$101 = Gear
+  XS_0001 -> =Calculation!$L$116 =      Options of basic input parameters
+  XS_0002 -> =Calculation!$L$123 =      Options of material, loading conditions, operational and production parameters
+  XS_0003 -> =Calculation!$L$136 =      Parameters of the cutting tool and tooth profile
+  XS_0004 -> =Calculation!$L$163 =      Design of a module and geometry of toothing
+  XS_0005 -> =Calculation!$L$197 =      Correction of toothing (Addendum modification)
+  XS_0006 -> =Calculation!$L$231 =      Basic dimensions of gearing
+  XS_0007 -> =Calculation!$L$278 =      Supplemental parameters of gearing
+  XS_0008 -> =Calculation!$L$282 =      - Permissible undercutting
+  XS_0009 -> =Calculation!$L$283 =      - Without undercutting
+  XS_0010 -> =Calculation!$L$284 =      - Without tapering
+  XS_0011 -> =Calculation!$L$286 =      Qualitative indices of gearing
+  XS_0012 -> =Calculation!$L$321 =      Coefficients for safety calculation
+  XS_0013 -> =Calculation!$L$372 =      Stress and safety coefficients
+  XS_0014 -> =Calculation!$L$388 =      Check dimensions of gearing, ISO 1328 system of accuracy
+  XS_0015 -> =Calculation!$L$424 =      Force conditions (forces acting on the toothing)
+  XS_0016 -> =Calculation!$L$440 =      Parameters of the chosen material
+  XS_0017 -> =Calculation!$L$457 =      Calculation of gearing for the given axis distance
+  XS_0018 -> =Calculation!$L$474 =      Power, warming-up, gearbox surface
+  XS_0019 -> =Calculation!$L$481 =      Preliminary design of shaft diameters (steel)
+  XS_0020 -> =Calculation!$L$483 =      - Main power-transmitting shafts
+  XS_0021 -> =Calculation!$L$484 =      - Small, short shafts
+  XS_0022 -> =Calculation!$L$486 =      Approximate module calculation from the existing gear
+  XS_0023 -> =Calculation!$L$493 =      Auxiliary calculations, calculation KHbeta, calculation YSg
+  XS_2DCAD -> =Calculation!$L$542 =      Graphical output, CAD systems
+  XS_3200 -> =Calculation!$L$520 =      Calculation of SHlim and SFlim based on ISO 6336-5, proposal of material properties
+  XS_Project -> =Calculation!$L$102 =      Project information
+
+=== NAMED RANGE PREFIX COUNTS ===
+  OTHER: 830
+  S: 55
+  T: 77
+  XC: 133
+  XM: 401
+  XS: 26
+  TOTAL: 1522
+
+=== OPTIONS SHEET (Full) ===
+Row 1: [A]=Gear1_01_KO  [B]=06.08.2018-2:15:02  
+Row 3: [K]=1.0  [M]=General  
+Row 4: [K]=1.1  [M]=Language  [U]=Language selection  
+Row 6: [K]=2.0  [M]=Info  [U]=Warning messages  
+Row 7: [K]=2.1  [M]=Name of help file  [Q]=gear1.htm  
+Row 8: [B]=Yes/No Table  [K]=2.2  [M]=Version number  [Q]=Gear1_01_KO  
+Row 9: [B]=Yes  [K]=2.3  [M]=Version date  [Q]=06.08.2018-2:15:02  
+Row 10: [B]=No  
+Row 11: [K]=Copyright © 2003
+This program/workbook is copyright protected  [Q]=www.mitcalc.com  
+Row 13: [B]=Language table  
+Row 14: [B]=English  [C]=EN  
+Row 15: [B]=Česky (Czech)  [C]=CS  
+Row 16: [B]=Deutsch (German)  [C]=DE  
+Row 17: [B]=* Spanish  [C]=ES  
+Row 18: [B]=* Finnish  [C]=FI  
+Row 19: [B]=French  [C]=FR  
+Row 20: [B]=* Hungarian  [C]=HU  
+Row 21: [B]=* Italian  [C]=IT  
+Row 22: [B]=* Japanese  [C]=JA  
+Row 23: [B]=* Korean  [C]=KO  
+Row 24: [B]=* Dutch  [C]=NL  
+Row 25: [B]=* Norwegian  [C]=NO  
+Row 26: [B]=* Polish   [C]=PL  
+Row 27: [B]=* Portuguese   [C]=PT  
+Row 28: [B]=* Russian  [C]=RU  
+Row 29: [B]=* Slovak  [C]=SK  
+Row 30: [B]=* Slovenian  [C]=SL  
+Row 31: [B]=* Swedish  [C]=SV  
+Row 32: [B]=* Turkish  [C]=TR  
+Row 33: [B]=* Chinese (traditional)  [C]=ZH  
+Row 34: [B]=* Chinese (simplified)  [C]=ZS  
+Row 35: [B]=* Other  [C]=OT  
+
+=== DICTIONARY SHEET (First 100 rows) ===
+  Total rows: 518, Total cols: 27
+  Row 1: ID=Sheet 
+texts | EN=EN
+  Row 2: ID= | EN=Calculation name
+  Row 3: ID=XM_Yes | EN=Yes
+  Row 4: ID=XM_No | EN=No
+  Row 5: ID=XM_Language | EN=Language
+  Row 6: ID=XM_WarningMSG | EN=Display automatically warning messages
+  Row 7: ID=XM_General | EN=General
+  Row 8: ID=XM_Standard | EN=Standard
+  Row 9: ID=XM_InfoSection | EN=Info
+  Row 10: ID=XM_HelpName | EN=Name of help file
+  Row 11: ID=XM_VerN | EN=Version number
+  Row 12: ID=XM_VerD | EN=Version date
+  Row 13: ID=XS_Project | EN=Project information
+  Row 14: ID=XM_PrjAuthor | EN=Author
+  Row 15: ID=XM_PrjDate | EN=Date
+  Row 16: ID=XM_PrjNo | EN=Project No.
+  Row 17: ID=XM_PrjName | EN=Project Name
+  Row 18: ID=XM_PrjFileName | EN=File name
+  Row 19: ID=XM_PrjInfo | EN=Basic Info
+  Row 20: ID=XM_PrjNote | EN=Project Notes
+  Row 21: ID= | EN=Authorization
+  Row 22: ID= | EN=&Cancel
+  Row 23: ID= | EN=Run
+  Row 24: ID= | EN=View Only
+  Row 25: ID= | EN=&Demo
+  Row 26: ID= | EN=&Renew
+  Row 27: ID= | EN=&Buy
+  Row 28: ID= | EN=&Authorize
+  Row 29: ID= | EN=Do&wnload
+  Row 30: ID= | EN=Enter the Authorization code here :
+  Row 31: ID= | EN=Runs calculation translation
+  Row 32: ID= | EN=&Calculations
+  Row 33: ID= | EN=&Help
+  Row 34: ID= | EN=Authorization
+  Row 35: ID= | EN=Calculation
+  Row 36: ID= | EN=Tables
+  Row 37: ID= | EN=DXFTables
+  Row 38: ID= | EN=Material
+  Row 39: ID= | EN=Options
+  Row 40: ID= | EN=Dictionary
+  Row 41: ID= | EN=Data
+  Row 42: ID= | EN=System date change
+  Row 43: ID= | EN=Authorization - Password entering
+  Row 44: ID= | EN=Start of the integrated environment.
+  Row 45: ID= | EN=Start of calculation.
+  Row 46: ID= | EN=Help
+  Row 47: ID= | EN=Help
+  Row 48: ID= | EN=Warning
+  Row 49: ID= | EN=MITCalc - Nonvalid license
+  Row 50: ID= | EN=Valid license
+  Row 51: ID= | EN=Valid license
+  Row 52: ID= | EN=Renewing your license
+  Row 53: ID= | EN=Demo version
+  Row 54: ID= | EN=Demo version
+  Row 55: ID= | EN=Error in the entry
+  Row 56: ID= | EN=System error
+  Row 57: ID= | EN=The software is not installed
+  Row 58: ID= | EN=Contact information:
+  Row 59: ID=XM_Copyright | EN=Copyright © 2003
+This program/workbook is copyright protected
+  Row 60: ID= | EN=Graphic output
+  Row 61: ID= | EN=Graphic output
+  Row 62: ID=XM_ErrMsg1 | EN=Calculation without errors.
+  Row 63: ID=XM_ErrMsg2 | EN=Check lines:
+  Row 66: ID= | EN=Messages for material table
+  Row 67: ID=XM_MaterialName | EN=Material name
+  Row 68: ID=XM_MatIDStd | EN=Material identification according standard :
+  Row 69: ID=XM_TlgInfo | EN=Technological information
+  Row 70: ID=XM_Identification | EN=Identification (Standard)
+  Row 71: ID=XM_Ussage | EN=Material Notes
+  Row 72: ID=XM_Density | EN=Density
+  Row 73: ID=XM_YoungsModulus | EN=Young's Modulus (Modulus of Elasticity)
+  Row 74: ID=XM_TStrengthUltimate | EN=Tensile Strength, Ultimate
+  Row 75: ID=XM_TStrengthYield | EN=Tensile Strength, Yield
+  Row 76: ID=XM_ShearStrength | EN=Contact Fatigue Limit
+  Row 77: ID=XM_BendingFL | EN=Bending Fatigue Limit
+  Row 78: ID=XM_ContactFL | EN=Contact Fatigue Limit
+  Row 79: ID=XM_ContactBN | EN=Base Number of Load Cycles in Contact
+  Row 80: ID=XM_BendingBN | EN=Base Number of Load Cycles in Bend
+  Row 81: ID=XM_ContactWC | EN=Wohler Curve Exponent for Contact
+  Row 82: ID=XM_BendingWC | EN=Wohler Curve Exponent for Bend
+  Row 83: ID=XM_ToothHardnessCore | EN=Tooth Hardness - Core
+  Row 84: ID=XM_ToothHardnessSide | EN=Tooth Hardness - Side
+  Row 85: ID=XM_PoisonsRatio | EN=Poison's Ratio
+  Row 86: ID=XM_GUssage | EN=Range of use
+  Row 87: ID=XM_HeatT | EN=Type of heat treatment
+  Row 88: ID= | EN=Messages specific for gearing calculation
+  Row 89: ID=XM_CalcName | EN=Spur gearing, Helical gearing [mm/ISO]
+  Row 90: ID= | EN=Helical gearing
+  Row 91: ID= | EN=Spur gearing
+  Row 92: ID= | EN=Design gearing
+  Row 93: ID=XM_UF | EN=A...Continuous
+  Row 94: ID=XM_LS | EN=B...Light shocks
+  Row 95: ID=XM_MS | EN=C...Moderate shocks
+  Row 96: ID=XM_HS | EN=D...Heavy shocks
+  Row 97: ID=XM_GearArrA | EN=Double-sided symmetrically supported gearing - type 1
+  Row 98: ID=XM_GearArrA2 | EN=Double-sided symmetrically supported gearing - type 2
+  Row 99: ID=XM_GearArrB | EN=Double-sided non-symmetrically supported gearing - type 1
+  Row 100: ID=XM_GearArrB2 | EN=Double-sided non-symmetrically supported gearing - type 2
+

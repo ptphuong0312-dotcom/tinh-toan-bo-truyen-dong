@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>MITCalc WebApp Audit Runner</title>
+</head>
+<body>
+    <script src="js/mitcalc-engine.bundle.js"></script>
+    <div id="json_output"></div>
+    <script>
+        try {
+            const inputs = {
+                P: 100.0,
+                n1: 1000.0,
+                z1: 19,
+                z2: 48,
+                mn: 6.0,
+                beta: 0.0,
+                alfa_n: 20.0,
+                x1: 0.0,
+                x2: 0.0,
+                b1: 120.0,
+                b2: 117.0,
+                ha0: 1.25,
+                hf0: 1.00,
+                c0: 0.25,
+                ra0: 0.38,
+                ca_star: 0.25,
+                isoGrade: 6
+            };
+            const geom = GearGeometry.calculate(inputs);
+            const insp = GearCheckDimensions.calculate(geom, 6);
+            const aux = GearCheckDimensions.calcAuxiliary(19, 48, 1000, 395.8, 1600, 1000, 0.2, 0.3, 4.0, 3.0);
+            
+            const dump = {
+                inputs: inputs,
+                geom: geom,
+                insp: insp,
+                aux: aux
+            };
+            document.getElementById('json_output').textContent = JSON.stringify(dump);
+        } catch (e) {
+            document.getElementById('json_output').textContent = JSON.stringify({ error: e.toString(), stack: e.stack });
+        }
+    </script>
+</body>
+</html>

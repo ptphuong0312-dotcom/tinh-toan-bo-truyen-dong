@@ -1,0 +1,200 @@
+R115 | C12:Input section
+R116 | C12:Options of basic input parameters
+R117 | C12:Transferred power | C14:Pw [kW] | C16:50.000 | C17:49.150
+R118 | C12:Speed (Pinion / Gear) | C14:n [/min] | C16:1000.0 | C17:400.0 | C19:[/min]
+R119 | C12:Torsional moment (Pinion / Gear) | C14:Mk [Nm] | C16:477.50 | C17:1173.46 | C19:[Nm]
+R120 | C12:Transmission ratio / from table | C14:i | C16:2.50
+R121 | C12:Actual transmission ratio / deviation | C14:i | C16:2.5000 | C17:0.00%
+R123 | C12:Options of material, loading conditions, operational and production parameters
+R124 | C12:Material identification according standard :
+R125 | C12:Material of the pinion :
+R126 | C12:Material of the gear :
+R127 | C12:Loading of the gearbox, driving machine - examples
+R128 | C12:Loading of gearbox, driven machine - examples
+R129 | C12:Type of gearing mounting
+R130 | C12:Accuracy grade - DIN3965 / ISO1328 |Ra max|v max
+R131 | C12:Coefficient of one-off overloading | C14:KAS | C16:2.00
+R132 | C12:Desired service life | C14:Lh | C16:20000 | C19:[h]
+R133 | C12:Coefficient of safety (contact/bend) | C14:SH / SF | C16:1.30 | C17:1.60
+R134 | C12:Automatic design
+R136 | C12:Parameters of the tooth profile, gearing type
+R137 | C12:Guiding curve of the toothing (Type of toothing)
+R138 | C12:Addendum - Coefficient of the height of the tooth head | C14:ha* | C16:1.000 | C17:1.000 | C19:[modul]
+R139 | C12:Unit head clearance | C14:c* | C16:0.200 | C17:0.200 | C19:[modul]
+R140 | C12:Recommended coefficient of the root radius | C16:0.286 | C17:0.286 | C19:[modul]
+R141 | C12:Coefficient of the root radius | C14:rf* | C16:0.286 | C17:0.286 | C19:[modul]
+R143 | C12:Design of a module (Diametral Pitch) and geometry of toothing
+R144 | C12:Number of teeth Pinion / Gear | C14:z | C16:18 | C17:45
+R145 | C12:Angle of shaft axes | C14:S | C16:90 | C19:[°]
+R146 | C12:Pressure angle | C14:a | C16:20.0 | C19:[°]
+R147 | C12:Base helix angle | C14:bm | C16:30.0 | C19:[°]
+R148 | C12:Direction of the teeth pitch (pinion)
+R149 | C12:Width of toothing to the surface straight line of the cone (b/Re)
+R150 | C12:Width of toothing to the surface straight line of the cone (b/Re) | C14:Re/b | C16:0.35 | C17:< 0.35
+R151 | C12:Module | C14:mmn | C16:10.000 | C19:[mm]
+R152 | C12:Face width / max. recommendet value | C14:b | C16:117 | C17:< 118 | C19:[mm]
+R153 | C12:Approximate weight of the gearing | C14:m | C16:134.331 | C19:[kg]
+R154 | C12:Minimum coefficient of safety | C14:SH / SF | C16:1.414 | C17:13.487
+R168 | C12:Correction of toothing (Addendum modification)
+R169 | C12:Correction type
+R170 | C12:Recommendet value | C14:x1 / xt1 | C16:0.265 | C17:0.000
+R171 | C12:- Permissible undercutting of teeth (min. value) | C14:x1 / x2 | C16:-0.5154 | C17:-7.5964
+R172 | C12:- Preventing undercutting of teeth (min. value) | C14:x1 / x2 | C16:-0.3488 | C17:-7.4297
+R173 | C12:Pinion addendum modification coefficient setting
+R174 | C12:Addendum modification coefficient Pinion / Gear | C14:x1 / x2 | C16:0.3200 | C17:-0.3200
+R175 | C12:Tooth thicknes modification coefficient | C14:xt1 / xt2 | C16:0.0400 | C17:-0.0400
+R176 | C12:Total contact ratio | C14:eg | C16:3.0117
+R177 | C12:Unit tooth thickness on the tip diameter | C14:sae* | C16:0.7347 | C17:1.1183
+R178 | C12:Safety coefficient for surface durability | C14:SH | C16:1.604 | C17:1.414
+R179 | C12:Safety coefficient for bending durability | C14:SF | C16:15.14 | C17:13.49
+R181 | C12:Results section
+R182 | C12:Basic dimensions of gearing
+R195 | C12:Number of teeth Pinion / Gear | C14:z | C16:18 | C17:45
+R196 | C12:Transverse module (outer, midle, inner) | C13:met,mmt,mit | C14:13.9610 | C16:11.5470 | C17:9.1330 | C19:[mm]
+R197 | C12:Normal module (outer, midle, inner) | C13:men,mmn,min | C14:12.0906 | C16:10.0000 | C17:7.9094 | C19:[mm]
+R198 | C12:Cone length (outer, midle, inner) | C13:Re,Rm,Ri | C14:338.321 | C16:279.821 | C17:221.321 | C19:[mm]
+R199 | C12:Pitch cone angle | C14:d | C16:21.8014 | C17:68.1986 | C19:[°]
+R200 | C12:Addendum cone angle | C14:da | C16:24.5022 | C17:69.5907 | C19:[°]
+R201 | C12:Dedendum cone angle | C14:df | C16:20.0001 | C17:65.0893 | C19:[°]
+R202 | C12:Tip diameter (outer) | C14:dae | C16:280.935 | C17:634.354 | C19:[mm]
+R203 | C12:Tip diameter (midle) | C14:dam | C16:232.358 | C17:524.666 | C19:[mm]
+R204 | C12:Tip diameter (inner) | C14:dai | C16:183.781 | C17:414.978 | C19:[mm]
+R205 | C12:Pitch diameter (outer) | C14:de | C16:251.299 | C17:628.247 | C19:[mm]
+R206 | C12:Pitch diameter (midle) | C14:dm | C16:207.846 | C17:519.615 | C19:[mm]
+R207 | C12:Pitch diameter (inner) | C14:di | C16:164.393 | C17:410.983 | C19:[mm]
+R208 | C12:Root diameter (outer) | C14:dfe | C16:231.541 | C17:614.596 | C19:[mm]
+R209 | C12:Root diameter (midle) | C14:dfm | C16:191.505 | C17:508.325 | C19:[mm]
+R210 | C12:Root diameter (inner) | C14:dfi | C16:151.469 | C17:402.054 | C19:[mm]
+R211 | C12:Addendum angle | C14:qa | C16:2.7008 | C17:1.3921 | C19:[°]
+R212 | C12:Dedendum angle | C14:qf | C16:1.8013 | C17:3.1093 | C19:[°]
+R213 | C12:Addendum (outer) | C14:hae | C16:15.9596 | C17:8.2216 | C19:[mm]
+R214 | C12:Addendum (midle) | C14:ha | C16:13.2000 | C17:6.8000 | C19:[mm]
+R215 | C12:Addendum (inner) | C14:hai | C16:10.4404 | C17:5.3784 | C19:[mm]
+R216 | C12:Dedendum (outer) | C14:hfe | C16:10.6397 | C17:18.3777 | C19:[mm]
+R217 | C12:Dedendum (midle) | C14:hf | C16:8.8000 | C17:15.2000 | C19:[mm]
+R218 | C12:Dedendum (inner) | C14:hfi | C16:6.9603 | C17:12.0223 | C19:[mm]
+R219 | C12:Normal pressure angle | C14:an | C16:17.4952 | C19:[°]
+R220 | C12:Transverse pressure angle | C14:at | C16:20.0000 | C19:[°]
+R221 | C12:Helix angle | C14:b | C16:30.00 | C19:[°]
+R222 | C12:Base helix angle | C14:bb | C16:28.4812 | C19:[°]
+R223 | C12:Pressure angle at the pitch cylinder | C14:awn | C16:17.4953 | C19:[°]
+R224 | C12:Transverse pressure angle at the pitch cylinder | C14:awt | C16:20.0000 | C19:[°]
+R225 | C12:Circular pitch | C14:pe | C16:37.984 | C19:[mm]
+R226 | C12:Transverse circular pitch | C14:pte | C16:43.860 | C19:[mm]
+R227 | C12:Tooth thickness on the pitch diameter | C14:sne | C16:22.2919 | C17:15.6919 | C19:[mm]
+R228 | C12:Tooth thickness on the pitch diameter | C14:sn | C16:18.4374 | C17:12.9786 | C19:[mm]
+R229 | C12:Tooth thickness on the pitch diameter | C14:sni | C16:14.5828 | C17:10.2652 | C19:[mm]
+R230 | C12:Tooth thickness on the tip diameter | C14:sae | C16:8.8833 | C17:13.5204 | C19:[mm]
+R231 | C12:Tooth thickness on the tip diameter | C14:sa | C16:7.3473 | C17:11.1826 | C19:[mm]
+R232 | C12:Tooth thickness on the tip diameter | C14:sai | C16:5.8112 | C17:8.8447 | C19:[mm]
+R233 | C12:Unit tooth thickness on the tip diameter | C14:sae* | C16:0.7347 | C17:1.1183 | C19:[modul]
+R235 | C12:Virtual spur gear toothing
+R236 | C12:Number of teeth of a virtual wheel with oblique teeth | C14:zvn' | C16:19.387 | C17:121.166
+R237 | C12:Number of teeth of a virtual wheel with straight teeth | C14:zv | C16:29.848 | C17:186.548
+R238 | C12:Reference diameter | C14:dv' | C16:223.857 | C17:1399.107 | C19:[mm]
+R239 | C12:Tip diameter | C14:dva' | C16:250.257 | C17:1412.707 | C19:[mm]
+R240 | C12:Base diameter | C14:dvb' | C16:210.357 | C17:1314.730 | C19:[mm]
+R241 | C12:Root diameter | C14:dvf' | C16:206.257 | C17:1368.707 | C19:[mm]
+R242 | C12:Virtual center distance | C14:av | C16:811.4820 | C19:[mm]
+R243 | C12:Virtual Gear Ratio | C14:iv | C16:6.2500
+R245 | C12:Qualitative indexes of a gearing
+R246 | C12:Transverse contact ratio / overlap ratio | C14:ea  | eb | C16:1.4289 | C17:1.5828
+R247 | C12:Total contact ratio | C14:eg | C16:3.0117
+R248 | C12:Resonance speed | C14:nE1 | C16:6188.65 | C19:[ /min]
+R249 | C12:Resonance ratio | C14:N | C16:0.16
+R250 | C12:Approximate weight of the gearing | C14:m | C16:134.3312 | C19:[kg]
+R251 | C12:Efficiency of the gearing | C14:m | C16:98.30%
+R252 | C12:Selected / Recomended lubricant viscosity | C14:v50 | C16:57 | C17:57 | C19:[mm2/sec]
+R254 | C12:Coefficients for safety calculation
+R255 | C12:Common for the gearing
+R256 | C12:Stiffness of a tooth pair | C14:c' | C16:12.61
+R257 | C12:Meshing stiffness per unit face width | C14:cg | C16:16.67
+R258 | C12:Application factor | C14:KA | C16:1.000
+R259 | C12:Dynamic factor | C14:KV | C16:1.297
+R260 | C12:Number of cycles | C14:NK | C16:1.20E+09 | C17:4.80E+08
+R261 | C12:For pitting safety calculation
+R262 | C12:Face load factor (contact stress) | C14:KHb | C16:1.500
+R263 | C12:Transverse load factor (contact stress) | C14:KHa | C16:1.850
+R264 | C12:Total factor of additional loads | C14:KH | C16:3.599
+R265 | C12:Elasticity factor | C14:ZE | C16:189.81
+R266 | C12:Zone factor | C14:ZH | C16:2.339
+R267 | C12:Helix angle factor | C14:Zbeta | C16:0.931
+R268 | C12:Contact ratio factor | C14:Zeps | C16:0.837
+R269 | C12:Size factor | C14:ZX | C16:1.000 | C17:1.000
+R270 | C12:Lubricant factor | C14:ZL | C16:0.930 | C17:0.930
+R271 | C12:Peripheral speed factor | C14:ZV | C16:1.005 | C17:1.005
+R272 | C12:Roughness factor affecting surface durability | C14:ZR | C16:0.933 | C17:0.933
+R273 | C12:Bevel gear factor (flank) | C14:ZK | C16:0.850
+R274 | C12:Life factor for contact stress | C14:ZN | C16:0.850 | C17:0.850
+R275 | C12:Single pair tooth contact factor | C14:ZB / ZD | C16:1.000 | C17:1.000
+R276 | C12:For bending safety calculation
+R277 | C12:Face load factor (root stress) | C14:KFb | C16:1.500
+R278 | C12:Transverse load factor (root stress) | C14:KFa | C16:1.850
+R279 | C12:Total factor of additional loads | C14:KF | C16:3.599
+R280 | C12:Helix angle factor | C14:Ybeta | C16:0.750
+R281 | C12:Contact ratio factor | C14:Yeps | C16:0.656
+R282 | C12:Notch sensitivity factor | C14:Ydelta | C16:1.019 | C17:0.994
+R283 | C12:Size factor | C14:YX | C16:0.970 | C17:0.970
+R284 | C12:Tooth-root surface factor | C14:YR | C16:1.003 | C17:1.003
+R285 | C12:Alternating load factor | C14:YA | C16:1.000
+R286 | C12:Production technology factor | C14:YT | C16:1.000
+R287 | C12:Life factor for bending stress | C14:YN | C16:0.850 | C17:0.850
+R288 | C12:Tip factor, equal (YFa YSa) | C14:YFS | C16:3.618 | C17:3.595
+R290 | C12:Safety coefficients
+R291 | C12:Safety coefficient for surface durability | C14:SH | C16:1.60 | C17:1.41
+R292 | C12:Safety coefficient for bending durability | C14:SF | C16:15.14 | C17:13.49
+R293 | C12:Safety in contact in one-time overloading | C14:SHst | C16:2.22 | C17:1.89
+R294 | C12:Safety in bending in one-time overloading | C14:SFst | C16:21.80 | C17:19.90
+R295 | C12:Nominal contact stress | C14:SigmaH0 | C16:143.73
+R296 | C12:Contact stress | C14:SigmaH | C16:272.67 | C17:272.67
+R297 | C12:Pitting stress limit | C14:SigmaHG | C16:437.31 | C17:385.42
+R298 | C12:Permissible contact stress | C14:SigmaHP | C16:336.39 | C17:296.48
+R299 | C12:Nominal tooth-root stress | C14:SigmaF0 | C16:6.99 | C17:6.94
+R300 | C12:Tooth-root stress | C14:SigmaF | C16:25.14 | C17:24.98
+R301 | C12:Tooth-root stress limit | C14:SigmaFG | C16:380.73 | C17:336.87
+R302 | C12:Permissible bending stress | C14:SigmaFP | C16:237.96 | C17:210.54
+R304 | C12:Force conditions (forces acting on the toothing)
+R315 | C12:Tangential force | C14:Ft | C16:4594.75 | C19:[N]
+R316 | C12:Normal force | C14:Fn | C16:5562.88 | C19:[N]
+R317 | C12:Axial force - (rotation acc. to the picture) | C14:Fa | C16:3084.14 | C17:567.52 | C19:[N]
+R318 | C12:Radial force (rotation acc. to the picture) | C14:Fr | C16:567.52 | C17:3084.14
+R319 | C12:Axial force (rotation opposite to the picture) | C14:Fa | C16:-1841.95 | C17:2537.96 | C19:[N]
+R320 | C12:Radial force (rotation opposite to the picture) | C14:Fr | C16:2537.96 | C17:-1841.95
+R321 | C12:Peripheral speed on the pitch diameter | C14:v | vmax | C16:10.88 | C17:< 12 | C19:[m/s]
+R322 | C12:Specific load / Unit load | C14:wt | wt* | C16:46.20 | C17:4.62 | C19:[N/mm | MPa]
+R324 | C12:Parameters of the chosen material
+R325 | C12:Density | C14:Ro | C16:7870 | C17:7870 | C19:[kg/m^3]
+R326 | C12:Young's Modulus (Modulus of Elasticity) | C14:E | C16:206 | C17:206 | C19:[GPa]
+R327 | C12:Tensile Strength, Ultimate | C14:Rm | C16:740 | C17:660 | C19:[MPa]
+R328 | C12:Tensile Strength, Yield | C14:Rp0.2 | C16:440 | C17:380 | C19:[MPa]
+R329 | C12:Poison's Ratio | C16:0.3 | C17:0.3
+R330 | C12:Contact Fatigue Limit | C14:SHlim | C16:590 | C17:520 | C19:[MPa]
+R331 | C12:Bending Fatigue Limit | C14:SFlim | C16:452 | C17:410 | C19:[MPa]
+R332 | C12:Tooth Hardness - Side | C14:VHV | C16:235 | C17:200 | C19:[HV]
+R333 | C12:Tooth Hardness - Core | C14:JHV | C16:235 | C17:200 | C19:[HV]
+R334 | C12:Base Number of Load Cycles in Contact | C14:NHlim | C16:5.00E+07 | C17:5.00E+07
+R335 | C12:Wohler Curve Exponent for Contact | C14:qH | C16:10 | C17:10
+R336 | C12:Base Number of Load Cycles in Bend | C14:NFlim | C16:3.00E+06 | C17:3.00E+06
+R337 | C12:Wohler Curve Exponent for Bend | C14:qF | C16:6 | C17:6
+R339 | C12:Additions section
+R341 | C12:Power, warming-up, gearbox surface
+R342 | C12:Ambient air temperature | C16:20.00 | C19:[°C]
+R343 | C12:Maximum oil temperature | C16:60.00 | C19:[°C]
+R344 | C12:Coefficient of heat dissipation | C16:10.00 | C19:[W/m2/K]
+R345 | C12:Power losses | C16:0.85 | C19:[kW]
+R346 | C12:Gearbox surface (min.) | C16:2.12 | C19:[m2]
+R348 | C12:Preliminary design of shaft diameters (steel)
+R349 | C12:Recommended shaft diameter for:
+R350 | C12:- Main power-transmitting shafts | C14:DA | C16:95.57 | C17:128.93 | C19:[mm]
+R351 | C12:- Small, short shafts | C14:DB | C16:74.27 | C17:100.19 | C19:[mm]
+R353 | C12:Auxiliary calculations
+R354 | C12:Transmission ratio calculation using the number of teeth | C14:z1,z2 = i | C16:14 | C17:43 | C18:= | C19:3.0714
+R355 | C12:Transmission ratio calculation using the speed | C14:n1,n2 = i | C16:2000.0 | C17:750.0 | C18:= | C19:2.6667
+R356 | C12:Power calculation using the pinion speed and torque moment | C14:Mk1,n1=Pw1 | C16:270.0 | C17:1600.0 | C18:= | C19:45.2356
+R358 | C12:Graphical output, CAD systems
+R359 | C12:2D drawing output to:
+R360 | C12:2D Drawing scale
+R361 | C12:Detail:
+R362 | C12:Radius of the machining tool (for 3D model) | C13:R | C14:175.5 | C15:175.5 | C17:[mm]
+R363 | C14:Pinion | C15:Gear
+R364 | C12:Amount of the inner offset | C13:a | C14:4.836 | C15:5.911 | C17:[mm]

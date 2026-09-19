@@ -1,0 +1,1513 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MITCalc Web - Tính Toán Bánh Răng Trụ & Bánh Răng Nghiêng (Spur & Helical Gears)</title>
+    <link rel="stylesheet" href="../../shared/css/engineering-theme.css">
+    <style>
+        .input-eng.user-input {
+            background-color: #ffffff !important;
+            color: #111827 !important;
+            border: 2px solid #60a5fa !important;
+            font-weight: 700;
+        }
+        .input-eng.user-input:focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
+        }
+        .highlight-key-param {
+            background-color: #0f172a !important;
+            color: #38bdf8 !important; /* Bright cyan */
+            border: 2px solid #f59e0b !important; /* Amber-gold accent */
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4) !important;
+            font-weight: 800 !important;
+            font-size: 1.05rem !important;
+            letter-spacing: 0.5px;
+            padding: 3px 8px !important;
+            border-radius: 4px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Application Header -->
+    <header class="app-header">
+        <div class="logo-area">
+            <div class="logo-icon">⚙️</div>
+            <div class="logo-text">
+                <h1>MITCalc Web - Tính Toán Bánh Răng Trụ & Bánh Răng Nghiêng</h1>
+                <p>Cấu Trúc & Trải Nghiệm Chuẩn 1-to-1 Bản Gốc MITCalc 1.74 | Tiêu chuẩn ISO 6336, DIN 3960, ISO 1328 (Δ = 0.0000)</p>
+            </div>
+        </div>
+        <div class="header-controls">
+            <a href="../../index.html" class="btn btn-secondary" style="font-size: 0.85rem; text-decoration: none;">🏠 Cổng Hub</a>
+            <span class="btn btn-primary" style="font-size: 0.85rem;">⚙️ Bánh Răng Trụ</span>
+            <a href="../bevel-gear/index.html" class="btn btn-secondary" style="font-size: 0.85rem; text-decoration: none;">📐 Bánh Răng Côn</a>
+            <button type="button" class="btn btn-secondary" id="btnResetDefaults">🔄 Mặc Định</button>
+            <button type="button" class="btn btn-secondary" id="btnPrintReport">🖨️ In / Xuất PDF</button>
+            <button type="button" class="btn btn-secondary" id="btnExportDXF" style="background:#0284c7; color:#ffffff; font-weight:700;">📥 Xuất DXF</button>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="tab-navigation">
+        <button type="button" class="tab-btn active" data-target="tabCalculator">📐 Bảng Tính Toán (Chuẩn MITCalc 1.74)</button>
+        <button type="button" class="tab-btn" data-target="tabCanvas">🔄 Mô Hình 2D Ăn Khớp (Canvas)</button>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- Quick Summary Executive Banner -->
+        <section class="summary-banner">
+            <div class="summary-status-badge">
+                <div class="status-indicator status-safe"></div>
+                <div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Tiêu chuẩn ăn khớp & hình học răng</div>
+                    <strong style="color: var(--accent-green);">ĐẠT TIÊU CHUẨN ISO 6336 / DIN 3960</strong>
+                </div>
+            </div>
+            <div class="summary-metric">
+                <div class="metric-title">Khoảng Cách Trục aw</div>
+                <div class="metric-value val-blue" id="summaryAw">201.000 mm</div>
+            </div>
+            <div class="summary-metric">
+                <div class="metric-title">Tỉ Số Truyền Thực i</div>
+                <div class="metric-value val-blue" id="summaryRatio">2.526</div>
+            </div>
+            <div class="summary-metric">
+                <div class="metric-title">Hệ Số Trùng Khớp εα</div>
+                <div class="metric-value" id="summaryEa">1.646</div>
+            </div>
+            <div class="summary-metric">
+                <div class="metric-title">Chiều Dày Đỉnh sa1*</div>
+                <div class="metric-value" id="summarySa1">0.689</div>
+            </div>
+            <div class="summary-metric">
+                <div class="metric-title">Tổng Khối Lượng m</div>
+                <div class="metric-value val-blue" id="summaryWeight">68.75 kg</div>
+            </div>
+        </section>
+
+        <!-- Global Accordion Toolbar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <span style="font-size: 0.85rem; color: var(--text-secondary);">
+                * Cấu trúc, màu sắc ô nhập/tính và các nút tính toán thuận nghịch đồng bộ 100% với bản gốc MITCalc 1.74.
+            </span>
+            <div style="display: flex; gap: 0.5rem;">
+                <button type="button" class="btn btn-secondary" id="btnExpandAll">📂 Mở Rộng Tất Cả</button>
+                <button type="button" class="btn btn-secondary" id="btnCollapseAll">📁 Thu Gọn Tất Cả</button>
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TAB 1: CALCULATOR (STANDARDIZED ACCORDION)                                 -->
+        <!-- ========================================================================= -->
+        <div id="tabCalculator" class="tab-pane active">
+            <div class="accordion-group">
+
+                <!-- ################################################################# -->
+                <!-- MASTER BLOCK 1: INPUT SECTION (Thanh Xanh Lá Cây Chuẩn MITCalc)   -->
+                <!-- ################################################################# -->
+                <div class="master-block">
+                    <div class="master-header master-input">
+                        <span>📥 Phần Đầu Vào (Input Section)</span>
+                        <span style="font-size: 0.8rem; font-weight: normal; opacity: 0.85;">Mục 1.0 đến Mục 5.0 (Thông Số Truyền Động, Vật Liệu, Dụng Cụ Cắt, Mô Đun & Dịch Chỉnh)</span>
+                    </div>
+
+                    <!-- SECTION 1.0: Options of basic input parameters -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>1.0 Nhập Các Thông Số Truyền Động Cơ Bản (Options of basic input parameters)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Tính Toán</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Bánh Dẫn (Pinion 1)</th>
+                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2)</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1.1</td>
+                                        <td>
+                                            Công suất truyền động
+                                            <button type="button" class="btn-smart" id="btnCalcP_from_Mk" title="Tính ngược công suất từ Mô-men và Vòng quay">[ Pw &lt;= Mk,n ]</button>
+                                        </td>
+                                        <td>Pw</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_Pw" value="100.000"></td>
+                                        <td><span class="output-eng" id="out_Pw2">99.050</span></td>
+                                        <td>kW</td>
+                                    </tr>
+                                    <tr>
+                                        <td>1.2</td>
+                                        <td>Tốc độ quay (Pinion / Gear)</td>
+                                        <td>n</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_n1" value="1000.00"></td>
+                                        <td><span class="output-eng" id="out_n2">395.8</span></td>
+                                        <td>v/ph</td>
+                                    </tr>
+                                    <tr>
+                                        <td>1.3</td>
+                                        <td>Mô-men xoắn xoay danh nghĩa (Torsional moment)</td>
+                                        <td>Mk</td>
+                                        <td><span class="output-eng" id="out_Mk1">955.00</span></td>
+                                        <td><span class="output-eng" id="out_Mk2">2389.72</span></td>
+                                        <td>N.m</td>
+                                    </tr>
+                                    <tr>
+                                        <td>1.4</td>
+                                        <td>
+                                            Tỉ số truyền yêu cầu / dãy tiêu chuẩn
+                                            <button type="button" class="btn-smart" id="btnCalcI_from_n" title="Tính tỉ số truyền từ n1, n2">[ i &lt;= n1,n2 ]</button>
+                                            <button type="button" class="btn-smart" id="btnCalcI_from_z" title="Tính tỉ số truyền từ z1, z2">[ i &lt;= z1,z2 ]</button>
+                                        </td>
+                                        <td>i</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_target_i" value="2.500"></td>
+                                        <td>
+                                            <select class="select-eng" id="selStandardRatio">
+                                                <option value="custom">Tùy chọn...</option>
+                                                <option value="1.0">1.000</option>
+                                                <option value="1.25">1.250</option>
+                                                <option value="1.6">1.600</option>
+                                                <option value="2.0">2.000</option>
+                                                <option value="2.5" selected>2.500 (R10)</option>
+                                                <option value="3.15">3.150 (R10)</option>
+                                                <option value="4.0">4.000 (R10)</option>
+                                                <option value="5.0">5.000 (R10)</option>
+                                                <option value="6.3">6.300 (R10)</option>
+                                            </select>
+                                        </td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>1.5</td>
+                                        <td>Tỉ số truyền thực tế / Độ lệch tỉ số truyền</td>
+                                        <td>i / Δ</td>
+                                        <td><span class="output-eng" id="out_act_i">2.526</span></td>
+                                        <td><span class="output-eng" id="out_dev_i">1.04%</span></td>
+                                        <td>- / %</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+                    <!-- SECTION 3.0: Parameters of the cutting tool and tooth profile -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>3.0 Dụng Cụ Cắt & Biên Dạng Răng Cơ Sở (Parameters of cutting tool and basic rack)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Tính Toán</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Bánh Dẫn (Pinion 1)</th>
+                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2)</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>3.1</td>
+                                        <td>Dụng cụ cắt tiêu chuẩn (Standardized tool)</td>
+                                        <td>-</td>
+                                        <td colspan="2">
+                                            <select class="select-eng" id="selCutTool">
+                                                <option value="1" selected>1. DIN 867 (a=20deg, ha0=1.25, hf0=1.0, ra0=0.38, d0=0, anp=0deg, ca=0.25)</option>
+                                                <option value="2">2. DIN 867 (a=20deg, ha0=1.25, hf0=1.0, ra0=0.25, d0=0deg, anp=0, ca=0.25)</option>
+                                                <option value="3">3. ANSI B6.1 (a=20deg, ha0=1.25, hf0=1.0, ra0=0.3, d0=0deg, anp=0, ca=0.35)</option>
+                                                <option value="4">4. ANSI B6.1 (a=20deg, ha0=1.35, hf0=1.0, ra0=0.3, d0=0, anp=0, ca=0.35)</option>
+                                                <option value="5">5. Protuberance (ha0=1.4, hf0=1.0, ra0=0.4, d0=0.02, a=20, anp=6, ca=0.25)</option>
+                                            </select>
+                                        </td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.2</td>
+                                        <td>Hệ số chiều cao đỉnh dao cắt (Addendum of tool)</td>
+                                        <td>ha0*</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_ha0" value="1.250"></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_ha0_2" value="1.250"></td>
+                                        <td>[modul]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.3</td>
+                                        <td>Hệ số chiều cao đáy dao cắt (Dedendum of tool)</td>
+                                        <td>hf0*</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_hf0" value="1.000"></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_hf0_2" value="1.000"></td>
+                                        <td>[modul]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.4</td>
+                                        <td>Bán kính góc lượn đỉnh dao (Fillet radius of tool)</td>
+                                        <td>ra0*</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_ra0" value="0.380"></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_ra0_2" value="0.380"></td>
+                                        <td>[modul]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.5</td>
+                                        <td>Bán kính lượn chân dao (Root fillet radius of tool)</td>
+                                        <td>rf0*</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_rf0" value="0.000"></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_rf0_2" value="0.000"></td>
+                                        <td>[modul]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.6</td>
+                                        <td>Góc vát chân răng a (Chamfer of root)</td>
+                                        <td>cha*</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_cha" value="0.000"></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_cha_2" value="0.000"></td>
+                                        <td>[modul]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.7</td>
+                                        <td>Góc vát chân răng b (Chamfer of root)</td>
+                                        <td>chb*</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_chb" value="0.000"></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_chb_2" value="0.000"></td>
+                                        <td>[modul]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.8</td>
+                                        <td>Chiều cao phần lồi (Protuberance height)</td>
+                                        <td>d0*</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_d0" value="0.000"></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_d0_2" value="0.000"></td>
+                                        <td>[modul]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.9</td>
+                                        <td>Góc lồi (Protuberance angle)</td>
+                                        <td>αnp</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_anp" value="0.000"></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_anp_2" value="0.000"></td>
+                                        <td>[°]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.10</td>
+                                        <td>Khe hở hướng tâm đỉnh răng tối thiểu (Min. unit head clearance)</td>
+                                        <td>ca* min</td>
+                                        <td><span class="cell-limit" id="out_ca_min1">0.2438</span></td>
+                                        <td><span class="cell-limit" id="out_ca_min2">0.2438</span></td>
+                                        <td>[modul]</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.11</td>
+                                        <td>Hệ số khe hở hướng tâm đỉnh răng (Unit head clearance)</td>
+                                        <td>ca*</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_ca_star" value="0.2500"></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_ca_star_2" value="0.2500"></td>
+                                        <td>[modul]</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 4.0: Design of a module and geometry of toothing -->
+                    <div class="calc-section">
+                        <div class="section-header">
+                            <h3>4.0 Thiết Kế Mô Đun & Hình Học Ăn Khớp (Module design and toothing geometry)</h3>
+                            <span class="section-toggle">▼</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Tính Toán</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Bánh Dẫn (Pinion 1)</th>
+                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2)</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>4.1</td>
+                                        <td>Số răng của bánh răng (Number of teeth)</td>
+                                        <td>z</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_z1" value="19"></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_z2" value="48"></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.2</td>
+                                        <td>Góc ăn khớp danh nghĩa (Normal pressure angle)</td>
+                                        <td>α</td>
+                                        <td colspan="2"><input type="text" class="input-eng user-input" id="in_alfa_n" value="20.0"></td>
+                                        <td>độ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.3</td>
+                                        <td>Góc nghiêng răng cơ sở (Base helix angle)</td>
+                                        <td>β</td>
+                                        <td colspan="2"><input type="text" class="input-eng user-input" id="in_beta" value="0.0"></td>
+                                        <td>độ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.6</td>
+                                        <td>Mô đun pháp tuyến / Tiêu chuẩn DIN 780</td>
+                                        <td>mn</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_mn" value="6.000"></td>
+                                        <td>
+                                            <select class="select-eng" id="selStdModule">
+                                                <option value="custom">Tùy chọn...</option>
+                                                <option value="1.0">1.0 mm</option>
+                                                <option value="1.5">1.5 mm</option>
+                                                <option value="2.0">2.0 mm</option>
+                                                <option value="2.5">2.5 mm</option>
+                                                <option value="3.0">3.0 mm</option>
+                                                <option value="4.0">4.0 mm</option>
+                                                <option value="5.0">5.0 mm</option>
+                                                <option value="6.0" selected>6.0 mm (Dãy 1)</option>
+                                                <option value="8.0">8.0 mm (Dãy 1)</option>
+                                                <option value="10.0">10.0 mm (Dãy 1)</option>
+                                            </select>
+                                        </td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.7</td>
+                                        <td>Đường kính vòng chia tham chiếu (Reference diameter)</td>
+                                        <td>d</td>
+                                        <td><span class="output-eng" id="out_d1">114.00</span></td>
+                                        <td><span class="output-eng" id="out_d2">288.00</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.9</td>
+                                        <td>Chiều rộng vành răng (Face width)</td>
+                                        <td>b</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_b1" value="120.00"></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_b2" value="117.00"></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.10</td>
+                                        <td>Chiều rộng làm việc chung (Working face width)</td>
+                                        <td>bw</td>
+                                        <td colspan="2"><span class="output-eng" id="out_bw">117.00</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.12</td>
+                                        <td>Khoảng cách trục làm việc (Working center distance)</td>
+                                        <td>aw</td>
+                                        <td colspan="2"><span class="output-eng highlight-key-param" id="out_aw_sec4">201.000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.13</td>
+                                        <td>Khối lượng xấp xỉ của bộ truyền</td>
+                                        <td>m</td>
+                                        <td colspan="2"><span class="output-eng" id="out_weight_sec4">68.748</span></td>
+                                        <td>kg</td>
+                                    </tr>
+                                    <tr class="table-subgroup-header">
+                                        <td>4.14</td>
+                                        <td colspan="4"><strong>Khe hở cạnh răng pháp tuyến (Normal backlash)</strong></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.15</td>
+                                        <td>- Giá trị nhỏ nhất / lớn nhất khuyến nghị (Recommended min. | max.)</td>
+                                        <td>jn min / max</td>
+                                        <td><span class="output-eng" id="out_jn_min">0.085</span></td>
+                                        <td><span class="output-eng" id="out_jn_max">0.340</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.16</td>
+                                        <td>- Khe hở cạnh răng pháp tuyến được chọn (Selected normal backlash)</td>
+                                        <td>jn / jtw</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_jn" value="0.0000"></td>
+                                        <td><span class="output-eng" id="out_jtw">0.0000</span> (jtw)</td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.17</td>
+                                        <td>- Hiệu chỉnh khoảng cách trục do khe hở (Centre distance mod.)</td>
+                                        <td>Δaj</td>
+                                        <td colspan="2"><span class="output-eng" id="out_delta_a_jn">0.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 5.0: Correction of toothing (Addendum modification) -->
+                    <div class="calc-section">
+                        <div class="section-header">
+                            <h3>5.0 Dịch Chỉnh Biên Dạng Răng (Addendum modification / Profile shift)</h3>
+                            <span class="section-toggle">▼</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Tính Toán</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Bánh Dẫn (Pinion 1)</th>
+                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2)</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>5.2</td>
+                                        <td>Giới hạn dịch chỉnh chống cắt chân răng cho phép</td>
+                                        <td>xmin (undercut)</td>
+                                        <td><span class="cell-limit" id="out_xmin_undercut1">-0.263</span></td>
+                                        <td><span class="cell-limit" id="out_xmin_undercut2">-0.708</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.3</td>
+                                        <td>Giới hạn dịch chỉnh triệt tiêu cắt chân răng hoàn toàn</td>
+                                        <td>xmin (no cut)</td>
+                                        <td><span class="cell-limit" id="out_xmin_nocut1">-0.105</span></td>
+                                        <td><span class="cell-limit" id="out_xmin_nocut2">-0.646</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.4</td>
+                                        <td>Giới hạn dịch chỉnh chống nhọn đỉnh răng (sa* &gt;= 0.25)</td>
+                                        <td>xmax (tapering)</td>
+                                        <td><span class="cell-limit" id="out_xmax_taper1">0.194</span></td>
+                                        <td><span class="cell-limit" id="out_xmax_taper2">-1.683</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.5</td>
+                                        <td>Thanh trượt điều chỉnh hệ số dịch chỉnh x1</td>
+                                        <td>Slider x1</td>
+                                        <td colspan="2">
+                                            <div class="slider-container">
+                                                <input type="range" class="slider-eng" id="slider_x1" min="-1.0" max="1.0" step="0.01" value="0.0">
+                                                <span id="slider_x1_val" style="font-family: Consolas; font-weight: 700; width: 60px;">0.0000</span>
+                                            </div>
+                                        </td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.6</td>
+                                        <td>Hệ số dịch chỉnh biên dạng (Profile shift coefficient)</td>
+                                        <td>x</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_x1" value="0.0000"></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_x2" value="0.0000"></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.7</td>
+                                        <td>Tổng hệ số dịch chỉnh biên dạng / Giới hạn nhỏ nhất</td>
+                                        <td>Σx / min</td>
+                                        <td><span class="output-eng" id="out_sum_x">0.0000</span></td>
+                                        <td><span class="cell-limit" id="out_min_sum_x">&gt; -1.372</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.8</td>
+                                        <td>Hệ số trùng khớp ngang / Hệ số trùng khớp tổng</td>
+                                        <td>εα / εγ</td>
+                                        <td><span class="output-eng" id="out_ea_sec5">1.6456</span></td>
+                                        <td><span class="output-eng" id="out_eg_sec5">1.6456</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.9</td>
+                                        <td>Chiều dày răng không thứ nguyên trên đỉnh răng</td>
+                                        <td>sa*</td>
+                                        <td><span class="output-eng" id="out_sa1_star_sec5">0.6886</span></td>
+                                        <td><span class="output-eng" id="out_sa2_star_sec5">0.7729</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.10</td>
+                                        <td>Hệ số trượt riêng tại chân răng</td>
+                                        <td>JA1 / JE2</td>
+                                        <td><span class="output-eng" id="out_JA1">-5.3758</span></td>
+                                        <td><span class="output-eng" id="out_JE2">-1.3551</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.11</td>
+                                        <td>Hệ số trượt riêng tại đỉnh răng</td>
+                                        <td>JE1 / JA2</td>
+                                        <td><span class="output-eng" id="out_JE1">0.5754</span></td>
+                                        <td><span class="output-eng" id="out_JA2">0.8432</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.12</td>
+                                        <td>Tổng trị tuyệt đối các hệ số trượt riêng</td>
+                                        <td>Sum|J|</td>
+                                        <td colspan="2"><span class="output-eng" id="out_sum_J">8.1494</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ################################################################# -->
+                <!-- MASTER BLOCK 2: RESULTS SECTION (Thanh Vàng Cam Chuẩn MITCalc)    -->
+                <!-- ################################################################# -->
+                <div class="master-block">
+                    <div class="master-header master-results">
+                        <span>📊 Phần Kết Quả Tính Toán (Results Section)</span>
+                        <span style="font-size: 0.8rem; font-weight: normal; opacity: 0.85;">Mục 6.0 đến Mục 8.0 (Kích Thước Cơ Bản, Thông Số Bổ Sung & Chất Lượng Ăn Khớp)</span>
+                    </div>
+
+                    <!-- SECTION 6.0: Basic dimensions of gearing -->
+                    <div class="calc-section">
+                        <div class="section-header">
+                            <h3>6.0 Kích Thước Hình Học Cơ Bản (Basic dimensions of gearing)</h3>
+                            <span class="section-toggle">▼</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Tính Toán</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Bánh Dẫn (Pinion 1)</th>
+                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2)</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>6.1</td>
+                                        <td>Số răng bánh dẫn và bánh bị dẫn</td>
+                                        <td>z</td>
+                                        <td><span class="output-eng" id="res_z1">19</span></td>
+                                        <td><span class="output-eng" id="res_z2">48</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.2</td>
+                                        <td>Chiều rộng vành răng</td>
+                                        <td>b</td>
+                                        <td><span class="output-eng" id="res_b1">120.00</span></td>
+                                        <td><span class="output-eng" id="res_b2">117.00</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.3</td>
+                                        <td>Mô đun pháp tuyến danh nghĩa</td>
+                                        <td>mn</td>
+                                        <td colspan="2"><span class="output-eng" id="res_mn">6.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.4</td>
+                                        <td>Mô đun mặt mút (Transverse module)</td>
+                                        <td>mt</td>
+                                        <td colspan="2"><span class="output-eng" id="res_mt">6.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.5</td>
+                                        <td>Bước răng danh nghĩa theo vòng chia (Circular pitch)</td>
+                                        <td>p</td>
+                                        <td colspan="2"><span class="output-eng" id="res_p">18.8496</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.6</td>
+                                        <td>Bước răng mặt mút (Transverse circular pitch)</td>
+                                        <td>pt</td>
+                                        <td colspan="2"><span class="output-eng" id="res_pt">18.8496</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.7</td>
+                                        <td>Bước răng vòng cơ sở (Base circular pitch)</td>
+                                        <td>ptb</td>
+                                        <td colspan="2"><span class="output-eng" id="res_ptb">17.7128</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.8</td>
+                                        <td>Khoảng cách trục lý thuyết không dịch chỉnh</td>
+                                        <td>a</td>
+                                        <td colspan="2"><span class="output-eng" id="res_a">201.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.9</td>
+                                        <td>Khoảng cách trục chế tạo</td>
+                                        <td>av</td>
+                                        <td colspan="2"><span class="output-eng" id="res_av">201.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.10</td>
+                                        <td>Khoảng cách trục làm việc thực tế</td>
+                                        <td>aw</td>
+                                        <td colspan="2"><span class="output-eng highlight-key-param" id="res_aw">201.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.11</td>
+                                        <td>Góc áp lực danh nghĩa</td>
+                                        <td>α</td>
+                                        <td colspan="2"><span class="output-eng" id="res_alfa">20.0000</span></td>
+                                        <td>độ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.12</td>
+                                        <td>Góc áp lực mặt mút</td>
+                                        <td>αt</td>
+                                        <td colspan="2"><span class="output-eng" id="res_alfat">20.0000</span></td>
+                                        <td>độ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.13</td>
+                                        <td>Góc ăn khớp làm việc pháp tuyến</td>
+                                        <td>αwn</td>
+                                        <td colspan="2"><span class="output-eng" id="res_alfawn">20.0000</span></td>
+                                        <td>độ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.14</td>
+                                        <td>Góc ăn khớp làm việc mặt mút</td>
+                                        <td>αwt</td>
+                                        <td colspan="2"><span class="output-eng" id="res_alfawt">20.0000</span></td>
+                                        <td>độ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.15</td>
+                                        <td>Góc xoắn răng danh nghĩa</td>
+                                        <td>β</td>
+                                        <td colspan="2"><span class="output-eng" id="res_beta">0.0000</span></td>
+                                        <td>độ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.16</td>
+                                        <td>Góc xoắn răng vòng cơ sở</td>
+                                        <td>βb</td>
+                                        <td colspan="2"><span class="output-eng" id="res_betab">0.0000</span></td>
+                                        <td>độ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.17</td>
+                                        <td>Đường kính đỉnh răng (Tip diameter)</td>
+                                        <td>da</td>
+                                        <td><span class="output-eng highlight-key-param" id="res_da1">126.0000</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="res_da2">300.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.18</td>
+                                        <td>Đường kính vòng chia tham chiếu (Reference diameter)</td>
+                                        <td>d</td>
+                                        <td><span class="output-eng" id="res_d1">114.0000</span></td>
+                                        <td><span class="output-eng" id="res_d2">288.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.19</td>
+                                        <td>Đường kính vòng cơ sở (Base diameter)</td>
+                                        <td>db</td>
+                                        <td><span class="output-eng" id="res_db1">107.1250</span></td>
+                                        <td><span class="output-eng" id="res_db2">270.6315</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.20</td>
+                                        <td>Đường kính chân răng (Root diameter)</td>
+                                        <td>df</td>
+                                        <td><span class="output-eng highlight-key-param" id="res_df1">99.0000</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="res_df2">273.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.21</td>
+                                        <td>Đường kính lăn làm việc (Operating pitch diameter)</td>
+                                        <td>dw</td>
+                                        <td><span class="output-eng" id="res_dw1">114.0000</span></td>
+                                        <td><span class="output-eng" id="res_dw2">288.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.22</td>
+                                        <td>Chiều cao đỉnh răng (Addendum)</td>
+                                        <td>ha</td>
+                                        <td><span class="output-eng" id="res_ha1">6.0000</span></td>
+                                        <td><span class="output-eng" id="res_ha2">6.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.23</td>
+                                        <td>Chiều cao chân răng (Dedendum)</td>
+                                        <td>hf</td>
+                                        <td><span class="output-eng" id="res_hf1">7.5000</span></td>
+                                        <td><span class="output-eng" id="res_hf2">7.5000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.24</td>
+                                        <td>Chiều dày răng trên đường kính đỉnh (pháp tuyến)</td>
+                                        <td>sna</td>
+                                        <td><span class="output-eng" id="res_sna1">4.1314</span></td>
+                                        <td><span class="output-eng" id="res_sna2">4.6375</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.25</td>
+                                        <td>Chiều dày răng trên đường kính đỉnh (mặt mút)</td>
+                                        <td>sta</td>
+                                        <td><span class="output-eng" id="res_sta1">4.1314</span></td>
+                                        <td><span class="output-eng" id="res_sta2">4.6375</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.26</td>
+                                        <td>Chiều dày răng trên vòng chia (pháp tuyến)</td>
+                                        <td>sn</td>
+                                        <td><span class="output-eng" id="res_sn1">9.4248</span></td>
+                                        <td><span class="output-eng" id="res_sn2">9.4248</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.27</td>
+                                        <td>Chiều dày răng trên vòng chia (mặt mút)</td>
+                                        <td>st</td>
+                                        <td><span class="output-eng" id="res_st1">9.4248</span></td>
+                                        <td><span class="output-eng" id="res_st2">9.4248</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.28</td>
+                                        <td>Chiều dày răng trên vòng cơ sở</td>
+                                        <td>sb</td>
+                                        <td><span class="output-eng" id="res_sb1">9.6602</span></td>
+                                        <td><span class="output-eng" id="res_sb2">13.0028</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.29</td>
+                                        <td>Chiều dày đỉnh răng không thứ nguyên</td>
+                                        <td>sa*</td>
+                                        <td><span class="output-eng" id="res_sa1_star">0.6886</span></td>
+                                        <td><span class="output-eng" id="res_sa2_star">0.7729</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.30</td>
+                                        <td>Hệ số dịch chỉnh khoảng cách trục</td>
+                                        <td>Δy</td>
+                                        <td colspan="2"><span class="output-eng" id="res_dy">0.0000</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.31</td>
+                                        <td>Tổng hệ số dịch chỉnh biên dạng</td>
+                                        <td>x1 + x2</td>
+                                        <td colspan="2"><span class="output-eng" id="res_sum_x">0.0000</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.32</td>
+                                        <td>Hệ số dịch chỉnh biên dạng từng bánh</td>
+                                        <td>x</td>
+                                        <td><span class="output-eng" id="res_x1">0.0000</span></td>
+                                        <td><span class="output-eng" id="res_x2">0.0000</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 7.0: Supplemental parameters of gearing -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>7.0 Thông Số Hình Học Bổ Sung (Supplemental parameters of gearing)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Tính Toán</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Bánh Dẫn (Pinion 1)</th>
+                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2)</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>7.1</td>
+                                        <td>Số răng thực tế</td>
+                                        <td>z</td>
+                                        <td><span class="output-eng" id="sup_z1">19</span></td>
+                                        <td><span class="output-eng" id="sup_z2">48</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>7.2</td>
+                                        <td>Số răng tương đương của bánh răng nghiêng</td>
+                                        <td>zn</td>
+                                        <td><span class="output-eng" id="sup_zn1">19.000</span></td>
+                                        <td><span class="output-eng" id="sup_zn2">48.000</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>7.3</td>
+                                        <td>Số răng nhỏ nhất (chấp nhận cắt chân răng nhỏ)</td>
+                                        <td>zmin1</td>
+                                        <td><span class="output-eng" id="sup_zmin1_1">14</span></td>
+                                        <td><span class="output-eng" id="sup_zmin1_2">14</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>7.4</td>
+                                        <td>Số răng nhỏ nhất (không bị cắt chân răng)</td>
+                                        <td>zmin2</td>
+                                        <td><span class="output-eng" id="sup_zmin2_1">17</span></td>
+                                        <td><span class="output-eng" id="sup_zmin2_2">17</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>7.5</td>
+                                        <td>Số răng nhỏ nhất (không bị nhọn đầu răng)</td>
+                                        <td>zmin3</td>
+                                        <td><span class="output-eng" id="sup_zmin3_1">22</span></td>
+                                        <td><span class="output-eng" id="sup_zmin3_2">22</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 8.0: Qualitative indices of gearing -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>8.0 Chỉ Số Chất Lượng Ăn Khớp & Kích Thước Bánh Răng (Qualitative indices)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Tính Toán</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Bánh Dẫn (Pinion 1)</th>
+                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2)</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>8.1</td>
+                                        <td>Hệ số trùng khớp ngang / Hệ số trùng khớp dọc</td>
+                                        <td>εα / εβ</td>
+                                        <td><span class="output-eng" id="qual_ea">1.6456</span></td>
+                                        <td><span class="output-eng" id="qual_eb">0.0000</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8.2</td>
+                                        <td>Hệ số trùng khớp tổng (Total contact ratio)</td>
+                                        <td>εγ</td>
+                                        <td colspan="2"><span class="output-eng" id="qual_eg">1.6456</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8.4</td>
+                                        <td>Đường kính trục khuyến nghị nhỏ nhất</td>
+                                        <td>Ds min</td>
+                                        <td><span class="cell-limit" id="qual_Dsmin1">56.60</span></td>
+                                        <td><span class="cell-limit" id="qual_Dsmin2">76.90</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8.5</td>
+                                        <td>Đường kính ngoài moay-ơ nhỏ nhất</td>
+                                        <td>Dh min</td>
+                                        <td><span class="cell-limit" id="qual_Dhmin1">74.60</span></td>
+                                        <td><span class="cell-limit" id="qual_Dhmin2">94.90</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8.6</td>
+                                        <td>Đường kính trục lớn nhất cho phép</td>
+                                        <td>Ds max</td>
+                                        <td><span class="cell-limit" id="qual_Dsmax1">87.00</span></td>
+                                        <td><span class="cell-limit" id="qual_Dsmax2">261.00</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8.11</td>
+                                        <td>Chiều dày vành răng (Gear rim thickness)</td>
+                                        <td>sR</td>
+                                        <td><span class="output-eng" id="qual_sR1">49.50</span></td>
+                                        <td><span class="output-eng" id="qual_sR2">136.50</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8.12</td>
+                                        <td>Chiều dày nan hoa / vách đĩa bánh răng</td>
+                                        <td>bs</td>
+                                        <td><span class="output-eng" id="qual_bs1">120.00</span></td>
+                                        <td><span class="output-eng" id="qual_bs2">117.00</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8.13</td>
+                                        <td>Khối lượng từng bánh răng (Gear weight)</td>
+                                        <td>m</td>
+                                        <td><span class="output-eng" id="qual_m1">9.388</span></td>
+                                        <td><span class="output-eng" id="qual_m2">59.361</span></td>
+                                        <td>kg</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8.18</td>
+                                        <td>Vận tốc vòng trên đường kính chia / Giới hạn vận tốc</td>
+                                        <td>v / vmax</td>
+                                        <td><span class="output-eng" id="qual_v">5.97</span></td>
+                                        <td><span class="cell-limit" id="qual_vmax">&lt; 15</span></td>
+                                        <td>m/s</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8.19</td>
+                                        <td>Lực tiếp tuyến riêng trên một đơn vị chiều dài răng</td>
+                                        <td>wt</td>
+                                        <td><span class="output-eng" id="qual_wt1">143.20</span></td>
+                                        <td><span class="output-eng" id="qual_wt2">150.57</span></td>
+                                        <td>N/mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8.22</td>
+                                        <td>Tổng khối lượng bộ truyền bánh răng</td>
+                                        <td>m (total)</td>
+                                        <td colspan="2"><span class="output-eng" id="qual_mtotal">68.7483</span></td>
+                                        <td>kg</td>
+                                    </tr>
+                                    <tr>
+                                        <td>8.23</td>
+                                        <td>Hiệu suất bộ truyền bánh răng</td>
+                                        <td>η</td>
+                                        <td colspan="2"><span class="output-eng" id="qual_eta">99.05%</span></td>
+                                        <td>%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ################################################################# -->
+                <!-- MASTER BLOCK 3: ADDITIONS & INSPECTION (Thanh Xanh Dương)        -->
+                <!-- ################################################################# -->
+                <div class="master-block">
+                    <div class="master-header master-additions">
+                        <span>🛠️ Phần Bổ Sung & Đo Kiểm Chế Tạo (Additions & Manufacturing)</span>
+                        <span style="font-size: 0.8rem; font-weight: normal; opacity: 0.85;">Mục 11.0, 14.0, 17.0, 18.0 (Kích Thước Đo W/M, Dung Sai ISO 1328 & Chế Tạo)</span>
+                    </div>
+
+                    <!-- SECTION 11.0: Check dimensions of gearing, ISO 1328 system of accuracy -->
+                    <div class="calc-section">
+                        <div class="section-header">
+                            <h3>11.0 Kích Thước Đo Kiểm W, M & Dung Sai ISO 1328 (Inspection & ISO 1328 Tolerances)</h3>
+                            <span class="section-toggle">▼</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Tính Toán</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Bánh Dẫn (Pinion 1)</th>
+                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2)</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="table-subgroup-header">
+                                        <td>11.1</td>
+                                        <td colspan="5"><strong>Kích thước đo kiểm bộ truyền bánh răng (Check dimensions of gearing)</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.2</td>
+                                        <td>Số răng đo pháp tuyến chung khuyến nghị (Number of measured teeth - rec.)</td>
+                                        <td>zw (rec)</td>
+                                        <td><span class="output-eng" id="res_zw1_calc">3</span></td>
+                                        <td><span class="output-eng" id="res_zw2_calc">6</span></td>
+                                        <td>
+                                            <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer; font-size:0.8rem;">
+                                                <input type="checkbox" id="chkAutoZw" checked> Tự động
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.3</td>
+                                        <td>Số răng đo pháp tuyến chung áp dụng (Number of measured teeth - applied)</td>
+                                        <td>zw</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_zw1" value="3" disabled></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_zw2" value="6" disabled></td>
+                                        <td>răng</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.4</td>
+                                        <td>Chiều dài pháp tuyến chung (Base tangent length)</td>
+                                        <td>W</td>
+                                        <td><span class="output-eng highlight-key-param" id="res_W1">45.8786</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="res_W2">101.4539</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.5</td>
+                                        <td>Đường kính con lăn / bi đo khuyến nghị (Pin/Ball diameter - rec.)</td>
+                                        <td>dt (rec)</td>
+                                        <td><span class="output-eng" id="res_dt1_calc">10.5000</span></td>
+                                        <td><span class="output-eng" id="res_dt2_calc">10.5000</span></td>
+                                        <td>
+                                            <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer; font-size:0.8rem;">
+                                                <input type="checkbox" id="chkAutoDt" checked> Tự động
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.6</td>
+                                        <td>Đường kính con lăn / bi đo áp dụng (Pin/Ball diameter - applied)</td>
+                                        <td>dt</td>
+                                        <td><input type="text" class="input-eng user-input" id="in_dt1" value="10.5000" disabled></td>
+                                        <td><input type="text" class="input-eng user-input" id="in_dt2" value="10.5000" disabled></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.7</td>
+                                        <td>Kích thước đo qua con lăn/bi (Dimension over pins/balls)</td>
+                                        <td>M</td>
+                                        <td><span class="output-eng" id="res_M1">128.3642</span></td>
+                                        <td><span class="output-eng" id="res_M2">303.0482</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr class="table-subgroup-header">
+                                        <td>11.8</td>
+                                        <td colspan="5"><strong>Thiết kế bộ truyền theo kích thước đo yêu cầu W và M (GoalSeek x1, Σx)</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.9</td>
+                                        <td>Khoảng biến thiên cho phép của W (Permissible range of W)</td>
+                                        <td>W min/max</td>
+                                        <td><span class="cell-limit" id="res_W1_range">44.8 / 52.03</span></td>
+                                        <td><span class="cell-limit" id="res_W2_range">98.5 / 107.6</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.10</td>
+                                        <td>Kích thước pháp tuyến chung yêu cầu (Requested chordal dimension)</td>
+                                        <td>W req</td>
+                                        <td>
+                                            <div style="display:flex; gap:4px; align-items:center;">
+                                                <input type="text" class="input-eng user-input" id="in_W1_req" value="77.000" style="width:75px;">
+                                                <button type="button" class="btn btn-secondary btn-compact" id="btn_W1_to_x1" title="Tính ngược x1 từ W1">->x1</button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="display:flex; gap:4px; align-items:center;">
+                                                <input type="text" class="input-eng user-input" id="in_W2_req" value="260.000" style="width:75px;">
+                                                <button type="button" class="btn btn-secondary btn-compact" id="btn_W2_to_sumX" title="Tính ngược Σx từ W2">->Σx</button>
+                                            </div>
+                                        </td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.11</td>
+                                        <td>Khoảng biến thiên cho phép của M (Permissible range of M)</td>
+                                        <td>M min/max</td>
+                                        <td><span class="cell-limit" id="res_M1_range">125.7 / 140.5</span></td>
+                                        <td><span class="cell-limit" id="res_M2_range">294.6 / 317.4</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.12</td>
+                                        <td>Kích thước qua con lăn/bi yêu cầu (Requested dimension over pins/balls)</td>
+                                        <td>M req</td>
+                                        <td>
+                                            <div style="display:flex; gap:4px; align-items:center;">
+                                                <input type="text" class="input-eng user-input" id="in_M1_req" value="240.000" style="width:75px;">
+                                                <button type="button" class="btn btn-secondary btn-compact" id="btn_M1_to_x1" title="Tính ngược x1 từ M1">->x1</button>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div style="display:flex; gap:4px; align-items:center;">
+                                                <input type="text" class="input-eng user-input" id="in_M2_req" value="700.000" style="width:75px;">
+                                                <button type="button" class="btn btn-secondary btn-compact" id="btn_M2_to_sumX" title="Tính ngược Σx từ M2">->Σx</button>
+                                            </div>
+                                        </td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr class="table-subgroup-header">
+                                        <td>11.13</td>
+                                        <td colspan="5"><strong>Hệ thống cấp chính xác ISO 1328 - Phần 1 (ISO 1328 System of accuracy - Part 1)</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.14</td>
+                                        <td>Cấp chính xác chế tạo (Accuracy grade)</td>
+                                        <td>Q</td>
+                                        <td colspan="2">
+                                            <select class="select-eng" id="selSec11Accuracy" style="width: 100%;" disabled>
+                                                <option value="3">3....(Ra max.= 0.1 / v max.= 80)</option>
+                                                <option value="4">4....(Ra max.= 0.2 / v max.= 60)</option>
+                                                <option value="5">5....(Ra max.= 0.4 / v max.= 35)</option>
+                                                <option value="6" selected>6....(Ra max.= 0.8 / v max.= 15)</option>
+                                                <option value="7">7....(Ra max.= 1.6 / v max.= 8)</option>
+                                                <option value="8">8....(Ra max.= 1.6 / v max.= 5)</option>
+                                                <option value="9">9....(Ra max.= 3.2 / v max.= 3)</option>
+                                                <option value="10">10..(Ra max.= 6.3 / v max.= 3)</option>
+                                                <option value="11">11..(Ra max.= 12.5 / v max.= 3)</option>
+                                                <option value="12">12..(Ra max.= 25 / v max.= 3)</option>
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer; font-size:0.8rem;">
+                                                <input type="checkbox" id="chkAutoAccuracy" checked> Tự động
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.15</td>
+                                        <td>Mô đun danh nghĩa (Normal module)</td>
+                                        <td>mn</td>
+                                        <td><span class="output-eng" id="res_sec11_mn">6.000</span></td>
+                                        <td>
+                                            <select class="select-eng" id="selSec11Module">
+                                                <option value="custom">Tiêu chuẩn...</option>
+                                                <option value="1.0">1.0 mm</option>
+                                                <option value="1.5">1.5 mm</option>
+                                                <option value="2.0">2.0 mm</option>
+                                                <option value="2.5">2.5 mm</option>
+                                                <option value="3.0">3.0 mm</option>
+                                                <option value="4.0">4.0 mm</option>
+                                                <option value="5.0">5.0 mm</option>
+                                                <option value="6.0" selected>6.0 mm</option>
+                                                <option value="8.0">8.0 mm</option>
+                                                <option value="10.0">10.0 mm</option>
+                                            </select>
+                                        </td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.16</td>
+                                        <td>Đường kính chia danh nghĩa (Reference diameter)</td>
+                                        <td>d</td>
+                                        <td><span class="output-eng" id="tol_d1">114.000</span></td>
+                                        <td><span class="output-eng" id="tol_d2">288.000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.17</td>
+                                        <td>Bề rộng vành răng (Face width)</td>
+                                        <td>b</td>
+                                        <td><span class="output-eng" id="tol_b1">120.000</span></td>
+                                        <td><span class="output-eng" id="tol_b2">117.000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.18</td>
+                                        <td>Tổng hệ số trùng khớp (Total contact ratio)</td>
+                                        <td>εγ</td>
+                                        <td colspan="2"><span class="output-eng" id="tol_eg">1.6456</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.19</td>
+                                        <td>Dung sai bước răng đơn (Single pitch deviation)</td>
+                                        <td>fpt</td>
+                                        <td><span class="output-eng" id="tol_fpt1">9.0</span></td>
+                                        <td><span class="output-eng" id="tol_fpt2">11.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.20</td>
+                                        <td>Số răng cho dung sai bước tích lũy k (Number of teeth for cumulative pitch dev)</td>
+                                        <td>k</td>
+                                        <td><span class="output-eng" id="tol_k1">2</span></td>
+                                        <td><span class="output-eng" id="tol_k2">2</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.21</td>
+                                        <td>Dung sai bước tích lũy k răng (Cumulative pitch deviation)</td>
+                                        <td>Fpk</td>
+                                        <td><span class="output-eng" id="tol_Fpk1">18.0</span></td>
+                                        <td><span class="output-eng" id="tol_Fpk2">20.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.22</td>
+                                        <td>Tổng dung sai bước tích lũy (Total cumulative pitch deviation)</td>
+                                        <td>Fp</td>
+                                        <td><span class="output-eng" id="tol_Fp1">28.0</span></td>
+                                        <td><span class="output-eng" id="tol_Fp2">47.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.23</td>
+                                        <td>Tổng dung sai biên dạng (Total profile deviation)</td>
+                                        <td>Fα</td>
+                                        <td><span class="output-eng" id="tol_Fa1">13.0</span></td>
+                                        <td><span class="output-eng" id="tol_Fa2">17.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.24</td>
+                                        <td>Tổng dung sai hướng răng (Total helix deviation)</td>
+                                        <td>Fβ</td>
+                                        <td><span class="output-eng" id="tol_Fb1">17.0</span></td>
+                                        <td><span class="output-eng" id="tol_Fb2">18.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.25</td>
+                                        <td>Sai lệch tiếp xúc ăn khớp đơn tiếp tuyến (Tooth-to-tooth tangential composite)</td>
+                                        <td>f'i</td>
+                                        <td><span class="output-eng" id="tol_fi1">20.0</span></td>
+                                        <td><span class="output-eng" id="tol_fi2">23.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.26</td>
+                                        <td>Tổng sai lệch tiếp xúc ăn khớp tiếp tuyến (Total tangential composite deviation)</td>
+                                        <td>F'i</td>
+                                        <td><span class="output-eng" id="tol_Fi1">47.0</span></td>
+                                        <td><span class="output-eng" id="tol_Fi2">70.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.27</td>
+                                        <td>Sai lệch dạng biên dạng (Profile form deviation)</td>
+                                        <td>ffα</td>
+                                        <td><span class="output-eng" id="tol_ffa1">10.0</span></td>
+                                        <td><span class="output-eng" id="tol_ffa2">13.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.28</td>
+                                        <td>Sai lệch độ nghiêng biên dạng (Profile slope deviation)</td>
+                                        <td>fHα</td>
+                                        <td><span class="output-eng" id="tol_fHa1">8.5</span></td>
+                                        <td><span class="output-eng" id="tol_fHa2">11.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.29</td>
+                                        <td>Sai lệch dạng hướng răng (Helix form deviation)</td>
+                                        <td>ffβ</td>
+                                        <td><span class="output-eng" id="tol_ffb1">12.0</span></td>
+                                        <td><span class="output-eng" id="tol_ffb2">13.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.30</td>
+                                        <td>Sai lệch độ nghiêng hướng răng (Helix slope deviation)</td>
+                                        <td>fHβ</td>
+                                        <td><span class="output-eng" id="tol_fHb1">12.0</span></td>
+                                        <td><span class="output-eng" id="tol_fHb2">13.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr class="table-subgroup-header">
+                                        <td>11.31</td>
+                                        <td colspan="5"><strong>Hệ thống cấp chính xác ISO 1328 - Phần 2 (ISO 1328 System of accuracy - Part 2)</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.32</td>
+                                        <td>Sai lệch tiếp xúc ăn khớp đơn hướng tâm (Tooth-to-tooth radial composite dev.)</td>
+                                        <td>f''i</td>
+                                        <td><span class="output-eng" id="tol_fffi1">22.0</span></td>
+                                        <td><span class="output-eng" id="tol_fffi2">22.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.33</td>
+                                        <td>Tổng sai lệch tiếp xúc ăn khớp hướng tâm (Total radial composite deviation)</td>
+                                        <td>F''i</td>
+                                        <td><span class="output-eng" id="tol_FFFFi1">44.0</span></td>
+                                        <td><span class="output-eng" id="tol_FFFFi2">60.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>11.34</td>
+                                        <td>Dung sai độ đảo hướng tâm vành răng (Run out tolerance)</td>
+                                        <td>Fr</td>
+                                        <td><span class="output-eng" id="tol_Fr1">22.0</span></td>
+                                        <td><span class="output-eng" id="tol_Fr2">38.0</span></td>
+                                        <td>µm</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 18.0: Manufacturing parameters table -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>18.0 Bảng Thông Số Chế Tạo Bánh Răng (Manufacturing parameters)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Chế Tạo</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Bánh Dẫn (Pinion 1)</th>
+                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2)</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>18.1</td>
+                                        <td>Mô đun danh nghĩa</td>
+                                        <td>mn</td>
+                                        <td colspan="2"><span class="output-eng" id="mfg_mn">6.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>18.2</td>
+                                        <td>Số răng</td>
+                                        <td>z</td>
+                                        <td><span class="output-eng" id="mfg_z1">19</span></td>
+                                        <td><span class="output-eng" id="mfg_z2">48</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>18.3</td>
+                                        <td>Góc ăn khớp danh nghĩa</td>
+                                        <td>α</td>
+                                        <td colspan="2"><span class="output-eng" id="mfg_alfa">20.0000</span></td>
+                                        <td>độ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>18.4</td>
+                                        <td>Góc xoắn răng danh nghĩa</td>
+                                        <td>β</td>
+                                        <td colspan="2"><span class="output-eng" id="mfg_beta">0.0000</span></td>
+                                        <td>độ</td>
+                                    </tr>
+                                    <tr>
+                                        <td>18.5</td>
+                                        <td>Đường kính vòng chia</td>
+                                        <td>d</td>
+                                        <td><span class="output-eng" id="mfg_d1">114.0000</span></td>
+                                        <td><span class="output-eng" id="mfg_d2">288.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>18.6</td>
+                                        <td>Đường kính đỉnh răng</td>
+                                        <td>da</td>
+                                        <td><span class="output-eng highlight-key-param" id="mfg_da1">126.0000</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="mfg_da2">300.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>18.7</td>
+                                        <td>Đường kính chân răng</td>
+                                        <td>df</td>
+                                        <td><span class="output-eng highlight-key-param" id="mfg_df1">99.0000</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="mfg_df2">273.0000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>18.8</td>
+                                        <td>Hệ số dịch chỉnh biên dạng</td>
+                                        <td>x</td>
+                                        <td><span class="output-eng" id="mfg_x1">0.0000</span></td>
+                                        <td><span class="output-eng" id="mfg_x2">0.0000</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>18.9</td>
+                                        <td>Chiều dài pháp tuyến chung</td>
+                                        <td>W</td>
+                                        <td><span class="output-eng highlight-key-param" id="mfg_W1">45.8786</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="mfg_W2">101.4539</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>18.10</td>
+                                        <td>Cấp chính xác chế tạo</td>
+                                        <td>Q</td>
+                                        <td colspan="2"><span class="output-eng" id="mfg_grade">ISO 1328 Cấp 6</span></td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TAB 2: 2D CANVAS VISUALIZER                                               -->
+        <!-- ========================================================================= -->
+        <div id="tabCanvas" class="tab-pane">
+            <div style="background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--accent-green);">🔄 Mô Hình Ăn Khớp 2D Trực Quan (2D Involute Mesh Simulation)</h2>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                            Biên dạng thân khai chính xác, góc lượn chân răng chuẩn R = 0.38*mn, đường ăn khớp (Line of Action) và vòng tròn lăn dw1, dw2.
+                        </p>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.25); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border-color);">
+                            <label for="sliderAnimSpeed" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">⚡ Tốc độ quay:</label>
+                            <input type="range" id="sliderAnimSpeed" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 100px; cursor: pointer;">
+                            <span id="animSpeedVal" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); width: 35px;">1.0x</span>
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="btnZoomIn">🔍 Phóng To (+)</button>
+                        <button type="button" class="btn btn-secondary" id="btnZoomOut">🔎 Thu Nhỏ (-)</button>
+                        <button type="button" class="btn btn-secondary" id="btnResetView">🎯 Đặt Lại</button>
+                        <button type="button" class="btn btn-primary" id="btnToggleAnim">⏸️ Tạm Dừng</button>
+                        <button type="button" class="btn" id="btnExportDXFCanvas" style="background:#0284c7; color:#ffffff; font-weight:700;">📥 Xuất DXF 2D</button>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: center; background-color: #0b0f19; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);">
+                    <canvas id="gearCanvas" width="1200" height="650" style="background-color: #0b0f19;"></canvas>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Classic Script: 100% Offline & CORS-Free -->
+    <script src="js/mitcalc-engine.bundle.js"></script>
+</body>
+</html>

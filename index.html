@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MITCalc Web App - Cổng Trung Tâm Tính Toán Cơ Khí (Engineering Portal)</title>
+    <link rel="stylesheet" href="shared/css/engineering-theme.css">
+    <style>
+        .portal-hero {
+            text-align: center;
+            padding: 3rem 1.5rem 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        .portal-hero h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #38bdf8 0%, #3b82f6 50%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.75rem;
+        }
+        .portal-hero p {
+            font-size: 1.05rem;
+            color: #94a3b8;
+            line-height: 1.6;
+        }
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+            gap: 1.75rem;
+            max-width: 1200px;
+            margin: 1.5rem auto 3rem;
+            padding: 0 1rem;
+        }
+        .module-card {
+            background: #131d2e;
+            border: 1px solid #1e293b;
+            border-radius: 12px;
+            padding: 1.75rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.25s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        .module-card:hover {
+            transform: translateY(-4px);
+            border-color: #38bdf8;
+            box-shadow: 0 8px 25px rgba(14, 165, 233, 0.25);
+        }
+        .module-badge {
+            display: inline-block;
+            padding: 0.25rem 0.65rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+        }
+        .badge-spur {
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .badge-bevel {
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .module-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #f8fafc;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+        .module-desc {
+            font-size: 0.92rem;
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 1.25rem;
+        }
+        .module-specs {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1.5rem 0;
+            font-size: 0.85rem;
+            color: #cbd5e1;
+        }
+        .module-specs li {
+            padding: 0.35rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+        }
+        .module-specs li:last-child {
+            border-bottom: none;
+        }
+        .module-specs li span.check {
+            color: #10b981;
+            font-weight: bold;
+        }
+        .module-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.25rem;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            text-decoration: none;
+            color: #ffffff;
+            transition: all 0.2s ease;
+        }
+        .btn-spur {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+        }
+        .btn-spur:hover {
+            background: linear-gradient(135deg, #047857 0%, #059669 100%);
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+        }
+        .btn-bevel {
+            background: linear-gradient(135deg, #2563eb 0%, #38bdf8 100%);
+        }
+        .btn-bevel:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+        .portal-footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            border-top: 1px solid #1e293b;
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2.5rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-val {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: #38bdf8;
+        }
+        .stat-lbl {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="logo-area">
+            <div class="logo-icon">🚀</div>
+            <div class="logo-text">
+                <h1>MITCalc Web - Hệ Thống Tính Toán Cơ Khí Độc Lập</h1>
+                <p>Nền tảng tính toán kỹ thuật Client-Side 100% Offline (Không phụ thuộc Node.js hay Excel)</p>
+            </div>
+        </div>
+        <div class="header-controls">
+            <span style="font-size:0.85rem; color:#10b981; font-weight:600;">● Phiên bản 2.0 (Modular Architecture)</span>
+        </div>
+    </header>
+
+    <main class="main-container">
+
+        <!-- Hero Section -->
+        <section class="portal-hero">
+            <h1>CỔNG TÍNH TOÁN CƠ KHÍ CHUYÊN SÂU</h1>
+            <p>
+                Bộ công cụ tính toán hình học, ăn khớp, độ bền và dung sai bánh răng theo chuẩn quốc tế <b>ISO / DIN / AGMA</b>.
+                Toàn bộ dữ liệu tính toán đã được đối chiếu và kiểm tra chéo (QC) đạt độ chính xác tuyệt đối <b>Δ = 0.0000</b> so với MITCalc 1.74 gốc.
+            </p>
+
+            <div class="stats-bar">
+                <div class="stat-item">
+                    <div class="stat-val">2</div>
+                    <div class="stat-lbl">Mô-đun Độc Lập</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val">51</div>
+                    <div class="stat-lbl">Mác Thép CSDL</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val">Δ = 0.0000</div>
+                    <div class="stat-lbl">Sai Số Kiểm Tra QC</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-val">100%</div>
+                    <div class="stat-lbl">Offline Client-Side</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Modules Grid -->
+        <section class="modules-grid">
+
+            <!-- MODULE 1: SPUR & HELICAL GEAR -->
+            <div class="module-card">
+                <div>
+                    <span class="module-badge badge-spur">MÔ-ĐUN 1 • HOÀN THIỆN 100%</span>
+                    <h2 class="module-title">⚙️ Bánh Răng Trụ & Nghiêng</h2>
+                    <p class="module-desc">
+                        Tính toán hình học ăn khớp ngoài, ăn khớp trong, bánh răng thẳng và răng nghiêng theo tiêu chuẩn ISO 6336, ISO 1122-1 và DIN 3960.
+                    </p>
+                    <ul class="module-specs">
+                        <li><span class="check">✓</span> Tiêu chuẩn: ISO 6336:2006, DIN 3960, ISO 1328</li>
+                        <li><span class="check">✓</span> 12 Phân mục tính toán chuyên sâu (1.0 đến 18.0)</li>
+                        <li><span class="check">✓</span> Biên dạng thân khai công nghiệp (Triệt tiêu sừng nhọn, tiếp tuyến mượt C1)</li>
+                        <li><span class="check">✓</span> Dò tìm khoảng cách trục aw chuẩn (Section 14)</li>
+                        <li><span class="check">✓</span> Kiểm tra chéo QC: 100% Pass (5 kịch bản thiết kế)</li>
+                    </ul>
+                </div>
+                <a href="modules/spur-gear/index.html" class="module-btn btn-spur">
+                    🚀 Mở Mô-Đun Bánh Răng Trụ →
+                </a>
+            </div>
+
+            <!-- MODULE 2: BEVEL GEAR -->
+            <div class="module-card">
+                <div>
+                    <span class="module-badge badge-bevel">MÔ-ĐUN 2 • HOÀN THIỆN 100%</span>
+                    <h2 class="module-title">📐 Bánh Răng Côn (Bevel Gear)</h2>
+                    <p class="module-desc">
+                        Tính toán hình học nón bánh răng côn răng thẳng và răng xoắn Gleason / Klingelnberg theo chuẩn ISO 23509, DIN 3971 và AGMA 2005.
+                    </p>
+                    <ul class="module-specs">
+                        <li><span class="check">✓</span> Tiêu chuẩn: ISO 23509, DIN 3971, AGMA 2005, ISO 10300</li>
+                        <li><span class="check">✓</span> 12 Phân mục hình học nón & Tredgold Virtual Spur Gears</li>
+                        <li><span class="check">✓</span> Mô hình 2D Canvas động: Nón chia, Đỉnh nón V, Đường sinh tiếp xúc</li>
+                        <li><span class="check">✓</span> Tính toán góc nón đỉnh/đáy, chiều dài sinh nón Re, Rm, Ri</li>
+                        <li><span class="check">✓</span> Kiểm tra chéo QC: 110/110 checks Pass (Δ = 0.0000)</li>
+                    </ul>
+                </div>
+                <a href="modules/bevel-gear/index.html" class="module-btn btn-bevel">
+                    🚀 Mở Mô-Đun Bánh Răng Côn →
+                </a>
+            </div>
+
+        </section>
+
+    </main>
+
+    <footer class="portal-footer">
+        <p>Hệ thống phần mềm kỹ thuật tối ưu hóa cho máy trạm CAD/CAM của SirPhuong / Pham Phuong.</p>
+        <p style="margin-top:0.35rem; font-size:0.8rem; color:#475569;">Bản quyền công nghệ © 2026. Chạy độc lập hoàn toàn trong trình duyệt không cần cài đặt môi trường.</p>
+    </footer>
+
+</body>
+</html>

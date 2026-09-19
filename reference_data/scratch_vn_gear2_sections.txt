@@ -1,0 +1,219 @@
+R115 | [?    ] | Phần nhập dữ liệu                                       |            | P:             | Q:             | 
+R116 | [1    ] | Nhập các thông số đầu vào cơ bản                        |            | P:             | Q:             | 
+R117 | [1.1  ] | Công suất truyền động                                   |            | P:99.489       | Q:             | 
+R118 | [1.2  ] | Tốc độ (BR chủ động/BR bị động)                         |            | P:-400.00      | Q:             | 
+R119 | [1.3  ] | Moment xoắn (BR chủ động/BR bị động)                    |            | P:-2375.30     | Q:             | 
+R120 | [1.4  ] | Tỷ số truyền động / Nhập từ bảng                        |            | P:             | Q:             | 
+R121 | [1.5  ] | Tỷ số truyền động làm việc / hiệu suất                  |            | P:0.00%        | Q:             | 
+R123 | [2    ] | Các thông số về vật liệu, điều kiện tải trọng, làm việc và sản xuất |            | P:             | Q:             | 
+R124 | [2.1  ] | Xác định vật liệu từ các tiêu chuẩn :                   |            | P:             | Q:             | 
+R125 | [2.1  ] | Vật liệu của BR chủ động :                              |            | P:             | Q:             | 
+R126 | [2.2  ] | Vật liệu của BR bị động :                               |            | P:             | Q:             | 
+R127 | [2.3  ] | Tải trọng của hộp giảm tốc, máy truyền động -Ví dụ      |            | P:             | Q:             | 
+R128 | [2.4  ] | Tải trọng của hộp giảm tốc, máy công tác - Ví dụ        |            | P:             | Q:             | 
+R129 | [2.5  ] | Kiểu lắp ghép bánh răng                                 |            | P:             | Q:             | 
+R130 | [2.6  ] | Cấp chính xác  - DIN3965 / ISO1328 |Ra max|v max        |            | P:             | Q:             | 
+R131 | [2.7  ] | Hệ số quá tải                                           |            | P:             | Q:             | 
+R132 | [2.8  ] | Thời gian làm việc yêu cầu                              |            | P:             | Q:             | 
+R133 | [2.9  ] | Hệ số an toàn (tiếp xúc/uốn)                            |            | P:1.60         | Q:             | 
+R134 | [2.1  ] | Thiết kế tự động                                        |            | P:             | Q:             | 
+R136 | [3    ] | Các thông số của dụng cụ cắt và dạng răng               |            | P:             | Q:             | 
+R137 | [3.1  ] | Đường cong của quá trình cắt răng ( Kiểu cắt răng )     |            | P:             | Q:             | 
+R138 | [3.2  ] | Chiều cao đầu răng của dụng cụ                          |            | P:1.250        | Q:             | 
+R139 | [3.3  ] | Độ hở đầu răng                                          |            | P:1.200        | Q:             | 
+R140 | [3.4  ] | Hệ số khuyên dùng cho bán kính chân răng                |            | P:0.150        | Q:             | 
+R141 | [3.5  ] | Hệ số của bán kính chân răng                            |            | P:0.380        | Q:             | 
+R142 | [3.6  ] | Chamfer of root                                         |            | P:0.000        | Q:             | 
+R143 | [3.7  ] | Chamfer of root                                         |            | P:0.000        | Q:             | 
+R144 | [3.8  ] | Số răng của BR chủ động / BR bị động                    |            | P:0.000        | Q:             | 
+R145 | [3.9  ] | Góc của đường tâm trục                                  |            | P:0.000        | Q:             | 
+R146 | [3.10 ] | Pressure angle                                          |            | P:0.1000       | Q:             | 
+R147 | [3.3  ] | Góc nghiêng răng cơ sở                                  |            | P:0.2500       | Q:             | 
+R148 | [3.12 ] | Hướng của bước răng (BR chủ động)                       |            | P:22           | Q:             | 
+R149 | [3.13 ] | Bề rộng của dụng cụ cắt răng đến mặt phẳng của mặt nón (b/Re) |            | P:0.00         | Q:             | 
+R150 | [3.14 ] | Bề rộng của dụng cụ cắt răng đến mặt phẳng của mặt nón (b/Re) |            | P:147.0000     | Q:             | 
+R151 | [     ] | Module                                                  |            | P:             | Q:             | 
+R152 | [     ] | Bề rộng mặt răng / Giá trị khuyên dùng lớn nhất         |            | P:             | Q:             | 
+R153 | [     ] | Trọng lượng tương đương của bộ truyền bánh răng         |            | P:             | Q:             | 
+R154 | [     ] | Hệ số an toàn nhỏ nhất                                  |            | P:             | Q:             | 
+R166 | [4    ] | Thiết kế môđun ( Bước răng) và hình dạng của dụng cụ cắt răng |            | P:             | Q:             | 
+R168 | [     ] | Điều chỉnh dụng cụ cắt răng (Dịch chỉnh đầu răng)       |            | P:             | Q:             | 
+R169 | [     ] | Phương pháp điều chỉnh                                  |            | P:             | Q:             | 
+R170 | [     ] | Giá trị khuyên dùng                                     |            | P:             | Q:             | 
+R171 | [     ] | Khe hở răng cho phép (giá trị nhỏ nhất)                 |            | P:             | Q:             | 
+R172 | [     ] | Khắc phục khe hở răng ( giá trị nhỏ nhất)               |            | P:             | Q:             | 
+R173 | [4.1  ] | Xác định hệ số điều chỉnh đầu răng BR chủ động          |            | P:-55          | Q:             | 
+R174 | [4.3  ] | Hệ số điều chỉnh đầu răng của BR chủ động/BR bị động    |            | P:             | Q:             | 
+R175 | [4.4  ] | Hệ số điều chỉnh chiều dày răng                         |            | P:             | Q:             | 
+R176 | [4.6  ] | Tỷ số tiếp xúc tổng                                     |            | P:             | Q:             | 
+R177 | [4.7  ] | Chiều dày răng trên đường kính đỉnh                     |            | P:< 0.7        | Q:             | 
+R178 | [4.6  ] | Hệ số an toàn của độ bền bề mặt                         |            | P:             | Q:             | 
+R179 | [4.7  ] | Hệ số an toàn của độ bền uốn                            |            | P:-330.00      | Q:             | 
+R180 | [4.8  ] | Recommended width of gearing                            |            | P:             | Q:             | 
+R181 | [4.9  ] | Phần kết quả                                            |            | P:89.00        | Q:             | 
+R182 | [4.10 ] | Các kích thước cơ bản của bộ truyền bánh răng           |            | P:             | Q:             | 
+R183 | [4.11 ] | Chiều dày răng trên đường kính đỉnh                     |            | P:< 0.7        | Q:             | 
+R184 | [4.12 ] | Working center distance                                 |            | P:             | Q:             | 
+R185 | [4.13 ] | Trọng lượng tương đương của bộ truyền bánh răng         |            | P:             | Q:             | 
+R186 | [4.11 ] | Hệ số an toàn nhỏ nhất                                  |            | P:3.38         | Q:             | 
+R196 | [     ] | Transverse module (outer, midle, inner)                 |            | P:             | Q:             | 
+R197 | [4.15 ] | Normal module (outer, midle, inner)                     |            | P:             | Q:             | 
+R198 | [4.16 ] | Cone length (outer, midle, inner)                       |            | P:0.239        | Q:             | 
+R199 | [4.17 ] | Pitch cone angle                                        |            | P:             | Q:             | 
+R200 | [     ] | Addendum cone angle                                     |            | P:             | Q:             | 
+R201 | [5    ] | Dedendum cone angle                                     |            | P:             | Q:             | 
+R202 | [5.1  ] | Tip diameter (outer)                                    |            | P:             | Q:             | 
+R203 | [5.3  ] | Tip diameter (midle)                                    |            | P:-1.291       | Q:S=           | 
+R204 | [5.4  ] | Tip diameter (inner)                                    |            | P:-1.364       | Q:S=           | 
+R205 | [5.4  ] | Pitch diameter (outer)                                  |            | P:4.267        | Q:S=           | 
+R206 | [5.5  ] | Pitch diameter (midle)                                  |            | P:             | Q:             | 
+R207 | [5.6  ] | Pitch diameter (inner)                                  |            | P:0.0000       | Q:             | 
+R208 | [5.7  ] | Root diameter (outer)                                   |            | P:<  0.6757    | Q:             | 
+R209 | [5.8  ] | Root diameter (midle)                                   |            | P:1.9878       | Q:             | 
+R210 | [5.9  ] | Root diameter (inner)                                   |            | P:0.9247       | Q:             | 
+R211 | [5.10 ] | Addendum angle                                          |            | P:-0.2981      | Q:             | 
+R212 | [5.11 ] | Dedendum angle                                          |            | P:0.9032       | Q:             | 
+R213 | [5.12 ] | Addendum (outer)                                        |            | P:             | Q:             | 
+R214 | [5.13 ] | Addendum (midle)                                        |            | P:1.52         | Q:             | 
+R215 | [5.14 ] | Addendum (inner)                                        |            | P:3.38         | Q:             | 
+R216 | [5.15 ] | Dedendum (outer)                                        |            | P:0            | Q:[°]          | 
+R217 | [     ] | Dedendum (midle)                                        |            | P:             | Q:             | 
+R218 | [     ] | Dedendum (inner)                                        |            | P:             | Q:             | 
+R219 | [     ] | Normal pressure angle                                   |            | P:             | Q:             | 
+R220 | [     ] | Transverse pressure angle                               |            | P:             | Q:             | 
+R221 | [     ] | Góc nghiêng răng                                        |            | P:             | Q:             | 
+R222 | [     ] | Góc nghiêng răng cơ sở                                  |            | P:             | Q:             | 
+R223 | [     ] | Góc áp suất tại vòng chia                               |            | P:             | Q:             | 
+R224 | [     ] | Góc áp suất tiếp tuyến tại vòng chia                    |            | P:             | Q:             | 
+R225 | [     ] | Bước răng vòng                                          |            | P:             | Q:             | 
+R226 | [     ] | Bước răng vòng tiếp tuyến                               |            | P:             | Q:             | 
+R229 | [     ] | chiều dày răng trên đường kính vòng chia                |            | P:             | Q:             | 
+R232 | [     ] | Chiều dày răng trên đường kính đỉnh                     |            | P:             | Q:             | 
+R234 | [     ] | Phần kết quả                                            |            | P:             | Q:             | 
+R235 | [6    ] | Sự cắt răng thẳng ảo                                    |            | P:             | Q:             | 
+R236 | [     ] | Number of teeth of a virtual wheel with oblique teeth   |            | P:             | Q:             | 
+R237 | [     ] | Number of teeth of a virtual wheel with straight teeth  |            | P:             | Q:             | 
+R238 | [     ] | Đường kính vòng chia                                    |            | P:             | Q:             | 
+R239 | [     ] | Đường kính vòng đỉnh                                    |            | P:             | Q:             | 
+R240 | [     ] | Đường kính cơ sở                                        |            | P:             | Q:             | 
+R241 | [     ] | Đường kính đỉnh                                         |            | P:             | Q:             | 
+R242 | [     ] | Virtual center distance                                 |            | P:             | Q:             | 
+R243 | [     ] | Virtual Gear Ratio                                      |            | P:             | Q:             | 
+R245 | [6.1  ] | Xác định hệ số điều chỉnh đầu răng BR chủ động          |            | P:-55          | Q:             | 
+R246 | [6.2  ] | Phần kết quả                                            |            | P:89.000       | Q:             | 
+R247 | [6.3  ] | Normal module                                           |            | P:             | Q:             | 
+R248 | [6.4  ] | Tốc độ cộng hưởng                                       |            | P:             | Q:             | 
+R249 | [6.5  ] | Tỷ số cộng hưởng                                        |            | P:             | Q:             | 
+R250 | [6.6  ] | Bước răng vòng tiếp tuyến                               |            | P:             | Q:             | 
+R251 | [6.7  ] | Hiệu suất của bộ truyền bánh răng                       |            | P:             | Q:             | 
+R252 | [6.8  ] | Lựa chọn hệ số nhớt của chất bôi trơn                   |            | P:             | Q:             | 
+R253 | [6.9  ] | Center distance (production)                            |            | P:             | Q:             | 
+R254 | [6.10 ] | Các hệ số tính toán độ an toàn                          |            | P:             | Q:             | 
+R255 | [6.11 ] | Các hệ số thông dụng của bộ truyền bánh răng            |            | P:             | Q:             | 
+R256 | [6.12 ] | Độ cứng của một cặp răng                                |            | P:             | Q:             | 
+R257 | [6.13 ] | Độ cứng ăn khớp trên đơn vị bề rộng mặt răng            |            | P:             | Q:             | 
+R258 | [6.14 ] | Hệ số ứng dụng                                          |            | P:             | Q:             | 
+R259 | [6.15 ] | Hệ số động                                              |            | P:             | Q:             | 
+R260 | [6.16 ] | Số chu kỳ                                               |            | P:             | Q:             | 
+R261 | [6.17 ] | Hệ số cho tính toán an toàn hiện tượng rỗ               |            | P:-318.0000    | Q:             | 
+R262 | [6.18 ] | Hệ số tải trọng bề mặt (ứng suất tiếp xúc)              |            | P:-330.0000    | Q:             | 
+R263 | [6.19 ] | Hệ số tải trọng ngang (ứng suất tiếp xúc)               |            | P:-310.0986    | Q:             | 
+R264 | [6.20 ] | Tổng hệ số của tải trọng thêm vào                       |            | P:-345.0000    | Q:             | 
+R265 | [6.21 ] | Hệ số đàn hồi                                           |            | P:-330.0000    | Q:             | 
+R266 | [6.22 ] | Hệ số vùng                                              |            | P:6.0000       | Q:             | 
+R267 | [6.23 ] | Hệ số góc nghiêng răng                                  |            | P:7.5000       | Q:             | 
+R268 | [6.24 ] | Hệ số tỷ lệ tiếp xúc                                    |            | P:5.5482       | Q:             | 
+R269 | [6.25 ] | Tooth thickness on the tip diameter (transverse)        |            | P:5.5482       | Q:             | 
+R270 | [6.26 ] | Hệ số bôi trơn                                          |            | P:9.4248       | Q:             | 
+R271 | [6.27 ] | Hệ số vận tốc vòng                                      |            | P:9.4248       | Q:             | 
+R272 | [6.28 ] | Hệ số độ nhám ảnh hưởng đến độ bền bề mặt               |            | P:16.4149      | Q:             | 
+R273 | [6.39 ] | Root diameter (inner)                                   |            | P:0.9247       | Q:             | 
+R274 | [6.30 ] | Hệ số tuổi thọ cho ứng suất tiếp xúc                    |            | P:             | Q:             | 
+R275 | [6.31 ] | Hệ số cho một cặp bánh răng tiếp xúc                    |            | P:             | Q:             | 
+R276 | [6.32 ] | Các hệ số tính toán bền uốn                             |            | P:0.0000       | Q:             | 
+R277 | [6.33 ] | Hệ số tải trọng bề mặt ( ứng suất tại chân răng)        |            | P:             | Q:             | 
+R278 | [6.34 ] | Góc nghiêng răng cơ sở                                  |            | P:0.2500       | Q:             | 
+R279 | [6.35 ] | Tổng hệ số của lực thêm vào                             |            | P:-316.2/-321  | Q:             | 
+R280 | [6.36 ] | Requested tip diameter                                  |            | P:-177.000     | Q:             | 
+R282 | [7.0  ] | Hệ số vết khía                                          |            | P:             | Q:             | 
+R283 | [7.1  ] | Hệ số kích cỡ                                           |            | P:-55          | Q:             | 
+R284 | [7.2  ] | Hệ số bề mặt chân răng                                  |            | P:-55.000      | Q:             | 
+R285 | [     ] | Hệ số tải trọng đổi chiều                               |            | P:             | Q:             | 
+R286 | [7.3  ] | Hệ số kỹ thuật sản xuất                                 |            | P:16           | Q:             | 
+R287 | [7.4  ] | Hệ số tuổi thọ cho ứng suất uốn                         |            | P:20           | Q:             | 
+R288 | [7.5  ] | Hệ số đỉnh, cân bằng (YFa Ysa)                          |            | P:26           | Q:             | 
+R290 | [8    ] | Hệ số an toàn                                           |            | P:             | Q:             | 
+R291 | [     ] | Hệ số an toàn cho độ bền bề mặt                         |            | P:             | Q:             | 
+R292 | [     ] | Hệ số an toàn cho độ bền uốn                            |            | P:             | Q:             | 
+R293 | [     ] | Độ an toàn tiếp xúc quá tải một thời gian               |            | P:             | Q:             | 
+R294 | [     ] | Độ an toàn uốn quá tải một thời gian                    |            | P:             | Q:             | 
+R295 | [     ] | Ứng suất tiếp xúc danh nghĩa                            |            | P:             | Q:             | 
+R296 | [     ] | Ứng suất tiếp xúc                                       |            | P:             | Q:             | 
+R297 | [     ] | Ứng suất rỗ mòn giới hạn                                |            | P:             | Q:             | 
+R298 | [     ] | Ứng suất tiếp xúc cho phép                              |            | P:             | Q:             | 
+R299 | [     ] | Ứng suất chân răng danh nghĩa                           |            | P:             | Q:             | 
+R300 | [     ] | Ứng suất chân răng                                      |            | P:             | Q:             | 
+R301 | [8.1  ] | Ứng suất chân răng giới hạn                             |            | P:0.0000       | Q:             | 
+R302 | [8.2  ] | Ứng suất uốn giới hạn                                   |            | P:             | Q:             | 
+R303 | [8.3  ] | Definition of wheel dimensions                          |            | P:             | Q:             | 
+R304 | [8.4  ] | Điều kiện tải trọng ( lực tác dụng lên răng)            |            | P:73.20        | Q:             | 
+R305 | [8.5  ] | Recommended minimum outer diameter of the hub           |            | P:~            | Q:             | 
+R306 | [8.6  ] | Shaft diameter (max)                                    |            | P:~            | Q:             | 
+R307 | [8.7  ] | Shaft diameter                                          |            | P:~            | Q:             | 
+R308 | [8.8  ] | Outer diameter of the hub                               |            | P:~            | Q:             | 
+R309 | [8.9  ] | Coefficient of gear unloading (0 - 100)                 |            | P:2.00         | Q:             | 
+R310 | [8.10 ] | Central web thickness in % of the gear width (20-100)   |            | P:~            | Q:             | 
+R311 | [8.11 ] | Gear rim thickness                                      |            | P:27.00        | Q:             | 
+R312 | [8.12 ] | Central web thickness                                   |            | P:~            | Q:             | 
+R313 | [8.13 ] | Gear weight                                             |            | P:27.126       | Q:             | 
+R314 | [8.14 ] | Relative individual gear mass per unit face width       |            | P:0.426443902  | Q:             | 
+R315 | [8.15 ] | Lực tiếp tuyến                                          |            | P:9.1241E-01   | Q:             | 
+R316 | [8.16 ] | Lực danh nghĩa                                          |            | P:1.0252E+04   | Q:             | 
+R317 | [8.17 ] | Lực dọc trục - ( chiều quay trên hình)                  |            | P:             | Q:             | 
+R318 | [8.18 ] | Vận tốc vòng trên đường kính vòng chia                  |            | P:< 8          | Q:             | 
+R319 | [8.19 ] | Lực dọc trục - ( chiều quay nguợc với hình)             |            | P:173.05       | Q:             | 
+R320 | [8.3  ] | Lực hướng tâm - ( chiều quay ngược với hình)            |            | P:             | Q:             | 
+R321 | [8.4  ] | Vận tốc vòng trên đường kính vòng chia                  |            | P:0.850        | Q:             | 
+R322 | [8.22 ] | Trọng lượng tương đương của bộ truyền bánh răng         |            | P:             | Q:             | 
+R323 | [8.6  ] | Hiệu suất của bộ truyền bánh răng                       |            | P:             | Q:             | 
+R324 | [     ] | Thông số của vật liệu được chọn                         |            | P:             | Q:             | 
+R325 | [9    ] | Các hệ số tính toán độ an toàn                          |            | P:             | Q:             | 
+R326 | [9.1  ] | Setting the parameters for calculation                  |            | P:             | Q:             | 
+R327 | [9.2  ] | Dynamic factor KV (max. value)                          |            | P:             | Q:             | 
+R328 | [9.3  ] | Face load factor contact stress KHbeta (max. value)     |            | P:             | Q:             | 
+R329 | [9.4  ] | Reversals of the load (factor YA)                       |            | P:             | Q:             | 
+R330 | [9.5  ] | Calculation of "Work hardening factor ZW"               |            | P:             | Q:             | 
+R331 | [9.6  ] | Tooth profile modification (KHalfa, KHbeta)             |            | P:             | Q:             | 
+R332 | [9.15 ] | Oil type (ZL)                                           |            | P:             | Q:             | 
+R333 | [9.8  ] | Lựa chọn hệ số nhớt của chất bôi trơn                   |            | P:82           | Q:             | 
+R334 | [9.17 ] | Tooth roughness (factor ZR)                             |            | P:             | Q:             | 
+R335 | [9.10 ] | Roughness in the tooth root fillets (factor YR)         |            | P:             | Q:             | 
+R336 | [9.11 ] | Các hệ số thông dụng của bộ truyền bánh răng            |            | P:             | Q:             | 
+R337 | [9.12 ] | Theoretical single stiffness                            |            | P:             | Q:             | 
+R338 | [9.13 ] | Độ cứng của một cặp răng                                |            | P:             | Q:             | 
+R339 | [9.14 ] | Phần bổ sung                                            |            | P:             | Q:             | 
+R340 | [9.15 ] | Hệ số ứng dụng                                          |            | P:             | Q:             | 
+R341 | [9.16 ] | Công suất, làm mát và bề mặt hộp giảm tốc               |            | P:             | Q:             | 
+R342 | [9.17 ] | Nhiệt độ không khí của môi trường xung quanh            |            | P:4.80E+08     | Q:             | 
+R343 | [9.18 ] | Nhiệt độ dầu cao nhất                                   |            | P:             | Q:             | 
+R344 | [9.19 ] | Hệ số tản nhiệt                                         |            | P:             | Q:             | 
+R345 | [9.20 ] | Tổn hao công suất                                       |            | P:             | Q:             | 
+R346 | [9.21 ] | Bề mặt hộp truyền động (giá trị nhỏ nhất)               |            | P:             | Q:             | 
+R347 | [9.22 ] | Hệ số đàn hồi                                           |            | P:             | Q:             | 
+R348 | [9.23 ] | Thiết kế sơ bộ đường kính trục (bằng thép)              |            | P:             | Q:             | 
+R349 | [9.24 ] | Đừơng kính trục khuyên dùng cho:                        |            | P:             | Q:             | 
+R350 | [9.25 ] | Trục truyền công suất chính                             |            | P:             | Q:             | 
+R351 | [9.26 ] | Trục nhỏ, ngắn                                          |            | P:1.000        | Q:             | 
+R352 | [9.27 ] | Text description (Information for BOM)                  |            | P:1.000        | Q:             | 
+R353 | [9.28 ] | Phần tính toán phụ                                      |            | P:1.071        | Q:             | 
+R354 | [9.29 ] | Tỷ số truyền động tính toán sử dụng số răng             |            | P:0.979        | Q:             | 
+R355 | [9.30 ] | Tỷ số truyền động tính toán sử dụng tốc độ              |            | P:0.897        | Q:             | 
+R356 | [9.19 ] | Tính toán công suất sử dụng tốc độ và moment xoắn của BR chủ động |            | P:0.933        | Q:             | 
+R357 | [9.32 ] | Hệ số cho một cặp bánh răng tiếp xúc                    |            | P:1.000        | Q:             | 
+R358 | [9.33 ] | Xuất bản vẽ ra hệ thống CAD                             |            | P:             | Q:             | 
+R359 | [9.34 ] | 2D drawing output to:                                   |            | P:             | Q:             | 
+R360 | [9.35 ] | 2D Drawing scale                                        |            | P:             | Q:             | 
+R361 | [9.36 ] | Detail:                                                 |            | P:             | Q:             | 
+R362 | [9.37 ] | Radius of the machining tool (for 3D model)             |            | P:             | Q:             | 
+R363 | [9.38 ] | Rim thickness factor                                    |            | P:1.000        | Q:             | 
+R364 | [9.39 ] | Amount of the inner offset                              |            | P:1.000        | Q:             | 
