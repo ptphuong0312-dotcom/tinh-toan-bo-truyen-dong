@@ -283,3 +283,38 @@
   - **Bevel Gear QC Suite (`qc_bevel_multi_case_suite.py`)**: **120 / 120 checks PASS tuyệt đối (100.0%)**.
   - **Automated WebApp Test (`test_spur_webapp.py` & `test_bevel_webapp.py`)**: 0 lỗi Console/JavaScript, sạch 100%.
   - **Classic Bundle Đóng Gói Thuần**: `bevel-engine.bundle.js` (126,880 ký tự) và `mitcalc-engine.bundle.js` cập nhật hoàn chỉnh, chạy 100% offline.
+
+---
+
+## Giai Đoạn 13: Xây Dựng Hộp Nhập Liệu Tích Hợp Mũi Tên Sổ Xuống Chuẩn Excel (Excel-Style Combo-Box Protocol)
+* **Bối cảnh & Yêu cầu người dùng**:
+  - Người dùng gửi ảnh màn hình MITCalc 1.74 (`media_1789831412481.png`, `media_1789831432487.png`, `media_1789831460631.png`) và ra lệnh: *"trong ảnh tôi gửi cho bạn, bạn để ý những thông số có mũi tên sổ xuống để lựa chọn thêm thông số"*.
+  - Quan sát kỹ thuật: Trong Excel MITCalc gốc, các thông số kỹ thuật (như tỉ số truyền $i$, góc trục $\Sigma$, góc ăn khớp $\alpha$, góc xoắn $\beta$, mô đun $m$, loại răng, phương pháp dịch chỉnh, hệ thống CAD, tỉ lệ bản vẽ, v.v.) đều tích hợp điều khiển DropDowns của Excel đặt ngay kề sát bên cạnh ô nhập liệu để người dùng vừa có thể gõ giá trị tùy ý, vừa có thể bấm mũi tên sổ xuống `▼` để chọn nhanh từ danh mục tiêu chuẩn.
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Đảo ngược & Trích xuất Named Ranges chuẩn từ Excel gốc (`Gear1_01.xlsb` & `Gear2_01.xlsb`)**:
+     - Sử dụng Python Excel COM Automation để quét toàn bộ điều khiển `ws.DropDowns()` và đọc các Named Ranges:
+       * `T_i`: Dãy tỉ số truyền tiêu chuẩn ISO R10/R20 (1.00 đến 20.00).
+       * `T_AngleList`: Góc trục $\Sigma$ tiêu chuẩn ($60^\circ$ đến $120^\circ$).
+       * `T_AlfaList`: Góc ăn khớp danh nghĩa $\alpha$ ($14.5^\circ, 15.0^\circ, 17.5^\circ, 20.0^\circ, 22.0^\circ, 25.0^\circ$).
+       * `T_BetaList`: Góc xoắn răng $\beta$ ($0^\circ, 8^\circ, 10^\circ, 12^\circ, 15^\circ, 20^\circ, 25^\circ, 30^\circ, 35^\circ, 40^\circ, 45^\circ$).
+       * `T_modul`: Dãy mô đun tiêu chuẩn DIN 780 Dãy 1 và Dãy 2 (0.5 mm đến 50.0 mm).
+       * `T_ToothType`: 4 kiểu răng côn (Thẳng loại I, Xoắn Gleason loại II, Zerol loại II, Klingelnberg/Oerlikon loại III).
+       * `T_AddendModif`: 5 phương pháp dịch chỉnh chiều cao răng (VN uốn, VN tiếp xúc, DIN 870, BSI, Răng cong).
+       * `T_TypePressAngle` & `T_TypeoffModule`: Hoán đổi linh hoạt giữa góc/mô đun pháp diện (Normal) và ngang diện (Transverse).
+       * `T_CADSystems`, `T_DXFScale`, `T_DXF_2P`, `T_DXFTablesList`: Danh mục phần mềm CAD, tỉ lệ vẽ, chi tiết xuất và bảng thông số chế tạo.
+  2. **Thiết kế thành phần giao diện Combo-Box (`shared/css/engineering-theme.css`)**:
+     - `.combo-box-group`: Khung inline-flex với bo góc 4px, gom ô nhập `.combo-input` và nút chevron mũi tên `.combo-arrow-select` nằm trọn vẹn trong **Cột 4 (Bánh Dẫn - Pinion 1)**.
+     - `.combo-arrow-select`: Nút chọn độ rộng 24px, ẩn mũi tên mặc định của hệ điều hành và thay bằng SVG chevron `▼` màu xanh `#2563eb` sắc nét, đồng bộ hoàn hảo với theme kỹ thuật.
+     - `.param-type-select`: Dropdown tích hợp trực tiếp trên tiêu đề thông số (Mục 4.3 & 4.8) cho phép chuyển đổi tức thì loại thông số mà không làm phình chiều dọc giao diện.
+     - **Bảo toàn Cột 5 (Bánh Bị Dẫn - Gear 2)**: Khắc phục triệt để lỗi trước đây đẩy thẻ `<select>` sang Cột 5. Cột 5 nay được dành riêng cho giá trị tính toán của Bánh 2 hoặc thông số liên hợp (ví dụ: góc ăn khớp liên hợp $\alpha_n / \alpha_t$ hoặc mô đun liên hợp $m_t / m_{mn}$).
+  3. **Đồng bộ phản ứng hai chiều (Bidirectional Reactive Sync)**:
+     - Tích hợp sự kiện `change` trên toàn bộ các select: Khi chọn giá trị từ dropdown, giá trị lập tức được gán vào ô nhập liệu và kích hoạt hàm tính toán thời gian thực (`calculate()`).
+     - Khi người dùng gõ tay bất kỳ số thực nào vào ô nhập liệu, hệ thống tự động nhận diện và tính toán mà không bị giới hạn.
+  4. **Áp dụng đồng bộ cho cả hai mô-đun Bánh Răng Trụ & Bánh Răng Côn**:
+     - Bánh Răng Côn: Hàng 1.4 ($i$), 3.1 (Kiểu răng), 4.2 ($\Sigma$), 4.3 ($\alpha_t/\alpha_n$), 4.4 ($\beta_m$), 4.5 (Hướng xoắn), 4.8 ($m_{mn}/m_{et}$), 5.1 (Loại dịch chỉnh), Section 15.0, Section 16.0 (CAD systems, scale, detail, tables).
+     - Bánh Răng Trụ: Hàng 1.4 ($i$), 3.1 (Dao cắt), 4.2 ($\alpha_n$), 4.3 ($\beta$), 4.6 ($m_n$), Section 11.0 ($Q$), Section 16.0 (CAD systems, scale, detail, DXFTables).
+* **Kết quả kiểm chứng thực nghiệm**:
+  - **Spur Gear QC Suite (`qc_gear_multi_case_suite.py`)**: **110 / 110 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
+  - **Bevel Gear QC Suite (`qc_bevel_multi_case_suite.py`)**: **120 / 120 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
+  - **CORS-Free Bundler (`tools/bundle_all.py`)**: Đóng gói thành công `bevel-engine.bundle.js` (130,945 ký tự) và `mitcalc-engine.bundle.js` chạy 100% offline.
+

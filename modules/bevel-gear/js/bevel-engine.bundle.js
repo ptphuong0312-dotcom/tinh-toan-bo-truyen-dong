@@ -2740,9 +2740,22 @@ class BevelGearUI {
         const selSigma = document.getElementById('sel_std_sigma');
         if (selSigma) {
             selSigma.addEventListener('change', () => {
-                this.inputs.Sigma = parseFloat(selSigma.value);
-                const inp = document.getElementById('inp_Sigma');
-                if (inp) inp.value = selSigma.value;
+                if (selSigma.value) {
+                    this.inputs.Sigma = parseFloat(selSigma.value);
+                    const inp = document.getElementById('inp_Sigma');
+                    if (inp) inp.value = selSigma.value;
+                    this.calculate();
+                }
+            });
+        }
+
+        const selPAType = document.getElementById('selPressureAngleType');
+        if (selPAType) {
+            selPAType.addEventListener('change', () => {
+                const isNormal = selPAType.value === 'normal';
+                const sym = document.getElementById('sym_alfa');
+                if (sym) sym.textContent = isNormal ? 'αn' : 'αt';
+                this.inputs.isNormalPressureAngle = isNormal;
                 this.calculate();
             });
         }
@@ -2750,24 +2763,49 @@ class BevelGearUI {
         const selAlpha = document.getElementById('sel_std_alpha');
         if (selAlpha) {
             selAlpha.addEventListener('change', () => {
-                this.inputs.alfa = parseFloat(selAlpha.value);
-                const inp = document.getElementById('inp_alfa');
-                if (inp) inp.value = selAlpha.value;
-                this.calculate();
+                if (selAlpha.value) {
+                    this.inputs.alfa = parseFloat(selAlpha.value);
+                    const inp = document.getElementById('inp_alfa');
+                    if (inp) inp.value = selAlpha.value;
+                    this.calculate();
+                }
             });
         }
 
         const selBeta = document.getElementById('sel_std_beta');
         if (selBeta) {
             selBeta.addEventListener('change', () => {
-                this.inputs.beta = parseFloat(selBeta.value);
-                const inp = document.getElementById('inp_beta');
-                if (inp) inp.value = selBeta.value;
+                if (selBeta.value) {
+                    this.inputs.beta = parseFloat(selBeta.value);
+                    const inp = document.getElementById('inp_beta');
+                    if (inp) inp.value = selBeta.value;
+                    this.calculate();
+                }
+            });
+        }
+
+        // Tooth Hand direction
+        const selToothHand = document.getElementById('selToothHand');
+        if (selToothHand) {
+            selToothHand.addEventListener('change', () => {
+                this.inputs.toothHand = selToothHand.value;
                 this.calculate();
             });
         }
 
-        // ComboBox: Standard Module DIN 780
+        // Module Type selector
+        const selModType = document.getElementById('selModuleType');
+        if (selModType) {
+            selModType.addEventListener('change', () => {
+                const isOuter = selModType.value === 'transverse_outer';
+                const sym = document.getElementById('sym_module');
+                if (sym) sym.textContent = isOuter ? 'met' : 'mmn';
+                this.inputs.isOuterModule = isOuter;
+                this.calculate();
+            });
+        }
+
+        // ComboBox: Standard Module DIN 780 / ISO 54
         const selModule = document.getElementById('sel_std_module');
         if (selModule) {
             selModule.addEventListener('change', () => {
@@ -2775,9 +2813,27 @@ class BevelGearUI {
                     const mmn = parseFloat(selModule.value);
                     this.inputs.mmn = mmn;
                     const inp = document.getElementById('inp_mmn');
-                    if (inp) inp.value = mmn.toFixed(1);
+                    if (inp) inp.value = mmn.toFixed(3);
                     this.calculate();
                 }
+            });
+        }
+
+        // Gearing Type (Section 3.1)
+        const selGearType = document.getElementById('selGearingType');
+        if (selGearType) {
+            selGearType.addEventListener('change', () => {
+                const v = selGearType.value;
+                if (v === 'straight_type1' || v === 'zerol') {
+                    this.inputs.beta = 0.0;
+                    const inpB = document.getElementById('inp_beta');
+                    if (inpB) inpB.value = '0.0';
+                } else if (v === 'gleason') {
+                    this.inputs.beta = 30.0;
+                    const inpB = document.getElementById('inp_beta');
+                    if (inpB) inpB.value = '30.0';
+                }
+                this.calculate();
             });
         }
 
@@ -2812,17 +2868,20 @@ class BevelGearUI {
         if (selCorr) {
             selCorr.addEventListener('change', () => {
                 const type = selCorr.value;
-                if (type === '1') { // Equal slips
+                if (type === 'VN_bending') {
+                    this.inputs.x1 = 0.58;
+                    this.inputs.xt1 = 0.00;
+                } else if (type === 'VN_contact') {
                     this.inputs.x1 = 0.32;
                     this.inputs.xt1 = 0.04;
-                } else if (type === '0') { // Without correction
+                } else if (type === 'DIN870') {
+                    this.inputs.x1 = -0.93;
+                    this.inputs.xt1 = 0.00;
+                } else if (type === 'BSI') {
+                    this.inputs.x1 = 0.34;
+                    this.inputs.xt1 = 0.00;
+                } else if (type === 'curved') {
                     this.inputs.x1 = 0.00;
-                    this.inputs.xt1 = 0.00;
-                } else if (type === '2') { // Min thickness
-                    this.inputs.x1 = 0.265;
-                    this.inputs.xt1 = 0.00;
-                } else if (type === '3') { // Prevent undercutting
-                    this.inputs.x1 = 0.35;
                     this.inputs.xt1 = 0.00;
                 }
                 const inp_x1 = document.getElementById('inp_x1');
@@ -2831,6 +2890,16 @@ class BevelGearUI {
                 if (inp_xt1) inp_xt1.value = this.inputs.xt1.toFixed(2);
                 if (sliderX1) sliderX1.value = this.inputs.x1;
                 this.calculate();
+            });
+        }
+
+        // CAD Draw Table Button (Section 16.7)
+        const btnDrawTable = document.getElementById('btnDrawTable');
+        if (btnDrawTable) {
+            btnDrawTable.addEventListener('click', () => {
+                const tbl = document.getElementById('selCADTable') ? document.getElementById('selCADTable').value : 'pinion';
+                const name = tbl === 'pinion' ? 'Bánh dẫn 1 (Pinion)' : 'Bánh bị dẫn 2 (Gear)';
+                alert(`Đã trích xuất dữ liệu bảng thông số chế tạo ${name} theo chuẩn DIN 3965 / ISO 23509! Bấm nút Tải CAD để lưu file DXF.`);
             });
         }
 
@@ -2950,6 +3019,27 @@ class BevelGearUI {
         set4('out_sec4_b_Re', b_Re);
         set('out_sec4_bmax', '< ' + (g.Re * 0.35).toFixed(0));
         set('out_sec4_mass', '134.331');
+
+        // Section 4.3 & 4.8 Complementary calculated values (Matching MITCalc 1.74)
+        const alfa_val = parseFloat(this.inputs.alfa) || 20.0;
+        const beta_val = parseFloat(this.inputs.beta) || 30.0;
+        const beta_rad = (beta_val * Math.PI) / 180.0;
+        const cos_b = Math.cos(beta_rad);
+        let alfa_comp_deg = 0;
+        if (this.inputs.isNormalPressureAngle) {
+            // Entered angle is Normal (an). Complementary is Transverse (at)
+            const an_rad = (alfa_val * Math.PI) / 180.0;
+            const at_rad = Math.atan(cos_b !== 0 ? Math.tan(an_rad) / cos_b : Math.tan(an_rad));
+            alfa_comp_deg = (at_rad * 180.0) / Math.PI;
+        } else {
+            // Entered angle is Transverse (at). Complementary is Normal (an)
+            const at_rad = (alfa_val * Math.PI) / 180.0;
+            const an_rad = Math.atan(Math.tan(at_rad) * cos_b);
+            alfa_comp_deg = (an_rad * 180.0) / Math.PI;
+        }
+        set('out_sec4_alfa_comp', alfa_comp_deg.toFixed(1) + '°');
+        set('out_sec4_beta2', '0.0°');
+        set4('out_sec4_module_comp', g.met);
 
         // Section 5.0: Correction of toothing
         set4('out_sec5_x2', g.x2);

@@ -150,6 +150,21 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * Chạm 2 ngón tay: Thu phóng tức thì bằng khoảng cách giữa 2 đầu ngón tay (`Math.hypot(dx, dy)`).
      * Thiết lập `touch-action: none` và `aspect-ratio: 1200 / 650` với `width: 100%; height: auto;` để hình học ăn khớp luôn co giãn sắc nét và không bị trình duyệt giật cuộn trang khi tương tác với bánh răng.
 
+### Quy Tắc 12: Quy Chuẩn Hộp Nhập Liệu Tích Hợp Mũi Tên Sổ Xuống Chuẩn Excel (Excel-Style Combo-Box Protocol)
+1. **Bản chất giao diện 1-to-1 MITCalc 1.74**:
+   - Các ô thông số trong MITCalc 1.74 bản gốc sử dụng điều khiển DropDowns của Excel đặt ngay bên cạnh ô nhập liệu (ví dụ: $i, \Sigma, \alpha, \beta, m, Q$, CAD systems).
+   - Thiết kế chuẩn Web App: Sử dụng `.combo-box-group` (inline flexbox) gom cả ô nhập số `.combo-input` và nút mũi tên thả xuống `.combo-arrow-select` nằm trọn vẹn trong **Cột 4 (Bánh Dẫn - Pinion 1)**.
+   - **Bảo toàn Cột 5 (Bánh Bị Dẫn - Gear 2)**: Cột 5 dành riêng cho kết quả tính toán tương ứng của bánh bị dẫn hoặc góc/mô đun liên hợp bổ sung (ví dụ: góc ăn khớp pháp $\alpha_n$ khi chọn $\alpha_t$, mô đun ngang ngoài $m_t$ khi chọn $m_n$), tuyệt đối không đẩy thẻ `<select>` sang cột 5 làm phá vỡ cấu trúc bảng cơ khí.
+2. **Các danh mục tiêu chuẩn hóa (Standard Excel Named Ranges)**:
+   - `T_i`: Dãy tỉ số truyền tiêu chuẩn (1.00 đến 20.00).
+   - `T_AngleList`: Góc trục $\Sigma$ tiêu chuẩn ($60^\circ, 70^\circ, 80^\circ, 90^\circ, 100^\circ, 110^\circ, 120^\circ$).
+   - `T_AlfaList`: Góc ăn khớp danh nghĩa $\alpha$ ($14.5^\circ, 15^\circ, 17.5^\circ, 20^\circ, 22^\circ, 25^\circ$).
+   - `T_BetaList`: Góc xoắn răng $\beta$ ($0^\circ, 8^\circ, 10^\circ, 12^\circ, 15^\circ, 20^\circ, 25^\circ, 30^\circ, 35^\circ, 40^\circ, 45^\circ$).
+   - `T_modul`: Dãy mô đun tiêu chuẩn DIN 780 / ISO (0.5 mm đến 50.0 mm).
+   - `T_TypePressAngle` & `T_TypeoffModule`: Dropdown dạng `.param-type-select` nằm trực tiếp trên tên thông số để hoán đổi linh hoạt giữa Pháp diện (Normal) và Ngang diện (Transverse).
+   - `T_CADSystems`, `T_DXFScale`, `T_DXF_2P`, `T_DXFTablesList`: Dropdown lựa chọn phiên bản CAD, tỉ lệ bản vẽ, chi tiết xuất và bảng thông số gia công.
+3. **Tính phản ứng hai chiều (Bidirectional Reactive Sync)**:
+   - Khi người dùng chọn một giá trị từ mũi tên thả xuống `▼`, giá trị đó lập tức được ghi vào ô nhập liệu và bộ giải thuật tính toán lại theo thời gian thực (Zero-Lag).
+   - Khi người dùng nhập tay bất kỳ giá trị số thực nào vào ô nhập liệu, hệ thống tự động nhận diện và tính toán bình thường mà không bị ràng buộc bởi danh sách có sẵn.
+
 ---
-
-

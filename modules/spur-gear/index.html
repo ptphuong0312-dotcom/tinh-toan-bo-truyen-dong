@@ -169,21 +169,42 @@
                                             <button type="button" class="btn-smart" id="btnCalcI_from_z" title="Tính tỉ số truyền từ z1, z2">[ i &lt;= z1,z2 ]</button>
                                         </td>
                                         <td>i</td>
-                                        <td><input type="text" class="input-eng user-input" id="in_target_i" value="2.500"></td>
                                         <td>
-                                            <select class="select-eng" id="selStandardRatio">
-                                                <option value="custom">Tùy chọn...</option>
-                                                <option value="1.0">1.000</option>
-                                                <option value="1.25">1.250</option>
-                                                <option value="1.6">1.600</option>
-                                                <option value="2.0">2.000</option>
-                                                <option value="2.5" selected>2.500 (R10)</option>
-                                                <option value="3.15">3.150 (R10)</option>
-                                                <option value="4.0">4.000 (R10)</option>
-                                                <option value="5.0">5.000 (R10)</option>
-                                                <option value="6.3">6.300 (R10)</option>
-                                            </select>
+                                            <div class="combo-box-group">
+                                                <input type="text" class="combo-input input-eng user-input" id="in_target_i" value="2.500">
+                                                <select id="selStandardRatio" class="combo-arrow-select" title="Chọn tỉ số truyền tiêu chuẩn T_i">
+                                                    <option value="" disabled selected></option>
+                                                    <option value="1.00">1.00</option>
+                                                    <option value="1.12">1.12</option>
+                                                    <option value="1.25">1.25</option>
+                                                    <option value="1.40">1.40</option>
+                                                    <option value="1.60">1.60</option>
+                                                    <option value="1.80">1.80</option>
+                                                    <option value="2.00">2.00</option>
+                                                    <option value="2.24">2.24</option>
+                                                    <option value="2.50">2.50</option>
+                                                    <option value="2.80">2.80</option>
+                                                    <option value="3.15">3.15</option>
+                                                    <option value="3.55">3.55</option>
+                                                    <option value="4.00">4.00</option>
+                                                    <option value="4.50">4.50</option>
+                                                    <option value="5.00">5.00</option>
+                                                    <option value="5.60">5.60</option>
+                                                    <option value="6.30">6.30</option>
+                                                    <option value="7.10">7.10</option>
+                                                    <option value="8.00">8.00</option>
+                                                    <option value="9.00">9.00</option>
+                                                    <option value="10.00">10.00</option>
+                                                    <option value="11.20">11.20</option>
+                                                    <option value="12.50">12.50</option>
+                                                    <option value="14.00">14.00</option>
+                                                    <option value="16.00">16.00</option>
+                                                    <option value="18.00">18.00</option>
+                                                    <option value="20.00">20.00</option>
+                                                </select>
+                                            </div>
                                         </td>
+                                        <td>-</td>
                                         <td>-</td>
                                     </tr>
                                     <tr>
@@ -350,36 +371,80 @@
                                         <td>4.2</td>
                                         <td>Góc ăn khớp danh nghĩa (Normal pressure angle)</td>
                                         <td>α</td>
-                                        <td colspan="2"><input type="text" class="input-eng user-input" id="in_alfa_n" value="20.0"></td>
-                                        <td>độ</td>
+                                        <td>
+                                            <div class="combo-box-group">
+                                                <input type="text" class="combo-input input-eng user-input" id="in_alfa_n" value="20.0">
+                                                <select id="sel_std_alpha" class="combo-arrow-select" title="Chọn góc ăn khớp tiêu chuẩn T_AlfaList">
+                                                    <option value="" disabled selected></option>
+                                                    <option value="14.5">14.5° (Cổ điển)</option>
+                                                    <option value="15.0">15.0°</option>
+                                                    <option value="17.5">17.5°</option>
+                                                    <option value="20.0">20.0° (Tiêu chuẩn ISO)</option>
+                                                    <option value="22.0">22.0°</option>
+                                                    <option value="25.0">25.0° (Tải nặng)</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td>-</td>
+                                        <td>độ (°)</td>
                                     </tr>
                                     <tr>
                                         <td>4.3</td>
                                         <td>Góc nghiêng răng cơ sở (Base helix angle)</td>
                                         <td>β</td>
-                                        <td colspan="2"><input type="text" class="input-eng user-input" id="in_beta" value="0.0"></td>
-                                        <td>độ</td>
+                                        <td>
+                                            <div class="combo-box-group">
+                                                <input type="text" class="combo-input input-eng user-input" id="in_beta" value="0.0">
+                                                <select id="sel_std_beta" class="combo-arrow-select" title="Chọn góc xoắn tiêu chuẩn T_BetaList">
+                                                    <option value="" disabled selected></option>
+                                                    <option value="0.0">0.0° (Răng thẳng)</option>
+                                                    <option value="8.0">8.0°</option>
+                                                    <option value="10.0">10.0°</option>
+                                                    <option value="12.0">12.0°</option>
+                                                    <option value="15.0">15.0° (Nghiêng chuẩn)</option>
+                                                    <option value="20.0">20.0°</option>
+                                                    <option value="25.0">25.0°</option>
+                                                    <option value="30.0">30.0°</option>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td>-</td>
+                                        <td>độ (°)</td>
                                     </tr>
                                     <tr>
                                         <td>4.6</td>
                                         <td>Mô đun pháp tuyến / Tiêu chuẩn DIN 780</td>
                                         <td>mn</td>
-                                        <td><input type="text" class="input-eng user-input" id="in_mn" value="6.000"></td>
                                         <td>
-                                            <select class="select-eng" id="selStdModule">
-                                                <option value="custom">Tùy chọn...</option>
-                                                <option value="1.0">1.0 mm</option>
-                                                <option value="1.5">1.5 mm</option>
-                                                <option value="2.0">2.0 mm</option>
-                                                <option value="2.5">2.5 mm</option>
-                                                <option value="3.0">3.0 mm</option>
-                                                <option value="4.0">4.0 mm</option>
-                                                <option value="5.0">5.0 mm</option>
-                                                <option value="6.0" selected>6.0 mm (Dãy 1)</option>
-                                                <option value="8.0">8.0 mm (Dãy 1)</option>
-                                                <option value="10.0">10.0 mm (Dãy 1)</option>
-                                            </select>
+                                            <div class="combo-box-group">
+                                                <input type="text" class="combo-input input-eng user-input highlight-key-param" id="in_mn" value="6.000">
+                                                <select id="selStdModule" class="combo-arrow-select" title="Chọn mô đun tiêu chuẩn DIN 780">
+                                                    <option value="" disabled selected></option>
+                                                    <option value="0.5">0.5 mm</option>
+                                                    <option value="0.6">0.6 mm</option>
+                                                    <option value="0.8">0.8 mm</option>
+                                                    <option value="1.0">1.0 mm (Dãy 1)</option>
+                                                    <option value="1.25">1.25 mm (Dãy 1)</option>
+                                                    <option value="1.5">1.5 mm (Dãy 1)</option>
+                                                    <option value="2.0">2.0 mm (Dãy 1)</option>
+                                                    <option value="2.5">2.5 mm (Dãy 1)</option>
+                                                    <option value="3.0">3.0 mm (Dãy 1)</option>
+                                                    <option value="4.0">4.0 mm (Dãy 1)</option>
+                                                    <option value="5.0">5.0 mm (Dãy 1)</option>
+                                                    <option value="6.0">6.0 mm (Dãy 1)</option>
+                                                    <option value="8.0">8.0 mm (Dãy 1)</option>
+                                                    <option value="10.0">10.0 mm (Dãy 1)</option>
+                                                    <option value="12.0">12.0 mm (Dãy 1)</option>
+                                                    <option value="16.0">16.0 mm (Dãy 1)</option>
+                                                    <option value="20.0">20.0 mm (Dãy 1)</option>
+                                                    <option value="25.0">25.0 mm (Dãy 1)</option>
+                                                    <option value="32.0">32.0 mm (Dãy 1)</option>
+                                                    <option value="40.0">40.0 mm (Dãy 1)</option>
+                                                    <option value="50.0">50.0 mm (Dãy 1)</option>
+                                                </select>
+                                            </div>
                                         </td>
+                                        <td><span class="output-eng" id="out_sec4_mt">6.000</span></td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -1366,6 +1431,123 @@
                                     </tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 16.0: Graphic output, CAD systems & Manufacturing Specification -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>16.0 Xuất Bản Vẽ Đồ Họa, Hệ Thống CAD &amp; Bảng Chế Tạo (Graphic Output, CAD Systems &amp; DXFTables)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <!-- 16.1 CAD System Selection -->
+                            <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+                                <div style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.75rem; text-transform: uppercase;">
+                                    🖥️ 16.1 Chọn Hệ Thống CAD Mục Tiêu (CAD System Selection)
+                                </div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-around; align-items: center;">
+                                    <label style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; cursor: pointer; padding: 0.5rem 1rem; border: 2px solid #2563eb; border-radius: 6px; background: #eff6ff;">
+                                        <input type="radio" name="cad_system_spur" value="2d" checked style="accent-color: #2563eb;">
+                                        <img src="images/image3.png" alt="2D CAD" style="height: 38px; width: auto;">
+                                        <span style="font-size: 0.8rem; font-weight: 700; color: #1e40af;">2D CAD System</span>
+                                    </label>
+                                    <label style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; cursor: pointer; padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc;">
+                                        <input type="radio" name="cad_system_spur" value="3d" style="accent-color: #2563eb;">
+                                        <img src="images/image4.png" alt="3D CAD" style="height: 38px; width: auto;">
+                                        <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">3D CAD System</span>
+                                    </label>
+                                    <label style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; cursor: pointer; padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc;">
+                                        <input type="radio" name="cad_system_spur" value="autocad" style="accent-color: #2563eb;">
+                                        <img src="images/image5.png" alt="AutoCAD" style="height: 38px; width: auto;">
+                                        <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">AutoCAD / DXF</span>
+                                    </label>
+                                    <label style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; cursor: pointer; padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc;">
+                                        <input type="radio" name="cad_system_spur" value="other" style="accent-color: #2563eb;">
+                                        <img src="images/image7.png" alt="Other CAD" style="height: 38px; width: auto;">
+                                        <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">Other CAD / General</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 16.1 - 16.3 & 16.7 CAD Settings Dropdown Table -->
+                            <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem;">
+                                <table class="calc-table" style="margin-bottom: 0;">
+                                    <tbody>
+                                        <tr>
+                                            <td style="width: 45px; font-weight: 700; color: #1e3a8a;">16.1</td>
+                                            <td style="width: 300px; font-weight: 600;">Xuất bản vẽ 2D sang (2D drawing output to):</td>
+                                            <td colspan="3">
+                                                <select id="selCADSystem" class="select-eng" style="width: 100%; max-width: 340px;">
+                                                    <option value="autocad2004" selected>AutoCAD 2004 - 2009 (DXF / DDE)</option>
+                                                    <option value="dxf_r12">DXF File (Release 12 AC1009 - Universal CAD)</option>
+                                                    <option value="autocad2000">AutoCAD 2000 - 2002</option>
+                                                    <option value="autocad2014">AutoCAD 2014 - 2019</option>
+                                                    <option value="bricscad">BricsCAD</option>
+                                                    <option value="zwcad">ZWCAD</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="font-weight: 700; color: #1e3a8a;">16.2</td>
+                                            <td style="font-weight: 600;">Tỉ lệ bản vẽ 2D (2D Drawing scale):</td>
+                                            <td colspan="3">
+                                                <select id="selCADScale" class="select-eng" style="width: 100%; max-width: 340px;">
+                                                    <option value="auto" selected>Automatic (Tự động căn vừa khung)</option>
+                                                    <option value="1:1">1:1 (Tỉ lệ chuẩn 100%)</option>
+                                                    <option value="1:2">1:2 (Thu nhỏ 50%)</option>
+                                                    <option value="2:1">2:1 (Phóng to 200%)</option>
+                                                    <option value="1:5">1:5 (Thu nhỏ 5 lần)</option>
+                                                    <option value="1:10">1:10 (Thu nhỏ 10 lần)</option>
+                                                    <option value="1:20">1:20 (Thu nhỏ 20 lần)</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="font-weight: 700; color: #1e3a8a;">16.3</td>
+                                            <td style="font-weight: 600;">Chi tiết bản vẽ hiển thị (Detail):</td>
+                                            <td colspan="3">
+                                                <select id="selCADDetail" class="select-eng" style="width: 100%; max-width: 340px;">
+                                                    <option value="pinion" selected>Bánh dẫn 1 (Pinion)</option>
+                                                    <option value="gear">Bánh bị dẫn 2 (Gear / Wheel)</option>
+                                                    <option value="pair">Cặp bánh răng ăn khớp (Mating Pair)</option>
+                                                </select>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="font-weight: 700; color: #1e3a8a;">16.7</td>
+                                            <td style="font-weight: 600;">Bảng thông số chế tạo CAD (Table of parameters):</td>
+                                            <td style="width: 320px;">
+                                                <select id="selCADTable" class="select-eng" style="width: 100%; max-width: 340px;">
+                                                    <option value="pinion" selected>Bảng thông số Bánh dẫn (Table of pinion parameters)</option>
+                                                    <option value="gear">Bảng thông số Bánh bị dẫn (Table of wheel parameters)</option>
+                                                </select>
+                                            </td>
+                                            <td colspan="2">
+                                                <button type="button" class="btn btn-secondary" id="btnDrawTable" style="background-color: #0f766e; color: #fff; font-weight: 700; border: none; padding: 0.35rem 0.85rem;">📋 Vẽ Bảng (Draw table)</button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Showcase image for DXF / CAD -->
+                            <div style="text-align: center; margin-bottom: 1.25rem;">
+                                <img src="images/mitcalc_spur_sec16_dxf.png" alt="Sơ đồ hệ thống CAD DXF" style="max-width: 100%; height: auto; max-height: 180px; border-radius: 4px; border: 1px solid var(--border-color);">
+                            </div>
+
+                            <!-- CAD Action Buttons -->
+                            <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-weight: 700; color: #1e3a8a; font-size: 0.9rem;">💾 Xuất Tệp DXF 2D AC1009 (Release 12 Universal):</span>
+                                    <span style="font-size: 0.8rem; color: #64748b; margin-left: 0.5rem;">Tương thích AutoCAD, SolidWorks, Inventor, ZWCAD</span>
+                                </div>
+                                <div style="display: flex; gap: 0.75rem;">
+                                    <button type="button" class="btn btn-primary" id="btnExportDXF" style="background: #2563eb; color: #ffffff; font-weight: 700; padding: 0.5rem 1.25rem; border: none; border-radius: 6px; cursor: pointer; box-shadow: 0 2px 4px rgba(37,99,235,0.3);">
+                                        📥 Xuất File DXF (Zero-CORS)
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 

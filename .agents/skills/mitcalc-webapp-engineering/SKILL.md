@@ -353,6 +353,22 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
      * Chạm 2 ngón tay: Thu phóng tức thì bằng khoảng cách giữa 2 đầu ngón tay (`Math.hypot(dx, dy)`).
      * Thiết lập `touch-action: none` và `aspect-ratio: 1200 / 650` với `width: 100%; height: auto;` để canvas luôn sắc nét trên mọi mật độ điểm ảnh (Retina / OLED) và không bị giật trang khi thao tác với bánh răng.
 
+### Quy Chuẩn 17: Hộp Nhập Liệu Tích Hợp Mũi Tên Thả Xuống Chuẩn Excel (Excel Combo-Box Architecture)
+1. **Khắc phục lỗi đẩy thẻ select sang cột khác**:
+   - Trong giao diện bảng tính cơ khí chuẩn MITCalc, các ô có mũi tên sổ xuống (ví dụ $i, \Sigma, \alpha, \beta, m$) là các điều khiển DropDowns của Excel nằm kề cận ngay ô nhập liệu.
+   - Tránh tuyệt đối việc đặt `<select>` sang Cột 5 (Bánh 2) làm xáo trộn căn chỉnh bảng.
+   - Giải pháp chuẩn: Áp dụng lớp `.combo-box-group` (inline-flex, bo góc 4px) gom cả `.combo-input` (ô nhập số) và `.combo-arrow-select` (nút chevron mũi tên `▼` dạng SVG 24px) trọn vẹn trong Cột 4 (Bánh 1). Cột 5 được bảo tồn 100% cho kết quả tính toán của Bánh 2 hoặc thông số liên hợp bổ sung.
+2. **Trích xuất danh mục chuẩn từ Excel Named Ranges**:
+   - `T_i`: Dãy tỉ số truyền tiêu chuẩn ISO R10/R20 (1.00 đến 20.00).
+   - `T_AngleList`: Dãy góc trục $\Sigma$ chuẩn ($60^\circ$ đến $120^\circ$).
+   - `T_AlfaList`: Dãy góc ăn khớp $\alpha$ ($14.5^\circ, 15^\circ, 17.5^\circ, 20^\circ, 22^\circ, 25^\circ$).
+   - `T_BetaList`: Dãy góc xoắn $\beta$ ($0^\circ, 8^\circ, 10^\circ, 12^\circ, 15^\circ, 20^\circ, 25^\circ, 30^\circ, 35^\circ, 40^\circ, 45^\circ$).
+   - `T_modul`: Dãy mô đun tiêu chuẩn DIN 780 Dãy 1 và Dãy 2 (0.5 mm đến 50.0 mm).
+   - `T_TypePressAngle` & `T_TypeoffModule`: Dropdown hoán đổi trực tiếp loại góc/mô đun (Normal vs Transverse) nằm trên tiêu đề thông số `.param-type-select`.
+3. **Phản ứng hai chiều (Bidirectional Reactive Sync)**:
+   - Chọn từ dropdown -> Cập nhật input -> Tính toán thời gian thực.
+   - Nhập tay số tùy ý vào input -> Tính toán bình thường không bị giới hạn.
+
 ---
 
 

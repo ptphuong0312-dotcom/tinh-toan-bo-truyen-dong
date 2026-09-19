@@ -4046,6 +4046,37 @@ class SpurGearUI {
             });
         }
 
+        const selAlpha = document.getElementById('sel_std_alpha');
+        if (selAlpha) {
+            selAlpha.addEventListener('change', () => {
+                if (selAlpha.value) {
+                    this.inputs.alfa_n = parseFloat(selAlpha.value);
+                    const inAlfa = document.getElementById('in_alfa_n');
+                    if (inAlfa) inAlfa.value = this.inputs.alfa_n.toFixed(1);
+                    this.calculate();
+                }
+            });
+        }
+
+        const selBeta = document.getElementById('sel_std_beta');
+        if (selBeta) {
+            selBeta.addEventListener('change', () => {
+                if (selBeta.value) {
+                    this.inputs.beta = parseFloat(selBeta.value);
+                    const inBeta = document.getElementById('in_beta');
+                    if (inBeta) inBeta.value = this.inputs.beta.toFixed(1);
+                    this.calculate();
+                }
+            });
+        }
+
+        const btnDrawTable = document.getElementById('btnDrawTable');
+        if (btnDrawTable) {
+            btnDrawTable.addEventListener('click', () => {
+                this.exportDXF();
+            });
+        }
+
         const sliderX1 = document.getElementById('slider_x1');
         const sliderX1Val = document.getElementById('slider_x1_val');
         if (sliderX1) {
@@ -4337,6 +4368,7 @@ class SpurGearUI {
         set('out_bw', g.bw.toFixed(2));
         set('out_aw_sec4', g.aw.toFixed(3));
         set('out_weight_sec4', g.m_total.toFixed(3));
+        set('out_sec4_mt', (g.mt !== undefined ? g.mt : (g.mn / Math.cos(g.beta * Math.PI / 180))).toFixed(4));
 
         set('out_jn_min', g.jn_min.toFixed(3));
         set('out_jn_max', g.jn_max.toFixed(3));
