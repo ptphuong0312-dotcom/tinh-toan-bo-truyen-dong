@@ -134,3 +134,22 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 
 ---
 
+### Quy Tắc 11: Quy Chuẩn Kiến Trúc Giao Diện Mobile Khoa Học & Cử Chỉ Cảm Ứng 2D CAD
+1. **Nguyên tắc bảo toàn dữ liệu kỹ thuật 100%**:
+   - Tuyệt đối KHÔNG ẩn, KHÔNG lược bỏ bất kỳ cột thông số hay bảng tính toán kỹ thuật nào trên thiết bị di động (7 cột: `#`, `Thông số`, `Ký hiệu`, `Giá trị 1`, `Giá trị 2`, `Giá trị 3`, `Đơn vị`, `Thao tác`).
+   - Bọc toàn bộ các bảng tính toán cơ khí trong `.section-body` với `overflow-x: auto; -webkit-overflow-scrolling: touch;`. Cố định `min-width: 580px` cho `.calc-table` để duy trì căn chỉnh kỹ thuật hoàn hảo, cho phép vuốt ngang tự nhiên bằng ngón tay cái mà không làm vỡ bố cục.
+   - Cỡ chữ các ô nhập liệu `font-size: 16px` (hoặc `1rem`), chiều cao tối thiểu 36px để triệt tiêu hiện tượng tự động phóng to (Auto-zoom) khó chịu trên iOS Safari / Chrome Mobile.
+2. **Tối ưu không gian hiển thị dọc (Vertical Space Recovery)**:
+   - Header cố định trên desktop chuyển sang `position: static` trên mobile (`@media (max-width: 768px)`), giải phóng 45% chiều cao màn hình quý giá.
+   - Thanh điều hướng tab kỹ thuật (`.tab-navigation`) chuyển sang dạng thanh điều khiển phân đoạn 50/50 (Segmented control) với diện tích chạm tối ưu (`min-height: 42px`).
+   - Khối thẻ tóm tắt nhanh (`.summary-banner`) được tái cấu trúc thành lưới gọn 2 cột (`grid-template-columns: 1fr 1fr`), thẻ trạng thái ISO chiếm trọn chiều rộng hàng đầu, hiển thị sắc nét toàn bộ 5 chỉ số cốt lõi trong chưa đầy 120px chiều cao.
+   - Di chuyển `.summary-banner` và `.global-accordion-toolbar` vào phạm vi cục bộ của Tab 1 (`#tabCalculator`). Khi chuyển sang Tab 2 (`#tabCanvas`), khung vẽ mô phỏng 2D CAD hiển thị ngay lập tức dưới thanh điều hướng, dành trọn 100% không gian màn hình cho mô phỏng cơ khí.
+3. **Cử chỉ cảm ứng trực quan trên Canvas 2D CAD (Mobile Multi-Touch Engine)**:
+   - Tích hợp điều khiển cảm ứng đa điểm trực tiếp vào `gear-canvas.js` và `bevel-canvas.js`:
+     * Chạm 1 ngón tay (`touchstart`, `touchmove`, `touchend`): Kéo rê di chuyển mô hình (Pan).
+     * Chạm 2 ngón tay: Thu phóng tức thì bằng khoảng cách giữa 2 đầu ngón tay (`Math.hypot(dx, dy)`).
+     * Thiết lập `touch-action: none` và `aspect-ratio: 1200 / 650` với `width: 100%; height: auto;` để hình học ăn khớp luôn co giãn sắc nét và không bị trình duyệt giật cuộn trang khi tương tác với bánh răng.
+
+---
+
+

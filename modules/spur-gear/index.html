@@ -58,52 +58,52 @@
 
     <!-- Main Container -->
     <main class="main-container">
-        <!-- Quick Summary Executive Banner -->
-        <section class="summary-banner">
-            <div class="summary-status-badge">
-                <div class="status-indicator status-safe"></div>
-                <div>
-                    <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Tiêu chuẩn ăn khớp & hình học răng</div>
-                    <strong style="color: var(--accent-green);">ĐẠT TIÊU CHUẨN ISO 6336 / DIN 3960</strong>
-                </div>
-            </div>
-            <div class="summary-metric">
-                <div class="metric-title">Khoảng Cách Trục aw</div>
-                <div class="metric-value val-blue" id="summaryAw">201.000 mm</div>
-            </div>
-            <div class="summary-metric">
-                <div class="metric-title">Tỉ Số Truyền Thực i</div>
-                <div class="metric-value val-blue" id="summaryRatio">2.526</div>
-            </div>
-            <div class="summary-metric">
-                <div class="metric-title">Hệ Số Trùng Khớp εα</div>
-                <div class="metric-value" id="summaryEa">1.646</div>
-            </div>
-            <div class="summary-metric">
-                <div class="metric-title">Chiều Dày Đỉnh sa1*</div>
-                <div class="metric-value" id="summarySa1">0.689</div>
-            </div>
-            <div class="summary-metric">
-                <div class="metric-title">Tổng Khối Lượng m</div>
-                <div class="metric-value val-blue" id="summaryWeight">68.75 kg</div>
-            </div>
-        </section>
-
-        <!-- Global Accordion Toolbar -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <span style="font-size: 0.85rem; color: var(--text-secondary);">
-                * Cấu trúc, màu sắc ô nhập/tính và các nút tính toán thuận nghịch đồng bộ 100% với bản gốc MITCalc 1.74.
-            </span>
-            <div style="display: flex; gap: 0.5rem;">
-                <button type="button" class="btn btn-secondary" id="btnExpandAll">📂 Mở Rộng Tất Cả</button>
-                <button type="button" class="btn btn-secondary" id="btnCollapseAll">📁 Thu Gọn Tất Cả</button>
-            </div>
-        </div>
-
         <!-- ========================================================================= -->
         <!-- TAB 1: CALCULATOR (STANDARDIZED ACCORDION)                                 -->
         <!-- ========================================================================= -->
         <div id="tabCalculator" class="tab-pane active">
+            <!-- Quick Summary Executive Banner -->
+            <section class="summary-banner">
+                <div class="summary-status-badge">
+                    <div class="status-indicator status-safe"></div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Tiêu chuẩn ăn khớp & hình học răng</div>
+                        <strong style="color: var(--accent-green);">ĐẠT TIÊU CHUẨN ISO 6336 / DIN 3960</strong>
+                    </div>
+                </div>
+                <div class="summary-metric">
+                    <div class="metric-title">Khoảng Cách Trục aw</div>
+                    <div class="metric-value val-blue highlight-key-param" id="summaryAw" style="padding: 2px 8px; border-radius: 4px;">201.000 mm</div>
+                </div>
+                <div class="summary-metric">
+                    <div class="metric-title">Tỉ Số Truyền Thực i</div>
+                    <div class="metric-value val-blue highlight-key-param" id="summaryRatio" style="padding: 2px 8px; border-radius: 4px;">2.526</div>
+                </div>
+                <div class="summary-metric">
+                    <div class="metric-title">Hệ Số Trùng Khớp εα</div>
+                    <div class="metric-value" id="summaryEa">1.646</div>
+                </div>
+                <div class="summary-metric">
+                    <div class="metric-title">Chiều Dày Đỉnh sa1*</div>
+                    <div class="metric-value" id="summarySa1">0.689</div>
+                </div>
+                <div class="summary-metric">
+                    <div class="metric-title">Tổng Khối Lượng m</div>
+                    <div class="metric-value val-blue" id="summaryWeight">68.75 kg</div>
+                </div>
+            </section>
+
+            <!-- Global Accordion Toolbar -->
+            <div class="global-accordion-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <span style="font-size: 0.85rem; color: var(--text-secondary);">
+                    * Cấu trúc, màu sắc ô nhập/tính và các nút tính toán thuận nghịch đồng bộ 100% với bản gốc MITCalc 1.74.
+                </span>
+                <div class="btn-group" style="display: flex; gap: 0.5rem;">
+                    <button type="button" class="btn btn-secondary" id="btnExpandAll">📂 Mở Rộng Tất Cả</button>
+                    <button type="button" class="btn btn-secondary" id="btnCollapseAll">📁 Thu Gọn Tất Cả</button>
+                </div>
+            </div>
+
             <div class="accordion-group">
 
                 <!-- ################################################################# -->

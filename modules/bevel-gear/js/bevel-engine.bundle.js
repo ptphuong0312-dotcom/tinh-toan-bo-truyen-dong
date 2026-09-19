@@ -1995,6 +1995,49 @@ class BevelGearCanvas {
             this.zoom = Math.max(0.2, Math.min(5.0, this.zoom * factor));
             this.render();
         });
+
+        // Mobile Touch Gestures: 1-finger pan, 2-finger pinch zoom
+        let touchStartDist = 0;
+        let touchStartZoom = 1.0;
+        let isTouchPanning = false;
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        this.canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isTouchPanning = true;
+                touchStartX = e.touches[0].clientX - this.panX;
+                touchStartY = e.touches[0].clientY - this.panY;
+            } else if (e.touches.length === 2) {
+                isTouchPanning = false;
+                touchStartDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                touchStartZoom = this.zoom;
+            }
+        }, { passive: true });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1 && isTouchPanning) {
+                this.panX = e.touches[0].clientX - touchStartX;
+                this.panY = e.touches[0].clientY - touchStartY;
+                this.render();
+            } else if (e.touches.length === 2 && touchStartDist > 0) {
+                const currentDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const factor = currentDist / touchStartDist;
+                this.zoom = Math.max(0.2, Math.min(5.0, touchStartZoom * factor));
+                this.render();
+            }
+        }, { passive: true });
+
+        this.canvas.addEventListener('touchend', () => {
+            isTouchPanning = false;
+            touchStartDist = 0;
+        }, { passive: true });
     }
 
     animate() {

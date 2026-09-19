@@ -325,8 +325,6 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 | `RA_SOAT_SONG_SONG_BANH_RANG_CON.bat` | Chạy bộ rà soát song song từng dòng 109 ô tính Bánh răng côn (Delta = 0.000000 PASS 100%) |
 | `DONG_GOI_BUNDLE_JS.bat` | Tự động đóng gói tất cả các mô-đun thành classic bundle thuần (Zero-CORS) |
 
----
-
 ### Quy Chuẩn 15: Xuất Bản Lên GitHub & Triển Khai Toàn Cầu Qua Vercel (CI/CD Architecture)
 1. **Kiến trúc Zero-Build Static Web App**:
    - Vercel phục vụ trực tiếp các file tĩnh từ Cổng Trung Tâm (`index.html`) và các thư mục con (`modules/spur-gear/`, `modules/bevel-gear/`, `shared/`).
@@ -337,8 +335,26 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
    - Tích hợp Git Portable (MinGit) hoạt động 100% không đòi hỏi quyền Administrator.
    - **Quy tắc tuyệt đối**: Không tạo file batch `DAY_LEN_GITHUB.bat`. Toàn bộ thao tác push lên GitHub do AI trực tiếp thực hiện trong console.
 
+---
+
+### Quy Chuẩn 16: Thiết Kế Giao Diện Mobile Responsive Khoa Học & Cảm Ứng Đa Điểm 2D CAD
+1. **Quy tắc bảo toàn dữ liệu kỹ thuật 100%**:
+   - Nghiêm cấm lược bỏ, thu gọn hay ẩn bất kỳ cột dữ liệu nào trong 7 cột kỹ thuật của bảng tính toán cơ khí.
+   - Bọc mọi bảng trong `.section-body` có `overflow-x: auto; -webkit-overflow-scrolling: touch;`. Thiết lập `.calc-table` có `min-width: 580px` để người dùng có thể vuốt ngang mượt mà bằng ngón cái mà không làm méo mó các thông số.
+   - Các ô nhập dữ liệu có chiều cao tối thiểu `min-height: 36px` và `font-size: 16px` để ngăn Safari/Chrome trên di động tự động zoom vào ô input gây lệch màn hình.
+2. **Thu hồi không gian hiển thị dọc (Vertical Space Recovery)**:
+   - Header cố định trên desktop chuyển sang `position: static` trên màn hình di động (`@media (max-width: 768px)`), trả lại 45% diện tích màn hình quý giá.
+   - Thanh tab điều hướng chuyển sang dạng segmented control 50/50 với chiều cao chạm tối thiểu 42px.
+   - Khối thẻ tóm tắt (`.summary-banner`) được tái cấu trúc thành lưới 2 cột (`grid-template-columns: 1fr 1fr`), thẻ trạng thái ISO full-width ở trên cùng, hiển thị toàn bộ 5 chỉ số cốt lõi trong chưa đầy 120px.
+   - Chuyển khối `.summary-banner` và `.global-accordion-toolbar` vào bên trong `#tabCalculator`. Khi sang Tab 2 (`#tabCanvas`), khung vẽ mô phỏng 2D CAD chiếm ngay vị trí đầu trang dưới thanh điều hướng tab, dành trọn 100% tầm nhìn cho mô hình cơ khí.
+3. **Bộ điều khiển cử chỉ cảm ứng 2D Canvas (Mobile Multi-Touch Pan & Pinch-to-Zoom Engine)**:
+   - Bổ sung bộ lắng nghe sự kiện chạm vào `gear-canvas.js` và `bevel-canvas.js`:
+     * Chạm 1 ngón tay (`touchstart`, `touchmove`, `touchend`): Kéo rê di chuyển mô hình (Pan) mượt mà.
+     * Chạm 2 ngón tay: Thu phóng tức thì bằng khoảng cách giữa 2 đầu ngón tay (`Math.hypot(dx, dy)`).
+     * Thiết lập `touch-action: none` và `aspect-ratio: 1200 / 650` với `width: 100%; height: auto;` để canvas luôn sắc nét trên mọi mật độ điểm ảnh (Retina / OLED) và không bị giật trang khi thao tác với bánh răng.
 
 ---
+
 
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 

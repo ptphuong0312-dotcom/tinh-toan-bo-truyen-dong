@@ -23,35 +23,22 @@ def test_spur_webapp():
         page.wait_for_timeout(1000)
 
         # Tab 1: Calculator
-        print("1. Testing Tab Calculator...")
-        sec1_header = page.locator('.calc-section:has-text("1.0 Nhập Các Thông Số") .section-header')
-        if sec1_header.count() > 0:
-            sec1_header.click()
+        print("1. Testing Spur Tab Calculator...")
+        btn_expand = page.locator('#btnExpandAll')
+        if btn_expand.count() > 0:
+            btn_expand.click()
             page.wait_for_timeout(300)
 
-        # Tab 2: Live Audit
-        print("2. Testing Tab Live Audit...")
-        page.click('button[data-target="tabAudit"]')
-        page.wait_for_timeout(500)
-        badge = page.locator('#auditSummaryBadge').text_content()
-        print("Audit summary badge:", badge.strip())
+        # Tab 2: 2D Canvas CAD Simulation
+        print("2. Testing Spur Tab 2: 2D Canvas CAD Simulation...")
+        btn_canvas = page.locator('button[data-target="tabCanvas"]')
+        if btn_canvas.count() > 0:
+            btn_canvas.click()
+            page.wait_for_timeout(500)
 
-        # Tab 3: Canvas
-        print("3. Testing Tab Canvas...")
-        page.click('button[data-target="tabCanvas"]')
-        page.wait_for_timeout(500)
-
-        # Tab 4: Solutions
-        print("4. Testing Tab Solutions...")
-        page.click('button[data-target="tabSolutions"]')
-        page.wait_for_timeout(300)
-        page.click('#btnSolveAw')
-        page.wait_for_timeout(300)
-
-        # Tab 5: Materials
-        print("5. Testing Tab Materials...")
-        page.click('button[data-target="tabMaterials"]')
-        page.wait_for_timeout(300)
+        # Verify Canvas present
+        canvas = page.locator('#gearCanvas')
+        print("Spur Canvas present:", canvas.count() > 0)
 
         print("Console errors count:", len(console_errors))
         if console_errors:

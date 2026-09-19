@@ -246,6 +246,40 @@
 * **Kết quả kiểm chứng thực nghiệm**:
   - **Multi-case QC Suite (`qc_bevel_multi_case_suite.py`)**: 120 / 120 kiểm thử PASS tuyệt đối (100.0%, $\Delta = 0.0000$).
   - **Playwright E2E Test (`test_bevel_webapp.py`)**: 0 lỗi Console/JavaScript, chạy sạch 100%.
-  - **CORS-Free Single Bundle**: Đóng gói thành công `bevel-engine.bundle.js` (125,087 ký tự) chạy 100% offline.
 
+---
 
+## Giai Đoạn 12: Thiết Kế Giao Diện Mobile Responsive Khoa Học & Bộ Điều Khiển Cảm Ứng Đa Điểm 2D CAD (Mobile Multi-Touch Engine)
+* **Bối cảnh & Yêu cầu người dùng**:
+  - Người dùng yêu cầu trực tiếp: *"bạn cần tối ưu giao diện mobile cho tôi sao cho khoa học vào"*.
+  - Yêu cầu đặt ra: Phải tối ưu trải nghiệm trên các thiết bị di động (Smartphones/Tablets, màn hình từ 360px đến 768px), đảm bảo giữ nguyên 100% dữ liệu kỹ thuật, không làm vỡ bố cục, thu hồi tối đa không gian màn hình dọc và cho phép tương tác cảm ứng tự nhiên với mô hình ăn khớp bánh răng 2D CAD.
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Chẩn đoán hiển thị trực quan bằng Playwright Headless**:
+     - Phát hiện Header cố định (`position: sticky`) chiếm tới 45% chiều cao màn hình di động trên iPhone 14 / Pixel 7 (`390x844`).
+     - Khối tóm tắt `.summary-banner` xếp chồng 6 thẻ dọc dài hơn 800px, đẩy nội dung chính xuống sâu dưới nếp gấp màn hình.
+     - Bảng tính toán kỹ thuật 7 cột `.calc-table` bị co ép làm méo mó các thông số khi hiển thị trong container hẹp.
+     - Canvas 2D cố định kích thước 1200px gây tràn màn hình ngang và thiếu hoàn toàn bộ lắng nghe sự kiện chạm (`touchstart`, `touchmove`, `touchend`).
+  2. **Tối ưu hóa kiến trúc CSS Responsive (`shared/css/engineering-theme.css`)**:
+     - **Canvas co giãn tự động**: `#gearCanvas, #bevelCanvas { width: 100%; max-width: 100%; height: auto; aspect-ratio: 1200 / 650; touch-action: none; }` - triệt tiêu hiện tượng giật màn hình khi thao tác trên canvas.
+     - **Thu hồi 45% diện tích dọc của Header**: Chuyển `position: sticky` sang `position: static`, ẩn văn bản mô tả phụ, chuyển thanh nút điều hướng (`.header-controls`) thành thanh cuộn ngang cảm ứng (`overflow-x: auto; scrollbar-width: none;`).
+     - **Thanh điều hướng Tab 50/50 (Segmented Control)**: Phân bố đều 2 tab với diện tích chạm tối ưu (`min-height: 42px`).
+     - **Tái cấu trúc Executive Summary Banner thành lưới 2 cột**: Sử dụng `grid-template-columns: 1fr 1fr`, thẻ trạng thái ISO chiếm trọn chiều rộng hàng trên, chữ số đậm `1.05rem`, nhãn `0.65rem`, hiển thị đầy đủ 5 chỉ số cốt lõi trong chưa đầy 120px chiều cao.
+     - **Bảo toàn 100% dữ liệu kỹ thuật 7 cột**: Thiết lập `.section-body` có `overflow-x: auto; -webkit-overflow-scrolling: touch;` và cố định `.calc-table` có `min-width: 580px`, cho phép vuốt ngang tự nhiên bằng ngón cái mà không làm xô lệch bất kỳ ô tính nào.
+     - **Chống Auto-Zoom trên iOS Safari**: Đặt `font-size: 16px` cho các ô `.user-input` và chiều cao tối thiểu 36px.
+  3. **Tối ưu hóa cấu trúc DOM Tab**:
+     - Di chuyển khối `.summary-banner` và `.global-accordion-toolbar` vào bên trong `#tabCalculator`. Khi người dùng chuyển sang `#tabCanvas`, khung vẽ mô phỏng 2D CAD xuất hiện ngay dưới thanh tab, dành 100% không gian màn hình cho bản vẽ kỹ thuật.
+     - Cổng trung tâm (`index.html`): Điều chỉnh lưới thẻ mô-đun từ `minmax(420px, 1fr)` xuống `minmax(280px, 1fr)`.
+  4. **Bộ điều khiển cảm ứng đa điểm 2D Canvas (Mobile Multi-Touch Engine)**:
+     - Tích hợp trực tiếp vào `modules/spur-gear/js/ui/gear-canvas.js` và `modules/bevel-gear/js/bevel-canvas.js`:
+       * Chạm 1 ngón tay (`touchstart`, `touchmove`, `touchend`): Kéo rê di chuyển mô hình (Pan) mượt mà.
+       * Chạm 2 ngón tay: Thu phóng tức thì bằng khoảng cách giữa 2 đầu ngón tay (`Math.hypot(dx, dy)`).
+* **Kết quả kiểm chứng thực nghiệm**:
+  - **Kiểm thử giao diện di động bằng Playwright (iPhone 14 / Pixel 7: 390x844)**:
+    * Header và Navigation hiển thị cân đối, không che khuất màn hình.
+    * Summary Banner hiển thị trọn vẹn 5 thông số then chốt không cần cuộn trang.
+    * Bảng tính vuốt ngang 7 cột mượt mà, đầy đủ các thông số `#`, `Thông số`, `Ký hiệu`, `Giá trị 1`, `Giá trị 2`, `Giá trị 3`, `Đơn vị`.
+    * Tab Canvas 2D chiếm trọn tầm nhìn, hiển thị sắc nét mô hình ăn khớp.
+  - **Spur Gear QC Suite (`qc_gear_multi_case_suite.py`)**: **110 / 110 checks PASS tuyệt đối (100.0%)**.
+  - **Bevel Gear QC Suite (`qc_bevel_multi_case_suite.py`)**: **120 / 120 checks PASS tuyệt đối (100.0%)**.
+  - **Automated WebApp Test (`test_spur_webapp.py` & `test_bevel_webapp.py`)**: 0 lỗi Console/JavaScript, sạch 100%.
+  - **Classic Bundle Đóng Gói Thuần**: `bevel-engine.bundle.js` (126,880 ký tự) và `mitcalc-engine.bundle.js` cập nhật hoàn chỉnh, chạy 100% offline.

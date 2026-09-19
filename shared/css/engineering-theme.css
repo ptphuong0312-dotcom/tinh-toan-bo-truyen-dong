@@ -389,14 +389,19 @@ body {
     border-bottom: 1px solid var(--border-color);
 }
 
-#gearCanvas {
+#gearCanvas,
+#bevelCanvas {
     display: block;
     width: 100%;
-    height: 650px;
+    max-width: 100%;
+    height: auto;
+    aspect-ratio: 1200 / 650;
     cursor: grab;
+    touch-action: none;
 }
 
-#gearCanvas:active {
+#gearCanvas:active,
+#bevelCanvas:active {
     cursor: grabbing;
 }
 
@@ -407,20 +412,347 @@ body {
     100% { transform: scale(0.95); opacity: 0.8; }
 }
 
-/* Responsive */
+/* ==========================================================================
+   SCIENTIFIC MOBILE & RESPONSIVE DESIGN SYSTEM (ISO / MITCalc Standard)
+   ========================================================================== */
+
+/* 1. Tablet Viewport (<= 1024px) */
 @media (max-width: 1024px) {
     .summary-banner {
         grid-template-columns: 1fr 1fr;
     }
 }
-@media (max-width: 640px) {
-    .summary-banner {
-        grid-template-columns: 1fr;
+
+/* 2. Mobile Smartphone Viewport (<= 768px) */
+@media (max-width: 768px) {
+    /* Touch & Base Sizing */
+    body {
+        font-size: 14px;
+        -webkit-text-size-adjust: 100%;
     }
+
+    .main-container {
+        padding: 0.6rem 0.4rem;
+    }
+
+    /* Prevent iOS browser auto-zoom on input focus */
+    input[type="text"],
+    input[type="number"],
+    select {
+        font-size: 16px !important;
+    }
+
+    /* Compact Mobile Header (Save ~40% vertical screen) */
     .app-header {
+        position: static;
+        padding: 0.5rem 0.65rem;
         flex-direction: column;
-        gap: 1rem;
+        gap: 0.45rem;
+        align-items: stretch;
+    }
+
+    .logo-area {
+        gap: 0.5rem;
+    }
+
+    .logo-icon {
+        font-size: 1.4rem;
+        flex-shrink: 0;
+    }
+
+    .logo-text h1 {
+        font-size: 1.05rem;
+        font-weight: 700;
+        line-height: 1.25;
+    }
+
+    .logo-text p {
+        display: none; /* Hide verbose descriptive paragraph on mobile */
+    }
+
+    .header-controls {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        white-space: nowrap;
+        padding-bottom: 2px;
+        width: 100%;
+        scrollbar-width: none;
+    }
+
+    .header-controls::-webkit-scrollbar {
+        display: none;
+    }
+
+    .header-controls .btn {
+        padding: 0.35rem 0.6rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+        flex-shrink: 0;
+        border-radius: 4px;
+    }
+
+    /* Mobile Segmented Tab Navigation */
+    .tab-navigation {
+        padding: 0 0.35rem;
+        display: flex;
+        width: 100%;
+        background: #0f172a;
+        border-bottom: 2px solid #1e293b;
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 0.6rem 0.35rem;
+        font-size: 0.82rem;
+        font-weight: 700;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        border-bottom-width: 3px;
+    }
+
+    /* Scientific 2-Column Summary Banner */
+    .summary-banner {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.45rem;
+        padding: 0.6rem;
+        margin-bottom: 0.85rem;
+        border-radius: 8px;
+    }
+
+    .summary-status-badge {
+        grid-column: 1 / -1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        padding-bottom: 0.35rem;
+        border-bottom: 1px solid rgba(55, 65, 81, 0.6);
+        text-align: center;
+    }
+
+    .summary-status-badge strong {
+        font-size: 0.78rem;
+    }
+
+    .summary-metric {
+        min-width: unset;
+        padding: 0.45rem 0.35rem;
+        border-radius: 6px;
+        background: rgba(31, 41, 55, 0.85);
+    }
+
+    .metric-title {
+        font-size: 0.65rem;
+        letter-spacing: 0.02em;
+        color: #94a3b8;
+    }
+
+    .metric-value {
+        font-size: 1.05rem;
+        font-weight: 800;
+        margin-top: 0.1rem;
+    }
+
+    /* Global Accordion Toolbar */
+    .global-accordion-toolbar {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 0.35rem !important;
+        margin-bottom: 0.75rem !important;
+    }
+
+    .global-accordion-toolbar span {
+        display: none !important;
+    }
+
+    .global-accordion-toolbar .btn-group {
+        width: 100% !important;
+        display: flex !important;
+        gap: 0.4rem !important;
+    }
+
+    .global-accordion-toolbar .btn-group .btn {
+        flex: 1 !important;
+        justify-content: center !important;
+        font-size: 0.75rem !important;
+        padding: 0.35rem 0.5rem !important;
+    }
+
+    /* Master Blocks & Accordion Headers */
+    .master-block {
+        margin-bottom: 1.25rem;
+    }
+
+    .master-header {
+        padding: 0.45rem 0.65rem;
+        font-size: 0.82rem;
+        flex-direction: column;
         align-items: flex-start;
+        gap: 0.15rem;
+        border-radius: 6px 6px 0 0;
+    }
+
+    .master-header span:first-child {
+        font-weight: 800;
+    }
+
+    .master-header span:last-child {
+        font-size: 0.7rem !important;
+        opacity: 0.85;
+    }
+
+    .section-header {
+        padding: 0.55rem 0.65rem;
+        min-height: 42px;
+    }
+
+    .section-header h3 {
+        font-size: 0.82rem;
+        font-weight: 600;
+        line-height: 1.35;
+    }
+
+    .section-toggle {
+        font-size: 0.85rem;
+        padding: 0 0.2rem;
+    }
+
+    .section-body {
+        padding: 0.5rem 0.35rem;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        position: relative;
+    }
+
+    /* Engineering Calculation Table: Preserve 100% Technical Integrity */
+    .calc-table {
+        min-width: 580px;
+        font-size: 0.82rem;
+    }
+
+    .calc-table th {
+        padding: 0.4rem 0.45rem;
+        font-size: 0.75rem;
+        white-space: nowrap;
+    }
+
+    .calc-table td {
+        padding: 0.35rem 0.4rem;
+    }
+
+    .col-idx { width: 42px; }
+    .col-param { width: 180px; min-width: 150px; }
+    .col-sym { width: 50px; }
+    .col-val1, .col-val2, .col-val3 { min-width: 80px; }
+    .col-unit { width: 50px; }
+
+    .input-eng {
+        padding: 0.35rem 0.4rem;
+        font-size: 0.88rem;
+        min-height: 36px;
+    }
+
+    .output-eng {
+        padding: 0.35rem 0.4rem;
+        font-size: 0.88rem;
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+
+    .select-eng {
+        padding: 0.35rem 0.4rem;
+        font-size: 0.82rem;
+        min-height: 36px;
+    }
+
+    .btn-smart {
+        padding: 0.25rem 0.4rem;
+        font-size: 0.72rem;
+        min-height: 30px;
+    }
+
+    .highlight-key-param {
+        padding: 2px 5px !important;
+        font-size: 0.88rem !important;
+    }
+
+    /* Responsive Section 4.0 Chart & Section 16.0 CAD Modes */
+    #bevelSec4ChartCanvas {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        aspect-ratio: 460 / 280;
+    }
+
+    .cad-mode-grid {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Canvas Simulation Tab 2 on Mobile */
+    .canvas-wrapper {
+        border-radius: 8px;
+    }
+
+    .canvas-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+
+    .canvas-toolbar > div:first-child {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.78rem;
+    }
+
+    .canvas-toolbar > div:last-child {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.3rem;
+        align-items: center;
+    }
+
+    .canvas-toolbar .btn {
+        flex: 1 1 auto;
+        padding: 0.35rem 0.5rem;
+        font-size: 0.72rem;
+        justify-content: center;
+        min-height: 34px;
+    }
+}
+
+/* 3. Small Smartphone Viewport (<= 480px) */
+@media (max-width: 480px) {
+    .summary-banner {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.35rem;
+        padding: 0.5rem;
+    }
+
+    .metric-value {
+        font-size: 0.95rem;
+    }
+
+    .logo-text h1 {
+        font-size: 0.95rem;
+    }
+
+    .tab-btn {
+        font-size: 0.76rem;
+        padding: 0.55rem 0.25rem;
     }
 }
 

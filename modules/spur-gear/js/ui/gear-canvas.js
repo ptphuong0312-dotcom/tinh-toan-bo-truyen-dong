@@ -50,6 +50,49 @@ export class GearCanvas {
             this.scale = Math.max(0.1, Math.min(this.scale, 10.0));
             this.render();
         });
+
+        // Mobile Touch Gestures: 1-finger pan, 2-finger pinch zoom
+        let touchStartDist = 0;
+        let touchStartScale = 1.0;
+        let isTouchPanning = false;
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        this.canvas.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isTouchPanning = true;
+                touchStartX = e.touches[0].clientX - this.panX;
+                touchStartY = e.touches[0].clientY - this.panY;
+            } else if (e.touches.length === 2) {
+                isTouchPanning = false;
+                touchStartDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                touchStartScale = this.scale;
+            }
+        }, { passive: true });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 1 && isTouchPanning) {
+                this.panX = e.touches[0].clientX - touchStartX;
+                this.panY = e.touches[0].clientY - touchStartY;
+                this.render();
+            } else if (e.touches.length === 2 && touchStartDist > 0) {
+                const currentDist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const factor = currentDist / touchStartDist;
+                this.scale = Math.max(0.1, Math.min(10.0, touchStartScale * factor));
+                this.render();
+            }
+        }, { passive: true });
+
+        this.canvas.addEventListener('touchend', () => {
+            isTouchPanning = false;
+            touchStartDist = 0;
+        }, { passive: true });
     }
 
     setGeometry(geom) {
