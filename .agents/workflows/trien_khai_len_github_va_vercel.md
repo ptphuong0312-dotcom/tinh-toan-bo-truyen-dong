@@ -36,7 +36,7 @@ Quy trình từng bước để xuất bản dự án **MITCalc Web App** lên k
    git branch -M main
    git push -u origin main
    ```
-   *(Hoặc nhấp đúp chạy file `DAY_LEN_GITHUB.bat` tại thư mục gốc)*.
+   *(Toàn bộ thao tác commit & push do AI trực tiếp thực hiện trong console theo Rule 9)*.
 
 ---
 
@@ -50,4 +50,4 @@ Quy trình từng bước để xuất bản dự án **MITCalc Web App** lên k
    - **Build & Output Settings**: Để trống (ứng dụng tĩnh không cần build)
 5. Nhấn **"Deploy"**.
 6. Sau khoảng 10 giây, Vercel sẽ thông báo thành công và cấp tên miền (URL) trực tuyến chính thức.
-7. Mọi lần cập nhật sau này chỉ cần chạy `git push` (hoặc `DAY_LEN_GITHUB.bat`), Vercel sẽ tự động cập nhật bản mới nhất ngay lập tức!
+7. Mọi lần cập nhật sau này chỉ cần AI thực hiện `git push origin main`, Vercel sẽ tự động cập nhật bản mới nhất ngay lập tức!

@@ -1,0 +1,170 @@
+115 | ?        | Input section                                      |            |              |              |          | 
+116 | 1.0      | Options of basic input parameters                  |            |              |              |          | 
+117 | 1.1      | Transferred power                                  | Pw [kW]    | 50.000       | 49.150       |          | 
+118 | 1.2      | Speed (Pinion / Gear)                              | n [/min]   | 1000.0       | 400.0        | [/min]   | 
+119 | 1.3      | Torsional moment (Pinion / Gear)                   | Mk [Nm]    | 477.50       | 1173.46      | [Nm]     | 
+120 | 1.4      | Transmission ratio / from table                    | i          | 2.50         |              |          | Transmition ratio from table
+121 | 1.5      | Actual transmission ratio / deviation              | i          | 2.5000       | 0.00%        |          | 
+123 | 2.0      | Options of material, loading conditions, operational and production parameters |            |              |              |          | 
+124 | 2.0      | Material identification according standard :       |            |              |              |          | 
+125 | 2.1      | Material of the pinion :                           |            |              |              |          | 
+126 | 2.2      | Material of the gear :                             |            |              |              |          | Recommendet values for automatic design
+127 | 2.3      | Loading of the gearbox, driving machine - examples |            |              |              |          | Values based on transmiss. ratio
+128 | 2.4      | Loading of gearbox, driven machine - examples      |            |              |              |          | Recomendet beta
+129 | 2.5      | Type of gearing mounting                           |            |              |              |          | Recommendet z1
+130 | 2.6      | Accuracy grade - DIN3965 / ISO1328 |Ra max|v max   |            |              |              |          | Recommendet x1
+131 | 2.7      | Coefficient of one-off overloading                 | KAS        | 2.00         |              |          | Recommendet xT1
+132 | 2.8      | Desired service life                               | Lh         | 20000        |              | [h]      | 
+133 | 2.9      | Coefficient of safety (contact/bend)               | SH / SF    | 1.30         | 1.60         |          | 
+134 | 2.10     | Automatic design                                   |            |              |              |          | 
+136 | 3.0      | Parameters of the tooth profile, gearing type      |            |              |              |          | 
+137 | 3.1      | Guiding curve of the toothing (Type of toothing)   |            |              |              |          | 
+138 | 3.2      | Addendum - Coefficient of the height of the tooth head | ha*        | 1.000        | 1.000        | [modul]  | Info selected from table
+139 | 3.3      | Unit head clearance                                | c*         | 0.200        | 0.200        | [modul]  | 
+140 | 3.4      | Recommended coefficient of the root radius         |            | 0.286        | 0.286        | [modul]  | 
+141 | 3.5      | Coefficient of the root radius                     | rf*        | 0.286        | 0.286        | [modul]  | 
+143 | 4.0      | Design of a module (Diametral Pitch) and geometry of toothing |            |              |              |          | 
+144 | 4.1      | Number of teeth Pinion / Gear                      | z          | 18           | 45           |          | Name for DXF table
+145 | 4.2      | Angle of shaft axes                                | S          | 90           |              | [°]      | Selected axis angle
+146 | 4.3      | Pressure angle                                     | a          | 20.0         |              | [°]      | Calculated press angle acc inpt choice
+147 | 4.4      | Base helix angle                                   | bm         | 30.0         |              | [°]      | Selected angle beta
+148 | 4.5      | Direction of the teeth pitch (pinion)              |            |              |              |          | Force sign
+149 | 4.6      | Width of toothing to the surface straight line of the cone (b/Re) |            |              |              |          | Face width based on the Psi coef
+150 | 4.7      | Width of toothing to the surface straight line of the cone (b/Re) | Re/b       | 0.35         | < 0.35       |          | Max facewidth based on the type
+151 | 4.8      | Module                                             | mmn        | 10.000       |              | [mm]     | Modul selection from table
+152 | 4.9      | Face width / max. recommendet value                | b          | 117          | < 118        | [mm]     | Max facewidth
+153 | 4.10     | Approximate weight of the gearing                  | m          | 134.331      |              | [kg]     | Working face width (0.85 * b)
+154 | 4.11     | Minimum coefficient of safety                      | SH / SF    | 1.414        | 13.487       |          | 
+168 | 5.0      | Correction of toothing (Addendum modification)     |            |              |              |          | 
+169 | 5.1      | Correction type                                    |            |              |              |          | 
+170 | 5.2      | Recommendet value                                  | x1 / xt1   | 0.265        | 0.000        |          | 
+171 | 5.3      | - Permissible undercutting of teeth (min. value)   | x1 / x2    | -0.5154      | -7.5964      |          | 
+172 | 5.4      | - Preventing undercutting of teeth (min. value)    | x1 / x2    | -0.3488      | -7.4297      |          | 
+173 | 5.5      | Pinion addendum modification coefficient setting   |            |              |              |          | Support numbers for corrections
+174 | 5.6      | Addendum modification coefficient Pinion / Gear    | x1 / x2    | 0.3200       | -0.3200      |          | minimum value of SumX
+175 | 5.7      | Tooth thicknes modification coefficient            | xt1 / xt2  | 0.0400       | -0.0400      |          | 
+176 | 5.8      | Total contact ratio                                | eg         | 3.0117       |              |          | 
+177 | 5.9      | Unit tooth thickness on the tip diameter           | sae*       | 0.7347       | 1.1183       |          | 
+178 | 5.10     | Safety coefficient for surface durability          | SH         | 1.604        | 1.414        |          | 
+179 | 5.11     | Safety coefficient for bending durability          | SF         | 15.14        | 13.49        |          | 
+181 |          | Results section                                    |            |              |              |          | 
+182 | 6.0      | Basic dimensions of gearing                        |            |              |              |          | 
+195 | 6.1      | Number of teeth Pinion / Gear                      | z          | 18           | 45           |          | 
+196 | 6.2      | Transverse module (outer, midle, inner)            | 13.9610    | 11.5470      | 9.1330       | [mm]     | 
+197 | 6.3      | Normal module (outer, midle, inner)                | 12.0906    | 10.0000      | 7.9094       | [mm]     | Sections for 3D models
+198 | 6.4      | Cone length (outer, midle, inner)                  | 338.321    | 279.821      | 221.321      | [mm]     | Section A
+199 | 6.5      | Pitch cone angle                                   | d          | 21.8014      | 68.1986      | [°]      | Section B
+200 | 6.6      | Addendum cone angle                                | da         | 24.5022      | 69.5907      | [°]      | Section C
+201 | 6.7      | Dedendum cone angle                                | df         | 20.0001      | 65.0893      | [°]      | Section D
+202 | 6.8      | Tip diameter (outer)                               | dae        | 280.935      | 634.354      | [mm]     | Section E
+203 | 6.9      | Tip diameter (midle)                               | dam        | 232.358      | 524.666      | [mm]     | 
+204 | 6.10     | Tip diameter (inner)                               | dai        | 183.781      | 414.978      | [mm]     | 
+205 | 6.11     | Pitch diameter (outer)                             | de         | 251.299      | 628.247      | [mm]     | 
+206 | 6.12     | Pitch diameter (midle)                             | dm         | 207.846      | 519.615      | [mm]     | 
+207 | 6.13     | Pitch diameter (inner)                             | di         | 164.393      | 410.983      | [mm]     | 
+208 | 6.14     | Root diameter (outer)                              | dfe        | 231.541      | 614.596      | [mm]     | 
+209 | 6.15     | Root diameter (midle)                              | dfm        | 191.505      | 508.325      | [mm]     | 
+210 | 6.16     | Root diameter (inner)                              | dfi        | 151.469      | 402.054      | [mm]     | 
+211 | 6.17     | Addendum angle                                     | qa         | 2.7008       | 1.3921       | [°]      | 
+212 | 6.18     | Dedendum angle                                     | qf         | 1.8013       | 3.1093       | [°]      | 
+213 | 6.19     | Addendum (outer)                                   | hae        | 15.9596      | 8.2216       | [mm]     | Calculation from mte  (_ToothType=2)
+214 | 6.20     | Addendum (midle)                                   | ha         | 13.2000      | 6.8000       | [mm]     | Calculation from hae (_ToothType=2)
+215 | 6.21     | Addendum (inner)                                   | hai        | 10.4404      | 5.3784       | [mm]     | Old version hai
+216 | 6.22     | Dedendum (outer)                                   | hfe        | 10.6397      | 18.3777      | [mm]     | Calculation from mte  (_ToothType=2)
+217 | 6.23     | Dedendum (midle)                                   | hf         | 8.8000       | 15.2000      | [mm]     | Calculation from hae (_ToothType=2)
+218 | 6.24     | Dedendum (inner)                                   | hfi        | 6.9603       | 12.0223      | [mm]     | Old version hfi
+219 | 6.25     | Normal pressure angle                              | an         | 17.4952      |              | [°]      | 
+220 | 6.26     | Transverse pressure angle                          | at         | 20.0000      |              | [°]      | 
+221 | 6.27     | Helix angle                                        | b          | 30.00        |              | [°]      | 
+222 | 6.28     | Base helix angle                                   | bb         | 28.4812      |              | [°]      | 
+223 | 6.29     | Pressure angle at the pitch cylinder               | awn        | 17.4953      |              | [°]      | 
+224 | 6.30     | Transverse pressure angle at the pitch cylinder    | awt        | 20.0000      |              | [°]      | 
+225 | 6.31     | Circular pitch                                     | pe         | 37.984       |              | [mm]     | 
+226 | 6.32     | Transverse circular pitch                          | pte        | 43.860       |              | [mm]     | 
+227 | 6.33     | Tooth thickness on the pitch diameter              | sne        | 22.2919      | 15.6919      | [mm]     | 
+228 | 6.34     | Tooth thickness on the pitch diameter              | sn         | 18.4374      | 12.9786      | [mm]     | 
+229 | 6.35     | Tooth thickness on the pitch diameter              | sni        | 14.5828      | 10.2652      | [mm]     | 
+230 | 6.36     | Tooth thickness on the tip diameter                | sae        | 8.8833       | 13.5204      | [mm]     | 
+231 | 6.37     | Tooth thickness on the tip diameter                | sa         | 7.3473       | 11.1826      | [mm]     | 
+232 | 6.38     | Tooth thickness on the tip diameter                | sai        | 5.8112       | 8.8447       | [mm]     | 
+233 | 6.39     | Unit tooth thickness on the tip diameter           | sae*       | 0.7347       | 1.1183       | [modul]  | 
+235 | 7.0      | Virtual spur gear toothing                         |            |              |              |          | 
+236 | 7.1      | Number of teeth of a virtual wheel with oblique teeth | zvn'       | 19.387       | 121.166      |          | 
+237 | 7.2      | Number of teeth of a virtual wheel with straight teeth | zv         | 29.848       | 186.548      |          | 
+238 | 7.3      | Reference diameter                                 | dv'        | 223.857      | 1399.107     | [mm]     | 
+239 | 7.4      | Tip diameter                                       | dva'       | 250.257      | 1412.707     | [mm]     | 
+240 | 7.5      | Base diameter                                      | dvb'       | 210.357      | 1314.730     | [mm]     | 
+241 | 7.6      | Root diameter                                      | dvf'       | 206.257      | 1368.707     | [mm]     | 
+242 | 7.7      | Virtual center distance                            | av         | 811.4820     |              | [mm]     | 
+243 | 7.8      | Virtual Gear Ratio                                 | iv         | 6.2500       |              |          | 
+245 | 8.0      | Qualitative indexes of a gearing                   |            |              |              |          | Eps alfa podle din
+246 | 8.1      | Transverse contact ratio / overlap ratio           | ea  | eb   | 1.4289       | 1.5828       |          | Alfa_a1,Alfa_a2,epsilon_alfa_n
+247 | 8.2      | Total contact ratio                                | eg         | 3.0117       |              |          | Reduced mass of gear set
+248 | 8.3      | Resonance speed                                    | nE1        | 6188.65      |              | [ /min]  | Moment of inertia - pinion | wheel
+249 | 8.4      | Resonance ratio                                    | N          | 0.16         |              |          | Support value for mred calculation
+250 | 8.5      | Approximate weight of the gearing                  | m          | 134.3312     |              | [kg]     | Lover limit of resonance ratio NS
+251 | 8.6      | Efficiency of the gearing                          | m          | 98.30%       |              |          | Weight of pinion / wheel
+252 | 8.7      | Selected / Recomended lubricant viscosity          | v50        | 57           | 57           | [mm2/sec] | Friction coefficient
+254 | 9.0      | Coefficients for safety calculation                |            |              |              |          | Efficiency beta=0 / beta<>0
+255 |          | Common for the gearing                             |            |              |              |          | KV temp for beta>1 | beta=0 | beta<1
+256 | 9.1      | Stiffness of a tooth pair                          | c'         | 12.61        |              |          | CM correction coeficient
+257 | 9.2      | Meshing stiffness per unit face width              | cg         | 16.67        |              |          | Material correction coeficient
+258 | 9.4      | Application factor                                 | KA         | 1.000        |              |          | Coeficients K1, K2, K3
+259 | 9.5      | Dynamic factor                                     | KV         | 1.297        |              |          | Speed coeficient Sc
+260 | 9.6      | Number of cycles                                   | NK         | 1.20E+09     | 4.80E+08     |          | Service coeficient
+261 |          | For pitting safety calculation                     |            |              |              |          | Coefficient if (Ft*KA/b)<100 CFK
+262 | 9.7      | Face load factor (contact stress)                  | KHb        | 1.500        |              |          | Coeficient Gapa | Psi rd | K1
+263 | 9.8      | Transverse load factor (contact stress)            | KHa        | 1.850        |              |          | Coeficients K1, K2 for Khbeta form
+264 | 9.9      | Total factor of additional loads                   | KH         | 3.599        |              |          | Coeficient AG_temp
+265 | 9.10     | Elasticity factor                                  | ZE         | 189.81       |              |          | Borders for KHalfa
+266 | 9.11     | Zone factor                                        | ZH         | 2.339        |              |          | 
+267 | 9.12     | Helix angle factor                                 | Zbeta      | 0.931        |              |          | 
+268 | 9.13     | Contact ratio factor                               | Zeps       | 0.837        |              |          | Average contact limit
+269 | 9.14     | Size factor                                        | ZX         | 1.000        | 1.000        |          | Koefficents ZX for different materials
+270 | 9.15     | Lubricant factor                                   | ZL         | 0.930        | 0.930        |          | Coeficient CZL
+271 | 9.16     | Peripheral speed factor                            | ZV         | 1.005        | 1.005        |          | Coeficient CZV
+272 | 9.17     | Roughness factor affecting surface durability      | ZR         | 0.933        | 0.933        |          | Coeficient CZR
+273 | 9.18     | Bevel gear factor (flank)                          | ZK         | 0.850        |              |          | Teeth Roughness Ra / Rz / Rz100
+274 | 9.19     | Life factor for contact stress                     | ZN         | 0.850        | 0.850        |          | Life factor n=infinite; max value
+275 | 9.20     | Single pair tooth contact factor                   | ZB / ZD    | 1.000        | 1.000        |          | 
+276 |          | For bending safety calculation                     |            |              |              |          | 
+277 | 9.21     | Face load factor (root stress)                     | KFb        | 1.500        |              |          | Coeficient M1/M2
+278 | 9.22     | Transverse load factor (root stress)               | KFa        | 1.850        |              |          | Coef qs
+279 | 9.23     | Total factor of additional loads                   | KF         | 3.599        |              |          | Old value Ydelta
+280 | 9.24     | Helix angle factor                                 | Ybeta      | 0.750        |              |          | Coef gapa1 = 2.3/(Rfn1*mmn)
+281 | 9.25     | Contact ratio factor                               | Yeps       | 0.656        |              |          | Coef gapa2 = 2.3/(Rfn2*mmn)
+282 | 9.26     | Notch sensitivity factor                           | Ydelta     | 1.019        | 0.994        |          | Koefficents YX for different materials
+283 | 9.27     | Size factor                                        | YX         | 0.970        | 0.970        |          | Koefficents YR for different materials
+284 | 9.28     | Tooth-root surface factor                          | YR         | 1.003        | 1.003        |          | 
+285 | 9.29     | Alternating load factor                            | YA         | 1.000        |              |          | Life factor
+286 | 9.30     | Production technology factor                       | YT         | 1.000        |              |          | Selected coeff. YFS
+287 | 9.31     | Life factor for bending stress                     | YN         | 0.850        | 0.850        |          | Coefficient YFS1 (frézované a obrážené bez protuberance)
+288 | 9.32     | Tip factor, equal (YFa YSa)                        | YFS        | 3.618        | 3.595        |          | Coefficient YFS1 (broušené s protuberancí)
+290 | 10.0     | Safety coefficients                                |            |              |              |          | 
+291 | 10.1     | Safety coefficient for surface durability          | SH         | 1.60         | 1.41         |          | Failure probability
+292 | 10.2     | Safety coefficient for bending durability          | SF         | 15.14        | 13.49        |          | Material contact limit
+293 | 10.3     | Safety in contact in one-time overloading          | SHst       | 2.22         | 1.89         |          | Material bending limit
+294 | 10.4     | Safety in bending in one-time overloading          | SFst       | 21.80        | 19.90        |          | Old values SH
+295 | 10.5     | Nominal contact stress                             | SigmaH0    | 143.73       |              |          | Old values SF
+296 | 10.6     | Contact stress                                     | SigmaH     | 272.67       | 272.67       |          | 
+297 | 10.7     | Pitting stress limit                               | SigmaHG    | 437.31       | 385.42       |          | Yfa
+298 | 10.8     | Permissible contact stress                         | SigmaHP    | 336.39       | 296.48       |          | 
+299 | 10.9     | Nominal tooth-root stress                          | SigmaF0    | 6.99         | 6.94         |          | 
+300 | 10.10    | Tooth-root stress                                  | SigmaF     | 25.14        | 24.98        |          | 
+301 | 10.11    | Tooth-root stress limit                            | SigmaFG    | 380.73       | 336.87       |          | 
+302 | 10.12    | Permissible bending stress                         | SigmaFP    | 237.96       | 210.54       |          | 
+304 | 11.0     | Force conditions (forces acting on the toothing)   |            |              |              |          | 
+315 | 11.1     | Tangential force                                   | Ft         | 4594.75      |              | [N]      | Force FQ
+316 | 11.2     | Normal force                                       | Fn         | 5562.88      |              | [N]      | 
+317 | 11.3     | Axial force - (rotation acc. to the picture)       | Fa         | 3084.14      | 567.52       | [N]      | 
+318 | 11.4     | Radial force (rotation acc. to the picture)        | Fr         | 567.52       | 3084.14      |          | 
+319 | 11.5     | Axial force (rotation opposite to the picture)     | Fa         | -1841.95     | 2537.96      | [N]      | 
+320 | 11.6     | Radial force (rotation opposite to the picture)    | Fr         | 2537.96      | -1841.95     |          | 
+321 | 11.7     | Peripheral speed on the pitch diameter             | v | vmax   | 10.88        | < 12         | [m/s]    | Vmax
+322 | 11.8     | Specific load / Unit load                          | wt | wt*   | 46.20        | 4.62         | [N/mm | MPa] | 
+324 | 12.0     | Parameters of the chosen material                  |            |              |              |          | 
+325 | 12.1     | Density                                            | Ro         | 7870         | 7870         | [kg/m^3] | 
+326 | 12.2     | Young's Modulus (Modulus of Elasticity)            | E          | 206          | 206          | [GPa]    | 
+327 | 12.3     | Tensile Strength, Ultimate                         | Rm         | 740          | 660          | [MPa]    | 
+328 | 12.4     | Tensile Strength, Yield                            | Rp0.2      | 440          | 380          | [MPa]    | 
+329 | 12.5     | Poison's Ratio                                     |            | 0.3          | 0.3          |          | 

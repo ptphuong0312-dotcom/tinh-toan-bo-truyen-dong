@@ -1,0 +1,40 @@
+330 | 12.6     | Contact Fatigue Limit                              | SHlim      | 590          | 520          | [MPa]    | 
+331 | 12.7     | Bending Fatigue Limit                              | SFlim      | 452          | 410          | [MPa]    | 
+332 | 12.8     | Tooth Hardness - Side                              | VHV        | 235          | 200          | [HV]     | 
+333 | 12.9     | Tooth Hardness - Core                              | JHV        | 235          | 200          | [HV]     | 
+334 | 12.10    | Base Number of Load Cycles in Contact              | NHlim      | 5.00E+07     | 5.00E+07     |          | 
+335 | 12.11    | Wohler Curve Exponent for Contact                  | qH         | 10           | 10           |          | 
+336 | 12.12    | Base Number of Load Cycles in Bend                 | NFlim      | 3.00E+06     | 3.00E+06     |          | 
+337 | 12.13    | Wohler Curve Exponent for Bend                     | qF         | 6            | 6            |          | 
+339 |          | Additions section                                  |            |              |              |          | 
+341 | 13.0     | Power, warming-up, gearbox surface                 |            |              |              |          | 
+342 | 13.1     | Ambient air temperature                            |            | 20.00        |              | [°C]     | 
+343 | 13.2     | Maximum oil temperature                            |            | 60.00        |              | [°C]     | 
+344 | 13.3     | Coefficient of heat dissipation                    |            | 10.00        |              | [W/m2/K] | 
+345 | 13.4     | Power losses                                       |            | 0.85         |              | [kW]     | 
+346 | 13.5     | Gearbox surface (min.)                             |            | 2.12         |              | [m2]     | 
+348 | 14.0     | Preliminary design of shaft diameters (steel)      |            |              |              |          | 
+349 |          | Recommended shaft diameter for:                    |            |              |              |          | 
+350 | 14.1     | - Main power-transmitting shafts                   | DA         | 95.57        | 128.93       | [mm]     | 
+351 | 14.2     | - Small, short shafts                              | DB         | 74.27        | 100.19       | [mm]     | 
+353 | 15.0     | Auxiliary calculations                             |            |              |              |          | 
+354 | 15.1     | Transmission ratio calculation using the number of teeth | z1,z2 = i  | 14           | 43           | 3.0714   | 
+355 | 15.2     | Transmission ratio calculation using the speed     | n1,n2 = i  | 2000.0       | 750.0        | 2.6667   | 
+356 | 15.3     | Power calculation using the pinion speed and torque moment | Mk1,n1=Pw1 | 270.0        | 1600.0       | 45.2356  | 
+358 | 16.0     | Graphical output, CAD systems                      |            |              |              |          | 
+359 | 16.1     | 2D drawing output to:                              |            |              |              |          | Units
+360 | 16.2     | 2D Drawing scale                                   |            |              |              |          | Drawing scale
+361 | 16.3     | Detail:                                            |            |              |              |          | AutoScale value
+362 | 16.4     | Radius of the machining tool (for 3D model)        | 175.5      |              | [mm]         |          | 
+363 |          |                                                    | Pinion     |              |              |          | 
+364 | 16.4     | Amount of the inner offset                         | 4.836      |              | [mm]         |          | a
+365 | 16.5     | Amount of the outer offset                         | 13.300     |              | [mm]         |          | b
+366 | 16.6     | Text description (Information for BOM)             | Pinion     |              |              |          | String for BOM in 3D
+367 |          | Row 1 (BOM attribute 1)                            | Bevel gear - Pinion |              |              |          | Bevel gear - Pinion
+368 |          | Row 2 (BOM attribute 2)                            | z1=18, mmn=10, beta=30 |              |              |          | z1=18, mmn=10, beta=30
+369 |          | Row 3 (BOM attribute 3)                            | Material: Ck 60 |              |              |          | Material: Ck 60
+370 |          |                                                    | Gear       |              |              |          | 
+371 |          | Row 1 (BOM attribute 1)                            | Bevel gear - Gear |              |              |          | Bevel gear - Gear
+372 |          | Row 2 (BOM attribute 2)                            | z2=45, mmn=10, beta=30 |              |              |          | z2=45, mmn=10, beta=30
+373 |          | Row 3 (BOM attribute 3)                            | Material: Ck 60 |              |              |          | Material: Ck 60
+375 | 16.7     | Table of parameters                                |            |              |              |          | Table name (range name)

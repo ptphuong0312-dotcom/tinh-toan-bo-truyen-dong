@@ -286,6 +286,14 @@ class BevelGearUI {
                 }
             });
         });
+
+        // Section 15.0 Auxiliary Calculation Listeners
+        ['aux_inp_n1', 'aux_inp_n2', 'aux_inp_Mk1', 'aux_inp_n1_pw'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', () => this.calculateAuxiliary());
+            }
+        });
     }
 
     initSmartControls() {
@@ -478,6 +486,56 @@ class BevelGearUI {
         };
         if (btnDesign) btnDesign.addEventListener('click', runAutoDesign);
         if (btnRun) btnRun.addEventListener('click', runAutoDesign);
+
+        // Section 15.0 Auxiliary OK Buttons
+        const btn_aux_15_1 = document.getElementById('btn_aux_ok_15_1');
+        if (btn_aux_15_1) {
+            btn_aux_15_1.addEventListener('click', () => {
+                const val = parseFloat(document.getElementById('aux_i_n') ? document.getElementById('aux_i_n').textContent : 2.6667) || 2.6667;
+                this.inputs.i_req = val;
+                const inp = document.getElementById('inp_i_req');
+                if (inp) inp.value = val.toFixed(4);
+                const z2_calc = Math.round(val * this.inputs.z1);
+                this.inputs.z2 = z2_calc;
+                const inp_z2 = document.getElementById('inp_z2');
+                if (inp_z2) inp_z2.value = z2_calc;
+                this.calculate();
+            });
+        }
+
+        const btn_aux_15_2 = document.getElementById('btn_aux_ok_15_2');
+        if (btn_aux_15_2) {
+            btn_aux_15_2.addEventListener('click', () => {
+                const val = parseFloat(document.getElementById('aux_Pw') ? document.getElementById('aux_Pw').textContent : 45.239) || 45.239;
+                this.inputs.P = val;
+                const inp = document.getElementById('inp_P');
+                if (inp) inp.value = val.toFixed(1);
+                this.calculate();
+            });
+        }
+
+        const btn_aux_15_3 = document.getElementById('btn_aux_ok_15_3');
+        if (btn_aux_15_3) {
+            btn_aux_15_3.addEventListener('click', () => {
+                const val = parseFloat(document.getElementById('aux_i_z') ? document.getElementById('aux_i_z').textContent : 2.5000) || 2.5000;
+                this.inputs.i_req = val;
+                const inp = document.getElementById('inp_i_req');
+                if (inp) inp.value = val.toFixed(4);
+                this.calculate();
+            });
+        }
+
+        // Section 16.3 Draw 2D Button
+        const btn_draw_2d = document.getElementById('btn_draw_2d');
+        if (btn_draw_2d) {
+            btn_draw_2d.addEventListener('click', () => {
+                const tabCanvasBtn = document.querySelector('.tab-btn[data-target="tabCanvas"]');
+                if (tabCanvasBtn) {
+                    tabCanvasBtn.click();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            });
+        }
     }
 
     calculate() {
@@ -631,8 +689,8 @@ class BevelGearUI {
         set('out_eta', '98.30%');
 
         // Section 11.0: Assembly & Tolerances
-        set('out_apex1', g.Apex1);
-        set('out_apex2', g.Apex2);
+        set('out_apex1', g.apex1);
+        set('out_apex2', g.apex2);
         set('out_sc1', g.sc1);
         set('out_sc2', g.sc2);
         set('out_hc1', g.hc1);
@@ -641,7 +699,13 @@ class BevelGearUI {
         set('out_Fbeta', g.Fbeta.toFixed(1) + ' µm');
         set('out_Fr', g.Fr.toFixed(1) + ' µm');
 
-        // Section 16.0: Manufacturing Specification (DXFTables)
+        // Section 15.0: Auxiliary Calculations (MITCalc 1.74 Image 3)
+        set('aux_z1', g.z1);
+        set('aux_z2', g.z2);
+        set4('aux_i_z', g.i);
+        this.calculateAuxiliary();
+
+        // Section 16.0: Manufacturing Specification & CAD (DXFTables - Image 3)
         set('mfg_mmn', g.mmn.toFixed(3));
         set('mfg_z1', g.z1);
         set('mfg_z2', g.z2);
@@ -660,6 +724,209 @@ class BevelGearUI {
         const selAcc = document.getElementById('selAccuracySec14') || document.getElementById('selAccuracy');
         const gradeText = selAcc && selAcc.options[selAcc.selectedIndex] ? selAcc.options[selAcc.selectedIndex].text : 'Cấp ' + g.Q;
         set('mfg_grade', 'DIN 3965 ' + gradeText);
+
+        // CAD Tool radius & Offsets (MITCalc Rows 362, 364, 365)
+        set('mfg_R1', g.R_tool1.toFixed(1));
+        set('mfg_R2', g.R_tool2.toFixed(1));
+        set('mfg_a1', g.a_offset1.toFixed(3));
+        set('mfg_a2', g.a_offset2.toFixed(3));
+        set('mfg_b1', g.b_offset1.toFixed(3));
+        set('mfg_b2', g.b_offset2.toFixed(3));
+
+        // BOM Attributes
+        set('bom_row1_1', 'Bevel gear - Pinion');
+        set('bom_row2_1', 'z1=' + g.z1 + ', mmn=' + Math.round(g.mmn) + ', beta=' + Math.round(g.beta_deg));
+        set('bom_row3_1', 'Material: ' + (this.inputs.mat1 || 'Ck 60'));
+        set('bom_row1_2', 'Bevel gear - Gear');
+        set('bom_row2_2', 'z2=' + g.z2 + ', mmn=' + Math.round(g.mmn) + ', beta=' + Math.round(g.beta_deg));
+        set('bom_row3_2', 'Material: ' + (this.inputs.mat2 || 'Ck 60'));
+
+        // Render embedded 2D Section 4.0 Coordinate Chart (Cartesian Mesh)
+        this.renderSec4Chart(g);
+    }
+
+    calculateAuxiliary() {
+        const inp_n1 = document.getElementById('aux_inp_n1');
+        const inp_n2 = document.getElementById('aux_inp_n2');
+        if (inp_n1 && inp_n2) {
+            const n1 = parseFloat(String(inp_n1.value).replace(',', '.')) || 2000;
+            const n2 = parseFloat(String(inp_n2.value).replace(',', '.')) || 750;
+            const i_n = n2 > 0 ? (n1 / n2) : 0;
+            const el_in = document.getElementById('aux_i_n');
+            if (el_in) el_in.textContent = i_n.toFixed(4);
+        }
+
+        const inp_Mk1 = document.getElementById('aux_inp_Mk1');
+        const inp_n1_pw = document.getElementById('aux_inp_n1_pw');
+        if (inp_Mk1 && inp_n1_pw) {
+            const Mk1 = parseFloat(String(inp_Mk1.value).replace(',', '.')) || 270;
+            const n1_pw = parseFloat(String(inp_n1_pw.value).replace(',', '.')) || 1600;
+            const Pw = (Mk1 * n1_pw) / 9550.0;
+            const el_pw = document.getElementById('aux_Pw');
+            if (el_pw) el_pw.textContent = Pw.toFixed(3);
+        }
+    }
+
+    renderSec4Chart(g) {
+        const canvas = document.getElementById('bevelSec4ChartCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const w = canvas.width;
+        const h = canvas.height;
+
+        ctx.clearRect(0, 0, w, h);
+
+        // Background: Light cream yellow matching MITCalc Excel Chart 4181
+        ctx.fillStyle = '#ffffe0';
+        ctx.fillRect(0, 0, w, h);
+
+        // Chart border
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(0.5, 0.5, w - 1, h - 1);
+
+        // Dynamic domain based on Re
+        const maxRange = Math.max(g.Re * 1.15, 360);
+        const xMin = -maxRange, xMax = maxRange;
+        const yMin = -maxRange * (h / w), yMax = maxRange * (h / w);
+
+        const toScreenX = (x) => 35 + ((x - xMin) / (xMax - xMin)) * (w - 55);
+        const toScreenY = (y) => (h - 25) - ((y - yMin) / (yMax - yMin)) * (h - 45);
+
+        // Grid lines
+        ctx.strokeStyle = '#e2e8f0';
+        ctx.lineWidth = 1;
+        ctx.font = '10px Tahoma, sans-serif';
+        ctx.fillStyle = '#64748b';
+
+        // X Grid & labels
+        const stepX = 100;
+        for (let x = Math.ceil(xMin / stepX) * stepX; x <= xMax; x += stepX) {
+            const sx = toScreenX(x);
+            ctx.beginPath();
+            ctx.moveTo(sx, 12);
+            ctx.lineTo(sx, h - 22);
+            ctx.stroke();
+            ctx.fillText(x, sx - 10, h - 8);
+        }
+
+        // Y Grid & labels
+        const stepY = 50;
+        for (let y = Math.ceil(yMin / stepY) * stepY; y <= yMax; y += stepY) {
+            const sy = toScreenY(y);
+            ctx.beginPath();
+            ctx.moveTo(35, sy);
+            ctx.lineTo(w - 20, sy);
+            ctx.stroke();
+            ctx.fillText(y, 6, sy + 3);
+        }
+
+        // Coordinate Axes (X=0, Y=0)
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 1.2;
+        const sX0 = toScreenX(0);
+        const sY0 = toScreenY(0);
+        ctx.beginPath();
+        ctx.moveTo(sX0, 12);
+        ctx.lineTo(sX0, h - 22);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(35, sY0);
+        ctx.lineTo(w - 20, sY0);
+        ctx.stroke();
+
+        // Gear Cross-Section Geometry
+        const d1 = g.delta1;
+        const d2 = g.delta2;
+        const th_a1 = (g.deltaa1_deg * Math.PI) / 180.0;
+        const th_a2 = (g.deltaa2_deg * Math.PI) / 180.0;
+        const th_f1 = (g.deltaf1_deg * Math.PI) / 180.0;
+        const th_f2 = (g.deltaf2_deg * Math.PI) / 180.0;
+
+        const Re = g.Re;
+        const Ri = g.Ri;
+
+        // Pinion (left/top sector)
+        const d_a1 = d1 + th_a1;
+        const d_f1 = d1 - th_f1;
+        const p1_tip_out = [-Re * Math.cos(d_a1), Re * Math.sin(d_a1)];
+        const p1_tip_in  = [-Ri * Math.cos(d_a1), Ri * Math.sin(d_a1)];
+        const p1_root_out = [-Re * Math.cos(d_f1), Re * Math.sin(d_f1)];
+        const p1_root_in  = [-Ri * Math.cos(d_f1), Ri * Math.sin(d_f1)];
+
+        ctx.fillStyle = 'rgba(37, 99, 235, 0.2)';
+        ctx.strokeStyle = '#1e40af';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(toScreenX(p1_root_in[0]), toScreenY(p1_root_in[1]));
+        ctx.lineTo(toScreenX(p1_tip_in[0]), toScreenY(p1_tip_in[1]));
+        ctx.lineTo(toScreenX(p1_tip_out[0]), toScreenY(p1_tip_out[1]));
+        ctx.lineTo(toScreenX(p1_root_out[0]), toScreenY(p1_root_out[1]));
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Pinion symmetrical lower half
+        const p1_s_tip_out = [-Re * Math.cos(d_a1), -Re * Math.sin(d_a1)];
+        const p1_s_tip_in  = [-Ri * Math.cos(d_a1), -Ri * Math.sin(d_a1)];
+        const p1_s_root_out = [-Re * Math.cos(d_f1), -Re * Math.sin(d_f1)];
+        const p1_s_root_in  = [-Ri * Math.cos(d_f1), -Ri * Math.sin(d_f1)];
+
+        ctx.beginPath();
+        ctx.moveTo(toScreenX(p1_s_root_in[0]), toScreenY(p1_s_root_in[1]));
+        ctx.lineTo(toScreenX(p1_s_tip_in[0]), toScreenY(p1_s_tip_in[1]));
+        ctx.lineTo(toScreenX(p1_s_tip_out[0]), toScreenY(p1_s_tip_out[1]));
+        ctx.lineTo(toScreenX(p1_s_root_out[0]), toScreenY(p1_s_root_out[1]));
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Gear (bottom/horizontal sector)
+        const d_a2 = d2 + th_a2;
+        const d_f2 = d2 - th_f2;
+        const p2_tip_out = [Re * Math.sin(d_a2), -Re * Math.cos(d_a2)];
+        const p2_tip_in  = [Ri * Math.sin(d_a2), -Ri * Math.cos(d_a2)];
+        const p2_root_out = [Re * Math.sin(d_f2), -Re * Math.cos(d_f2)];
+        const p2_root_in  = [Ri * Math.sin(d_f2), -Ri * Math.cos(d_f2)];
+
+        ctx.fillStyle = 'rgba(5, 150, 105, 0.2)';
+        ctx.strokeStyle = '#065f46';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+        ctx.moveTo(toScreenX(-p2_root_in[0]), toScreenY(p2_root_in[1]));
+        ctx.lineTo(toScreenX(-p2_tip_in[0]), toScreenY(p2_tip_in[1]));
+        ctx.lineTo(toScreenX(-p2_tip_out[0]), toScreenY(p2_tip_out[1]));
+        ctx.lineTo(toScreenX(-p2_root_out[0]), toScreenY(p2_root_out[1]));
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(toScreenX(p2_root_in[0]), toScreenY(p2_root_in[1]));
+        ctx.lineTo(toScreenX(p2_tip_in[0]), toScreenY(p2_tip_in[1]));
+        ctx.lineTo(toScreenX(p2_tip_out[0]), toScreenY(p2_tip_out[1]));
+        ctx.lineTo(toScreenX(p2_root_out[0]), toScreenY(p2_root_out[1]));
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // Red pitch generator line
+        ctx.strokeStyle = '#dc2626';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath();
+        ctx.moveTo(toScreenX(0), toScreenY(0));
+        ctx.lineTo(toScreenX(-Re * Math.cos(d1)), toScreenY(Re * Math.sin(d1)));
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Origin marker
+        ctx.fillStyle = '#dc2626';
+        ctx.beginPath();
+        ctx.arc(sX0, sY0, 3, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillText('Apex (0,0)', sX0 + 6, sY0 - 4);
     }
 
     renderAuditTable(g) {

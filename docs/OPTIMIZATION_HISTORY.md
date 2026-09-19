@@ -208,10 +208,44 @@
   3. **Cấu hình Vercel (`vercel.json`)**:
      - Đặt `cleanUrls: false` để bảo toàn tuyệt đối toàn bộ liên kết HTML tương đối (`modules/spur-gear/index.html`, `modules/bevel-gear/index.html`).
      - Bổ sung HTTP Security Headers (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`) và MIME UTF-8 cho script và style.
-  4. **Launcher 1-Click Đẩy Code Lên GitHub (`DAY_LEN_GITHUB.bat`)**:
-     - Cho phép người dùng nhấp đúp để tự động commit và đẩy mã nguồn lên nhánh `main` trên GitHub, kích hoạt Vercel tự động build & deploy phiên bản mới nhất chỉ trong 5-10 giây.
+  4. **Cơ Chế Đẩy Trực Tiếp Lên GitHub (Zero-Batch Direct Push Protocol)**:
+     - Toàn bộ thao tác commit và push lên GitHub được AI trực tiếp thực hiện trong console theo lệnh người dùng, không tạo file batch trung gian, đảm bảo an ninh và thuận tiện.
 * **Kết quả kiểm chứng thực nghiệm**:
   - `git status` sạch hoàn toàn (`nothing to commit, working tree clean`).
   - Kiểm thử mô phỏng máy chủ web tĩnh (`http://localhost:8089`): Cả 5 tuyến đường (`/`, Spur Gear, Bevel Gear, Spur Bundle, Bevel Bundle) đều trả về mã phản hồi `HTTP 200 OK`.
+
+---
+
+## Giai Đoạn 11: Đồng Bộ Giao Diện 1-to-1 Chuẩn MITCalc 1.74 & Trích Xuất Tài Nguyên Đồ Họa Vector Gốc
+* **Bối cảnh & Yêu cầu người dùng**:
+  - Người dùng cung cấp ảnh chụp trực tiếp từ MITCalc 1.74 (`media_1789811424445.png`, `media_1789811438574.png`, `media_1789811473048.png`) với yêu cầu: "tham khảo lại giao diện trên app mitcalc 1.74 để làm cho chuẩn xác".
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Trích xuất trực tiếp tài nguyên WMF/PNG từ `Gear2_01.xlsb`**:
+     - Đọc cấu trúc zip của file `.xlsb` tại `C:\MITCalc\gear2\Gear2_01.xlsb`.
+     - Sử dụng Windows GDI+ (`gdiplus.dll` qua Python `ctypes`) để rasterize các file WMF vector thành PNG độ nét cao (1200px):
+       * `modules/bevel-gear/images/mitcalc_bevel_sec4_geometry.png`
+       * `modules/bevel-gear/images/mitcalc_bevel_sec6_dimensions.png`
+       * `modules/bevel-gear/images/mitcalc_bevel_sec16_offset.png`
+       * Bộ icon CAD: `image3.png`, `image4.png`, `image5.png`, `image7.png`
+  2. **Section 4.0: Trình diễn đồ họa kép (Dual Graphic Showcase)**:
+     - Sơ đồ góc xoắn & nón răng bên trái.
+     - Biểu đồ tọa độ 2D Descartes mặt cắt trục ăn khớp (`<canvas id="bevelSec4ChartCanvas">`) bên phải mô phỏng 1-to-1 Chart 4181 của MITCalc.
+  3. **Section 6.0: Kích thước hình học 39 dòng đầy đủ (ISO 23509)**:
+     - Nhúng bản vẽ kỹ thuật định nghĩa kích thước gốc `mitcalc_bevel_sec6_dimensions.png`.
+     - Bố cục 7 cột rõ ràng: `#` | `Kích Thước Hình Học` | `Ký Hiệu` | `Bánh 1 / Ngoài` | `Bánh 2 / TB` | `Mặt Trong` | `Đơn Vị`.
+  4. **Section 15.0: Các phép tính toán phụ trợ (Auxiliary Calculations)**:
+     - 15.1: Tỉ số truyền từ vận tốc $i = n_1 / n_2$ kèm nút `[ OK ]` tự động cập nhật Mục 1.0 & 4.0.
+     - 15.2: Công suất từ mô men xoắn $P = (M_1 \cdot n_1) / 9550$ kèm nút `[ OK ]` tự động cập nhật Mục 1.0.
+     - 15.3: Tỉ số truyền từ số răng $i = z_2 / z_1$ kèm nút `[ OK ]` tự động cập nhật Mục 1.0.
+  5. **Section 16.0: Hệ thống CAD & Bảng chế tạo (DXFTables)**:
+     - 16.1 Chọn hệ thống CAD: 4 chế độ với các icon gốc MITCalc (`image3.png` đến `image7.png`).
+     - 16.2 Thông số dao cắt & lượng dịch chỉnh gia công: $R_{\text{tool}} = 1.5 \cdot b$, $a_1, a_2, b_1, b_2$ kèm sơ đồ minh họa `mitcalc_bevel_sec16_offset.png`.
+     - 16.3 Các nút vẽ 2D (`btn_draw_2d`) và xuất DXF Release 12.
+     - 16.4 Bảng thuộc tính BOM (Part Name, Specification, Material).
+     - 16.5 Bảng thông số chế tạo chi tiết DIN 3965 / ISO 23509.
+* **Kết quả kiểm chứng thực nghiệm**:
+  - **Multi-case QC Suite (`qc_bevel_multi_case_suite.py`)**: 120 / 120 kiểm thử PASS tuyệt đối (100.0%, $\Delta = 0.0000$).
+  - **Playwright E2E Test (`test_bevel_webapp.py`)**: 0 lỗi Console/JavaScript, chạy sạch 100%.
+  - **CORS-Free Single Bundle**: Đóng gói thành công `bevel-engine.bundle.js` (125,087 ký tự) chạy 100% offline.
 
 

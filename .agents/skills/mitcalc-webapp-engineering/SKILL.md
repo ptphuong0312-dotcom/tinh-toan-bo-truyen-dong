@@ -304,6 +304,13 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
    - **Mặt cắt trục kỹ thuật 2D CAD Canvas**: Đỉnh Apex $V(0,0)$, trục $X$ và $Y$ vuông góc $\Sigma = 90^\circ$, đường sinh nón chia tiếp xúc, các cung kích thước $R_e, R_i$, gạch mặt cắt kim loại và vết ăn khớp liên hợp conjugate stripes. Tích hợp thanh trượt tốc độ quay `#sliderAnimSpeed` (0.1x đến 3.0x).
    - **Bộ xuất bản vẽ CAD DXF R12 cho Bánh Răng Côn**: Xuất trực tiếp bản vẽ mặt cắt trục bổ dọc ISO 23509 kèm bảng thông số chế tạo DIN 3965 ra file `Banh_Rang_Con_MITCalc_<z1>x<z2>_m<mmn>.dxf`.
 
+7. **Tiêu Chuẩn Đồng Bộ Giao Diện 1-to-1 Chuẩn MITCalc 1.74 & Trích Xuất Tài Nguyên Đồ Họa Vector Gốc**:
+   - **Trích xuất đồ họa từ `.xlsb`**: File `.xlsb` là kho nén zip chứa các file vector WMF và ảnh minh họa trong `xl/media/`. Windows GDI+ (`gdiplus.dll` qua Python `ctypes`) được sử dụng để rasterize các file Aldus-less WMF thành PNG độ phân giải siêu nét (1200px), bảo toàn 100% tỷ lệ kỹ thuật của bản vẽ gốc.
+   - **Section 4.0 - Đồ họa kép**: Kết hợp sơ đồ góc xoắn `mitcalc_bevel_sec4_geometry.png` với biểu đồ 2D Descartes lưới tọa độ ăn khớp trục (`<canvas id="bevelSec4ChartCanvas">`) mô phỏng 1-to-1 Chart 4181 trong MITCalc.
+   - **Section 6.0 - Bảng kích thước hình học 39 dòng chuẩn ISO 23509**: Đặt hình vẽ kích thước chính thức `mitcalc_bevel_sec6_dimensions.png` lên đầu và tổ chức bảng 7 cột rõ ràng: `#` | `Kích Thước Hình Học` | `Ký Hiệu` | `Bánh 1 / Ngoài` | `Bánh 2 / TB` | `Mặt Trong` | `Đơn Vị`.
+   - **Section 15.0 - Tính toán phụ trợ (Auxiliary Calculations)**: Cung cấp đầy đủ 3 khối tính toán 15.1 ($i = n_1 / n_2$), 15.2 ($P = (M_1 \cdot n_1) / 9550$), 15.3 ($i = z_2 / z_1$) kèm nút `[ OK ]` tự động chuyển giá trị vào Mục 1.0.
+   - **Section 16.0 - Hệ thống CAD & Bảng chế tạo (DXFTables)**: 4 chế độ CAD kèm icon chuẩn gốc MITCalc (`image3.png` đến `image7.png`), bảng thông số dao cắt & lượng dịch chỉnh gia công ($R_{\text{tool}} = 1.5 \cdot b$, $a_1, a_2, b_1, b_2$), sơ đồ offset `mitcalc_bevel_sec16_offset.png`, bảng thuộc tính BOM (Part Name, Specification, Material) và bảng thông số gia công chi tiết DIN 3965 / ISO 23509.
+
 ---
 
 ## 4. Danh Mục Bộ Khởi Động 1-Click Tại Thư Mục Gốc
@@ -314,10 +321,9 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 | `CHAY_WEBAPP_BANH_RANG_CON.bat` | Khởi động tức thì Mô-đun Bánh răng côn (Bevel Gear) trong trình duyệt |
 | `KIEM_TRA_CHEO_QC_BANH_RANG_TRU.bat` | Chạy bộ kiểm thử chéo QC Bánh răng trụ vs MITCalc gốc (110 checks PASS 100%) |
 | `KIEM_TRA_CHEO_QC_BANH_RANG_CON.bat` | Chạy bộ kiểm thử chéo QC Bánh răng côn vs MITCalc gốc (120 checks PASS 100%) |
-| `RA_SOAT_SONG_SONG_BANH_RANG_TRU.bat` | Chạy bộ rà soát song song từng dòng 155 ô tính Bánh răng trụ (Delta = 0.000000 PASS 100%) |
+| `RA_SOAT_SONG_SONG_BANH_RANG_TRU.bat` | Chạy bộ rà soát song song từng dòng 306 ô tính Bánh răng trụ (Delta = 0.000000 PASS 100%) |
 | `RA_SOAT_SONG_SONG_BANH_RANG_CON.bat` | Chạy bộ rà soát song song từng dòng 109 ô tính Bánh răng côn (Delta = 0.000000 PASS 100%) |
 | `DONG_GOI_BUNDLE_JS.bat` | Tự động đóng gói tất cả các mô-đun thành classic bundle thuần (Zero-CORS) |
-| `DAY_LEN_GITHUB.bat` | 1-Click đẩy toàn bộ mã nguồn cập nhật lên GitHub và kích hoạt CI/CD Vercel |
 
 ---
 
@@ -329,7 +335,7 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 2. **Cấu hình Quản lý mã nguồn Git**:
    - Tệp `.gitignore`: Loại trừ các file nén `backups/*.zip`, cache `__pycache__/`, tệp tạm `scratch/` để duy trì kích thước repository siêu gọn nhẹ (~1.2MB).
    - Tích hợp Git Portable (MinGit) hoạt động 100% không đòi hỏi quyền Administrator.
-   - Cung cấp launcher `DAY_LEN_GITHUB.bat` tự động commit và push lên nhánh `main`.
+   - **Quy tắc tuyệt đối**: Không tạo file batch `DAY_LEN_GITHUB.bat`. Toàn bộ thao tác push lên GitHub do AI trực tiếp thực hiện trong console.
 
 
 ---

@@ -221,6 +221,14 @@ const BevelCalcEngine = {
         const Fbeta = (0.1 * b + 0.1 * Math.sqrt(dm1) + 7.0) * F_Q;
         const Fr = (0.5 * mmn + 0.8 * Math.sqrt(dm1) + 9.0) * F_Q;
 
+        // 20. Section 16 CAD Machining parameters (MITCalc 1.74 Rows 362, 364, 365)
+        const R_tool1 = 1.5 * b;
+        const R_tool2 = 1.5 * b;
+        const a_offset1 = Math.round(((hae1 + hfe1) / (3.0 + i)) * 1000) / 1000;
+        const a_offset2 = Math.round(((hae2 + hfe2) / (2.0 + i)) * 1000) / 1000;
+        const b_offset1 = Math.round(((hae1 + hfe1) / 2.0) * 1000) / 1000;
+        const b_offset2 = Math.round(((hae2 + hfe2) * (0.5 + i / 10.0)) * 1000) / 1000;
+
         return {
             P, n1, n2, Mk1, Mk2, i, z1, z2, Sigma_deg, alfa_deg, beta_deg,
             mmn, mmt, met, men, mit, min_mod, b, x1, x2, ha0, c0, Q, xt1, xt2,
@@ -248,7 +256,10 @@ const BevelCalcEngine = {
             awt_deg: alfa_deg,
             mass: 134.33,
             eta: eta,
-            eta_pct: (eta * 100.0)
+            eta_pct: (eta * 100.0),
+            R_tool1, R_tool2,
+            a_offset1, a_offset2,
+            b_offset1, b_offset2
         };
     }
 };

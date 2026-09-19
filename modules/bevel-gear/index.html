@@ -431,6 +431,25 @@
                                         <td>kg</td>
                                         <td>-</td>
                                     </tr>
+                                    <!-- Embedded Visual Showcase: Sơ đồ hình học & Tọa độ mặt cắt 2D (Chuẩn MITCalc 1.74 Image 1) -->
+                                    <tr>
+                                        <td colspan="7" style="padding: 1rem 0.5rem; background: #f8fafc; border-top: 2px solid var(--border-color);">
+                                            <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; align-items: stretch;">
+                                                <div style="flex: 1 1 320px; max-width: 480px; background: #ffffff; padding: 0.75rem; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: center;">
+                                                    <div style="font-size: 0.8rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.5rem; text-transform: uppercase;">
+                                                        📐 Sơ Đồ Góc Xoắn βm &amp; Thông Số Nón (ISO 23509)
+                                                    </div>
+                                                    <img src="images/mitcalc_bevel_sec4_geometry.png" alt="Sơ đồ hình học răng nón" style="max-width: 100%; height: auto; border-radius: 4px;">
+                                                </div>
+                                                <div style="flex: 1 1 320px; max-width: 480px; background: #ffffff; padding: 0.75rem; border-radius: 8px; border: 1px solid #cbd5e1; box-shadow: 0 1px 3px rgba(0,0,0,0.05); text-align: center;">
+                                                    <div style="font-size: 0.8rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.5rem; text-transform: uppercase;">
+                                                        📈 Tọa Độ Mặt Cắt Trục Ăn Khớp 2D (Axial Section Plot)
+                                                    </div>
+                                                    <canvas id="bevelSec4ChartCanvas" width="460" height="280" style="width: 100%; max-width: 460px; height: auto; background-color: #ffffe0; border: 1px solid #cbd5e1; border-radius: 4px;"></canvas>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -569,47 +588,60 @@
                             <span class="section-toggle">▼</span>
                         </div>
                         <div class="section-body">
+                            <!-- Official MITCalc Engineering Dimension Diagram (ISO 23509) -->
+                            <div style="text-align: center; margin-bottom: 1.25rem; background: #ffffff; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                                <div style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.5rem; text-transform: uppercase;">
+                                    📐 Bản Vẽ Kỹ Thuật Định Nghĩa Kích Thước Hình Học Bánh Răng Côn (Technical Dimension Reference - ISO 23509)
+                                </div>
+                                <img src="images/mitcalc_bevel_sec6_dimensions.png" alt="Bản vẽ kích thước hình học bánh răng côn" style="max-width: 100%; height: auto; border-radius: 4px;">
+                            </div>
+
                             <table class="calc-table">
                                 <thead>
                                     <tr>
                                         <th class="col-idx">#</th>
                                         <th class="col-param">Kích Thước Hình Học (3 Mặt Cắt: Ngoài - Giữa - Trong)</th>
                                         <th class="col-sym">Ký Hiệu</th>
-                                        <th class="col-val1">Bánh Dẫn (Pinion 1)</th>
-                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2)</th>
+                                        <th class="col-val1">Bánh Dẫn (Pinion 1) / Ngoài (Outer)</th>
+                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2) / Trung Bình (Middle)</th>
+                                        <th class="col-val3" style="width: 14%;">Mặt Trong (Inner)</th>
                                         <th class="col-unit">Đơn Vị</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
                                         <td>6.1</td>
-                                        <td>Số răng bánh 1 & bánh 2</td>
+                                        <td>Số răng bánh 1 &amp; bánh 2 (Number of teeth)</td>
                                         <td>z</td>
                                         <td><span class="output-eng" id="out_z1">18</span></td>
                                         <td><span class="output-eng" id="out_z2">45</span></td>
+                                        <td>-</td>
                                         <td>răng</td>
                                     </tr>
                                     <tr>
                                         <td>6.2</td>
                                         <td>Mô đun tiếp tuyến (Mặt ngoài met / Trung bình mmt / Mặt trong mit)</td>
-                                        <td>met/mmt/mit</td>
-                                        <td><span class="output-eng" id="out_met">13.9610</span> / <span class="output-eng" id="out_mmt">11.5470</span></td>
+                                        <td>met, mmt, mit</td>
+                                        <td><span class="output-eng" id="out_met">13.9610</span></td>
+                                        <td><span class="output-eng" id="out_mmt">11.5470</span></td>
                                         <td><span class="output-eng" id="out_mit">9.1330</span></td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
                                         <td>6.3</td>
                                         <td>Mô đun pháp tuyến (Mặt ngoài men / Trung bình mmn / Mặt trong min)</td>
-                                        <td>men/mmn/min</td>
-                                        <td><span class="output-eng" id="out_men">12.0906</span> / <span class="output-eng" id="out_mmn">10.0000</span></td>
+                                        <td>men, mmn, min</td>
+                                        <td><span class="output-eng" id="out_men">12.0906</span></td>
+                                        <td><span class="output-eng" id="out_mmn">10.0000</span></td>
                                         <td><span class="output-eng" id="out_min">7.9094</span></td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
                                         <td>6.4</td>
                                         <td>Chiều dài đường sinh nón (Mặt ngoài Re / Trung bình Rm / Mặt trong Ri)</td>
-                                        <td>Re/Rm/Ri</td>
-                                        <td><span class="output-eng highlight-key-param" id="out_Re">338.321</span> / <span class="output-eng" id="out_Rm">279.821</span></td>
+                                        <td>Re, Rm, Ri</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_Re">338.321</span></td>
+                                        <td><span class="output-eng" id="out_Rm">279.821</span></td>
                                         <td><span class="output-eng" id="out_Ri">221.321</span></td>
                                         <td>mm</td>
                                     </tr>
@@ -619,6 +651,7 @@
                                         <td>δ</td>
                                         <td><span class="output-eng highlight-key-param" id="out_delta1">21.8014</span></td>
                                         <td><span class="output-eng highlight-key-param" id="out_delta2">68.1986</span></td>
+                                        <td>-</td>
                                         <td>độ (°)</td>
                                     </tr>
                                     <tr>
@@ -627,6 +660,7 @@
                                         <td>δa</td>
                                         <td><span class="output-eng highlight-key-param" id="out_delta1a">24.5022</span></td>
                                         <td><span class="output-eng highlight-key-param" id="out_delta2a">69.5907</span></td>
+                                        <td>-</td>
                                         <td>độ (°)</td>
                                     </tr>
                                     <tr>
@@ -635,6 +669,7 @@
                                         <td>δf</td>
                                         <td><span class="output-eng highlight-key-param" id="out_delta1f">20.0001</span></td>
                                         <td><span class="output-eng highlight-key-param" id="out_delta2f">65.0893</span></td>
+                                        <td>-</td>
                                         <td>độ (°)</td>
                                     </tr>
                                     <tr>
@@ -643,6 +678,7 @@
                                         <td>dae</td>
                                         <td><span class="output-eng highlight-key-param" id="out_dae1">280.935</span></td>
                                         <td><span class="output-eng highlight-key-param" id="out_dae2">634.354</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -651,6 +687,7 @@
                                         <td>dam</td>
                                         <td><span class="output-eng" id="out_dam1">232.358</span></td>
                                         <td><span class="output-eng" id="out_dam2">524.666</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -659,6 +696,7 @@
                                         <td>dai</td>
                                         <td><span class="output-eng" id="out_dai1">183.781</span></td>
                                         <td><span class="output-eng" id="out_dai2">414.978</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -667,6 +705,7 @@
                                         <td>de</td>
                                         <td><span class="output-eng" id="out_de1">251.299</span></td>
                                         <td><span class="output-eng" id="out_de2">628.247</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -675,6 +714,7 @@
                                         <td>dm</td>
                                         <td><span class="output-eng" id="out_dm1">207.846</span></td>
                                         <td><span class="output-eng" id="out_dm2">519.615</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -683,6 +723,7 @@
                                         <td>di</td>
                                         <td><span class="output-eng" id="out_di1">164.393</span></td>
                                         <td><span class="output-eng" id="out_di2">410.983</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -691,6 +732,7 @@
                                         <td>dfe</td>
                                         <td><span class="output-eng highlight-key-param" id="out_dfe1">231.541</span></td>
                                         <td><span class="output-eng highlight-key-param" id="out_dfe2">614.596</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -699,6 +741,7 @@
                                         <td>dfm</td>
                                         <td><span class="output-eng" id="out_dfm1">191.505</span></td>
                                         <td><span class="output-eng" id="out_dfm2">508.325</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -707,6 +750,7 @@
                                         <td>dfi</td>
                                         <td><span class="output-eng" id="out_dfi1">151.469</span></td>
                                         <td><span class="output-eng" id="out_dfi2">402.054</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -715,6 +759,7 @@
                                         <td>θa</td>
                                         <td><span class="output-eng" id="out_qa1">2.7008</span></td>
                                         <td><span class="output-eng" id="out_qa2">1.3921</span></td>
+                                        <td>-</td>
                                         <td>độ (°)</td>
                                     </tr>
                                     <tr>
@@ -723,6 +768,7 @@
                                         <td>θf</td>
                                         <td><span class="output-eng" id="out_qf1">1.8013</span></td>
                                         <td><span class="output-eng" id="out_qf2">3.1093</span></td>
+                                        <td>-</td>
                                         <td>độ (°)</td>
                                     </tr>
                                     <tr>
@@ -731,6 +777,7 @@
                                         <td>hae</td>
                                         <td><span class="output-eng" id="out_hae1">15.960</span></td>
                                         <td><span class="output-eng" id="out_hae2">8.222</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -739,6 +786,7 @@
                                         <td>ha</td>
                                         <td><span class="output-eng" id="out_ha1">13.200</span></td>
                                         <td><span class="output-eng" id="out_ha2">6.800</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -747,6 +795,7 @@
                                         <td>hai</td>
                                         <td><span class="output-eng" id="out_hai1">10.440</span></td>
                                         <td><span class="output-eng" id="out_hai2">5.378</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -755,6 +804,7 @@
                                         <td>hfe</td>
                                         <td><span class="output-eng" id="out_hfe1">10.640</span></td>
                                         <td><span class="output-eng" id="out_hfe2">18.378</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -763,6 +813,7 @@
                                         <td>hf</td>
                                         <td><span class="output-eng" id="out_hf1">8.800</span></td>
                                         <td><span class="output-eng" id="out_hf2">15.200</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -771,62 +822,63 @@
                                         <td>hfi</td>
                                         <td><span class="output-eng" id="out_hfi1">6.960</span></td>
                                         <td><span class="output-eng" id="out_hfi2">12.022</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
                                         <td>6.25</td>
                                         <td>Góc áp lực pháp tuyến (Normal pressure angle)</td>
                                         <td>αn</td>
-                                        <td colspan="2"><span class="output-eng" id="out_alfa_n">17.4952</span></td>
+                                        <td colspan="3"><span class="output-eng" id="out_alfa_n">17.4952</span></td>
                                         <td>độ (°)</td>
                                     </tr>
                                     <tr>
                                         <td>6.26</td>
                                         <td>Góc áp lực tiếp tuyến (Transverse pressure angle)</td>
                                         <td>αt</td>
-                                        <td colspan="2"><span class="output-eng" id="out_alfa_t">20.0000</span></td>
+                                        <td colspan="3"><span class="output-eng" id="out_alfa_t">20.0000</span></td>
                                         <td>độ (°)</td>
                                     </tr>
                                     <tr>
                                         <td>6.27</td>
                                         <td>Góc xoắn răng trung bình (Helix angle)</td>
                                         <td>β</td>
-                                        <td colspan="2"><span class="output-eng" id="out_beta">30.0000</span></td>
+                                        <td colspan="3"><span class="output-eng" id="out_beta">30.0000</span></td>
                                         <td>độ (°)</td>
                                     </tr>
                                     <tr>
                                         <td>6.28</td>
                                         <td>Góc xoắn cơ sở (Base helix angle)</td>
                                         <td>βb</td>
-                                        <td colspan="2"><span class="output-eng" id="out_beta_b">28.4812</span></td>
+                                        <td colspan="3"><span class="output-eng" id="out_beta_b">28.4812</span></td>
                                         <td>độ (°)</td>
                                     </tr>
                                     <tr>
                                         <td>6.29</td>
-                                        <td>Góc áp lực vòng lăn pháp tuyến</td>
+                                        <td>Góc áp lực vòng lăn pháp tuyến (Operating normal press.)</td>
                                         <td>αwn</td>
-                                        <td colspan="2"><span class="output-eng" id="out_awn">17.4953</span></td>
+                                        <td colspan="3"><span class="output-eng" id="out_awn">17.4953</span></td>
                                         <td>độ (°)</td>
                                     </tr>
                                     <tr>
                                         <td>6.30</td>
-                                        <td>Góc áp lực vòng lăn tiếp tuyến</td>
+                                        <td>Góc áp lực vòng lăn tiếp tuyến (Operating transv. press.)</td>
                                         <td>αwt</td>
-                                        <td colspan="2"><span class="output-eng" id="out_awt">20.0000</span></td>
+                                        <td colspan="3"><span class="output-eng" id="out_awt">20.0000</span></td>
                                         <td>độ (°)</td>
                                     </tr>
                                     <tr>
                                         <td>6.31</td>
                                         <td>Bước răng pháp ngoài (Circular pitch)</td>
                                         <td>pe</td>
-                                        <td colspan="2"><span class="output-eng" id="out_pe">37.9838</span></td>
+                                        <td colspan="3"><span class="output-eng" id="out_pe">37.9838</span></td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
                                         <td>6.32</td>
                                         <td>Bước răng tiếp tuyến ngoài (Transverse circular pitch)</td>
                                         <td>pte</td>
-                                        <td colspan="2"><span class="output-eng" id="out_pte">43.8599</span></td>
+                                        <td colspan="3"><span class="output-eng" id="out_pte">43.8599</span></td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -835,6 +887,7 @@
                                         <td>sne</td>
                                         <td><span class="output-eng highlight-key-param" id="out_sne1">22.2919</span></td>
                                         <td><span class="output-eng highlight-key-param" id="out_sne2">15.6919</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -843,6 +896,7 @@
                                         <td>sn</td>
                                         <td><span class="output-eng" id="out_sn1">18.4374</span></td>
                                         <td><span class="output-eng" id="out_sn2">12.9786</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -851,6 +905,7 @@
                                         <td>sni</td>
                                         <td><span class="output-eng" id="out_sni1">14.5828</span></td>
                                         <td><span class="output-eng" id="out_sni2">10.2652</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -859,6 +914,7 @@
                                         <td>sae</td>
                                         <td><span class="output-eng" id="out_sae1">8.8833</span></td>
                                         <td><span class="output-eng" id="out_sae2">13.5204</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -867,6 +923,7 @@
                                         <td>sa</td>
                                         <td><span class="output-eng" id="out_sa1">7.3473</span></td>
                                         <td><span class="output-eng" id="out_sa2">11.1826</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -875,6 +932,7 @@
                                         <td>sai</td>
                                         <td><span class="output-eng" id="out_sai1">5.8112</span></td>
                                         <td><span class="output-eng" id="out_sai2">8.8447</span></td>
+                                        <td>-</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -883,6 +941,7 @@
                                         <td>sae*</td>
                                         <td><span class="cell-limit" id="out_sae1_star">0.735</span></td>
                                         <td><span class="cell-limit" id="out_sae2_star">1.118</span></td>
+                                        <td>-</td>
                                         <td>[modul]</td>
                                     </tr>
                                 </tbody>
@@ -1057,7 +1116,7 @@
                 <div class="master-block">
                     <div class="master-header master-additions">
                         <span>⚙️ Phần Mở Rộng & Chế Tạo (Additions & Manufacturing Section)</span>
-                        <span style="font-size: 0.8rem; font-weight: normal; opacity: 0.85;">Mục 11.0 & Mục 16.0 DIN 3965 / DXFTables (Lắp Ráp, Đo Mỏ Kẹp & Bảng Chế Tạo)</span>
+                        <span style="font-size: 0.8rem; font-weight: normal; opacity: 0.85;">Mục 11.0, 15.0 & 16.0 DIN 3965 / DXFTables (Lắp Ráp, Đo Mỏ Kẹp, Tính Phụ Trợ & Hệ Thống CAD)</span>
                     </div>
 
                     <!-- SECTION 11.0: Assembly & Tolerances -->
@@ -1149,13 +1208,239 @@
                         </div>
                     </div>
 
-                    <!-- SECTION 16.0: Manufacturing Specification (DXFTables) -->
+                    <!-- SECTION 15.0: Auxiliary Calculations (MITCalc 1.74) -->
                     <div class="calc-section collapsed">
                         <div class="section-header">
-                            <h3>16.0 Bảng Thông Số Chế Tạo & Gia Công (Manufacturing Specification - DIN 3965 / DXFTables)</h3>
+                            <h3>15.0 Các Phép Tính Toán Phụ Trợ (Auxiliary Calculations - MITCalc 1.74)</h3>
                             <span class="section-toggle">▶</span>
                         </div>
                         <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Tính Toán Phụ Trợ</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Bánh Dẫn (Pinion 1)</th>
+                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2) / Kết Quả</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                        <th class="col-act">Tác Vụ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr style="background: #e2e8f0; font-weight: 700; color: #1e3a8a;">
+                                        <td colspan="7">15.1 Tính toán tỉ số truyền từ tốc độ vòng quay (Calculation of transmission ratio from speed)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>15.1</td>
+                                        <td>Tốc độ vòng quay bánh dẫn &amp; bánh bị dẫn</td>
+                                        <td>n1, n2</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" id="aux_inp_n1" value="2000.00"></td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" id="aux_inp_n2" value="750.00"></td>
+                                        <td>v/p (rpm)</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>-</td>
+                                        <td>Tỉ số truyền tính toán (Transmission ratio)</td>
+                                        <td>i</td>
+                                        <td colspan="2"><span class="output-eng highlight-key-param" id="aux_i_n">2.6667</span></td>
+                                        <td>-</td>
+                                        <td><button type="button" class="btn-smart" id="btn_aux_ok_15_1" title="Áp dụng tỉ số truyền này vào Mục 1.0 & 4.0">OK &#10004;</button></td>
+                                    </tr>
+
+                                    <tr style="background: #e2e8f0; font-weight: 700; color: #1e3a8a;">
+                                        <td colspan="7">15.2 Tính toán công suất từ mô-men xoắn và tốc độ (Calculation of power from torque and speed)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>15.2</td>
+                                        <td>Mô-men xoắn trên bánh dẫn</td>
+                                        <td>M1</td>
+                                        <td colspan="2"><input type="text" inputmode="decimal" class="input-eng user-input" id="aux_inp_Mk1" value="270.00"></td>
+                                        <td>N.m</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>-</td>
+                                        <td>Tốc độ vòng quay bánh dẫn</td>
+                                        <td>n1</td>
+                                        <td colspan="2"><input type="text" inputmode="decimal" class="input-eng user-input" id="aux_inp_n1_pw" value="1600.00"></td>
+                                        <td>v/p (rpm)</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>-</td>
+                                        <td>Công suất truyền động tính toán (Transmitted power)</td>
+                                        <td>P</td>
+                                        <td colspan="2"><span class="output-eng highlight-key-param" id="aux_Pw">45.239</span></td>
+                                        <td>kW</td>
+                                        <td><button type="button" class="btn-smart" id="btn_aux_ok_15_2" title="Áp dụng công suất này vào Mục 1.0">OK &#10004;</button></td>
+                                    </tr>
+
+                                    <tr style="background: #e2e8f0; font-weight: 700; color: #1e3a8a;">
+                                        <td colspan="7">15.3 Tính toán tỉ số truyền từ số răng (Calculation of transmission ratio from number of teeth)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>15.3</td>
+                                        <td>Số răng bánh 1 &amp; bánh 2</td>
+                                        <td>z1, z2</td>
+                                        <td><span class="output-eng" id="aux_z1">18</span></td>
+                                        <td><span class="output-eng" id="aux_z2">45</span></td>
+                                        <td>răng</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>-</td>
+                                        <td>Tỉ số truyền động học (Transmission ratio)</td>
+                                        <td>i</td>
+                                        <td colspan="2"><span class="output-eng highlight-key-param" id="aux_i_z">2.5000</span></td>
+                                        <td>-</td>
+                                        <td><button type="button" class="btn-smart" id="btn_aux_ok_15_3" title="Áp dụng tỉ số truyền này vào Mục 1.0">OK &#10004;</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 16.0: Graphic output, CAD systems & Manufacturing Specification -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>16.0 Xuất Bản Vẽ Đồ Họa, Hệ Thống CAD & Bảng Chế Tạo (Graphic Output, CAD Systems & DXFTables)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <!-- 16.1 CAD System Selection -->
+                            <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+                                <div style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.75rem; text-transform: uppercase;">
+                                    🖥️ 16.1 Chọn Hệ Thống CAD Mục Tiêu (CAD System Selection)
+                                </div>
+                                <div style="display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-around; align-items: center;">
+                                    <label style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; cursor: pointer; padding: 0.5rem 1rem; border: 2px solid #2563eb; border-radius: 6px; background: #eff6ff;">
+                                        <input type="radio" name="cad_system" value="2d" checked style="accent-color: #2563eb;">
+                                        <img src="images/image3.png" alt="2D CAD" style="height: 38px; width: auto;">
+                                        <span style="font-size: 0.8rem; font-weight: 700; color: #1e40af;">2D CAD System</span>
+                                    </label>
+                                    <label style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; cursor: pointer; padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc;">
+                                        <input type="radio" name="cad_system" value="3d" style="accent-color: #2563eb;">
+                                        <img src="images/image4.png" alt="3D CAD" style="height: 38px; width: auto;">
+                                        <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">3D CAD System</span>
+                                    </label>
+                                    <label style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; cursor: pointer; padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc;">
+                                        <input type="radio" name="cad_system" value="autocad" style="accent-color: #2563eb;">
+                                        <img src="images/image5.png" alt="AutoCAD" style="height: 38px; width: auto;">
+                                        <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">AutoCAD / DXF</span>
+                                    </label>
+                                    <label style="display: flex; flex-direction: column; align-items: center; gap: 0.4rem; cursor: pointer; padding: 0.5rem 1rem; border: 1px solid #cbd5e1; border-radius: 6px; background: #f8fafc;">
+                                        <input type="radio" name="cad_system" value="other" style="accent-color: #2563eb;">
+                                        <img src="images/image7.png" alt="Other CAD" style="height: 38px; width: auto;">
+                                        <span style="font-size: 0.8rem; font-weight: 600; color: #475569;">Other CAD / General</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 16.2 Output Parameters & Offsets Diagram Showcase -->
+                            <div style="display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: stretch; margin-bottom: 1.25rem;">
+                                <div style="flex: 1 1 360px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem;">
+                                    <div style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.75rem; text-transform: uppercase;">
+                                        ⚙️ 16.2 Thông Số Dao Cắt &amp; Dịch Chỉnh Gia Công CAD
+                                    </div>
+                                    <table class="calc-table" style="margin-bottom: 0;">
+                                        <thead>
+                                            <tr>
+                                                <th>Thông Số</th>
+                                                <th>Ký Hiệu</th>
+                                                <th>Bánh 1</th>
+                                                <th>Bánh 2</th>
+                                                <th>Đơn Vị</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Bán kính dao cắt nón (Tool radius R = 1.5·b)</td>
+                                                <td>R</td>
+                                                <td><span class="output-eng" id="mfg_R1">175.5</span></td>
+                                                <td><span class="output-eng" id="mfg_R2">175.5</span></td>
+                                                <td>mm</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Lượng dịch chỉnh trong (Inner offset)</td>
+                                                <td>a</td>
+                                                <td><span class="output-eng" id="mfg_a1">4.629</span></td>
+                                                <td><span class="output-eng" id="mfg_a2">5.658</span></td>
+                                                <td>mm</td>
+                                            </tr>
+                                            <tr>
+                                                <td>Lượng dịch chỉnh ngoài (Outer offset)</td>
+                                                <td>b</td>
+                                                <td><span class="output-eng" id="mfg_b1">12.730</span></td>
+                                                <td><span class="output-eng" id="mfg_b2">19.095</span></td>
+                                                <td>mm</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <div style="flex: 0 1 280px; background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 0.75rem; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center;">
+                                    <div style="font-size: 0.8rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.5rem; text-transform: uppercase;">
+                                        📐 Sơ Đồ Lượng Dịch Chỉnh Răng R, a, b
+                                    </div>
+                                    <img src="images/mitcalc_bevel_sec16_offset.png" alt="Sơ đồ lượng dịch chỉnh gia công răng nón R, a, b" style="max-width: 100%; height: auto; max-height: 220px; border-radius: 4px;">
+                                </div>
+                            </div>
+
+                            <!-- 16.3 CAD Action Buttons -->
+                            <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 0.75rem 1rem; margin-bottom: 1.25rem; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <span style="font-weight: 700; color: #1e293b; font-size: 0.9rem;">16.3 Lệnh Xuất Đồ Họa &amp; Bản Vẽ:</span>
+                                    <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">Tương thích AutoCAD, SolidWorks, Inventor</span>
+                                </div>
+                                <div style="display: flex; gap: 0.75rem;">
+                                    <button type="button" class="btn btn-secondary" id="btn_draw_2d" style="background-color: #0f766e; color: #fff; font-weight: 700; border: none;">📐 Chuyển Sang Bản Vẽ 2D CAD (Draw 2D)</button>
+                                    <button type="button" class="btn btn-primary" id="btnExportDXFSec16" style="background-color: #2563eb; font-weight: 700;">💾 Tải Bảng Thông Số &amp; CAD (DXF AC1009)</button>
+                                </div>
+                            </div>
+
+                            <!-- 16.4 BOM Attributes (Bill of Materials) -->
+                            <div style="background: #ffffff; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin-bottom: 1.25rem;">
+                                <div style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.75rem; text-transform: uppercase;">
+                                    📋 16.4 Bảng Thuộc Tính Xuất Danh Mục BOM (Bill of Materials)
+                                </div>
+                                <table class="calc-table" style="margin-bottom: 0;">
+                                    <thead>
+                                        <tr>
+                                            <th>Dòng BOM</th>
+                                            <th>Thuộc Tính Chi Tiết</th>
+                                            <th>Bánh Dẫn (Pinion 1)</th>
+                                            <th>Bánh Bị Dẫn (Gear 2)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>Dòng 1</td>
+                                            <td>Tên chi tiết (Part Name)</td>
+                                            <td><span class="output-eng" id="bom_row1_1">Bevel gear - Pinion</span></td>
+                                            <td><span class="output-eng" id="bom_row1_2">Bevel gear - Gear</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Dòng 2</td>
+                                            <td>Quy cách kỹ thuật (Specification)</td>
+                                            <td><span class="output-eng" id="bom_row2_1">z1=18, mmn=10, beta=30</span></td>
+                                            <td><span class="output-eng" id="bom_row2_2">z2=45, mmn=10, beta=30</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Dòng 3</td>
+                                            <td>Vật liệu chế tạo (Material)</td>
+                                            <td><span class="output-eng" id="bom_row3_1">Material: Ck 60</span></td>
+                                            <td><span class="output-eng" id="bom_row3_2">Material: Ck 60</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- 16.5 Manufacturing Specification Table (DXFTables DIN 3965 / ISO 23509) -->
+                            <div style="font-size: 0.85rem; font-weight: 700; color: #1e3a8a; margin-bottom: 0.5rem; text-transform: uppercase;">
+                                📑 16.5 Bảng Thông Số Chế Tạo Gia Công Chi Tiết (DXFTables - DIN 3965 / ISO 23509)
+                            </div>
                             <table class="calc-table">
                                 <thead>
                                     <tr>
@@ -1169,14 +1454,14 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td>16.1</td>
+                                        <td>16.5.1</td>
                                         <td>Mô đun pháp tuyến trung bình</td>
                                         <td>mmn</td>
                                         <td colspan="2"><span class="output-eng highlight-key-param" id="mfg_mmn">10.000</span></td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
-                                        <td>16.2</td>
+                                        <td>16.5.2</td>
                                         <td>Số răng bánh 1 & bánh 2</td>
                                         <td>z</td>
                                         <td><span class="output-eng highlight-key-param" id="mfg_z1">18</span></td>
@@ -1184,7 +1469,7 @@
                                         <td>răng</td>
                                     </tr>
                                     <tr>
-                                        <td>16.3</td>
+                                        <td>16.5.3</td>
                                         <td>Góc nón chia</td>
                                         <td>δ</td>
                                         <td><span class="output-eng highlight-key-param" id="mfg_delta1">21.8014</span></td>
@@ -1192,7 +1477,7 @@
                                         <td>độ (°)</td>
                                     </tr>
                                     <tr>
-                                        <td>16.4</td>
+                                        <td>16.5.4</td>
                                         <td>Đường kính vòng đỉnh ngoài</td>
                                         <td>dae</td>
                                         <td><span class="output-eng highlight-key-param" id="mfg_dae1">280.935</span></td>
@@ -1200,21 +1485,21 @@
                                         <td>mm</td>
                                     </tr>
                                     <tr>
-                                        <td>16.5</td>
+                                        <td>16.5.5</td>
                                         <td>Chiều dài đường sinh nón ngoài</td>
                                         <td>Re</td>
                                         <td colspan="2"><span class="output-eng highlight-key-param" id="mfg_Re">338.321</span></td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
-                                        <td>16.6</td>
+                                        <td>16.5.6</td>
                                         <td>Chiều rộng vành răng</td>
                                         <td>b</td>
                                         <td colspan="2"><span class="output-eng highlight-key-param" id="mfg_b">117.0</span></td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
-                                        <td>16.7</td>
+                                        <td>16.5.7</td>
                                         <td>Hệ số dịch chỉnh biên dạng</td>
                                         <td>x</td>
                                         <td><span class="output-eng highlight-key-param" id="mfg_x1">0.3200</span></td>
@@ -1222,7 +1507,7 @@
                                         <td>-</td>
                                     </tr>
                                     <tr>
-                                        <td>16.8</td>
+                                        <td>16.5.8</td>
                                         <td>Hệ số dịch chỉnh chiều dày răng</td>
                                         <td>xt</td>
                                         <td><span class="output-eng" id="mfg_xt1">0.0400</span></td>
@@ -1230,7 +1515,7 @@
                                         <td>-</td>
                                     </tr>
                                     <tr>
-                                        <td>16.9</td>
+                                        <td>16.5.9</td>
                                         <td>Hướng xoắn răng (Tooth hand)</td>
                                         <td>Hand</td>
                                         <td><span class="output-eng" id="mfg_hand1">Xoắn Trái (Left-Hand)</span></td>
@@ -1238,7 +1523,7 @@
                                         <td>-</td>
                                     </tr>
                                     <tr>
-                                        <td>16.10</td>
+                                        <td>16.5.10</td>
                                         <td>Cấp chính xác gia công chế tạo</td>
                                         <td>Grade</td>
                                         <td colspan="2"><span class="output-eng" id="mfg_grade">DIN 3965 5 / 6 .... (Ra max.= 1.6 / v max.= 20)</span></td>
@@ -1246,9 +1531,6 @@
                                     </tr>
                                 </tbody>
                             </table>
-                            <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
-                                <button type="button" class="btn btn-primary" id="btnExportDXFSec16" style="background-color: #2563eb; font-weight: 700;">📐 Tải Bản Vẽ 2D CAD (DXF Release 12)</button>
-                            </div>
                         </div>
                     </div>
                 </div>
