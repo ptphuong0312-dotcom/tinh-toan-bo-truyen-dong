@@ -99,55 +99,40 @@ def test_bevel_3d():
         page.screenshot(path=front_path)
         print(f"[+] Đã lưu ảnh chụp 3D Mặt Bổ Dọc Trục: {front_path}")
 
-        # Kiểm tra tính phẳng tuyệt đối của 2 mặt đầu (Planar Caps, ZERO "nhấp nhô")
-        print("\n-> [6] Kiểm tra tính phẳng toán học tuyệt đối của 2 mặt đầu (Planar Caps)...")
-        planar_check = page.evaluate("""() => {
+        # Kiểm tra hình học nón thực thể chuẩn MITCalc 1.74 (ISO 23509 Conical Projection & Zero Penetration)
+        print("\n-> [6] Kiểm tra hình học nón thực thể chuẩn MITCalc 1.74 (ISO 23509 & Data1 Ground Truth)...")
+        conical_check = page.evaluate("""() => {
             const ui = window.appUI;
             const v = ui.visualizer3D;
             const m1 = v.mesh1Data;
-            
-            // Lấy các đỉnh ở nắp đáy và nắp đầu
-            // Trong bevel-3d-generator:
-            // Back cap: z = z_back = Re * cos(delta)
-            // Front cap: z = z_front = Ri * cos(delta)
+            const m2 = v.mesh2Data;
             const g = ui.lastGeom;
-            const expectedZBack = g.Re * Math.cos(g.delta1);
-            const expectedZFront = g.Ri * Math.cos(g.delta1);
             
-            const verts = m1.vertices;
-            let maxDiffBack = 0;
-            let maxDiffFront = 0;
-            let backCapCount = 0;
-            let frontCapCount = 0;
+            // Pinion 1 bounds (matches Data1!C70:D87: P01 X=-201.61, P03 X=-318.08, P02 Y=140.47)
+            const m1_minZ = m1.bbox.min[2];
+            const m1_maxZ = m1.bbox.max[2];
+            const m1_maxR = Math.max(Math.abs(m1.bbox.min[0]), m1.bbox.max[0]);
             
-            for (let i = 0; i < verts.length; i += 3) {
-                const z = verts[i + 2];
-                if (Math.abs(z - expectedZBack) < 1e-3) {
-                    backCapCount++;
-                    maxDiffBack = Math.max(maxDiffBack, Math.abs(z - expectedZBack));
-                }
-                if (Math.abs(z - expectedZFront) < 1e-3) {
-                    frontCapCount++;
-                    maxDiffFront = Math.max(maxDiffFront, Math.abs(z - expectedZFront));
-                }
-            }
-            
+            // Gear 2 bounds (matches Data1!H35:I52: P01 X=-77.20, P03 X=-142.71, P02 Y=317.18)
+            const m2_minZ = m2.bbox.min[2];
+            const m2_maxZ = m2.bbox.max[2];
+            const m2_maxR = Math.max(Math.abs(m2.bbox.min[0]), m2.bbox.max[0]);
+
             return {
-                backCapCount,
-                frontCapCount,
-                maxDiffBack,
-                maxDiffFront,
-                expectedZBack,
-                expectedZFront
+                m1_minZ, m1_maxZ, m1_maxR,
+                m2_minZ, m2_maxZ, m2_maxR,
+                hasVertices: m1.vertices.length > 0 && m2.vertices.length > 0
             };
         }""")
         
-        print(f"[+] Mặt đầu ngoài (Back Cap): {planar_check['backCapCount']} đỉnh tại Z={planar_check['expectedZBack']:.4f} mm | Độ lệch max: {planar_check['maxDiffBack']:.6f} mm (PHẲNG TUYỆT ĐỐI!)")
-        print(f"[+] Mặt đầu trong (Front Cap): {planar_check['frontCapCount']} đỉnh tại Z={planar_check['expectedZFront']:.4f} mm | Độ lệch max: {planar_check['maxDiffFront']:.6f} mm (PHẲNG TUYỆT ĐỐI!)")
-        assert planar_check['backCapCount'] > 0, "Không tìm thấy đỉnh mặt đầu ngoài!"
-        assert planar_check['frontCapCount'] > 0, "Không tìm thấy đỉnh mặt đầu trong!"
-        assert planar_check['maxDiffBack'] < 1e-5, f"Mặt đầu ngoài bị nhấp nhô: {planar_check['maxDiffBack']}"
-        assert planar_check['maxDiffFront'] < 1e-5, f"Mặt đầu trong bị nhấp nhô: {planar_check['maxDiffFront']}"
+        print(f"[+] Bánh dẫn 1 (Pinion): Z in [{conical_check['m1_minZ']:.2f}, {conical_check['m1_maxZ']:.2f}] mm, R_max={conical_check['m1_maxR']:.2f} mm (Khớp Data1!C70:D87!)")
+        print(f"[+] Bánh bị dẫn 2 (Gear): Z in [{conical_check['m2_minZ']:.2f}, {conical_check['m2_maxZ']:.2f}] mm, R_max={conical_check['m2_maxR']:.2f} mm (Khớp Data1!H35:I52!)")
+        assert 200.0 <= conical_check['m1_minZ'] <= 203.0, f"Bánh 1 minZ sai: {conical_check['m1_minZ']}"
+        assert 317.0 <= conical_check['m1_maxZ'] <= 320.0, f"Bánh 1 maxZ sai: {conical_check['m1_maxZ']}"
+        assert 138.0 <= conical_check['m1_maxR'] <= 142.0, f"Bánh 1 maxR sai: {conical_check['m1_maxR']}"
+        assert 76.0 <= conical_check['m2_minZ'] <= 78.5, f"Bánh 2 minZ sai: {conical_check['m2_minZ']}"
+        assert 141.0 <= conical_check['m2_maxZ'] <= 144.0, f"Bánh 2 maxZ sai: {conical_check['m2_maxZ']}"
+        assert 315.0 <= conical_check['m2_maxR'] <= 319.0, f"Bánh 2 maxR sai: {conical_check['m2_maxR']}"
 
         # Kiểm tra tạo tệp xuất 3D CAD: STEP Solid, STEP Surface, Binary STL
         print("\n-> [7] Kiểm tra sinh dữ liệu xuất 3D CAD (STEP & STL)...")

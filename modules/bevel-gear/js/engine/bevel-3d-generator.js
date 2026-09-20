@@ -155,34 +155,30 @@ export const Bevel3DGenerator = {
         // 1. Precompute normalized 2D tooth profile points at mean cone Rm (Tredgold virtual gear)
         const toothProfile = this.computeBevelProfile(z, delta, Rm, mmn, alfa, x, xt, ha_mean, hf_mean, ptsPerFlank);
 
-        // 2. Planar Axial Boundary Heights (Strictly flat end faces perpendicular to rotation axis)
-        const z_back = Re * cosDelta;
-        const z_front = Ri * cosDelta;
-
-        // 3. Build 3D points for all slices along face width b
+        // 2. Build 3D points for all slices along face width b from Heel (Re) to Toe (Ri)
+        // Authentic Conical Tooth Geometry (ISO 23509, DIN 3971 & MITCalc 1.74 Calculation!U197:AQ202)
         const layers = [];
         const R_tool = 1.5 * b; // MITCalc Section 16.4 nominal cutter radius
 
         for (let s = 0; s <= numSlices; s++) {
             const frac = s / numSlices;
-            const z_slice = z_back - frac * (z_back - z_front);
-            const R = z_slice / Math.max(0.001, cosDelta);
-            const scale = R / Rm;
-            const u = (R - Rm) / b; // Normalized position along face width: u in [-0.5, 0.5], u=0 at Rm
+            const R_slice = Re - frac * (Re - Ri);
+            const scale = R_slice / Rm;
+            const u = (R_slice - Rm) / b; // Normalized position along face width: u in [-0.5, 0.5], u=0 at Rm
 
             // Spiral angle twist along cone generator centered at Rm (Calculation!U197:AQ202)
             let spiralTwist = 0.0;
             if (isSpiral) {
                 // Gleason circular arc cutter trace: W(u)
-                const term = R_tool * Math.sin(beta) - u * b;
-                const W = R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term));
-                const r_pitch = Math.max(1.0, R * sinDelta);
-                spiralTwist = hand * (W / r_pitch);
+                const term = u * b + R_tool * Math.sin(beta);
+                const W = hand * (R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term)));
+                const r_pitch = Math.max(1.0, R_slice * sinDelta);
+                spiralTwist = W / r_pitch;
             } else if (Math.abs(beta) > 1e-4) {
                 // Helical / Oblique bevel gear: V(u)
-                const V = -u * b * Math.tan(beta);
-                const r_pitch = Math.max(1.0, R * sinDelta);
-                spiralTwist = hand * (V / r_pitch);
+                const V = -hand * u * b * Math.tan(beta);
+                const r_pitch = Math.max(1.0, R_slice * sinDelta);
+                spiralTwist = V / r_pitch;
             }
 
             const layerPoints = [];
@@ -193,14 +189,18 @@ export const Bevel3DGenerator = {
                 for (let p = 0; p < toothProfile.length; p++) {
                     const pt = toothProfile[p];
                     const h = pt.h * scale;
-                    const r = R * sinDelta + h;
-                    // Angles radiate directly from Apex V(0, 0, 0) - strictly invariant along conical ray!
+                    // Authentic conical tooth projection:
+                    // Height h is measured normal to the pitch cone generator.
+                    // r(R, h) = R * sin(delta) + h * cos(delta)
+                    // z(R, h) = R * cos(delta) - h * sin(delta)
+                    const r = R_slice * sinDelta + h * cosDelta;
+                    const z_val = R_slice * cosDelta - h * sinDelta;
                     const ang = toothCenterAngle + pt.theta;
 
                     layerPoints.push({
                         x: r * Math.cos(ang),
                         y: r * Math.sin(ang),
-                        z: z_slice,
+                        z: z_val,
                         isTip: pt.isTip,
                         isRoot: pt.isRoot
                     });
@@ -212,7 +212,7 @@ export const Bevel3DGenerator = {
 
         const N = layers[0].length; // Points per ring contour
 
-        // 4. Mesh Assembly & Vertex Splitting
+        // 3. Mesh Assembly & Surface Normals
         const vertices = [];
         const normals = [];
         const indices = [];
@@ -280,10 +280,11 @@ export const Bevel3DGenerator = {
         }
 
         // =========================================================================
-        // GROUP 2: OUTER BACK END CAP (MẶT ĐẦU NGOÀI PHẲNG TẠI Z = z_back) - 100% PLANAR
+        // GROUP 2: OUTER BACK END CAP (HEEL FACE AT R = Re)
         // Winding order facing backward (+Z direction): (boreOuter[j], L_outer[j], L_outer[nextJ], boreOuter[nextJ])
         // =========================================================================
         const L_outer = layers[0];
+        const z_back_bore = Re * cosDelta + hf_mean * (Re / Rm) * sinDelta;
         const boreOuterPoints = [];
 
         for (let j = 0; j < N; j++) {
@@ -291,7 +292,7 @@ export const Bevel3DGenerator = {
             boreOuterPoints.push({
                 x: rBore * Math.cos(ang),
                 y: rBore * Math.sin(ang),
-                z: z_back // Exactly planar at z_back
+                z: z_back_bore
             });
         }
 
@@ -302,10 +303,11 @@ export const Bevel3DGenerator = {
         }
 
         // =========================================================================
-        // GROUP 3: INNER FRONT END CAP (MẶT ĐẦU TRONG PHẲNG TẠI Z = z_front) - 100% PLANAR
+        // GROUP 3: INNER FRONT END CAP (TOE FACE AT R = Ri)
         // Winding order facing forward (-Z direction): (L_inner[j], boreInner[j], boreInner[nextJ], L_inner[nextJ])
         // =========================================================================
         const L_inner = layers[numSlices];
+        const z_front_bore = Ri * cosDelta - ha_mean * (Ri / Rm) * sinDelta;
         const boreInnerPoints = [];
 
         for (let j = 0; j < N; j++) {
@@ -313,7 +315,7 @@ export const Bevel3DGenerator = {
             boreInnerPoints.push({
                 x: rBore * Math.cos(ang),
                 y: rBore * Math.sin(ang),
-                z: z_front // Exactly planar at z_front
+                z: z_front_bore
             });
         }
 
@@ -324,14 +326,14 @@ export const Bevel3DGenerator = {
         }
 
         // =========================================================================
-        // GROUP 4: INNER CYLINDRICAL BORE (LÒNG LỖ TRỤC ĐƯỜNG KÍNH ds)
-        // Winding order facing inward toward axis: (boreInner[j], boreInner[nextJ], boreOuter[nextJ], boreOuter[j])
+        // GROUP 4: INNER CYLINDRICAL BORE (SHAFT BORE RADIUS rBore)
+        // Winding order facing inward toward rotation axis: (boreOuter[j], boreOuter[nextJ], boreInner[nextJ], boreInner[j])
         // =========================================================================
         for (let j = 0; j < N; j++) {
             const nextJ = (j + 1) % N;
             const angMid = Math.atan2(boreOuterPoints[j].y, boreOuterPoints[j].x);
             const nBore = { x: -Math.cos(angMid), y: -Math.sin(angMid), z: 0 };
-            addQuad(boreInnerPoints[j], boreInnerPoints[nextJ], boreOuterPoints[nextJ], boreOuterPoints[j], nBore);
+            addQuad(boreOuterPoints[j], boreOuterPoints[nextJ], boreInnerPoints[nextJ], boreInnerPoints[j], nBore);
         }
 
         const bbox = Bevel3DGenerator._computeBBox(vertices);

@@ -2851,34 +2851,30 @@ const Bevel3DGenerator = {
         // 1. Precompute normalized 2D tooth profile points at mean cone Rm (Tredgold virtual gear)
         const toothProfile = this.computeBevelProfile(z, delta, Rm, mmn, alfa, x, xt, ha_mean, hf_mean, ptsPerFlank);
 
-        // 2. Planar Axial Boundary Heights (Strictly flat end faces perpendicular to rotation axis)
-        const z_back = Re * cosDelta;
-        const z_front = Ri * cosDelta;
-
-        // 3. Build 3D points for all slices along face width b
+        // 2. Build 3D points for all slices along face width b from Heel (Re) to Toe (Ri)
+        // Authentic Conical Tooth Geometry (ISO 23509, DIN 3971 & MITCalc 1.74 Calculation!U197:AQ202)
         const layers = [];
         const R_tool = 1.5 * b; // MITCalc Section 16.4 nominal cutter radius
 
         for (let s = 0; s <= numSlices; s++) {
             const frac = s / numSlices;
-            const z_slice = z_back - frac * (z_back - z_front);
-            const R = z_slice / Math.max(0.001, cosDelta);
-            const scale = R / Rm;
-            const u = (R - Rm) / b; // Normalized position along face width: u in [-0.5, 0.5], u=0 at Rm
+            const R_slice = Re - frac * (Re - Ri);
+            const scale = R_slice / Rm;
+            const u = (R_slice - Rm) / b; // Normalized position along face width: u in [-0.5, 0.5], u=0 at Rm
 
             // Spiral angle twist along cone generator centered at Rm (Calculation!U197:AQ202)
             let spiralTwist = 0.0;
             if (isSpiral) {
                 // Gleason circular arc cutter trace: W(u)
-                const term = R_tool * Math.sin(beta) - u * b;
-                const W = R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term));
-                const r_pitch = Math.max(1.0, R * sinDelta);
-                spiralTwist = hand * (W / r_pitch);
+                const term = u * b + R_tool * Math.sin(beta);
+                const W = hand * (R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term)));
+                const r_pitch = Math.max(1.0, R_slice * sinDelta);
+                spiralTwist = W / r_pitch;
             } else if (Math.abs(beta) > 1e-4) {
                 // Helical / Oblique bevel gear: V(u)
-                const V = -u * b * Math.tan(beta);
-                const r_pitch = Math.max(1.0, R * sinDelta);
-                spiralTwist = hand * (V / r_pitch);
+                const V = -hand * u * b * Math.tan(beta);
+                const r_pitch = Math.max(1.0, R_slice * sinDelta);
+                spiralTwist = V / r_pitch;
             }
 
             const layerPoints = [];
@@ -2889,14 +2885,18 @@ const Bevel3DGenerator = {
                 for (let p = 0; p < toothProfile.length; p++) {
                     const pt = toothProfile[p];
                     const h = pt.h * scale;
-                    const r = R * sinDelta + h;
-                    // Angles radiate directly from Apex V(0, 0, 0) - strictly invariant along conical ray!
+                    // Authentic conical tooth projection:
+                    // Height h is measured normal to the pitch cone generator.
+                    // r(R, h) = R * sin(delta) + h * cos(delta)
+                    // z(R, h) = R * cos(delta) - h * sin(delta)
+                    const r = R_slice * sinDelta + h * cosDelta;
+                    const z_val = R_slice * cosDelta - h * sinDelta;
                     const ang = toothCenterAngle + pt.theta;
 
                     layerPoints.push({
                         x: r * Math.cos(ang),
                         y: r * Math.sin(ang),
-                        z: z_slice,
+                        z: z_val,
                         isTip: pt.isTip,
                         isRoot: pt.isRoot
                     });
@@ -2908,7 +2908,7 @@ const Bevel3DGenerator = {
 
         const N = layers[0].length; // Points per ring contour
 
-        // 4. Mesh Assembly & Vertex Splitting
+        // 3. Mesh Assembly & Surface Normals
         const vertices = [];
         const normals = [];
         const indices = [];
@@ -2976,10 +2976,11 @@ const Bevel3DGenerator = {
         }
 
         // =========================================================================
-        // GROUP 2: OUTER BACK END CAP (MẶT ĐẦU NGOÀI PHẲNG TẠI Z = z_back) - 100% PLANAR
+        // GROUP 2: OUTER BACK END CAP (HEEL FACE AT R = Re)
         // Winding order facing backward (+Z direction): (boreOuter[j], L_outer[j], L_outer[nextJ], boreOuter[nextJ])
         // =========================================================================
         const L_outer = layers[0];
+        const z_back_bore = Re * cosDelta + hf_mean * (Re / Rm) * sinDelta;
         const boreOuterPoints = [];
 
         for (let j = 0; j < N; j++) {
@@ -2987,7 +2988,7 @@ const Bevel3DGenerator = {
             boreOuterPoints.push({
                 x: rBore * Math.cos(ang),
                 y: rBore * Math.sin(ang),
-                z: z_back // Exactly planar at z_back
+                z: z_back_bore
             });
         }
 
@@ -2998,10 +2999,11 @@ const Bevel3DGenerator = {
         }
 
         // =========================================================================
-        // GROUP 3: INNER FRONT END CAP (MẶT ĐẦU TRONG PHẲNG TẠI Z = z_front) - 100% PLANAR
+        // GROUP 3: INNER FRONT END CAP (TOE FACE AT R = Ri)
         // Winding order facing forward (-Z direction): (L_inner[j], boreInner[j], boreInner[nextJ], L_inner[nextJ])
         // =========================================================================
         const L_inner = layers[numSlices];
+        const z_front_bore = Ri * cosDelta - ha_mean * (Ri / Rm) * sinDelta;
         const boreInnerPoints = [];
 
         for (let j = 0; j < N; j++) {
@@ -3009,7 +3011,7 @@ const Bevel3DGenerator = {
             boreInnerPoints.push({
                 x: rBore * Math.cos(ang),
                 y: rBore * Math.sin(ang),
-                z: z_front // Exactly planar at z_front
+                z: z_front_bore
             });
         }
 
@@ -3020,14 +3022,14 @@ const Bevel3DGenerator = {
         }
 
         // =========================================================================
-        // GROUP 4: INNER CYLINDRICAL BORE (LÒNG LỖ TRỤC ĐƯỜNG KÍNH ds)
-        // Winding order facing inward toward axis: (boreInner[j], boreInner[nextJ], boreOuter[nextJ], boreOuter[j])
+        // GROUP 4: INNER CYLINDRICAL BORE (SHAFT BORE RADIUS rBore)
+        // Winding order facing inward toward rotation axis: (boreOuter[j], boreOuter[nextJ], boreInner[nextJ], boreInner[j])
         // =========================================================================
         for (let j = 0; j < N; j++) {
             const nextJ = (j + 1) % N;
             const angMid = Math.atan2(boreOuterPoints[j].y, boreOuterPoints[j].x);
             const nBore = { x: -Math.cos(angMid), y: -Math.sin(angMid), z: 0 };
-            addQuad(boreInnerPoints[j], boreInnerPoints[nextJ], boreOuterPoints[nextJ], boreOuterPoints[j], nBore);
+            addQuad(boreOuterPoints[j], boreOuterPoints[nextJ], boreInnerPoints[nextJ], boreInnerPoints[j], nBore);
         }
 
         const bbox = Bevel3DGenerator._computeBBox(vertices);
@@ -3478,9 +3480,11 @@ class Bevel3DVisualizer {
 
         // 6. Groups for independent rotation & orientation
         this.pinionGroup = new THREE.Group();
+        this.gearPivot = new THREE.Group();
         this.gearGroup = new THREE.Group();
+        this.gearPivot.add(this.gearGroup);
         this.scene.add(this.pinionGroup);
-        this.scene.add(this.gearGroup);
+        this.scene.add(this.gearPivot);
 
         // 7. Grid helper at apex
         this.gridHelper = new THREE.GridHelper(1000, 50, 0x1e293b, 0x0f172a);
@@ -3583,14 +3587,11 @@ class Bevel3DVisualizer {
         this.updateMeshes();
 
         // 3. Analytical Conjugate Phase Offset (Zero-Collision Conjugate Mesh)
-        // Pinion rotates around X, Gear rotates around Y.
+        // Pinion rotates around X, Gear rotates around Y (or Sigma via gearPivot).
         // Pitch contact line lies in XY plane (Z = 0) at angle delta1 from X axis.
-        // Pinion tooth phase at contact line: (z1 / 4) mod 1
-        // Gear tooth phase at contact line: 0 (crest).
-        // Gear 2 is phase-shifted so tooth crest enters tooth space center with zero collision:
-        const p1_teeth_at_contact = z1 / 4.0;
-        const p1_phase = p1_teeth_at_contact - Math.floor(p1_teeth_at_contact);
-        this.initialGearAngle = (p1_phase - 0.5) * (2.0 * Math.PI / z2);
+        // Pinion tooth 0 crest is at angle 0 along the contact line.
+        // Gear 2 has tooth space (half pitch -pi/z2) at the contact line:
+        this.initialGearAngle = -Math.PI / z2;
         this.pinionAngle = 0;
         this.gearAngle = this.initialGearAngle;
 
@@ -3638,9 +3639,11 @@ class Bevel3DVisualizer {
         this.pinionMesh.receiveShadow = true;
         this.pinionGroup.add(this.pinionMesh);
 
-        // Align Pinion along X-axis: rotate mesh so its Z-axis lies along +X
-        // Mesh local Z is rotation axis. To put local Z along +X, rotate Y by +90 deg
-        this.pinionMesh.rotation.set(0, Math.PI / 2.0, 0);
+        // Align Pinion along +X axis:
+        // Local Z -> World +X (Pinion axis)
+        // Local X -> World +Y (Tooth 0 points along +Y, exactly towards the contact line in XY plane)
+        // Local Y -> World +Z
+        this.pinionMesh.rotation.set(0, Math.PI / 2.0, Math.PI / 2.0);
 
         // 2. Gear BufferGeometry
         const geo2 = new THREE.BufferGeometry();
@@ -3652,11 +3655,15 @@ class Bevel3DVisualizer {
         this.gearMesh.receiveShadow = true;
         this.gearGroup.add(this.gearMesh);
 
-        // Align Gear along direction of Shaft Angle Sigma:
-        // When Sigma = 90 deg, Gear axis is along +Y.
-        // To put local Z along +Y, rotate X by -90 deg
+        // Align Gear along +Y axis (inside gearPivot):
+        // Local Z -> World +Y (Gear axis)
+        // Local X -> World +X (Tooth 0 points along +X, exactly towards the contact line in XY plane)
+        // Local Y -> World -Z
+        this.gearMesh.rotation.set(-Math.PI / 2.0, 0, 0);
+
+        // Rotate gearPivot for general shaft angle Sigma:
         const sigma = this.sigmaRad || (Math.PI / 2.0);
-        this.gearMesh.rotation.set(-Math.PI / 2.0, 0, Math.PI / 2.0 - sigma);
+        this.gearPivot.rotation.z = sigma - Math.PI / 2.0;
     }
 
     updateGearRotations() {
@@ -3711,56 +3718,59 @@ class Bevel3DVisualizer {
         if (!this.camera || !this.controls) return;
 
         const Re = this.geom ? (parseFloat(this.geom.Re) || 300.0) : 300.0;
-        const dist = Re * 1.6;
+        const dist = Re * 2.2;
 
-        // Center on mean pitch contact point
         const Rm = this.geom ? (parseFloat(this.geom.Rm) || (Re * 0.8)) : (Re * 0.8);
         const delta1 = this.geom ? (parseFloat(this.geom.delta1) || (Math.PI / 4)) : (Math.PI / 4);
-        const cx = Rm * Math.cos(delta1) * 0.5;
-        const cy = Rm * Math.sin(delta1) * 0.5;
-        const cz = 0;
+        const mx = Rm * Math.cos(delta1);
+        const my = Rm * Math.sin(delta1);
 
         switch (preset) {
-            case 'front': // Axial Section view (XY plane)
-                this.camera.position.set(cx, cy, dist * 1.4);
-                this.controls.target.set(cx, cy, 0);
+            case 'front': // Axial Section view (looking straight at XY plane from +Z)
+                this.camera.position.set(0, 0, dist * 1.5);
+                this.camera.up.set(0, 1, 0);
+                this.controls.target.set(0, 0, 0);
                 break;
-            case 'pinion': // Front face of Pinion (looking along X axis from +X)
-                this.camera.position.set(dist * 1.5, cy, 0);
-                this.controls.target.set(cx, cy, 0);
+            case 'pinion': // Looking along X axis from +X towards Pinion
+                this.camera.position.set(dist * 1.5, my, 0);
+                this.camera.up.set(0, 1, 0);
+                this.controls.target.set(mx, my, 0);
                 break;
-            case 'gear': // Front face of Gear (looking along Y axis from +Y)
-                this.camera.position.set(cx, dist * 1.5, 0);
-                this.controls.target.set(cx, cy, 0);
+            case 'gear': // Looking along Y axis from +Y towards Gear
+                this.camera.position.set(mx, dist * 1.5, 0);
+                this.camera.up.set(0, 0, -1);
+                this.controls.target.set(mx, my, 0);
                 break;
-            case 'top': // Top view (XZ plane)
-                this.camera.position.set(cx, dist * 1.5, cz);
-                this.controls.target.set(cx, 0, cz);
+            case 'top': // Top view (looking down Y axis)
+                this.camera.position.set(0, dist * 1.6, 0);
+                this.camera.up.set(0, 0, -1);
+                this.controls.target.set(0, 0, 0);
                 break;
             case 'bottom': // Bottom view
-                this.camera.position.set(cx, -dist * 1.5, cz);
-                this.controls.target.set(cx, 0, cz);
+                this.camera.position.set(0, -dist * 1.6, 0);
+                this.camera.up.set(0, 0, 1);
+                this.controls.target.set(0, 0, 0);
                 break;
-            case 'right': // Right view
-                this.camera.position.set(dist * 1.5, cy, cz);
-                this.controls.target.set(0, cy, cz);
+            case 'right': // Right view looking along +X axis
+                this.camera.position.set(dist * 1.6, 0, 0);
+                this.camera.up.set(0, 1, 0);
+                this.controls.target.set(0, 0, 0);
                 break;
             case 'left': // Left view
-                this.camera.position.set(-dist * 1.5, cy, cz);
-                this.controls.target.set(0, cy, cz);
+                this.camera.position.set(-dist * 1.6, 0, 0);
+                this.camera.up.set(0, 1, 0);
+                this.controls.target.set(0, 0, 0);
                 break;
-            case 'mesh': // Close up of pitch contact zone (looking along tooth face from Re to Ri)
-                const mx = Rm * Math.cos(delta1);
-                const my = Rm * Math.sin(delta1);
-                const ex = Re * Math.cos(delta1);
-                const ey = Re * Math.sin(delta1);
-                this.camera.position.set(ex + 80, ey + 40, 60);
+            case 'mesh': // Close up on pitch contact zone looking at engaging teeth
+                this.camera.position.set(mx + 80, my + 80, 150);
+                this.camera.up.set(0, 1, 0);
                 this.controls.target.set(mx, my, 0);
                 break;
             case 'iso':
             default:
-                this.camera.position.set(dist * 0.9, dist * 0.9, dist * 1.1);
-                this.controls.target.set(cx, cy, 0);
+                this.camera.position.set(dist * 0.8, dist * 0.55, dist * 0.95);
+                this.camera.up.set(0, 1, 0);
+                this.controls.target.set(0, 0, 0);
                 break;
         }
 
@@ -3800,33 +3810,6 @@ class Bevel3DVisualizer {
         const delta_f1 = parseFloat(this.geom.delta_f1 || (delta1 - Math.atan(hf1 / Rm)));
         const delta_f2 = parseFloat(this.geom.delta_f2 || (delta2 - Math.atan(hf2 / Rm)));
 
-        // Helper to transform triangle: [[p1], [p2], [p3], [n]]
-        function transformTriangles(tris, rotY_rad, rotX_rad, rotZ_rad = 0) {
-            const cosY = Math.cos(rotY_rad), sinY = Math.sin(rotY_rad);
-            const cosX = Math.cos(rotX_rad), sinX = Math.sin(rotX_rad);
-            const cosZ = Math.cos(rotZ_rad), sinZ = Math.sin(rotZ_rad);
-
-            function rotPt(p) {
-                // Rotate around Y
-                let x1 = p[0] * cosY + p[2] * sinY;
-                let y1 = p[1];
-                let z1 = -p[0] * sinY + p[2] * cosY;
-                // Rotate around X
-                let x2 = x1;
-                let y2 = y1 * cosX - z1 * sinX;
-                let z2 = y1 * sinX + z1 * cosX;
-                // Rotate around Z
-                let x3 = x2 * cosZ - y2 * sinZ;
-                let y3 = x2 * sinZ + y2 * cosZ;
-                let z3 = z2;
-                return [x3, y3, z3];
-            }
-
-            return tris.map(([p1, p2, p3, n]) => {
-                return [rotPt(p1), rotPt(p2), rotPt(p3), rotPt(n)];
-            });
-        }
-
         if (type === 'pinion') {
             const m1 = Bevel3DGenerator.generateGearMesh({
                 z: z1, mmn, delta: delta1, delta_a: delta_a1, delta_f: delta_f1,
@@ -3845,7 +3828,7 @@ class Bevel3DVisualizer {
             return m2.rawTriangles;
         }
 
-        // Assembly Pair
+        // Assembly Pair: transform both to common apex V(0,0,0) and conjugate engagement line
         const m1 = Bevel3DGenerator.generateGearMesh({
             z: z1, mmn, delta: delta1, delta_a: delta_a1, delta_f: delta_f1,
             Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1, ha: ha1, hf: hf1,
@@ -3857,13 +3840,40 @@ class Bevel3DVisualizer {
             hand: -1, surfaceOnly
         });
 
-        // Pinion transformed to Axis 1 (along +X)
-        const tPinion = transformTriangles(m1.rawTriangles, Math.PI / 2.0, 0, 0);
+        // Pinion: Local (x, y, z) -> World (z, x, y)
+        const tPinion = m1.rawTriangles.map(([p1, p2, p3, n]) => [
+            [p1[2], p1[0], p1[1]],
+            [p2[2], p2[0], p2[1]],
+            [p3[2], p3[0], p3[1]],
+            [n[2], n[0], n[1]]
+        ]);
 
-        // Gear transformed to Axis 2 (along direction of Sigma) and aligned with conjugate initial phase
-        const sigma = this.sigmaRad || (Math.PI / 2.0);
-        const gearMeshRotated = transformTriangles(m2.rawTriangles, 0, -Math.PI / 2.0, Math.PI / 2.0 - sigma);
-        const tGear = transformTriangles(gearMeshRotated, this.initialGearAngle, 0, 0);
+        // Gear: Local (x, y, z) -> (x, z, -y), then rotate Y by initialGearAngle, then rotate Z by (sigma - 90 deg)
+        const phi = this.initialGearAngle;
+        const cosP = Math.cos(phi), sinP = Math.sin(phi);
+        const rotZ = (this.sigmaRad || (Math.PI / 2.0)) - Math.PI / 2.0;
+        const cosZ = Math.cos(rotZ), sinZ = Math.sin(rotZ);
+
+        function xformGear(p) {
+            // 1. Base orientation: local X -> X, local Z -> Y, local Y -> -Z
+            const bx = p[0], by = p[2], bz = -p[1];
+            // 2. Rotate around Y by phi (initial conjugate phase)
+            const rx = bx * cosP + bz * sinP;
+            const ry = by;
+            const rz = -bx * sinP + bz * cosP;
+            // 3. Rotate around Z by rotZ (shaft angle sigma)
+            const fx = rx * cosZ - ry * sinZ;
+            const fy = rx * sinZ + ry * cosZ;
+            const fz = rz;
+            return [fx, fy, fz];
+        }
+
+        const tGear = m2.rawTriangles.map(([p1, p2, p3, n]) => [
+            xformGear(p1),
+            xformGear(p2),
+            xformGear(p3),
+            xformGear(n)
+        ]);
 
         return tPinion.concat(tGear);
     }

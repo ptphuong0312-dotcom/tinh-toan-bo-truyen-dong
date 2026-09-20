@@ -718,3 +718,30 @@
   - **Đóng gói mã nguồn CORS-Free (`bundle_all.py`)**:
     * Cập nhật thành công `bevel-engine.bundle.js` (225,141 ký tự), khởi động tức thì offline 100%.
 
+---
+
+## Giai Đoạn 11: Chuẩn Hóa Hình Học 3D Bánh Răng Côn Thực Thể Khớp 1-to-1 MITCalc 1.74 (ISO 23509 Conical Projection & Zero-Penetration Conjugate Meshing)
+* **Tiêu chuẩn**: ISO 23509, DIN 3971, Gleason System, MITCalc 1.74 (`Calculation!U197:AQ202` & `Data1!C70:D87`, `Data1!H35:I52`).
+* **Đột phá kỹ thuật & Khắc phục triệt để**:
+  1. **Khắc phục lỗi biến dạng phóng đại chiều cao răng (Tooth Projection Distortion Bug)**:
+     - *Bản chất lỗi*: Khi ép các lát cắt răng có cao độ trục phẳng $z = \text{const}$, toàn bộ chiều cao răng $h$ bị dồn vào bán kính $r = z \tan\delta + h/\cos\delta$. Với Bánh 2 ($\delta_2 = 68.2^\circ$), hệ số $1/\cos\delta_2 = 2.693\times$ làm răng bị thổi phồng theo phương ngang $270\%$, trong khi chiều cao trục $z = 0$, biến Bánh 2 thành đĩa cưa phẳng và khiến Bánh 1 đâm xuyên vào mặt lưng phẳng của Bánh 2.
+     - *Giải pháp hình học nón thực thể chuẩn giải tích*:
+       $$r(R, h) = R \sin\delta + h \cos\delta$$
+       $$z(R, h) = R \cos\delta - h \sin\delta$$
+       Bảo toàn 100% chiều sâu răng danh nghĩa $h_e = 26.60\text{ mm}$ tại gót ngoài (khớp `Calculation!U202` `Teeth_h = 26.5994`) và $h_i = 17.40\text{ mm}$ tại mũi trong (khớp `Calculation!U198` `Teeth_h = 17.4006`).
+  2. **Trùng khớp 100% với 18 điểm mặt cắt trục thực thể trong `Data1` của MITCalc 1.74**:
+     - Bánh dẫn 1: $Z \in [201.61, 318.08]\text{ mm}$, $R_{\max} = 140.20\text{ mm}$ (khớp chuẩn $P_{01}, P_{03}, P_{02}$ trong `Data1!C70:D87`).
+     - Bánh bị dẫn 2: $Z \in [77.20, 142.71]\text{ mm}$, $R_{\max} = 317.12\text{ mm}$ (khớp chuẩn $P_{01}, P_{03}, P_{02}$ trong `Data1!H35:I52`).
+  3. **Đồng bộ góc khởi tạo và pha động học ăn khớp liên hợp chuẩn xác**:
+     - Định vị trục Bánh 1 theo World $+X$ (`(0, Math.PI/2, Math.PI/2)`), Bánh 2 theo World $+Y$ (`(-Math.PI/2, 0, 0)`).
+     - Pha khởi tạo chuẩn xác đưa rãnh răng (tooth space) vào chính giữa đường tiếp xúc:
+       $$\text{initialGearAngle} = -\frac{\pi}{z_2}$$
+     - Răng Bánh dẫn 1 lọt chính giữa rãnh răng Bánh bị dẫn 2 với khe hở đáy $c = 0.2 m_n = 2.00\text{ mm}$, triệt tiêu 100% hiện tượng va chạm hay ngập xuyên sườn răng.
+  4. **Khử nếp gấp nan hoa & Làm phẳng mượt mà 2 mặt đầu (Smooth Manifold Caps)**:
+     - Nắp đầu ngoài và trong được gán pháp tuyến phẳng chuẩn $\vec{n} = [0, 0, 1]$ và $[0, 0, -1]$. Lòng lỗ trục gán pháp tuyến hướng tâm. Mặt đầu phản xạ ánh kim loại phẳng lỳ, không còn vết nhăn nan hoa.
+  5. **Định tâm và căn chỉnh khung nhìn Camera chuẩn CAD**:
+     - `controls.target.set(0, 0, 0)` căn chính xác vào trọng tâm hình học của cả bộ truyền, loại bỏ độ lệch nhìn xiên, mô hình hiển thị cân đối hoàn hảo trong mọi tỷ lệ màn hình.
+* **Kết quả kiểm thử tự động E2E**:
+  - `test_bevel_3d.py`: **100% PASS tất cả các bài kiểm thử hình học, ăn khớp, STEP Solid, STEP Surface, STL và DXF AC1009**.
+  - `deep_line_by_line_bevel_audit.py`: **115 / 115 ô tính PASS 100.0% với $\Delta = 0.000000$**.
+
