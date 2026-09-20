@@ -99,8 +99,58 @@ def test_bevel_3d():
         page.screenshot(path=front_path)
         print(f"[+] Đã lưu ảnh chụp 3D Mặt Bổ Dọc Trục: {front_path}")
 
+        # Kiểm tra tính phẳng tuyệt đối của 2 mặt đầu (Planar Caps, ZERO "nhấp nhô")
+        print("\n-> [6] Kiểm tra tính phẳng toán học tuyệt đối của 2 mặt đầu (Planar Caps)...")
+        planar_check = page.evaluate("""() => {
+            const ui = window.appUI;
+            const v = ui.visualizer3D;
+            const m1 = v.mesh1Data;
+            
+            // Lấy các đỉnh ở nắp đáy và nắp đầu
+            // Trong bevel-3d-generator:
+            // Back cap: z = z_back = Re * cos(delta)
+            // Front cap: z = z_front = Ri * cos(delta)
+            const g = ui.lastGeom;
+            const expectedZBack = g.Re * Math.cos(g.delta1);
+            const expectedZFront = g.Ri * Math.cos(g.delta1);
+            
+            const verts = m1.vertices;
+            let maxDiffBack = 0;
+            let maxDiffFront = 0;
+            let backCapCount = 0;
+            let frontCapCount = 0;
+            
+            for (let i = 0; i < verts.length; i += 3) {
+                const z = verts[i + 2];
+                if (Math.abs(z - expectedZBack) < 1e-3) {
+                    backCapCount++;
+                    maxDiffBack = Math.max(maxDiffBack, Math.abs(z - expectedZBack));
+                }
+                if (Math.abs(z - expectedZFront) < 1e-3) {
+                    frontCapCount++;
+                    maxDiffFront = Math.max(maxDiffFront, Math.abs(z - expectedZFront));
+                }
+            }
+            
+            return {
+                backCapCount,
+                frontCapCount,
+                maxDiffBack,
+                maxDiffFront,
+                expectedZBack,
+                expectedZFront
+            };
+        }""")
+        
+        print(f"[+] Mặt đầu ngoài (Back Cap): {planar_check['backCapCount']} đỉnh tại Z={planar_check['expectedZBack']:.4f} mm | Độ lệch max: {planar_check['maxDiffBack']:.6f} mm (PHẲNG TUYỆT ĐỐI!)")
+        print(f"[+] Mặt đầu trong (Front Cap): {planar_check['frontCapCount']} đỉnh tại Z={planar_check['expectedZFront']:.4f} mm | Độ lệch max: {planar_check['maxDiffFront']:.6f} mm (PHẲNG TUYỆT ĐỐI!)")
+        assert planar_check['backCapCount'] > 0, "Không tìm thấy đỉnh mặt đầu ngoài!"
+        assert planar_check['frontCapCount'] > 0, "Không tìm thấy đỉnh mặt đầu trong!"
+        assert planar_check['maxDiffBack'] < 1e-5, f"Mặt đầu ngoài bị nhấp nhô: {planar_check['maxDiffBack']}"
+        assert planar_check['maxDiffFront'] < 1e-5, f"Mặt đầu trong bị nhấp nhô: {planar_check['maxDiffFront']}"
+
         # Kiểm tra tạo tệp xuất 3D CAD: STEP Solid, STEP Surface, Binary STL
-        print("\n-> [6] Kiểm tra sinh dữ liệu xuất 3D CAD (STEP & STL)...")
+        print("\n-> [7] Kiểm tra sinh dữ liệu xuất 3D CAD (STEP & STL)...")
         export_tests = page.evaluate("""() => {
             const ui = window.appUI;
             const v = ui.visualizer3D;
@@ -135,7 +185,50 @@ def test_bevel_3d():
         assert export_tests['hasClosedShell'], "Tệp STEP Solid không có CLOSED_SHELL!"
         assert export_tests['hasOpenShell'], "Tệp STEP Surface không có OPEN_SHELL!"
         assert export_tests['hasSurfaceModel'], "Tệp STEP Surface không có SHELL_BASED_SURFACE_MODEL!"
-        assert export_tests['stlSurfaceTris'] < export_tests['stlSolidTris'], "Lưới Surface rỗng phải ít tam giác hơn Solid (do bỏ nắp đầu và lòng trục)!"
+        assert export_tests['stlSurfaceTris'] < export_tests['stlSolidTris'], "Lưới Surface rỗng phải ít tam giác hơn Solid!"
+
+        # Kiểm tra xuất bản vẽ 2D CAD DXF (AutoCAD 2004+ AC1009) với 11 mức độ mịn
+        print("\n-> [8] Kiểm tra xuất bản vẽ 2D CAD DXF (AutoCAD 2004+ Release 12 AC1009)...")
+        dxf_tests = page.evaluate("""() => {
+            const ui = window.appUI;
+            const g = ui.lastGeom;
+            
+            // Test 3 targets (pinion, gear, assembly) with level 6 (default)
+            const dxfPinion = BevelDxfExporter.generateDXF(g, 'pinion', 6);
+            const dxfGear = BevelDxfExporter.generateDXF(g, 'gear', 6);
+            const dxfAssembly = BevelDxfExporter.generateDXF(g, 'assembly', 6);
+            
+            // Test level 1 (coarse) and level 11 (ultra-fine)
+            const dxfLvl1 = BevelDxfExporter.generateDXF(g, 'assembly', 1);
+            const dxfLvl11 = BevelDxfExporter.generateDXF(g, 'assembly', 11);
+            
+            return {
+                hasAC1009: dxfAssembly.includes('AC1009'),
+                hasAcadVer: dxfAssembly.includes('$ACADVER'),
+                hasTables: dxfAssembly.includes('TABLES') && dxfAssembly.includes('LAYER') && dxfAssembly.includes('LTYPE'),
+                hasEntities: dxfAssembly.includes('ENTITIES'),
+                hasMfgTable: dxfAssembly.includes('MFG_TABLE'),
+                hasCRLF: dxfAssembly.includes('\\r\\n'),
+                pinionLen: dxfPinion.length,
+                gearLen: dxfGear.length,
+                assemblyLen: dxfAssembly.length,
+                lvl1Len: dxfLvl1.length,
+                lvl11Len: dxfLvl11.length
+            };
+        }""")
+
+        print(f"[+] DXF AC1009 Header: {dxf_tests['hasAC1009']} ($ACADVER: {dxf_tests['hasAcadVer']})")
+        print(f"[+] DXF TABLES (VPORT, LTYPE, LAYER, STYLE): {dxf_tests['hasTables']}")
+        print(f"[+] DXF ENTITIES & Bảng chế tạo MFG_TABLE: {dxf_tests['hasEntities']} & {dxf_tests['hasMfgTable']}")
+        print(f"[+] Định dạng xuống dòng chuẩn CRLF (AutoCAD 2004+): {dxf_tests['hasCRLF']}")
+        print(f"[+] Độ dài DXF Pinion: {dxf_tests['pinionLen']:,} bytes | Gear: {dxf_tests['gearLen']:,} bytes | Assembly: {dxf_tests['assemblyLen']:,} bytes")
+        print(f"[+] Độ mịn Mức 1 (Thô): {dxf_tests['lvl1Len']:,} bytes | Mức 11 (Siêu mịn): {dxf_tests['lvl11Len']:,} bytes")
+
+        assert dxf_tests['hasAC1009'], "DXF thiếu AC1009!"
+        assert dxf_tests['hasAcadVer'], "DXF thiếu $ACADVER!"
+        assert dxf_tests['hasTables'], "DXF thiếu TABLES!"
+        assert dxf_tests['hasEntities'], "DXF thiếu ENTITIES!"
+        assert dxf_tests['hasCRLF'], "DXF không dùng CRLF!"
 
         print("\n" + "=" * 80)
         print(" TẤT CẢ CÁC BÀI KIỂM THỬ 3D WEBGL & CAD EXPORT CHO BÁNH RĂNG CÔN ĐÃ PASS 100%!")

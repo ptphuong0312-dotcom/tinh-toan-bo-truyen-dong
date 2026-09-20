@@ -29,6 +29,7 @@ class BevelGearUI {
         };
 
         this.lastGeom = null;
+        this.profileResolution = 6;
         this.activeMode = '2D';
         this.canvasController = (typeof BevelGearCanvas !== 'undefined') ? new BevelGearCanvas('bevelCanvas') : null;
         const container3DEl = document.getElementById('bevel3DContainer');
@@ -183,14 +184,103 @@ class BevelGearUI {
             });
         }
 
-        // DXF Export Buttons (Canvas & Section 16)
+        // Profile Resolution Sliders (11 Levels: 1 to 11)
+        const sliderResSec16 = document.getElementById('sliderProfileResolution');
+        const lblResSec16 = document.getElementById('lblProfileResolution');
+        const sliderResCanvas = document.getElementById('sliderProfileResolutionCanvas');
+        const lblResCanvas = document.getElementById('lblProfileResolutionCanvas');
+
+        const updateResolutionUI = (lvl) => {
+            this.profileResolution = parseInt(lvl) || 6;
+            const resInfo = (typeof BEVEL_PROFILE_RESOLUTIONS !== 'undefined') ? BEVEL_PROFILE_RESOLUTIONS[this.profileResolution] : null;
+            const nameText = resInfo ? resInfo.name : `Mức ${this.profileResolution}`;
+            const canvasText = resInfo ? `${resInfo.name} (${resInfo.ptsPerTooth} pts)` : `Mức ${this.profileResolution}`;
+            if (sliderResSec16) sliderResSec16.value = this.profileResolution;
+            if (lblResSec16) lblResSec16.textContent = nameText;
+            if (sliderResCanvas) sliderResCanvas.value = this.profileResolution;
+            if (lblResCanvas) lblResCanvas.textContent = canvasText;
+        };
+
+        if (sliderResSec16) {
+            sliderResSec16.addEventListener('input', (e) => updateResolutionUI(e.target.value));
+        }
+        if (sliderResCanvas) {
+            sliderResCanvas.addEventListener('input', (e) => updateResolutionUI(e.target.value));
+        }
+
+        // Section 16 DXF Dropdown
+        const btnExportDXFSec16Menu = document.getElementById('btnExportDXFSec16Menu');
+        const exportDXFSec16Dropdown = document.getElementById('exportDXFSec16Dropdown');
+        if (btnExportDXFSec16Menu && exportDXFSec16Dropdown) {
+            btnExportDXFSec16Menu.addEventListener('click', (e) => {
+                e.stopPropagation();
+                exportDXFSec16Dropdown.style.display = (exportDXFSec16Dropdown.style.display === 'block') ? 'none' : 'block';
+            });
+            document.addEventListener('click', () => {
+                exportDXFSec16Dropdown.style.display = 'none';
+            });
+        }
+
+        const bindDXFSec16 = (id, target) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (exportDXFSec16Dropdown) exportDXFSec16Dropdown.style.display = 'none';
+                    this.exportDXF(target);
+                });
+            }
+        };
+        bindDXFSec16('btnExportDXFSec16Pinion', 'pinion');
+        bindDXFSec16('btnExportDXFSec16Gear', 'gear');
+        bindDXFSec16('btnExportDXFSec16Assembly', 'assembly');
+
+        // Canvas 2D DXF Dropdown
+        const btnExportDXFCanvasMenu = document.getElementById('btnExportDXFCanvasMenu');
+        const exportDXFCanvasDropdown = document.getElementById('exportDXFCanvasDropdown');
+        if (btnExportDXFCanvasMenu && exportDXFCanvasDropdown) {
+            btnExportDXFCanvasMenu.addEventListener('click', (e) => {
+                e.stopPropagation();
+                exportDXFCanvasDropdown.style.display = (exportDXFCanvasDropdown.style.display === 'block') ? 'none' : 'block';
+            });
+            document.addEventListener('click', () => {
+                exportDXFCanvasDropdown.style.display = 'none';
+            });
+        }
+
+        const bindDXFCanvas = (id, target) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (exportDXFCanvasDropdown) exportDXFCanvasDropdown.style.display = 'none';
+                    this.exportDXF(target);
+                });
+            }
+        };
+        bindDXFCanvas('expDxfPinionCanvas', 'pinion');
+        bindDXFCanvas('expDxfGearCanvas', 'gear');
+        bindDXFCanvas('expDxfAssemblyCanvas', 'assembly');
+
+        // Fallback for direct DXF buttons if present
         const btnExportDXFCanvas = document.getElementById('btnExportDXFCanvas');
         if (btnExportDXFCanvas) {
-            btnExportDXFCanvas.addEventListener('click', () => this.exportDXF());
+            btnExportDXFCanvas.addEventListener('click', () => this.exportDXF('assembly'));
         }
         const btnExportDXFSec16 = document.getElementById('btnExportDXFSec16');
         if (btnExportDXFSec16) {
-            btnExportDXFSec16.addEventListener('click', () => this.exportDXF());
+            btnExportDXFSec16.addEventListener('click', () => this.exportDXF('assembly'));
+        }
+
+        // Draw 2D Navigation Button
+        const btnDraw2D = document.getElementById('btn_draw_2d');
+        if (btnDraw2D) {
+            btnDraw2D.addEventListener('click', () => {
+                const tabCanvasBtn = document.querySelector('[data-target="tabCanvas"]');
+                if (tabCanvasBtn) tabCanvasBtn.click();
+                const btnMode2D = document.getElementById('btnMode2D');
+                if (btnMode2D) btnMode2D.click();
+            });
         }
 
         // Live Audit Refresh Button
@@ -1515,184 +1605,12 @@ class BevelGearUI {
         }
     }
 
-    exportDXF() {
+    exportDXF(target = 'assembly') {
         const g = this.lastGeom || (typeof BevelCalcEngine !== 'undefined' ? BevelCalcEngine.calculate(this.inputs) : null);
         if (!g) return;
-
-        const Re = g.Re;
-        const Ri = g.Ri;
-        const b = g.b;
-        const d1 = g.delta1; // rad
-        const d2 = g.delta2; // rad
-        const th_a1 = (g.deltaa1_deg * Math.PI) / 180.0;
-        const th_f1 = (g.deltaf1_deg * Math.PI) / 180.0;
-        const th_a2 = (g.deltaa2_deg * Math.PI) / 180.0;
-        const th_f2 = (g.deltaf2_deg * Math.PI) / 180.0;
-
-        const d1a = d1 + th_a1;
-        const d1f = d1 - th_f1;
-        const d2a = d2 + th_a2;
-        const d2f = d2 - th_f2;
-
-        const Rae1 = Re / Math.cos(th_a1);
-        const Rfe1 = Re / Math.cos(th_f1);
-        const Rai1 = Ri / Math.cos(th_a1);
-        const Rfi1 = Ri / Math.cos(th_f1);
-
-        const p1_toe_tip = { x: Rai1 * Math.cos(d1a), y: Rai1 * Math.sin(d1a) };
-        const p1_heel_tip = { x: Rae1 * Math.cos(d1a), y: Rae1 * Math.sin(d1a) };
-        const p1_heel_root = { x: Rfe1 * Math.cos(d1f), y: Rfe1 * Math.sin(d1f) };
-        const p1_toe_root = { x: Rfi1 * Math.cos(d1f), y: Rfi1 * Math.sin(d1f) };
-
-        const d_bore1 = Math.max(15, g.de1 * 0.22);
-        const d_hub1 = Math.max(25, g.de1 * 0.45);
-        const x_back1 = p1_heel_tip.x + 15;
-        const x_hub_end1 = x_back1 + Math.max(30, b * 0.7);
-
-        // Pinion Upper Half (Clean vertical front face at p1_toe_root.x)
-        const x_front1 = p1_toe_root.x;
-        const p1_upper = [
-            p1_toe_root, p1_toe_tip, p1_heel_tip, p1_heel_root,
-            { x: x_back1, y: d_hub1 / 2.0 },
-            { x: x_hub_end1, y: d_hub1 / 2.0 },
-            { x: x_hub_end1, y: d_bore1 / 2.0 },
-            { x: x_front1, y: d_bore1 / 2.0 },
-            p1_toe_root
-        ];
-        const p1_lower = p1_upper.map(p => ({ x: p.x, y: -p.y }));
-
-        // Gear (Apex at 0,0, shaft along Y axis)
-        const Rae2 = Re / Math.cos(th_a2);
-        const Rfe2 = Re / Math.cos(th_f2);
-        const Rai2 = Ri / Math.cos(th_a2);
-        const Rfi2 = Ri / Math.cos(th_f2);
-
-        const p2_toe_tip = { x: Rai2 * Math.cos(d1 - th_a2), y: Rai2 * Math.sin(d1 - th_a2) };
-        const p2_heel_tip = { x: Rae2 * Math.cos(d1 - th_a2), y: Rae2 * Math.sin(d1 - th_a2) };
-        const p2_heel_root = { x: Rfe2 * Math.cos(d1 + th_f2), y: Rfe2 * Math.sin(d1 + th_f2) };
-        const p2_toe_root = { x: Rfi2 * Math.cos(d1 + th_f2), y: Rfi2 * Math.sin(d1 + th_f2) };
-
-        const d_bore2 = Math.max(25, g.de2 * 0.16);
-        const d_hub2 = Math.max(45, g.de2 * 0.32);
-        const y_back2 = p2_heel_tip.y + 18;
-        const y_hub_end2 = y_back2 + Math.max(35, b * 0.8);
-
-        const p2_right = [
-            p2_toe_root, p2_toe_tip, p2_heel_tip, p2_heel_root,
-            { x: d_hub2 / 2.0, y: y_back2 },
-            { x: d_hub2 / 2.0, y: y_hub_end2 },
-            { x: d_bore2 / 2.0, y: y_hub_end2 },
-            { x: d_bore2 / 2.0, y: p2_toe_root.y },
-            p2_toe_root
-        ];
-        const p2_left = p2_right.map(p => ({ x: -p.x, y: p.y }));
-
-        // DXF Header & Layers (AutoCAD Release 12 AC1009)
-        const dxf = [];
-        dxf.push("0\nSECTION\n2\nHEADER\n9\n$ACADVER\n1\nAC1009\n0\nENDSEC\n");
-        dxf.push("0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n70\n6\n");
-        const layers = [
-            { name: "PINION_CROSS_SECTION", color: 3 },
-            { name: "GEAR_CROSS_SECTION", color: 5 },
-            { name: "CENTER_LINES", color: 1 },
-            { name: "PITCH_CONES", color: 2 },
-            { name: "APEX_POINT", color: 1 },
-            { name: "MFG_TABLE", color: 7 }
-        ];
-        layers.forEach(lyr => {
-            dxf.push(`0\nLAYER\n2\n${lyr.name}\n70\n0\n62\n${lyr.color}\n6\nCONTINUOUS\n`);
-        });
-        dxf.push("0\nENDTAB\n0\nENDSEC\n");
-        dxf.push("0\nSECTION\n2\nENTITIES\n");
-
-        const addPolyline = (pts, layer) => {
-            dxf.push(`0\nPOLYLINE\n8\n${layer}\n66\n1\n70\n1\n`);
-            pts.forEach(p => {
-                dxf.push(`0\nVERTEX\n8\n${layer}\n10\n${p.x.toFixed(4)}\n20\n${p.y.toFixed(4)}\n30\n0.0\n`);
-            });
-            dxf.push("0\nSEQEND\n");
-        };
-
-        const addLine = (p1, p2, layer) => {
-            dxf.push(`0\nLINE\n8\n${layer}\n10\n${p1.x.toFixed(4)}\n20\n${p1.y.toFixed(4)}\n30\n0.0\n11\n${p2.x.toFixed(4)}\n21\n${p2.y.toFixed(4)}\n31\n0.0\n`);
-        };
-
-        const addText = (text, x, y, height, layer) => {
-            dxf.push(`0\nTEXT\n8\n${layer}\n10\n${x.toFixed(4)}\n20\n${y.toFixed(4)}\n30\n0.0\n40\n${height.toFixed(4)}\n1\n${text}\n`);
-        };
-
-        // 1. Pinion Profile
-        addPolyline(p1_upper, "PINION_CROSS_SECTION");
-        addPolyline(p1_lower, "PINION_CROSS_SECTION");
-        // Pinion bore rectangle
-        addLine({ x: p1_toe_root.x - 5, y: -d_bore1 / 2.0 }, { x: x_hub_end1, y: -d_bore1 / 2.0 }, "PINION_CROSS_SECTION");
-        addLine({ x: p1_toe_root.x - 5, y: d_bore1 / 2.0 }, { x: x_hub_end1, y: d_bore1 / 2.0 }, "PINION_CROSS_SECTION");
-
-        // 2. Gear Profile
-        addPolyline(p2_right, "GEAR_CROSS_SECTION");
-        addPolyline(p2_left, "GEAR_CROSS_SECTION");
-        // Gear bore rectangle
-        addLine({ x: -d_bore2 / 2.0, y: y_hub_end2 }, { x: -d_bore2 / 2.0, y: p2_toe_root.y - 5 }, "GEAR_CROSS_SECTION");
-        addLine({ x: d_bore2 / 2.0, y: y_hub_end2 }, { x: d_bore2 / 2.0, y: p2_toe_root.y - 5 }, "GEAR_CROSS_SECTION");
-
-        // 3. Center Lines
-        addLine({ x: -30, y: 0 }, { x: x_hub_end1 + 40, y: 0 }, "CENTER_LINES");
-        addLine({ x: 0, y: -30 }, { x: 0, y: y_hub_end2 + 40 }, "CENTER_LINES");
-        const contactX = Re * Math.cos(d1);
-        const contactY = Re * Math.sin(d1);
-        addLine({ x: 0, y: 0 }, { x: contactX * 1.15, y: contactY * 1.15 }, "CENTER_LINES");
-
-        // 4. Pitch Cones (Re, Ri generator lines)
-        addLine({ x: 0, y: 0 }, { x: Re * Math.cos(d1a), y: Re * Math.sin(d1a) }, "PITCH_CONES");
-        addLine({ x: 0, y: 0 }, { x: Re * Math.cos(d1f), y: Re * Math.sin(d1f) }, "PITCH_CONES");
-
-        // 5. Apex Point
-        dxf.push("0\nCIRCLE\n8\nAPEX_POINT\n10\n0.0\n20\n0.0\n30\n0.0\n40\n3.0\n");
-
-        // 6. Manufacturing Specification Table
-        const tx = Math.max(x_hub_end1 + 60, Re * 1.25);
-        let ty = y_hub_end2 + 20;
-        const lineH = 10.0;
-
-        const mfgRows = [
-            "===========================================================",
-            "  BANG THONG SO CHE TAO BANH RANG CON (ISO 23509 / DIN 3971)",
-            "===========================================================",
-            `Mo-dun phap tuyen trung binh (mmn):    ${g.mmn.toFixed(3)} mm`,
-            `So rang banh dan / bi dan (z1 / z2):   ${g.z1} / ${g.z2}`,
-            `Ti so truyen dong thuc te (i):         ${g.i.toFixed(4)}`,
-            `Goc giua hai truc (Sigma):             ${g.Sigma_deg.toFixed(2)} deg`,
-            `Goc an khop danh nghia (alfa):         ${g.alfa_deg.toFixed(2)} deg`,
-            `Goc xoan rang trung binh (beta):       ${g.beta_deg.toFixed(2)} deg`,
-            `Goc non chia 1 (delta1):               ${g.delta1_deg.toFixed(4)} deg`,
-            `Goc non chia 2 (delta2):               ${g.delta2_deg.toFixed(4)} deg`,
-            `Chieu dai duong sinh non ngoai (Re):   ${g.Re.toFixed(3)} mm`,
-            `Chieu rong vanh rang (b):              ${g.b.toFixed(1)} mm`,
-            `He so dich chinh bien dang (x1 / x2):  ${g.x1.toFixed(4)} / ${g.x2.toFixed(4)}`,
-            `He so dich chinh chieu day (xt1 / xt2):${g.xt1.toFixed(4)} / ${g.xt2.toFixed(4)}`,
-            `Duong kinh dinh ngoai (dae1 / dae2):   ${g.dae1.toFixed(3)} / ${g.dae2.toFixed(3)} mm`,
-            `Duong kinh day ngoai (dfe1 / dfe2):    ${g.dfe1.toFixed(3)} / ${g.dfe2.toFixed(3)} mm`,
-            `Cap chinh xac che tao:                 DIN 3965 Cap ${g.Q}`,
-            "==========================================================="
-        ];
-
-        mfgRows.forEach(row => {
-            addText(row, tx, ty, 5.0, "MFG_TABLE");
-            ty -= lineH;
-        });
-
-        dxf.push("0\nENDSEC\n0\nEOF\n");
-        const dxfContent = dxf.join("");
-
-        // Download via Blob
-        const blob = new Blob([dxfContent], { type: "application/dxf;charset=utf-8" });
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = `Banh_Rang_Con_MITCalc_${g.z1}x${g.z2}_m${g.mmn}.dxf`;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
+        if (typeof BevelDxfExporter !== 'undefined') {
+            BevelDxfExporter.downloadDXF(g, target, this.profileResolution || 6);
+        }
     }
 
     export3DCAD(format, target) {

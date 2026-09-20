@@ -526,28 +526,72 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
    - Tọa độ 3D mặt nón chia: $r(R) = R \sin\delta, z(R) = R \cos\delta$ với $R \in [R_i, R_e]$.
    - Chiều cao sườn răng $h$ đo trên mặt nón phụ vuông góc đường sinh: $r = R \sin\delta + h \cos\delta, z = R \cos\delta - h \sin\delta$.
    - Biên dạng thân khai cầu ảo Tredgold ($z_v = z / \cos\delta, r_v = R \tan\delta$) kết hợp góc lượn chân răng $R = 0.38 \cdot m_{mn}$ và đoạn đáy rãnh root land arc, đảm bảo góc $\theta$ đơn điệu nghiêm ngặt từ $-\pi/z$ đến $+\pi/z$.
-   - Răng xoắn Gleason Spiral Bevel ($\beta > 0$): đường xoắn ốc nón $\phi_{\text{spiral}}(R) = \text{hand} \cdot \frac{(R_e - R)\tan\beta_m}{R_m \sin\delta}$ với hướng xoắn đối xứng giữa bánh dẫn 1 (+1) và bánh bị dẫn 2 (-1).
-2. **Đồng bộ pha động học ăn khớp tổng quát không va chạm (Universal Zero-Collision Conjugate Phase Offset)**:
+2. **Quy Chuẩn Hai Mặt Đầu Phẳng Tuyệt Đối (Planar End Caps Protocol - Triệt Tiêu 100% "Nhấp Nhô")**:
+   - **Bản chất lỗi "nhấp nhô" trước đây**: Các lát cắt được tạo theo mặt nón phụ có cao độ trục thay đổi theo chiều cao răng $z = R \cos\delta - h \sin\delta$. Khi nối đỉnh có $z$ khác nhau về lòng lỗ trục có cao độ $Z$ phẳng, các mặt tam giác bị gấp khúc dạng nan hoa tạo gợn nhấp nhô.
+   - **Giải pháp chuẩn xác cơ khí**: Cắt lát sinh khối theo các mặt phẳng song song trực tiếp với mặt phẳng quay vuông góc trục bánh răng:
+     * Mặt đầu ngoài (Back cap): phẳng tuyệt đối tại $Z = z_{\text{back}} = R_e \cos\delta$, pháp tuyến $[0, 0, 1]$.
+     * Mặt đầu trong (Front cap): phẳng tuyệt đối tại $Z = z_{\text{front}} = R_i \cos\delta$, pháp tuyến $[0, 0, -1]$.
+     * Bán kính lát cắt tại cao độ $Z$ được nội suy giải tích: $R(Z) = Z / \cos\delta$, đảm bảo mọi điểm trên chu vi nắp đầu đều có cùng cao độ $Z$, sai số phẳng $\le 0.000005\text{ mm}$.
+     * Tách đỉnh độc lập (Vertex Splitting) tại mép biên nắp đầu và lòng trục để tạo gờ cơ khí sắc nét $90^\circ$, không dùng chung pháp tuyến với mặt sườn răng.
+3. **Quy Chuẩn Đường Răng Xoắn Gleason Chuẩn MITCalc 1.74 (Calculation!U197:AQ202)**:
+   - **Bản chất đường chạy dao phay mặt đầu nón Gleason**: Cung tròn bán kính dao cắt $R_{\text{tool}} = 1.5 \cdot b$ (Section 16.4) tiếp xúc tại điểm chia trung bình $R_m$.
+   - Tọa độ chuẩn hóa dọc bề rộng: $u = (R - R_m)/b \in [-0.5, 0.5]$ (tâm vặn xoắn đặt đúng tại $R = R_m$ nơi $u = 0$, vặn xoắn bằng 0).
+   - Độ võng cung dao cắt:
+     $$W(u) = R_{\text{tool}} \cos\beta - \sqrt{R_{\text{tool}}^2 - (-u \cdot b + R_{\text{tool}} \sin\beta)^2}$$
+   - Góc xoay cung răng: $\Delta\phi(R) = \text{hand} \cdot \frac{W(u)}{R_m \sin\delta}$.
+   - Khắc phục triệt để lỗi vặn xoắn từ $R_e$ về $R_i$ gây sai lệch $18.6^\circ$ tại mặt phẳng tiếp xúc trung bình, đưa răng về đúng pha ăn khớp danh nghĩa.
+4. **Đồng bộ pha động học ăn khớp tổng quát không va chạm (Universal Zero-Collision Conjugate Phase Offset)**:
    - Trục bánh dẫn 1 dọc theo trục X, trục bánh bị dẫn 2 dọc theo trục Y (hoặc góc trục $\Sigma$).
-   - Vùng ăn khớp nằm tại mặt phẳng $XY$ ($Z = 0$), góc tiếp xúc $\phi_1 = \pi/2$ ($90^\circ$ quanh trục X).
-   - Pha răng của bánh 1 tại đường ăn khớp: $\text{phase}_1 = \left(\frac{z_1}{4}\right) \bmod 1$.
-   - Khi `gearAngle = 0`, bánh 2 có đỉnh răng (crest) nằm ngay tại đường ăn khớp (phase 0).
-   - Công thức bù pha tổng quát cho mọi bộ răng $(z_1, z_2)$ để đỉnh răng bánh 2 lọt chính giữa rãnh răng bánh 1:
+   - Bù pha tổng quát cho mọi bộ răng $(z_1, z_2)$:
      $$\phi_{2,0} = \left( \left(\frac{z_1}{4}\right) \bmod 1 - 0.5 \right) \cdot \frac{2\pi}{z_2}$$
-     *(Ví dụ $z_1 = 18$: $18/4 = 4.5 \implies \phi_{2,0} = 0$; $z_1 = 20$: $20/4 = 5.0 \implies \phi_{2,0} = -\pi / z_2$ nửa bước răng).*
    - Khóa cứng quan hệ quay động học: $\phi_2 = \phi_{2,0} - \frac{\phi_1}{u}$ (với $u = z_2 / z_1$).
    - Khe hở động học thực đo $c \in [1.423\text{ mm}, 1.895\text{ mm}]$ xuyên suốt 360 độ quay, triệt tiêu hoàn toàn va chạm và xuyên thân răng.
-3. **Thứ tự đỉnh tam giác chuẩn kín nước thể tích dương (Watertight Manifold Topology & Positive Signed Volume)**:
-   - Thiết lập thứ tự cuộn đỉnh ngược chiều kim đồng hồ nhìn từ ngoài không gian (counter-clockwise) cho cả 4 khối:
-     * Nhóm 1 (Mặt sườn răng): `addQuad(L1[j], L2[j], L2[nextJ], L1[nextJ])`.
-     * Nhóm 2 (Nắp đầu ngoài $R_e$): `addQuad(boreOuter[j], L_outer[j], L_outer[nextJ], boreOuter[nextJ], nBack)`.
-     * Nhóm 3 (Nắp đầu trong $R_i$): `addQuad(L_inner[j], boreInner[j], boreInner[nextJ], L_inner[nextJ], nFront)`.
-     * Nhóm 4 (Lòng lỗ trục $d_s$): `addQuad(boreInner[j], boreInner[nextJ], boreOuter[nextJ], boreOuter[j], nBore)`.
-   - Đảm bảo toàn bộ pháp véc-tơ hướng ra ngoài, thể tích đại số $\text{Vol} > 0$, triệt tiêu lỗi lật mặt phẳng (inverted normals) khi kết xuất vật liệu kim loại PBR.
-4. **Đa dạng định dạng xuất CAD cho SolidWorks & Mastercam**:
+5. **Thứ tự đỉnh tam giác chuẩn kín nước thể tích dương (Watertight Manifold Topology & Positive Signed Volume)**:
+   - Thứ tự cuộn đỉnh ngược chiều kim đồng hồ nhìn từ ngoài không gian (counter-clockwise) cho cả 4 khối: Mặt sườn răng, Nắp đầu ngoài $R_e$, Nắp đầu trong $R_i$, và Lòng lỗ trục $d_s$.
+   - Đảm bảo toàn bộ pháp véc-tơ hướng ra ngoài, thể tích đại số $\text{Vol}_1 = +4,077,728\text{ mm}^3, \text{Vol}_2 = +9,812,709\text{ mm}^3 > 0$, triệt tiêu lỗi lật mặt phẳng (inverted normals).
+6. **Đa dạng định dạng xuất CAD cho SolidWorks & Mastercam**:
    - STEP AP214 B-Rep Solid (`CLOSED_SHELL` / `MANIFOLD_SOLID_BREP`).
-   - STEP AP214 Flank Surface Rỗng (`OPEN_SHELL` / `SHELL_BASED_SURFACE_MODEL`) - không nắp đầu, không lòng trục để Mastercam lập trình phay 5 trục trực tiếp (Surface Finish Scallop/Flowline/Swarf).
+   - STEP AP214 Flank Surface Rỗng (`OPEN_SHELL` / `SHELL_BASED_SURFACE_MODEL`) - không nắp đầu, không lòng trục để Mastercam lập trình phay 5 trục trực tiếp.
    - Binary STL Solid & Surface (`.stl`) và Wavefront OBJ (`.obj`).
+
+---
+
+### Quy Chuẩn 27: Xuất Bản Vẽ 2D CAD Chuẩn Release 12 (AC1009) Mở Tốt Từ AutoCAD 2004 Đến 2026
+1. **Tiêu chuẩn tương thích AutoCAD 2004+ (AC1009 Standard)**:
+   - Sử dụng định dạng DXF Release 12 (mã hiệu `AC1009` và biến `$ACADVER`).
+   - Bắt buộc sử dụng ký tự xuống dòng chuẩn DOS/Windows CRLF (`\r\n`). Ký tự xuống dòng đơn `\n` sẽ khiến AutoCAD 2004 báo lỗi "Premature end of file" hoặc từ chối đọc.
+   - Bắt buộc chứa đầy đủ 4 bảng hệ thống trong `SECTION TABLES`:
+     * `VPORT`: Viewport hiển thị ban đầu.
+     * `LTYPE`: Các nét vẽ kỹ thuật (CONTINUOUS, CENTER, DASHED).
+     * `LAYER`: Các lớp kỹ thuật phân tầng (`GEAR1_PINION`, `GEAR2_WHEEL`, `PITCH_CONES`, `CENTER_LINES`, `SHAFTS_BORE`, `MFG_TABLE`).
+     * `STYLE`: Font chữ kỹ thuật STANDARD (`txt.shx`).
+2. **Thanh Tăng Chỉnh Độ Mịn Biên Dạng Răng 11 Mức (11-Level Profile Resolution)**:
+   - Tích hợp thanh trượt 11 mức (`sliderProfileResolution` min=1, max=11, mặc định mức 6):
+     * Mức 1: Thô xem trước nhanh (20 điểm/răng).
+     * Mức 6: Chuẩn gốc MITCalc 1.74 (40 điểm/răng, khớp 100% bản vẽ chuẩn).
+     * Mức 11: Siêu mịn CNC / Cắt dây EDM (72 điểm/răng, độ mượt tiệm cận spline giải tích).
+3. **Menu Sổ Xuống Đa Lựa Chọn Xuất Bản Vẽ (Dropdown CAD Export Options)**:
+   - Cung cấp 3 tùy chọn trực quan:
+     * ⚙️ Xuất Bánh Dẫn 1 (`pinion`): Bản vẽ mặt cắt trục và biên dạng răng bánh 1.
+     * ⚙️ Xuất Bánh Bị Dẫn 2 (`gear`): Bản vẽ mặt cắt trục và biên dạng răng bánh 2.
+     * 🔗 Xuất Cả Bộ Ăn Khớp (`assembly`): Bản vẽ cặp bánh răng ăn khớp liên hợp tại đỉnh nón chung Apex $V(0, 0)$.
+   - Tích hợp đầy đủ Bảng thông số chế tạo (`MFG_TABLE`) theo ISO 23509 / DIN 3971.
+
+---
+
+### Quy Chuẩn 28: Hộp Chọn Hướng Nhìn 3D Duy Nhất (Single Dropdown 3D Camera View)
+1. **Thiết kế gọn gàng chuẩn phần mềm CAD chuyên nghiệp**:
+   - Thay thế toàn bộ cụm nút dàn trải ("Mặt Trước", "Nhìn Trên", "Mặt Bên", "Isometric") bằng một ô chọn duy nhất có mũi tên thả xuống: `<select id="sel3DViewPreset">`.
+   - Các góc nhìn chuẩn cơ khí:
+     * `iso`: 🎥 Phối Cảnh (Isometric)
+     * `mesh`: 🔍 Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)
+     * `front`: ⬆️ Mặt Bổ Dọc Trục (Axial XY)
+     * `top`: 🔝 Nhìn Từ Trên Xuống (Top XZ)
+     * `side`: ➡️ Nhìn Ngang Hông (Side YZ)
+     * `pinion`: ⚙️ Cận Cảnh Bánh Dẫn 1
+     * `gear`: ⚙️ Cận Cảnh Bánh Bị Dẫn 2
+2. **Nút đặt lại góc nhìn (`btnReset3DView`)**:
+   - Đưa camera trở về hướng Isometric tiêu chuẩn với 1 cú nhấp.
 
 ---
 

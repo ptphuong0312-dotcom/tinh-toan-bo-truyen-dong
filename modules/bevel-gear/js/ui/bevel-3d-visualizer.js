@@ -471,9 +471,10 @@ export class Bevel3DVisualizer {
         // Pinion transformed to Axis 1 (along +X)
         const tPinion = transformTriangles(m1.rawTriangles, Math.PI / 2.0, 0, 0);
 
-        // Gear transformed to Axis 2 (along direction of Sigma)
+        // Gear transformed to Axis 2 (along direction of Sigma) and aligned with conjugate initial phase
         const sigma = this.sigmaRad || (Math.PI / 2.0);
-        const tGear = transformTriangles(m2.rawTriangles, 0, -Math.PI / 2.0, Math.PI / 2.0 - sigma);
+        const gearMeshRotated = transformTriangles(m2.rawTriangles, 0, -Math.PI / 2.0, Math.PI / 2.0 - sigma);
+        const tGear = transformTriangles(gearMeshRotated, this.initialGearAngle, 0, 0);
 
         return tPinion.concat(tGear);
     }

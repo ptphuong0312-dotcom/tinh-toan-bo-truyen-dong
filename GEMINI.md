@@ -384,19 +384,49 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 ---
 
 ### Quy Tắc 21: Quy Chuẩn Mô Hình 3D CAD & Xuất File Bánh Răng Côn (Bevel Gear 3D CAD & CAM Surface Protocol - ISO 23509)
-1. **Hình học không gian nón răng hội tụ Apex V(0, 0, 0)**:
+1. **Hình học không gian nón răng hội tụ Apex V(0, 0, 0) & Bất biến góc theo tia nón**:
    - Các điểm hình học răng biến thiên tuyến tính dọc bề rộng vành răng $b$ từ nón ngoài $R_e$ về nón trong $R_i$.
+   - **Bất biến góc theo tia nón**: Các góc cực biên dạng răng $\theta$ xuất phát trực tiếp từ Đỉnh Apex $V(0, 0, 0)$ nên cố định tuyệt đối, không nhân tỷ lệ $R/R_m$, triệt tiêu hoàn toàn hiện tượng vặn xoắn giả.
    - Tọa độ 3D mặt nón chia: $r(R) = R \sin\delta, z(R) = R \cos\delta$ với $R \in [R_i, R_e]$.
    - Chiều cao sườn răng $h$ đo trên mặt nón phụ vuông góc đường sinh: $r = R \sin\delta + h \cos\delta, z = R \cos\delta - h \sin\delta$.
    - Biên dạng thân khai cầu ảo Tredgold ($z_v = z / \cos\delta, r_v = R \tan\delta$) kết hợp góc lượn dao cắt $R = 0.38 \cdot m_{mn}$.
-   - Răng thẳng ($\beta = 0$): đường sinh răng hội tụ thẳng về Apex $V(0, 0, 0)$.
-   - Răng xoắn Gleason Spiral Bevel ($\beta > 0$): đường xoắn ốc nón $\phi_{\text{spiral}}(R) = \text{hand} \cdot \frac{(R_e - R)\tan\beta_m}{R_m \sin\delta}$.
-2. **Đồng bộ pha động học ăn khớp không va chạm**:
-   - Trục bánh 1 dọc theo trục X, trục bánh 2 dọc theo trục Y (hoặc góc $\Sigma$).
-   - Góc pha ban đầu: $\phi_{2,0} = \frac{\pi}{z_2} + \frac{\pi}{2}\left(1 - \frac{z_1}{z_2}\right)$.
-   - Khóa cứng góc quay động học $\phi_2 = \phi_{2,0} - \phi_1 \cdot \frac{z_1}{z_2}$, ăn khớp lăn tiếp xúc liên tục, khe hở chân răng đạt chuẩn $c = 0.2 \cdot m_n$, triệt tiêu hoàn toàn va chạm và chồng chéo răng.
-3. **Đa dạng định dạng xuất CAD cho SolidWorks & Mastercam**:
+2. **Quy Chuẩn Hai Mặt Đầu Phẳng Tuyệt Đối (Planar End Caps - Triệt Tiêu 100% "Nhấp Nhô")**:
+   - Cắt lát sinh khối theo đúng các mặt phẳng trực giao trục quay:
+     * Mặt đầu ngoài (Back cap): phẳng tuyệt đối tại $Z = z_{\text{back}} = R_e \cos\delta$ (pháp tuyến $[0, 0, 1]$).
+     * Mặt đầu trong (Front cap): phẳng tuyệt đối tại $Z = z_{\text{front}} = R_i \cos\delta$ (pháp tuyến $[0, 0, -1]$).
+     * Bán kính lát cắt tại cao độ $Z$ được nội suy giải tích $R(Z) = Z / \cos\delta$, độ lệch phẳng $\le 0.000005\text{ mm}$.
+     * Tách đỉnh độc lập (Vertex Splitting) tại mép nắp đầu và lòng trục tạo góc vát vuông $90^\circ$ sắc nét cơ khí.
+3. **Đường xoắn răng Gleason chuẩn gốc MITCalc 1.74 (`Calculation!U197:AQ202`)**:
+   - Bán kính dao phay mặt đầu $R_{\text{tool}} = 1.5 \cdot b$.
+   - Tâm vặn xoắn đặt đúng tại điểm nón trung bình $R_m$ ($u = (R - R_m)/b \in [-0.5, 0.5]$). Tại $R = R_m$ ($u = 0$), góc xoay bằng 0.
+   - Độ võng cung dao: $W(u) = R_{\text{tool}} \cos\beta - \sqrt{R_{\text{tool}}^2 - (-u \cdot b + R_{\text{tool}} \sin\beta)^2}$.
+4. **Đồng bộ pha động học ăn khớp tổng quát không va chạm**:
+   - Bù pha giải tích tổng quát cho mọi bộ răng $(z_1, z_2)$: $\phi_{2,0} = \left(\left(\frac{z_1}{4}\right) \bmod 1 - 0.5\right) \cdot \frac{2\pi}{z_2}$.
+   - Khóa cứng quan hệ quay động học: $\phi_2 = \phi_{2,0} - \frac{\phi_1}{u}$ (với $u = z_2 / z_1$).
+   - Khe hở động học thực đo $c \in [1.423\text{ mm}, 1.895\text{ mm}]$ xuyên suốt 360 độ quay, triệt tiêu hoàn toàn va chạm và xuyên thân răng.
+5. **Đa dạng định dạng xuất CAD cho SolidWorks & Mastercam**:
    - STEP AP214 B-Rep Solid (`CLOSED_SHELL` / `MANIFOLD_SOLID_BREP`).
-   - STEP AP214 Flank Surface Rỗng (`OPEN_SHELL` / `SHELL_BASED_SURFACE_MODEL`) - không nắp đầu, không lòng trục để Mastercam lập trình phay 5 trục trực tiếp (Surface Finish Scallop/Flowline/Swarf).
+   - STEP AP214 Flank Surface Rỗng (`OPEN_SHELL` / `SHELL_BASED_SURFACE_MODEL`) - không nắp đầu, không lòng trục để Mastercam lập trình phay 5 trục trực tiếp.
    - Binary STL Solid & Surface (`.stl`) và Wavefront OBJ (`.obj`).
+
+---
+
+### Quy Tắc 22: Quy Chuẩn Xuất Bản Vẽ 2D CAD Release 12 (AC1009) Tương Thích AutoCAD 2004 - 2026
+1. **Định dạng tương thích 100% AutoCAD 2004+**:
+   - Chuẩn Release 12 (mã hiệu `$ACADVER = AC1009`), ký tự xuống dòng bắt buộc CRLF (`\r\n`).
+   - Đầy đủ 4 bảng hệ thống trong `SECTION TABLES`: `VPORT`, `LTYPE` (CONTINUOUS, CENTER, DASHED), `LAYER` (`GEAR1_PINION`, `GEAR2_WHEEL`, `PITCH_CONES`, `CENTER_LINES`, `SHAFTS_BORE`, `MFG_TABLE`), `STYLE` (`STANDARD`).
+   - Bản vẽ mặt cắt trục kỹ thuật ISO 23509 trích xuất từ dữ liệu thực thể `Data1!C63:D95` & `Data1!C28:D60`.
+   - Bảng thông số chế tạo gia công `MFG_TABLE` theo ISO 23509 / DIN 3971.
+2. **Thanh Tăng Chỉnh Độ Mịn Biên Dạng Răng 11 Mức**:
+   - Thanh trượt 11 mức (`sliderProfileResolution` min=1, max=11, mặc định mức 6: 40 pts/răng).
+3. **Menu Sổ Xuống Đa Lựa Chọn Xuất Bản Vẽ DXF**:
+   - Cung cấp 3 tùy chọn: ⚙️ Xuất Bánh Dẫn 1 (.dxf), ⚙️ Xuất Bánh Bị Dẫn 2 (.dxf), 🔗 Xuất Cả Cặp Ăn Khớp (.dxf).
+
+---
+
+### Quy Tắc 23: Hộp Chọn Hướng Nhìn 3D Duy Nhất Dropdown Chuẩn CAD
+1. **Giao diện chuẩn phần mềm CAD chuyên nghiệp**:
+   - Gom toàn bộ hướng nhìn vào 1 ô chọn duy nhất có mũi tên sổ xuống: `<select id="sel3DViewPreset">` (Isometric, Mesh Zone, Axial XY Front, Top XZ, Side YZ, Cận cảnh Bánh 1 / Bánh 2).
+   - Nút Đặt Lại (`btnReset3DView`) đưa góc nhìn về Isometric ban đầu với 1 cú nhấp.
+
 

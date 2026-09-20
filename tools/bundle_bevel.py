@@ -34,13 +34,19 @@ with open(os.path.join(bevel_dir, "js", "ui", "bevel-3d-visualizer.js"), "r", en
     vis3d_code = "".join(lines).replace("export class Bevel3DVisualizer", "class Bevel3DVisualizer")
     vis3d_code += "\nif (typeof window !== 'undefined') window.Bevel3DVisualizer = Bevel3DVisualizer;\n"
 
+with open(os.path.join(bevel_dir, "js", "engine", "bevel-dxf-exporter.js"), "r", encoding="utf-8") as f:
+    lines = [l for l in f if not l.strip().startswith("import ")]
+    dxf_code = "".join(lines).replace("export const BEVEL_PROFILE_RESOLUTIONS =", "const BEVEL_PROFILE_RESOLUTIONS =")
+    dxf_code = dxf_code.replace("export const BevelDxfExporter =", "const BevelDxfExporter =")
+    dxf_code += "\nif (typeof window !== 'undefined') { window.BevelDxfExporter = BevelDxfExporter; window.BEVEL_PROFILE_RESOLUTIONS = BEVEL_PROFILE_RESOLUTIONS; }\n"
+
 with open(os.path.join(bevel_dir, "js", "bevel-ui.js"), "r", encoding="utf-8") as f:
     ui_content = f.read()
 
 header = """// MITCalc Web App - Bevel Gear Classic Unified Script Bundle
 // 100% Client-Side, Zero Dependencies, Zero External Module Imports
 // Standards: ISO 23509, DIN 3971, DIN 3965, AGMA 2005
-// Real-time 2D Canvas & 3D WebGL Visualization & CAD Export (Solid & Surface)
+// Real-time 2D Canvas & 3D WebGL Visualization & CAD Export (Solid & Surface & 2D DXF)
 
 """
 
@@ -52,6 +58,7 @@ bundle = (
     + gen3d_code + "\n\n"
     + exp3d_code + "\n\n"
     + vis3d_code + "\n\n"
+    + dxf_code + "\n\n"
     + ui_content + "\n"
 )
 
