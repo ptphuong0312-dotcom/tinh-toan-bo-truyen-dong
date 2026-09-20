@@ -161,6 +161,36 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - **Bảo toàn Cột 5 (Bánh Bị Dẫn - Gear 2)**: Cột 5 dành riêng cho kết quả tính toán tương ứng của bánh bị dẫn hoặc góc/mô đun liên hợp bổ sung (ví dụ: góc ăn khớp pháp $\alpha_n$ khi chọn $\alpha_t$, mô đun ngang ngoài $m_t$ khi chọn $m_n$), tuyệt đối không đẩy thẻ `<select>` sang cột 5 làm phá vỡ cấu trúc bảng cơ khí.
 2. **Các danh mục tiêu chuẩn hóa (Standard Excel Named Ranges)**:
    - `T_i`: Dãy tỉ số truyền tiêu chuẩn (1.00 đến 20.00).
+   - **Thuật toán co dãn khung hình chuẩn Excel (Dynamic Box Bounds & Nice-Scale Engine)**: Sử dụng dải bounding box ảo `Data1!C13:C24` với hệ số khung hình `Coef a:b = 1.7`, tự động tính nấc chia đẹp (Nice step ticks) độc lập cho trục X và Y nhằm bảo toàn tỷ lệ đẳng cự 1:1, khớp chính xác 100% với hiển thị của Excel MITCalc 1.74 trên mọi góc trục ($\Sigma = 60^\circ, 90^\circ, 120^\circ$) và mọi mô-đun.
+3. **Section 6.0 Bản vẽ kỹ thuật & Bảng kích thước 39 dòng 7 cột**: Nhúng bản vẽ kỹ thuật gốc `mitcalc_bevel_sec6_dimensions.png` định nghĩa kích thước ISO 23509.
+4. **Section 15.0 Tính toán phụ trợ (Auxiliary Calculations)**: 15.1 ($i = n_1 / n_2$), 15.2 ($P = (M_1 \cdot n_1) / 9550$), 15.3 ($i = z_2 / z_1$) kèm nút `[ OK ]` tự động chuyển giá trị vào Mục 1.0 & 4.0.
+5. **Section 16.0 Hệ thống CAD & Bảng chế tạo DXFTables**: 4 chế độ CAD với icon chuẩn gốc (`image3.png` đến `image7.png`), bảng thông số dao cắt & lượng dịch chỉnh ($R_{\text{tool}} = 1.5 \cdot b$, $a_1, a_2, b_1, b_2$), sơ đồ offset `mitcalc_bevel_sec16_offset.png`, bảng BOM attributes, và DXFTables DIN 3965 / ISO 23509.
+
+---
+
+### Quy Tắc 11: Quy Chuẩn Kiến Trúc Giao Diện Mobile Khoa Học & Cử Chỉ Cảm Ứng 2D CAD
+1. **Nguyên tắc bảo toàn dữ liệu kỹ thuật 100%**:
+   - Tuyệt đối KHÔNG ẩn, KHÔNG lược bỏ bất kỳ cột thông số hay bảng tính toán kỹ thuật nào trên thiết bị di động (7 cột: `#`, `Thông số`, `Ký hiệu`, `Giá trị 1`, `Giá trị 2`, `Giá trị 3`, `Đơn vị`, `Thao tác`).
+   - Bọc toàn bộ các bảng tính toán cơ khí trong `.section-body` với `overflow-x: auto; -webkit-overflow-scrolling: touch;`. Cố định `min-width: 580px` để duy trì căn chỉnh kỹ thuật hoàn hảo, cho phép vuốt ngang tự nhiên bằng ngón tay cái mà không làm vỡ bố cục.
+   - Cỡ chữ các ô nhập liệu `font-size: 16px` (hoặc `1rem`), chiều cao tối thiểu 36px để triệt tiêu hiện tượng tự động phóng to (Auto-zoom) khó chịu trên iOS Safari / Chrome Mobile.
+2. **Tối ưu không gian hiển thị dọc (Vertical Space Recovery)**:
+   - Header cố định trên desktop chuyển sang `position: static` trên mobile (`@media (max-width: 768px)`), giải phóng 45% chiều cao màn hình quý giá.
+   - Thanh điều hướng tab kỹ thuật (`.tab-navigation`) chuyển sang dạng thanh điều khiển phân đoạn 50/50 (Segmented control) với diện tích chạm tối ưu (`min-height: 42px`).
+   - Khối thẻ tóm tắt nhanh (`.summary-banner`) được tái cấu trúc thành lưới gọn 2 cột (`grid-template-columns: 1fr 1fr`), thẻ trạng thái ISO chiếm trọn chiều rộng hàng đầu, hiển thị sắc nét toàn bộ 5 chỉ số cốt lõi trong chưa đầy 120px chiều cao.
+   - Di chuyển `.summary-banner` và `.global-accordion-toolbar` vào phạm vi cục bộ của Tab 1 (`#tabCalculator`). Khi chuyển sang Tab 2 (`#tabCanvas`), khung vẽ mô phỏng 2D CAD hiển thị ngay lập tức dưới thanh điều hướng, dành trọn 100% không gian màn hình cho mô phỏng cơ khí.
+3. **Cử chỉ cảm ứng trực quan trên Canvas 2D CAD (Mobile Multi-Touch Engine)**:
+   - Tích hợp điều khiển cảm ứng đa điểm trực tiếp vào `gear-canvas.js` và `bevel-canvas.js`:
+     * Chạm 1 ngón tay (`touchstart`, `touchmove`, `touchend`): Kéo rê di chuyển mô hình (Pan).
+     * Chạm 2 ngón tay: Thu phóng tức thì bằng khoảng cách giữa 2 đầu ngón tay (`Math.hypot(dx, dy)`).
+     * Thiết lập `touch-action: none` và `aspect-ratio: 1200 / 650` với `width: 100%; height: auto;` để hình học ăn khớp luôn co giãn sắc nét và không bị trình duyệt giật cuộn trang khi tương tác với bánh răng.
+
+### Quy Tắc 12: Quy Chuẩn Hộp Nhập Liệu Tích Hợp Mũi Tên Sổ Xuống Chuẩn Excel (Excel-Style Combo-Box Protocol)
+1. **Bản chất giao diện 1-to-1 MITCalc 1.74**:
+   - Các ô thông số trong MITCalc 1.74 bản gốc sử dụng điều khiển DropDowns của Excel đặt ngay bên cạnh ô nhập liệu (ví dụ: $i, \Sigma, \alpha, \beta, m, Q$, CAD systems).
+   - Thiết kế chuẩn Web App: Sử dụng `.combo-box-group` (inline flexbox) gom cả ô nhập số `.combo-input` và nút mũi tên thả xuống `.combo-arrow-select` nằm trọn vẹn trong **Cột 4 (Bánh Dẫn - Pinion 1)**.
+   - **Bảo toàn Cột 5 (Bánh Bị Dẫn - Gear 2)**: Cột 5 dành riêng cho kết quả tính toán tương ứng của bánh bị dẫn hoặc góc/mô đun liên hợp bổ sung (ví dụ: góc ăn khớp pháp $\alpha_n$ khi chọn $\alpha_t$, mô đun ngang ngoài $m_t$ khi chọn $m_n$), tuyệt đối không đẩy thẻ `<select>` sang cột 5 làm phá vỡ cấu trúc bảng cơ khí.
+2. **Các danh mục tiêu chuẩn hóa (Standard Excel Named Ranges)**:
+   - `T_i`: Dãy tỉ số truyền tiêu chuẩn (1.00 đến 20.00).
    - `T_AngleList`: Góc trục $\Sigma$ tiêu chuẩn ($60^\circ, 70^\circ, 80^\circ, 90^\circ, 100^\circ, 110^\circ, 120^\circ$).
    - `T_AlfaList`: Góc ăn khớp danh nghĩa $\alpha$ ($14.5^\circ, 15^\circ, 17.5^\circ, 20^\circ, 22^\circ, 25^\circ$).
    - `T_BetaList`: Góc xoắn răng $\beta$ ($0^\circ, 8^\circ, 10^\circ, 12^\circ, 15^\circ, 20^\circ, 25^\circ, 30^\circ, 35^\circ, 40^\circ, 45^\circ$).
@@ -170,5 +200,20 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 3. **Tính phản ứng hai chiều (Bidirectional Reactive Sync)**:
    - Khi người dùng chọn một giá trị từ mũi tên thả xuống `▼`, giá trị đó lập tức được ghi vào ô nhập liệu và bộ giải thuật tính toán lại theo thời gian thực (Zero-Lag).
    - Khi người dùng nhập tay bất kỳ giá trị số thực nào vào ô nhập liệu, hệ thống tự động nhận diện và tính toán bình thường mà không bị ràng buộc bởi danh sách có sẵn.
+
+---
+
+### Quy Tắc 13: Quy Chuẩn Đóng Khung Công Thức Toán Học & Triệt Tiêu Nét Cắt Chéo Đồ Thị Mặt Cắt Trục (Master Formula & Clean Polygon Protocol)
+1. **Đóng khung hệ thống công thức toán học (`docs/MATHEMATICAL_FORMULAS_MASTER.md`)**:
+   - Toàn bộ các công thức tính toán hình học, động học, tương đương Tredgold, trùng khớp và đo kiểm của cả Bánh Răng Trụ (ISO 6336) và Bánh Răng Côn (ISO 23509) được đóng khung thành tiêu chuẩn vàng bất biến.
+   - Bổ sung công thức giải tích chuẩn xác tuyệt đối cho Chiều dày đỉnh răng trong (Inner tip tooth thickness - Row 6.38 $s_{ai1}, s_{ai2}$):
+     $$\cos\alpha_{ai} = \frac{d_i \cos\alpha}{d_{ai}}, \quad s_{ai} = d_{ai} \left(\frac{s_{ni}}{d_i} + \text{inv}(\alpha) - \text{inv}(\alpha_{ai})\right)$$
+     Khớp 100% với ô $P_{232}$ và $Q_{232}$ của MITCalc gốc với sai số $\Delta = 0.000000$.
+2. **Thuật toán triệt tiêu nét cắt chéo đồ thị mặt cắt trục 2D (Clean Polygon Algorithm)**:
+   - Khắc phục lỗi tự giao cắt (self-intersecting bowtie) do lặp tuần tự $0 \to 17$ và `closePath()` chéo qua tâm trục.
+   - Chu trình đa giác chu vi sạch khép kín cho cả Bánh 1 và Bánh 2:
+     $$\text{boundaryIndices} = [0, 1, 2, 3, 14, 15, 16, 17, 10, 11, 8, 7, 6, 5, 0]$$
+   - Vẽ riêng 2 đường chân răng (Root lines: $3 \to 0$ đỉnh trên và $9 \to 8$ đỉnh dưới) bằng nét mảnh 1.0px.
+   - Tuyệt đối không sinh bất kỳ nét cắt chéo nào giữa 2 hình cắt bánh răng hoặc trong lòng thân bánh răng.
 
 ---

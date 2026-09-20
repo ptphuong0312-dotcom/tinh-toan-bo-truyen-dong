@@ -186,6 +186,15 @@ def run_deep_audit():
             (229, 'P229', 'Chiều dày răng pháp trong 1', 'sni1', '=_min*(PI/2+2*x1*TAN(alfa)+xt1)', float(ws_calc.Range('P229').Value), 'sni1', 0.0001),
             (229, 'Q229', 'Chiều dày răng pháp trong 2', 'sni2', '=_min*(PI/2+2*x2*TAN(alfa)+xt2)', float(ws_calc.Range('Q229').Value), 'sni2', 0.0001),
 
+            (230, 'P230', 'Chiều dày đỉnh răng ngoài 1', 'sae1', 'Involute tip thickness', float(ws_calc.Range('P230').Value), 'sae1', 0.0005),
+            (230, 'Q230', 'Chiều dày đỉnh răng ngoài 2', 'sae2', 'Involute tip thickness', float(ws_calc.Range('Q230').Value), 'sae2', 0.0005),
+
+            (231, 'P231', 'Chiều dày đỉnh răng TB 1', 'sa1', 'Involute tip thickness', float(ws_calc.Range('P231').Value), 'sa1', 0.0005),
+            (231, 'Q231', 'Chiều dày đỉnh răng TB 2', 'sa2', 'Involute tip thickness', float(ws_calc.Range('Q231').Value), 'sa2', 0.0005),
+
+            (232, 'P232', 'Chiều dày đỉnh răng trong 1', 'sai1', 'Involute tip thickness', float(ws_calc.Range('P232').Value), 'sai1', 0.0005),
+            (232, 'Q232', 'Chiều dày đỉnh răng trong 2', 'sai2', 'Involute tip thickness', float(ws_calc.Range('Q232').Value), 'sai2', 0.0005),
+
             (233, 'P233', 'Chiều dày đỉnh răng chuẩn 1', 'sae1*', '=_sae1/_men', float(ws_calc.Range('P233').Value), 'sae1_star', 0.0005),
             (233, 'Q233', 'Chiều dày đỉnh răng chuẩn 2', 'sae2*', '=_sae2/_men', float(ws_calc.Range('Q233').Value), 'sae2_star', 0.0005),
 

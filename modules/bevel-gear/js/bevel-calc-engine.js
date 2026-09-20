@@ -178,6 +178,14 @@ const BevelCalcEngine = {
         const alpha_at_dam2 = Math.acos(cos_alpha_at_dam2);
         const sa2 = dam2 * (sn2 / (dm2 || 1.0) + invAlfa - this.inv(alpha_at_dam2));
 
+        const cos_alpha_at_dai1 = Math.min(1.0, Math.max(0.0, (di1 * Math.cos(alfa)) / (dai1 || 1.0)));
+        const alpha_at_dai1 = Math.acos(cos_alpha_at_dai1);
+        const sai1 = dai1 * (sni1 / (di1 || 1.0) + invAlfa - this.inv(alpha_at_dai1));
+
+        const cos_alpha_at_dai2 = Math.min(1.0, Math.max(0.0, (di2 * Math.cos(alfa)) / (dai2 || 1.0)));
+        const alpha_at_dai2 = Math.acos(cos_alpha_at_dai2);
+        const sai2 = dai2 * (sni2 / (di2 || 1.0) + invAlfa - this.inv(alpha_at_dai2));
+
         // Unit tooth thickness on tip diameter
         const sae1_star = sae1 / (men || 1.0);
         const sae2_star = sae2 / (men || 1.0);
@@ -258,7 +266,7 @@ const BevelCalcEngine = {
             dai1, dai2, dfi1, dfi2,
             alfa_n_deg, beta_b_deg, pe, pte,
             sne1, sne2, sn1, sn2, sni1, sni2,
-            sae1, sae2, sa1, sa2, sae1_star, sae2_star,
+            sae1, sae2, sa1, sa2, sai1, sai2, sae1_star, sae2_star,
             zvt1, zvt2, zvn1, zvn2, zv1, zv2,
             dvm1, dvm2, dva1, dva2, dvb1, dvb2, dvf1, dvf2, av, iv,
             ea, eb, eg,

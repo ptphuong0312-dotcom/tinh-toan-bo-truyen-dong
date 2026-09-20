@@ -352,4 +352,30 @@
   - **Spur Gear QC Multi-Case Suite (`qc_gear_multi_case_suite.py`)**: **110 / 110 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
   - **CORS-Free Single Bundle**: Đóng gói tự động thành công `bevel-engine.bundle.js` (138,307 ký tự) chạy 100% offline.
 
+---
+
+## 8. ĐỢT TỐI ƯU HÓA 8: ĐÓNG KHUNG HỆ THỐNG CÔNG THỨC TOÁN HỌC MASTER, BỔ SUNG CHIỀU DÀY ĐỈNH RĂNG TRONG (ROW 6.38 SAI) & TRIỆT TIÊU HOÀN TOÀN NÉT CẮT CHÉO MẶT CẮT TRỤC (CHART 4181)
+
+* **Mục tiêu kỹ thuật**:
+  1. Đóng khung bất biến toàn bộ hệ thống công thức toán học và thông số cơ khí của bộ truyền bánh răng côn (ISO 23509) và bánh răng trụ (ISO 6336) vào tài liệu chuẩn `docs/MATHEMATICAL_FORMULAS_MASTER.md`.
+  2. Bổ sung thông số còn thiếu tại Dòng 6.38: Chiều dày đỉnh răng trong ($s_{ai1}, s_{ai2}$ - Inner tip tooth thickness).
+  3. Xóa bỏ hoàn toàn hiện tượng nét cắt chéo ("X" diagonal crossing cut lines / hourglass bowtie) ở giữa 2 hình cắt bánh răng trên đồ thị mặt cắt trục 2D (Section 4.0 Chart 4181).
+* **Giải pháp kỹ thuật chi tiết**:
+  1. **Giải mã & Hiện thực hóa công thức giải tích Dòng 6.38 ($s_{ai}$)**:
+     - Truy vấn trực tiếp công thức ô Excel `Calculation!P232` và `Calculation!Q232` trong `Gear2_01.xlsb`:
+       $$\cos\alpha_{ai1} = \frac{d_{i1} \cos\alpha}{d_{ai1}}, \quad s_{ai1} = d_{ai1} \left(\frac{s_{ni1}}{d_{i1}} + \text{inv}(\alpha) - \text{inv}(\alpha_{ai1})\right) = 5.811230\text{ mm}$$
+       $$\cos\alpha_{ai2} = \frac{d_{i2} \cos\alpha}{d_{ai2}}, \quad s_{ai2} = d_{ai2} \left(\frac{s_{ni2}}{d_{i2}} + \text{inv}(\alpha) - \text{inv}(\alpha_{ai2})\right) = 8.844712\text{ mm}$$
+     - Tích hợp vào `BevelCalcEngine.calculate(p)`, đưa vào bộ kết quả và cập nhật bảng rà soát Live Audit table.
+  2. **Thuật toán chu trình đa giác chu vi sạch (Clean Boundary Polygon Loop)**:
+     - Khắc phục nguyên nhân gây nét cắt chéo: Do nối tuần tự từ điểm $12$ (đáy răng dưới) sang điểm $13$ (đáy răng trên) và `closePath()` từ $17$ về $0$.
+     - Thiết lập thứ tự chu vi kín chuẩn xác duy nhất:
+       $$\text{boundaryIndices} = [0, 1, 2, 3, 14, 15, 16, 17, 10, 11, 8, 7, 6, 5, 0]$$
+     - Vẽ 2 đường chân răng (Root lines $3 \to 0$ và $9 \to 8$) độc lập bằng nét mảnh `1.0px`.
+     - Kết quả: Mặt cắt 2 bánh răng phẳng mịn tuyệt đối, viền sắc nét, zero nét cắt chéo trong lòng và giữa 2 bánh răng, khớp 100% với ảnh chụp thực tế của MITCalc 1.74.
+* **Kết quả nghiệm thu**:
+  - **Live Audit Script (`deep_line_by_line_bevel_audit.py`)**: **115 / 115 ô tính PASS tuyệt đối (100.0%, $\Delta = 0.000000$)** bao gồm toàn bộ $s_{ae}, s_a, s_{ai}$.
+  - **Browser Automated Playwright Test**: Trích xuất giá trị DOM `#out_sai1 = 5.8112`, `#out_sai2 = 8.8447`, chụp ảnh canvas `#bevelSec4ChartCanvas` xác nhận triệt tiêu hoàn toàn nét cắt chéo.
+  - **Tài liệu đóng khung công thức**: Hoàn thành `docs/MATHEMATICAL_FORMULAS_MASTER.md`.
+
+
 

@@ -1114,14 +1114,16 @@ class BevelGearUI {
         });
         ctx.setLineDash([]);
 
-        // 9. Draw Wheel 1 Cross-Section Path (Bold Solid Blue Line)
+        const boundaryIndices = [0, 1, 2, 3, 14, 15, 16, 17, 10, 11, 8, 7, 6, 5, 0];
+
+        // 9. Draw Wheel 1 Cross-Section Path (Clean Outer Boundary + Tooth Root Lines, Zero Crossing Lines)
         ctx.strokeStyle = '#000080';
         ctx.fillStyle = 'rgba(0, 0, 128, 0.08)';
         ctx.lineWidth = 2.0;
         ctx.beginPath();
-        w1_pts.forEach(([x, y], idx) => {
-            const sx = toScreenX(x);
-            const sy = toScreenY(y);
+        boundaryIndices.forEach((ptIdx, idx) => {
+            const sx = toScreenX(w1_pts[ptIdx][0]);
+            const sy = toScreenY(w1_pts[ptIdx][1]);
             if (idx === 0) ctx.moveTo(sx, sy);
             else ctx.lineTo(sx, sy);
         });
@@ -1129,16 +1131,35 @@ class BevelGearUI {
         ctx.fill();
         ctx.stroke();
 
-        // 10. Draw Wheel 2 Cross-Section Path (Bold Solid Blue Line)
+        // Stroke tooth root lines (Upper root line 3->0, Lower root line 9->8)
+        ctx.lineWidth = 1.0;
         ctx.beginPath();
-        w2_pts.forEach(([x, y], idx) => {
-            const sx = toScreenX(x);
-            const sy = toScreenY(y);
+        ctx.moveTo(toScreenX(w1_pts[3][0]), toScreenY(w1_pts[3][1]));
+        ctx.lineTo(toScreenX(w1_pts[0][0]), toScreenY(w1_pts[0][1]));
+        ctx.moveTo(toScreenX(w1_pts[9][0]), toScreenY(w1_pts[9][1]));
+        ctx.lineTo(toScreenX(w1_pts[8][0]), toScreenY(w1_pts[8][1]));
+        ctx.stroke();
+
+        // 10. Draw Wheel 2 Cross-Section Path (Clean Outer Boundary + Tooth Root Lines, Zero Crossing Lines)
+        ctx.lineWidth = 2.0;
+        ctx.beginPath();
+        boundaryIndices.forEach((ptIdx, idx) => {
+            const sx = toScreenX(w2_pts[ptIdx][0]);
+            const sy = toScreenY(w2_pts[ptIdx][1]);
             if (idx === 0) ctx.moveTo(sx, sy);
             else ctx.lineTo(sx, sy);
         });
         ctx.closePath();
         ctx.fill();
+        ctx.stroke();
+
+        // Wheel 2 tooth root lines (Upper root line 3->0, Lower root line 9->8)
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.moveTo(toScreenX(w2_pts[3][0]), toScreenY(w2_pts[3][1]));
+        ctx.lineTo(toScreenX(w2_pts[0][0]), toScreenY(w2_pts[0][1]));
+        ctx.moveTo(toScreenX(w2_pts[9][0]), toScreenY(w2_pts[9][1]));
+        ctx.lineTo(toScreenX(w2_pts[8][0]), toScreenY(w2_pts[8][1]));
         ctx.stroke();
 
         // 11. Apex Marker & Origin Dot
@@ -1235,6 +1256,12 @@ class BevelGearUI {
             { cell: 'Q228', name: 'Chiều dày răng pháp TB 2', sym: 'sn2', mit: 12.978554, getVal: () => g.sn2 },
             { cell: 'P229', name: 'Chiều dày răng pháp trong 1', sym: 'sni1', mit: 14.582820, getVal: () => g.sni1 },
             { cell: 'Q229', name: 'Chiều dày răng pháp trong 2', sym: 'sni2', mit: 10.265232, getVal: () => g.sni2 },
+            { cell: 'P230', name: 'Chiều dày đỉnh răng ngoài 1', sym: 'sae1', mit: 8.883307, getVal: () => g.sae1 },
+            { cell: 'Q230', name: 'Chiều dày đỉnh răng ngoài 2', sym: 'sae2', mit: 13.520387, getVal: () => g.sae2 },
+            { cell: 'P231', name: 'Chiều dày đỉnh răng TB 1', sym: 'sa1', mit: 7.347259, getVal: () => g.sa1 },
+            { cell: 'Q231', name: 'Chiều dày đỉnh răng TB 2', sym: 'sa2', mit: 11.182560, getVal: () => g.sa2 },
+            { cell: 'P232', name: 'Chiều dày đỉnh răng trong 1', sym: 'sai1', mit: 5.811230, getVal: () => g.sai1 },
+            { cell: 'Q232', name: 'Chiều dày đỉnh răng trong 2', sym: 'sai2', mit: 8.844712, getVal: () => g.sai2 },
             { cell: 'P233', name: 'Chiều dày đỉnh răng chuẩn 1', sym: 'sae1*', mit: 0.734726, getVal: () => g.sae1_star },
             { cell: 'Q233', name: 'Chiều dày đỉnh răng chuẩn 2', sym: 'sae2*', mit: 1.118256, getVal: () => g.sae2_star },
             { cell: 'P236', name: 'Răng ảo pháp diện 1', sym: 'zvn1', mit: 19.386593, getVal: () => g.zvn1 },

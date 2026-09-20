@@ -373,6 +373,19 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
    - Chọn từ dropdown -> Cập nhật input -> Tính toán thời gian thực.
    - Nhập tay số tùy ý vào input -> Tính toán bình thường không bị giới hạn.
 
+### Quy Chuẩn 18: Đóng Khung Công Thức Toán Học Master & Thuật Toán Triệt Tiêu Nét Cắt Chéo Mặt Cắt Trục (Clean Boundary Polygon Loop)
+1. **Đóng khung hệ thống công thức toán học (`docs/MATHEMATICAL_FORMULAS_MASTER.md`)**:
+   - Toàn bộ các công thức tính toán từ Mục 1.0 đến Mục 18.0 được đóng băng và lưu trữ để tránh sai lệch khi phát triển lâu dài.
+   - Công thức giải tích chuẩn xác tuyệt đối cho Chiều dày đỉnh răng trong (Inner tip tooth thickness - Row 6.38 $s_{ai}$):
+     $$\cos\alpha_{ai} = \frac{d_i \cos\alpha}{d_{ai}}, \quad s_{ai} = d_{ai} \left(\frac{s_{ni}}{d_i} + \text{inv}(\alpha) - \text{inv}(\alpha_{ai})\right)$$
+     Khớp 100% với $P_{232} = 5.811230\text{ mm}$ và $Q_{232} = 8.844712\text{ mm}$ của MITCalc gốc ($\Delta = 0.000000$).
+2. **Thuật toán triệt tiêu nét cắt chéo đồ thị mặt cắt trục (Clean Polygon Loop)**:
+   - Loại bỏ cách nối tuần tự $0 \to 17$ gây nét cắt chéo từ $12 \to 13$ và $17 \to 0$.
+   - Chu trình đa giác chu vi sạch khép kín cho cả Bánh 1 và Bánh 2:
+     $$\text{boundaryIndices} = [0, 1, 2, 3, 14, 15, 16, 17, 10, 11, 8, 7, 6, 5, 0]$$
+   - Vẽ 2 đường chân răng (Root lines $3 \to 0$ và $9 \to 8$) độc lập bằng nét mảnh `1.0px`.
+   - Bảo đảm 100% hình vẽ sạch, mặt cắt kim loại chuẩn cơ khí ISO 23509, không có bất kỳ nét cắt chéo nào giữa 2 hình cắt bánh răng hoặc trong thân bánh răng.
+
 ---
 
 
