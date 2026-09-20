@@ -244,3 +244,25 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 
 ---
 
+### Quy Tắc 15: Quy Chuẩn Mô Phỏng Ăn Khớp 3D WebGL Bánh Răng Trụ & Bánh Răng Nghiêng & Xuất File CAD 3D Cho SolidWorks / Mastercam
+1. **Kiến trúc mô phỏng ăn khớp 3D WebGL (Three.js r128 100% Offline & Zero-CORS)**:
+   - Thư viện Three.js r128 và OrbitControls được lưu trữ cục bộ tại `shared/js/three.min.js` và `shared/js/OrbitControls.js`, khởi chạy 100% độc lập không cần internet và zero-CORS qua giao thức `file:///`.
+   - **Tự động nhận diện kiểu răng theo góc nghiêng $\beta$**:
+     * Khi $\beta = 0^\circ$: Tự động mô phỏng Bánh Răng Trụ Răng Thẳng (Spur Gear), răng thẳng đứng song song với trục, 2 mặt đầu phẳng, số lát cắt trục $numSlices = 1$.
+     * Khi $\beta > 0^\circ$ (hoặc $\ne 0^\circ$): Tự động chuyển sang mô phỏng Bánh Răng Trụ Răng Nghiêng (Helical Gear), các răng xoắn liên tục dọc theo bề rộng vành răng $b$ với tốc độ xoắn không gian $\omega_{\text{twist}} = \frac{2 \tan\beta}{d}$ (rad/mm).
+   - **Ăn khớp liên hợp không gian (Spatial Conjugate Meshing)**: Bánh dẫn 1 có hướng xoắn phải ($Hand = +1$), Bánh bị dẫn 2 có hướng xoắn trái ($Hand = -1$). Hai bánh tiếp xúc liên tục và mượt mà trên đường ăn khớp tại đúng khoảng cách trục $a_w$.
+   - **Động học thời gian thực**: Góc quay bánh 1 là $\theta_1(t)$ và bánh 2 là $\theta_2(t) = \phi_{\text{initial}} - \theta_1(t) / i$. Tích hợp thanh trượt tốc độ $0.1\times - 3.0\times$ và nút Dừng/Chạy.
+   - **Bộ góc nhìn & Vật liệu PBR kim loại**:
+     * 4 góc nhìn cơ khí 1-Click: Isometric, Mặt trước (Front XY), Nhìn từ trên (Top XZ), Cận cảnh ăn khớp (Mesh Zoom).
+     * Chế độ bật/tắt khung dây kỹ thuật (Wireframe).
+     * Vật liệu PBR kim loại: Bánh dẫn mạ đồng thau vàng hổ phách, Bánh bị dẫn thép hợp kim titan xanh cyan, lưới sàn tọa độ tương phản cao.
+2. **Hệ thống xuất tệp CAD 3D chuyên dụng cho SolidWorks & Mastercam**:
+   - **STEP AP214 (ISO 10303-21 B-Rep Solid)**: Định dạng chuẩn công nghiệp với cấu trúc B-Rep thực thể rắn (`MANIFOLD_SOLID_BREP` / `CLOSED_SHELL`). Khi mở trên SolidWorks hoặc Mastercam, mô hình được nhận diện lập tức là một **Solid Body hoàn chỉnh (không phải Surface rỗng)**, cho phép kỹ sư lập trình gia công CNC ngay lập tức trên Mastercam (phay lăn răng 4/5 trục, phay 3D High-Speed, cắt dây EDM Wire) mà không cần vá bề mặt.
+   - **Binary STL (Nhị phân chuẩn)**: Header 80-byte chuẩn hóa, 4-byte số lượng tam giác (uint32 Little-Endian), 50 bytes mỗi tam giác (vector pháp tuyến float32 + 3 đỉnh float32 + 2 bytes attribute byte count = 0). Dung lượng siêu nhẹ ($\sim 1.5 - 3.5\text{ MB}$), nhập vào Mastercam Mill/Wire và máy in 3D công nghiệp trong nháy mắt.
+   - **Wavefront OBJ**: Định dạng bổ trợ kèm đầy đủ vector đỉnh và pháp tuyến.
+   - **Tùy chọn xuất linh hoạt**: Xuất Bánh dẫn 1 (Pinion 1), Bánh bị dẫn 2 (Gear 2), hoặc Cặp lắp ráp hoàn chỉnh (Assembly Pair) đúng vị trí khoảng cách trục $a_w$.
+3. **Thuật toán tối ưu hóa lưới đa giác Kín Nước (Watertight Manifold Topology Optimization)**:
+   - Bảo toàn 100% tính kín nước (Watertight): Biên dạng răng thân khai chính xác, góc lượn chân răng $R = 0.38 m_n$, cung đáy rãnh, mặt trụ lỗ trục và 2 mặt đầu liên kết đối xứng $1:1$ qua các tam giác định hướng nhất quán (CCW winding).
+   - Lấy mẫu thích ứng: Bước lấy mẫu $step = 2$ cho $z \le 30$ và $step = 4$ cho $z > 30$, cùng 6 đến 10 lát cắt trục cho bánh răng nghiêng. Khống chế số lượng tam giác ở mức lý tưởng ($\sim 30,000 - 70,000$ tam giác cho cả bộ truyền), đảm bảo mô phỏng 60 FPS mượt mà trên mọi thiết bị và tệp CAD mở tức thì trong 1 giây.
+
+

@@ -406,6 +406,25 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 20: Mô Phỏng Ăn Khớp 3D WebGL (Three.js r128 100% Offline) & Bộ Xuất File CAD 3D SolidWorks / Mastercam (STEP AP214 B-Rep & Binary STL)
+1. **Kiến trúc mô phỏng ăn khớp 3D WebGL (Spur & Helical Gears)**:
+   - Thư viện Three.js r128 và OrbitControls được lưu cục bộ tại `shared/js/three.min.js` và `shared/js/OrbitControls.js`, 100% offline & zero-CORS.
+   - Khi $\beta = 0^\circ$: Tự động dựng bánh răng trụ răng thẳng 3D (Spur Gear), răng song song với trục, $numSlices = 1$, 2 mặt đầu phẳng.
+   - Khi $\beta > 0^\circ$: Tự động chuyển sang bánh răng trụ răng nghiêng 3D (Helical Gear), các răng xoắn không gian theo tốc độ $\omega_{\text{twist}} = \frac{2 \tan\beta}{d}$. Cặp ăn khớp liên hợp: Pinion 1 xoắn phải (+1), Gear 2 xoắn trái (-1), ăn khớp chuẩn xác tại khoảng cách trục $a_w$.
+   - Động học liên hợp mượt mà: $\theta_1(t)$ và $\theta_2(t) = \phi_{\text{initial}} - \theta_1(t) / i$, thanh trượt tốc độ $0.1\times - 3.0\times$.
+   - Các góc nhìn cơ khí 1-Click: Isometric, Mặt trước (Front XY), Nhìn từ trên (Top XZ), Cận cảnh ăn khớp (Mesh Zoom), và Khung dây (Wireframe).
+   - Vật liệu PBR kim loại: Bánh dẫn vàng hổ phách, Bánh bị dẫn xanh titan, đổ bóng phản xạ môi trường và lưới sàn tọa độ.
+2. **Bộ xuất file CAD 3D chuẩn hóa cho SolidWorks & Mastercam**:
+   - **STEP AP214 (ISO 10303-21)**: Dạng B-Rep Solid (`MANIFOLD_SOLID_BREP` / `CLOSED_SHELL` / `ADVANCED_BREP_SHAPE_REPRESENTATION`). SolidWorks và Mastercam mở ra nhận diện ngay lập tức thành 1 Solid Body duy nhất (không phải Surface rỗng), cho phép kỹ sư lập trình gia công CNC ngay lập tức trên Mastercam (phay lăn răng 4/5 trục, phay 3D High-Speed, cắt dây EDM Wire).
+   - **Binary STL**: Header 80-byte chuẩn hóa, 4-byte số lượng tam giác (uint32 Little-Endian), 50 bytes mỗi tam giác (vector pháp tuyến float32 + 3 đỉnh float32 + 2 bytes attribute byte count = 0). Dung lượng siêu nhẹ ($\sim 1.5 - 3.5\text{ MB}$), nhập vào Mastercam Mill/Wire và máy in 3D công nghiệp trong nháy mắt.
+   - **Wavefront OBJ**: Định dạng bổ trợ kèm đầy đủ vector đỉnh và pháp tuyến.
+   - Tùy chọn xuất linh hoạt: Bánh dẫn 1 (Pinion 1), Bánh bị dẫn 2 (Gear 2), hoặc Cặp lắp ráp hoàn chỉnh (Assembly Pair) đúng khoảng cách trục $a_w$.
+3. **Tối ưu hóa lưới đa giác Kín Nước (Watertight Manifold Topology Optimization)**:
+   - Bảo toàn 100% tính kín nước (Watertight): Biên dạng răng thân khai chính xác, góc lượn chân răng $R = 0.38 m_n$, cung đáy rãnh, mặt trụ lỗ trục và 2 mặt đầu liên kết đối xứng $1:1$ qua các tam giác định hướng nhất quán (CCW winding).
+   - Lấy mẫu thích ứng: Bước lấy mẫu $step = 2$ cho $z \le 30$ và $step = 4$ cho $z > 30$, cùng 6 đến 10 lát cắt trục cho bánh răng nghiêng. Khống chế số lượng tam giác ở mức lý tưởng ($\sim 30,000 - 70,000$ tam giác cho cả bộ truyền), đảm bảo mô phỏng 60 FPS mượt mà trên mọi thiết bị và tệp CAD mở tức thì trong 1 giây.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

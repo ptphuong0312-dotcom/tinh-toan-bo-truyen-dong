@@ -53,7 +53,7 @@
     <!-- Navigation Tabs -->
     <nav class="tab-navigation">
         <button type="button" class="tab-btn active" data-target="tabCalculator">📐 Bảng Tính Toán (Chuẩn MITCalc 1.74)</button>
-        <button type="button" class="tab-btn" data-target="tabCanvas">🔄 Mô Hình 2D Ăn Khớp (Canvas)</button>
+        <button type="button" class="tab-btn" data-target="tabCanvas">🔄 Mô Phỏng Ăn Khớp 2D / 3D CAD</button>
     </nav>
 
     <!-- Main Container -->
@@ -1659,18 +1659,34 @@
         <!-- TAB 2: 2D CANVAS VISUALIZER                                               -->
         <!-- ========================================================================= -->
         <div id="tabCanvas" class="tab-pane">
-            <div style="background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.5rem;">
+            <div style="background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+                <!-- Tab Header & Mode Switcher -->
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
                     <div>
-                        <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--accent-green);">🔄 Mô Hình Ăn Khớp 2D Trực Quan (2D Involute Mesh Simulation)</h2>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
-                            Biên dạng thân khai chính xác, góc lượn chân răng chuẩn R = 0.38*mn, đường ăn khớp (Line of Action) và vòng tròn lăn dw1, dw2.
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--accent-green);" id="visualizerTitle">
+                                🔄 Mô Phỏng Ăn Khớp 2D / 3D CAD
+                            </h2>
+                            <!-- 2D / 3D Segmented Control Toggle -->
+                            <div style="display: inline-flex; background: rgba(0,0,0,0.4); padding: 3px; border-radius: 6px; border: 1px solid var(--border-color);">
+                                <button type="button" id="btnMode2D" class="btn btn-sm" style="background: var(--accent-green); color: #000; font-weight: 700; border-radius: 4px; padding: 4px 12px; cursor: pointer; border: none;">
+                                    📐 2D CAD Canvas
+                                </button>
+                                <button type="button" id="btnMode3D" class="btn btn-sm" style="background: transparent; color: var(--text-secondary); font-weight: 700; border-radius: 4px; padding: 4px 12px; cursor: pointer; border: none;">
+                                    🧊 3D WebGL (Spur & Helical)
+                                </button>
+                            </div>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.35rem;" id="visualizerDesc">
+                            Biên dạng thân khai chính xác, góc lượn chân răng chuẩn R = 0.38*mn. Bấm 3D WebGL để quan sát ăn khớp không gian và xuất file CAD cho Mastercam/SolidWorks.
                         </p>
                     </div>
-                    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+
+                    <!-- 2D Action Toolbar -->
+                    <div id="toolbar2D" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.25); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border-color);">
-                            <label for="sliderAnimSpeed" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">⚡ Tốc độ quay:</label>
-                            <input type="range" id="sliderAnimSpeed" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 100px; cursor: pointer;">
+                            <label for="sliderAnimSpeed" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">⚡ Tốc độ:</label>
+                            <input type="range" id="sliderAnimSpeed" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 80px; cursor: pointer;">
                             <span id="animSpeedVal" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); width: 35px;">1.0x</span>
                         </div>
                         <button type="button" class="btn btn-secondary" id="btnZoomIn">🔍 Phóng To (+)</button>
@@ -1679,15 +1695,79 @@
                         <button type="button" class="btn btn-primary" id="btnToggleAnim">⏸️ Tạm Dừng</button>
                         <button type="button" class="btn" id="btnExportDXFCanvas" style="background:#0284c7; color:#ffffff; font-weight:700;">📥 Xuất DXF 2D</button>
                     </div>
+
+                    <!-- 3D Action Toolbar -->
+                    <div id="toolbar3D" style="display: none; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <!-- Camera Views -->
+                        <div style="display: flex; background: rgba(0,0,0,0.3); padding: 2px; border-radius: 4px; border: 1px solid var(--border-color); gap: 2px;">
+                            <button type="button" class="btn btn-sm btn-secondary" id="btnViewIso" title="Góc nhìn phối cảnh Isometric">🎥 Iso</button>
+                            <button type="button" class="btn btn-sm btn-secondary" id="btnViewFront" title="Góc nhìn trực diện mặt đầu (XY)">⬆️ Mặt Trước</button>
+                            <button type="button" class="btn btn-sm btn-secondary" id="btnViewTop" title="Góc nhìn từ trên xuống (XZ)">➡️ Nhìn Trên</button>
+                            <button type="button" class="btn btn-sm btn-secondary" id="btnViewMesh" title="Phóng to vùng tiếp xúc ăn khớp">🔍 Ăn Khớp</button>
+                        </div>
+
+                        <!-- Speed & Play -->
+                        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.25); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border-color);">
+                            <label for="slider3DAnimSpeed" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">⚡ Tốc độ:</label>
+                            <input type="range" id="slider3DAnimSpeed" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 80px; cursor: pointer;">
+                            <span id="anim3DSpeedVal" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); width: 35px;">1.0x</span>
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="btnToggle3DAnim">⏸️ Dừng</button>
+                        <button type="button" class="btn btn-secondary" id="btnToggleWireframe" title="Bật/tắt khung dây">🕸️ Khung Dây</button>
+                        <button type="button" class="btn btn-secondary" id="btnReset3DView">🎯 Đặt Lại</button>
+
+                        <!-- 3D Export Dropdown -->
+                        <div class="dropdown" style="position: relative; display: inline-block;">
+                            <button type="button" class="btn" id="btnExport3DMenu" style="background:#059669; color:#ffffff; font-weight:700; cursor: pointer;">
+                                📥 Xuất File 3D (SolidWorks / Mastercam) ▾
+                            </button>
+                            <div id="export3DDropdown" style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); min-width: 290px; padding: 0.5rem 0; margin-top: 4px;">
+                                <div style="padding: 4px 12px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
+                                    Định Dạng STEP AP214 (Khối Solid B-Rep)
+                                </div>
+                                <a href="javascript:void(0)" id="expStepPinion" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">⚙️ Xuất Bánh Dẫn 1 (.step)</a>
+                                <a href="javascript:void(0)" id="expStepGear" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">⚙️ Xuất Bánh Bị Dẫn 2 (.step)</a>
+                                <a href="javascript:void(0)" id="expStepAssembly" style="display: block; padding: 6px 14px; color: #38bdf8; font-size: 0.85rem; font-weight: 700; text-decoration: none;">🔗 Xuất Cả Cặp Ăn Khớp (.step)</a>
+                                
+                                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                                <div style="padding: 4px 12px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
+                                    Định Dạng Binary STL (Lập Trình Mastercam)
+                                </div>
+                                <a href="javascript:void(0)" id="expStlPinion" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">⚙️ Xuất Bánh Dẫn 1 (.stl)</a>
+                                <a href="javascript:void(0)" id="expStlGear" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">⚙️ Xuất Bánh Bị Dẫn 2 (.stl)</a>
+                                <a href="javascript:void(0)" id="expStlAssembly" style="display: block; padding: 6px 14px; color: #10b981; font-size: 0.85rem; font-weight: 700; text-decoration: none;">🔗 Xuất Cả Cặp Ăn Khớp (.stl)</a>
+
+                                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                                <a href="javascript:void(0)" id="expObjAssembly" style="display: block; padding: 6px 14px; color: #cbd5e1; font-size: 0.85rem; text-decoration: none;">📦 Xuất File OBJ (.obj)</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <div style="display: flex; justify-content: center; background-color: #0b0f19; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);">
+                <!-- 2D Viewport Container -->
+                <div id="container2D" style="display: flex; justify-content: center; background-color: #0b0f19; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);">
                     <canvas id="gearCanvas" width="1200" height="650" style="background-color: #0b0f19;"></canvas>
+                </div>
+
+                <!-- 3D Viewport Container -->
+                <div id="container3D" style="display: none; position: relative; width: 100%; height: 650px; background-color: #0b0f19; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);">
+                    <div id="gear3DContainer" style="width: 100%; height: 100%;"></div>
+                    <!-- 3D Overlay Badge Info -->
+                    <div id="badge3DInfo" style="position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 8px 14px; font-size: 0.8rem; color: #cbd5e1; pointer-events: none;">
+                        <span id="badge3DType" style="color: #f59e0b; font-weight: 700;">⚙️ Bánh Răng Trụ Răng Thẳng (Spur Gear)</span> | 
+                        <span>aw = <strong id="badge3DAw" style="color: #38bdf8;">201.000 mm</strong></span> | 
+                        <span>Tỷ số i = <strong id="badge3DRatio" style="color: #38bdf8;">2.526</strong></span> | 
+                        <span>Góc xoắn β = <strong id="badge3DBeta" style="color: #10b981;">0.00°</strong></span>
+                    </div>
                 </div>
             </div>
         </div>
 
     </main>
+
+    <!-- 3D Offline Libraries: Zero-CORS & 100% Offline -->
+    <script src="../../shared/js/three.min.js"></script>
+    <script src="../../shared/js/OrbitControls.js"></script>
 
     <!-- Classic Script: 100% Offline & CORS-Free -->
     <script src="js/mitcalc-engine.bundle.js"></script>

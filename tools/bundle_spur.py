@@ -51,6 +51,18 @@ with open(os.path.join(spur_dir, "js", "ui", "gear-canvas.js"), "r", encoding="u
     lines = [l for l in f if not l.strip().startswith("import ")]
     canvas_code = "".join(lines).replace("export class GearCanvas", "class GearCanvas")
 
+with open(os.path.join(spur_dir, "js", "engine", "gear-3d-generator.js"), "r", encoding="utf-8") as f:
+    lines = [l for l in f if not l.strip().startswith("import ")]
+    gen3d_code = "".join(lines).replace("export const Gear3DGenerator =", "const Gear3DGenerator =")
+
+with open(os.path.join(spur_dir, "js", "engine", "gear-3d-exporter.js"), "r", encoding="utf-8") as f:
+    lines = [l for l in f if not l.strip().startswith("import ")]
+    exp3d_code = "".join(lines).replace("export const Gear3DExporter =", "const Gear3DExporter =")
+
+with open(os.path.join(spur_dir, "js", "ui", "gear-3d-visualizer.js"), "r", encoding="utf-8") as f:
+    lines = [l for l in f if not l.strip().startswith("import ")]
+    vis3d_code = "".join(lines).replace("export class Gear3DVisualizer", "class Gear3DVisualizer")
+
 ui_code = r'''
 class SpurGearUI {
     constructor() {
@@ -93,8 +105,12 @@ class SpurGearUI {
             mat2_id: 35
         };
 
+        this.activeMode = '2D';
         const canvasEl = document.getElementById('gearCanvas');
         this.canvasController = canvasEl ? new GearCanvas(canvasEl) : null;
+
+        const container3DEl = document.getElementById('gear3DContainer');
+        this.visualizer3D = (typeof Gear3DVisualizer !== 'undefined' && container3DEl) ? new Gear3DVisualizer(container3DEl) : null;
 
         this.initDOM();
         this.initAccordion();
@@ -150,9 +166,13 @@ class SpurGearUI {
                 if (target) {
                     target.classList.add('active');
                     target.style.display = 'block';
-                    if (targetId === 'tabCanvas' && this.canvasController) {
-                        this.canvasController.autoFit();
-                        this.canvasController.render();
+                    if (targetId === 'tabCanvas') {
+                        if (this.activeMode === '3D' && this.visualizer3D) {
+                            this.visualizer3D.onResize();
+                        } else if (this.canvasController) {
+                            this.canvasController.autoFit();
+                            this.canvasController.render();
+                        }
                     }
                 }
             });
@@ -223,6 +243,123 @@ class SpurGearUI {
         if (btnRefreshAudit) {
             btnRefreshAudit.addEventListener('click', () => this.calculate());
         }
+
+        // 2D / 3D Mode Toggle
+        const btnMode2D = document.getElementById('btnMode2D');
+        const btnMode3D = document.getElementById('btnMode3D');
+        const container2D = document.getElementById('container2D');
+        const container3D = document.getElementById('container3D');
+        const toolbar2D = document.getElementById('toolbar2D');
+        const toolbar3D = document.getElementById('toolbar3D');
+        const visualizerTitle = document.getElementById('visualizerTitle');
+        const visualizerDesc = document.getElementById('visualizerDesc');
+
+        if (btnMode2D && btnMode3D) {
+            btnMode2D.addEventListener('click', () => {
+                this.activeMode = '2D';
+                btnMode2D.style.background = 'var(--accent-green)';
+                btnMode2D.style.color = '#000';
+                btnMode3D.style.background = 'transparent';
+                btnMode3D.style.color = 'var(--text-secondary)';
+                if (container2D) container2D.style.display = 'flex';
+                if (container3D) container3D.style.display = 'none';
+                if (toolbar2D) toolbar2D.style.display = 'flex';
+                if (toolbar3D) toolbar3D.style.display = 'none';
+                if (visualizerTitle) visualizerTitle.textContent = '🔄 Mô Hình Ăn Khớp 2D Trực Quan (2D Involute Mesh Simulation)';
+                if (visualizerDesc) visualizerDesc.textContent = 'Biên dạng thân khai chính xác, góc lượn chân răng chuẩn R = 0.38*mn, đường ăn khớp (Line of Action) và vòng tròn lăn dw1, dw2.';
+                if (this.canvasController) {
+                    this.canvasController.autoFit();
+                    this.canvasController.render();
+                }
+            });
+
+            btnMode3D.addEventListener('click', () => {
+                this.activeMode = '3D';
+                btnMode3D.style.background = 'var(--accent-cyan)';
+                btnMode3D.style.color = '#000';
+                btnMode2D.style.background = 'transparent';
+                btnMode2D.style.color = 'var(--text-secondary)';
+                if (container2D) container2D.style.display = 'none';
+                if (container3D) container3D.style.display = 'block';
+                if (toolbar2D) toolbar2D.style.display = 'none';
+                if (toolbar3D) toolbar3D.style.display = 'flex';
+                if (visualizerTitle) visualizerTitle.textContent = '🧊 Mô Phỏng Ăn Khớp 3D WebGL (Spur & Helical Gears)';
+                if (visualizerDesc) visualizerDesc.textContent = 'Mô hình 3D thực thể xoay chuyển động ăn khớp liên tục. Tự động xoắn răng theo góc nghiêng beta, xuất file STEP/STL cho SolidWorks & Mastercam.';
+                if (this.visualizer3D) {
+                    this.visualizer3D.onResize();
+                    if (this.g) this.visualizer3D.setGeometry(this.g);
+                }
+            });
+        }
+
+        // 3D Camera Preset Buttons
+        const btnViewIso = document.getElementById('btnViewIso');
+        const btnViewFront = document.getElementById('btnViewFront');
+        const btnViewTop = document.getElementById('btnViewTop');
+        const btnViewMesh = document.getElementById('btnViewMesh');
+        const btnReset3DView = document.getElementById('btnReset3DView');
+
+        if (btnViewIso && this.visualizer3D) btnViewIso.addEventListener('click', () => this.visualizer3D.setCameraView('iso'));
+        if (btnViewFront && this.visualizer3D) btnViewFront.addEventListener('click', () => this.visualizer3D.setCameraView('front'));
+        if (btnViewTop && this.visualizer3D) btnViewTop.addEventListener('click', () => this.visualizer3D.setCameraView('top'));
+        if (btnViewMesh && this.visualizer3D) btnViewMesh.addEventListener('click', () => this.visualizer3D.setCameraView('mesh'));
+        if (btnReset3DView && this.visualizer3D) btnReset3DView.addEventListener('click', () => this.visualizer3D.autoFitCamera());
+
+        // 3D Wireframe & Animation Controls
+        const btnWireframe = document.getElementById('btnToggleWireframe');
+        if (btnWireframe && this.visualizer3D) {
+            btnWireframe.addEventListener('click', () => {
+                this.visualizer3D.toggleWireframe();
+                btnWireframe.classList.toggle('active', this.visualizer3D.wireframeMode);
+            });
+        }
+
+        const btnToggle3DAnim = document.getElementById('btnToggle3DAnim');
+        if (btnToggle3DAnim && this.visualizer3D) {
+            btnToggle3DAnim.addEventListener('click', () => {
+                const isRunning = this.visualizer3D.toggleAnimation();
+                btnToggle3DAnim.textContent = isRunning ? '⏸️ Dừng' : '▶️ Tiếp Tục';
+            });
+        }
+
+        const slider3DSpeed = document.getElementById('slider3DAnimSpeed');
+        const anim3DSpeedVal = document.getElementById('anim3DSpeedVal');
+        if (slider3DSpeed && this.visualizer3D) {
+            slider3DSpeed.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value) || 1.0;
+                if (anim3DSpeedVal) anim3DSpeedVal.textContent = val.toFixed(1) + 'x';
+                this.visualizer3D.setAnimSpeed(val);
+            });
+        }
+
+        // 3D Export Dropdown
+        const btnExport3DMenu = document.getElementById('btnExport3DMenu');
+        const export3DDropdown = document.getElementById('export3DDropdown');
+        if (btnExport3DMenu && export3DDropdown) {
+            btnExport3DMenu.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isShown = export3DDropdown.style.display === 'block';
+                export3DDropdown.style.display = isShown ? 'none' : 'block';
+            });
+            window.addEventListener('click', () => {
+                if (export3DDropdown) export3DDropdown.style.display = 'none';
+            });
+        }
+
+        const bindExport = (id, format, target) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('click', () => this.export3DCAD(format, target));
+            }
+        };
+
+        bindExport('expStepPinion', 'step', 'pinion');
+        bindExport('expStepGear', 'step', 'gear');
+        bindExport('expStepAssembly', 'step', 'assembly');
+        bindExport('expStlPinion', 'stl', 'pinion');
+        bindExport('expStlGear', 'stl', 'gear');
+        bindExport('expStlAssembly', 'stl', 'assembly');
+        bindExport('expObjAssembly', 'obj', 'assembly');
     }
 
     syncInputsToDOM() {
@@ -796,6 +933,20 @@ class SpurGearUI {
         if (this.canvasController) {
             this.canvasController.setGeometry(g);
         }
+        if (this.visualizer3D) {
+            this.visualizer3D.setGeometry(g);
+        }
+
+        const badge3DType = document.getElementById('badge3DType');
+        const badge3DAw = document.getElementById('badge3DAw');
+        const badge3DRatio = document.getElementById('badge3DRatio');
+        const badge3DBeta = document.getElementById('badge3DBeta');
+        if (badge3DType) {
+            badge3DType.textContent = isHelical ? '🌀 Bánh Răng Trụ Răng Nghiêng (Helical Gear)' : '⚙️ Bánh Răng Trụ Răng Thẳng (Spur Gear)';
+        }
+        if (badge3DAw) badge3DAw.textContent = g.aw.toFixed(3) + ' mm';
+        if (badge3DRatio) badge3DRatio.textContent = (g.z2 / g.z1).toFixed(3);
+        if (badge3DBeta) badge3DBeta.textContent = g.beta.toFixed(2) + '°';
     }
 
     renderOutputs(g) {
@@ -1446,6 +1597,35 @@ class SpurGearUI {
         document.body.removeChild(a);
         URL.revokeObjectURL(downloadUrl);
     }
+
+    export3DCAD(format, target) {
+        if (!this.visualizer3D || !this.g || typeof Gear3DExporter === 'undefined') return;
+        const g = this.g;
+        const isHelical = Math.abs(g.beta || 0.0) > 1e-4;
+        const typeStr = isHelical ? 'Helical' : 'Spur';
+        const tris = this.visualizer3D.getExportTriangles(target);
+
+        let filenameBase = '';
+        let partName = '';
+        if (target === 'pinion') {
+            filenameBase = `Banh_Dan_1_${typeStr}_z${g.z1}_mn${g.mn}_beta${g.beta.toFixed(1)}`;
+            partName = `PINION_1_Z${g.z1}`;
+        } else if (target === 'gear') {
+            filenameBase = `Banh_Bi_Dan_2_${typeStr}_z${g.z2}_mn${g.mn}_beta${g.beta.toFixed(1)}`;
+            partName = `GEAR_2_Z${g.z2}`;
+        } else {
+            filenameBase = `Cap_Banh_Rang_${typeStr}_z${g.z1}x${g.z2}_aw${g.aw.toFixed(2)}`;
+            partName = `GEAR_ASSEMBLY_Z${g.z1}x${g.z2}`;
+        }
+
+        if (format === 'step') {
+            return Gear3DExporter.exportSTEP(tris, `${filenameBase}.step`, partName);
+        } else if (format === 'stl') {
+            return Gear3DExporter.exportBinarySTL(tris, `${filenameBase}.stl`);
+        } else if (format === 'obj') {
+            return Gear3DExporter.exportOBJ(tris, `${filenameBase}.obj`);
+        }
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1468,6 +1648,9 @@ bundle_content = "\n".join([
     geom_code,
     solver_code,
     canvas_code,
+    gen3d_code,
+    exp3d_code,
+    vis3d_code,
     ref_code,
     ui_code
 ])

@@ -424,3 +424,46 @@
   - **Kiểm thử xuất CAD DXF**: 100% PASS (tạo Blob DXF hợp lệ).
   - **Bevel Gear QC Multi-Case Suite (`qc_bevel_multi_case_suite.py`)**: **120 / 120 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
   - **CORS-Free Single Bundle**: Đóng gói tự động thành công `bevel-engine.bundle.js` (152,810 ký tự) khởi động tức thì 100% offline.
+
+---
+
+## 10. ĐỢT TỐI ƯU HÓA 10: MÔ PHỎNG ĂN KHỚP 3D WEBGL BÁNH RĂNG TRỤ & BÁNH RĂNG NGHIÊNG & BỘ XUẤT CAD 3D SOLIDWORKS / MASTERCAM (STEP AP214 & BINARY STL)
+
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  1. *"bây giờ quay trở lại với module tính toán bánh răng trụ : tôi muốn nâng cấp phần mô phỏng, hiện tại đang là mô phỏng 2D, tôi muốn nâng cấp thêm mô phỏng ăn khớp của cặp bánh răng ăn khớp 3d (khi góc nghiêng = 0 thì mô phỏng bánh răng trụ răng thẳng, khi nhập góc nghiêng >0 thì mô phỏng bánh răng nghiêng ăn khớp)"*.
+  2. *"ngoài ra thêm bộ xuất file 3D thông dụng để mastercam và solidwork đều đọc được và có thể lập trình luôn trên mastercam"*.
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Tích hợp thư viện đồ họa 3D Three.js 100% Offline & Zero-CORS**:
+     - Lưu trữ cục bộ bản phát hành UMD chính thức `shared/js/three.min.js` (Three.js r128, 603 KB) và `shared/js/OrbitControls.js` (26 KB).
+     - Hoàn toàn độc lập, không phụ thuộc kết nối mạng, chạy mượt mà ngay trên giao thức `file:///`.
+  2. **Động cơ sinh lưới thực thể 3D Kín Nước Watertight Solid (`gear-3d-generator.js`)**:
+     - Tự động sinh hình học 3D solid cho cả bánh răng trụ răng thẳng ($\beta = 0^\circ$) và bánh răng nghiêng ($\beta \ne 0^\circ$).
+     - Dựng chính xác 100% biên dạng thân khai (Involute), bán kính lượn chân răng $R = 0.38 m_n$, cung tròn đáy rãnh, mặt trụ lỗ trục moay-ơ và 2 mặt đầu phẳng/xoắn.
+     - **Thuật toán xoắn không gian liên hợp (Helical Conjugate Twisting)**:
+       * Tốc độ góc xoắn: $\omega_{\text{twist}} = \frac{2 \tan\beta}{d}$ (rad/mm).
+       * Pinion 1 xoắn phải ($Hand = +1$), Gear 2 xoắn trái ($Hand = -1$). Hai bánh ăn khớp liên hợp hoàn hảo trên khoảng cách trục $a_w$.
+     - **Tối ưu hóa topo lưới (Watertight Manifold Topology)**: Bước lấy mẫu thích ứng ($step = 2$ cho $z \le 30$, $step = 4$ cho $z > 30$) và $numSlices$ thích ứng (1 lát cắt cho răng thẳng, 6-10 lát cắt cho răng nghiêng). Khống chế số lượng tam giác ở mức tối ưu ($\sim 30,000 - 70,000$ tam giác), bảo đảm 60 FPS mượt mà.
+  3. **Hệ thống xuất tệp CAD 3D chuyên dụng cho SolidWorks & Mastercam (`gear-3d-exporter.js`)**:
+     - **STEP AP214 (ISO 10303-21 B-Rep Solid)**: Cấu trúc thực thể khối đặc (`MANIFOLD_SOLID_BREP` / `CLOSED_SHELL` / `ADVANCED_BREP_SHAPE_REPRESENTATION`). SolidWorks và Mastercam mở ra nhận diện ngay là **Solid Body nguyên vẹn (không phải Surface rỗng)**, cho phép kỹ sư chọn mặt lập trình gia công phay lăn răng, phay 4/5 trục, phay 3D High-Speed hoặc cắt dây EDM Wire trực tiếp trong Mastercam mà không cần vá bề mặt.
+     - **Binary STL (Nhị phân chuẩn)**: Header 80-byte chuẩn hóa, 4-byte số lượng tam giác Little-Endian, 50 bytes mỗi tam giác. Tải về tức thì, dung lượng siêu nhẹ $\sim 1.5 - 3.5\text{ MB}$, nhập vào Mastercam Mill/Wire trong nháy mắt.
+     - **Wavefront OBJ**: Định dạng bổ trợ kèm đầy đủ vector đỉnh và pháp tuyến.
+     - Hỗ trợ xuất linh hoạt: Bánh dẫn 1 (Pinion 1), Bánh bị dẫn 2 (Gear 2), hoặc Cặp lắp ráp hoàn chỉnh (Assembly Pair) đúng vị trí khoảng cách trục $a_w$.
+  4. **Bộ trình diễn mô phỏng 3D WebGL tương tác (`gear-3d-visualizer.js` & `index.html`)**:
+     - Thanh điều hướng phân đoạn 2D / 3D: Chuyển đổi linh hoạt giữa `[ 📐 2D CAD Canvas ]` và `[ 🧊 3D WebGL (Spur & Helical) ]`.
+     - Huy hiệu thông số 3D thời gian thực: Tự động đổi giữa "⚙️ Bánh Răng Trụ Răng Thẳng (Spur Gear)" khi $\beta = 0^\circ$ và "🌀 Bánh Răng Trụ Răng Nghiêng (Helical Gear)" khi $\beta > 0^\circ$, cập nhật $a_w, i, \beta$.
+     - Mô phỏng động học liên hợp thời gian thực: $\theta_1(t)$ và $\theta_2(t) = \phi_{\text{initial}} - \theta_1(t) / i$, thanh trượt tốc độ $0.1\times - 3.0\times$.
+     - 4 góc nhìn cơ khí 1-Click: Isometric, Mặt trước (Front XY), Nhìn từ trên (Top XZ), Cận cảnh ăn khớp (Mesh Zoom). Chế độ bật/tắt Khung dây (Wireframe).
+     - Vật liệu PBR kim loại: Bánh dẫn đồng thau vàng hổ phách, Bánh bị dẫn thép titan xanh cyan, lưới sàn tọa độ không gian.
+* **Kết quả nghiệm thu thực tế**:
+  - **Headless Browser Automated Playwright Test (`test_gear_3d_export.py`)**:
+    * Nhận diện chính xác chế độ Spur Gear khi $\beta = 0^\circ$ ($a_w = 201.000\text{ mm}$). Đã lưu ảnh kiểm chứng `docs/3d_spur_gear_verified.png`.
+    * Tự động chuyển sang chế độ Helical Gear khi đổi $\beta = 15.00^\circ$. Đã lưu ảnh kiểm chứng `docs/3d_helical_gear_verified.png`.
+    * Các nút xoay camera và bật/tắt Wireframe kiểm tra thành công 100%.
+    * Xuất tệp STEP Pinion 1 (`docs/Pinion1_Helical_z19_m6_beta15.step`, 11.5 MB, 37,296 tam giác, B-Rep Solid hợp lệ).
+    * Xuất tệp STEP Assembly (`docs/GearPair_Helical_z19x48_aw208.step`, 22.6 MB, 71,232 tam giác, B-Rep Solid hợp lệ).
+    * Xuất tệp Binary STL Assembly (`docs/GearPair_Helical_z19x48_aw208.stl`, 3,561,684 bytes, 71,232 tam giác, cấu trúc kín nước chuẩn 100%).
+    * Xuất tệp OBJ Pinion 1 (`docs/Pinion1_Helical_z19.obj`, 5.94 MB).
+    * Báo cáo 0 lỗi Console / JavaScript.
+  - **Multi-Case QC Suite (`qc_gear_multi_case_suite.py`)**: **110 / 110 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
+  - **CORS-Free Single Bundle**: Đóng gói tự động thành công `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js` qua `bundle_all.py`.
+
