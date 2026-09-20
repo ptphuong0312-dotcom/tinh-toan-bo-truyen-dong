@@ -386,8 +386,25 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
    - Vẽ 2 đường chân răng (Root lines $3 \to 0$ và $9 \to 8$) độc lập bằng nét mảnh `1.0px`.
    - Bảo đảm 100% hình vẽ sạch, mặt cắt kim loại chuẩn cơ khí ISO 23509, không có bất kỳ nét cắt chéo nào giữa 2 hình cắt bánh răng hoặc trong thân bánh răng.
 
----
+### Quy Chuẩn 19: Nâng Cấp Mô Phỏng 2D CAD Canvas & Mặt Đầu Bánh Dẫn Chuẩn Kỹ Thuật (ISO 23509 & ISO 128 CAD Architecture)
+1. **Chuẩn hóa mặt đầu trước bánh dẫn (Pinion Front End Face)**:
+   - Mặt đầu trước của bánh dẫn (Pinion front face) được định nghĩa là **mặt phẳng thẳng đứng vuông góc 100% với trục quay** tại hoành độ đáy nón trong:
+     $$X_{\text{front1}} = X_{\text{toe\_root1}} = R_i \cos\delta_1 + h_{fi1} \sin\delta_1$$
+   - Hạ thẳng đứng từ $(X_{\text{toe\_root1}}, -d_{fi1}/2)$ xuống bán kính lỗ trục $-d_{\text{bore1}}/2$. Triệt tiêu hoàn toàn góc cắt xiên tùy tiện `- 5` cũ, tạo mặt định vị gá lắp cơ khí chuẩn xác, kín khít và thẩm mỹ cao.
+2. **Động cơ gạch mặt cắt kim loại ISO 128 & Tái tạo đường bao thực thể**:
+   - Thân Pinion 1 gạch mặt cắt ISO 128 góc $+45^\circ$ màu xanh lục bảo (`rgba(16, 185, 129, 0.45)`).
+   - Thân Gear 2 gạch mặt cắt ISO 128 góc $-45^\circ$ màu xanh hoàng gia (`rgba(59, 130, 246, 0.45)`).
+   - Lưu ý trọng yếu trong HTML5 Canvas 2D: Lệnh `ctx.beginPath()` bên trong hàm vẽ hatch sẽ xóa path của đa giác, do đó hàm `drawPolygonSection()` phải thực hiện theo quy trình 3 bước khép kín: (1) `fill()` thân đặc opaque -> (2) `drawHatchedPolygon()` bên trong clip -> (3) `beginPath()` dựng lại toàn bộ chu vi và `stroke()` viền kỹ thuật sắc nét 2.0px.
+3. **Hệ thống kích thước bản vẽ kỹ thuật CAD (Full CAD Dimensioning System)**:
+   - Mũi tên CAD chuẩn tỉ lệ 3:1 (chiều dài 8px, nửa rộng 2.5px) được vẽ đặc ở hai đầu đường kích thước.
+   - Đường dóng kích thước (extension lines) kéo từ các điểm hình học thực thể vươn qua đường kích thước 8-10px.
+   - Kích thước đường kính đỉnh $\varnothing d_{ae1}, \varnothing d_{ae2}$, bề rộng vành răng $b$, chiều dài nón ngoài $R_e$, cung đo góc $\delta_1, \delta_2$ và đỉnh nón chung Apex $V(0, 0)$ có tâm chữ thập đỏ.
+   - Bảng thông số kỹ thuật chuẩn ISO 23509 (Technical Data Card) ghim góc trên bên trái hiển thị đầy đủ $i, z_1/z_2, m_{mn}, \delta_1/\delta_2, b, \beta, x_1/x_2$.
+4. **Bộ điều khiển hiển thị lớp tương tác (Interactive CAD Layer Toggles)**:
+   - Tích hợp 5 checkbox điều khiển lớp trên toolbar: `chkShowDims`, `chkShowHatch`, `chkShowAxes`, `chkShowStripes`, `chkShowDataCard`.
+   - Đồng bộ hoàn toàn giữa Canvas hiển thị và tệp xuất CAD DXF (AutoCAD Release 12).
 
+---
 
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 

@@ -1670,11 +1670,28 @@
         <div id="tabCanvas" class="tab-pane">
             <div class="canvas-wrapper">
                 <div class="canvas-toolbar">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
                         <span style="font-weight: 700; color: var(--accent-cyan);">Mô Hình 2D Nón Bánh Răng Ăn Khớp (Gleason Spiral Bevel)</span>
-                        <span style="font-size: 0.8rem; color: var(--text-muted);">| Góc trục Σ = 90° | Mặt cắt trục ISO 23509</span>
+                        <span style="font-size: 0.8rem; color: var(--text-muted);">| Mặt cắt trục ISO 23509</span>
+                        <div style="display: flex; align-items: center; gap: 0.6rem; margin-left: 0.3rem; flex-wrap: wrap;">
+                            <label style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer;">
+                                <input type="checkbox" id="chkShowDims" checked style="cursor: pointer;"> Kích thước CAD
+                            </label>
+                            <label style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer;">
+                                <input type="checkbox" id="chkShowHatch" checked style="cursor: pointer;"> Mặt cắt ISO 128
+                            </label>
+                            <label style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer;">
+                                <input type="checkbox" id="chkShowAxes" checked style="cursor: pointer;"> Đường tâm & Nón
+                            </label>
+                            <label style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer;">
+                                <input type="checkbox" id="chkShowStripes" checked style="cursor: pointer;"> Vệt răng động
+                            </label>
+                            <label style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer;">
+                                <input type="checkbox" id="chkShowDataCard" checked style="cursor: pointer;"> Bảng thông số
+                            </label>
+                        </div>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.75rem;">
+                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; gap: 0.4rem; background: rgba(15, 23, 42, 0.6); padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid var(--border-color);">
                             <span style="font-size: 0.75rem; color: var(--text-secondary);">Tốc độ:</span>
                             <input type="range" id="sliderAnimSpeed" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 80px; cursor: pointer;">

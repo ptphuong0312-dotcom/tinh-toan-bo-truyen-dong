@@ -133,6 +133,54 @@ class BevelGearUI {
             });
         }
 
+        // Canvas Layer Toggles
+        const chkShowDims = document.getElementById('chkShowDims');
+        const chkShowHatch = document.getElementById('chkShowHatch');
+        const chkShowAxes = document.getElementById('chkShowAxes');
+        const chkShowStripes = document.getElementById('chkShowStripes');
+        const chkShowDataCard = document.getElementById('chkShowDataCard');
+
+        if (chkShowDims) {
+            chkShowDims.addEventListener('change', (e) => {
+                if (this.canvasController) {
+                    this.canvasController.showDimensions = e.target.checked;
+                    this.canvasController.render();
+                }
+            });
+        }
+        if (chkShowHatch) {
+            chkShowHatch.addEventListener('change', (e) => {
+                if (this.canvasController) {
+                    this.canvasController.showHatching = e.target.checked;
+                    this.canvasController.render();
+                }
+            });
+        }
+        if (chkShowAxes) {
+            chkShowAxes.addEventListener('change', (e) => {
+                if (this.canvasController) {
+                    this.canvasController.showAxes = e.target.checked;
+                    this.canvasController.render();
+                }
+            });
+        }
+        if (chkShowStripes) {
+            chkShowStripes.addEventListener('change', (e) => {
+                if (this.canvasController) {
+                    this.canvasController.showStripes = e.target.checked;
+                    this.canvasController.render();
+                }
+            });
+        }
+        if (chkShowDataCard) {
+            chkShowDataCard.addEventListener('change', (e) => {
+                if (this.canvasController) {
+                    this.canvasController.showDataCard = e.target.checked;
+                    this.canvasController.render();
+                }
+            });
+        }
+
         // DXF Export Buttons (Canvas & Section 16)
         const btnExportDXFCanvas = document.getElementById('btnExportDXFCanvas');
         if (btnExportDXFCanvas) {
@@ -1357,14 +1405,14 @@ class BevelGearUI {
         const x_back1 = p1_heel_tip.x + 15;
         const x_hub_end1 = x_back1 + Math.max(30, b * 0.7);
 
-        // Pinion Upper Half
+        // Pinion Upper Half (Clean vertical front face at p1_toe_root.x)
+        const x_front1 = p1_toe_root.x;
         const p1_upper = [
             p1_toe_root, p1_toe_tip, p1_heel_tip, p1_heel_root,
             { x: x_back1, y: d_hub1 / 2.0 },
             { x: x_hub_end1, y: d_hub1 / 2.0 },
             { x: x_hub_end1, y: d_bore1 / 2.0 },
-            { x: p1_toe_root.x - 5, y: d_bore1 / 2.0 },
-            { x: p1_toe_root.x - 5, y: p1_toe_root.y },
+            { x: x_front1, y: d_bore1 / 2.0 },
             p1_toe_root
         ];
         const p1_lower = p1_upper.map(p => ({ x: p.x, y: -p.y }));
@@ -1390,8 +1438,7 @@ class BevelGearUI {
             { x: d_hub2 / 2.0, y: y_back2 },
             { x: d_hub2 / 2.0, y: y_hub_end2 },
             { x: d_bore2 / 2.0, y: y_hub_end2 },
-            { x: d_bore2 / 2.0, y: p2_toe_root.y - 5 },
-            { x: p2_toe_root.x, y: p2_toe_root.y - 5 },
+            { x: d_bore2 / 2.0, y: p2_toe_root.y },
             p2_toe_root
         ];
         const p2_left = p2_right.map(p => ({ x: -p.x, y: p.y }));

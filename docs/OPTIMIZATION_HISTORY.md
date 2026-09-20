@@ -377,5 +377,50 @@
   - **Browser Automated Playwright Test**: Trích xuất giá trị DOM `#out_sai1 = 5.8112`, `#out_sai2 = 8.8447`, chụp ảnh canvas `#bevelSec4ChartCanvas` xác nhận triệt tiêu hoàn toàn nét cắt chéo.
   - **Tài liệu đóng khung công thức**: Hoàn thành `docs/MATHEMATICAL_FORMULAS_MASTER.md`.
 
+---
 
+## 9. ĐỢT TỐI ƯU HÓA 9: CHUẨN HÓA MÔ PHỎNG 2D CAD CANVAS, PHẦN ĐẦU BÁNH DẪN VÀ HỆ THỐNG KÍCH THƯỚC BẢN VẼ ISO 23509
 
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  1. *"Mô Phỏng 2D CAD (Canvas) của tính toán bánh răng côn nhìn vẫn hơi sơ sài và các kích thước chưa chuẩn kĩ thuật"*.
+  2. *"phần đầu (không phải đỉnh răng đâu nhá ) của bánh nhỏ bạn vẽ cũng chưa được chuẩn"*.
+* **Nguyên nhân khuyết tật đồ họa cũ**:
+  1. **Khuyết tật mặt đầu bánh nhỏ (Pinion Front End)**:
+     - Đoạn code cũ trong `bevel-canvas.js` (dòng 286-287) cố định giá trị lùi tùy tiện `p1_toe_root.x - 5` và nối chéo về `p1_toe_root.y`, tạo ra một góc vát xiên kỳ dị và để lại một khoảng trống thủng đen ngổn ngang ở mũi bánh nhỏ.
+  2. **Kích thước chưa chuẩn kỹ thuật CAD**:
+     - Các kích thước $R_e, b, \delta, \Sigma, d_{ae}$ chỉ là các chuỗi văn bản trôi nổi bằng `fillText()` không có đường kích thước (dimension lines), không có đường dóng (extension lines), không có mũi tên tiêu chuẩn CAD (CAD arrowheads), và thiếu ký hiệu đường kính phi ($\varnothing$).
+  3. **Thiếu vắng mặt cắt kỹ thuật cơ khí ISO 128**:
+     - Bánh răng trước đây chỉ được tô một lớp màu bán trong suốt phẳng mờ, chưa có hoa văn gạch mặt cắt kim loại (Cross-Hatching) đan chéo đặc trưng của bản vẽ kỹ thuật cơ khí.
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Chuẩn hóa hình học mặt đầu bánh nhỏ chuẩn ISO 23509**:
+     - Mặt đầu trước của bánh nhỏ (Pinion Front Face) là **mặt phẳng thẳng đứng vuông góc 100% với trục quay cơ khí**:
+       $$X_{\text{front1}} = X_{\text{toe\_root1}} = R_i \cos\delta_1 + h_{fi1} \sin\delta_1$$
+     - Đoạn thẳng mặt đầu hạ thẳng đứng góc $90^\circ$ từ đáy chân răng trong $(X_{\text{toe\_root1}}, -d_{fi1}/2)$ xuống bán kính lỗ trục $-d_{\text{bore1}}/2$.
+     - Lỗ trục được gạch bóng nền kỹ thuật (`rgba(15, 23, 42, 0.85)`), moay-ơ kéo dài về sau tạo thành khối gá lắp cơ khí đặc, chuẩn xác 100% và không có bất kỳ khoảng hở tùy tiện nào.
+  2. **Động cơ gạch mặt cắt kim loại ISO 128 & Tái tạo đường bao kỹ thuật**:
+     - Hàm `drawPolygonSection(ctx, points, fillColor, strokeColor, hatchAngleRad, hatchColor)` áp dụng quy trình 3 bước vững chắc:
+       * Bước 1: `fill()` thân khối đặc opaque chống xuyên thấu chồng chéo.
+       * Bước 2: `clip()` và vẽ các đường gạch song song (Pinion $+45^\circ$ màu xanh ngọc `#10b981`, Gear $-45^\circ$ màu xanh dương `#3b82f6`).
+       * Bước 3: `beginPath()` tái tạo chu vi và `stroke()` viền bao kỹ thuật dày 2.0px sắc nét.
+  3. **Hệ thống ghi kích thước bản vẽ kỹ thuật CAD hoàn chỉnh (CAD Dimensioning Engine)**:
+     - Mũi tên CAD chuẩn tỉ lệ 3:1 (chiều dài 8px, nửa rộng 2.5px) được tô đặc ở hai đầu mút.
+     - Đường dóng kích thước (extension lines) kéo dài từ các điểm hình học thực thể vươn qua đường dóng 8-10px.
+     - Kích thước đường kính đỉnh ngoài: $\varnothing d_{ae1}$ (bánh 1) đặt bên phải, $\varnothing d_{ae2}$ (bánh 2) đặt phía trên.
+     - Kích thước chiều dài nón ngoài $R_e$ và bề rộng vành răng $b$ đo song song với đường sinh nón chia kèm đường dóng vuông góc.
+     - Cung đo góc nón chia $\delta_1, \delta_2$, góc trục $\Sigma = 90^\circ$, và đỉnh nón chung Apex $V(0, 0)$ có tâm chữ thập đỏ.
+     - Ghim Bảng thông số kỹ thuật chuẩn ISO 23509 (Technical Data Card) ở góc trên bên trái hiển thị rõ ràng $i, z_1/z_2, m_{mn}, \delta_1/\delta_2, b, \beta, x_1/x_2$.
+  4. **Bộ điều khiển hiển thị lớp đồ họa tương tác (Interactive CAD Layer Toggles)**:
+     - Tích hợp 5 checkbox trên thanh công cụ Canvas Toolbar:
+       * `[x] Kích thước CAD` (`chkShowDims`)
+       * `[x] Mặt cắt ISO 128` (`chkShowHatch`)
+       * `[x] Đường tâm & Nón` (`chkShowAxes`)
+       * `[x] Vệt răng động` (`chkShowStripes`)
+       * `[x] Bảng thông số` (`chkShowDataCard`)
+     - Phản ứng tức thì thời gian thực khi người dùng bật/tắt từng lớp.
+     - Đồng bộ hóa hình học phần đầu bánh dẫn vào hàm xuất file `exportDXF()`.
+* **Kết quả nghiệm thu thực tế**:
+  - **Headless Browser Automated Playwright Test**: 0 lỗi Console/JavaScript. Ảnh chụp màn hình canvas (`tab2_bevel_canvas_upgraded.png`) và toàn trang (`tab2_bevel_page_full.png`) xác nhận độ sắc nét, phần đầu bánh nhỏ chuẩn xác, kích thước CAD rõ ràng và giao diện thẩm mỹ cao.
+  - **Kiểm thử tương tác Checkbox Layer**: 100% PASS (bật/tắt kích thước, mặt cắt, vệt răng động mượt mà).
+  - **Kiểm thử xuất CAD DXF**: 100% PASS (tạo Blob DXF hợp lệ).
+  - **Bevel Gear QC Multi-Case Suite (`qc_bevel_multi_case_suite.py`)**: **120 / 120 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
+  - **CORS-Free Single Bundle**: Đóng gói tự động thành công `bevel-engine.bundle.js` (152,810 ký tự) khởi động tức thì 100% offline.

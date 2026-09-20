@@ -1935,7 +1935,7 @@ const BevelCalcEngine = {
 /**
  * MITCalc Web App - 2D Interactive Bevel Gear Canvas Visualizer
  * Industrial-Grade Axial Engineering Cross-Section & Kinematic Meshing Simulator
- * Standards: ISO 23509, DIN 3971, DIN 3965
+ * Standards: ISO 23509, DIN 3971, DIN 3965, ISO 128 (Technical Drawings - Hatching)
  */
 
 class BevelGearCanvas {
@@ -1953,7 +1953,13 @@ class BevelGearCanvas {
         this.angle1 = 0;
         this.animSpeed = 1.0;
         this.isRunning = true;
-        this.viewMode = 'section'; // 'section' (Mat cat ky thuat) or 'kinematic' (Mo phong dong)
+
+        // Layer visibility toggles
+        this.showDimensions = true;
+        this.showHatching = true;
+        this.showAxes = true;
+        this.showStripes = true;
+        this.showDataCard = true;
 
         this.initEvents();
         this.animate();
@@ -2083,28 +2089,29 @@ class BevelGearCanvas {
         const b = g.b || 50;
         const d1 = g.delta1 || 0.38;
         const d2 = g.delta2 || 1.19;
-        const th_a1 = ((g.deltaa1_deg || 2.0) * Math.PI) / 180.0;
-        const th_a2 = ((g.deltaa2_deg || 2.0) * Math.PI) / 180.0;
-        const Rae1 = g.Re / Math.cos(th_a1);
-        const Rae2 = g.Re / Math.cos(th_a2);
+        const s1 = Math.sin(d1), c1 = Math.cos(d1);
+        const s2 = Math.sin(d2), c2 = Math.cos(d2);
 
-        // Calculate precise bounding box of entire assembly in mm:
-        const x_hub_end1 = Rae1 * Math.cos(d1 + th_a1) + 15 + Math.max(30, b * 0.7);
-        const y_hub_end2 = -Rae2 * Math.sin(d1 - th_a2 * 0.85) - 18 - Math.max(35, b * 0.8);
-        const dae2_half = (g.dae2 || 400) / 2.0;
-        const dae1_half = (g.dae1 || 200) / 2.0;
+        const hae1 = g.hae1 || 10, hfe1 = g.hfe1 || 12;
+        const hae2 = g.hae2 || 10, hfe2 = g.hfe2 || 12;
+        const Re = g.Re || 200;
 
-        const xMin = Math.min(-dae2_half - 20, -50);
-        const xMax = Math.max(dae2_half + 20, x_hub_end1 + 30);
-        const yMin = Math.min(y_hub_end2 - 30, -dae1_half - 20);
-        const yMax = Math.max(dae1_half + 30, 50);
+        const dae1 = g.dae1 || 200;
+        const dae2 = g.dae2 || 400;
+        const x_hub_end1 = (Re * c1 + hfe1 * s1 + 15) + Math.max(35, b * 0.7);
+        const y_hub_end2 = -(Re * c2 + hfe2 * s2 + 20) - Math.max(40, b * 0.8);
 
-        const wGeom = Math.max(100, xMax - xMin);
-        const hGeom = Math.max(100, yMax - yMin);
+        const xMin = Math.min(-dae2 / 2.0 - 50, -60);
+        const xMax = Math.max(dae2 / 2.0 + 50, x_hub_end1 + 60);
+        const yMin = Math.min(y_hub_end2 - 50, -dae1 / 2.0 - 50);
+        const yMax = Math.max(dae1 / 2.0 + 50, 60);
+
+        const wGeom = Math.max(120, xMax - xMin);
+        const hGeom = Math.max(120, yMax - yMin);
         const cxGeom = (xMin + xMax) / 2.0;
         const cyGeom = (yMin + yMax) / 2.0;
 
-        const scale = Math.min((w * 0.82) / wGeom, (h * 0.82) / hGeom);
+        const scale = Math.min((w * 0.78) / wGeom, (h * 0.78) / hGeom);
 
         ctx.save();
         ctx.translate(w / 2.0 + this.panX, h / 2.0 + this.panY);
@@ -2114,13 +2121,17 @@ class BevelGearCanvas {
         this.drawAxialSection(ctx);
 
         ctx.restore();
+
+        if (this.showDataCard) {
+            this.drawDataCard(ctx, g);
+        }
     }
 
     drawGrid(ctx, w, h) {
         ctx.save();
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
         ctx.lineWidth = 1;
-        const step = 25;
+        const step = 30;
         ctx.beginPath();
         for (let x = 0; x < w; x += step) {
             ctx.moveTo(x, 0);
@@ -2134,186 +2145,286 @@ class BevelGearCanvas {
         ctx.restore();
     }
 
+    drawPolygonSection(ctx, points, fillColor, strokeColor, hatchAngleRad, hatchColor) {
+        if (!points || points.length < 3) return;
+
+        // 1. Opaque solid body
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.closePath();
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+
+        // 2. ISO 128 Cross-hatching
+        if (this.showHatching) {
+            this.drawHatchedPolygon(ctx, points, hatchAngleRad, hatchColor, 8.0);
+        }
+
+        // 3. Crisp engineering boundary outline
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 2.0;
+        ctx.stroke();
+    }
+
+    drawHatchedPolygon(ctx, points, angleRad, strokeColor, step = 8.0) {
+        if (!points || points.length < 3) return;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.closePath();
+        ctx.clip();
+
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+
+        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+        for (const p of points) {
+            if (p.x < minX) minX = p.x;
+            if (p.x > maxX) maxX = p.x;
+            if (p.y < minY) minY = p.y;
+            if (p.y > maxY) maxY = p.y;
+        }
+
+        const diag = Math.hypot(maxX - minX, maxY - minY) + step * 3;
+        const cx = (minX + maxX) / 2.0;
+        const cy = (minY + maxY) / 2.0;
+        const cosA = Math.cos(angleRad);
+        const sinA = Math.sin(angleRad);
+
+        const numLines = Math.ceil(diag / step);
+        for (let i = -numLines; i <= numLines; i++) {
+            const offset = i * step;
+            const px = cx + offset * sinA;
+            const py = cy - offset * cosA;
+            ctx.moveTo(px - diag * cosA, py - diag * sinA);
+            ctx.lineTo(px + diag * cosA, py + diag * sinA);
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+
     drawAxialSection(ctx) {
         const g = this.geom;
         const d1 = g.delta1;
         const d2 = g.delta2;
         const Re = g.Re;
         const Ri = g.Ri;
-        const Rm = g.Rm;
         const b = g.b;
 
-        const th_a1 = (g.deltaa1_deg * Math.PI) / 180.0;
-        const th_f1 = (g.deltaf1_deg * Math.PI) / 180.0;
-        const th_a2 = (g.deltaa2_deg * Math.PI) / 180.0;
-        const th_f2 = (g.deltaf2_deg * Math.PI) / 180.0;
+        const s1 = Math.sin(d1), c1 = Math.cos(d1);
+        const s2 = Math.sin(d2), c2 = Math.cos(d2);
 
-        const d1a = d1 + th_a1;
-        const d1f = d1 - th_f1;
-        const d2a = d2 + th_a2;
-        const d2f = d2 - th_f2;
+        const hae1 = g.hae1, hfe1 = g.hfe1;
+        const hae2 = g.hae2, hfe2 = g.hfe2;
+        const hai1 = g.hai1, hfi1 = g.hfi1;
+        const hai2 = g.hai2, hfi2 = g.hfi2;
 
-        // Shaft Axes
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
-        ctx.lineWidth = 1.2;
-        ctx.setLineDash([12, 4, 3, 4]);
+        const dae1 = g.dae1, dae2 = g.dae2;
 
-        // Pinion Axis (X)
-        ctx.beginPath();
-        ctx.moveTo(-40, 0);
-        ctx.lineTo(Re * 1.45, 0);
-        ctx.stroke();
+        // 1. PINION KEY COORDINATES (Apex at (0, 0), Axis along X)
+        const p1_toe_tip = { x: Ri * c1 - hai1 * s1, y: -(Ri * s1 + hai1 * c1) };
+        const p1_toe_root = { x: Ri * c1 + hfi1 * s1, y: -(Ri * s1 - hfi1 * c1) };
+        const p1_heel_tip = { x: Re * c1 - hae1 * s1, y: -(Re * s1 + hae1 * c1) };
+        const p1_heel_root = { x: Re * c1 + hfe1 * s1, y: -(Re * s1 - hfe1 * c1) };
 
-        // Gear Axis (Y pointing up = -Y in canvas)
-        ctx.beginPath();
-        ctx.moveTo(0, 40);
-        ctx.lineTo(0, -Re * 1.45);
-        ctx.stroke();
+        const p1_toe_tip_b = { x: p1_toe_tip.x, y: -p1_toe_tip.y };
+        const p1_toe_root_b = { x: p1_toe_root.x, y: -p1_toe_root.y };
+        const p1_heel_tip_b = { x: p1_heel_tip.x, y: -p1_heel_tip.y };
+        const p1_heel_root_b = { x: p1_heel_root.x, y: -p1_heel_root.y };
 
-        // Pitch Generator Line
-        const pitchContactX = Re * Math.cos(d1);
-        const pitchContactY = -Re * Math.sin(d1);
-        ctx.strokeStyle = '#f59e0b';
-        ctx.lineWidth = 1.8;
-        ctx.setLineDash([8, 4]);
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(pitchContactX * 1.15, pitchContactY * 1.15);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        const d_bore1 = Math.max(20, (g.de1 || 100) * 0.22);
+        const d_hub1 = Math.max(35, (g.de1 || 100) * 0.45);
+        const H1out = Math.max(12, g.mmn * 1.3);
 
-        // Back Cone Normal Line at Re
-        ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(pitchContactX - 50 * Math.sin(d1), pitchContactY - 50 * Math.cos(d1));
-        ctx.lineTo(pitchContactX + 50 * Math.sin(d1), pitchContactY + 50 * Math.cos(d1));
-        ctx.stroke();
-        ctx.setLineDash([]);
+        // Pinion Front Face: Flat vertical face perpendicular to shaft axis at p1_toe_root.x
+        const x_front1 = p1_toe_root.x;
+        const x_back1 = p1_heel_root.x + H1out * s1;
+        const y_back_rim1 = -(Re * s1 - (hfe1 + H1out) * c1);
+        const x_hub_end1 = x_back1 + Math.max(35, b * 0.7);
 
-        // 1. PINION (BANH DAN 1)
-        const Rae1 = Re / Math.cos(th_a1);
-        const Rfe1 = Re / Math.cos(th_f1);
-        const Rai1 = Ri / Math.cos(th_a1);
-        const Rfi1 = Ri / Math.cos(th_f1);
+        // Pinion Upper Half Cross-Section Polygon
+        const pinion_upper = [
+            p1_toe_root,
+            p1_toe_tip,
+            p1_heel_tip,
+            p1_heel_root,
+            { x: x_back1, y: y_back_rim1 },
+            { x: x_back1, y: -d_hub1 / 2.0 },
+            { x: x_hub_end1, y: -d_hub1 / 2.0 },
+            { x: x_hub_end1, y: -d_bore1 / 2.0 },
+            { x: x_front1, y: -d_bore1 / 2.0 },
+            p1_toe_root
+        ];
 
-        const p1_toe_tip = { x: Rai1 * Math.cos(d1a), y: -Rai1 * Math.sin(d1a) };
-        const p1_heel_tip= { x: Rae1 * Math.cos(d1a), y: -Rae1 * Math.sin(d1a) };
-        const p1_heel_root={ x: Rfe1 * Math.cos(d1f), y: -Rfe1 * Math.sin(d1f) };
-        const p1_toe_root ={ x: Rfi1 * Math.cos(d1f), y: -Rfi1 * Math.sin(d1f) };
+        // Pinion Lower Half Cross-Section Polygon (Symmetric)
+        const pinion_lower = [
+            { x: x_front1, y: d_bore1 / 2.0 },
+            { x: x_hub_end1, y: d_bore1 / 2.0 },
+            { x: x_hub_end1, y: d_hub1 / 2.0 },
+            { x: x_back1, y: d_hub1 / 2.0 },
+            { x: x_back1, y: -y_back_rim1 },
+            p1_heel_root_b,
+            p1_heel_tip_b,
+            p1_toe_tip_b,
+            p1_toe_root_b,
+            { x: x_front1, y: d_bore1 / 2.0 }
+        ];
 
-        const d_bore1 = Math.max(15, g.de1 * 0.22);
-        const d_hub1  = Math.max(25, g.de1 * 0.45);
-        const x_back1 = p1_heel_tip.x + 15;
-        const x_hub_end1 = x_back1 + Math.max(30, b * 0.7);
+        // 2. GEAR KEY COORDINATES (Apex at (0, 0), Axis along Y pointing up = -Y in canvas)
+        const p2_heel_tip = { x: Re * s2 + hae2 * c2, y: -(Re * c2 - hae2 * s2) };
+        const p2_heel_root = { x: Re * s2 - hfe2 * c2, y: -(Re * c2 + hfe2 * s2) };
+        const p2_toe_tip = { x: Ri * s2 + hai2 * c2, y: -(Ri * c2 - hai2 * s2) };
+        const p2_toe_root = { x: Ri * s2 - hfi2 * c2, y: -(Ri * c2 + hfi2 * s2) };
 
-        // Pinion Upper Half Cross-Section
-        ctx.beginPath();
-        ctx.moveTo(p1_toe_root.x, p1_toe_root.y);
-        ctx.lineTo(p1_toe_tip.x, p1_toe_tip.y);
-        ctx.lineTo(p1_heel_tip.x, p1_heel_tip.y);
-        ctx.lineTo(p1_heel_root.x, p1_heel_root.y);
-        ctx.lineTo(x_back1, -d_hub1 / 2.0);
-        ctx.lineTo(x_hub_end1, -d_hub1 / 2.0);
-        ctx.lineTo(x_hub_end1, -d_bore1 / 2.0);
-        ctx.lineTo(p1_toe_root.x - 5, -d_bore1 / 2.0);
-        ctx.lineTo(p1_toe_root.x, p1_toe_root.y);
-        ctx.closePath();
+        const p2_heel_tip_l = { x: -p2_heel_tip.x, y: p2_heel_tip.y };
+        const p2_heel_root_l = { x: -p2_heel_root.x, y: p2_heel_root.y };
+        const p2_toe_tip_l = { x: -p2_toe_tip.x, y: p2_toe_tip.y };
+        const p2_toe_root_l = { x: -p2_toe_root.x, y: p2_toe_root.y };
 
-        ctx.fillStyle = 'rgba(16, 185, 129, 0.22)';
-        ctx.fill();
-        ctx.strokeStyle = '#10b981';
-        ctx.lineWidth = 1.8;
-        ctx.stroke();
+        const d_bore2 = Math.max(30, (g.de2 || 200) * 0.16);
+        const d_hub2 = Math.max(55, (g.de2 || 200) * 0.32);
+        const H2out = Math.max(16, g.mmn * 1.8);
 
-        // Pinion Lower Half Cross-Section (Symmetric)
-        ctx.beginPath();
-        ctx.moveTo(p1_toe_root.x, -p1_toe_root.y);
-        ctx.lineTo(p1_toe_tip.x, -p1_toe_tip.y);
-        ctx.lineTo(p1_heel_tip.x, -p1_heel_tip.y);
-        ctx.lineTo(p1_heel_root.x, -p1_heel_root.y);
-        ctx.lineTo(x_back1, d_hub1 / 2.0);
-        ctx.lineTo(x_hub_end1, d_hub1 / 2.0);
-        ctx.lineTo(x_hub_end1, d_bore1 / 2.0);
-        ctx.lineTo(p1_toe_root.x - 5, d_bore1 / 2.0);
-        ctx.lineTo(p1_toe_root.x, -p1_toe_root.y);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(16, 185, 129, 0.22)';
-        ctx.fill();
-        ctx.stroke();
+        const y_back2 = -(Re * c2 + hfe2 * s2 + H2out * s2);
+        const x_back_rim2 = Re * s2 - (hfe2 + H2out) * c2;
+        const y_front2 = p2_toe_root.y;
+        const x_front_rim2 = p2_toe_root.x;
+        const y_hub_end2 = y_back2 - Math.max(40, b * 0.8);
+
+        // Gear Right Half Cross-Section (Meshing side)
+        const gear_right = [
+            p2_toe_root,
+            p2_toe_tip,
+            p2_heel_tip,
+            p2_heel_root,
+            { x: x_back_rim2, y: y_back2 },
+            { x: d_hub2 / 2.0, y: y_back2 },
+            { x: d_hub2 / 2.0, y: y_hub_end2 },
+            { x: d_bore2 / 2.0, y: y_hub_end2 },
+            { x: d_bore2 / 2.0, y: y_front2 + 15 },
+            { x: x_front_rim2, y: y_front2 },
+            p2_toe_root
+        ];
+
+        // Gear Left Half Cross-Section (Symmetric)
+        const gear_left = [
+            { x: -x_front_rim2, y: y_front2 },
+            { x: -d_bore2 / 2.0, y: y_front2 + 15 },
+            { x: -d_bore2 / 2.0, y: y_hub_end2 },
+            { x: -d_hub2 / 2.0, y: y_hub_end2 },
+            { x: -d_hub2 / 2.0, y: y_back2 },
+            { x: -x_back_rim2, y: y_back2 },
+            p2_heel_root_l,
+            p2_heel_tip_l,
+            p2_toe_tip_l,
+            p2_toe_root_l,
+            { x: -x_front_rim2, y: y_front2 }
+        ];
+
+        // 3. DRAW PINION SECTIONS (Upper & Lower)
+        for (const poly of [pinion_upper, pinion_lower]) {
+            this.drawPolygonSection(ctx, poly, '#062e24', '#10b981', Math.PI / 4, 'rgba(16, 185, 129, 0.45)');
+        }
 
         // Pinion Bore Shading
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
-        ctx.fillRect(p1_toe_root.x - 5, -d_bore1 / 2.0, x_hub_end1 - (p1_toe_root.x - 5), d_bore1);
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.fillRect(x_front1, -d_bore1 / 2.0, x_hub_end1 - x_front1, d_bore1);
         ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
-        ctx.strokeRect(p1_toe_root.x - 5, -d_bore1 / 2.0, x_hub_end1 - (p1_toe_root.x - 5), d_bore1);
+        ctx.lineWidth = 1.0;
+        ctx.strokeRect(x_front1, -d_bore1 / 2.0, x_hub_end1 - x_front1, d_bore1);
 
-        // 2. GEAR (BANH BI DAN 2)
-        const Rae2 = Re / Math.cos(th_a2);
-        const Rfe2 = Re / Math.cos(th_f2);
-        const Rai2 = Ri / Math.cos(th_a2);
-        const Rfi2 = Ri / Math.cos(th_f2);
-
-        const ang_gear_tip_mesh = -d1 + th_a2 * 0.85;
-        const ang_gear_root_mesh= -d1 - th_f2;
-
-        const p2_heel_tip = { x: Rae2 * Math.cos(ang_gear_tip_mesh), y: Rae2 * Math.sin(ang_gear_tip_mesh) };
-        const p2_toe_tip  = { x: Rai2 * Math.cos(ang_gear_tip_mesh), y: Rai2 * Math.sin(ang_gear_tip_mesh) };
-        const p2_heel_root= { x: Rfe2 * Math.cos(ang_gear_root_mesh), y: Rfe2 * Math.sin(ang_gear_root_mesh) };
-        const p2_toe_root = { x: Rfi2 * Math.cos(ang_gear_root_mesh), y: Rfi2 * Math.sin(ang_gear_root_mesh) };
-
-        const d_bore2 = Math.max(25, g.de2 * 0.16);
-        const d_hub2  = Math.max(45, g.de2 * 0.32);
-        const y_back2 = p2_heel_tip.y - 18;
-        const y_hub_end2 = y_back2 - Math.max(35, b * 0.8);
-
-        // Gear Left Half Cross-Section (Meshing side)
-        ctx.beginPath();
-        ctx.moveTo(p2_toe_root.x, p2_toe_root.y);
-        ctx.lineTo(p2_toe_tip.x, p2_toe_tip.y);
-        ctx.lineTo(p2_heel_tip.x, p2_heel_tip.y);
-        ctx.lineTo(p2_heel_root.x, p2_heel_root.y);
-        ctx.lineTo(d_hub2 / 2.0, y_back2);
-        ctx.lineTo(d_hub2 / 2.0, y_hub_end2);
-        ctx.lineTo(d_bore2 / 2.0, y_hub_end2);
-        ctx.lineTo(d_bore2 / 2.0, p2_toe_root.y + 5);
-        ctx.lineTo(p2_toe_root.x, p2_toe_root.y);
-        ctx.closePath();
-
-        ctx.fillStyle = 'rgba(59, 130, 246, 0.22)';
-        ctx.fill();
-        ctx.strokeStyle = '#3b82f6';
-        ctx.lineWidth = 1.8;
-        ctx.stroke();
-
-        // Gear Right Half Cross-Section (Symmetric)
-        ctx.beginPath();
-        ctx.moveTo(-p2_toe_root.x, p2_toe_root.y);
-        ctx.lineTo(-p2_toe_tip.x, p2_toe_tip.y);
-        ctx.lineTo(-p2_heel_tip.x, p2_heel_tip.y);
-        ctx.lineTo(-p2_heel_root.x, p2_heel_root.y);
-        ctx.lineTo(-d_hub2 / 2.0, y_back2);
-        ctx.lineTo(-d_hub2 / 2.0, y_hub_end2);
-        ctx.lineTo(-d_bore2 / 2.0, y_hub_end2);
-        ctx.lineTo(-d_bore2 / 2.0, p2_toe_root.y + 5);
-        ctx.lineTo(-p2_toe_root.x, p2_toe_root.y);
-        ctx.closePath();
-        ctx.fillStyle = 'rgba(59, 130, 246, 0.22)';
-        ctx.fill();
-        ctx.stroke();
+        // 4. DRAW GEAR SECTIONS (Right & Left)
+        for (const poly of [gear_right, gear_left]) {
+            this.drawPolygonSection(ctx, poly, '#0d2247', '#3b82f6', -Math.PI / 4, 'rgba(59, 130, 246, 0.45)');
+        }
 
         // Gear Bore Shading
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
-        ctx.fillRect(-d_bore2 / 2.0, y_hub_end2, d_bore2, (p2_toe_root.y + 5) - y_hub_end2);
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
+        ctx.fillRect(-d_bore2 / 2.0, y_hub_end2, d_bore2, (y_front2 + 15) - y_hub_end2);
         ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
-        ctx.strokeRect(-d_bore2 / 2.0, y_hub_end2, d_bore2, (p2_toe_root.y + 5) - y_hub_end2);
+        ctx.lineWidth = 1.0;
+        ctx.strokeRect(-d_bore2 / 2.0, y_hub_end2, d_bore2, (y_front2 + 15) - y_hub_end2);
 
-        // 3. TOOTH CONJUGATE MESHING STRIPES
-        this.drawToothStripes(ctx, p1_toe_root, p1_heel_root, p1_toe_tip, p1_heel_tip, '#059669', this.angle1);
-        this.drawToothStripes(ctx, p2_toe_root, p2_heel_root, p2_toe_tip, p2_heel_tip, '#2563eb', -this.angle1 / (g.i || 2.5));
+        // 5. TOOTH ROOT CONE LINES
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(p1_toe_root.x, p1_toe_root.y);
+        ctx.lineTo(p1_heel_root.x, p1_heel_root.y);
+        ctx.moveTo(p1_toe_root_b.x, p1_toe_root_b.y);
+        ctx.lineTo(p1_heel_root_b.x, p1_heel_root_b.y);
+        ctx.stroke();
 
-        // 4. APEX V & DIMENSION LABELS
+        ctx.strokeStyle = '#3b82f6';
+        ctx.beginPath();
+        ctx.moveTo(p2_toe_root.x, p2_toe_root.y);
+        ctx.lineTo(p2_heel_root.x, p2_heel_root.y);
+        ctx.moveTo(p2_toe_root_l.x, p2_toe_root_l.y);
+        ctx.lineTo(p2_heel_root_l.x, p2_heel_root_l.y);
+        ctx.stroke();
+
+        // 6. ANIMATED CONJUGATE MESHING STRIPES
+        if (this.showStripes) {
+            this.drawToothStripes(ctx, p1_toe_root, p1_heel_root, p1_toe_tip, p1_heel_tip, '#10b981', this.angle1);
+            this.drawToothStripes(ctx, p2_toe_root, p2_heel_root, p2_toe_tip, p2_heel_tip, '#3b82f6', -this.angle1 / (g.i || 2.5));
+        }
+
+        // 7. CENTERLINES & PITCH CONE GENERATORS
+        if (this.showAxes) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+            ctx.lineWidth = 1.2;
+            ctx.setLineDash([14, 4, 3, 4]);
+
+            // Pinion Axis (Horizontal X)
+            ctx.beginPath();
+            ctx.moveTo(-50, 0);
+            ctx.lineTo(x_hub_end1 + 60, 0);
+            ctx.stroke();
+
+            // Gear Axis (Vertical Y)
+            ctx.beginPath();
+            ctx.moveTo(0, 50);
+            ctx.lineTo(0, y_hub_end2 - 60);
+            ctx.stroke();
+
+            // Pitch Cone Generator Line (Contact Line)
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 1.8;
+            ctx.setLineDash([10, 4, 3, 4]);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Re * c1 * 1.15, -Re * s1 * 1.15);
+            ctx.stroke();
+
+            // Symmetric Pitch Cone Generator for Gear Left
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+            ctx.lineWidth = 1.0;
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(-Re * s2 * 1.12, -Re * c2 * 1.12);
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Re * c1 * 1.12, Re * s1 * 1.12);
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // 8. APEX V INDICATOR
         ctx.fillStyle = '#ef4444';
         ctx.beginPath();
         ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
@@ -2323,42 +2434,234 @@ class BevelGearCanvas {
         ctx.stroke();
 
         ctx.fillStyle = '#f87171';
-        ctx.font = 'bold 12px Consolas, sans-serif';
-        ctx.fillText('V (Dinh Non Chung - Apex)', -25, 22);
+        ctx.font = 'bold 11px Consolas, monospace';
+        ctx.fillText('Apex V(0,0)', -28, 18);
 
-        // Dimension Arcs
-        ctx.strokeStyle = 'rgba(245, 158, 11, 0.45)';
-        ctx.lineWidth = 1;
-        ctx.setLineDash([3, 3]);
+        // 9. CAD ENGINEERING DIMENSIONS
+        if (this.showDimensions) {
+            this.drawCadDimensions(ctx, {
+                g, Re, Ri, b, d1, d2, s1, c1, s2, c2,
+                dae1, dae2, x_hub_end1,
+                p1_heel_tip, p1_heel_tip_b,
+                p2_heel_tip, p2_heel_tip_l
+            });
+        }
+    }
 
+    drawCadDimensions(ctx, d) {
+        const { g, Re, Ri, b, d1, d2, s1, c1, s2, c2, dae1, dae2, x_hub_end1, p1_heel_tip, p1_heel_tip_b, p2_heel_tip, p2_heel_tip_l } = d;
+
+        // A. Pinion Tip Diameter dae1 (Vertical dimension on right side)
+        const x_dim_dae1 = x_hub_end1 + 25;
+        const y_top_dae1 = -dae1 / 2.0;
+        const y_bot_dae1 = dae1 / 2.0;
+
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.4)';
+        ctx.lineWidth = 1.0;
         ctx.beginPath();
-        ctx.arc(0, 0, Re, -Math.PI / 2 - 0.1, 0.1);
+        ctx.moveTo(p1_heel_tip.x, p1_heel_tip.y);
+        ctx.lineTo(x_dim_dae1 + 10, y_top_dae1);
+        ctx.moveTo(p1_heel_tip_b.x, p1_heel_tip_b.y);
+        ctx.lineTo(x_dim_dae1 + 10, y_bot_dae1);
         ctx.stroke();
 
+        this.drawDimensionLine(ctx,
+            { x: x_dim_dae1, y: y_top_dae1 },
+            { x: x_dim_dae1, y: y_bot_dae1 },
+            '\u2300dae1 = ' + dae1.toFixed(1),
+            '#34d399',
+            { x: 10, y: 0 },
+            'left'
+        );
+
+        // B. Gear Tip Diameter dae2 (Horizontal dimension at top)
+        const y_dim_dae2 = -dae2 / 2.0 - 28;
+        const x_left_dae2 = -dae2 / 2.0;
+        const x_right_dae2 = dae2 / 2.0;
+
         ctx.beginPath();
-        ctx.arc(0, 0, Ri, -Math.PI / 2 - 0.1, 0.1);
+        ctx.moveTo(p2_heel_tip_l.x, p2_heel_tip_l.y);
+        ctx.lineTo(x_left_dae2, y_dim_dae2 - 10);
+        ctx.moveTo(p2_heel_tip.x, p2_heel_tip.y);
+        ctx.lineTo(x_right_dae2, y_dim_dae2 - 10);
         ctx.stroke();
-        ctx.setLineDash([]);
 
-        // Labels
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = '11px sans-serif';
+        this.drawDimensionLine(ctx,
+            { x: x_left_dae2, y: y_dim_dae2 },
+            { x: x_right_dae2, y: y_dim_dae2 },
+            '\u2300dae2 = ' + dae2.toFixed(1),
+            '#60a5fa',
+            { x: 0, y: -10 },
+            'center'
+        );
 
-        const ang_lbl = -d1 * 0.5;
-        ctx.fillText('Re = ' + Re.toFixed(1) + ' mm', Re * Math.cos(ang_lbl) + 10, Re * Math.sin(ang_lbl));
-        ctx.fillText('b = ' + b.toFixed(1) + ' mm', Rm * Math.cos(-d1) + 12, Rm * Math.sin(-d1) - 10);
+        // C. Face Width b (Parallel to pitch cone generator line)
+        const nx_p = -s1, ny_p = -c1;
+        const b_off = 32;
+        const p_b1 = { x: Ri * c1 + b_off * nx_p, y: -(Ri * s1 - b_off * ny_p) };
+        const p_b2 = { x: Re * c1 + b_off * nx_p, y: -(Re * s1 - b_off * ny_p) };
+
+        ctx.beginPath();
+        ctx.moveTo(Ri * c1, -Ri * s1);
+        ctx.lineTo(p_b1.x + 8 * nx_p, p_b1.y - 8 * ny_p);
+        ctx.moveTo(Re * c1, -Re * s1);
+        ctx.lineTo(p_b2.x + 8 * nx_p, p_b2.y - 8 * ny_p);
+        ctx.stroke();
+
+        this.drawDimensionLine(ctx,
+            p_b1, p_b2,
+            'b = ' + b.toFixed(1),
+            '#f59e0b',
+            { x: 10 * nx_p, y: -10 * ny_p },
+            'center'
+        );
+
+        // D. Outer Cone Distance Re
+        const re_off = 58;
+        const p_re1 = { x: re_off * nx_p, y: re_off * ny_p };
+        const p_re2 = { x: Re * c1 + re_off * nx_p, y: -(Re * s1 - re_off * ny_p) };
+
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.lineTo(p_re1.x + 8 * nx_p, p_re1.y - 8 * ny_p);
+        ctx.moveTo(Re * c1, -Re * s1);
+        ctx.lineTo(p_re2.x + 8 * nx_p, p_re2.y - 8 * ny_p);
+        ctx.stroke();
+
+        this.drawDimensionLine(ctx,
+            p_re1, p_re2,
+            'Re = ' + Re.toFixed(1),
+            '#fbbf24',
+            { x: 10 * nx_p, y: -10 * ny_p },
+            'center'
+        );
+
+        // E. Pitch Cone Angles (δ1, δ2)
+        ctx.save();
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.arc(0, 0, 85, -d1, 0);
+        ctx.stroke();
         ctx.fillStyle = '#10b981';
-        ctx.fillText('delta1 = ' + g.delta1_deg.toFixed(1) + ' deg', 70, -12);
-        ctx.fillStyle = '#60a5fa';
-        ctx.fillText('delta2 = ' + g.delta2_deg.toFixed(1) + ' deg', 14, -75);
-        ctx.fillStyle = '#cbd5e1';
-        ctx.fillText('Sigma = ' + g.Sigma_deg.toFixed(1) + ' deg', 35, -35);
+        ctx.font = '11px sans-serif';
+        ctx.fillText('\u03B41 = ' + g.delta1_deg.toFixed(1) + '°', 95, -12);
 
-        ctx.font = '10px sans-serif';
-        ctx.fillStyle = '#34d399';
-        ctx.fillText('dae1 = ' + g.dae1.toFixed(1), p1_heel_tip.x + 8, p1_heel_tip.y);
-        ctx.fillStyle = '#93c5fd';
-        ctx.fillText('dae2 = ' + g.dae2.toFixed(1), p2_heel_tip.x, p2_heel_tip.y - 12);
+        ctx.strokeStyle = '#60a5fa';
+        ctx.beginPath();
+        ctx.arc(0, 0, 115, -Math.PI / 2, -d1);
+        ctx.stroke();
+        ctx.fillStyle = '#60a5fa';
+        ctx.fillText('\u03B42 = ' + g.delta2_deg.toFixed(1) + '°', 20, -125);
+        ctx.restore();
+    }
+
+    drawDimensionLine(ctx, p1, p2, text, color = '#38bdf8', textOffset = { x: 0, y: -8 }, align = 'center') {
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const length = Math.hypot(dx, dy);
+        if (length < 8) return;
+
+        const ux = dx / length;
+        const uy = dy / length;
+        const vx = -uy;
+        const vy = ux;
+
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+
+        const arrowLen = Math.min(8.0, length * 0.35);
+        const arrowHalfWidth = arrowLen / 3.0;
+
+        // Arrow at p1
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p1.x + arrowLen * ux + arrowHalfWidth * vx, p1.y + arrowLen * uy + arrowHalfWidth * vy);
+        ctx.lineTo(p1.x + arrowLen * ux - arrowHalfWidth * vx, p1.y + arrowLen * uy - arrowHalfWidth * vy);
+        ctx.closePath();
+        ctx.fill();
+
+        // Arrow at p2
+        ctx.beginPath();
+        ctx.moveTo(p2.x, p2.y);
+        ctx.lineTo(p2.x - arrowLen * ux + arrowHalfWidth * vx, p2.y - arrowLen * uy + arrowHalfWidth * vy);
+        ctx.lineTo(p2.x - arrowLen * ux - arrowHalfWidth * vx, p2.y - arrowLen * uy - arrowHalfWidth * vy);
+        ctx.closePath();
+        ctx.fill();
+
+        const midX = (p1.x + p2.x) / 2.0 + textOffset.x;
+        const midY = (p1.y + p2.y) / 2.0 + textOffset.y;
+
+        ctx.font = 'bold 11px Consolas, monospace';
+        ctx.textAlign = align;
+        ctx.textBaseline = 'middle';
+
+        const metrics = ctx.measureText(text);
+        const txtWidth = metrics.width;
+        ctx.fillStyle = 'rgba(7, 11, 20, 0.85)';
+        ctx.fillRect(align === 'center' ? midX - txtWidth / 2 - 3 : midX - 2, midY - 7, txtWidth + 6, 14);
+
+        ctx.fillStyle = color;
+        ctx.fillText(text, midX, midY);
+        ctx.restore();
+    }
+
+    drawDataCard(ctx, g) {
+        ctx.save();
+        const cx = 16, cy = 16;
+        const cardW = 260, cardH = 175;
+
+        ctx.fillStyle = 'rgba(11, 19, 41, 0.9)';
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(cx, cy, cardW, cardH, 6) : ctx.rect(cx, cy, cardW, cardH);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#1e293b';
+        ctx.beginPath();
+        ctx.roundRect ? ctx.roundRect(cx, cy, cardW, 26, [6, 6, 0, 0]) : ctx.rect(cx, cy, cardW, 26);
+        ctx.fill();
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 11px system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('📐 BẢNG THÔNG SỐ CHUẨN ISO 23509', cx + 10, cy + 13);
+
+        const x1_str = (g.x1 >= 0 ? '+' : '') + (g.x1 || 0).toFixed(2);
+        const x2_str = (g.x2 >= 0 ? '+' : '') + (g.x2 || 0).toFixed(2);
+        const items = [
+            ['Tỉ số truyền i', (g.i || (g.z2 / g.z1)).toFixed(3)],
+            ['Số răng z1 / z2', g.z1 + ' / ' + g.z2],
+            ['Mô-đun pháp mmn', (g.mmn || 10).toFixed(1) + ' mm'],
+            ['Góc nón chia δ1 / δ2', (g.delta1_deg || 0).toFixed(1) + '° / ' + (g.delta2_deg || 0).toFixed(1) + '°'],
+            ['Bề rộng vành răng b', (g.b || 0).toFixed(1) + ' mm'],
+            ['Góc xoắn răng β', (g.beta_deg || 0).toFixed(1) + '°'],
+            ['Dịch chỉnh x1 / x2', x1_str + ' / ' + x2_str]
+        ];
+
+        ctx.font = '10px system-ui, sans-serif';
+        items.forEach((item, idx) => {
+            const rowY = cy + 40 + idx * 18;
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(item[0], cx + 10, rowY);
+            ctx.fillStyle = '#f1f5f9';
+            ctx.font = 'bold 10px Consolas, monospace';
+            ctx.textAlign = 'right';
+            ctx.fillText(item[1], cx + cardW - 10, rowY);
+            ctx.textAlign = 'left';
+            ctx.font = '10px system-ui, sans-serif';
+        });
+
+        ctx.restore();
     }
 
     drawToothStripes(ctx, toe_root, heel_root, toe_tip, heel_tip, color, phaseAngle) {
@@ -2522,6 +2825,54 @@ class BevelGearUI {
             btnAnimate.addEventListener('click', () => {
                 const running = this.canvasController.toggleAnimation();
                 btnAnimate.textContent = running ? '⏸ Tạm Dừng' : '▶ Chạy Mô Phỏng';
+            });
+        }
+
+        // Canvas Layer Toggles
+        const chkShowDims = document.getElementById('chkShowDims');
+        const chkShowHatch = document.getElementById('chkShowHatch');
+        const chkShowAxes = document.getElementById('chkShowAxes');
+        const chkShowStripes = document.getElementById('chkShowStripes');
+        const chkShowDataCard = document.getElementById('chkShowDataCard');
+
+        if (chkShowDims) {
+            chkShowDims.addEventListener('change', (e) => {
+                if (this.canvasController) {
+                    this.canvasController.showDimensions = e.target.checked;
+                    this.canvasController.render();
+                }
+            });
+        }
+        if (chkShowHatch) {
+            chkShowHatch.addEventListener('change', (e) => {
+                if (this.canvasController) {
+                    this.canvasController.showHatching = e.target.checked;
+                    this.canvasController.render();
+                }
+            });
+        }
+        if (chkShowAxes) {
+            chkShowAxes.addEventListener('change', (e) => {
+                if (this.canvasController) {
+                    this.canvasController.showAxes = e.target.checked;
+                    this.canvasController.render();
+                }
+            });
+        }
+        if (chkShowStripes) {
+            chkShowStripes.addEventListener('change', (e) => {
+                if (this.canvasController) {
+                    this.canvasController.showStripes = e.target.checked;
+                    this.canvasController.render();
+                }
+            });
+        }
+        if (chkShowDataCard) {
+            chkShowDataCard.addEventListener('change', (e) => {
+                if (this.canvasController) {
+                    this.canvasController.showDataCard = e.target.checked;
+                    this.canvasController.render();
+                }
             });
         }
 
@@ -3749,14 +4100,14 @@ class BevelGearUI {
         const x_back1 = p1_heel_tip.x + 15;
         const x_hub_end1 = x_back1 + Math.max(30, b * 0.7);
 
-        // Pinion Upper Half
+        // Pinion Upper Half (Clean vertical front face at p1_toe_root.x)
+        const x_front1 = p1_toe_root.x;
         const p1_upper = [
             p1_toe_root, p1_toe_tip, p1_heel_tip, p1_heel_root,
             { x: x_back1, y: d_hub1 / 2.0 },
             { x: x_hub_end1, y: d_hub1 / 2.0 },
             { x: x_hub_end1, y: d_bore1 / 2.0 },
-            { x: p1_toe_root.x - 5, y: d_bore1 / 2.0 },
-            { x: p1_toe_root.x - 5, y: p1_toe_root.y },
+            { x: x_front1, y: d_bore1 / 2.0 },
             p1_toe_root
         ];
         const p1_lower = p1_upper.map(p => ({ x: p.x, y: -p.y }));
@@ -3782,8 +4133,7 @@ class BevelGearUI {
             { x: d_hub2 / 2.0, y: y_back2 },
             { x: d_hub2 / 2.0, y: y_hub_end2 },
             { x: d_bore2 / 2.0, y: y_hub_end2 },
-            { x: d_bore2 / 2.0, y: p2_toe_root.y - 5 },
-            { x: p2_toe_root.x, y: p2_toe_root.y - 5 },
+            { x: d_bore2 / 2.0, y: p2_toe_root.y },
             p2_toe_root
         ];
         const p2_left = p2_right.map(p => ({ x: -p.x, y: p.y }));

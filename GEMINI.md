@@ -217,3 +217,30 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Tuyệt đối không sinh bất kỳ nét cắt chéo nào giữa 2 hình cắt bánh răng hoặc trong lòng thân bánh răng.
 
 ---
+
+### Quy Tắc 14: Quy Chuẩn Mô Phỏng 2D CAD Canvas & Mặt Đầu Bánh Dẫn Chuẩn Cơ Khí (ISO 23509 & ISO 128 CAD Protocol)
+1. **Phần Đầu Bánh Nhỏ (Pinion Front End / Face Protocol)**:
+   - Khắc phục triệt để lỗi vẽ đầu bánh nhỏ tùy tiện hoặc khoét lỗ xiên (`- 5` arbitrary offset).
+   - Mặt đầu trước của bánh nhỏ (Pinion front face) là **mặt phẳng thẳng đứng vuông góc hoàn toàn với trục quay** tại tọa độ hoành độ đáy nón trong: $X_{\text{front1}} = X_{\text{toe\_root1}} = R_i \cos\delta_1 + h_{fi1} \sin\delta_1$.
+   - Đường mặt đầu trước hạ thẳng đứng góc $90^\circ$ từ đáy chân răng trong $(X_{\text{toe\_root1}}, -d_{fi1}/2)$ xuống bán kính lỗ trục $-d_{\text{bore1}}/2$, tạo khối định vị gá lắp cơ khí chuẩn xác, liền lạc và cứng vững 100%.
+2. **Động cơ mặt cắt kỹ thuật ISO 128 (Technical Hatching Engine)**:
+   - Thân bánh dẫn (Pinion 1) được gạch mặt cắt kim loại chuẩn ISO 128 nghiêng $+45^\circ$ màu xanh ngọc lục bảo (`rgba(16, 185, 129, 0.45)`).
+   - Thân bánh bị dẫn (Gear 2) được gạch mặt cắt kim loại chuẩn ISO 128 nghiêng $-45^\circ$ màu xanh hoàng gia (`rgba(59, 130, 246, 0.45)`).
+   - Đường bao chi tiết được tái khởi tạo và stroke viền kỹ thuật 2.0px đè lên lớp gạch mặt cắt, triệt tiêu hiện tượng tràn nét hoặc mờ biên dạng.
+3. **Hệ thống kích thước bản vẽ CAD tiêu chuẩn (Full Engineering CAD Dimensioning)**:
+   - Kích thước đường kính đỉnh ngoài: $\varnothing d_{ae1}$ (bánh 1, đặt bên phải) và $\varnothing d_{ae2}$ (bánh 2, đặt phía trên) kèm đường dóng và mũi tên CAD tỉ lệ 3:1.
+   - Kích thước chiều dài nón ngoài $R_e$ và bề rộng vành răng $b$ song song với đường sinh nón chia kèm đường dóng vuông góc.
+   - Cung đo góc nón chia $\delta_1, \delta_2$ và góc trục $\Sigma = 90^\circ$.
+   - Điểm đỉnh nón chung Apex $V(0, 0)$ có tâm chữ thập đỏ nổi bật.
+   - Bảng thông số kỹ thuật chuẩn ISO 23509 (Technical Data Card) ghim góc trên bên trái hiển thị đầy đủ $i, z_1/z_2, m_{mn}, \delta_1/\delta_2, b, \beta, x_1/x_2$.
+4. **Bộ điều khiển hiển thị lớp đồ họa tương tác (Interactive CAD Layer Toggles)**:
+   - Tab 2 Canvas Toolbar tích hợp 5 checkbox bật/tắt tức thì:
+     * `[x] Kích thước CAD` (`chkShowDims`)
+     * `[x] Mặt cắt ISO 128` (`chkShowHatch`)
+     * `[x] Đường tâm & Nón` (`chkShowAxes`)
+     * `[x] Vệt răng động` (`chkShowStripes`)
+     * `[x] Bảng thông số` (`chkShowDataCard`)
+   - Đồng bộ hoàn toàn giữa Canvas hiển thị và tệp xuất CAD DXF (AutoCAD Release 12).
+
+---
+
