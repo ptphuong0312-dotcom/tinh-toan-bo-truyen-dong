@@ -445,6 +445,26 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 22: Chuẩn Hóa Mặt Đầu Phẳng Tuyệt Đối (Zero-Ripple Planar Caps), Dropdown Hướng Nhìn 3D CAD và Đồng Bộ Pha Động Học Ăn Khớp Liên Hợp
+1. **Tách khối đỉnh (Vertex Splitting) - Triệt tiêu 100% hiện tượng nhấp nhô gợn sóng mặt đầu**:
+   - Khắc phục lỗi dùng chung đỉnh giữa hông răng và mặt đầu: Khi dùng chung đỉnh, pháp tuyến đỉnh bị pha trộn giữa pháp tuyến hông $(n_x, n_y)$ và pháp tuyến mặt đầu $(0, 0, \pm 1)$, tạo ra bóng sáng gợn sóng/nhấp nhô không đúng với mặt phẳng cơ khí.
+   - Giải pháp: Chia lưới làm 4 nhóm đỉnh độc lập:
+     * Mặt hông răng: $numLayers \times N$ đỉnh, pháp tuyến mượt dọc thân khai.
+     * Mặt đầu trước $Z = +halfB$: $2N$ đỉnh, pháp tuyến **nghiêm ngặt $[0, 0, 1]$**.
+     * Mặt đầu sau $Z = -halfB$: $2N$ đỉnh, pháp tuyến **nghiêm ngặt $[0, 0, -1]$**.
+     * Lòng lỗ trục: $numLayers \times N$ đỉnh, pháp tuyến hướng tâm $[-\cos\theta, -\sin\theta, 0]$.
+   - Đảm bảo 2 mặt đầu phẳng lì 100%, cạnh nối góc $90^\circ$ sắc nét chuẩn chi tiết cơ khí phay tiện.
+2. **Hộp chọn Dropdown hướng nhìn 3D CAD tiêu chuẩn (`#sel3DViewPreset`)**:
+   - Thay thế toàn bộ nút bấm riêng lẻ bằng một ô chọn `<select id="sel3DViewPreset">` có mũi tên sổ xuống chuẩn các phần mềm CAD 3D (SolidWorks, Inventor, Mastercam).
+   - Đầy đủ 8 góc nhìn tiêu chuẩn: Phối cảnh (Isometric), Mặt trước (Front XY), Mặt sau (Back XY), Nhìn trên (Top XZ), Nhìn dưới (Bottom XZ), Nhìn phải (Right YZ), Nhìn trái (Left YZ), và Cận cảnh ăn khớp (Mesh Zone).
+3. **Đồng bộ pha động học ăn khớp không va chạm (Conjugate Meshing Phase Alignment)**:
+   - Từng chi tiết bánh răng độc lập được thiết kế đối xứng tuyệt đối qua trục $+Y$ với $baseOffset = 0.0$.
+   - Khi lắp ghép ăn khớp tại khoảng cách trục $a_w$, góc pha ban đầu của bánh 2 được xác định theo công thức giải tích chuẩn xác:
+     $$\phi_{2,0} = \frac{\pi}{z_2} + \frac{\pi}{2} \left(1 - \frac{z_1}{z_2}\right)$$
+   - Khóa cứng góc quay động học: $\phi_2 = \phi_{2,0} - \phi_1 \cdot \frac{z_1}{z_2}$ trong toàn bộ vòng lặp hoạt ảnh `animate()`, triệt tiêu hoàn toàn sai số tích lũy. Răng bánh 1 đi vào rãnh răng bánh 2 đạt khe hở chân răng $c = 1.501\text{ mm}$ (chuẩn $c^* = 0.25 \cdot m_n$), khe hở cạnh răng tiếp xúc trơn tru liên tục ($0.0025\text{ mm}$), **hoàn toàn không bị chồng chéo hay va chạm**.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

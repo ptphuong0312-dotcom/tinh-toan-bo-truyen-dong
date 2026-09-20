@@ -308,8 +308,7 @@ export const MitcalcToothSolver = {
         };
 
         const pitchAngle = (2.0 * pi) / z;
-        const isGear2 = (opt.id === 2);
-        const baseOffset = isGear2 ? (pitchAngle / 2.0) : 0.0;
+        const baseOffset = 0.0;
 
         const contour = [];
         for (let toothIdx = 0; toothIdx < z; toothIdx++) {

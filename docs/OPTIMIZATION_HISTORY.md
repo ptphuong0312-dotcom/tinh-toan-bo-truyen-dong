@@ -509,4 +509,51 @@
   - **Multi-Case QC Suite (`qc_gear_multi_case_suite.py`)**: **110 / 110 checks PASS tuyệt đối (100.0%)**.
   - **CORS-Free Single Bundle**: Đóng gói thành công `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js`.
 
+---
+
+## 12. ĐỢT TỐI ƯU HÓA 12: MẶT ĐẦU PHẲNG TUYỆT ĐỐI (TRIỆT TIÊU NHẤP NHÔ), DROPDOWN CHỌN HƯỚNG NHÌN 3D CAD CHUẨN XÁC, ĐỒNG BỘ PHA ĂN KHỚP KHÔNG CHỒNG CHÉO
+
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  - Ảnh chụp màn hình từ người dùng:
+    1. *"như trong anh 2 mặt đầu là phẳng là được, bạn lại dựng nhấp nhô làm gì"*: Mặt đầu trước và sau của cả 2 bánh răng bị đổ bóng gợn sóng/nhấp nhô do dùng chung đỉnh và pháp tuyến (shared normals) giữa bề mặt hông răng và mặt đáy. Mặt đầu cơ khí phải là mặt phẳng tuyệt đối 100% (Planar hard edge).
+    2. *"thay vì kiểu ghi như bạn hiện tại : mặt trước, nhìn trên ... thì bạn cho tôi một ô thôi có mũi tên sổ xuống, khi nhấp vào đấy nó sẽ sổ xuống tất các các hướng nhìn như các phần mềm 3D"*: Thay thế toàn bộ các nút bấm riêng lẻ bằng một ô chọn Dropdown duy nhất có mũi tên sổ xuống (`#sel3DViewPreset`) chuẩn các phần mềm 3D CAD (SolidWorks, Inventor, Mastercam) với đầy đủ 8 góc nhìn tiêu chuẩn.
+    3. *"ngay với mô hình mô phỏng 3D hiện tại thì các răng khi ăn khớp cũng đang bị trồng chéo lên nhau chưa đúng pha"*: Răng của bánh 1 và bánh 2 đang bị va chạm/chồng chéo lên nhau do lệch pha động học (Pinion angle không được reset và công thức pha chưa triệt tiêu góc lệch phân đoạn).
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Tách khối đỉnh (Vertex Splitting) - Mặt đầu phẳng tuyệt đối 100% (Zero-Ripple Planar Caps)**:
+     - Tái cấu trúc bộ sinh lưới `Gear3DGenerator.generateGearMesh`: chia tách thành 4 nhóm đỉnh độc lập với pháp tuyến riêng biệt:
+       * Nhóm 1 (Bề mặt hông răng - Lateral Flank): $numLayers \times N$ đỉnh, pháp tuyến cong mềm mại theo thân khai và lượn chân răng.
+       * Nhóm 2 (Mặt đầu trước - Front Cap tại $Z = +halfB$): $2N$ đỉnh (vòng ngoài + lỗ trục), pháp tuyến **chính xác tuyệt đối $[0, 0, 1]$**.
+       * Nhóm 3 (Mặt đầu sau - Back Cap tại $Z = -halfB$): $2N$ đỉnh (vòng ngoài + lỗ trục), pháp tuyến **chính xác tuyệt đối $[0, 0, -1]$**.
+       * Nhóm 4 (Lòng lỗ trục - Inner Bore): $numLayers \times N$ đỉnh, pháp tuyến hướng tâm $[-\cos\theta, -\sin\theta, 0]$.
+     - Cạnh nối giữa mặt đầu và thân răng trở thành cạnh sắc cơ khí chuẩn $90^\circ$ (Hard mechanical crease edge). Triệt tiêu 100% hiện tượng bóng sáng nhấp nhô, phẳng mịn như gia công phay tiện thực tế.
+  2. **Hộp chọn Dropdown hướng nhìn 3D CAD tiêu chuẩn (`#sel3DViewPreset`)**:
+     - Thay thế cụm nút bấm cũ bằng `<select id="sel3DViewPreset">` tinh gọn, chuyên nghiệp với 8 góc nhìn chuẩn quốc tế:
+       * `iso`: 🎥 Phối Cảnh (Isometric)
+       * `front`: ⬆️ Trực Diện Mặt Đầu (Front - XY)
+       * `back`: ⬇️ Mặt Sau (Back - XY)
+       * `top`: ➡️ Nhìn Từ Trên (Top - XZ)
+       * `bottom`: ⬅️ Nhìn Từ Dưới (Bottom - XZ)
+       * `right`: ▶️ Nhìn Từ Phải (Right - YZ)
+       * `left`: ◀️ Nhìn Từ Trái (Left - YZ)
+       * `mesh`: 🔍 Vùng Tiếp Xúc Ăn Khớp (Mesh Zone Zoom)
+     - Liên kết sự kiện `change` chuyển góc camera tức thì với Target tâm ăn khớp và bán kính bao chuẩn xác.
+  3. **Giải thuật đồng bộ pha động học ăn khớp tuyệt đối (Conjugate Meshing Phase Solver)**:
+     - Chuẩn hóa tọa độ cục bộ của từng chi tiết độc lập: $baseOffset = 0.0$ cho cả bánh 1 và bánh 2 (trục đối xứng hoàn hảo dọc theo trục $+Y$).
+     - Thiết lập công thức giải tích tính góc lệch pha lắp ghép ăn khớp $\phi_{2,0}$:
+       $$\phi_{2,0} = \frac{\pi}{z_2} + \frac{\pi}{2} \left(1 - \frac{z_1}{z_2}\right)$$
+     - Khóa cứng góc quay động học: $\phi_2 = \phi_{2,0} - \phi_1 \cdot \frac{z_1}{z_2}$ trong toàn bộ vòng lặp hoạt ảnh `animate()`, triệt tiêu hoàn toàn sai số tích lũy dấu phẩy động (Accumulation drift).
+     - Kiểm chứng hình học: Đỉnh răng bánh 1 đi vào rãnh răng bánh 2 đạt khe hở chân răng danh nghĩa $c = 1.501\text{ mm}$ (chuẩn $c^* = 0.25 \cdot m_n$), khe hở cạnh răng tiếp xúc trơn tru liên tục với khoảng cách bề mặt đạt $0.0025\text{ mm}$ (tiếp xúc lăn thân khai thực tế), **TRIỆT TIÊU 100% HIỆN TƯỢNG RĂNG CHỒNG CHÉO**.
+* **Kết quả nghiệm thu thực tế**:
+  - **Kiểm thử hình học ăn khớp toàn chu kỳ (`scratch_test_full_mesh.py`)**: Đạt khoảng cách tối thiểu liên tục $0.0025\text{ mm}$ xuyên suốt 360 độ góc quay bánh răng, không có bất kỳ điểm va chạm/giao nhau nào.
+  - **Kiểm thử trực quan Playwright (`test_gear_3d_visual_verification.py`)**:
+    * Mặt đầu trước phẳng tuyệt đối: Đã lưu ảnh kiểm chứng `gear_3d_front_flat_caps.png`.
+    * Vùng ăn khớp phóng to: Đã lưu ảnh kiểm chứng `gear_3d_mesh_zone_clearance.png`.
+    * Phối cảnh bánh răng thẳng: Đã lưu ảnh kiểm chứng `gear_3d_isometric_view.png`.
+    * Phối cảnh bánh răng nghiêng ($\beta = 15^\circ$): Đã lưu ảnh kiểm chứng `gear_3d_helical_15deg_iso.png`.
+    * Báo cáo 0 lỗi Console / JavaScript.
+  - **Kiểm thử xuất 3D CAD (`test_gear_3d_export.py`)**: 100% PASS (STEP Solid 17.2 MB, Binary STL 2.68 MB).
+  - **Multi-Case QC Suite (`qc_gear_multi_case_suite.py`)**: **110 / 110 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
+  - **CORS-Free Single Bundle**: Đóng gói thành công qua `bundle_all.py`.
+
+
 

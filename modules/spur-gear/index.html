@@ -1830,12 +1830,19 @@
 
                     <!-- 3D Action Toolbar -->
                     <div id="toolbar3D" style="display: none; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                        <!-- Camera Views -->
-                        <div style="display: flex; background: rgba(0,0,0,0.3); padding: 2px; border-radius: 4px; border: 1px solid var(--border-color); gap: 2px;">
-                            <button type="button" class="btn btn-sm btn-secondary" id="btnViewIso" title="Góc nhìn phối cảnh Isometric">🎥 Iso</button>
-                            <button type="button" class="btn btn-sm btn-secondary" id="btnViewFront" title="Góc nhìn trực diện mặt đầu (XY)">⬆️ Mặt Trước</button>
-                            <button type="button" class="btn btn-sm btn-secondary" id="btnViewTop" title="Góc nhìn từ trên xuống (XZ)">➡️ Nhìn Trên</button>
-                            <button type="button" class="btn btn-sm btn-secondary" id="btnViewMesh" title="Phóng to vùng tiếp xúc ăn khớp">🔍 Ăn Khớp</button>
+                        <!-- 3D Camera View Dropdown Select (CAD Standard: SolidWorks / Mastercam) -->
+                        <div style="display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);">
+                            <label for="sel3DViewPreset" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">📐 Hướng nhìn:</label>
+                            <select id="sel3DViewPreset" class="calc-select" style="padding: 4px 28px 4px 8px; font-size: 0.82rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #38bdf8; border: 1.5px solid #0284c7; cursor: pointer;">
+                                <option value="iso">🎥 Phối Cảnh (Isometric)</option>
+                                <option value="front">⬆️ Trực Diện Mặt Đầu (Front - XY)</option>
+                                <option value="back">⬇️ Mặt Sau (Back - XY)</option>
+                                <option value="top">➡️ Nhìn Từ Trên (Top - XZ)</option>
+                                <option value="bottom">⬅️ Nhìn Từ Dưới (Bottom - XZ)</option>
+                                <option value="right">▶️ Nhìn Từ Phải (Right - YZ)</option>
+                                <option value="left">◀️ Nhìn Từ Trái (Left - YZ)</option>
+                                <option value="mesh">🔍 Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)</option>
+                            </select>
                         </div>
 
                         <!-- Speed & Play -->

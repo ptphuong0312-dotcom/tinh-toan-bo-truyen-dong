@@ -91,10 +91,13 @@ def test_gear_3d_webapp():
 
         # 4. Test Camera presets
         log('[4] Testing camera presets (Front, Top, Mesh, Iso, Wireframe)...')
-        page.evaluate('document.getElementById("btnViewFront").click()')
-        page.evaluate('document.getElementById("btnViewTop").click()')
-        page.evaluate('document.getElementById("btnViewMesh").click()')
-        page.evaluate('document.getElementById("btnViewIso").click()')
+        page.evaluate('''() => {
+            const sel = document.getElementById("sel3DViewPreset");
+            sel.value = "front"; sel.dispatchEvent(new Event("change"));
+            sel.value = "top"; sel.dispatchEvent(new Event("change"));
+            sel.value = "mesh"; sel.dispatchEvent(new Event("change"));
+            sel.value = "iso"; sel.dispatchEvent(new Event("change"));
+        }''')
         page.evaluate('document.getElementById("btnToggleWireframe").click()')
         page.evaluate('document.getElementById("btnToggleWireframe").click()')
         log('[+] Camera & Wireframe controls verified!')

@@ -228,9 +228,8 @@ export class GearCanvas {
         ctx.save();
         ctx.translate(c2x, c2y);
         // Conjugate meshing phase offset: opposite rotation, tooth entering space cleanly
-        // Exact conjugate rolling phase: gap of Gear 2 aligns with tooth of Pinion 1
-        const pitchAngle2 = (2.0 * Math.PI) / g.z2;
-        const phaseOffset = Math.PI + (pitchAngle2 / 2.0);
+        // Exact conjugate rolling phase: tooth crest of Pinion meshes cleanly into tooth gap of Gear
+        const phaseOffset = (Math.PI / g.z2) + (Math.PI / 2.0) * (1.0 - g.z1 / g.z2);
         const angle2 = phaseOffset - this.rotationAngle * (g.z1 / g.z2);
         ctx.rotate(angle2);
         this.drawGearOutline(g.z2, m_canvas, alpha_canvas, g.x2, g.d2, g.db2, g.da2, g.df2, '#38bdf8', '#1d4ed8');

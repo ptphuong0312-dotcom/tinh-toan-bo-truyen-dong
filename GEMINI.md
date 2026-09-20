@@ -293,5 +293,34 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Biên dạng 2D xuất file DXF, mô hình 3D WebGL, tệp STEP AP214 và tệp STL đều sử dụng trực tiếp lưới biên dạng từ `MitcalcToothSolver`.
    - Đáp ứng trọn vẹn yêu cầu gia công cơ khí chính xác: người kỹ sư có thể lấy trực tiếp file STEP/STL mở trên Mastercam để lập trình đường chạy dao phay lăn răng, phay mặt sườn răng thân khai hoặc cắt dây EDM Wire mà không sợ sai lệch hình học dù chỉ 1 micron.
 
+---
+
+### Quy Tắc 17: Quy Chuẩn Mặt Đầu Phẳng Tuyệt Đối (Zero-Ripple Planar Caps), Dropdown Hướng Nhìn 3D CAD Tiêu Chuẩn và Đồng Bộ Pha Động Học Ăn Khớp Không Va Chạm
+1. **Tách khối đỉnh (Vertex Splitting) - Triệt tiêu 100% hiện tượng nhấp nhô gợn sóng mặt đầu**:
+   - Khắc phục triệt để lỗi đổ bóng gợn sóng (rippled shading) do dùng chung đỉnh giữa hông răng và mặt đầu phẳng.
+   - Chia lưới đa giác thành 4 nhóm đỉnh độc lập:
+     * Nhóm hông răng ngoài: Pháp tuyến cong mịn theo toán học thân khai và lượn chân răng.
+     * Nhóm mặt đầu trước ($Z = +halfB$): $2N$ đỉnh, vector pháp tuyến **chính xác tuyệt đối $[0, 0, 1]$**.
+     * Nhóm mặt đầu sau ($Z = -halfB$): $2N$ đỉnh, vector pháp tuyến **chính xác tuyệt đối $[0, 0, -1]$**.
+     * Nhóm lòng lỗ trục: Pháp tuyến hướng tâm $[-\cos\theta, -\sin\theta, 0]$.
+   - Tạo ra cạnh sắc cơ khí chuẩn $90^\circ$ (Hard mechanical edge), 2 mặt đầu phẳng lì 100%, phản xạ ánh sáng đồng nhất, trung thực như sản phẩm cơ khí sau gia công phay mặt đầu.
+2. **Hộp chọn Dropdown hướng nhìn 3D CAD tiêu chuẩn (`#sel3DViewPreset`)**:
+   - Thay thế cụm nút bấm riêng lẻ bằng một ô chọn Dropdown duy nhất có mũi tên sổ xuống theo chuẩn công nghiệp (SolidWorks / Mastercam / Inventor):
+     * `iso`: 🎥 Phối Cảnh (Isometric)
+     * `front`: ⬆️ Trực Diện Mặt Đầu (Front - XY)
+     * `back`: ⬇️ Mặt Sau (Back - XY)
+     * `top`: ➡️ Nhìn Từ Trên (Top - XZ)
+     * `bottom`: ⬅️ Nhìn Từ Dưới (Bottom - XZ)
+     * `right`: ▶️ Nhìn Từ Phải (Right - YZ)
+     * `left`: ◀️ Nhìn Từ Trái (Left - YZ)
+     * `mesh`: 🔍 Vùng Tiếp Xúc Ăn Khớp (Mesh Zone Zoom)
+   - Tự động căn tâm cụm chi tiết hoặc điểm tiếp xúc ăn khớp khi người dùng đổi góc nhìn.
+3. **Đồng bộ pha động học ăn khớp không va chạm (Conjugate Meshing Phase Alignment)**:
+   - Các chi tiết riêng lẻ được sinh đối xứng hoàn hảo quanh trục $+Y$ với $baseOffset = 0.0$.
+   - Khi ghép cụm bộ truyền tại khoảng cách trục $a_w$, góc pha ban đầu của bánh 2 được xác định theo giải tích:
+     $$\phi_{2,0} = \frac{\pi}{z_2} + \frac{\pi}{2} \left(1 - \frac{z_1}{z_2}\right)$$
+   - Khóa cứng góc quay động học: $\phi_2 = \phi_{2,0} - \phi_1 \cdot \frac{z_1}{z_2}$ trong toàn bộ vòng lặp hoạt ảnh, triệt tiêu 100% sai số tích lũy. Răng bánh 1 đi vào rãnh răng bánh 2 đạt khe hở chân răng $c = 1.501\text{ mm}$ (chuẩn $c^* = 0.25 \cdot m_n$), khe hở cạnh răng tiếp xúc trơn tru liên tục ($0.0025\text{ mm}$), **hoàn toàn không bị chồng chéo hay va chạm**.
+
+
 
 

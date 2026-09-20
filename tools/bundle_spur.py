@@ -301,18 +301,21 @@ class SpurGearUI {
             });
         }
 
-        // 3D Camera Preset Buttons
-        const btnViewIso = document.getElementById('btnViewIso');
-        const btnViewFront = document.getElementById('btnViewFront');
-        const btnViewTop = document.getElementById('btnViewTop');
-        const btnViewMesh = document.getElementById('btnViewMesh');
+        // 3D Camera View Preset Dropdown (CAD Standard: SolidWorks / Mastercam)
+        const sel3DViewPreset = document.getElementById('sel3DViewPreset');
         const btnReset3DView = document.getElementById('btnReset3DView');
 
-        if (btnViewIso && this.visualizer3D) btnViewIso.addEventListener('click', () => this.visualizer3D.setCameraView('iso'));
-        if (btnViewFront && this.visualizer3D) btnViewFront.addEventListener('click', () => this.visualizer3D.setCameraView('front'));
-        if (btnViewTop && this.visualizer3D) btnViewTop.addEventListener('click', () => this.visualizer3D.setCameraView('top'));
-        if (btnViewMesh && this.visualizer3D) btnViewMesh.addEventListener('click', () => this.visualizer3D.setCameraView('mesh'));
-        if (btnReset3DView && this.visualizer3D) btnReset3DView.addEventListener('click', () => this.visualizer3D.autoFitCamera());
+        if (sel3DViewPreset && this.visualizer3D) {
+            sel3DViewPreset.addEventListener('change', () => {
+                this.visualizer3D.setCameraView(sel3DViewPreset.value);
+            });
+        }
+        if (btnReset3DView && this.visualizer3D) {
+            btnReset3DView.addEventListener('click', () => {
+                if (sel3DViewPreset) sel3DViewPreset.value = 'iso';
+                this.visualizer3D.setCameraView('iso');
+            });
+        }
 
         // 3D Wireframe & Animation Controls
         const btnWireframe = document.getElementById('btnToggleWireframe');

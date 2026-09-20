@@ -223,9 +223,10 @@ export class Gear3DVisualizer {
         this.pinionGroup.position.set(0, 0, 0);
         this.gearGroup.position.set(geom.aw, 0, 0);
 
-        // Initial alignment: Gear 2 tooth gap enters mesh at (aw, 0)
+        // Exact conjugate rolling phase: tooth crest of Pinion 1 meshes cleanly into tooth gap of Gear 2
         this.gearRatio = geom.z2 / geom.z1;
-        this.initialGearAngle = Math.PI + Math.PI / geom.z2;
+        this.initialGearAngle = (Math.PI / geom.z2) + (Math.PI / 2.0) * (1.0 - geom.z1 / geom.z2);
+        this.pinionAngle = 0.0;
         this.gearAngle = this.initialGearAngle;
 
         this.pinionGroup.rotation.z = this.pinionAngle;
@@ -261,29 +262,49 @@ export class Gear3DVisualizer {
         }
     }
 
+    /**
+     * Standard 3D CAD Camera View Presets (SolidWorks / Mastercam standard)
+     * @param {'iso'|'front'|'back'|'top'|'bottom'|'right'|'left'|'mesh'} viewType
+     */
     setCameraView(viewType) {
         if (!this.geom || !this.camera) return;
         const centerX = this.geom.aw / 2.0;
         const totalSpan = this.geom.aw + (this.geom.da1 + this.geom.da2) / 2.0;
-        const dist = totalSpan * 1.5;
+        const dist = Math.max(totalSpan, this.geom.da2) * 1.5;
 
         if (this.controls) {
             this.controls.target.set(centerX, 0, 0);
         }
 
         switch (viewType) {
-            case 'front': // Looking directly down Z axis at XY mesh face
-                this.camera.position.set(centerX, 0, dist * 1.2);
+            case 'front': // Looking down +Z at XY front face
+                this.camera.position.set(centerX, 0, dist * 1.3);
                 this.camera.up.set(0, 1, 0);
                 break;
-            case 'top': // Looking down Y axis (showing face width Z and pitch distance X)
-                this.camera.position.set(centerX, -dist * 1.2, 0);
+            case 'back': // Looking up -Z at XY back face
+                this.camera.position.set(centerX, 0, -dist * 1.3);
+                this.camera.up.set(0, 1, 0);
+                break;
+            case 'top': // Looking from top +Y down at XZ plane
+                this.camera.position.set(centerX, dist * 1.3, 0);
+                this.camera.up.set(0, 0, 1);
+                break;
+            case 'bottom': // Looking from bottom -Y up at XZ plane
+                this.camera.position.set(centerX, -dist * 1.3, 0);
+                this.camera.up.set(0, 0, 1);
+                break;
+            case 'right': // Looking from right +X along shaft axis
+                this.camera.position.set(centerX + dist * 1.3, 0, 0);
+                this.camera.up.set(0, 0, 1);
+                break;
+            case 'left': // Looking from left -X along shaft axis
+                this.camera.position.set(centerX - dist * 1.3, 0, 0);
                 this.camera.up.set(0, 0, 1);
                 break;
             case 'mesh': // Close-up on the pitch point contact zone
                 const pitchPtX = (this.geom.d1 || 100) / 2.0;
                 if (this.controls) this.controls.target.set(pitchPtX, 0, 0);
-                this.camera.position.set(pitchPtX, -(this.geom.mn * 15), this.geom.mn * 18);
+                this.camera.position.set(pitchPtX, -(this.geom.mn * 14), this.geom.mn * 16);
                 this.camera.up.set(0, 0, 1);
                 break;
             case 'iso': // Standard Isometric view
@@ -323,7 +344,8 @@ export class Gear3DVisualizer {
         if (this.isAnimating && this.pinionGroup && this.gearGroup) {
             const dTheta = this.rotSpeedBase * this.animSpeed;
             this.pinionAngle += dTheta;
-            this.gearAngle -= dTheta / this.gearRatio;
+            // Lock gearAngle directly to conjugate rolling phase (zero accumulation drift):
+            this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
 
             this.pinionGroup.rotation.z = this.pinionAngle;
             this.gearGroup.rotation.z = this.gearAngle;
