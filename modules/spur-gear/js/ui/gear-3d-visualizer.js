@@ -132,9 +132,11 @@ export class Gear3DVisualizer {
     /**
      * Updates 3D gear pair from calculation geometry
      * @param {Object} geom - Calculation results from GearGeometry.calculate
+     * @param {Object} [resolution=null] - { noPtHead, noPtEv, cuttStep }
      */
-    setGeometry(geom) {
+    setGeometry(geom, resolution = null) {
         this.geom = geom;
+        if (resolution) this.resolution = resolution;
         if (!geom || !this.scene) return;
 
         const isHelical = Math.abs(geom.beta || 0.0) > 1e-4;
@@ -151,8 +153,10 @@ export class Gear3DVisualizer {
             this.gearGroup.remove(obj);
         }
 
+        const resOpts = this.resolution || {};
+
         // 1. Generate 3D mesh for Pinion 1 (Hand: +1)
-        this.mesh1Data = Gear3DGenerator.generateGearMesh({
+        this.mesh1Data = Gear3DGenerator.generateGearMesh(Object.assign({
             z: geom.z1,
             mn: geom.mn,
             alfa_n: geom.alfa_n,
@@ -165,10 +169,10 @@ export class Gear3DVisualizer {
             df: geom.df1,
             hand: +1,
             dBore: geom.df1 * 0.45
-        });
+        }, resOpts));
 
         // 2. Generate 3D mesh for Gear 2 (Hand: -1 for helical conjugate mesh!)
-        this.mesh2Data = Gear3DGenerator.generateGearMesh({
+        this.mesh2Data = Gear3DGenerator.generateGearMesh(Object.assign({
             z: geom.z2,
             mn: geom.mn,
             alfa_n: geom.alfa_n,
@@ -181,7 +185,7 @@ export class Gear3DVisualizer {
             df: geom.df2,
             hand: -1,
             dBore: geom.df2 * 0.45
-        });
+        }, resOpts));
 
         // 3. Create Three.js BufferGeometries
         const geo1 = new THREE.BufferGeometry();
@@ -361,17 +365,56 @@ export class Gear3DVisualizer {
     }
 
     /**
-     * Gets raw triangle data for export
+     * Gets raw triangle data for export (Solid or Hollow Open Surface Shell)
      * @param {'pinion'|'gear'|'assembly'} type
+     * @param {boolean} [surfaceOnly=false]
      * @returns {Array} rawTriangles
      */
-    getExportTriangles(type = 'pinion') {
-        if (!this.mesh1Data || !this.mesh2Data) return [];
+    getExportTriangles(type = 'pinion', surfaceOnly = false) {
+        if (!this.geom) return [];
+
+        let m1 = this.mesh1Data;
+        let m2 = this.mesh2Data;
+
+        const resOpts = this.resolution || {};
+
+        if (surfaceOnly) {
+            m1 = Gear3DGenerator.generateGearSurfaceMesh(Object.assign({
+                z: this.geom.z1,
+                mn: this.geom.mn,
+                alfa_n: this.geom.alfa_n,
+                beta: this.geom.beta,
+                b: this.geom.b1,
+                x: this.geom.x1,
+                d: this.geom.d1,
+                db: this.geom.db1,
+                da: this.geom.da1,
+                df: this.geom.df1,
+                hand: +1,
+                dBore: this.geom.df1 * 0.45
+            }, resOpts));
+            m2 = Gear3DGenerator.generateGearSurfaceMesh(Object.assign({
+                z: this.geom.z2,
+                mn: this.geom.mn,
+                alfa_n: this.geom.alfa_n,
+                beta: this.geom.beta,
+                b: this.geom.b2,
+                x: this.geom.x2,
+                d: this.geom.d2,
+                db: this.geom.db2,
+                da: this.geom.da2,
+                df: this.geom.df2,
+                hand: -1,
+                dBore: this.geom.df2 * 0.45
+            }, resOpts));
+        }
+
+        if (!m1 || !m2) return [];
 
         if (type === 'pinion') {
-            return this.mesh1Data.rawTriangles;
+            return m1.rawTriangles;
         } else if (type === 'gear') {
-            return this.mesh2Data.rawTriangles;
+            return m2.rawTriangles;
         } else if (type === 'assembly') {
             // Transform gear 2 triangles to center distance aw and initial mesh angle
             const aw = (this.geom && this.geom.aw) ? this.geom.aw : 100.0;
@@ -379,7 +422,7 @@ export class Gear3DVisualizer {
             const cosR = Math.cos(rotZ);
             const sinR = Math.sin(rotZ);
 
-            const transformedGear2 = this.mesh2Data.rawTriangles.map(([p1, p2, p3, n]) => {
+            const transformedGear2 = m2.rawTriangles.map(([p1, p2, p3, n]) => {
                 const trPt = (p) => [
                     p[0] * cosR - p[1] * sinR + aw,
                     p[0] * sinR + p[1] * cosR,
@@ -393,7 +436,7 @@ export class Gear3DVisualizer {
                 return [trPt(p1), trPt(p2), trPt(p3), trVec(n)];
             });
 
-            return this.mesh1Data.rawTriangles.concat(transformedGear2);
+            return m1.rawTriangles.concat(transformedGear2);
         }
         return [];
     }

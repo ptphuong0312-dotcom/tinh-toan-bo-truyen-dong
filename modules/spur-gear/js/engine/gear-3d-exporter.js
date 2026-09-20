@@ -155,20 +155,25 @@ export const Gear3DExporter = {
 
     /**
      * Exports standard ISO 10303-21 STEP AP214 file (.step)
-     * SolidWorks parses this directly into a Solid Body.
-     * Mastercam recognizes it as a Machinable Solid for 3D Toolpaths & Wire EDM.
+     * Solid: Recognized by SolidWorks as a native Solid Body and Mastercam as a Machinable Solid.
+     * Surface: Recognized by SolidWorks as a Surface Body and Mastercam as Machinable Drive Surfaces (Open Shell).
      * @param {Array|Object} input - Triangle data
      * @param {string} filename - e.g. "SpurGear.step"
      * @param {string} partName - Part name
+     * @param {boolean} [autoDownload=true] - Trigger browser download
+     * @param {boolean} [isSurface=false] - If true, exports OPEN_SHELL with SHELL_BASED_SURFACE_MODEL
      */
-    exportSTEP(input, filename = 'gear_model.step', partName = 'GEAR_SOLID_PART', autoDownload = true) {
+    exportSTEP(input, filename = 'gear_model.step', partName = 'GEAR_SOLID_PART', autoDownload = true, isSurface = false) {
         const triangles = this.normalizeTriangles(input);
         const now = new Date().toISOString().replace(/\.\d+Z$/, '');
 
         const lines = [];
         lines.push('ISO-10303-21;');
         lines.push('HEADER;');
-        lines.push(`FILE_DESCRIPTION(('MITCalc 3D Gear Solid Model for SolidWorks and Mastercam'),'2;1');`);
+        const fileDesc = isSurface
+            ? 'MITCalc 3D Gear Hollow Flank Surface Model for SolidWorks and Mastercam Surface Toolpaths'
+            : 'MITCalc 3D Gear Solid Model for SolidWorks and Mastercam';
+        lines.push(`FILE_DESCRIPTION(('${fileDesc}'),'2;1');`);
         lines.push(`FILE_NAME('${filename}','${now}',('SirPhuong'),('MITCalc-Gear-Engineering'),'Antigravity CAD/CAM Engine','SolidWorks / Mastercam Compatible','');`);
         lines.push(`FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));`);
         lines.push('ENDSEC;');
@@ -194,7 +199,7 @@ export const Gear3DExporter = {
 
         const repContextId = 12;
 
-        // Write vertices & faces for closed shell
+        // Write vertices & faces for shell
         const vMap = new Map();
         let nextVId = id;
 
@@ -256,15 +261,21 @@ export const Gear3DExporter = {
         }
 
         const shellId = id++;
-        lines.push(`#${shellId} = CLOSED_SHELL('',(${faceIds.join(',')}));`);
-
-        const solidId = id++;
-        lines.push(`#${solidId} = MANIFOLD_SOLID_BREP('${partName}',#${shellId});`);
-
-        const shapeRepId = id++;
-        lines.push(`#${shapeRepId} = SHAPE_REPRESENTATION('${partName}',(#${solidId}),#${repContextId});`);
-
-        lines.push(`#${id++} = SHAPE_DEFINITION_REPRESENTATION(#7,#${shapeRepId});`);
+        if (isSurface) {
+            lines.push(`#${shellId} = OPEN_SHELL('',(${faceIds.join(',')}));`);
+            const surfaceModelId = id++;
+            lines.push(`#${surfaceModelId} = SHELL_BASED_SURFACE_MODEL('${partName}',(#${shellId}));`);
+            const shapeRepId = id++;
+            lines.push(`#${shapeRepId} = SHAPE_REPRESENTATION('${partName}',(#${surfaceModelId}),#${repContextId});`);
+            lines.push(`#${id++} = SHAPE_DEFINITION_REPRESENTATION(#7,#${shapeRepId});`);
+        } else {
+            lines.push(`#${shellId} = CLOSED_SHELL('',(${faceIds.join(',')}));`);
+            const solidId = id++;
+            lines.push(`#${solidId} = MANIFOLD_SOLID_BREP('${partName}',#${shellId});`);
+            const shapeRepId = id++;
+            lines.push(`#${shapeRepId} = SHAPE_REPRESENTATION('${partName}',(#${solidId}),#${repContextId});`);
+            lines.push(`#${id++} = SHAPE_DEFINITION_REPRESENTATION(#7,#${shapeRepId});`);
+        }
 
         lines.push('ENDSEC;');
         lines.push('END-ISO-10303-21;');
@@ -272,7 +283,14 @@ export const Gear3DExporter = {
         const textContent = lines.join('\r\n');
         const blob = new Blob([textContent], { type: 'application/step;charset=utf-8' });
         if (autoDownload) this.downloadBlob(blob, filename);
-        return { text: textContent, blob, triangleCount: triangles.length, faceCount: faceIds.length };
+        return { text: textContent, blob, triangleCount: triangles.length, faceCount: faceIds.length, isSurface };
+    },
+
+    /**
+     * Exports hollow open flank surface STEP file for Mastercam Surface Toolpaths & SolidWorks Surface Modeling
+     */
+    exportSTEPSurface(input, filename = 'gear_surface.step', partName = 'GEAR_SURFACE_PART', autoDownload = true) {
+        return this.exportSTEP(input, filename, partName, autoDownload, true);
     },
 
     /**

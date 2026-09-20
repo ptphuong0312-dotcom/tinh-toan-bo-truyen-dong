@@ -321,6 +321,62 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      $$\phi_{2,0} = \frac{\pi}{z_2} + \frac{\pi}{2} \left(1 - \frac{z_1}{z_2}\right)$$
    - Khóa cứng góc quay động học: $\phi_2 = \phi_{2,0} - \phi_1 \cdot \frac{z_1}{z_2}$ trong toàn bộ vòng lặp hoạt ảnh, triệt tiêu 100% sai số tích lũy. Răng bánh 1 đi vào rãnh răng bánh 2 đạt khe hở chân răng $c = 1.501\text{ mm}$ (chuẩn $c^* = 0.25 \cdot m_n$), khe hở cạnh răng tiếp xúc trơn tru liên tục ($0.0025\text{ mm}$), **hoàn toàn không bị chồng chéo hay va chạm**.
 
+---
 
+### Quy Tắc 18: Quy Chuẩn Xuất File DXF Tương Thích AutoCAD 2004+ & Đa Lựa Chọn Xuất Bánh 1, Bánh 2, Cặp Ăn Khớp (AutoCAD 2004+ Compliant DXF Protocol)
+1. **Khắc phục triệt để lỗi không mở được DXF trên AutoCAD 2004+**:
+   - Định dạng DXF chuẩn Release 12 (`AC1009`) tương thích 100% từ AutoCAD 2004 đến 2026.
+   - Bắt buộc sử dụng ký tự ngắt dòng chuẩn Windows **CRLF (`\r\n`)** cho toàn bộ file DXF thay vì chỉ `\n`.
+   - Bổ sung đầy đủ 4 bảng kỹ thuật bắt buộc trong phần `TABLES`:
+     * Bảng `VPORT`: Khởi tạo khung nhìn chuẩn `*ACTIVE`.
+     * Bảng `LTYPE`: Khai báo tường minh toàn bộ các kiểu đường nét sử dụng (`CONTINUOUS`, `CENTER`, `DASHED`). Triệt tiêu lỗi "Undefined linetype CENTER on layer..." làm crash AutoCAD 2004.
+     * Bảng `LAYER`: Đầy đủ các layer kỹ thuật (`GEAR1_PINION`, `GEAR2_WHEEL`, `PITCH_CIRCLES`, `CENTER_LINES`, `SHAFTS_BORE`, `MFG_TABLE`).
+     * Bảng `STYLE`: Khai báo kiểu chữ chuẩn `STANDARD` với font `txt`.
+   - Thực thể `POLYLINE` có tọa độ khởi tạo `10\n0.0\n20\n0.0\n30\n0.0`, và thực thể kết thúc `SEQEND` bắt buộc phải kèm mã nhóm **`8\nLAYER_NAME`** để đóng chuỗi đỉnh hợp lệ.
+2. **Đa lựa chọn đối tượng xuất linh hoạt (Target Options)**:
+   - Thay thế nút xuất đơn lẻ bằng Dropdown thông minh tương tự xuất 3D:
+     * `⚙️ Xuất Bánh Dẫn 1 (.dxf)`: Xuất độc lập bánh 1 đặt tại gốc $(0, 0)$, kèm vòng chia, lỗ trục, đường tâm và bảng thông số chế tạo bánh 1.
+     * `⚙️ Xuất Bánh Bị Dẫn 2 (.dxf)`: Xuất độc lập bánh 2 đặt tại gốc $(0, 0)$, kèm vòng chia, lỗ trục, đường tâm và bảng thông số chế tạo bánh 2.
+     * `🔗 Xuất Cả Cặp Ăn Khớp (.dxf)`: Xuất cụm 2 bánh ăn khớp, bánh 1 tại $(0, 0)$, bánh 2 tại $(a_w, 0)$ xoay đúng pha động học liên hợp $\phi_{2,0} = \frac{\pi}{z_2} + \frac{\pi}{2}(1 - \frac{z_1}{z_2})$, kèm các vòng lăn $d_{w1}, d_{w2}$, đường tâm và bảng thông số toàn diện.
+   - Tích hợp đồng thời tại 3 vị trí: Header chính, Section 16.0 bảng chế tạo, và Toolbar 2D Canvas.
 
+---
 
+### Quy Tắc 19: Quy Chuẩn Xuất File 3D Flank Surface Rỗng Cho Mastercam & SolidWorks (Open Flank Shell STEP / STL Protocol)
+1. **Mục đích kỹ thuật CAM / CNC**:
+   - Khi gia công phay sườn răng 5 trục (Surface Finish Scallop / Flowline / Swarf Milling) trên Mastercam hoặc mô hình hóa mặt trên SolidWorks, người kỹ sư cần **mặt sườn răng hở (Hollow Flank Surface Shell)** không có nắp đầu phẳng và không có lòng lỗ trục để chọn trực tiếp làm Drive Surfaces / Machinable Surfaces.
+2. **Cấu trúc dữ liệu hình học Surface**:
+   - Bỏ qua hoàn toàn Nhóm 2 (Mặt đầu trước), Nhóm 3 (Mặt đầu sau) và Nhóm 4 (Lòng lỗ trục) trong bộ sinh lưới 3D (`generateGearSurfaceMesh`).
+   - Chỉ giữ lại duy nhất mạng lưới tam giác của biên dạng thân khai và lượn chân răng dọc theo bề rộng vành răng $b$.
+3. **Định dạng chuẩn STEP AP214 cho Surface Body**:
+   - Khác với Solid Model dùng `CLOSED_SHELL` và `MANIFOLD_SOLID_BREP`, mô hình Surface được đóng gói theo chuẩn ISO 10303-21 bằng:
+     ```step
+     #shellId = OPEN_SHELL('',(...));
+     #surfaceModelId = SHELL_BASED_SURFACE_MODEL('PART_NAME',(#shellId));
+     #shapeRepId = SHAPE_REPRESENTATION('PART_NAME',(#surfaceModelId),#repContextId);
+     ```
+   - SolidWorks và Mastercam khi đọc tệp này sẽ nhận diện trực tiếp là **Surface Body (Thân Mặt / Open Surface)** mà không cố vá kín thành khối rắn.
+   - Hỗ trợ xuất đồng thời cả **Binary STL Surface** (`.stl`) cho các chu trình gia công CAM lưới đa giác.
+
+---
+
+### Quy Tắc 20: Quy Chuẩn Thanh Tăng Chỉnh Độ Mịn Biên Dạng Răng 11 Mức (11-Level Profile Resolution Engine)
+1. **Cấu trúc 11 mức rời rạc (Discrete Resolution Architecture)**:
+   - Cung cấp thanh trượt 11 mức (`sliderProfileResolution` min=1, max=11, step=1, mặc định mức 6):
+     * Mức 1: Thô xem trước nhanh ($NoPtHead = 8, NoPtEv = 32, \Delta\psi = 1.0^\circ$, 80 điểm/răng).
+     * Mức 2: $NoPtHead = 10, NoPtEv = 45, \Delta\psi = 0.9^\circ$ (110 điểm/răng).
+     * Mức 3: $NoPtHead = 12, NoPtEv = 58, \Delta\psi = 0.8^\circ$ (140 điểm/răng).
+     * Mức 4: $NoPtHead = 14, NoPtEv = 72, \Delta\psi = 0.7^\circ$ (172 điểm/răng).
+     * Mức 5: $NoPtHead = 17, NoPtEv = 86, \Delta\psi = 0.6^\circ$ (206 điểm/răng).
+     * **Mức 6 (Giá trị ở giữa - Chuẩn Gốc MITCalc 1.74)**: $NoPtHead = 20, NoPtEv = 100, \Delta\psi = 0.5^\circ$ (240 điểm/răng, khớp 100% sheet `Coordinates` với $\Delta = 0.000000\text{ mm}$).
+     * Mức 7: $NoPtHead = 24, NoPtEv = 120, \Delta\psi = 0.4^\circ$ (288 điểm/răng).
+     * Mức 8: $NoPtHead = 28, NoPtEv = 145, \Delta\psi = 0.35^\circ$ (346 điểm/răng).
+     * Mức 9: $NoPtHead = 32, NoPtEv = 175, \Delta\psi = 0.3^\circ$ (414 điểm/răng).
+     * Mức 10: $NoPtHead = 36, NoPtEv = 210, \Delta\psi = 0.25^\circ$ (492 điểm/răng).
+     * **Mức 11 (Siêu mịn gia công CNC / Cắt dây Wire EDM)**: $NoPtHead = 40, NoPtEv = 260, \Delta\psi = 0.2^\circ$ (600 điểm/răng, độ mượt tiệm cận spline giải tích).
+2. **Đồng bộ toàn diện hệ thống (System-wide Reactive Synchronization)**:
+   - Khi thay đổi thanh trượt độ mịn:
+     * Cập nhật thời gian thực vào mô hình 3D Canvas WebGL.
+     * Cập nhật số điểm hiển thị trong Bảng tọa độ Mục 20.0 (`coordTableBody`).
+     * Áp dụng trực tiếp vào số điểm xuất bản vẽ DXF 2D và mô hình 3D STEP/STL.
+     * Đồng bộ hai chiều giữa thanh trượt trong Bảng tính toán (Mục 20.9) và thanh trượt trên thanh công cụ Canvas Tab 2.

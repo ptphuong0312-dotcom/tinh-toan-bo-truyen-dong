@@ -68,6 +68,20 @@ with open(os.path.join(spur_dir, "js", "ui", "gear-3d-visualizer.js"), "r", enco
     vis3d_code = "".join(lines).replace("export class Gear3DVisualizer", "class Gear3DVisualizer")
 
 ui_code = r'''
+const PROFILE_RESOLUTION_LEVELS = {
+    1: { level: 1, name: 'Mức 1 (Thô)', noPtHead: 8, noPtEv: 32, cuttStep: 1.0, ptsPerTooth: 80 },
+    2: { level: 2, name: 'Mức 2', noPtHead: 10, noPtEv: 45, cuttStep: 0.9, ptsPerTooth: 110 },
+    3: { level: 3, name: 'Mức 3', noPtHead: 12, noPtEv: 58, cuttStep: 0.8, ptsPerTooth: 140 },
+    4: { level: 4, name: 'Mức 4', noPtHead: 14, noPtEv: 72, cuttStep: 0.7, ptsPerTooth: 172 },
+    5: { level: 5, name: 'Mức 5', noPtHead: 17, noPtEv: 86, cuttStep: 0.6, ptsPerTooth: 206 },
+    6: { level: 6, name: 'Mức 6 (Chuẩn Gốc MITCalc 1.74)', noPtHead: 20, noPtEv: 100, cuttStep: 0.5, ptsPerTooth: 240 },
+    7: { level: 7, name: 'Mức 7', noPtHead: 24, noPtEv: 120, cuttStep: 0.4, ptsPerTooth: 288 },
+    8: { level: 8, name: 'Mức 8', noPtHead: 28, noPtEv: 145, cuttStep: 0.35, ptsPerTooth: 346 },
+    9: { level: 9, name: 'Mức 9', noPtHead: 32, noPtEv: 175, cuttStep: 0.3, ptsPerTooth: 414 },
+    10: { level: 10, name: 'Mức 10', noPtHead: 36, noPtEv: 210, cuttStep: 0.25, ptsPerTooth: 492 },
+    11: { level: 11, name: 'Mức 11 (Siêu Mịn CNC/EDM)', noPtHead: 40, noPtEv: 260, cuttStep: 0.2, ptsPerTooth: 600 }
+};
+
 class SpurGearUI {
     constructor() {
         this.inputs = {
@@ -114,6 +128,7 @@ class SpurGearUI {
             cad_system: 'dxf_step'
         };
 
+        this.profileResolution = 6;
         this.activeMode = '2D';
         const canvasEl = document.getElementById('gearCanvas');
         this.canvasController = canvasEl ? new GearCanvas(canvasEl) : null;
@@ -128,6 +143,43 @@ class SpurGearUI {
         this.initInputs();
         this.initSmartControls();
         this.calculate();
+    }
+
+    setProfileResolution(lvl) {
+        lvl = Math.max(1, Math.min(11, parseInt(lvl, 10) || 6));
+        this.profileResolution = lvl;
+        const resInfo = PROFILE_RESOLUTION_LEVELS[lvl];
+
+        const slider1 = document.getElementById('sliderProfileResolution');
+        if (slider1) slider1.value = lvl;
+        const slider2 = document.getElementById('sliderProfileResolutionCanvas');
+        if (slider2) slider2.value = lvl;
+
+        const lbl1 = document.getElementById('lblProfileResolution');
+        if (lbl1) lbl1.textContent = `${resInfo.name} (${resInfo.ptsPerTooth} điểm/răng, Δψ=${resInfo.cuttStep}°)`;
+        const lbl2 = document.getElementById('lblProfileResolutionCanvas');
+        if (lbl2) lbl2.textContent = `Mức ${lvl} (${resInfo.ptsPerTooth} pts)`;
+
+        const inHead = document.getElementById('in_sec20_no_pt_head');
+        if (inHead) inHead.value = resInfo.noPtHead;
+        const inEv = document.getElementById('in_sec20_no_pt_ev');
+        if (inEv) inEv.value = resInfo.noPtEv;
+        const inStep = document.getElementById('in_sec20_cutt_step');
+        if (inStep) inStep.value = resInfo.cuttStep;
+        this.inputs.sec20_no_pt_head = resInfo.noPtHead;
+        this.inputs.sec20_no_pt_ev = resInfo.noPtEv;
+        this.inputs.sec20_cutt_step = resInfo.cuttStep;
+
+        if (this.g) {
+            if (this.visualizer3D) {
+                this.visualizer3D.setGeometry(this.g, {
+                    noPtHead: resInfo.noPtHead,
+                    noPtEv: resInfo.noPtEv,
+                    cuttStep: resInfo.cuttStep
+                });
+            }
+            this.renderCoordinatesTable(this.g);
+        }
     }
 
     initDOM() {
@@ -233,15 +285,58 @@ class SpurGearUI {
             });
         }
 
+        const setupDropdown = (btnId, menuId) => {
+            const btn = document.getElementById(btnId);
+            const menu = document.getElementById(menuId);
+            if (btn && menu) {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const isShown = menu.style.display === 'block';
+                    menu.style.display = isShown ? 'none' : 'block';
+                });
+                window.addEventListener('click', () => {
+                    if (menu) menu.style.display = 'none';
+                });
+            }
+        };
+
+        setupDropdown('btnExportDXFMenu', 'exportDXFDropdown');
+        setupDropdown('btnExportDXFCanvasMenu', 'exportDXFCanvasDropdown');
+
+        const bindDXF = (id, target) => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('click', () => this.exportDXF(target));
+        };
+        bindDXF('expDxfPinion', 'pinion');
+        bindDXF('expDxfGear', 'gear');
+        bindDXF('expDxfAssembly', 'assembly');
+        bindDXF('expDxfPinionCanvas', 'pinion');
+        bindDXF('expDxfGearCanvas', 'gear');
+        bindDXF('expDxfAssemblyCanvas', 'assembly');
+        bindDXF('btnExportDXFSec16Pinion', 'pinion');
+        bindDXF('btnExportDXFSec16Gear', 'gear');
+        bindDXF('btnExportDXFSec16Assembly', 'assembly');
+
         const btnExportDXF = document.getElementById('btnExportDXF');
         if (btnExportDXF) {
-            btnExportDXF.addEventListener('click', () => this.exportDXF());
+            btnExportDXF.addEventListener('click', () => this.exportDXF('assembly'));
         }
 
         const btnExportDXFCanvas = document.getElementById('btnExportDXFCanvas');
         if (btnExportDXFCanvas) {
-            btnExportDXFCanvas.addEventListener('click', () => this.exportDXF());
+            btnExportDXFCanvas.addEventListener('click', () => this.exportDXF('assembly'));
         }
+
+        const setupResSlider = (sliderId) => {
+            const slider = document.getElementById(sliderId);
+            if (slider) {
+                slider.addEventListener('input', (e) => {
+                    this.setProfileResolution(parseInt(e.target.value, 10) || 6);
+                });
+            }
+        };
+        setupResSlider('sliderProfileResolution');
+        setupResSlider('sliderProfileResolutionCanvas');
 
         const btnSolveAw = document.getElementById('btnSolveAw');
         if (btnSolveAw) {
@@ -368,9 +463,14 @@ class SpurGearUI {
         bindExport('expStepPinion', 'step', 'pinion');
         bindExport('expStepGear', 'step', 'gear');
         bindExport('expStepAssembly', 'step', 'assembly');
+        bindExport('expStepSurfacePinion', 'step_surface', 'pinion');
+        bindExport('expStepSurfaceGear', 'step_surface', 'gear');
+        bindExport('expStepSurfaceAssembly', 'step_surface', 'assembly');
         bindExport('expStlPinion', 'stl', 'pinion');
         bindExport('expStlGear', 'stl', 'gear');
         bindExport('expStlAssembly', 'stl', 'assembly');
+        bindExport('expStlSurfacePinion', 'stl_surface', 'pinion');
+        bindExport('expStlSurfaceGear', 'stl_surface', 'gear');
         bindExport('expObjAssembly', 'obj', 'assembly');
 
         const btnToggleCoord = document.getElementById('btnToggleCoordTable');
@@ -996,8 +1096,16 @@ class SpurGearUI {
         if (this.canvasController) {
             this.canvasController.setGeometry(g);
         }
+        const resInfo = (typeof PROFILE_RESOLUTION_LEVELS !== 'undefined')
+            ? (PROFILE_RESOLUTION_LEVELS[this.profileResolution || 6] || PROFILE_RESOLUTION_LEVELS[6])
+            : { noPtHead: 20, noPtEv: 100, cuttStep: 0.5 };
+
         if (this.visualizer3D) {
-            this.visualizer3D.setGeometry(g);
+            this.visualizer3D.setGeometry(g, {
+                noPtHead: resInfo.noPtHead,
+                noPtEv: resInfo.noPtEv,
+                cuttStep: resInfo.cuttStep
+            });
         }
 
         const badge3DType = document.getElementById('badge3DType');
@@ -1608,7 +1716,7 @@ class SpurGearUI {
         URL.revokeObjectURL(url);
     }
 
-    exportDXF() {
+    exportDXF(target = 'assembly') {
         const g = this.g;
         if (!g) return;
 
@@ -1618,14 +1726,36 @@ class SpurGearUI {
         const m_canvas = isHelical ? (g.mt || (g.mn / Math.cos(betaRad))) : g.mn;
         const alpha_canvas = isHelical ? (g.alfat || (Math.atan(Math.tan((g.alfa_n || 20) * Math.PI / 180.0) / Math.cos(betaRad)) * 180.0 / Math.PI)) : g.alfa_n;
 
-        const pts1 = ToothProfileGenerator.generateProfile(g.z1, m_canvas, alpha_canvas, g.x1, g.d1, g.db1, g.da1, g.df1);
-        const pts2 = ToothProfileGenerator.generateProfile(g.z2, m_canvas, alpha_canvas, g.x2, g.d2, g.db2, g.da2, g.df2);
+        const res = (typeof PROFILE_RESOLUTION_LEVELS !== 'undefined')
+            ? (PROFILE_RESOLUTION_LEVELS[this.profileResolution || 6] || PROFILE_RESOLUTION_LEVELS[6])
+            : { noPtHead: 20, noPtEv: 100, cuttStep: 0.5, name: 'Mức 6 (Chuẩn Gốc MITCalc 1.74)', ptsPerTooth: 240 };
 
-        if (!pts1 || pts1.length === 0 || !pts2 || pts2.length === 0) {
-            alert('Không thể tạo biên dạng răng để xuất DXF.');
-            return;
+        let pts1 = null;
+        let pts2 = null;
+
+        if (target === 'pinion' || target === 'assembly') {
+            pts1 = ToothProfileGenerator.generateProfile(
+                g.z1, m_canvas, alpha_canvas, g.x1, g.d1, g.db1, g.da1, g.df1, g.ra0 || 0.38,
+                { noPtHead: res.noPtHead, noPtEv: res.noPtEv, cuttStep: res.cuttStep, beta: g.beta || 0.0 }
+            );
+            if (!pts1 || pts1.length === 0) {
+                alert('Không thể tạo biên dạng bánh 1 để xuất DXF.');
+                return;
+            }
         }
 
+        if (target === 'gear' || target === 'assembly') {
+            pts2 = ToothProfileGenerator.generateProfile(
+                g.z2, m_canvas, alpha_canvas, g.x2, g.d2, g.db2, g.da2, g.df2, g.ra0 || 0.38,
+                { noPtHead: res.noPtHead, noPtEv: res.noPtEv, cuttStep: res.cuttStep, beta: g.beta || 0.0 }
+            );
+            if (!pts2 || pts2.length === 0) {
+                alert('Không thể tạo biên dạng bánh 2 để xuất DXF.');
+                return;
+            }
+        }
+
+        // Fully compliant AutoCAD 2004+ Release 12 DXF (AC1009)
         const lines = [
             '0', 'SECTION',
             '2', 'HEADER',
@@ -1634,6 +1764,41 @@ class SpurGearUI {
             '0', 'ENDSEC',
             '0', 'SECTION',
             '2', 'TABLES',
+            // VPORT table
+            '0', 'TABLE',
+            '2', 'VPORT',
+            '70', '1',
+            '0', 'VPORT',
+            '2', '*ACTIVE',
+            '70', '0',
+            '10', '0.0', '20', '0.0',
+            '11', '1.0', '21', '1.0',
+            '12', '0.0', '22', '0.0',
+            '40', '250.0', '41', '1.5',
+            '0', 'ENDTAB',
+            // LTYPE table (mandatory for AutoCAD 2004+ so referenced linetypes exist)
+            '0', 'TABLE',
+            '2', 'LTYPE',
+            '70', '3',
+            '0', 'LTYPE',
+            '2', 'CONTINUOUS',
+            '70', '0',
+            '3', 'Solid line',
+            '72', '65', '73', '0', '40', '0.0',
+            '0', 'LTYPE',
+            '2', 'CENTER',
+            '70', '0',
+            '3', 'Center ____ _ ____ _ ____',
+            '72', '65', '73', '4', '40', '50.0',
+            '49', '31.75', '49', '-6.35', '49', '6.35', '49', '-6.35',
+            '0', 'LTYPE',
+            '2', 'DASHED',
+            '70', '0',
+            '3', 'Dashed __ __ __ __',
+            '72', '65', '73', '2', '40', '19.05',
+            '49', '12.7', '49', '-6.35',
+            '0', 'ENDTAB',
+            // LAYER table
             '0', 'TABLE',
             '2', 'LAYER',
             '70', '6',
@@ -1644,13 +1809,21 @@ class SpurGearUI {
             '0', 'LAYER', '2', 'SHAFTS_BORE', '70', '0', '62', '7', '6', 'CONTINUOUS',
             '0', 'LAYER', '2', 'MFG_TABLE', '70', '0', '62', '7', '6', 'CONTINUOUS',
             '0', 'ENDTAB',
+            // STYLE table
+            '0', 'TABLE',
+            '2', 'STYLE',
+            '70', '1',
+            '0', 'STYLE',
+            '2', 'STANDARD',
+            '70', '0', '40', '0.0', '41', '1.0', '50', '0.0', '71', '0', '42', '2.5', '3', 'txt', '4', '',
+            '0', 'ENDTAB',
             '0', 'ENDSEC',
             '0', 'SECTION',
             '2', 'ENTITIES'
         ];
 
         const addPolyline = (points, layer, offX = 0, offY = 0, rot = 0) => {
-            lines.push('0', 'POLYLINE', '8', layer, '66', '1', '70', '1');
+            lines.push('0', 'POLYLINE', '8', layer, '66', '1', '70', '1', '10', '0.0', '20', '0.0', '30', '0.0');
             const cosR = Math.cos(rot);
             const sinR = Math.sin(rot);
             for (let i = 0; i < points.length; i++) {
@@ -1658,7 +1831,7 @@ class SpurGearUI {
                 const py = points[i].x * sinR + points[i].y * cosR + offY;
                 lines.push('0', 'VERTEX', '8', layer, '10', px.toFixed(4), '20', py.toFixed(4), '30', '0.0');
             }
-            lines.push('0', 'SEQEND');
+            lines.push('0', 'SEQEND', '8', layer);
         };
 
         const addCircle = (cx, cy, r, layer) => {
@@ -1673,68 +1846,146 @@ class SpurGearUI {
             lines.push('0', 'TEXT', '8', layer, '10', x.toFixed(4), '20', y.toFixed(4), '30', '0.0', '40', h.toFixed(4), '1', text);
         };
 
-        // Pinion 1 Polyline at (0, 0)
-        addPolyline(pts1, 'GEAR1_PINION', 0, 0, 0);
+        let filename = '';
+        const typeStr = isHelical ? 'Helical' : 'Spur';
 
-        // Gear 2 Polyline at (aw, 0) with conjugate phase
-        const pitchAngle2 = (2.0 * Math.PI) / g.z2;
-        const phaseOffset = Math.PI + (pitchAngle2 / 2.0);
-        addPolyline(pts2, 'GEAR2_WHEEL', g.aw, 0, phaseOffset);
+        if (target === 'pinion') {
+            filename = `Banh_Dan_1_${typeStr}_z${g.z1}_mn${g.mn}_muc${this.profileResolution || 6}.dxf`;
+            addPolyline(pts1, 'GEAR1_PINION', 0, 0, 0);
+            addCircle(0, 0, g.d1 / 2.0, 'PITCH_CIRCLES');
+            const boreR1 = (g.df1 / 2.0) * 0.38;
+            addCircle(0, 0, boreR1, 'SHAFTS_BORE');
+            const rExt = g.da1 / 2.0 + 15;
+            addLine(-rExt, 0, rExt, 0, 'CENTER_LINES');
+            addLine(0, -rExt, 0, rExt, 'CENTER_LINES');
 
-        // Pitch Circles
-        addCircle(0, 0, g.d1 / 2.0, 'PITCH_CIRCLES');
-        addCircle(g.aw, 0, g.d2 / 2.0, 'PITCH_CIRCLES');
-        if (Math.abs(g.dw1 - g.d1) > 0.001) {
-            addCircle(0, 0, g.dw1 / 2.0, 'PITCH_CIRCLES');
-            addCircle(g.aw, 0, g.dw2 / 2.0, 'PITCH_CIRCLES');
+            // Table for Pinion
+            const tblX = -g.da1 / 2.0;
+            let tblY = -g.da1 / 2.0 - 25;
+            const rowH = 6.5;
+            addText(`THONG SO CHE TAO BANH DAN 1 (ISO 6336 / DIN 3960)`, tblX, tblY, 4.0, 'MFG_TABLE');
+            tblY -= rowH * 1.3;
+            addText(`- So rang (Tooth count z1): ${g.z1}`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Mo-dun phap tuyen (Normal module mn): ${g.mn.toFixed(4)} mm`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Goc ap luc danh nghia (Pressure angle alpha): ${g.alfa_n.toFixed(4)} deg`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Goc xoan rang (Helix angle beta): ${g.beta.toFixed(4)} deg`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- He so dich chinh (Profile shift x1): ${g.x1.toFixed(4)}`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Duong kinh vong dinh (Tip dia da1): ${g.da1.toFixed(4)} mm`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Duong kinh vong chia (Pitch dia d1): ${g.d1.toFixed(4)} mm`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Duong kinh vong chan (Root dia df1): ${g.df1.toFixed(4)} mm`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Chieu dai phap tuyen chung W1: ${g.W1.toFixed(4)} mm`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Do min bien dang: ${res.name} (${res.ptsPerTooth} diem/rang)`, tblX, tblY, 3.2, 'MFG_TABLE');
+        } else if (target === 'gear') {
+            filename = `Banh_Bi_Dan_2_${typeStr}_z${g.z2}_mn${g.mn}_muc${this.profileResolution || 6}.dxf`;
+            addPolyline(pts2, 'GEAR2_WHEEL', 0, 0, 0);
+            addCircle(0, 0, g.d2 / 2.0, 'PITCH_CIRCLES');
+            const boreR2 = (g.df2 / 2.0) * 0.38;
+            addCircle(0, 0, boreR2, 'SHAFTS_BORE');
+            const rExt = g.da2 / 2.0 + 15;
+            addLine(-rExt, 0, rExt, 0, 'CENTER_LINES');
+            addLine(0, -rExt, 0, rExt, 'CENTER_LINES');
+
+            // Table for Gear
+            const tblX = -g.da2 / 2.0;
+            let tblY = -g.da2 / 2.0 - 25;
+            const rowH = 6.5;
+            addText(`THONG SO CHE TAO BANH BI DAN 2 (ISO 6336 / DIN 3960)`, tblX, tblY, 4.0, 'MFG_TABLE');
+            tblY -= rowH * 1.3;
+            addText(`- So rang (Tooth count z2): ${g.z2}`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Mo-dun phap tuyen (Normal module mn): ${g.mn.toFixed(4)} mm`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Goc ap luc danh nghia (Pressure angle alpha): ${g.alfa_n.toFixed(4)} deg`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Goc xoan rang (Helix angle beta): ${g.beta.toFixed(4)} deg`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- He so dich chinh (Profile shift x2): ${g.x2.toFixed(4)}`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Duong kinh vong dinh (Tip dia da2): ${g.da2.toFixed(4)} mm`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Duong kinh vong chia (Pitch dia d2): ${g.d2.toFixed(4)} mm`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Duong kinh vong chan (Root dia df2): ${g.df2.toFixed(4)} mm`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Chieu dai phap tuyen chung W2: ${g.W2.toFixed(4)} mm`, tblX, tblY, 3.2, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Do min bien dang: ${res.name} (${res.ptsPerTooth} diem/rang)`, tblX, tblY, 3.2, 'MFG_TABLE');
+        } else {
+            // Assembly Pair
+            filename = `Cap_Banh_Rang_Tru_${typeStr}_z${g.z1}x${g.z2}_aw${g.aw.toFixed(2)}_muc${this.profileResolution || 6}.dxf`;
+            addPolyline(pts1, 'GEAR1_PINION', 0, 0, 0);
+
+            // Exact conjugate meshing phase
+            const initialGearAngle = (Math.PI / g.z2) + (Math.PI / 2.0) * (1.0 - g.z1 / g.z2);
+            addPolyline(pts2, 'GEAR2_WHEEL', g.aw, 0, initialGearAngle);
+
+            // Pitch circles
+            addCircle(0, 0, g.d1 / 2.0, 'PITCH_CIRCLES');
+            addCircle(g.aw, 0, g.d2 / 2.0, 'PITCH_CIRCLES');
+            if (Math.abs(g.dw1 - g.d1) > 0.001) {
+                addCircle(0, 0, g.dw1 / 2.0, 'PITCH_CIRCLES');
+                addCircle(g.aw, 0, g.dw2 / 2.0, 'PITCH_CIRCLES');
+            }
+
+            // Bores
+            const boreR1 = (g.df1 / 2.0) * 0.38;
+            const boreR2 = (g.df2 / 2.0) * 0.38;
+            addCircle(0, 0, boreR1, 'SHAFTS_BORE');
+            addCircle(g.aw, 0, boreR2, 'SHAFTS_BORE');
+
+            // Centerlines
+            const spanX = g.aw + g.da2 / 2.0 + 20;
+            addLine(-g.da1 / 2.0 - 20, 0, spanX, 0, 'CENTER_LINES');
+            addLine(0, -g.da1 / 2.0 - 15, 0, g.da1 / 2.0 + 15, 'CENTER_LINES');
+            addLine(g.aw, -g.da2 / 2.0 - 15, g.aw, g.da2 / 2.0 + 15, 'CENTER_LINES');
+
+            // Table for Assembly
+            const tblX = -g.da1 / 2.0;
+            let tblY = -Math.max(g.da1, g.da2) / 2.0 - 40;
+            const rowH = 7.0;
+
+            addText('THONG SO CHE TAO CAP BANH RANG TRU (ISO 6336 / DIN 3960)', tblX, tblY, 4.5, 'MFG_TABLE');
+            tblY -= rowH * 1.3;
+            addText(`- So rang (Pinion z1 / Gear z2): ${g.z1} / ${g.z2}`, tblX, tblY, 3.5, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Mo-dun phap tuyen (Normal module mn): ${g.mn.toFixed(4)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Goc ap luc danh nghia (Pressure angle alpha): ${g.alfa_n.toFixed(4)} deg`, tblX, tblY, 3.5, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Goc xoan rang (Helix angle beta): ${g.beta.toFixed(4)} deg`, tblX, tblY, 3.5, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Khoang cach truc lam viec (Center distance aw): ${g.aw.toFixed(4)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- He so dich chinh (Profile shift x1 / x2): ${g.x1.toFixed(4)} / ${g.x2.toFixed(4)}`, tblX, tblY, 3.5, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Duong kinh dinh (Tip dia da1 / da2): ${g.da1.toFixed(4)} / ${g.da2.toFixed(4)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Duong kinh chan (Root dia df1 / df2): ${g.df1.toFixed(4)} / ${g.df2.toFixed(4)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Chieu dai phap tuyen chung (Chordal W1 / W2): ${g.W1.toFixed(4)} / ${g.W2.toFixed(4)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Cap chinh xac che tao: ISO 1328 Cap ${g.sec11_Q || 6}`, tblX, tblY, 3.5, 'MFG_TABLE');
+            tblY -= rowH;
+            addText(`- Do min bien dang: ${res.name} (${res.ptsPerTooth} diem/rang)`, tblX, tblY, 3.5, 'MFG_TABLE');
         }
-
-        // Shaft Bores
-        const boreR1 = (g.df1 / 2.0) * 0.38;
-        const boreR2 = (g.df2 / 2.0) * 0.38;
-        addCircle(0, 0, boreR1, 'SHAFTS_BORE');
-        addCircle(g.aw, 0, boreR2, 'SHAFTS_BORE');
-
-        // Centerlines
-        const spanX = g.aw + g.da2 / 2.0 + 20;
-        addLine(-g.da1 / 2.0 - 20, 0, spanX, 0, 'CENTER_LINES');
-        addLine(0, -g.da1 / 2.0 - 15, 0, g.da1 / 2.0 + 15, 'CENTER_LINES');
-        addLine(g.aw, -g.da2 / 2.0 - 15, g.aw, g.da2 / 2.0 + 15, 'CENTER_LINES');
-
-        // Manufacturing Data Table in DXF
-        const tblX = -g.da1 / 2.0;
-        let tblY = -Math.max(g.da1, g.da2) / 2.0 - 40;
-        const rowH = 7.0;
-
-        addText('THONG SO CHE TAO BANH RANG TRU (ISO 6336 / DIN 3960)', tblX, tblY, 4.5, 'MFG_TABLE');
-        tblY -= rowH * 1.3;
-        addText(`- So rang (Pinion z1 / Gear z2): ${g.z1} / ${g.z2}`, tblX, tblY, 3.5, 'MFG_TABLE');
-        tblY -= rowH;
-        addText(`- Mo-dun phap tuyen (Normal module mn): ${g.mn.toFixed(4)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
-        tblY -= rowH;
-        addText(`- Goc ap luc danh nghia (Pressure angle alpha): ${g.alfa_n.toFixed(4)} deg`, tblX, tblY, 3.5, 'MFG_TABLE');
-        tblY -= rowH;
-        addText(`- Goc xoan rang (Helix angle beta): ${g.beta.toFixed(4)} deg`, tblX, tblY, 3.5, 'MFG_TABLE');
-        tblY -= rowH;
-        addText(`- Khoang cach truc lam viec (Center distance aw): ${g.aw.toFixed(4)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
-        tblY -= rowH;
-        addText(`- He so dich chinh (Profile shift x1 / x2): ${g.x1.toFixed(4)} / ${g.x2.toFixed(4)}`, tblX, tblY, 3.5, 'MFG_TABLE');
-        tblY -= rowH;
-        addText(`- Duong kinh dinh (Tip dia da1 / da2): ${g.da1.toFixed(4)} / ${g.da2.toFixed(4)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
-        tblY -= rowH;
-        addText(`- Duong kinh chan (Root dia df1 / df2): ${g.df1.toFixed(4)} / ${g.df2.toFixed(4)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
-        tblY -= rowH;
-        addText(`- Chieu dai phap tuyen chung (Chordal W1 / W2): ${g.W1.toFixed(4)} / ${g.W2.toFixed(4)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
-        tblY -= rowH;
-        addText(`- Cap chinh xac che tao (Accuracy grade Q): ISO 1328 Cap ${g.sec11_Q || 6}`, tblX, tblY, 3.5, 'MFG_TABLE');
 
         lines.push('0', 'ENDSEC', '0', 'EOF');
 
-        const dxfBlob = new Blob([lines.join('\n')], { type: 'application/dxf' });
+        // CRLF is mandatory for AutoCAD 2004+
+        const dxfBlob = new Blob([lines.join('\r\n')], { type: 'application/dxf;charset=utf-8' });
         const downloadUrl = URL.createObjectURL(dxfBlob);
         const a = document.createElement('a');
         a.href = downloadUrl;
-        a.download = `Banh_Rang_Tru_MITCalc_${g.z1}x${g.z2}_m${g.mn}.dxf`;
+        a.download = filename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1746,7 +1997,9 @@ class SpurGearUI {
         const g = this.g;
         const isHelical = Math.abs(g.beta || 0.0) > 1e-4;
         const typeStr = isHelical ? 'Helical' : 'Spur';
-        const tris = this.visualizer3D.getExportTriangles(target);
+
+        const isSurface = (format === 'step_surface' || format === 'stl_surface');
+        const tris = this.visualizer3D.getExportTriangles(target, isSurface);
 
         let filenameBase = '';
         let partName = '';
@@ -1761,9 +2014,16 @@ class SpurGearUI {
             partName = `GEAR_ASSEMBLY_Z${g.z1}x${g.z2}`;
         }
 
+        if (isSurface) {
+            filenameBase += '_Surface_Rong';
+            partName += '_SURFACE';
+        }
+
         if (format === 'step') {
-            return Gear3DExporter.exportSTEP(tris, `${filenameBase}.step`, partName);
-        } else if (format === 'stl') {
+            return Gear3DExporter.exportSTEP(tris, `${filenameBase}.step`, partName, true, false);
+        } else if (format === 'step_surface') {
+            return Gear3DExporter.exportSTEPSurface(tris, `${filenameBase}.step`, partName, true);
+        } else if (format === 'stl' || format === 'stl_surface') {
             return Gear3DExporter.exportBinarySTL(tris, `${filenameBase}.stl`);
         } else if (format === 'obj') {
             return Gear3DExporter.exportOBJ(tris, `${filenameBase}.obj`);

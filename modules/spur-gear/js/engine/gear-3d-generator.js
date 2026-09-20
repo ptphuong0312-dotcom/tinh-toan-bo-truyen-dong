@@ -94,10 +94,11 @@ export const Gear3DGenerator = {
         // Group 2: Front end cap at Z = +halfB (2 * N vertices: N outer + N bore, normal strictly [0, 0, 1])
         // Group 3: Back end cap at Z = -halfB (2 * N vertices: N outer + N bore, normal strictly [0, 0, -1])
         // Group 4: Inner bore cylinder surface (numLayers * N vertices, normal pointing radially inwards)
+        const isSurfaceOnly = !!opt.surfaceOnly;
 
         const lateralVCount = numLayers * N;
-        const capVCount = 2 * N;
-        const boreVCount = numLayers * N;
+        const capVCount = isSurfaceOnly ? 0 : (2 * N);
+        const boreVCount = isSurfaceOnly ? 0 : (numLayers * N);
         const totalVertices = lateralVCount + capVCount + capVCount + boreVCount;
 
         const positions = new Float32Array(totalVertices * 3);
@@ -189,155 +190,157 @@ export const Gear3DGenerator = {
             }
         }
 
-        // --- GROUP 2: Front End Cap at Z = +halfB ---
-        const frontBase = lateralVCount;
-        vIdx = frontBase;
-        const frontGeom = getLayerGeom(numSlices); // layer at Z = +halfB
-        // N outer contour points at Z = +halfB
-        for (let j = 0; j < N; j++) {
-            const px = contour[j].x;
-            const py = contour[j].y;
-            positions[vIdx * 3] = px * frontGeom.cosT - py * frontGeom.sinT;
-            positions[vIdx * 3 + 1] = px * frontGeom.sinT + py * frontGeom.cosT;
-            positions[vIdx * 3 + 2] = halfB;
-            normals[vIdx * 3] = 0.0;
-            normals[vIdx * 3 + 1] = 0.0;
-            normals[vIdx * 3 + 2] = 1.0; // Strictly +Z normal for 100% flat planar reflection
-            vIdx++;
-        }
-        // N inner bore points at Z = +halfB
-        for (let j = 0; j < N; j++) {
-            const bAng = boreAngles[j] + frontGeom.theta;
-            positions[vIdx * 3] = rBore * Math.cos(bAng);
-            positions[vIdx * 3 + 1] = rBore * Math.sin(bAng);
-            positions[vIdx * 3 + 2] = halfB;
-            normals[vIdx * 3] = 0.0;
-            normals[vIdx * 3 + 1] = 0.0;
-            normals[vIdx * 3 + 2] = 1.0; // Strictly +Z normal for 100% flat planar reflection
-            vIdx++;
-        }
-
-        // Front Cap Triangles (CCW when viewed from +Z)
-        const frontNormal = [0.0, 0.0, 1.0];
-        for (let j = 0; j < N; j++) {
-            const jNext = (j + 1) % N;
-            const o0 = frontBase + j;
-            const o1 = frontBase + jNext;
-            const b0 = frontBase + N + j;
-            const b1 = frontBase + N + jNext;
-
-            indices.push(o0, o1, b1);
-            indices.push(o0, b1, b0);
-
-            rawTriangles.push([
-                [positions[o0 * 3], positions[o0 * 3 + 1], halfB],
-                [positions[o1 * 3], positions[o1 * 3 + 1], halfB],
-                [positions[b1 * 3], positions[b1 * 3 + 1], halfB],
-                frontNormal
-            ]);
-            rawTriangles.push([
-                [positions[o0 * 3], positions[o0 * 3 + 1], halfB],
-                [positions[b1 * 3], positions[b1 * 3 + 1], halfB],
-                [positions[b0 * 3], positions[b0 * 3 + 1], halfB],
-                frontNormal
-            ]);
-        }
-
-        // --- GROUP 3: Back End Cap at Z = -halfB ---
-        const backBase = frontBase + capVCount;
-        vIdx = backBase;
-        const backGeom = getLayerGeom(0); // layer at Z = -halfB
-        // N outer contour points at Z = -halfB
-        for (let j = 0; j < N; j++) {
-            const px = contour[j].x;
-            const py = contour[j].y;
-            positions[vIdx * 3] = px * backGeom.cosT - py * backGeom.sinT;
-            positions[vIdx * 3 + 1] = px * backGeom.sinT + py * backGeom.cosT;
-            positions[vIdx * 3 + 2] = -halfB;
-            normals[vIdx * 3] = 0.0;
-            normals[vIdx * 3 + 1] = 0.0;
-            normals[vIdx * 3 + 2] = -1.0; // Strictly -Z normal for 100% flat planar reflection
-            vIdx++;
-        }
-        // N inner bore points at Z = -halfB
-        for (let j = 0; j < N; j++) {
-            const bAng = boreAngles[j] + backGeom.theta;
-            positions[vIdx * 3] = rBore * Math.cos(bAng);
-            positions[vIdx * 3 + 1] = rBore * Math.sin(bAng);
-            positions[vIdx * 3 + 2] = -halfB;
-            normals[vIdx * 3] = 0.0;
-            normals[vIdx * 3 + 1] = 0.0;
-            normals[vIdx * 3 + 2] = -1.0; // Strictly -Z normal for 100% flat planar reflection
-            vIdx++;
-        }
-
-        // Back Cap Triangles (CCW when viewed from -Z)
-        const backNormal = [0.0, 0.0, -1.0];
-        for (let j = 0; j < N; j++) {
-            const jNext = (j + 1) % N;
-            const o0 = backBase + j;
-            const o1 = backBase + jNext;
-            const b0 = backBase + N + j;
-            const b1 = backBase + N + jNext;
-
-            indices.push(o1, o0, b1);
-            indices.push(b1, o0, b0);
-
-            rawTriangles.push([
-                [positions[o1 * 3], positions[o1 * 3 + 1], -halfB],
-                [positions[o0 * 3], positions[o0 * 3 + 1], -halfB],
-                [positions[b1 * 3], positions[b1 * 3 + 1], -halfB],
-                backNormal
-            ]);
-            rawTriangles.push([
-                [positions[b1 * 3], positions[b1 * 3 + 1], -halfB],
-                [positions[o0 * 3], positions[o0 * 3 + 1], -halfB],
-                [positions[b0 * 3], positions[b0 * 3 + 1], -halfB],
-                backNormal
-            ]);
-        }
-
-        // --- GROUP 4: Inner Bore Cylinder Surface ---
-        const boreBase = backBase + capVCount;
-        vIdx = boreBase;
-        for (let k = 0; k < numLayers; k++) {
-            const { zCoord, theta } = getLayerGeom(k);
+        if (!isSurfaceOnly) {
+            // --- GROUP 2: Front End Cap at Z = +halfB ---
+            const frontBase = lateralVCount;
+            vIdx = frontBase;
+            const frontGeom = getLayerGeom(numSlices); // layer at Z = +halfB
+            // N outer contour points at Z = +halfB
             for (let j = 0; j < N; j++) {
-                const bAng = boreAngles[j] + theta;
-                const cosA = Math.cos(bAng);
-                const sinA = Math.sin(bAng);
-                positions[vIdx * 3] = rBore * cosA;
-                positions[vIdx * 3 + 1] = rBore * sinA;
-                positions[vIdx * 3 + 2] = zCoord;
-                // Normal points radially inwards towards the gear shaft axis:
-                normals[vIdx * 3] = -cosA;
-                normals[vIdx * 3 + 1] = -sinA;
-                normals[vIdx * 3 + 2] = 0.0;
+                const px = contour[j].x;
+                const py = contour[j].y;
+                positions[vIdx * 3] = px * frontGeom.cosT - py * frontGeom.sinT;
+                positions[vIdx * 3 + 1] = px * frontGeom.sinT + py * frontGeom.cosT;
+                positions[vIdx * 3 + 2] = halfB;
+                normals[vIdx * 3] = 0.0;
+                normals[vIdx * 3 + 1] = 0.0;
+                normals[vIdx * 3 + 2] = 1.0; // Strictly +Z normal for 100% flat planar reflection
                 vIdx++;
             }
-        }
+            // N inner bore points at Z = +halfB
+            for (let j = 0; j < N; j++) {
+                const bAng = boreAngles[j] + frontGeom.theta;
+                positions[vIdx * 3] = rBore * Math.cos(bAng);
+                positions[vIdx * 3 + 1] = rBore * Math.sin(bAng);
+                positions[vIdx * 3 + 2] = halfB;
+                normals[vIdx * 3] = 0.0;
+                normals[vIdx * 3 + 1] = 0.0;
+                normals[vIdx * 3 + 2] = 1.0; // Strictly +Z normal for 100% flat planar reflection
+                vIdx++;
+            }
 
-        // Bore Triangles (Facing inwards)
-        for (let k = 0; k < numSlices; k++) {
+            // Front Cap Triangles (CCW when viewed from +Z)
+            const frontNormal = [0.0, 0.0, 1.0];
             for (let j = 0; j < N; j++) {
                 const jNext = (j + 1) % N;
-                const b00 = boreBase + k * N + j;
-                const b01 = boreBase + k * N + jNext;
-                const b10 = boreBase + (k + 1) * N + j;
-                const b11 = boreBase + (k + 1) * N + jNext;
+                const o0 = frontBase + j;
+                const o1 = frontBase + jNext;
+                const b0 = frontBase + N + j;
+                const b1 = frontBase + N + jNext;
 
-                indices.push(b00, b11, b01);
-                indices.push(b00, b10, b11);
+                indices.push(o0, o1, b1);
+                indices.push(o0, b1, b0);
 
-                const ax = positions[b00 * 3], ay = positions[b00 * 3 + 1], az = positions[b00 * 3 + 2];
-                const bx = positions[b01 * 3], by = positions[b01 * 3 + 1], bz = positions[b01 * 3 + 2];
-                const cx = positions[b11 * 3], cy = positions[b11 * 3 + 1], cz = positions[b11 * 3 + 2];
-                const dx = positions[b10 * 3], dy = positions[b10 * 3 + 1], dz = positions[b10 * 3 + 2];
+                rawTriangles.push([
+                    [positions[o0 * 3], positions[o0 * 3 + 1], halfB],
+                    [positions[o1 * 3], positions[o1 * 3 + 1], halfB],
+                    [positions[b1 * 3], positions[b1 * 3 + 1], halfB],
+                    frontNormal
+                ]);
+                rawTriangles.push([
+                    [positions[o0 * 3], positions[o0 * 3 + 1], halfB],
+                    [positions[b1 * 3], positions[b1 * 3 + 1], halfB],
+                    [positions[b0 * 3], positions[b0 * 3 + 1], halfB],
+                    frontNormal
+                ]);
+            }
 
-                const n1 = computeFaceNormal(ax, ay, az, cx, cy, cz, bx, by, bz);
-                const n2 = computeFaceNormal(ax, ay, az, dx, dy, dz, cx, cy, cz);
-                rawTriangles.push([[ax, ay, az], [cx, cy, cz], [bx, by, bz], n1]);
-                rawTriangles.push([[ax, ay, az], [dx, dy, dz], [cx, cy, cz], n2]);
+            // --- GROUP 3: Back End Cap at Z = -halfB ---
+            const backBase = frontBase + capVCount;
+            vIdx = backBase;
+            const backGeom = getLayerGeom(0); // layer at Z = -halfB
+            // N outer contour points at Z = -halfB
+            for (let j = 0; j < N; j++) {
+                const px = contour[j].x;
+                const py = contour[j].y;
+                positions[vIdx * 3] = px * backGeom.cosT - py * backGeom.sinT;
+                positions[vIdx * 3 + 1] = px * backGeom.sinT + py * backGeom.cosT;
+                positions[vIdx * 3 + 2] = -halfB;
+                normals[vIdx * 3] = 0.0;
+                normals[vIdx * 3 + 1] = 0.0;
+                normals[vIdx * 3 + 2] = -1.0; // Strictly -Z normal for 100% flat planar reflection
+                vIdx++;
+            }
+            // N inner bore points at Z = -halfB
+            for (let j = 0; j < N; j++) {
+                const bAng = boreAngles[j] + backGeom.theta;
+                positions[vIdx * 3] = rBore * Math.cos(bAng);
+                positions[vIdx * 3 + 1] = rBore * Math.sin(bAng);
+                positions[vIdx * 3 + 2] = -halfB;
+                normals[vIdx * 3] = 0.0;
+                normals[vIdx * 3 + 1] = 0.0;
+                normals[vIdx * 3 + 2] = -1.0; // Strictly -Z normal for 100% flat planar reflection
+                vIdx++;
+            }
+
+            // Back Cap Triangles (CCW when viewed from -Z)
+            const backNormal = [0.0, 0.0, -1.0];
+            for (let j = 0; j < N; j++) {
+                const jNext = (j + 1) % N;
+                const o0 = backBase + j;
+                const o1 = backBase + jNext;
+                const b0 = backBase + N + j;
+                const b1 = backBase + N + jNext;
+
+                indices.push(o1, o0, b1);
+                indices.push(b1, o0, b0);
+
+                rawTriangles.push([
+                    [positions[o1 * 3], positions[o1 * 3 + 1], -halfB],
+                    [positions[o0 * 3], positions[o0 * 3 + 1], -halfB],
+                    [positions[b1 * 3], positions[b1 * 3 + 1], -halfB],
+                    backNormal
+                ]);
+                rawTriangles.push([
+                    [positions[b1 * 3], positions[b1 * 3 + 1], -halfB],
+                    [positions[o0 * 3], positions[o0 * 3 + 1], -halfB],
+                    [positions[b0 * 3], positions[b0 * 3 + 1], -halfB],
+                    backNormal
+                ]);
+            }
+
+            // --- GROUP 4: Inner Bore Cylinder Surface ---
+            const boreBase = backBase + capVCount;
+            vIdx = boreBase;
+            for (let k = 0; k < numLayers; k++) {
+                const { zCoord, theta } = getLayerGeom(k);
+                for (let j = 0; j < N; j++) {
+                    const bAng = boreAngles[j] + theta;
+                    const cosA = Math.cos(bAng);
+                    const sinA = Math.sin(bAng);
+                    positions[vIdx * 3] = rBore * cosA;
+                    positions[vIdx * 3 + 1] = rBore * sinA;
+                    positions[vIdx * 3 + 2] = zCoord;
+                    // Normal points radially inwards towards the gear shaft axis:
+                    normals[vIdx * 3] = -cosA;
+                    normals[vIdx * 3 + 1] = -sinA;
+                    normals[vIdx * 3 + 2] = 0.0;
+                    vIdx++;
+                }
+            }
+
+            // Bore Triangles (Facing inwards)
+            for (let k = 0; k < numSlices; k++) {
+                for (let j = 0; j < N; j++) {
+                    const jNext = (j + 1) % N;
+                    const b00 = boreBase + k * N + j;
+                    const b01 = boreBase + k * N + jNext;
+                    const b10 = boreBase + (k + 1) * N + j;
+                    const b11 = boreBase + (k + 1) * N + jNext;
+
+                    indices.push(b00, b11, b01);
+                    indices.push(b00, b10, b11);
+
+                    const ax = positions[b00 * 3], ay = positions[b00 * 3 + 1], az = positions[b00 * 3 + 2];
+                    const bx = positions[b01 * 3], by = positions[b01 * 3 + 1], bz = positions[b01 * 3 + 2];
+                    const cx = positions[b11 * 3], cy = positions[b11 * 3 + 1], cz = positions[b11 * 3 + 2];
+                    const dx = positions[b10 * 3], dy = positions[b10 * 3 + 1], dz = positions[b10 * 3 + 2];
+
+                    const n1 = computeFaceNormal(ax, ay, az, cx, cy, cz, bx, by, bz);
+                    const n2 = computeFaceNormal(ax, ay, az, dx, dy, dz, cx, cy, cz);
+                    rawTriangles.push([[ax, ay, az], [cx, cy, cz], [bx, by, bz], n1]);
+                    rawTriangles.push([[ax, ay, az], [dx, dy, dz], [cx, cy, cz], n2]);
+                }
             }
         }
 
@@ -355,7 +358,16 @@ export const Gear3DGenerator = {
             radiusRoot: df / 2.0,
             radiusBore: rBore,
             faceWidth: b,
-            dBore
+            dBore,
+            isSurfaceOnly
         };
+    },
+
+    /**
+     * Generate 3D Surface Mesh (Hollow flank shell only, no caps, no bore)
+     * For 5-axis surface finishing in Mastercam / SolidWorks Surface modeling / Wire EDM
+     */
+    generateGearSurfaceMesh: function(opt) {
+        return this.generateGearMesh(Object.assign({}, opt, { surfaceOnly: true }));
     }
 };
