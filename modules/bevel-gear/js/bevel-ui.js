@@ -28,7 +28,12 @@ class BevelGearUI {
             mat2: '16MnCr5'
         };
 
+        this.lastGeom = null;
+        this.activeMode = '2D';
         this.canvasController = (typeof BevelGearCanvas !== 'undefined') ? new BevelGearCanvas('bevelCanvas') : null;
+        const container3DEl = document.getElementById('bevel3DContainer');
+        this.visualizer3D = (typeof Bevel3DVisualizer !== 'undefined' && container3DEl) ? new Bevel3DVisualizer(container3DEl) : null;
+
         this.initDOM();
         this.initAccordion();
         this.initMaterials();
@@ -59,19 +64,11 @@ class BevelGearUI {
                     const k = inp.getAttribute('data-key');
                     if (this.inputs[k] !== undefined) inp.value = this.inputs[k];
                 });
-                const selAcc = document.getElementById('selAccuracySec14') || document.getElementById('selAccuracy');
-                const selAccSec14 = document.getElementById('selAccuracySec14');
-                if (selAcc) selAcc.value = '6';
-                if (selAccSec14) selAccSec14.value = '6';
-                const sliderB = document.getElementById('slider_b_Re');
-                if (sliderB) sliderB.value = '0.3458';
-                const sliderX1 = document.getElementById('slider_x1');
-                if (sliderX1) sliderX1.value = '0.32';
                 this.calculate();
             });
         }
 
-        // Print report
+        // Print Report
         const btnPrint = document.getElementById('btnPrintReport');
         if (btnPrint) {
             btnPrint.addEventListener('click', () => window.print());
@@ -92,8 +89,13 @@ class BevelGearUI {
                 if (target) {
                     target.classList.add('active');
                     target.style.display = 'block';
-                    if (targetId === 'tabCanvas' && this.canvasController) {
-                        this.canvasController.resetView();
+                    if (targetId === 'tabCanvas') {
+                        if (this.activeMode === '2D' && this.canvasController) {
+                            this.canvasController.resetView();
+                        } else if (this.activeMode === '3D' && this.visualizer3D) {
+                            this.visualizer3D.onResize();
+                            if (this.lastGeom) this.visualizer3D.setGeometry(this.lastGeom);
+                        }
                     }
                 }
             });
@@ -196,6 +198,136 @@ class BevelGearUI {
         if (btnRefreshAudit) {
             btnRefreshAudit.addEventListener('click', () => this.calculate());
         }
+
+        // =========================================================================
+        // 2D / 3D MODE SWITCHER & 3D CAD CONTROLS
+        // =========================================================================
+        const btnMode2D = document.getElementById('btnMode2D');
+        const btnMode3D = document.getElementById('btnMode3D');
+        const container2D = document.getElementById('container2D');
+        const container3D = document.getElementById('container3D');
+        const toolbar2D = document.getElementById('toolbar2D');
+        const toolbar3D = document.getElementById('toolbar3D');
+        const visualizerTitle = document.getElementById('visualizerTitle');
+        const visualizerDesc = document.getElementById('visualizerDesc');
+
+        if (btnMode2D && btnMode3D) {
+            btnMode2D.addEventListener('click', () => {
+                this.activeMode = '2D';
+                btnMode2D.style.background = 'var(--accent-green)';
+                btnMode2D.style.color = '#000';
+                btnMode3D.style.background = 'transparent';
+                btnMode3D.style.color = 'var(--text-secondary)';
+                if (container2D) container2D.style.display = 'flex';
+                if (container3D) container3D.style.display = 'none';
+                if (toolbar2D) toolbar2D.style.display = 'flex';
+                if (toolbar3D) toolbar3D.style.display = 'none';
+                if (visualizerTitle) visualizerTitle.textContent = '📐 Mô Hình 2D Nón Bánh Răng Ăn Khớp (ISO 23509)';
+                if (visualizerDesc) visualizerDesc.textContent = 'Mặt cắt trục bổ dọc ISO 23509 khép kín, gạch mặt cắt kim loại 45°, đường sinh nón chia và đỉnh Apex V(0,0).';
+                if (this.canvasController) this.canvasController.resetView();
+            });
+
+            btnMode3D.addEventListener('click', () => {
+                this.activeMode = '3D';
+                btnMode3D.style.background = 'var(--accent-cyan)';
+                btnMode3D.style.color = '#000';
+                btnMode2D.style.background = 'transparent';
+                btnMode2D.style.color = 'var(--text-secondary)';
+                if (container2D) container2D.style.display = 'none';
+                if (container3D) container3D.style.display = 'block';
+                if (toolbar2D) toolbar2D.style.display = 'none';
+                if (toolbar3D) toolbar3D.style.display = 'flex';
+                if (visualizerTitle) visualizerTitle.textContent = '🧊 Mô Phỏng Ăn Khớp 3D WebGL (Bevel Gears)';
+                if (visualizerDesc) visualizerDesc.textContent = 'Mô hình 3D thực thể xoay chuyển động ăn khớp liên hợp không gian tại góc trục Σ. Xuất file CAD STEP/STL cho SolidWorks & Mastercam.';
+                if (this.visualizer3D) {
+                    this.visualizer3D.onResize();
+                    if (this.lastGeom) this.visualizer3D.setGeometry(this.lastGeom);
+                }
+            });
+        }
+
+        // 3D Camera View Preset Dropdown
+        const sel3DViewPreset = document.getElementById('sel3DViewPreset');
+        const btnReset3DView = document.getElementById('btnReset3DView');
+        if (sel3DViewPreset && this.visualizer3D) {
+            sel3DViewPreset.addEventListener('change', () => {
+                this.visualizer3D.setViewPreset(sel3DViewPreset.value);
+            });
+        }
+        if (btnReset3DView && this.visualizer3D) {
+            btnReset3DView.addEventListener('click', () => {
+                if (sel3DViewPreset) sel3DViewPreset.value = 'iso';
+                this.visualizer3D.setViewPreset('iso');
+            });
+        }
+
+        // 3D Wireframe & Animation Controls
+        const btnWireframe = document.getElementById('btnToggleWireframe');
+        if (btnWireframe && this.visualizer3D) {
+            btnWireframe.addEventListener('click', () => {
+                this.visualizer3D.toggleWireframe();
+                btnWireframe.classList.toggle('active', this.visualizer3D.wireframeMode);
+            });
+        }
+
+        const btnToggle3DAnim = document.getElementById('btnToggle3DAnim');
+        if (btnToggle3DAnim && this.visualizer3D) {
+            btnToggle3DAnim.addEventListener('click', () => {
+                const isRunning = this.visualizer3D.toggleAnimation();
+                btnToggle3DAnim.textContent = isRunning ? '⏸️ Dừng' : '▶️ Tiếp Tục';
+            });
+        }
+
+        const slider3DSpeed = document.getElementById('slider3DAnimSpeed');
+        const anim3DSpeedVal = document.getElementById('anim3DSpeedVal');
+        if (slider3DSpeed && this.visualizer3D) {
+            slider3DSpeed.addEventListener('input', (e) => {
+                const val = parseFloat(e.target.value) || 1.0;
+                if (anim3DSpeedVal) anim3DSpeedVal.textContent = val.toFixed(1) + 'x';
+                this.visualizer3D.setAnimSpeed(val);
+            });
+        }
+
+        // 3D Export Dropdown & Items Binding
+        const btnExport3DMenu = document.getElementById('btnExport3DMenu');
+        const export3DDropdown = document.getElementById('export3DDropdown');
+        if (btnExport3DMenu && export3DDropdown) {
+            btnExport3DMenu.addEventListener('click', (e) => {
+                e.stopPropagation();
+                export3DDropdown.style.display = (export3DDropdown.style.display === 'block') ? 'none' : 'block';
+            });
+            document.addEventListener('click', () => {
+                export3DDropdown.style.display = 'none';
+            });
+        }
+
+        const bind3DExp = (id, format, target) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (export3DDropdown) export3DDropdown.style.display = 'none';
+                    this.export3DCAD(format, target);
+                });
+            }
+        };
+
+        bind3DExp('expStepPinion', 'step', 'pinion');
+        bind3DExp('expStepGear', 'step', 'gear');
+        bind3DExp('expStepAssembly', 'step', 'assembly');
+
+        bind3DExp('expStepSurfacePinion', 'step_surface', 'pinion');
+        bind3DExp('expStepSurfaceGear', 'step_surface', 'gear');
+        bind3DExp('expStepSurfaceAssembly', 'step_surface', 'assembly');
+
+        bind3DExp('expStlPinion', 'stl', 'pinion');
+        bind3DExp('expStlGear', 'stl', 'gear');
+        bind3DExp('expStlAssembly', 'stl', 'assembly');
+
+        bind3DExp('expStlSurfacePinion', 'stl_surface', 'pinion');
+        bind3DExp('expStlSurfaceGear', 'stl_surface', 'gear');
+
+        bind3DExp('expObjAssembly', 'obj', 'assembly');
     }
 
     initAccordion() {
@@ -664,6 +796,18 @@ class BevelGearUI {
         if (this.canvasController) {
             this.canvasController.setGeometry(g);
         }
+        if (this.visualizer3D) {
+            this.visualizer3D.setGeometry(g);
+        }
+        const badgeType = document.getElementById('badge3DType');
+        const badgeSigma = document.getElementById('badge3DSigma');
+        const badgeRatio = document.getElementById('badge3DRatio');
+        const badgeRe = document.getElementById('badge3DRe');
+        const isSpiral = Math.abs(g.beta_deg || 0.0) > 1e-4;
+        if (badgeType) badgeType.textContent = isSpiral ? '⚙️ Bánh Răng Côn Răng Xoắn (Spiral Bevel)' : '⚙️ Bánh Răng Côn Răng Thẳng (Straight Bevel)';
+        if (badgeSigma) badgeSigma.textContent = `${(g.Sigma_deg || 90.0).toFixed(1)}°`;
+        if (badgeRatio) badgeRatio.textContent = (g.i || 1.0).toFixed(3);
+        if (badgeRe) badgeRe.textContent = `${(g.Re || 0).toFixed(1)} mm`;
     }
 
     renderOutputs(g) {
@@ -1551,4 +1695,41 @@ class BevelGearUI {
         URL.revokeObjectURL(link.href);
     }
 
+    export3DCAD(format, target) {
+        if (!this.visualizer3D || !this.lastGeom || typeof Bevel3DExporter === 'undefined') return;
+        const g = this.lastGeom;
+        const isSpiral = Math.abs(g.beta_deg || 0.0) > 1e-4;
+        const typeStr = isSpiral ? 'Spiral_Bevel' : 'Straight_Bevel';
+
+        const isSurface = (format === 'step_surface' || format === 'stl_surface');
+        const tris = this.visualizer3D.getExportTriangles(target, isSurface);
+
+        let filenameBase = '';
+        let partName = '';
+        if (target === 'pinion') {
+            filenameBase = `Banh_Dan_1_${typeStr}_z${g.z1}_mmn${g.mmn}`;
+            partName = `BEVEL_PINION_1_Z${g.z1}`;
+        } else if (target === 'gear') {
+            filenameBase = `Banh_Bi_Dan_2_${typeStr}_z${g.z2}_mmn${g.mmn}`;
+            partName = `BEVEL_GEAR_2_Z${g.z2}`;
+        } else {
+            filenameBase = `Cap_Banh_Rang_Con_${typeStr}_z${g.z1}x${g.z2}_Sigma${(g.Sigma_deg || 90).toFixed(0)}`;
+            partName = `BEVEL_GEAR_ASSEMBLY_Z${g.z1}x${g.z2}`;
+        }
+
+        if (isSurface) {
+            filenameBase += '_Surface_Rong';
+            partName += '_SURFACE';
+        }
+
+        if (format === 'step') {
+            return Bevel3DExporter.exportSTEP(tris, `${filenameBase}.step`, partName, true, false);
+        } else if (format === 'step_surface') {
+            return Bevel3DExporter.exportSTEPSurface(tris, `${filenameBase}.step`, partName, true);
+        } else if (format === 'stl' || format === 'stl_surface') {
+            return Bevel3DExporter.exportBinarySTL(tris, `${filenameBase}.stl`);
+        } else if (format === 'obj') {
+            return Bevel3DExporter.exportOBJ(tris, `${filenameBase}.obj`);
+        }
+    }
 }

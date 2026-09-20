@@ -599,3 +599,42 @@
     * STL Surface Pinion: 1.73 MB, cấu trúc rỗng không có nắp đầu và không có lỗ trục.
   - **Multi-Case QC Suite (`qc_gear_multi_case_suite.py`)**: **110 / 110 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
   - **Đóng gói mã nguồn CORS-Free (`bundle_all.py`)**: Cập nhật thành công `mitcalc-engine.bundle.js` (249,949 bytes).
+
+---
+
+## 14. ĐỢT TỐI ƯU HÓA 14: XÂY DỰNG MÔ HÌNH 3D CAD BÁNH RĂNG CÔN (BEVEL GEAR - ISO 23509) - MÔ PHỎNG ĂN KHỚP 3D WEBGL VÀ BỘ XUẤT FILE CAD SOLID / SURFACE CHO MASTERCAM & SOLIDWORKS
+
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  - *"sau khi hoàn thiện mô hình 3D cho bánh răng trụ tôi muốn bạn xây dựng cho module tính toán bánh răng côn mô hình 3D tương tự bánh răng trụ"*: Xây dựng hệ thống mô phỏng 3D WebGL ăn khớp không gian cho bánh răng côn tại góc trục $\Sigma$ (chuẩn $90^\circ$ hoặc tùy biến), hỗ trợ cả bánh răng côn thẳng ($\beta = 0$) và bánh răng côn xoắn ($\beta > 0$), kèm bộ xuất file 3D CAD (STEP B-Rep Solid, STEP Flank Surface rỗng, Binary STL Solid & Surface) để lập trình gia công phay 5 trục trên Mastercam và mô hình hóa trong SolidWorks.
+
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Hình học không gian nón răng hội tụ Apex $V(0, 0, 0)$ (`Bevel3DGenerator`)**:
+     - Các kích thước răng biến thiên tuyến tính từ nón ngoài $R_e$ về nón trong $R_i$.
+     - Tọa độ 3D mặt nón: $r = R \sin\delta + h \cos\delta$, $z = R \cos\delta - h \sin\delta$ với $h$ là chiều cao sườn răng đo trên mặt nón phụ vuông góc đường sinh nón chia.
+     - Dựng biên dạng thân khai cầu Tredgold trên nón phụ với số răng ảo $z_v = z / \cos\delta$, vòng chia ảo $d_v = d / \cos\delta$, và bán kính góc lượn dao cắt $R = 0.38 \cdot m_{mn}$.
+     - Răng thẳng ($\beta = 0$): đường sinh răng hội tụ thẳng về Apex $V(0, 0, 0)$.
+     - Răng xoắn Gleason Spiral Bevel ($\beta > 0$): đường xoắn ốc nón $\phi_{\text{spiral}}(R) = \text{hand} \cdot \frac{(R_e - R)\tan\beta_m}{R_m \sin\delta}$.
+  2. **Tách khối đỉnh (Vertex Splitting) & Màng mặt Flank Surface rỗng**:
+     - Mặt đầu trước và mặt đầu sau được phân tách đỉnh và pháp tuyến nghiêm ngặt, phẳng mịn 100%, triệt tiêu gợn sóng/nhấp nhô.
+     - Chế độ `surfaceOnly: true`: loại bỏ nắp đầu và lòng lỗ trục, chỉ sinh màng mặt sườn răng hở.
+  3. **Bộ xuất 3D CAD đa định dạng (`Bevel3DExporter`)**:
+     - STEP AP214 B-Rep Solid (`CLOSED_SHELL` / `MANIFOLD_SOLID_BREP`).
+     - STEP AP214 Flank Surface Rỗng (`OPEN_SHELL` / `SHELL_BASED_SURFACE_MODEL`) cho Mastercam phay 5 trục.
+     - Binary STL Solid & Surface (`.stl`) và Wavefront OBJ (`.obj`).
+     - Đa lựa chọn xuất: Bánh dẫn 1, Bánh bị dẫn 2, Cả cặp ăn khớp tại góc trục $\Sigma$.
+  4. **Trực quan hóa 3D WebGL & Hoạt ảnh ăn khớp liên hợp (`Bevel3DVisualizer`)**:
+     - Vật liệu kim loại PBR kỹ thuật (Metallic Steel).
+     - Khóa cứng góc quay động học $\phi_2 = \phi_{2,0} - \phi_1 \cdot \frac{z_1}{z_2}$ với góc pha ban đầu $\phi_{2,0} = \frac{\pi}{z_2} + \frac{\pi}{2}(1 - \frac{z_1}{z_2})$, khe hở chân răng đạt chuẩn $c = 0.2 \cdot m_n$, 0 va chạm.
+     - Hộp chọn Dropdown hướng nhìn 3D CAD tiêu chuẩn (`#sel3DViewPreset`): Isometric, Axial XY Front, Pinion +X, Gear +Y, Top XZ, Mesh Zone.
+
+* **Kết quả nghiệm thu thực tế**:
+  - **Kiểm thử tự động Playwright (`test_bevel_3d.py`)**: 100% PASS, 0 lỗi Console:
+    * Lưới Bánh dẫn 1: 26,676 đỉnh, 8,892 tam giác.
+    * Lưới Bánh bị dẫn 2: 66,690 đỉnh, 22,230 tam giác.
+    * Tổng cụm lắp ráp: 31,122 tam giác (1.48 MB STL Solid, 0.33 MB STL Surface).
+    * STEP Solid Model (2.72 MB, `CLOSED_SHELL`: True).
+    * STEP Surface Model (2.11 MB, `OPEN_SHELL`: True, `SHELL_BASED_SURFACE_MODEL`: True).
+    * Đã lưu ảnh chụp 3D: `bevel_3d_isometric_view.png`, `bevel_3d_mesh_zone.png`, `bevel_3d_axial_front.png`.
+  - **Kiểm thử không hồi quy (`qc_bevel_multi_case_suite.py`)**: **120 / 120 kiểm thử PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
+  - **Đóng gói mã nguồn CORS-Free (`bundle_all.py`)**: Cập nhật thành công `bevel-engine.bundle.js` (212,833 ký tự) chạy trực tiếp qua `file:///`.
+

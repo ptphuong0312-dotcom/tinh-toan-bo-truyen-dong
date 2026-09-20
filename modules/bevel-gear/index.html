@@ -47,7 +47,7 @@
     <!-- Navigation Tabs -->
     <nav class="tab-navigation">
         <button type="button" class="tab-btn active" data-target="tabCalculator">⚙️ Bảng Tính Cơ Khí (Calculator)</button>
-        <button type="button" class="tab-btn" data-target="tabCanvas">📐 Mô Phỏng 2D CAD (Canvas)</button>
+        <button type="button" class="tab-btn" data-target="tabCanvas">🔄 Mô Phỏng Ăn Khớp 2D / 3D CAD</button>
     </nav>
 
     <!-- Main Container -->
@@ -1668,30 +1668,31 @@
         <!-- TAB 2: 2D CANVAS GEARING VISUALIZATION                                    -->
         <!-- ========================================================================= -->
         <div id="tabCanvas" class="tab-pane">
-            <div class="canvas-wrapper">
-                <div class="canvas-toolbar">
-                    <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                        <span style="font-weight: 700; color: var(--accent-cyan);">Mô Hình 2D Nón Bánh Răng Ăn Khớp (Gleason Spiral Bevel)</span>
-                        <span style="font-size: 0.8rem; color: var(--text-muted);">| Mặt cắt trục ISO 23509</span>
-                        <div style="display: flex; align-items: center; gap: 0.6rem; margin-left: 0.3rem; flex-wrap: wrap;">
-                            <label style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer;">
-                                <input type="checkbox" id="chkShowDims" checked style="cursor: pointer;"> Kích thước CAD
-                            </label>
-                            <label style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer;">
-                                <input type="checkbox" id="chkShowHatch" checked style="cursor: pointer;"> Mặt cắt ISO 128
-                            </label>
-                            <label style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer;">
-                                <input type="checkbox" id="chkShowAxes" checked style="cursor: pointer;"> Đường tâm & Nón
-                            </label>
-                            <label style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer;">
-                                <input type="checkbox" id="chkShowStripes" checked style="cursor: pointer;"> Vệt răng động
-                            </label>
-                            <label style="display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.78rem; color: var(--text-secondary); cursor: pointer;">
-                                <input type="checkbox" id="chkShowDataCard" checked style="cursor: pointer;"> Bảng thông số
-                            </label>
+            <div style="background-color: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 1.25rem;">
+                <!-- Tab Header & Mode Switcher -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <h2 style="font-size: 1.25rem; font-weight: 700; color: var(--accent-cyan);" id="visualizerTitle">
+                                📐 Mô Hình 2D Nón Bánh Răng Ăn Khớp (ISO 23509)
+                            </h2>
+                            <!-- 2D / 3D Segmented Control Toggle -->
+                            <div style="display: inline-flex; background: rgba(0,0,0,0.4); padding: 3px; border-radius: 6px; border: 1px solid var(--border-color);">
+                                <button type="button" id="btnMode2D" class="btn btn-sm" style="background: var(--accent-green); color: #000; font-weight: 700; border-radius: 4px; padding: 4px 12px; cursor: pointer; border: none;">
+                                    📐 2D CAD Canvas
+                                </button>
+                                <button type="button" id="btnMode3D" class="btn btn-sm" style="background: transparent; color: var(--text-secondary); font-weight: 700; border-radius: 4px; padding: 4px 12px; cursor: pointer; border: none;">
+                                    🧊 3D WebGL (Bevel Gears)
+                                </button>
+                            </div>
                         </div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.35rem;" id="visualizerDesc">
+                            Mặt cắt trục bổ dọc ISO 23509 khép kín, gạch mặt cắt kim loại 45°, đường sinh nón chia và đỉnh Apex V(0,0). Bấm 3D WebGL để quan sát ăn khớp không gian và xuất file CAD cho Mastercam/SolidWorks.
+                        </p>
                     </div>
-                    <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+
+                    <!-- 2D Action Toolbar -->
+                    <div id="toolbar2D" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
                         <div style="display: flex; align-items: center; gap: 0.4rem; background: rgba(15, 23, 42, 0.6); padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid var(--border-color);">
                             <span style="font-size: 0.75rem; color: var(--text-secondary);">Tốc độ:</span>
                             <input type="range" id="sliderAnimSpeed" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 80px; cursor: pointer;">
@@ -1703,12 +1704,94 @@
                         <button type="button" class="btn btn-primary" id="btnCanvasAnimate">⏸ Tạm Dừng</button>
                         <button type="button" class="btn btn-success" id="btnExportDXFCanvas" style="background-color: #107c41; border-color: #107c41; font-weight: 700;">📐 Tải Bản Vẽ 2D CAD (DXF)</button>
                     </div>
+
+                    <!-- 3D Action Toolbar -->
+                    <div id="toolbar3D" style="display: none; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <!-- 3D Camera View Preset Dropdown (CAD Standard: SolidWorks / Mastercam) -->
+                        <div style="display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);">
+                            <label for="sel3DViewPreset" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">📐 Hướng nhìn:</label>
+                            <select id="sel3DViewPreset" class="calc-select" style="padding: 4px 28px 4px 8px; font-size: 0.82rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #38bdf8; border: 1.5px solid #0284c7; cursor: pointer;">
+                                <option value="iso">🎥 Phối Cảnh (Isometric)</option>
+                                <option value="front">⬆️ Mặt Bổ Dọc Trục (Axial XY)</option>
+                                <option value="pinion">⚙️ Trực Diện Bánh Dẫn 1 (+X)</option>
+                                <option value="gear">⚙️ Trực Diện Bánh Bị Dẫn 2 (+Y)</option>
+                                <option value="top">➡️ Nhìn Từ Trên (Top - XZ)</option>
+                                <option value="mesh">🔍 Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)</option>
+                            </select>
+                        </div>
+
+                        <!-- Speed & Play -->
+                        <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.25); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border-color);">
+                            <label for="slider3DAnimSpeed" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">⚡ Tốc độ:</label>
+                            <input type="range" id="slider3DAnimSpeed" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 80px; cursor: pointer;">
+                            <span id="anim3DSpeedVal" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); width: 35px;">1.0x</span>
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="btnToggle3DAnim">⏸️ Dừng</button>
+                        <button type="button" class="btn btn-secondary" id="btnToggleWireframe" title="Bật/tắt khung dây">🕸️ Khung Dây</button>
+                        <button type="button" class="btn btn-secondary" id="btnReset3DView">🎯 Đặt Lại</button>
+
+                        <!-- 3D Export Dropdown -->
+                        <div class="dropdown" style="position: relative; display: inline-block;">
+                            <button type="button" class="btn" id="btnExport3DMenu" style="background:#059669; color:#ffffff; font-weight:700; cursor: pointer;">
+                                📥 Xuất File 3D (SolidWorks / Mastercam) ▾
+                            </button>
+                            <div id="export3DDropdown" style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); min-width: 320px; padding: 0.5rem 0; margin-top: 4px;">
+                                <div style="padding: 4px 12px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
+                                    Định Dạng STEP AP214 (Khối Solid B-Rep)
+                                </div>
+                                <a href="javascript:void(0)" id="expStepPinion" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">⚙️ Xuất Bánh Dẫn 1 (.step)</a>
+                                <a href="javascript:void(0)" id="expStepGear" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">⚙️ Xuất Bánh Bị Dẫn 2 (.step)</a>
+                                <a href="javascript:void(0)" id="expStepAssembly" style="display: block; padding: 6px 14px; color: #38bdf8; font-size: 0.85rem; font-weight: 700; text-decoration: none;">🔗 Xuất Cả Cặp Ăn Khớp (.step)</a>
+                                
+                                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                                <div style="padding: 4px 12px; font-size: 0.75rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;">
+                                    🌐 Flank Surface Rỗng (Mastercam Surface / 5-Trục)
+                                </div>
+                                <a href="javascript:void(0)" id="expStepSurfacePinion" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🌐 Xuất Bánh Dẫn 1 Surface (.step)</a>
+                                <a href="javascript:void(0)" id="expStepSurfaceGear" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🌐 Xuất Bánh Bị Dẫn 2 Surface (.step)</a>
+                                <a href="javascript:void(0)" id="expStepSurfaceAssembly" style="display: block; padding: 6px 14px; color: #38bdf8; font-size: 0.85rem; font-weight: 700; text-decoration: none;">🌐 Xuất Cả Cặp Surface (.step)</a>
+                                <a href="javascript:void(0)" id="expStlSurfacePinion" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🌐 Xuất Bánh Dẫn 1 Surface (.stl)</a>
+                                <a href="javascript:void(0)" id="expStlSurfaceGear" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🌐 Xuất Bánh Bị Dẫn 2 Surface (.stl)</a>
+
+                                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                                <div style="padding: 4px 12px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
+                                    Định Dạng Binary STL (Lập Trình Mastercam)
+                                </div>
+                                <a href="javascript:void(0)" id="expStlPinion" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">⚙️ Xuất Bánh Dẫn 1 (.stl)</a>
+                                <a href="javascript:void(0)" id="expStlGear" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">⚙️ Xuất Bánh Bị Dẫn 2 (.stl)</a>
+                                <a href="javascript:void(0)" id="expStlAssembly" style="display: block; padding: 6px 14px; color: #10b981; font-size: 0.85rem; font-weight: 700; text-decoration: none;">🔗 Xuất Cả Cặp Ăn Khớp (.stl)</a>
+
+                                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                                <a href="javascript:void(0)" id="expObjAssembly" style="display: block; padding: 6px 14px; color: #cbd5e1; font-size: 0.85rem; text-decoration: none;">📦 Xuất File OBJ (.obj)</a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <canvas id="bevelCanvas" width="1200" height="650" style="background-color: #0b0f19;"></canvas>
+
+                <!-- 2D Viewport Container -->
+                <div id="container2D" style="display: flex; justify-content: center; background-color: #0b0f19; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);">
+                    <canvas id="bevelCanvas" width="1200" height="650" style="background-color: #0b0f19;"></canvas>
+                </div>
+
+                <!-- 3D Viewport Container -->
+                <div id="container3D" style="display: none; position: relative; width: 100%; height: 650px; background-color: #0b0f19; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);">
+                    <div id="bevel3DContainer" style="width: 100%; height: 100%;"></div>
+                    <!-- 3D Overlay Badge Info -->
+                    <div id="badge3DInfo" style="position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 8px 14px; font-size: 0.8rem; color: #cbd5e1; pointer-events: none;">
+                        <span id="badge3DType" style="color: #f59e0b; font-weight: 700;">⚙️ Bánh Răng Côn (Bevel Gear)</span> | 
+                        <span>Góc trục Σ = <strong id="badge3DSigma" style="color: #38bdf8;">90.0°</strong></span> | 
+                        <span>Tỷ số i = <strong id="badge3DRatio" style="color: #38bdf8;">2.500</strong></span> | 
+                        <span>Re = <strong id="badge3DRe" style="color: #10b981;">338.3 mm</strong></span>
+                    </div>
+                </div>
             </div>
         </div>
 
         </main>
+
+    <!-- 3D Offline Libraries: Zero-CORS & 100% Offline -->
+    <script src="../../shared/js/three.min.js"></script>
+    <script src="../../shared/js/OrbitControls.js"></script>
 
     <!-- Classic Unified Bundle (CORS-free, 100% Offline Single Script) -->
     <script src="js/bevel-engine.bundle.js"></script>

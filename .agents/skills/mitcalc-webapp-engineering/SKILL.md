@@ -519,7 +519,22 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
      * Cập nhật thời gian thực vào mô hình 3D Canvas WebGL.
      * Cập nhật số điểm hiển thị trong Bảng tọa độ Mục 20.0 (`coordTableBody`).
      * Áp dụng trực tiếp vào số điểm xuất bản vẽ DXF 2D và mô hình 3D STEP/STL.
-     * Đồng bộ hai chiều giữa thanh trượt trong Bảng tính toán (Mục 20.9) và thanh trượt trên thanh công cụ Canvas Tab 2.
+### Quy Chuẩn 26: Quy Chuẩn Mô Hình 3D CAD & Xuất File Bánh Răng Côn (Bevel Gear 3D CAD & CAM Surface Protocol - ISO 23509)
+1. **Hình học không gian nón răng hội tụ Apex V(0, 0, 0)**:
+   - Các điểm hình học răng biến thiên tuyến tính dọc bề rộng vành răng $b$ từ nón ngoài $R_e$ về nón trong $R_i$.
+   - Tọa độ 3D mặt nón chia: $r(R) = R \sin\delta, z(R) = R \cos\delta$ với $R \in [R_i, R_e]$.
+   - Chiều cao sườn răng $h$ đo trên mặt nón phụ vuông góc đường sinh: $r = R \sin\delta + h \cos\delta, z = R \cos\delta - h \sin\delta$.
+   - Biên dạng thân khai cầu ảo Tredgold ($z_v = z / \cos\delta, r_v = R \tan\delta$) kết hợp góc lượn dao cắt $R = 0.38 \cdot m_{mn}$.
+   - Răng thẳng ($\beta = 0$): đường sinh răng hội tụ thẳng về Apex $V(0, 0, 0)$.
+   - Răng xoắn Gleason Spiral Bevel ($\beta > 0$): đường xoắn ốc nón $\phi_{\text{spiral}}(R) = \text{hand} \cdot \frac{(R_e - R)\tan\beta_m}{R_m \sin\delta}$.
+2. **Đồng bộ pha động học ăn khớp không va chạm**:
+   - Trục bánh 1 dọc theo trục X, trục bánh 2 dọc theo trục Y (hoặc góc $\Sigma$).
+   - Góc pha ban đầu: $\phi_{2,0} = \frac{\pi}{z_2} + \frac{\pi}{2}\left(1 - \frac{z_1}{z_2}\right)$.
+   - Khóa cứng góc quay động học $\phi_2 = \phi_{2,0} - \phi_1 \cdot \frac{z_1}{z_2}$, ăn khớp lăn tiếp xúc liên tục, khe hở chân răng đạt chuẩn $c = 0.2 \cdot m_n$, triệt tiêu hoàn toàn va chạm và chồng chéo răng.
+3. **Đa dạng định dạng xuất CAD cho SolidWorks & Mastercam**:
+   - STEP AP214 B-Rep Solid (`CLOSED_SHELL` / `MANIFOLD_SOLID_BREP`).
+   - STEP AP214 Flank Surface Rỗng (`OPEN_SHELL` / `SHELL_BASED_SURFACE_MODEL`) - không nắp đầu, không lòng trục để Mastercam lập trình phay 5 trục trực tiếp (Surface Finish Scallop/Flowline/Swarf).
+   - Binary STL Solid & Surface (`.stl`) và Wavefront OBJ (`.obj`).
 
 ---
 
