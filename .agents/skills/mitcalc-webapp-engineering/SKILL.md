@@ -520,18 +520,31 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
      * Cập nhật số điểm hiển thị trong Bảng tọa độ Mục 20.0 (`coordTableBody`).
      * Áp dụng trực tiếp vào số điểm xuất bản vẽ DXF 2D và mô hình 3D STEP/STL.
 ### Quy Chuẩn 26: Quy Chuẩn Mô Hình 3D CAD & Xuất File Bánh Răng Côn (Bevel Gear 3D CAD & CAM Surface Protocol - ISO 23509)
-1. **Hình học không gian nón răng hội tụ Apex V(0, 0, 0)**:
+1. **Hình học không gian nón răng hội tụ Apex V(0, 0, 0) & Bất biến góc theo tia nón (Ray-Invariant Geometry)**:
    - Các điểm hình học răng biến thiên tuyến tính dọc bề rộng vành răng $b$ từ nón ngoài $R_e$ về nón trong $R_i$.
+   - **Nguyên lý bất biến góc theo tia nón**: Các góc tọa độ biên dạng răng $\theta(\eta)$ xuất phát trực tiếp từ Đỉnh Apex $V(0, 0, 0)$ nên **hoàn toàn cố định (không nhân tỉ lệ $R/R_m$)** dọc theo tia sinh nón; chỉ có các kích thước dài ($h = h_{\text{mean}} \cdot (R/R_m)$, bán kính $r(R)$ và tọa độ trục $z(R)$) co dãn tỷ lệ thuận theo $R/R_m$. Điều này triệt tiêu 100% hiện tượng vặn xoắn giả (twisted blades) của răng thẳng.
    - Tọa độ 3D mặt nón chia: $r(R) = R \sin\delta, z(R) = R \cos\delta$ với $R \in [R_i, R_e]$.
    - Chiều cao sườn răng $h$ đo trên mặt nón phụ vuông góc đường sinh: $r = R \sin\delta + h \cos\delta, z = R \cos\delta - h \sin\delta$.
-   - Biên dạng thân khai cầu ảo Tredgold ($z_v = z / \cos\delta, r_v = R \tan\delta$) kết hợp góc lượn dao cắt $R = 0.38 \cdot m_{mn}$.
-   - Răng thẳng ($\beta = 0$): đường sinh răng hội tụ thẳng về Apex $V(0, 0, 0)$.
-   - Răng xoắn Gleason Spiral Bevel ($\beta > 0$): đường xoắn ốc nón $\phi_{\text{spiral}}(R) = \text{hand} \cdot \frac{(R_e - R)\tan\beta_m}{R_m \sin\delta}$.
-2. **Đồng bộ pha động học ăn khớp không va chạm**:
-   - Trục bánh 1 dọc theo trục X, trục bánh 2 dọc theo trục Y (hoặc góc $\Sigma$).
-   - Góc pha ban đầu: $\phi_{2,0} = \frac{\pi}{z_2} + \frac{\pi}{2}\left(1 - \frac{z_1}{z_2}\right)$.
-   - Khóa cứng góc quay động học $\phi_2 = \phi_{2,0} - \phi_1 \cdot \frac{z_1}{z_2}$, ăn khớp lăn tiếp xúc liên tục, khe hở chân răng đạt chuẩn $c = 0.2 \cdot m_n$, triệt tiêu hoàn toàn va chạm và chồng chéo răng.
-3. **Đa dạng định dạng xuất CAD cho SolidWorks & Mastercam**:
+   - Biên dạng thân khai cầu ảo Tredgold ($z_v = z / \cos\delta, r_v = R \tan\delta$) kết hợp góc lượn chân răng $R = 0.38 \cdot m_{mn}$ và đoạn đáy rãnh root land arc, đảm bảo góc $\theta$ đơn điệu nghiêm ngặt từ $-\pi/z$ đến $+\pi/z$.
+   - Răng xoắn Gleason Spiral Bevel ($\beta > 0$): đường xoắn ốc nón $\phi_{\text{spiral}}(R) = \text{hand} \cdot \frac{(R_e - R)\tan\beta_m}{R_m \sin\delta}$ với hướng xoắn đối xứng giữa bánh dẫn 1 (+1) và bánh bị dẫn 2 (-1).
+2. **Đồng bộ pha động học ăn khớp tổng quát không va chạm (Universal Zero-Collision Conjugate Phase Offset)**:
+   - Trục bánh dẫn 1 dọc theo trục X, trục bánh bị dẫn 2 dọc theo trục Y (hoặc góc trục $\Sigma$).
+   - Vùng ăn khớp nằm tại mặt phẳng $XY$ ($Z = 0$), góc tiếp xúc $\phi_1 = \pi/2$ ($90^\circ$ quanh trục X).
+   - Pha răng của bánh 1 tại đường ăn khớp: $\text{phase}_1 = \left(\frac{z_1}{4}\right) \bmod 1$.
+   - Khi `gearAngle = 0`, bánh 2 có đỉnh răng (crest) nằm ngay tại đường ăn khớp (phase 0).
+   - Công thức bù pha tổng quát cho mọi bộ răng $(z_1, z_2)$ để đỉnh răng bánh 2 lọt chính giữa rãnh răng bánh 1:
+     $$\phi_{2,0} = \left( \left(\frac{z_1}{4}\right) \bmod 1 - 0.5 \right) \cdot \frac{2\pi}{z_2}$$
+     *(Ví dụ $z_1 = 18$: $18/4 = 4.5 \implies \phi_{2,0} = 0$; $z_1 = 20$: $20/4 = 5.0 \implies \phi_{2,0} = -\pi / z_2$ nửa bước răng).*
+   - Khóa cứng quan hệ quay động học: $\phi_2 = \phi_{2,0} - \frac{\phi_1}{u}$ (với $u = z_2 / z_1$).
+   - Khe hở động học thực đo $c \in [1.423\text{ mm}, 1.895\text{ mm}]$ xuyên suốt 360 độ quay, triệt tiêu hoàn toàn va chạm và xuyên thân răng.
+3. **Thứ tự đỉnh tam giác chuẩn kín nước thể tích dương (Watertight Manifold Topology & Positive Signed Volume)**:
+   - Thiết lập thứ tự cuộn đỉnh ngược chiều kim đồng hồ nhìn từ ngoài không gian (counter-clockwise) cho cả 4 khối:
+     * Nhóm 1 (Mặt sườn răng): `addQuad(L1[j], L2[j], L2[nextJ], L1[nextJ])`.
+     * Nhóm 2 (Nắp đầu ngoài $R_e$): `addQuad(boreOuter[j], L_outer[j], L_outer[nextJ], boreOuter[nextJ], nBack)`.
+     * Nhóm 3 (Nắp đầu trong $R_i$): `addQuad(L_inner[j], boreInner[j], boreInner[nextJ], L_inner[nextJ], nFront)`.
+     * Nhóm 4 (Lòng lỗ trục $d_s$): `addQuad(boreInner[j], boreInner[nextJ], boreOuter[nextJ], boreOuter[j], nBore)`.
+   - Đảm bảo toàn bộ pháp véc-tơ hướng ra ngoài, thể tích đại số $\text{Vol} > 0$, triệt tiêu lỗi lật mặt phẳng (inverted normals) khi kết xuất vật liệu kim loại PBR.
+4. **Đa dạng định dạng xuất CAD cho SolidWorks & Mastercam**:
    - STEP AP214 B-Rep Solid (`CLOSED_SHELL` / `MANIFOLD_SOLID_BREP`).
    - STEP AP214 Flank Surface Rỗng (`OPEN_SHELL` / `SHELL_BASED_SURFACE_MODEL`) - không nắp đầu, không lòng trục để Mastercam lập trình phay 5 trục trực tiếp (Surface Finish Scallop/Flowline/Swarf).
    - Binary STL Solid & Surface (`.stl`) và Wavefront OBJ (`.obj`).

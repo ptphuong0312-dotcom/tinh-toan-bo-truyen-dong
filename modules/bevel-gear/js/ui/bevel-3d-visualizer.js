@@ -193,10 +193,15 @@ export class Bevel3DVisualizer {
 
         this.updateMeshes();
 
-        // 3. Analytical Conjugate Phase Offset (Collision-Free Mesh)
-        // Bánh 1 quay quanh trục X, Bánh 2 quay quanh trục Y (góc Sigma).
-        // Bánh 2 được bù góc để răng khớp vào rãnh hoàn hảo
-        this.initialGearAngle = Math.PI / z2 + (Math.PI / 2.0) * (1.0 - z1 / z2);
+        // 3. Analytical Conjugate Phase Offset (Zero-Collision Conjugate Mesh)
+        // Pinion rotates around X, Gear rotates around Y.
+        // Pitch contact line lies in XY plane (Z = 0) at angle delta1 from X axis.
+        // Pinion tooth phase at contact line: (z1 / 4) mod 1
+        // Gear tooth phase at contact line: 0 (crest).
+        // Gear 2 is phase-shifted so tooth crest enters tooth space center with zero collision:
+        const p1_teeth_at_contact = z1 / 4.0;
+        const p1_phase = p1_teeth_at_contact - Math.floor(p1_teeth_at_contact);
+        this.initialGearAngle = (p1_phase - 0.5) * (2.0 * Math.PI / z2);
         this.pinionAngle = 0;
         this.gearAngle = this.initialGearAngle;
 
@@ -355,10 +360,12 @@ export class Bevel3DVisualizer {
                 this.camera.position.set(-dist * 1.5, cy, cz);
                 this.controls.target.set(0, cy, cz);
                 break;
-            case 'mesh': // Close up of pitch contact zone
+            case 'mesh': // Close up of pitch contact zone (looking along tooth face from Re to Ri)
                 const mx = Rm * Math.cos(delta1);
                 const my = Rm * Math.sin(delta1);
-                this.camera.position.set(mx + 60, my + 60, 100);
+                const ex = Re * Math.cos(delta1);
+                const ey = Re * Math.sin(delta1);
+                this.camera.position.set(ex + 80, ey + 40, 60);
                 this.controls.target.set(mx, my, 0);
                 break;
             case 'iso':
