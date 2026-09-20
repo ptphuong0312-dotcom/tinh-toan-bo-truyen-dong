@@ -383,27 +383,25 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 
 ---
 
-### Quy Tắc 21: Quy Chuẩn Mô Hình 3D CAD & Xuất File Bánh Răng Côn (Bevel Gear 3D CAD & CAM Surface Protocol - ISO 23509)
-1. **Hình học không gian nón răng hội tụ Apex V(0, 0, 0) & Chiếu Trực Giao Đường Sinh Nón**:
-   - Các điểm hình học răng biến thiên tuyến tính dọc bề rộng vành răng $b$ từ nón ngoài $R_e$ về nón trong $R_i$:
-     $$R(s) = R_e - \frac{s}{\text{numSlices}} (R_e - R_i)$$
-   - Tỉ lệ thu nhỏ từ mặt nón trung bình $R_m$: $\text{scale} = R / R_m$, $h(R) = h_{\text{mean}} \cdot \text{scale}$.
-   - **Tuyệt đối không dùng lát cắt phẳng trục $z = \text{const}$**: Chiếu phẳng $r = z \tan\delta + h/\cos\delta$ sẽ phóng đại chiều cao răng gấp $1/\cos\delta = 2.7\times$ trên Bánh 2 ($\delta_2 = 68.2^\circ$), biến răng thành lưỡi quạt dẹt và gây va chạm xuyên thấu.
-   - **Hệ tọa độ nón thực thể chuẩn giải tích (ISO 23509 & MITCalc 1.74)**: Chiều cao răng $h$ đo vuông góc đường sinh nón chia, bảo toàn 100% chiều cao danh nghĩa:
-     $$r(R, h) = R \sin\delta + h \cos\delta$$
-     $$z(R, h) = R \cos\delta - h \sin\delta$$
-   - Khớp 100% với 18 điểm tọa độ mặt cắt trục trong sheet `Data1` của MITCalc 1.74 (`Data1!C70:D87` cho Bánh 1 và `Data1!H35:I52` cho Bánh 2):
-     * Bánh dẫn 1: $Z \in [201.61, 318.08]\text{ mm}$, $R_{\max} = 140.20\text{ mm}$ (khớp $P_{01}, P_{03}, P_{02}$).
-     * Bánh bị dẫn 2: $Z \in [77.20, 142.71]\text{ mm}$, $R_{\max} = 317.12\text{ mm}$ (khớp $P_{01}, P_{03}, P_{02}$).
-     * Chiều sâu răng tại gót ngoài (Heel): đúng $26.60\text{ mm}$ (khớp `Teeth_h = 26.5994`).
-     * Chiều sâu răng tại mũi trong (Toe): đúng $17.40\text{ mm}$ (khớp `Teeth_h = 17.4006`).
-2. **Quy Chuẩn Nắp Đầu Liền Khối Kín Nước & Khử Vân Gấp Khúc (Smooth Manifold Solid Caps)**:
-   - Nắp đầu ngoài (Back cap tại $R_e$): Nối chu vi đáy răng gót ngoài về vành lỗ trục tại cao độ chân răng gót $z_{\text{back\_bore}} = R_e \cos\delta + h_{fe} \sin\delta$, gán pháp tuyến mặt phẳng chuẩn $\vec{n} = [0, 0, 1]$.
-   - Nắp đầu trong (Front cap tại $R_i$): Nối chu vi đỉnh răng mũi trong về vành lỗ trục tại cao độ $z_{\text{front\_bore}} = R_i \cos\delta - h_{ai} \sin\delta$, gán pháp tuyến mặt phẳng chuẩn $\vec{n} = [0, 0, -1]$.
-   - Lòng lỗ trục (Shaft bore): Nối hình trụ tròn từ $z_{\text{front\_bore}}$ đến $z_{\text{back\_bore}}$ với pháp tuyến hướng tâm vào trục quay.
-   - Bề mặt đáy bánh răng hiển thị phẳng lỳ, ánh kim loại mượt mà, triệt tiêu 100% đường vân nan hoa gấp khúc.
-3. **Đường xoắn răng Gleason chuẩn gốc MITCalc 1.74 (`Calculation!U197:AQ202`)**:
-   - Cung tròn dao cắt bán kính $R_{\text{tool}} = 1.5 \cdot b$ (Section 16.4) tiếp xúc tại điểm chia trung bình $R_m$.
+### Quy Tắc 21: Quy Chuẩn Phôi Đặc & Răng Thực Thể 3D Bánh Răng Côn Chuẩn Gốc MITCalc 1.74 (Authentic Gear Blank Solid & Tooth Protocol - ISO 23509 & Data1)
+1. **Khối Phôi Đặc Bánh Răng (Gear Blank Solid Body - Trích Xuất Gốc Data1 & Section 16)**:
+   - Khắc phục triệt để lỗi kéo mặt nắp từ `rBore` ra đỉnh răng $R_e$ (khiến Bánh 2 bị biến thành đĩa mỏng phẳng úp ngược và dập chìm toàn bộ thân răng).
+   - Thân phôi đặc (Solid Blank) của bánh răng côn chuẩn MITCalc 1.74 bao gồm:
+     * **Mặt côn đáy (Root cone)**: Mặt nón tạo bởi chân răng có bán kính $R_f(u)$ và cao độ trục $Z_f(u)$ chạy dọc theo bề rộng vành răng $b$.
+     * **Mặt côn vát sau (Back chamfer cone)**: Nối từ đáy răng tại gót ngoài $R_e$ ra mép vành ngoài $R_{15}$ (vuông góc đường sinh nón chia hoặc theo góc vát $\delta_f + 90^\circ$).
+     * **Mặt moay-ơ sau (Back hub flat face)**: Mặt phẳng trực giao trục quay từ $R_{15}$ vào thành lỗ trục $r_{\text{bore}}$ tại cao độ $Z_{16}$.
+     * **Mặt côn vát trước (Front chamfer cone)**: Nối từ đáy răng tại mũi trong $R_i$ vào mép vành trước $R_{10}$.
+     * **Mặt moay-ơ trước (Front hub flat face)**: Mặt phẳng trực giao từ $R_{10}$ vào thành lỗ trục tại cao độ $Z_{11}$.
+     * **Lòng lỗ trục (Cylindrical shaft bore)**: Ống trụ tròn chạy từ $Z_{11}$ đến $Z_{16}$.
+   - Khớp 100% với kích thước bao phôi thực thể trong sheet `Data1` của MITCalc 1.74:
+     * Bánh dẫn 1 (Pinion): $Z \in [201.11, 323.01]\text{ mm}$ (chiều dài trục $121.9\text{ mm}$), $R_{\max} = 140.18\text{ mm}$, lỗ trục $d = 50\text{ mm}$ (khớp $P_{16}$ và $P_{03}$ trong `Data1!C70:D87`).
+     * Bánh bị dẫn 2 (Gear): $Z \in [65.55, 161.24]\text{ mm}$ (chiều dài trục $95.7\text{ mm}$), $R_{\max} = 317.12\text{ mm}$, lỗ trục $d = 100\text{ mm}$ (khớp $P_{16}$ và $P_{03}$ trong `Data1!H35:I52`).
+2. **Răng Thực Thể Đứng Độc Lập Chuẩn Biên Dạng Thân Khai Tredgold**:
+   - Răng mọc nổi trên mặt nón đáy, bảo toàn 100% chiều sâu răng: $h_e = 26.60\text{ mm}$ tại gót ngoài (khớp `Teeth_h = 26.5994`), $h_i = 17.40\text{ mm}$ tại mũi trong (khớp `Teeth_h = 17.4006`).
+   - Biên dạng thân khai ảo Tredgold đầy đủ mặt đỉnh ($s_{ae1} = 8.88\text{ mm}, s_{ae2} = 13.52\text{ mm}$), hai sườn làm việc thân khai, và cung bo lượn chân răng.
+   - Toàn bộ khối hình học là khối kín nước hoàn toàn 100% (Watertight Manifold Solid): 25,920 đỉnh cho Bánh 1, 64,800 đỉnh cho Bánh 2.
+3. **Đường Xoắn Răng Gleason Chuẩn Gốc MITCalc 1.74 (`Calculation!U197:AQ202`)**:
+   - Cung tròn dao cắt bán kính $R_{\text{tool}} = 1.5 \cdot b = 175.5\text{ mm}$ (Section 16.4) tiếp xúc tại điểm chia trung bình $R_m$.
    - Tọa độ chuẩn hóa dọc bề rộng: $u = (R - R_m)/b \in [-0.5, 0.5]$ ($u = 0$ tại $R_m$).
    - Độ võng cung dao cắt:
      $$W(u) = \text{hand} \cdot \left(R_{\text{tool}} \cos\beta - \sqrt{R_{\text{tool}}^2 - (u \cdot b + R_{\text{tool}} \sin\beta)^2}\right)$$
@@ -412,13 +410,13 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 4. **Đồng Bộ Pha Động Học Ăn Khớp Liên Hợp 3D Không Va Chạm (Conjugate Phase Alignment)**:
    - Trục Bánh 1 đặt dọc theo World $+X$ (`pinionMesh.rotation.set(0, Math.PI / 2.0, Math.PI / 2.0)`).
    - Trục Bánh 2 đặt dọc theo World $+Y$ (`gearMesh.rotation.set(-Math.PI / 2.0, 0, 0)`).
-   - Đường sinh tiếp xúc nằm trong mặt phẳng World $XY$ tại góc $\delta_1$ so với trục $X$.
-   - Đỉnh răng Bánh 1 nằm tại góc 0 trên đường tiếp xúc.
    - Pha khởi tạo của Bánh 2 đưa rãnh răng (tooth space) vào chính giữa đường tiếp xúc:
      $$\text{initialGearAngle} = -\frac{\pi}{z_2}$$
    - Đồng bộ động học: $\phi_2 = \text{initialGearAngle} - \frac{\phi_1}{u}$ (với $u = z_2 / z_1$).
-   - Đỉnh răng Bánh dẫn 1 lọt chính giữa lòng rãnh Bánh bị dẫn 2, khe hở đáy danh nghĩa $c = 0.2 m_n = 2.00\text{ mm}$, hoàn toàn không va chạm, không ngập xuyên sườn răng.
-5. **Đa Dạng Định Dạng Xuất CAD Cho SolidWorks & Mastercam**:
+   - Răng Bánh 1 lọt chính giữa rãnh Bánh 2, khe hở đáy danh nghĩa $c = 0.2 m_n = 2.00\text{ mm}$, 100% không va chạm, không ngập xuyên sườn răng.
+5. **Căn Giữa Camera Trọng Tâm Assembly**:
+   - Đặt `controls.target.set(0, 20, 0)` căn chính xác vào trọng tâm của toàn bộ cụm ăn khớp, giúp bộ truyền hiển thị cân đối hoàn hảo trong viewport 1200x650.
+6. **Đa Dạng Định Dạng Xuất CAD Cho SolidWorks & Mastercam**:
    - STEP AP214 B-Rep Solid (`CLOSED_SHELL` / `MANIFOLD_SOLID_BREP`).
    - STEP AP214 Flank Surface Rỗng (`OPEN_SHELL` / `SHELL_BASED_SURFACE_MODEL`) - không nắp đầu, không lòng trục để Mastercam lập trình phay 5 trục trực tiếp.
    - Binary STL Solid & Surface (`.stl`) và Wavefront OBJ (`.obj`).

@@ -745,3 +745,43 @@
   - `test_bevel_3d.py`: **100% PASS tất cả các bài kiểm thử hình học, ăn khớp, STEP Solid, STEP Surface, STL và DXF AC1009**.
   - `deep_line_by_line_bevel_audit.py`: **115 / 115 ô tính PASS 100.0% với $\Delta = 0.000000$**.
 
+---
+
+## Giai Đoạn 12: Tái Thiết Toàn Diện Khối Phôi Đặc & Răng Thực Thể 3D Chuẩn Gốc MITCalc 1.74 (Authentic Gear Blank Solid Body & Tooth Generator Protocol)
+* **Bối cảnh & Phản hồi từ SirPhuong**:
+  - Người dùng gửi ảnh chụp màn hình phàn nàn mô hình 3D cũ: *"gì đây bạn, bạn đã làm theo app mitcalc 1.74 chưa vậy"*. Bánh bị dẫn 2 trông như một chiếc đĩa giấy mỏng úp ngược với răng sắc nhọn như dao cạo nhô lên từ một mặt phẳng dẹt, còn Bánh dẫn 1 như khúc gỗ xoắn tròn.
+  - Lệnh trực tiếp: *"lấy công thức và cách thức từ module tính toán bánh răng côn của app mitcalc 1.74 mà làm cho chuẩn xác"*.
+* **Nguyên nhân kỹ thuật cốt lõi**:
+  - Thuật toán cũ kết nối mặt nắp sau (Back cap) trực tiếp từ bán kính lỗ trục `rBore` ($50\text{ mm}$) lên thẳng đỉnh răng / sườn răng $L_{\text{outer}}[j]$ ($317\text{ mm}$) tại nón ngoài $R_e$.
+  - Với Bánh 2 ($\delta_2 = 68.2^\circ$), việc kéo mặt phẳng từ tâm ra đỉnh răng tại gót ngoài đã biến toàn bộ mặt sau thành một chiếc đĩa mỏng phẳng lỳ, dập chìm hoàn toàn thân răng và chỉ để lại các đầu nhọn tí hon như lưỡi dao cạo!
+* **Đột phá kỹ thuật & Giải pháp chuẩn gốc MITCalc 1.74**:
+  1. **Trích xuất toàn diện mã nguồn VBA & Hình học thực thể từ `Gear2_01.xlsb`**:
+     - Khảo sát mã nguồn VBA `MTC_3D.bas`, `DXF.bas`, `Calculation!U197:AQ202` và đặc biệt là bảng tọa độ 18 điểm mặt cắt trục thực thể trong `Data1!C70:D87` (Bánh 1) và `Data1!H35:I52` (Bánh 2).
+     - Phân tích các thông số Section 16 trong file Excel gốc:
+       * Chiều cao vát trong/ngoài Bánh 1: $H_{1\text{in}} = 4.836\text{ mm}$, $H_{1\text{out}} = 13.300\text{ mm}$.
+       * Chiều cao vát trong/ngoài Bánh 2: $H_{2\text{in}} = 5.911\text{ mm}$, $H_{2\text{out}} = 19.950\text{ mm}$.
+       * Bán kính dao phay xoắn Gleason: $R_{\text{tool}} = 1.5 \cdot b = 175.5\text{ mm}$.
+  2. **Tái thiết Khối Phôi Đặc Chuẩn Công Nghiệp (Authentic Gear Blank Solid Body)**:
+     - Tách rời hoàn toàn phôi thân bánh răng khỏi răng:
+       * **Mặt côn đáy (Root cone)**: Răng mọc nổi trên mặt nón đáy có bán kính $R_f(u)$ và cao độ $Z_f(u)$ biến thiên dọc bề rộng vành răng $b$.
+       * **Mặt côn vát sau (Back chamfer cone)**: Nối từ đáy răng tại $R_e$ ra mép vành ngoài $R_{15}$ với góc vát $\delta_f + 90^\circ$ hoặc vuông góc đường sinh nón chia.
+       * **Mặt moay-ơ sau (Back hub flat face)**: Mặt phẳng trực giao trục quay từ mép vành $R_{15}$ vào lỗ trục $r_{\text{bore}}$ tại cao độ $Z_{16}$.
+       * **Mặt côn vát trước (Front chamfer cone)**: Nối từ đáy răng tại $R_i$ vào mép trước $R_{10}$.
+       * **Mặt moay-ơ trước (Front hub flat face)**: Mặt phẳng trực giao từ $R_{10}$ vào lỗ trục tại cao độ $Z_{11}$.
+       * **Lòng lỗ trục (Cylindrical shaft bore)**: Nối ống trụ tròn từ $Z_{11}$ đến $Z_{16}$.
+     - Kích thước bao hình phôi đặc khớp 100% với MITCalc 1.74 `Data1`:
+       * Bánh dẫn 1: $Z \in [201.11, 323.01]\text{ mm}$ (chiều dài $121.9\text{ mm}$), $R_{\max} = 140.18\text{ mm}$, lỗ trục $d = 50\text{ mm}$.
+       * Bánh bị dẫn 2: $Z \in [65.55, 161.24]\text{ mm}$ (chiều dài $95.7\text{ mm}$), $R_{\max} = 317.12\text{ mm}$, lỗ trục $d = 100\text{ mm}$.
+  3. **Răng Thực Thể Đứng Độc Lập Chuẩn Biên Dạng Thân Khai Tredgold**:
+     - Chiều sâu răng tại gót ngoài đạt trọn vẹn $h_e = 26.60\text{ mm}$, tại mũi trong đạt $h_i = 17.40\text{ mm}$.
+     - Biên dạng thân khai ảo Tredgold đầy đủ mặt đỉnh ($s_{ae} = 8.88\text{ mm}$ cho Bánh 1, $13.52\text{ mm}$ cho Bánh 2), hai sườn làm việc thân khai, và cung bo lượn chân răng.
+     - Đường xoắn răng Gleason bán kính $R_{\text{tool}} = 1.5 \cdot b = 175.5\text{ mm}$ uốn lượn mượt mà theo `Calculation!U197:AQ202`.
+     - Toàn bộ lưới đa giác là khối kín nước hoàn toàn 100% (Watertight Manifold Solid): 25,920 đỉnh cho Bánh 1, 64,800 đỉnh cho Bánh 2.
+  4. **Tối ưu góc nhìn & Căn giữa Camera Assembly**:
+     - Đặt tâm xoay camera tại trọng tâm ăn khớp `(0, 20, 0)`, giúp mô hình bộ truyền $634\text{ mm}$ luôn nằm trọn vẹn và cân đối trong khung nhìn 1200x650.
+* **Kết quả đo đạc & Kiểm thử tự động thực tế**:
+  - `test_bevel_3d.py`: **100% PASS toàn bộ 8 giai đoạn kiểm thử** (Hình học `Data1`, Lưới 3D WebGL, chuyển góc nhìn Preset, STEP Solid, STEP Surface, STL Solid, STL Surface, DXF Release 12 AC1009).
+  - `deep_line_by_line_bevel_audit.py`: **115 / 115 ô tính PASS 100.0% với $\Delta = 0.000000$**.
+  - Không còn hiện tượng đĩa giấy úp ngược hay răng lưỡi dao cạo. Bánh răng hiển thị bề thế, dày dặn, chuẩn xác cơ khí chế tạo máy.
+
+

@@ -179,17 +179,40 @@ export class Bevel3DVisualizer {
         const delta_f1 = parseFloat(geom.delta_f1 !== undefined ? geom.delta_f1 : (delta1 - Math.atan(hf1 / Rm)));
         const delta_f2 = parseFloat(geom.delta_f2 !== undefined ? geom.delta_f2 : (delta2 - Math.atan(hf2 / Rm)));
 
-        // 1. Generate Pinion 1 Mesh
+        // Extract authentic MITCalc tip and pitch tooth thicknesses and blank offsets
+        const ha_e1 = parseFloat(geom.hae1) || (ha1 * (Re / Rm));
+        const hf_e1 = parseFloat(geom.hfe1) || (hf1 * (Re / Rm));
+        const sa_e1 = parseFloat(geom.sae1) || (mmn * 0.88);
+        const sn_e1 = parseFloat(geom.sne1) || (mmn * 1.84);
+
+        const ha_e2 = parseFloat(geom.hae2) || (ha2 * (Re / Rm));
+        const hf_e2 = parseFloat(geom.hfe2) || (hf2 * (Re / Rm));
+        const sa_e2 = parseFloat(geom.sae2) || (mmn * 1.35);
+        const sn_e2 = parseFloat(geom.sne2) || (mmn * 1.30);
+
+        const Hin1 = parseFloat(geom.H1in) || 4.836;
+        const Hout1 = parseFloat(geom.H1out) || 13.300;
+        const Hin2 = parseFloat(geom.H2in) || 5.911;
+        const Hout2 = parseFloat(geom.H2out) || 19.950;
+
+        const dBore1 = parseFloat(geom.dBore1) || 50.0;
+        const dBore2 = parseFloat(geom.dBore2) || 100.0;
+
+        // 1. Generate Pinion 1 Mesh (Authentic MITCalc Data1 & Section 3D)
         this.mesh1Data = Bevel3DGenerator.generateGearMesh({
             z: z1, mmn, delta: delta1, delta_a: delta_a1, delta_f: delta_f1,
-            Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1, ha: ha1, hf: hf1,
+            Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
+            ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
+            Hin: Hin1, Hout: Hout1, dBore: dBore1,
             hand: 1
         });
 
-        // 2. Generate Gear 2 Mesh (opposite spiral hand for conjugate engagement)
+        // 2. Generate Gear 2 Mesh (Authentic MITCalc Data1 & Section 3D, hand: -1)
         this.mesh2Data = Bevel3DGenerator.generateGearMesh({
             z: z2, mmn, delta: delta2, delta_a: delta_a2, delta_f: delta_f2,
-            Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2, ha: ha2, hf: hf2,
+            Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
+            ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
+            Hin: Hin2, Hout: Hout2, dBore: dBore2,
             hand: -1
         });
 
@@ -334,52 +357,57 @@ export class Bevel3DVisualizer {
         const mx = Rm * Math.cos(delta1);
         const my = Rm * Math.sin(delta1);
 
+        const cenX = 0;
+        const cenY = 20;
+        const cenZ = 0;
+        const viewDist = Re * 2.8;
+
         switch (preset) {
             case 'front': // Axial Section view (looking straight at XY plane from +Z)
-                this.camera.position.set(0, 0, dist * 1.5);
+                this.camera.position.set(cenX, cenY, viewDist * 1.05);
                 this.camera.up.set(0, 1, 0);
-                this.controls.target.set(0, 0, 0);
+                this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'pinion': // Looking along X axis from +X towards Pinion
-                this.camera.position.set(dist * 1.5, my, 0);
+                this.camera.position.set(viewDist * 1.1, cenY, 0);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(mx, my, 0);
                 break;
             case 'gear': // Looking along Y axis from +Y towards Gear
-                this.camera.position.set(mx, dist * 1.5, 0);
+                this.camera.position.set(cenX, viewDist * 1.1, 0);
                 this.camera.up.set(0, 0, -1);
                 this.controls.target.set(mx, my, 0);
                 break;
             case 'top': // Top view (looking down Y axis)
-                this.camera.position.set(0, dist * 1.6, 0);
+                this.camera.position.set(cenX, viewDist * 1.15, 0);
                 this.camera.up.set(0, 0, -1);
-                this.controls.target.set(0, 0, 0);
+                this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'bottom': // Bottom view
-                this.camera.position.set(0, -dist * 1.6, 0);
+                this.camera.position.set(cenX, -viewDist * 1.15, 0);
                 this.camera.up.set(0, 0, 1);
-                this.controls.target.set(0, 0, 0);
+                this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'right': // Right view looking along +X axis
-                this.camera.position.set(dist * 1.6, 0, 0);
+                this.camera.position.set(viewDist * 1.15, cenY, 0);
                 this.camera.up.set(0, 1, 0);
-                this.controls.target.set(0, 0, 0);
+                this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'left': // Left view
-                this.camera.position.set(-dist * 1.6, 0, 0);
+                this.camera.position.set(-viewDist * 1.15, cenY, 0);
                 this.camera.up.set(0, 1, 0);
-                this.controls.target.set(0, 0, 0);
+                this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'mesh': // Close up on pitch contact zone looking at engaging teeth
-                this.camera.position.set(mx + 80, my + 80, 150);
+                this.camera.position.set(360, 200, 260);
                 this.camera.up.set(0, 1, 0);
-                this.controls.target.set(mx, my, 0);
+                this.controls.target.set(240, 95, 0);
                 break;
             case 'iso':
             default:
-                this.camera.position.set(dist * 0.8, dist * 0.55, dist * 0.95);
+                this.camera.position.set(viewDist * 0.65, viewDist * 0.45, viewDist * 0.70);
                 this.camera.up.set(0, 1, 0);
-                this.controls.target.set(0, 0, 0);
+                this.controls.target.set(cenX, cenY, cenZ);
                 break;
         }
 

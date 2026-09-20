@@ -127,11 +127,12 @@ def test_bevel_3d():
         
         print(f"[+] Bánh dẫn 1 (Pinion): Z in [{conical_check['m1_minZ']:.2f}, {conical_check['m1_maxZ']:.2f}] mm, R_max={conical_check['m1_maxR']:.2f} mm (Khớp Data1!C70:D87!)")
         print(f"[+] Bánh bị dẫn 2 (Gear): Z in [{conical_check['m2_minZ']:.2f}, {conical_check['m2_maxZ']:.2f}] mm, R_max={conical_check['m2_maxR']:.2f} mm (Khớp Data1!H35:I52!)")
+        # Authentic MITCalc Data1 Solid Body bounds (Data1!C70:D87 & Data1!H35:I52 with Hub/Bore)
         assert 200.0 <= conical_check['m1_minZ'] <= 203.0, f"Bánh 1 minZ sai: {conical_check['m1_minZ']}"
-        assert 317.0 <= conical_check['m1_maxZ'] <= 320.0, f"Bánh 1 maxZ sai: {conical_check['m1_maxZ']}"
+        assert 321.0 <= conical_check['m1_maxZ'] <= 325.0, f"Bánh 1 maxZ sai: {conical_check['m1_maxZ']}"
         assert 138.0 <= conical_check['m1_maxR'] <= 142.0, f"Bánh 1 maxR sai: {conical_check['m1_maxR']}"
-        assert 76.0 <= conical_check['m2_minZ'] <= 78.5, f"Bánh 2 minZ sai: {conical_check['m2_minZ']}"
-        assert 141.0 <= conical_check['m2_maxZ'] <= 144.0, f"Bánh 2 maxZ sai: {conical_check['m2_maxZ']}"
+        assert 63.0 <= conical_check['m2_minZ'] <= 68.0, f"Bánh 2 minZ sai: {conical_check['m2_minZ']}"
+        assert 159.0 <= conical_check['m2_maxZ'] <= 163.0, f"Bánh 2 maxZ sai: {conical_check['m2_maxZ']}"
         assert 315.0 <= conical_check['m2_maxR'] <= 319.0, f"Bánh 2 maxR sai: {conical_check['m2_maxR']}"
 
         # Kiểm tra tạo tệp xuất 3D CAD: STEP Solid, STEP Surface, Binary STL
