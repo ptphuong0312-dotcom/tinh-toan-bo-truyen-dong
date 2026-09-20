@@ -128,12 +128,68 @@ def test_bevel_3d():
         print(f"[+] Bánh dẫn 1 (Pinion): Z in [{conical_check['m1_minZ']:.2f}, {conical_check['m1_maxZ']:.2f}] mm, R_max={conical_check['m1_maxR']:.2f} mm (Khớp Data1!C70:D87!)")
         print(f"[+] Bánh bị dẫn 2 (Gear): Z in [{conical_check['m2_minZ']:.2f}, {conical_check['m2_maxZ']:.2f}] mm, R_max={conical_check['m2_maxR']:.2f} mm (Khớp Data1!H35:I52!)")
         # Authentic MITCalc Data1 Solid Body bounds (Data1!C70:D87 & Data1!H35:I52 with Hub/Bore)
-        assert 200.0 <= conical_check['m1_minZ'] <= 203.0, f"Bánh 1 minZ sai: {conical_check['m1_minZ']}"
+        assert 200.0 <= conical_check['m1_minZ'] <= 204.0, f"Bánh 1 minZ sai: {conical_check['m1_minZ']}"
         assert 321.0 <= conical_check['m1_maxZ'] <= 325.0, f"Bánh 1 maxZ sai: {conical_check['m1_maxZ']}"
         assert 138.0 <= conical_check['m1_maxR'] <= 142.0, f"Bánh 1 maxR sai: {conical_check['m1_maxR']}"
-        assert 63.0 <= conical_check['m2_minZ'] <= 68.0, f"Bánh 2 minZ sai: {conical_check['m2_minZ']}"
+        assert 75.0 <= conical_check['m2_minZ'] <= 79.0, f"Bánh 2 minZ sai: {conical_check['m2_minZ']}"
         assert 159.0 <= conical_check['m2_maxZ'] <= 163.0, f"Bánh 2 maxZ sai: {conical_check['m2_maxZ']}"
         assert 315.0 <= conical_check['m2_maxR'] <= 319.0, f"Bánh 2 maxR sai: {conical_check['m2_maxR']}"
+
+        # Kiểm tra chuyển đổi góc xoắn beta về 0 (Răng thẳng)
+        print("\n-> [6.1] Kiểm tra chuyển góc xoắn beta về 0 (Răng Thẳng Tuyệt Đối)...")
+        page.click('.tab-btn[data-target="tabCalculator"]')
+        page.wait_for_timeout(300)
+        page.fill('#inp_beta', '0.0')
+        page.dispatch_event('#inp_beta', 'input')
+        page.wait_for_timeout(500)
+
+        page.click('.tab-btn[data-target="tabCanvas"]')
+        page.wait_for_timeout(600)
+
+        beta0_check = page.evaluate("""() => {
+            const ui = window.appUI;
+            const g = ui.lastGeom;
+            const v = ui.visualizer3D;
+            const badgeType = document.getElementById('badge3DType');
+            return {
+                beta_deg: g.beta_deg,
+                badgeText: badgeType ? badgeType.textContent : '',
+                m1_isSpiral: v.mesh1Data ? Math.abs(v.mesh1Data.bbox.min[0]) > 0 : true
+            };
+        }""")
+        print(f"[+] lastGeom.beta_deg: {beta0_check['beta_deg']:.1f}°")
+        print(f"[+] Badge 3D: {beta0_check['badgeText']}")
+        assert beta0_check['beta_deg'] == 0.0, f"beta_deg không phải 0.0: {beta0_check['beta_deg']}"
+        assert "Thẳng" in beta0_check['badgeText'], f"Badge không nhận diện răng thẳng: {beta0_check['badgeText']}"
+
+        straight_path = os.path.join(artifacts_dir, "bevel_3d_straight_beta0.png")
+        page.screenshot(path=straight_path)
+        print(f"[+] Đã lưu ảnh chụp 3D Răng Thẳng (beta = 0): {straight_path}")
+
+        # Kiểm tra cập nhật khi thay đổi các góc xoắn khác (beta = 15, beta = 25, beta = 35)
+        print("\n-> [6.2] Kiểm tra thay đổi các góc xoắn khác (15°, 25°, 35°)...")
+        for test_b in [15.0, 25.0, 35.0]:
+            page.evaluate(f"""(b) => {{
+                const inp = document.getElementById('inp_beta');
+                if (inp) {{
+                    inp.value = b.toFixed(1);
+                    inp.dispatchEvent(new Event('input'));
+                }}
+            }}""", test_b)
+            page.wait_for_timeout(400)
+            actual_b = page.evaluate("() => window.appUI.lastGeom.beta_deg")
+            assert abs(actual_b - test_b) < 1e-4, f"beta không cập nhật: mong muốn {test_b}, nhận {actual_b}"
+            print(f"[+] Cập nhật beta = {test_b}° -> lastGeom.beta_deg = {actual_b}° thành công!")
+
+        # Đặt lại beta = 30 tiêu chuẩn
+        page.evaluate("""() => {
+            const inp = document.getElementById('inp_beta');
+            if (inp) {
+                inp.value = '30.0';
+                inp.dispatchEvent(new Event('input'));
+            }
+        }""")
+        page.wait_for_timeout(400)
 
         # Kiểm tra tạo tệp xuất 3D CAD: STEP Solid, STEP Surface, Binary STL
         print("\n-> [7] Kiểm tra sinh dữ liệu xuất 3D CAD (STEP & STL)...")

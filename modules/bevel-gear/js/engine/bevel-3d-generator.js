@@ -34,10 +34,11 @@ export const Bevel3DGenerator = {
         const Rm = opt.Rm !== undefined ? parseFloat(opt.Rm) : (Re - b / 2.0);
 
         const alfa = parseFloat(opt.alfa) || (20.0 * Math.PI / 180.0);
-        const beta = parseFloat(opt.beta) || 0.0;
+        const beta = (opt.beta !== undefined && opt.beta !== null) ? parseFloat(opt.beta) : 0.0;
         const x = parseFloat(opt.x) || 0.0;
         const xt = parseFloat(opt.xt) || 0.0;
         const hand = opt.hand !== undefined ? parseInt(opt.hand) : 1;
+        const gearingType = opt.gearingType || 'gleason';
 
         const isSpiral = Math.abs(beta) > 1e-4;
         const isSurfaceOnly = !!opt.surfaceOnly;
@@ -65,12 +66,12 @@ export const Bevel3DGenerator = {
         const rBore = dBore / 2.0;
 
         // Authentic MITCalc Data1 Blank Coordinates (Z along axis from apex, R radial):
-        const z_toe_hub = Ri * cosD - (hf_i + Hin) * sinD;
+        const z_toe_hub = Ri * cosD + (hf_i + Hin) * sinD;
         const r_toe_rim = Math.max(rBore + 2.0, Ri * sinD - (hf_i + Hin) * cosD);
-        const z_toe_root = Ri * cosD - hf_i * sinD;
+        const z_toe_root = Ri * cosD + hf_i * sinD;
         const r_toe_root = Ri * sinD - hf_i * cosD;
 
-        const z_heel_root = Re * cosD - hf_e * sinD;
+        const z_heel_root = Re * cosD + hf_e * sinD;
         const r_heel_root = Re * sinD - hf_e * cosD;
         const z_heel_hub = Re * cosD + (hf_e + Hout) * sinD;
         const r_heel_rim = Math.max(rBore + 5.0, Re * sinD - (hf_e + Hout) * cosD);
@@ -91,12 +92,16 @@ export const Bevel3DGenerator = {
 
             let spiralAngle = 0.0;
             if (isSpiral) {
-                const term = u * b + R_tool * Math.sin(beta);
-                const W = hand * (R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term)));
-                spiralAngle = W / Math.max(1.0, R_s * sinD);
-            } else if (Math.abs(beta) > 1e-4) {
-                const V = -hand * u * b * Math.tan(beta);
-                spiralAngle = V / Math.max(1.0, R_s * sinD);
+                if (gearingType === 'straight_type1') {
+                    const V = hand * u * b * Math.tan(beta);
+                    spiralAngle = V / Math.max(1.0, R_s * sinD);
+                } else {
+                    const term = u * b + R_tool * Math.sin(beta);
+                    const W = hand * (R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term)));
+                    spiralAngle = W / Math.max(1.0, R_s * sinD);
+                }
+            } else {
+                spiralAngle = 0.0;
             }
 
             const r_pitch = R_s * sinD;

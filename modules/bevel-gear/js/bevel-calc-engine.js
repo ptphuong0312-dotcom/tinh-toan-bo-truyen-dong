@@ -16,9 +16,10 @@ const BevelCalcEngine = {
         const n1 = parseFloat(p.n1) || 1000.0;
         const z1 = parseInt(p.z1) || 18;
         const z2 = parseInt(p.z2) || 45;
-        const Sigma_deg = parseFloat(p.Sigma) || 90.0;
-        const alfa_deg = parseFloat(p.alfa) || 20.0;
-        const beta_deg = parseFloat(p.beta) || 30.0;
+        const Sigma_deg = (p.Sigma !== undefined && p.Sigma !== null && String(p.Sigma).trim() !== '') ? parseFloat(p.Sigma) : 90.0;
+        const alfa_deg = (p.alfa !== undefined && p.alfa !== null && String(p.alfa).trim() !== '') ? parseFloat(p.alfa) : 20.0;
+        const beta_deg = (p.beta !== undefined && p.beta !== null && String(p.beta).trim() !== '') ? parseFloat(p.beta) : 30.0;
+        const gearingType = p.gearingType || 'gleason';
         let mmn = parseFloat(p.mmn) || 10.0;
         const b = parseFloat(p.b) || 117.0;
         const x1 = parseFloat(p.x1 !== undefined ? p.x1 : 0.32);
@@ -252,7 +253,7 @@ const BevelCalcEngine = {
         const b_offset2 = Math.round(((hae2 + hfe2) * (0.5 + i / 10.0)) * 1000) / 1000;
 
         return {
-            P, n1, n2, Mk1, Mk2, i, z1, z2, Sigma_deg, alfa_deg, beta_deg,
+            P, n1, n2, Mk1, Mk2, i, z1, z2, Sigma_deg, alfa_deg, beta_deg, gearingType,
             mmn, mmt, met, men, mit, min_mod, b, x1, x2, ha0, c0, Q, xt1, xt2,
             delta1_deg, delta2_deg, delta1, delta2,
             Re, Rm, Ri,

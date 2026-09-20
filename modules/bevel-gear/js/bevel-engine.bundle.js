@@ -1660,9 +1660,10 @@ const BevelCalcEngine = {
         const n1 = parseFloat(p.n1) || 1000.0;
         const z1 = parseInt(p.z1) || 18;
         const z2 = parseInt(p.z2) || 45;
-        const Sigma_deg = parseFloat(p.Sigma) || 90.0;
-        const alfa_deg = parseFloat(p.alfa) || 20.0;
-        const beta_deg = parseFloat(p.beta) || 30.0;
+        const Sigma_deg = (p.Sigma !== undefined && p.Sigma !== null && String(p.Sigma).trim() !== '') ? parseFloat(p.Sigma) : 90.0;
+        const alfa_deg = (p.alfa !== undefined && p.alfa !== null && String(p.alfa).trim() !== '') ? parseFloat(p.alfa) : 20.0;
+        const beta_deg = (p.beta !== undefined && p.beta !== null && String(p.beta).trim() !== '') ? parseFloat(p.beta) : 30.0;
+        const gearingType = p.gearingType || 'gleason';
         let mmn = parseFloat(p.mmn) || 10.0;
         const b = parseFloat(p.b) || 117.0;
         const x1 = parseFloat(p.x1 !== undefined ? p.x1 : 0.32);
@@ -1896,7 +1897,7 @@ const BevelCalcEngine = {
         const b_offset2 = Math.round(((hae2 + hfe2) * (0.5 + i / 10.0)) * 1000) / 1000;
 
         return {
-            P, n1, n2, Mk1, Mk2, i, z1, z2, Sigma_deg, alfa_deg, beta_deg,
+            P, n1, n2, Mk1, Mk2, i, z1, z2, Sigma_deg, alfa_deg, beta_deg, gearingType,
             mmn, mmt, met, men, mit, min_mod, b, x1, x2, ha0, c0, Q, xt1, xt2,
             delta1_deg, delta2_deg, delta1, delta2,
             Re, Rm, Ri,
@@ -2730,10 +2731,11 @@ const Bevel3DGenerator = {
         const Rm = opt.Rm !== undefined ? parseFloat(opt.Rm) : (Re - b / 2.0);
 
         const alfa = parseFloat(opt.alfa) || (20.0 * Math.PI / 180.0);
-        const beta = parseFloat(opt.beta) || 0.0;
+        const beta = (opt.beta !== undefined && opt.beta !== null) ? parseFloat(opt.beta) : 0.0;
         const x = parseFloat(opt.x) || 0.0;
         const xt = parseFloat(opt.xt) || 0.0;
         const hand = opt.hand !== undefined ? parseInt(opt.hand) : 1;
+        const gearingType = opt.gearingType || 'gleason';
 
         const isSpiral = Math.abs(beta) > 1e-4;
         const isSurfaceOnly = !!opt.surfaceOnly;
@@ -2761,12 +2763,12 @@ const Bevel3DGenerator = {
         const rBore = dBore / 2.0;
 
         // Authentic MITCalc Data1 Blank Coordinates (Z along axis from apex, R radial):
-        const z_toe_hub = Ri * cosD - (hf_i + Hin) * sinD;
+        const z_toe_hub = Ri * cosD + (hf_i + Hin) * sinD;
         const r_toe_rim = Math.max(rBore + 2.0, Ri * sinD - (hf_i + Hin) * cosD);
-        const z_toe_root = Ri * cosD - hf_i * sinD;
+        const z_toe_root = Ri * cosD + hf_i * sinD;
         const r_toe_root = Ri * sinD - hf_i * cosD;
 
-        const z_heel_root = Re * cosD - hf_e * sinD;
+        const z_heel_root = Re * cosD + hf_e * sinD;
         const r_heel_root = Re * sinD - hf_e * cosD;
         const z_heel_hub = Re * cosD + (hf_e + Hout) * sinD;
         const r_heel_rim = Math.max(rBore + 5.0, Re * sinD - (hf_e + Hout) * cosD);
@@ -2787,12 +2789,16 @@ const Bevel3DGenerator = {
 
             let spiralAngle = 0.0;
             if (isSpiral) {
-                const term = u * b + R_tool * Math.sin(beta);
-                const W = hand * (R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term)));
-                spiralAngle = W / Math.max(1.0, R_s * sinD);
-            } else if (Math.abs(beta) > 1e-4) {
-                const V = -hand * u * b * Math.tan(beta);
-                spiralAngle = V / Math.max(1.0, R_s * sinD);
+                if (gearingType === 'straight_type1') {
+                    const V = hand * u * b * Math.tan(beta);
+                    spiralAngle = V / Math.max(1.0, R_s * sinD);
+                } else {
+                    const term = u * b + R_tool * Math.sin(beta);
+                    const W = hand * (R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term)));
+                    spiralAngle = W / Math.max(1.0, R_s * sinD);
+                }
+            } else {
+                spiralAngle = 0.0;
             }
 
             const r_pitch = R_s * sinD;
@@ -3489,7 +3495,9 @@ class Bevel3DVisualizer {
         const delta2 = this.sigmaRad - delta1;
 
         const alfa = (parseFloat(geom.alfa_deg !== undefined ? geom.alfa_deg : 20.0) * Math.PI) / 180.0;
-        const beta = (parseFloat(geom.beta_deg !== undefined ? geom.beta_deg : 0.0) * Math.PI) / 180.0;
+        const beta_deg = (geom.beta_deg !== undefined ? parseFloat(geom.beta_deg) : (geom.beta !== undefined ? parseFloat(geom.beta) : 0.0));
+        const beta = (beta_deg * Math.PI) / 180.0;
+        const gearingType = geom.gearingType || 'gleason';
 
         const x1 = parseFloat(geom.x1 !== undefined ? geom.x1 : 0.0);
         const x2 = parseFloat(geom.x2 !== undefined ? geom.x2 : -x1);
@@ -3531,7 +3539,7 @@ class Bevel3DVisualizer {
             Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
             ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
             Hin: Hin1, Hout: Hout1, dBore: dBore1,
-            hand: 1
+            hand: 1, gearingType
         });
 
         // 2. Generate Gear 2 Mesh (Authentic MITCalc Data1 & Section 3D, hand: -1)
@@ -3540,7 +3548,7 @@ class Bevel3DVisualizer {
             Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
             ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
             Hin: Hin2, Hout: Hout2, dBore: dBore2,
-            hand: -1
+            hand: -1, gearingType
         });
 
         this.updateMeshes();
@@ -3759,26 +3767,48 @@ class Bevel3DVisualizer {
         const Ri = parseFloat(this.geom.Ri) || (Re - b);
         const delta1 = parseFloat(this.geom.delta1) || Math.atan(1.0 / this.gearRatio);
         const delta2 = this.sigmaRad - delta1;
-        const alfa = (parseFloat(this.geom.alfa_deg || 20.0) * Math.PI) / 180.0;
-        const beta = (parseFloat(this.geom.beta_deg || 0.0) * Math.PI) / 180.0;
-        const x1 = parseFloat(this.geom.x1 || 0.0);
-        const x2 = parseFloat(this.geom.x2 || -x1);
-        const xt1 = parseFloat(this.geom.xt1 || 0.0);
-        const xt2 = parseFloat(this.geom.xt2 || -xt1);
-        const ha1 = parseFloat(this.geom.ha1 || (mmn * (1.0 + x1)));
-        const ha2 = parseFloat(this.geom.ha2 || (mmn * (1.0 + x2)));
-        const hf1 = parseFloat(this.geom.hf1 || (mmn * (1.2 - x1)));
-        const hf2 = parseFloat(this.geom.hf2 || (mmn * (1.2 - x2)));
-        const delta_a1 = parseFloat(this.geom.delta_a1 || (delta1 + Math.atan(ha1 / Rm)));
-        const delta_a2 = parseFloat(this.geom.delta_a2 || (delta2 + Math.atan(ha2 / Rm)));
-        const delta_f1 = parseFloat(this.geom.delta_f1 || (delta1 - Math.atan(hf1 / Rm)));
-        const delta_f2 = parseFloat(this.geom.delta_f2 || (delta2 - Math.atan(hf2 / Rm)));
+        const alfa = (parseFloat(this.geom.alfa_deg !== undefined ? this.geom.alfa_deg : 20.0) * Math.PI) / 180.0;
+        const beta_deg = (this.geom.beta_deg !== undefined ? parseFloat(this.geom.beta_deg) : (this.geom.beta !== undefined ? parseFloat(this.geom.beta) : 0.0));
+        const beta = (beta_deg * Math.PI) / 180.0;
+        const gearingType = this.geom.gearingType || 'gleason';
+        const x1 = parseFloat(this.geom.x1 !== undefined ? this.geom.x1 : 0.0);
+        const x2 = parseFloat(this.geom.x2 !== undefined ? this.geom.x2 : -x1);
+        const xt1 = parseFloat(this.geom.xt1 !== undefined ? this.geom.xt1 : 0.0);
+        const xt2 = parseFloat(this.geom.xt2 !== undefined ? this.geom.xt2 : -xt1);
+        const ha1 = parseFloat(this.geom.ha1 !== undefined ? this.geom.ha1 : (mmn * (1.0 + x1)));
+        const ha2 = parseFloat(this.geom.ha2 !== undefined ? this.geom.ha2 : (mmn * (1.0 + x2)));
+        const hf1 = parseFloat(this.geom.hf1 !== undefined ? this.geom.hf1 : (mmn * (1.2 - x1)));
+        const hf2 = parseFloat(this.geom.hf2 !== undefined ? this.geom.hf2 : (mmn * (1.2 - x2)));
+        const delta_a1 = parseFloat(this.geom.delta_a1 !== undefined ? this.geom.delta_a1 : (delta1 + Math.atan(ha1 / Rm)));
+        const delta_a2 = parseFloat(this.geom.delta_a2 !== undefined ? this.geom.delta_a2 : (delta2 + Math.atan(ha2 / Rm)));
+        const delta_f1 = parseFloat(this.geom.delta_f1 !== undefined ? this.geom.delta_f1 : (delta1 - Math.atan(hf1 / Rm)));
+        const delta_f2 = parseFloat(this.geom.delta_f2 !== undefined ? this.geom.delta_f2 : (delta2 - Math.atan(hf2 / Rm)));
+
+        const ha_e1 = parseFloat(this.geom.hae1) || (ha1 * (Re / Rm));
+        const hf_e1 = parseFloat(this.geom.hfe1) || (hf1 * (Re / Rm));
+        const sa_e1 = parseFloat(this.geom.sae1) || (mmn * 0.88);
+        const sn_e1 = parseFloat(this.geom.sne1) || (mmn * 1.84);
+
+        const ha_e2 = parseFloat(this.geom.hae2) || (ha2 * (Re / Rm));
+        const hf_e2 = parseFloat(this.geom.hfe2) || (hf2 * (Re / Rm));
+        const sa_e2 = parseFloat(this.geom.sae2) || (mmn * 1.35);
+        const sn_e2 = parseFloat(this.geom.sne2) || (mmn * 1.30);
+
+        const Hin1 = parseFloat(this.geom.H1in) || 4.836;
+        const Hout1 = parseFloat(this.geom.H1out) || 13.300;
+        const Hin2 = parseFloat(this.geom.H2in) || 5.911;
+        const Hout2 = parseFloat(this.geom.H2out) || 19.950;
+
+        const dBore1 = parseFloat(this.geom.dBore1) || 50.0;
+        const dBore2 = parseFloat(this.geom.dBore2) || 100.0;
 
         if (type === 'pinion') {
             const m1 = Bevel3DGenerator.generateGearMesh({
                 z: z1, mmn, delta: delta1, delta_a: delta_a1, delta_f: delta_f1,
-                Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1, ha: ha1, hf: hf1,
-                hand: 1, surfaceOnly
+                Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
+                ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
+                Hin: Hin1, Hout: Hout1, dBore: dBore1,
+                hand: 1, gearingType, surfaceOnly
             });
             return m1.rawTriangles;
         }
@@ -3786,8 +3816,10 @@ class Bevel3DVisualizer {
         if (type === 'gear') {
             const m2 = Bevel3DGenerator.generateGearMesh({
                 z: z2, mmn, delta: delta2, delta_a: delta_a2, delta_f: delta_f2,
-                Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2, ha: ha2, hf: hf2,
-                hand: -1, surfaceOnly
+                Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
+                ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
+                Hin: Hin2, Hout: Hout2, dBore: dBore2,
+                hand: -1, gearingType, surfaceOnly
             });
             return m2.rawTriangles;
         }
@@ -3795,13 +3827,17 @@ class Bevel3DVisualizer {
         // Assembly Pair: transform both to common apex V(0,0,0) and conjugate engagement line
         const m1 = Bevel3DGenerator.generateGearMesh({
             z: z1, mmn, delta: delta1, delta_a: delta_a1, delta_f: delta_f1,
-            Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1, ha: ha1, hf: hf1,
-            hand: 1, surfaceOnly
+            Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
+            ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
+            Hin: Hin1, Hout: Hout1, dBore: dBore1,
+            hand: 1, gearingType, surfaceOnly
         });
         const m2 = Bevel3DGenerator.generateGearMesh({
             z: z2, mmn, delta: delta2, delta_a: delta_a2, delta_f: delta_f2,
-            Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2, ha: ha2, hf: hf2,
-            hand: -1, surfaceOnly
+            Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
+            ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
+            Hin: Hin2, Hout: Hout2, dBore: dBore2,
+            hand: -1, gearingType, surfaceOnly
         });
 
         // Pinion: Local (x, y, z) -> World (z, x, y)
@@ -4205,7 +4241,8 @@ class BevelGearUI {
             c0: 0.2,
             Q: 6,
             mat1: '16MnCr5',
-            mat2: '16MnCr5'
+            mat2: '16MnCr5',
+            gearingType: 'gleason'
         };
 
         this.lastGeom = null;
@@ -4713,7 +4750,17 @@ class BevelGearUI {
                 const key = inp.getAttribute('data-key');
                 if (key) {
                     const rawVal = String(inp.value).trim().replace(',', '.');
-                    this.inputs[key] = parseFloat(rawVal) || 0;
+                    this.inputs[key] = (rawVal !== '' && !isNaN(parseFloat(rawVal))) ? parseFloat(rawVal) : 0;
+
+                    if (key === 'beta') {
+                        if (Math.abs(this.inputs.beta) < 1e-4) {
+                            const selGT = document.getElementById('selGearingType');
+                            if (selGT && selGT.value === 'gleason') {
+                                selGT.value = 'straight_type1';
+                                this.inputs.gearingType = 'straight_type1';
+                            }
+                        }
+                    }
 
                     // Auto-sync z2 if z1 changes
                     if (key === 'z1') {
@@ -4855,10 +4902,18 @@ class BevelGearUI {
         const selBeta = document.getElementById('sel_std_beta');
         if (selBeta) {
             selBeta.addEventListener('change', () => {
-                if (selBeta.value) {
-                    this.inputs.beta = parseFloat(selBeta.value);
+                if (selBeta.value !== '') {
+                    const bVal = parseFloat(selBeta.value);
+                    this.inputs.beta = bVal;
                     const inp = document.getElementById('inp_beta');
-                    if (inp) inp.value = selBeta.value;
+                    if (inp) inp.value = bVal.toFixed(1);
+                    if (Math.abs(bVal) < 1e-4) {
+                        const selGT = document.getElementById('selGearingType');
+                        if (selGT) {
+                            selGT.value = 'straight_type1';
+                            this.inputs.gearingType = 'straight_type1';
+                        }
+                    }
                     this.calculate();
                 }
             });
@@ -4904,6 +4959,7 @@ class BevelGearUI {
         if (selGearType) {
             selGearType.addEventListener('change', () => {
                 const v = selGearType.value;
+                this.inputs.gearingType = v;
                 if (v === 'straight_type1' || v === 'zerol') {
                     this.inputs.beta = 0.0;
                     const inpB = document.getElementById('inp_beta');
@@ -5114,7 +5170,7 @@ class BevelGearUI {
 
         // Section 4.3 & 4.8 Complementary calculated values (Matching MITCalc 1.74)
         const alfa_val = parseFloat(this.inputs.alfa) || 20.0;
-        const beta_val = parseFloat(this.inputs.beta) || 30.0;
+        const beta_val = (this.inputs.beta !== undefined && this.inputs.beta !== null && String(this.inputs.beta).trim() !== '') ? parseFloat(this.inputs.beta) : 30.0;
         const beta_rad = (beta_val * Math.PI) / 180.0;
         const cos_b = Math.cos(beta_rad);
         let alfa_comp_deg = 0;

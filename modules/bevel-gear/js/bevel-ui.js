@@ -25,7 +25,8 @@ class BevelGearUI {
             c0: 0.2,
             Q: 6,
             mat1: '16MnCr5',
-            mat2: '16MnCr5'
+            mat2: '16MnCr5',
+            gearingType: 'gleason'
         };
 
         this.lastGeom = null;
@@ -533,7 +534,17 @@ class BevelGearUI {
                 const key = inp.getAttribute('data-key');
                 if (key) {
                     const rawVal = String(inp.value).trim().replace(',', '.');
-                    this.inputs[key] = parseFloat(rawVal) || 0;
+                    this.inputs[key] = (rawVal !== '' && !isNaN(parseFloat(rawVal))) ? parseFloat(rawVal) : 0;
+
+                    if (key === 'beta') {
+                        if (Math.abs(this.inputs.beta) < 1e-4) {
+                            const selGT = document.getElementById('selGearingType');
+                            if (selGT && selGT.value === 'gleason') {
+                                selGT.value = 'straight_type1';
+                                this.inputs.gearingType = 'straight_type1';
+                            }
+                        }
+                    }
 
                     // Auto-sync z2 if z1 changes
                     if (key === 'z1') {
@@ -675,10 +686,18 @@ class BevelGearUI {
         const selBeta = document.getElementById('sel_std_beta');
         if (selBeta) {
             selBeta.addEventListener('change', () => {
-                if (selBeta.value) {
-                    this.inputs.beta = parseFloat(selBeta.value);
+                if (selBeta.value !== '') {
+                    const bVal = parseFloat(selBeta.value);
+                    this.inputs.beta = bVal;
                     const inp = document.getElementById('inp_beta');
-                    if (inp) inp.value = selBeta.value;
+                    if (inp) inp.value = bVal.toFixed(1);
+                    if (Math.abs(bVal) < 1e-4) {
+                        const selGT = document.getElementById('selGearingType');
+                        if (selGT) {
+                            selGT.value = 'straight_type1';
+                            this.inputs.gearingType = 'straight_type1';
+                        }
+                    }
                     this.calculate();
                 }
             });
@@ -724,6 +743,7 @@ class BevelGearUI {
         if (selGearType) {
             selGearType.addEventListener('change', () => {
                 const v = selGearType.value;
+                this.inputs.gearingType = v;
                 if (v === 'straight_type1' || v === 'zerol') {
                     this.inputs.beta = 0.0;
                     const inpB = document.getElementById('inp_beta');
@@ -934,7 +954,7 @@ class BevelGearUI {
 
         // Section 4.3 & 4.8 Complementary calculated values (Matching MITCalc 1.74)
         const alfa_val = parseFloat(this.inputs.alfa) || 20.0;
-        const beta_val = parseFloat(this.inputs.beta) || 30.0;
+        const beta_val = (this.inputs.beta !== undefined && this.inputs.beta !== null && String(this.inputs.beta).trim() !== '') ? parseFloat(this.inputs.beta) : 30.0;
         const beta_rad = (beta_val * Math.PI) / 180.0;
         const cos_b = Math.cos(beta_rad);
         let alfa_comp_deg = 0;

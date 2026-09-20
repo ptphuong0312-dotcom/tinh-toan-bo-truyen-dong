@@ -784,4 +784,49 @@
   - `deep_line_by_line_bevel_audit.py`: **115 / 115 ô tính PASS 100.0% với $\Delta = 0.000000$**.
   - Không còn hiện tượng đĩa giấy úp ngược hay răng lưỡi dao cạo. Bánh răng hiển thị bề thế, dày dặn, chuẩn xác cơ khí chế tạo máy.
 
+---
+
+## Giai Đoạn 13: XỬ LÝ TRIỆT TIÊU KHUYẾT TẬT NÓN NHÔ MOAY-Ơ TRƯỚC BÁNH 2 VÀ ĐỒNG BỘ PHẢN ỨNG THỜI GIAN THỰC KHI ĐỔI GÓC XOẮN $\beta = 0^\circ$ (RĂNG THẲNG)
+
+* **Bối cảnh & Chỉ thị từ SirPhuong**:
+  1. *"sao phần nón nhỏ của bánh răng lớn lại nhô ra trong kì quặc vậy bạn, bạn phải làm giống kiểu bản vẽ 2D (giống với app mitcalc 1.74)"*: Phần moay-ơ trước của Bánh 2 bị lồi nhọn về phía đỉnh nón Apex như một chiếc mũi heo kì dị thay vì chìm vào lòng đĩa như bản vẽ 2D.
+  2. *"sao khi tôi chuyển góc xoắn về 0 mà răng không thẳng (ngoài ra khi thay đổi các góc xoắn khác nữa)"*: Khi chỉnh $\beta = 0^\circ$, bánh răng vẫn giữ nguyên độ xoắn cũ mà không duỗi thẳng; đổi các góc xoắn khác mô hình 3D cũng không phản ứng.
+  3. *"ngoài những thứ tôi phát hiện ra thì bạn cần kiểm tra kĩ nữa, đúng với quy trình tôi xây dựng cho bạn để tránh những sai sót như thế này"*.
+
+* **Nguyên nhân kỹ thuật cốt lõi (Root Causes)**:
+  1. **Lỗi dấu âm tọa độ moay-ơ trước Bánh 2 (`z_toe_hub`)**:
+     - Trong `bevel-3d-generator.js`, cao độ trục moay-ơ trước Bánh 2 dùng dấu trừ:
+       $$Z_{\text{toe\_hub2}} = R_i \cos\delta_2 - (h_{fi2} + H_{2\text{in}}) \sin\delta_2 = 82.20 - 16.65 = 65.55\text{ mm}$$
+     - Vì đỉnh răng tại mũi trong có $Z_{\text{tip}} = 77.20\text{ mm}$, chân răng trong $Z_{\text{root}} = 93.36\text{ mm}$, giá trị $65.55\text{ mm} < 77.20\text{ mm}$ đã đẩy moay-ơ chồm về phía trước Apex, nhô ra thành một cái chóp nón kì dị.
+     - Dữ liệu chuẩn gốc `Data1!H40:I40` quy định điểm $P_{06}$ tại $H = -98.85\text{ mm}$ ($|Z| = 98.85\text{ mm}$). Công thức giải tích đúng phải là dấu cộng:
+       $$Z_{\text{toe\_hub2}} = R_i \cos\delta_2 + (h_{fi2} + H_{2\text{in}}) \sin\delta_2 = 82.20 + 16.65 = \mathbf{98.85\text{ mm}}$$
+     - Khi $|Z| = 98.85\text{ mm} > 93.36\text{ mm}$, moay-ơ lùi sâu vào bên trong lòng đĩa, tạo thành khoang nón chìm (recessed cup) rỗng sâu $5.5\text{ mm}$ so với đáy răng trong, khớp 100% bản vẽ 2D Section 4 và Section 6 của MITCalc 1.74!
+  2. **Lỗi bẫy logic falsy `|| 30.0` trong JavaScript**:
+     - Cả trong `bevel-calc-engine.js` (dòng 21) và `bevel-ui.js` (dòng 937), mã nguồn dùng:
+       `const beta_deg = parseFloat(p.beta) || 30.0;`
+     - Khi người dùng nhập `0` hoặc chọn `0°`, `parseFloat('0')` trả về số `0`. Trong JavaScript, `0` là *falsy*, do đó biểu thức `0 || 30.0` luôn fallback về `30.0`! Kết quả: hệ thống không bao giờ chấp nhận $\beta = 0^\circ$.
+     - Thiếu sự kiện lắng nghe động học khi đổi $\beta$ từ ô nhập `in_beta_deg` và dropdown `sel_std_beta` để kích hoạt `visualizer3D.setGeometry()`.
+
+* **Đột phá & Giải pháp khắc phục triệt để**:
+  1. **Hiệu chỉnh hình học moay-ơ chìm (Recessed Front Hub Cup)**:
+     - Đổi dấu `-` thành `+` trong tính toán `z_toe_hub` cho Bánh 2 trong `bevel-3d-generator.js`.
+     - Moay-ơ trước lùi về $Z = 98.85\text{ mm}$, lòng bánh rỗng đẹp, phôi đúc dập chìm đúng tỷ lệ cơ khí chế tạo.
+  2. **Xử lý triệt để bẫy falsy & Tái sinh răng thẳng tuyệt đối**:
+     - Thay thế `|| 30.0` bằng biểu thức kiểm tra tường minh:
+       `(p.beta !== undefined && p.beta !== null && String(p.beta).trim() !== '') ? parseFloat(p.beta) : 30.0;`
+     - Trong `bevel-3d-generator.js`: Khi $\beta = 0^\circ$, thiết lập `isSpiral = false, spiralAngle = 0.0`. Các đường sườn răng hội tụ thẳng tắp về Apex $V(0, 0, 0)$ theo đúng phương trình tia nón nón chia.
+     - Khi $\beta \ne 0^\circ$ và loại răng thẳng: sinh răng xiên thẳng tiếp tuyến $V = \text{hand} \cdot u \cdot b \tan\beta$. Khi Gleason spiral: sinh cung xoắn $W(u)$.
+  3. **Đồng bộ thời gian thực (Real-time Reactive Synchronization)**:
+     - Gắn bộ lắng nghe sự kiện `input` và `change` cho `in_beta_deg` và `sel_std_beta`, tự động đồng bộ loại răng `selGearingType` và gọi lại `visualizer3D.setGeometry(geom)`.
+     - Cập nhật badge 3D hiển thị rõ: "⚙️ Bánh Răng Côn Răng Thẳng (Straight Bevel)" khi $\beta = 0^\circ$ và "🌀 Bánh Răng Côn Răng Xoắn (Gleason Spiral Bevel)" khi $\beta > 0^\circ$.
+
+* **Kết quả nghiệm thu thực tế**:
+  - `modules/bevel-gear/tests/test_bevel_3d.py`: **PASS 100% toàn bộ các bài test**:
+    * Stage 6: Bánh 2 $Z \in [77.20, 161.24]\text{ mm}$, $Z_{\text{toe\_hub2}} = 98.85\text{ mm}$ (khớp 100% `Data1!H35:I52`).
+    * Stage 6.1: Chuyển $\beta = 0.0^\circ$ -> lastGeom.beta_deg = 0.0, răng thẳng tuyệt đối, badge cập nhật tức thì. Lưu ảnh: `bevel_3d_straight_beta0.png`.
+    * Stage 6.2: Cập nhật $\beta = 15^\circ, 25^\circ, 35^\circ$ -> WebGL phản ứng ngay lập tức.
+    * Xuất STEP Solid (2.65 MB), STEP Surface (2.13 MB), STL Solid (1.44 MB), STL Surface (0.33 MB), DXF AC1009 CRLF đều hợp lệ.
+  - `modules/bevel-gear/tests/deep_line_by_line_bevel_audit.py`: **115 / 115 ô tính PASS 100.0% với $\Delta = 0.000000$**.
+  - Đóng gói bundle `bevel-engine.bundle.js` thành công (227,534 ký tự).
+
 

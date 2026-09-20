@@ -530,19 +530,22 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
      * **Mặt moay-ơ trước (Front hub flat face)**: Mặt phẳng trực giao từ $R_{10}$ vào thành lỗ trục tại cao độ $Z_{11}$.
      * **Lòng lỗ trục (Cylindrical shaft bore)**: Ống trụ tròn chạy từ $Z_{11}$ đến $Z_{16}$.
    - Khớp 100% với kích thước bao phôi thực thể trong sheet `Data1` của MITCalc 1.74:
-     * Bánh dẫn 1 (Pinion): $Z \in [201.11, 323.01]\text{ mm}$ (chiều dài trục $121.9\text{ mm}$), $R_{\max} = 140.18\text{ mm}$, lỗ trục $d = 50\text{ mm}$ (khớp $P_{16}$ và $P_{03}$ trong `Data1!C70:D87`).
-     * Bánh bị dẫn 2 (Gear): $Z \in [65.55, 161.24]\text{ mm}$ (chiều dài trục $95.7\text{ mm}$), $R_{\max} = 317.12\text{ mm}$, lỗ trục $d = 100\text{ mm}$ (khớp $P_{16}$ và $P_{03}$ trong `Data1!H35:I52`).
+     * Bánh dẫn 1 (Pinion): $Z \in [201.61, 323.01]\text{ mm}$ (chiều dài trục $121.4\text{ mm}$), $R_{\max} = 140.18\text{ mm}$, lỗ trục $d = 50\text{ mm}$ (khớp $P_{16}$ và $P_{03}$ trong `Data1!C70:D87`).
+     * Bánh bị dẫn 2 (Gear): $Z \in [77.20, 161.24]\text{ mm}$ (chiều dài trục $84.0\text{ mm}$), $R_{\max} = 317.12\text{ mm}$, lỗ trục $d = 100\text{ mm}$ (khớp $P_{16}$ và $P_{03}$ trong `Data1!H35:I52`).
+     * **Quy chuẩn moay-ơ trước Bánh 2 lùi sâu trong lòng phôi (Recessed Front Hub Cup Protocol)**: $Z_{\text{toe\_hub2}} = R_i \cos\delta_2 + (h_{fi2} + H_{2\text{in}}) \sin\delta_2 = 82.20 + 16.65 = 98.85\text{ mm}$ (khớp điểm mép $P_{06}$ tại $H = -98.85\text{ mm}$ trong `Data1!H40:I40`). Triệt tiêu hoàn toàn hiện tượng nón nhô ra phía trước, tạo khoang rỗng lòng nón chìm (recessed cup) chuẩn 100% bản vẽ kỹ thuật cơ khí 2D Section 4 & 6.
 2. **Răng Thực Thể Đứng Độc Lập Chuẩn Biên Dạng Thân Khai Tredgold**:
    - Răng mọc nổi trên mặt nón đáy, bảo toàn 100% chiều sâu răng: $h_e = 26.60\text{ mm}$ tại gót ngoài (khớp `Teeth_h = 26.5994`), $h_i = 17.40\text{ mm}$ tại mũi trong (khớp `Teeth_h = 17.4006`).
    - Biên dạng thân khai ảo Tredgold đầy đủ mặt đỉnh ($s_{ae1} = 8.88\text{ mm}, s_{ae2} = 13.52\text{ mm}$), hai sườn làm việc thân khai, và cung bo lượn chân răng.
    - Toàn bộ khối hình học là khối kín nước hoàn toàn 100% (Watertight Manifold Solid): 25,920 đỉnh cho Bánh 1, 64,800 đỉnh cho Bánh 2.
-3. **Đường Xoắn Răng Gleason Chuẩn Gốc MITCalc 1.74 (`Calculation!U197:AQ202`)**:
-   - Cung tròn dao cắt bán kính $R_{\text{tool}} = 1.5 \cdot b = 175.5\text{ mm}$ (Section 16.4) tiếp xúc tại điểm chia trung bình $R_m$.
+3. **Đường Răng Thẳng & Xoắn Gleason Chuẩn Gốc MITCalc 1.74 (`Calculation!U197:AQ202`)**:
+   - **Răng Thẳng Tuyệt Đối ($\beta = 0^\circ$)**: Khắc phục triệt để lỗi fallback `|| 30.0` trong JavaScript. Khi $\beta = 0^\circ$, `isSpiral = false`, đường sinh răng hội tụ thẳng tắp về Đỉnh Apex $V(0, 0, 0)$, huy hiệu 3D tự động hiển thị "⚙️ Bánh Răng Côn Răng Thẳng (Straight Bevel)".
+   - **Răng Xoắn Gleason ($\beta > 0^\circ$)**: Cung tròn dao cắt bán kính $R_{\text{tool}} = 1.5 \cdot b = 175.5\text{ mm}$ (Section 16.4) tiếp xúc tại điểm chia trung bình $R_m$.
    - Tọa độ chuẩn hóa dọc bề rộng: $u = (R - R_m)/b \in [-0.5, 0.5]$ ($u = 0$ tại $R_m$).
    - Độ võng cung dao cắt:
      $$W(u) = \text{hand} \cdot \left(R_{\text{tool}} \cos\beta - \sqrt{R_{\text{tool}}^2 - (u \cdot b + R_{\text{tool}} \sin\beta)^2}\right)$$
    - Độ vặn xoắn góc cung răng: $\text{spiralTwist} = W(u) / (R \sin\delta)$.
    - Khớp 100% các giá trị độ võng dao cắt của MITCalc: Section A: $W = -21.058\text{ mm}$, Section C: $W = 0.000\text{ mm}$, Section E: $W = +54.976\text{ mm}$.
+   - **Phản ứng thời gian thực (Reactive Dynamic Sync)**: Khi người dùng đổi $\beta$ sang $0^\circ, 15^\circ, 25^\circ, 35^\circ$, mô hình 3D WebGL tự động tính toán lại hình học và dựng lại tức thì.
 4. **Đồng Bộ Pha Động Học Ăn Khớp Liên Hợp 3D Không Va Chạm (Conjugate Phase Alignment)**:
    - Trục Bánh 1 đặt dọc theo World $+X$ (`pinionMesh.rotation.set(0, Math.PI / 2.0, Math.PI / 2.0)`).
    - Trục Bánh 2 đặt dọc theo World $+Y$ (`gearMesh.rotation.set(-Math.PI / 2.0, 0, 0)`).
