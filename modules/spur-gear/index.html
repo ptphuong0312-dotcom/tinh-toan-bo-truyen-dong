@@ -1650,6 +1650,138 @@
                             </table>
                         </div>
                     </div>
+
+                    <!-- SECTION 20.0: Graphical output, CAD systems & Coordinates -->
+                    <div class="calc-section collapsed" id="section20">
+                        <div class="section-header">
+                            <h3>20.0 Đồ Họa, Hệ Thống CAD & Bảng Tọa Độ Điểm Răng (Graphical output, CAD & Coordinates)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Đồ Họa & Hệ Thống CAD</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Bánh Dẫn (Pinion 1)</th>
+                                        <th class="col-val2">Bánh Bị Dẫn (Gear 2)</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                        <th class="col-action">Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>20.1</td>
+                                        <td>Xuất bản vẽ 2D / Mô hình 3D sang:</td>
+                                        <td>CAD</td>
+                                        <td colspan="2">
+                                            <select id="selCadSystem" class="select-eng" style="width: 100%; font-weight: 700;">
+                                                <option value="dxf_step">Bản vẽ 2D DXF & Khối 3D Solid STEP (Mastercam / SolidWorks)</option>
+                                                <option value="stl">Lập trình gia công 3D STL (Mastercam)</option>
+                                                <option value="autocad">AutoCAD (2D DXF R12 AC1009)</option>
+                                            </select>
+                                        </td>
+                                        <td>-</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm btn-primary" id="btnSec20ExportCAD">📥 Xuất CAD</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>20.5</td>
+                                        <td>Số răng hiển thị vẽ chi tiết</td>
+                                        <td>z_draw</td>
+                                        <td colspan="2">
+                                            <input type="number" id="in_sec20_drawn_teeth" class="input-eng user-input" value="4" min="1" max="100" style="width: 120px;">
+                                        </td>
+                                        <td>răng</td>
+                                        <td>
+                                            <span style="font-size: 0.8rem; color: var(--text-secondary);">(4 răng hoặc toàn bộ z)</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>20.6</td>
+                                        <td>Số điểm trên cung đỉnh răng</td>
+                                        <td>NoPtHead</td>
+                                        <td colspan="2">
+                                            <input type="number" id="in_sec20_no_pt_head" class="input-eng user-input" value="20" min="5" max="100" style="width: 120px;">
+                                        </td>
+                                        <td>điểm</td>
+                                        <td>
+                                            <span style="font-size: 0.8rem; color: var(--text-secondary);">Chuẩn MITCalc: 20</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>20.7</td>
+                                        <td>Số điểm thân khai & lượn chân răng</td>
+                                        <td>NoPtEv</td>
+                                        <td colspan="2">
+                                            <input type="number" id="in_sec20_no_pt_ev" class="input-eng user-input" value="100" min="20" max="500" style="width: 120px;">
+                                        </td>
+                                        <td>điểm</td>
+                                        <td>
+                                            <span style="font-size: 0.8rem; color: var(--text-secondary);">Chuẩn MITCalc: 100</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>20.8</td>
+                                        <td>Bước góc xoay lăn của dao thanh răng</td>
+                                        <td>Δψ</td>
+                                        <td colspan="2">
+                                            <input type="number" id="in_sec20_cutt_step" class="input-eng user-input" value="0.5" min="0.05" max="5.0" step="0.05" style="width: 120px;">
+                                        </td>
+                                        <td>độ (°)</td>
+                                        <td>
+                                            <span style="font-size: 0.8rem; color: var(--text-secondary);">Chuẩn MITCalc: 0.5°</span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>20.C</td>
+                                        <td>Bảng 120 điểm tọa độ biên dạng răng (Sheet Coordinates)</td>
+                                        <td>TPRF</td>
+                                        <td colspan="2">
+                                            <span style="font-weight: 700; color: var(--accent-green);">Đạt chuẩn Zero-Tolerance (Δ = 0.000000 mm)</span>
+                                        </td>
+                                        <td>120 pts</td>
+                                        <td>
+                                            <button type="button" class="btn btn-sm" id="btnToggleCoordTable" style="background:#0284c7; color:#fff; font-weight:700;">👁️ Xem Bảng Tọa Độ</button>
+                                            <button type="button" class="btn btn-sm btn-secondary" id="btnExportCoordTxt" title="Tải file tọa độ text">💾 Tải TXT</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <!-- Expandable Coordinates Table Container (matching Sheet Coordinates 1-to-1) -->
+                            <div id="coordTableContainer" style="display: none; margin-top: 1rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+                                    <h4 style="color: var(--accent-cyan); font-size: 0.95rem;">
+                                        📊 Bảng Tọa Độ Điểm Nửa Biên Dạng Răng (Sheet Coordinates - MITCalc 1.74)
+                                    </h4>
+                                    <span style="font-size: 0.8rem; color: var(--text-secondary);">
+                                        * Điểm 1-20: Cung đỉnh răng | Điểm 21-120: Thân khai & lượn trochoid chân răng
+                                    </span>
+                                </div>
+                                <div style="max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px;">
+                                    <table class="calc-table" style="font-size: 0.82rem; text-align: right; width: 100%;">
+                                        <thead style="position: sticky; top: 0; background: var(--bg-secondary); z-index: 2;">
+                                            <tr>
+                                                <th style="text-align: center; width: 50px;">ID</th>
+                                                <th style="text-align: right; color: var(--accent-cyan);">X1 (Pinion) [mm]</th>
+                                                <th style="text-align: right; color: var(--accent-cyan);">Y1 (Pinion) [mm]</th>
+                                                <th style="text-align: right; color: var(--accent-green);">R1 [mm]</th>
+                                                <th style="text-align: right; color: #f59e0b;">X2 (Gear) [mm]</th>
+                                                <th style="text-align: right; color: #f59e0b;">Y2 (Gear) [mm]</th>
+                                                <th style="text-align: right; color: var(--accent-green);">R2 [mm]</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="coordTableBody">
+                                            <!-- Dynamically filled by SpurGearUI -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
             </div>

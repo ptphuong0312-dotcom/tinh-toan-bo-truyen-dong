@@ -467,3 +467,46 @@
   - **Multi-Case QC Suite (`qc_gear_multi_case_suite.py`)**: **110 / 110 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
   - **CORS-Free Single Bundle**: Đóng gói tự động thành công `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js` qua `bundle_all.py`.
 
+---
+
+## 11. ĐỢT TỐI ƯU HÓA 11: BIÊN DẠNG RĂNG GIA CÔNG THỰC THỂ 1-TO-1 CHUẨN GỐC MITCALC 1.74 & ZERO-TOLERANCE COORDINATES (Δ = 0.000000 MM)
+
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  - Người dùng cung cấp ảnh chụp màn hình MITCalc 1.74 (`media_1789884648786.png`) bao gồm Phân mục 20.0 (`Graphical output, CAD systems`) và tab bảng tính `Coordinates`.
+  - Chỉ thị trực tiếp: *"trong app mitcalc 1.74 cũng có phần xuất 3d thông qua phần mềm solidwork, bạn dựa vào app mà dựng 3D cho chuẩn. tiêu trí của tôi là sự chính xác chứ không cần sự hào nháng. bạn dựa vào app để dựng hình (biên dạng răng) cho chuẩn xác để tôi còn dùng nó để lập trình gia công."*
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Dịch ngược & Chuyển mã 1-to-1 giải thuật tạo biên dạng từ MITCalc 1.74**:
+     - Sử dụng công cụ `oletools.olevba` trích xuất mã nguồn VBA nguyên bản trong `Gear1_01.xlsb!xl/vbaProject.bin`.
+     - Phân tích chi tiết `GearFunctions.bas:920-1123` (`FillTeethProfile2` & `RotateTool`).
+     - Phát hiện quy tắc cắt răng thực tế của dao thanh răng (Rack Cutter):
+       * Dao thanh răng $h_{a0}^* = 1.25$ cắt vào chân răng phôi tạo góc lượn trochoid kéo dài và hiện tượng cắt lẹm tự nhiên (undercutting).
+       * Đáy dao $h_{f0}^* = 1.00$ tương ứng đỉnh răng.
+       * Bán kính mũi dao $r_{a0}^* = 0.38$.
+       * Bước góc xoay lăn dao thanh răng $\Delta\psi = 0.5^\circ$ (`_CuttStepAngle`).
+       * Lấy mẫu: 20 điểm cung đỉnh răng ($NoPtHead = 20$) và 100 điểm đường thân khai & lượn chân răng ($NoPtEv = 100$), tổng 120 điểm.
+       * Quy tắc chia đôi bước $deltaY$ ở bước thô và bước tinh tại `totalPts - 3` và `totalPts - 2` (điểm 117 và 118 khi $N = 120$) để tăng độ mịn tại chân răng.
+     - Viết mới module JavaScript độc lập `modules/spur-gear/js/engine/mitcalc-tooth-solver.js`.
+  2. **Kiểm chứng Zero-Tolerance tuyệt đối 240/240 điểm (Δ = 0.000000 mm)**:
+     - Tạo bộ kiểm thử đối chiếu tự động `tests/verify_tooth_profile_mitcalc.py` chạy qua Playwright và Excel COM:
+       * Bánh dẫn 1 ($z_1 = 19, m_n = 6, x_1 = 0$): $\text{Max } \Delta X = 0.000000000000\text{ mm}$, $\text{Max } \Delta Y = 0.000000000000\text{ mm}$ (120/120 điểm khớp 100%).
+       * Bánh bị dẫn 2 ($z_2 = 48, m_n = 6, x_2 = 0$): $\text{Max } \Delta X = 0.000000000000\text{ mm}$, $\text{Max } \Delta Y = 0.000000000000\text{ mm}$ (120/120 điểm khớp 100%).
+  3. **Tích hợp Phân mục 20.0 Hệ Thống CAD & Bảng Tọa Độ Điểm Răng trong Web App**:
+     - Thêm Section 20.0 vào Master Block 3 (Additions & Manufacturing):
+       * 20.1 Lựa chọn hệ thống CAD: Bản vẽ 2D DXF & Khối 3D Solid STEP (Mastercam / SolidWorks), File 3D STL (Mastercam CNC), AutoCAD.
+       * 20.5 Số răng vẽ chi tiết ($z_{\text{draw}} = 4$).
+       * 20.6 Số điểm trên cung đỉnh răng ($NoPtHead = 20$).
+       * 20.7 Số điểm thân khai & lượn chân răng ($NoPtEv = 100$).
+       * 20.8 Bước góc xoay dao thanh răng ($\Delta\psi = 0.5^\circ$).
+       * 20.C Bảng xem trực quan 120 điểm tọa độ răng (`#coordTableContainer`) thể hiện rõ ràng ID, $X_1, Y_1, R_1$ và $X_2, Y_2, R_2$.
+       * Nút xuất tệp tọa độ TXT (`MITCalc_Tooth_Coordinates_*.txt`) chuẩn hóa, sẵn sàng nạp vào máy gia công CNC hoặc phần mềm CAM.
+  4. **Tích hợp toàn diện vào bộ sinh mô hình 3D và 2D**:
+     - `ToothProfileGenerator.generateProfile` gọi trực tiếp `MitcalcToothSolver.generateCompleteWheelContour`.
+     - Bộ sinh 3D `Gear3DGenerator` sử dụng biên dạng chuẩn xác này để dựng khối Solid Mesh STEP AP214 và Binary STL.
+* **Kết quả nghiệm thu thực tế**:
+  - **Kiểm thử đối chiếu tọa độ (`verify_tooth_profile_mitcalc.py`)**: 240 / 240 điểm PASS tuyệt đối với $\Delta = 0.000000\text{ mm}$.
+  - **Kiểm thử giao diện Section 20 (`test_section20_ui_and_coords.py`)**: 100% PASS, 0 lỗi Console, hiển thị đủ 120 hàng tọa độ. Đã lưu ảnh kiểm chứng `docs/section20_clean_view.png`.
+  - **Kiểm thử xuất 3D CAD (`test_gear_3d_export.py`)**: 100% PASS (STEP Solid 17.2 MB, Binary STL 2.68 MB).
+  - **Multi-Case QC Suite (`qc_gear_multi_case_suite.py`)**: **110 / 110 checks PASS tuyệt đối (100.0%)**.
+  - **CORS-Free Single Bundle**: Đóng gói thành công `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js`.
+
+

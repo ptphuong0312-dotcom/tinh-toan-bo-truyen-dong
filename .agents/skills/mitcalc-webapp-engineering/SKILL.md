@@ -425,6 +425,26 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 21: Giải Thuật Bao Hình Lăn Dao Thanh Răng 1-to-1 Chuẩn Gốc MITCalc 1.74 & Bảng Tọa Độ Điểm Răng Zero-Tolerance (Section 20.0)
+1. **Chuyển mã giải thuật cốt lõi từ MITCalc 1.74 VBA (`GearFunctions.bas:920-1123`)**:
+   - `FillTeethProfile2` và `RotateTool`: Mô phỏng động học quá trình cắt răng bằng dao thanh răng tiêu chuẩn:
+     * Dao thanh răng addendum $h_{a0}^* = 1.25$ (cắt sâu tạo góc lượn trochoid và cắt lẹm tự nhiên), dedendum $h_{f0}^* = 1.00$, bán kính góc lượn mũi dao $r_{a0}^* = 0.38$.
+     * Bước góc xoay dao $\Delta\psi = 0.5^\circ$ (`_CuttStepAngle`).
+     * Lấy mẫu 120 điểm: $NoPtHead = 20$ điểm đỉnh răng và $NoPtEv = 100$ điểm thân khai & lượn chân răng.
+     * Lưu ý quy tắc giảm bước $deltaY$: Tại bước thô và bước tinh, $deltaY$ được chia đôi tại `totalPts - 3` và `totalPts - 2` (tương ứng điểm 117 và 118 khi $N = 120$) để tăng độ mịn chân răng.
+2. **Kiểm thử đối chiếu tuyệt đối 240/240 điểm tọa độ (Zero-Tolerance QC)**:
+   - Đối chiếu trực tiếp giữa `MitcalcToothSolver` và bảng `Coordinates` của `Gear1_01.xlsb`:
+     * Pinion 1: $\Delta X = 0.000000000000\text{ mm}, \Delta Y = 0.000000000000\text{ mm}$ (120/120 điểm PASS).
+     * Gear 2: $\Delta X = 0.000000000000\text{ mm}, \Delta Y = 0.000000000000\text{ mm}$ (120/120 điểm PASS).
+3. **Phân mục 20.0 Hệ thống CAD & Bảng Tọa Độ Điểm Răng trong Web App**:
+   - Tích hợp Section 20.0 trong Master Block 3:
+     * Tùy chọn xuất CAD (AutoCAD, SolidWorks, Mastercam, DXF / STEP / STL).
+     * Ô nhập $z_{\text{draw}} = 4$, $NoPtHead = 20$, $NoPtEv = 100$, $\Delta\psi = 0.5^\circ$.
+     * Bảng xem trực quan 120 điểm tọa độ răng kèm nút tải tệp TXT tọa độ gia công.
+   - Toàn bộ mô hình 3D Solid (STEP/STL) và bản vẽ 2D DXF được dựng từ biên dạng này, sẵn sàng cho việc lập trình gia công CNC trên Mastercam.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

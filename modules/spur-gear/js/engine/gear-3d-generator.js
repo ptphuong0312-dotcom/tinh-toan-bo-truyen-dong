@@ -48,8 +48,8 @@ export const Gear3DGenerator = {
         const isHelical = Math.abs(betaDeg) > 1e-4;
         const betaRad = (betaDeg * Math.PI) / 180.0;
 
-        // 1. Generate base 2D transverse profile
-        const rawContour = ToothProfileGenerator.generateProfile(z, mn, alfa_n, x, d, db, da, df, 0.38);
+        // 1. Generate base 2D transverse profile using exact MITCalc rack cutter envelope
+        const rawContour = ToothProfileGenerator.generateProfile(z, mn, alfa_n, x, d, db, da, df, opt.ra0 || 0.38, opt);
 
         // Downsample contour if step > 1 for high-performance watertight 3D CAD mesh
         let contour = [];

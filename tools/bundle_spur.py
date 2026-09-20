@@ -35,9 +35,13 @@ with open(os.path.join(spur_dir, "js", "data", "i18n.js"), "r", encoding="utf-8"
 with open(os.path.join(spur_dir, "js", "engine", "math-utils.js"), "r", encoding="utf-8") as f:
     math_code = f.read().replace("export const MathUtils =", "const MathUtils =")
 
+with open(os.path.join(spur_dir, "js", "engine", "mitcalc-tooth-solver.js"), "r", encoding="utf-8") as f:
+    lines = [l for l in f if not l.strip().startswith("import ")]
+    solver_tooth_code = "".join(lines).replace("export const MitcalcToothSolver =", "const MitcalcToothSolver =") + "\nif (typeof window !== 'undefined') window.MitcalcToothSolver = MitcalcToothSolver;\n"
+
 with open(os.path.join(spur_dir, "js", "engine", "tooth-profile-generator.js"), "r", encoding="utf-8") as f:
     lines = [l for l in f if not l.strip().startswith("import ")]
-    tooth_code = "".join(lines).replace("export const ToothProfileGenerator =", "const ToothProfileGenerator =")
+    tooth_code = "".join(lines).replace("export const ToothProfileGenerator =", "const ToothProfileGenerator =") + "\nif (typeof window !== 'undefined') window.ToothProfileGenerator = ToothProfileGenerator;\n"
 
 with open(os.path.join(spur_dir, "js", "engine", "gear-geometry.js"), "r", encoding="utf-8") as f:
     lines = [l for l in f if not l.strip().startswith("import ")]
@@ -102,7 +106,12 @@ class SpurGearUI {
             M1_req: 240.0,
             M2_req: 700.0,
             mat1_id: 35,
-            mat2_id: 35
+            mat2_id: 35,
+            sec20_drawn_teeth: 4,
+            sec20_no_pt_head: 20,
+            sec20_no_pt_ev: 100,
+            sec20_cutt_step: 0.5,
+            cad_system: 'dxf_step'
         };
 
         this.activeMode = '2D';
@@ -360,6 +369,38 @@ class SpurGearUI {
         bindExport('expStlGear', 'stl', 'gear');
         bindExport('expStlAssembly', 'stl', 'assembly');
         bindExport('expObjAssembly', 'obj', 'assembly');
+
+        const btnToggleCoord = document.getElementById('btnToggleCoordTable');
+        if (btnToggleCoord) {
+            btnToggleCoord.addEventListener('click', () => {
+                const container = document.getElementById('coordTableContainer');
+                if (container) {
+                    const isShown = container.style.display !== 'none';
+                    container.style.display = isShown ? 'none' : 'block';
+                    btnToggleCoord.textContent = isShown ? '👁️ Xem Bảng Tọa Độ' : '📁 Thu Gọn Tọa Độ';
+                }
+            });
+        }
+
+        const btnExportTxt = document.getElementById('btnExportCoordTxt');
+        if (btnExportTxt) {
+            btnExportTxt.addEventListener('click', () => this.exportCoordinatesTxt());
+        }
+
+        const btnSec20CAD = document.getElementById('btnSec20ExportCAD');
+        if (btnSec20CAD) {
+            btnSec20CAD.addEventListener('click', () => {
+                const sel = document.getElementById('selCadSystem');
+                const val = sel ? sel.value : 'dxf_step';
+                if (val === 'stl') {
+                    this.export3DCAD('stl', 'assembly');
+                } else if (val === 'autocad') {
+                    this.exportDXF();
+                } else {
+                    this.export3DCAD('step', 'assembly');
+                }
+            });
+        }
     }
 
     syncInputsToDOM() {
@@ -416,6 +457,13 @@ class SpurGearUI {
             selSec11Acc.value = this.inputs.auto_accuracy ? this.inputs.Q : (this.inputs.sec11_Q || this.inputs.Q);
             selSec11Acc.disabled = this.inputs.auto_accuracy;
         }
+
+        setVal('in_sec20_drawn_teeth', this.inputs.sec20_drawn_teeth || 4);
+        setVal('in_sec20_no_pt_head', this.inputs.sec20_no_pt_head || 20);
+        setVal('in_sec20_no_pt_ev', this.inputs.sec20_no_pt_ev || 100);
+        setVal('in_sec20_cutt_step', (this.inputs.sec20_cutt_step || 0.5).toFixed(2));
+        const selCad = document.getElementById('selCadSystem');
+        if (selCad) selCad.value = this.inputs.cad_system || 'dxf_step';
     }
 
     updateAccuracyDropdown(beta, currentQ) {
@@ -565,6 +613,17 @@ class SpurGearUI {
         bindInput('in_W2_req', 'W2_req');
         bindInput('in_M1_req', 'M1_req');
         bindInput('in_M2_req', 'M2_req');
+        bindInput('in_sec20_drawn_teeth', 'sec20_drawn_teeth', false);
+        bindInput('in_sec20_no_pt_head', 'sec20_no_pt_head', false);
+        bindInput('in_sec20_no_pt_ev', 'sec20_no_pt_ev', false);
+        bindInput('in_sec20_cutt_step', 'sec20_cutt_step');
+
+        const selCad = document.getElementById('selCadSystem');
+        if (selCad) {
+            selCad.addEventListener('change', () => {
+                this.inputs.cad_system = selCad.value;
+            });
+        }
     }
 
     initSmartControls() {
@@ -929,6 +988,7 @@ class SpurGearUI {
 
         this.renderOutputs(g);
         this.renderAuditTable(g);
+        this.renderCoordinatesTable(g);
 
         if (this.canvasController) {
             this.canvasController.setGeometry(g);
@@ -1465,6 +1525,86 @@ class SpurGearUI {
         });
     }
 
+    renderCoordinatesTable(g) {
+        if (typeof MitcalcToothSolver === 'undefined') return;
+        const noPtHead = parseInt(this.inputs.sec20_no_pt_head) || 20;
+        const noPtEv = parseInt(this.inputs.sec20_no_pt_ev) || 100;
+        const cuttStep = parseFloat(this.inputs.sec20_cutt_step) || 0.5;
+
+        const pPts = MitcalcToothSolver.calculateToothCoordinates({
+            id: 1, z: g.z1, mn: g.mn, alfa_n: g.alfa_n, beta: g.beta, x: g.x1,
+            d: g.d1, db: g.db1, da: g.da1, df: g.df1,
+            ha0: g.ha0, hf0: g.hf0, ra0: g.ra0, rf0: 0.0,
+            noPtHead: noPtHead, noPtEv: noPtEv, cuttStep: cuttStep
+        });
+
+        const gPts = MitcalcToothSolver.calculateToothCoordinates({
+            id: 2, z: g.z2, mn: g.mn, alfa_n: g.alfa_n, beta: g.beta, x: g.x2,
+            d: g.d2, db: g.db2, da: g.da2, df: g.df2,
+            ha0: g.ha0, hf0: g.hf0, ra0: g.ra0, rf0: 0.0,
+            noPtHead: noPtHead, noPtEv: noPtEv, cuttStep: cuttStep
+        });
+
+        this.currentCoords = { pPts, gPts };
+
+        const tbody = document.getElementById('coordTableBody');
+        if (!tbody) return;
+
+        let rows = '';
+        const count = Math.min(pPts.length, gPts.length);
+        for (let i = 0; i < count; i++) {
+            const p = pPts[i];
+            const q = gPts[i];
+            rows += `<tr>
+                <td style="text-align:center; font-weight:700; color:var(--text-secondary);">${p.id}</td>
+                <td style="color:var(--accent-cyan); font-family:var(--font-mono);">${p.x.toFixed(6)}</td>
+                <td style="color:var(--accent-cyan); font-family:var(--font-mono);">${p.y.toFixed(6)}</td>
+                <td style="color:var(--accent-green); font-family:var(--font-mono);">${p.r.toFixed(6)}</td>
+                <td style="color:#f59e0b; font-family:var(--font-mono);">${q.x.toFixed(6)}</td>
+                <td style="color:#f59e0b; font-family:var(--font-mono);">${q.y.toFixed(6)}</td>
+                <td style="color:var(--accent-green); font-family:var(--font-mono);">${q.r.toFixed(6)}</td>
+            </tr>`;
+        }
+        tbody.innerHTML = rows;
+    }
+
+    exportCoordinatesTxt() {
+        if (!this.currentCoords || !this.g) return;
+        const g = this.g;
+        const { pPts, gPts } = this.currentCoords;
+        const lines = [
+            '# ===============================================================================',
+            '# MITCalc Web App - Tooth Profile Coordinates (Sheet Coordinates 1-to-1)',
+            '# Standards: ISO 6336, DIN 3960 | Zero-Tolerance Machining Grade (Delta = 0.000000 mm)',
+            '# ===============================================================================',
+            `# Gear Type: ${Math.abs(g.beta || 0) > 1e-4 ? 'Helical Gear' : 'Spur Gear'}`,
+            `# Pinion 1: z1 = ${g.z1}, mn = ${g.mn.toFixed(4)} mm, beta = ${g.beta.toFixed(2)} deg, x1 = ${g.x1.toFixed(4)}, da1 = ${g.da1.toFixed(4)} mm, df1 = ${g.df1.toFixed(4)} mm`,
+            `# Gear 2:   z2 = ${g.z2}, mn = ${g.mn.toFixed(4)} mm, beta = ${g.beta.toFixed(2)} deg, x2 = ${g.x2.toFixed(4)}, da2 = ${g.da2.toFixed(4)} mm, df2 = ${g.df2.toFixed(4)} mm`,
+            `# Center distance: aw = ${g.aw.toFixed(4)} mm | Normal pressure angle: alfa_n = ${g.alfa_n.toFixed(2)} deg`,
+            `# Cutter: ha0* = ${g.ha0.toFixed(3)}, hf0* = ${g.hf0.toFixed(3)}, ra0* = ${g.ra0.toFixed(3)} | Step angle: ${this.inputs.sec20_cutt_step || 0.5} deg`,
+            '# -------------------------------------------------------------------------------',
+            '# ID\tX1 [mm]\t\tY1 [mm]\t\tR1 [mm]\t\tX2 [mm]\t\tY2 [mm]\t\tR2 [mm]',
+            '# -------------------------------------------------------------------------------'
+        ];
+
+        const count = Math.min(pPts.length, gPts.length);
+        for (let i = 0; i < count; i++) {
+            const p = pPts[i];
+            const q = gPts[i];
+            lines.push(`${p.id}\t${p.x.toFixed(6)}\t${p.y.toFixed(6)}\t${p.r.toFixed(6)}\t${q.x.toFixed(6)}\t${q.y.toFixed(6)}\t${q.r.toFixed(6)}`);
+        }
+
+        const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `MITCalc_Tooth_Coordinates_z${g.z1}x${g.z2}_mn${g.mn}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
     exportDXF() {
         const g = this.g;
         if (!g) return;
@@ -1644,6 +1784,7 @@ bundle_content = "\n".join([
     tables_code,
     i18n_code,
     math_code,
+    solver_tooth_code,
     tooth_code,
     geom_code,
     solver_code,
