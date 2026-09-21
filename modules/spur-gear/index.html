@@ -1897,6 +1897,21 @@
                         <button type="button" class="btn btn-secondary" id="btnToggleWireframe" title="Bật/tắt khung dây">🕸️ Khung Dây</button>
                         <button type="button" class="btn btn-secondary" id="btnReset3DView">🎯 Đặt Lại</button>
 
+                        <!-- TCA Contact Analysis Controls -->
+                        <div style="display: flex; align-items: center; gap: 4px; border-left: 1px solid var(--border-color); padding-left: 6px;">
+                            <button type="button" class="btn btn-secondary" id="btnToggleContactTCA" title="Bật/tắt hiển thị vết tiếp xúc ăn khớp thời gian thực (Tooth Contact Analysis)">🔴 Vết Tiếp Xúc</button>
+                            <select id="selTCAColorMode" class="calc-select" style="display: none; padding: 4px 8px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #f43f5e; border: 1.5px solid #e11d48; cursor: pointer;" title="Chế độ màu sắc vệt tiếp xúc">
+                                <option value="0">🔴 Laser Ruby (Đỏ Rực)</option>
+                                <option value="1">🔵 Prussian Blue (Bột Màu)</option>
+                                <option value="2">🌈 Thermal Heatmap (Bản Đồ Nhiệt)</option>
+                            </select>
+                            <div id="tcaBandControl" style="display: none; align-items: center; gap: 0.35rem; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);" title="Độ rộng dải tiếp xúc (0.5 - 4.0 mm)">
+                                <label for="sliderTCABandWidth" style="font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap;">Dải:</label>
+                                <input type="range" id="sliderTCABandWidth" min="0.5" max="4.0" step="0.1" value="2.2" style="width: 65px; cursor: pointer;">
+                                <span id="lblTCABandWidth" style="font-size: 0.75rem; font-weight: 700; color: #f43f5e; width: 32px;">2.2mm</span>
+                            </div>
+                        </div>
+
                         <!-- 3D Export Dropdown -->
                         <div class="dropdown" style="position: relative; display: inline-block;">
                             <button type="button" class="btn" id="btnExport3DMenu" style="background:#059669; color:#ffffff; font-weight:700; cursor: pointer;">

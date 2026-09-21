@@ -829,4 +829,46 @@
   - `modules/bevel-gear/tests/deep_line_by_line_bevel_audit.py`: **115 / 115 ô tính PASS 100.0% với $\Delta = 0.000000$**.
   - Đóng gói bundle `bevel-engine.bundle.js` thành công (227,534 ký tự).
 
+---
+
+## 14. ĐỢT TỐI ƯU HÓA 14: TÍNH NĂNG 3D TOOTH CONTACT ANALYSIS (TCA) - THEO DÕI VỆT TIẾP XÚC ĂN KHỚP THỜI GIAN THỰC (REAL-TIME CONJUGATE CONTACT SHADER)
+
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  1. *"bạn có cách nào để tôi có thể theo dõi sự tiếp xúc của 2 bánh răng trong mô phỏng truyền động 3D không, kiểu như là khi 2 bánh răng ăn khớp với nhau thì chỗ nào 2 bánh răng tiếp xúc thì chỗ đó đổi mầu để dễ dàng theo dõi, khi ra khỏi ăn khớp thì trở về mầu cũ, nhớ là chỉ chỗ tiếp xúc mới đổi mầu chứ không phải cả bề mặt răng. bạn xem có làm được không thì hãy làm hoặc có cách nào hay hơn thì tư vấn cho tôi. ngoài ra trước khi làm việc trên thì bạn hãy tạo cho tôi bản backup trước đã"*.
+  2. Ràng buộc an toàn: Tạo bản sao lưu đầy đủ dự án trước khi chỉnh sửa.
+  3. Ràng buộc Zero-Force: Tập trung 100% vào hình học tiếp xúc và động học ăn khớp, không tính toán lực/ứng suất phức tạp.
+  4. Ràng buộc hiệu năng: Duy trì mượt mà 60 FPS, 100% offline không CORS.
+
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Bản sao lưu dự án toàn diện**:
+     - Tạo gói nén `backups/BACKUP_MITCalc_Gear_20260921_080651.zip` (781 files, 14.96 MB) trước khi thực hiện bất kỳ thay đổi nào.
+  2. **Can thiệp Fragment Shader GPU thời gian thực (Zero-CPU Bottleneck)**:
+     - Nhúng GLSL tùy biến qua hook `material.onBeforeCompile` trên Three.js `MeshStandardMaterial`.
+     - Giữ nguyên 100% ánh sáng vật liệu PBR kim loại, tính toán trường khoảng cách pháp tuyến đến mặt phẳng/đường ăn khớp liên hợp per-fragment trên GPU:
+       * **Bánh răng côn**: Hệ tọa độ nón tiếp xúc $s, h$, bù góc xoắn $Z_{\text{offset}} = u_{\text{norm}} \cdot b \tan\beta \cdot 0.35$.
+       * **Bánh răng trụ & nghiêng**: Khoảng cách pháp tuyến tới Đường ăn khớp thân khai (Line of Action):
+         $$d_{\text{LoA}} = |(X - r_{w1}) \cos\alpha_{wt} + Y \sin\alpha_{wt} - Z \tan\beta \sin\alpha_{wt}|$$
+       * Bộ lọc hộp bao ăn khớp thực tế và triệt tiêu vùng lỗ trục moay-ơ ($r_{\text{axis}} > r_{\text{bore}} + 2.0$).
+  3. **Bộ 3 chế độ hiển thị màu sắc chuyên nghiệp**:
+     - `0`: 🔴 **Laser Ruby / Neon Flame** (`#ff1744`): Vệt đỏ neon rực rỡ, viền vàng hổ phách, quan sát rõ từ khoảng cách xa.
+     - `1`: 🔵 **Prussian Blue / Marking Compound** (`#0452f2`): Mô phỏng bột màu rà vết cơ khí trong xưởng chế tạo máy chính xác.
+     - `2`: 🌈 **Thermal Heatmap** (Gradient Hertzian Contact Pressure): Dải chuyển màu Xanh lá $\rightarrow$ Vàng $\rightarrow$ Đỏ rực trực quan hóa áp lực tiếp xúc danh nghĩa.
+  4. **Thanh điều khiển tương tác trên `#toolbar3D`**:
+     - Nút toggle `#btnToggleContactTCA` (đổi trạng thái `🔴 Đang Hiện Vết` khi kích hoạt).
+     - Dropdown chọn chế độ màu `#selTCAColorMode`.
+     - Slider tăng chỉnh bề rộng dải tiếp xúc `#sliderTCABandWidth` (0.5 mm - 4.0 mm).
+     - Huy hiệu trạng thái overlay `#badgeTCAStatus`.
+
+* **Kết quả nghiệm thu thực tế**:
+  - **Kiểm thử tự động Playwright**:
+    * `test_tca_spur_ui.py`: **PASS 100%**, 0 console errors.
+    * `test_tca_bevel_ui.py`: **PASS 100%**, 0 console errors.
+  - **Ảnh nghiệm thu kiểm chứng thực tế**:
+    * `spur_tca_iso.png`: Vệt tiếp xúc ăn khớp Laser Ruby rực rỡ giữa 2 bánh răng trụ ở phối cảnh isometric.
+    * `spur_tca_mesh_ruby.png`, `spur_tca_mesh_blue.png`, `spur_tca_mesh_heat.png`: Cận cảnh 3 chế độ màu trên bánh răng trụ.
+    * `bevel_tca_iso.png`: Phối cảnh bánh răng côn với vệt tiếp xúc.
+    * `bevel_tca_mesh_ruby.png`, `bevel_tca_mesh_blue.png`, `bevel_tca_mesh_heat.png`: Cận cảnh 3 chế độ màu trên nón tiếp xúc bánh răng côn.
+  - **Đóng gói mã nguồn Classic Script CORS-Free**: `bundle_all.py` cập nhật thành công cả 2 bundle `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js`.
+
+
 

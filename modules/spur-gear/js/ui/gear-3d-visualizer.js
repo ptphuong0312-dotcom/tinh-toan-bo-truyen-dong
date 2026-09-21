@@ -35,6 +35,25 @@ export class Gear3DVisualizer {
         this.mesh1Data = null;
         this.mesh2Data = null;
 
+        // Tooth Contact Analysis (TCA) Dynamic Highlighting Engine
+        this.tcaEnabled = false;
+        this.tcaWidth = 2.2;
+        this.tcaColorMode = 0; // 0: Laser Ruby / Neon Flame, 1: Prussian Blue, 2: Thermal Heatmap
+        this.tcaUniforms = {
+            uTcaEnabled: { value: 0.0 },
+            uTcaWidth: { value: 2.2 },
+            uTcaColorMode: { value: 0 },
+            uRw1: { value: 57.0 },
+            uAw: { value: 201.0 },
+            uMn: { value: 6.0 },
+            uB: { value: 120.0 },
+            uCosAlfa: { value: 0.93969 },
+            uSinAlfa: { value: 0.34202 },
+            uTanBeta: { value: 0.0 },
+            uRBore1: { value: 20.0 },
+            uRBore2: { value: 50.0 }
+        };
+
         this.init();
     }
 
@@ -216,6 +235,26 @@ export class Gear3DVisualizer {
             wireframe: this.wireframeMode,
             side: THREE.DoubleSide
         });
+
+        // Update TCA Uniforms for Spur / Helical Gears
+        const rw1 = geom.d1 / 2.0;
+        const bMax = Math.max(geom.b1, geom.b2) || 120.0;
+        const alfaVal = (geom.alfa_t || geom.alfa_n || 20.0) * Math.PI / 180.0;
+        const betaVal = (geom.beta || 0.0) * Math.PI / 180.0;
+
+        this.tcaUniforms.uRw1.value = rw1;
+        this.tcaUniforms.uAw.value = geom.aw;
+        this.tcaUniforms.uMn.value = geom.mn;
+        this.tcaUniforms.uB.value = bMax;
+        this.tcaUniforms.uCosAlfa.value = Math.cos(alfaVal);
+        this.tcaUniforms.uSinAlfa.value = Math.sin(alfaVal);
+        this.tcaUniforms.uTanBeta.value = Math.tan(betaVal);
+        this.tcaUniforms.uRBore1.value = geom.df1 * 0.225;
+        this.tcaUniforms.uRBore2.value = geom.df2 * 0.225;
+
+        // Apply TCA (Tooth Contact Analysis) Dynamic Shader
+        this.applyTCAShader(mat1, true);
+        this.applyTCAShader(mat2, false);
 
         this.pinionMesh = new THREE.Mesh(geo1, mat1);
         this.gearMesh = new THREE.Mesh(geo2, mat2);
@@ -439,5 +478,111 @@ export class Gear3DVisualizer {
             return m1.rawTriangles.concat(transformedGear2);
         }
         return [];
+    }
+
+    /**
+     * Tooth Contact Analysis (TCA) - Custom GPU Shader Hook for Spur & Helical Gears
+     * Colors only the active contact zone where the teeth meet in real time.
+     */
+    applyTCAShader(material, isPinion) {
+        material.onBeforeCompile = (shader) => {
+            Object.assign(shader.uniforms, this.tcaUniforms);
+            shader.uniforms.uIsPinion = { value: isPinion ? 1.0 : 0.0 };
+
+            shader.vertexShader = `
+                varying vec3 vTcaWorldPos;
+                varying vec3 vTcaWorldNorm;
+            ` + shader.vertexShader;
+
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <worldpos_vertex>',
+                `#include <worldpos_vertex>
+                vTcaWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
+                vTcaWorldNorm = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+                `
+            );
+
+            shader.fragmentShader = `
+                uniform float uTcaEnabled;
+                uniform float uTcaWidth;
+                uniform int uTcaColorMode;
+                uniform float uRw1;
+                uniform float uAw;
+                uniform float uMn;
+                uniform float uB;
+                uniform float uCosAlfa;
+                uniform float uSinAlfa;
+                uniform float uTanBeta;
+                uniform float uIsPinion;
+                uniform float uRBore1;
+                uniform float uRBore2;
+                varying vec3 vTcaWorldPos;
+                varying vec3 vTcaWorldNorm;
+            ` + shader.fragmentShader;
+
+            const tcaFragmentLogic = `
+                #include <dithering_fragment>
+                if (uTcaEnabled > 0.5) {
+                    float x = vTcaWorldPos.x;
+                    float y = vTcaWorldPos.y;
+                    float z = vTcaWorldPos.z;
+
+                    float rAxis = (uIsPinion > 0.5) ? length(vec2(x, y)) : length(vec2(x - uAw, y));
+                    float minBore = (uIsPinion > 0.5) ? (uRBore1 + 2.0) : (uRBore2 + 2.0);
+
+                    // Active meshing zone around pitch point (uRw1, 0)
+                    if (abs(x - uRw1) <= (uMn * 1.8) && abs(y) <= (uMn * 2.2) && abs(z) <= (uB * 0.5 + 2.0) && rAxis > minBore) {
+                        // Conjugate Line of Action distance: (x - rw1)*cos(alfa) + y*sin(alfa) - z*tan(beta)*sin(alfa)
+                        float dLoa = abs((x - uRw1) * uCosAlfa + y * uSinAlfa - z * uTanBeta * uSinAlfa);
+
+                        if (dLoa < uTcaWidth) {
+                            float t = clamp(1.0 - (dLoa / uTcaWidth), 0.0, 1.0);
+                            t = smoothstep(0.0, 1.0, t);
+
+                            vec3 contactCol = vec3(1.0, 0.08, 0.25); // Mode 0: Laser Ruby / Neon Flame
+                            vec3 glowCol = vec3(1.0, 0.95, 0.5);
+
+                            if (uTcaColorMode == 1) {
+                                // Mode 1: Prussian Blue (Bột màu rà vết cơ khí)
+                                contactCol = mix(vec3(0.04, 0.32, 0.95), vec3(0.35, 0.8, 1.0), t);
+                                glowCol = vec3(0.65, 0.92, 1.0);
+                            } else if (uTcaColorMode == 2) {
+                                // Mode 2: Thermal Heatmap (Bản đồ nhiệt áp lực)
+                                vec3 colA = vec3(0.08, 0.85, 0.22);
+                                vec3 colB = vec3(1.0, 0.85, 0.1);
+                                vec3 colC = vec3(1.0, 0.08, 0.15);
+                                contactCol = t < 0.5 ? mix(colA, colB, t * 2.0) : mix(colB, colC, (t - 0.5) * 2.0);
+                                glowCol = vec3(1.0, 1.0, 0.4);
+                            }
+
+                            gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
+                            gl_FragColor.rgb += glowCol * pow(t, 2.5) * 0.85;
+                        }
+                    }
+                }
+            `;
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <dithering_fragment>',
+                tcaFragmentLogic
+            );
+        };
+        material.needsUpdate = true;
+    }
+
+    toggleContactTCA() {
+        this.tcaEnabled = !this.tcaEnabled;
+        this.tcaUniforms.uTcaEnabled.value = this.tcaEnabled ? 1.0 : 0.0;
+        return this.tcaEnabled;
+    }
+
+    setTCAWidth(width) {
+        this.tcaWidth = Math.max(0.5, Math.min(5.0, parseFloat(width) || 2.2));
+        this.tcaUniforms.uTcaWidth.value = this.tcaWidth;
+    }
+
+    setTCAColorMode(mode) {
+        this.tcaColorMode = parseInt(mode) || 0;
+        this.tcaUniforms.uTcaColorMode.value = this.tcaColorMode;
     }
 }

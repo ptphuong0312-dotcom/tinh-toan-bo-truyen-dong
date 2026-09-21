@@ -439,6 +439,59 @@ class SpurGearUI {
             });
         }
 
+        // 3D Tooth Contact Analysis (TCA) Controls
+        const btnToggleContactTCA = document.getElementById('btnToggleContactTCA');
+        const selTCAColorMode = document.getElementById('selTCAColorMode');
+        const tcaBandControl = document.getElementById('tcaBandControl');
+        const sliderTCABandWidth = document.getElementById('sliderTCABandWidth');
+        const lblTCABandWidth = document.getElementById('lblTCABandWidth');
+        const badge3DInfo = document.getElementById('badge3DInfo');
+
+        if (btnToggleContactTCA && this.visualizer3D) {
+            btnToggleContactTCA.addEventListener('click', () => {
+                const isEnabled = this.visualizer3D.toggleContactTCA();
+                if (isEnabled) {
+                    btnToggleContactTCA.style.background = '#e11d48';
+                    btnToggleContactTCA.style.color = '#ffffff';
+                    btnToggleContactTCA.style.borderColor = '#be123c';
+                    btnToggleContactTCA.innerHTML = '🔴 Đang Hiện Vết';
+                    if (selTCAColorMode) selTCAColorMode.style.display = 'inline-block';
+                    if (tcaBandControl) tcaBandControl.style.display = 'inline-flex';
+                    let tcaBadge = document.getElementById('badgeTCAStatus');
+                    if (!tcaBadge && badge3DInfo) {
+                        tcaBadge = document.createElement('span');
+                        tcaBadge.id = 'badgeTCAStatus';
+                        tcaBadge.style.cssText = 'color: #f43f5e; font-weight: 700; margin-left: 8px;';
+                        tcaBadge.innerHTML = ' | 🔴 Vết Tiếp Xúc: <span style="color:#fde047;">Đang Ăn Khớp</span>';
+                        badge3DInfo.appendChild(tcaBadge);
+                    }
+                } else {
+                    btnToggleContactTCA.style.background = '';
+                    btnToggleContactTCA.style.color = '';
+                    btnToggleContactTCA.style.borderColor = '';
+                    btnToggleContactTCA.innerHTML = '🔴 Vết Tiếp Xúc';
+                    if (selTCAColorMode) selTCAColorMode.style.display = 'none';
+                    if (tcaBandControl) tcaBandControl.style.display = 'none';
+                    const tcaBadge = document.getElementById('badgeTCAStatus');
+                    if (tcaBadge && tcaBadge.parentNode) tcaBadge.parentNode.removeChild(tcaBadge);
+                }
+            });
+        }
+
+        if (selTCAColorMode && this.visualizer3D) {
+            selTCAColorMode.addEventListener('change', (e) => {
+                this.visualizer3D.setTCAColorMode(e.target.value);
+            });
+        }
+
+        if (sliderTCABandWidth && this.visualizer3D) {
+            sliderTCABandWidth.addEventListener('input', (e) => {
+                const w = parseFloat(e.target.value) || 2.2;
+                if (lblTCABandWidth) lblTCABandWidth.textContent = w.toFixed(1) + 'mm';
+                this.visualizer3D.setTCAWidth(w);
+            });
+        }
+
         // 3D Export Dropdown
         const btnExport3DMenu = document.getElementById('btnExport3DMenu');
         const export3DDropdown = document.getElementById('export3DDropdown');

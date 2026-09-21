@@ -601,6 +601,35 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 29: Kỹ Thuật Phân Tích & Hiển Thị Vệt Tiếp Xúc Ăn Khớp 3D Thời Gian Thực (Tooth Contact Analysis - TCA Dynamic Highlighting)
+1. **Bản chất kỹ thuật & Yêu cầu cốt lõi**:
+   - *Đổi màu chính xác dải tiếp xúc*: Khi 2 bánh răng ăn khớp, CHỈ có dải tiếp xúc thực tế nơi 2 bề mặt răng chạm nhau mới đổi màu. Tuyệt đối không tô màu toàn bộ sườn răng.
+   - *Khôi phục màu tức thì*: Khi răng quay ra khỏi vùng ăn khớp, bề mặt răng lập tức trở về màu kim loại gốc.
+   - *Hiệu năng 60 FPS*: Không tính toán khoảng cách đỉnh trên CPU (tránh sụt FPS), thay vào đó can thiệp trực tiếp vào Fragment Shader GPU qua `MeshStandardMaterial.onBeforeCompile`.
+2. **Thuật toán trường khoảng cách pháp tuyến GPU (Conjugate Distance Field)**:
+   - **Bánh răng côn (ISO 23509)**:
+     * Chiếu tọa độ thế giới $(X, Y, Z)$ lên hệ tọa độ nón tiếp xúc:
+       $$s = X \cos\delta_1 + Y \sin\delta_1, \quad h = -X \sin\delta_1 + Y \cos\delta_1$$
+     * Điều kiện vùng tiếp xúc nón: $s \in [R_i - 2, R_e + 2]$, $|h| \le 1.6 m_{mn}$, và nằm ngoài bán kính lỗ trục moay-ơ.
+     * Bù góc xoắn $\beta$: $Z_{\text{offset}} = u_{\text{norm}} \cdot b \tan\beta \cdot 0.35$.
+     * Khoảng cách tiếp xúc: $d_{\text{contact}} = \sqrt{(0.85 h)^2 + (Z - Z_{\text{offset}})^2}$.
+   - **Bánh răng trụ thẳng & nghiêng (ISO 6336)**:
+     * Tận dụng định lý cơ bản ăn khớp thân khai: điểm tiếp xúc của mọi cặp răng luôn nằm trên mặt phẳng ăn khớp tiếp xúc chung 2 vòng cơ sở đi qua điểm ăn khớp $P(r_{w1}, 0)$.
+     * Khoảng cách tới đường ăn khớp:
+       $$d_{\text{LoA}} = |(X - r_{w1}) \cos\alpha_{wt} + Y \sin\alpha_{wt} - Z \tan\beta \sin\alpha_{wt}|$$
+     * Chỉ kích hoạt trong hình hộp bao ăn khớp thực tế $|X - r_{w1}| \le 1.8 m_n$, $|Y| \le 2.2 m_n$, $|Z| \le b_{\max}/2 + 2$, và nằm ngoài bán kính lỗ trục moay-ơ.
+3. **Bộ 3 chế độ màu sắc kiểm tra trực quan (TCA Color Modes)**:
+   - `0`: 🔴 **Laser Ruby / Neon Flame** (`#ff1744`): Vệt đỏ neon rực sáng viền vàng hổ phách, dễ quan sát chuyển động từ xa.
+   - `1`: 🔵 **Prussian Blue / Marking Compound** (`#0452f2`): Bột màu rà vết cơ khí (Engineer's Marking Blue) trong xưởng cơ khí chính xác.
+   - `2`: 🌈 **Thermal Heatmap**: Gradient 3 màu (Xanh lá $\rightarrow$ Vàng $\rightarrow$ Đỏ rực) mô phỏng phân bố áp lực tiếp xúc danh nghĩa theo lý thuyết Hertz.
+4. **Bộ điều khiển thanh công cụ 3D (`#toolbar3D`)**:
+   - Nút bật/tắt `#btnToggleContactTCA`.
+   - Hộp chọn chế độ màu `#selTCAColorMode`.
+   - Thanh trượt bề rộng dải tiếp xúc `#sliderTCABandWidth` (0.5 - 4.0 mm, mặc định 2.2 mm).
+   - Huy hiệu trạng thái `#badgeTCAStatus`.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

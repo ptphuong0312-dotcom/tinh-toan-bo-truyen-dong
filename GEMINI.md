@@ -443,4 +443,28 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Gom toàn bộ hướng nhìn vào 1 ô chọn duy nhất có mũi tên sổ xuống: `<select id="sel3DViewPreset">` (Isometric, Mesh Zone, Axial XY Front, Top XZ, Side YZ, Cận cảnh Bánh 1 / Bánh 2).
    - Nút Đặt Lại (`btnReset3DView`) đưa góc nhìn về Isometric ban đầu với 1 cú nhấp.
 
+---
+
+### Quy Tắc 24: Quy Chuẩn Phân Tích & Hiển Thị Vệt Tiếp Xúc Ăn Khớp 3D Thời Gian Thực (Tooth Contact Analysis - TCA Dynamic Highlighting Protocol)
+1. **Yêu cầu kỹ thuật cốt lõi (Lệnh trực tiếp từ `SirPhuong`)**:
+   - *Chỉ đổi màu đúng vị trí tiếp xúc*: Khi 2 bánh răng ăn khớp, CHỈ có vệt/dải tiếp xúc cục bộ nơi 2 bề mặt răng chạm nhau mới đổi màu. Tuyệt đối không đổi màu toàn bộ bề mặt sườn răng.
+   - *Khôi phục màu tức thì*: Khi răng lăn ra khỏi vùng ăn khớp, bề mặt răng lập tức trở về màu kim loại gốc (vàng đồng / xanh ngọc PBR).
+   - *Zero-Force Scope*: Tính toán dựa hoàn toàn trên hình học tiếp xúc và động học ăn khớp thực tế, không tính toán ứng suất/lực phức tạp.
+   - *Hiệu năng 60 FPS*: Sử dụng kỹ thuật can thiệp fragment shader GPU (`MeshStandardMaterial.onBeforeCompile`), không duyệt đỉnh CPU, duy trì 60 FPS ổn định trên mọi thiết bị.
+2. **Giải thuật trường khoảng cách pháp tuyến GPU (Conjugate Distance Field)**:
+   - *Bánh răng côn (Module 2)*: Chiếu tọa độ thế giới $(X, Y, Z)$ lên hệ tọa độ nón tiếp xúc giữa $R_i$ và $R_e$. Độ lệch tiếp tuyến $h$ và trục $Z$ bù góc xoắn $\beta$ xác định dải tiếp xúc mỏng $d_{\text{contact}} \le w$.
+   - *Bánh răng trụ thẳng & nghiêng (Module 1)*: Sử dụng định lý cơ bản ăn khớp thân khai. Điểm tiếp xúc luôn nằm trên mặt phẳng ăn khớp tiếp xúc chung 2 vòng tròn cơ sở đi qua điểm ăn khớp $P(r_{w1}, 0)$:
+     $$d_{\text{LoA}} = |(X - r_{w1}) \cos\alpha_{wt} + Y \sin\alpha_{wt} - Z \tan\beta \sin\alpha_{wt}|$$
+     Chỉ kích hoạt khi $(X, Y, Z)$ nằm trong hình hộp bao ăn khớp thực tế $|X - r_{w1}| \le 1.8 m_n$, $|Y| \le 2.2 m_n$, $|Z| \le b_{\max}/2 + 2$, và nằm ngoài bán kính lỗ trục moay-ơ.
+3. **Bộ 3 chế độ màu sắc kiểm tra trực quan (TCA Color Modes)**:
+   - `0`: 🔴 **Laser Ruby / Neon Flame** (`#ff1744`): Vệt đỏ neon viền vàng hổ phách phát sáng rực rỡ, nhìn rõ từ xa.
+   - `1`: 🔵 **Prussian Blue / Marking Compound** (`#0452f2`): Mô phỏng bột màu rà vết cơ khí (Engineer's Marking Blue) trong xưởng chế tạo máy.
+   - `2`: 🌈 **Thermal Heatmap** (Gradient áp lực tiếp xúc Hertz): Dải 3 màu Xanh lá $\rightarrow$ Vàng $\rightarrow$ Đỏ rực trực quan hóa độ sâu vùng tiếp xúc danh nghĩa.
+4. **Bộ điều khiển tương tác trên thanh công cụ 3D (`#toolbar3D`)**:
+   - Nút bật/tắt: `#btnToggleContactTCA` (đổi trạng thái `🔴 Đang Hiện Vết` khi bật).
+   - Hộp chọn chế độ màu: `#selTCAColorMode` (hiện khi bật TCA).
+   - Thanh trượt bề rộng dải tiếp xúc: `#sliderTCABandWidth` (0.5 mm - 4.0 mm, mặc định 2.2 mm).
+   - Huy hiệu trạng thái: `#badgeTCAStatus` gắn vào thanh thông số overlay góc dưới màn hình.
+
+
 

@@ -38,6 +38,27 @@ export class Bevel3DVisualizer {
         this.mesh1Data = null;
         this.mesh2Data = null;
 
+        // Tooth Contact Analysis (TCA) Dynamic Highlighting Engine
+        this.tcaEnabled = false;
+        this.tcaWidth = 2.2;
+        this.tcaColorMode = 0; // 0: Laser Ruby / Neon Flame, 1: Prussian Blue, 2: Thermal Heatmap
+        this.tcaUniforms = {
+            uTcaEnabled: { value: 0.0 },
+            uTcaWidth: { value: 2.2 },
+            uTcaColorMode: { value: 0 },
+            uCosD: { value: 0.928 },
+            uSinD: { value: 0.371 },
+            uRe: { value: 338.0 },
+            uRi: { value: 221.0 },
+            uRm: { value: 279.5 },
+            uB: { value: 117.0 },
+            uMmn: { value: 10.0 },
+            uBetaRad: { value: 0.0 },
+            uIsSpiral: { value: 0.0 },
+            uRBore1: { value: 25.0 },
+            uRBore2: { value: 50.0 }
+        };
+
         this.init();
     }
 
@@ -218,6 +239,19 @@ export class Bevel3DVisualizer {
             hand: -1, gearingType
         });
 
+        // Update TCA Uniforms for Bevel Gear
+        this.tcaUniforms.uCosD.value = Math.cos(delta1);
+        this.tcaUniforms.uSinD.value = Math.sin(delta1);
+        this.tcaUniforms.uRe.value = Re;
+        this.tcaUniforms.uRi.value = Ri;
+        this.tcaUniforms.uRm.value = Rm;
+        this.tcaUniforms.uB.value = b;
+        this.tcaUniforms.uMmn.value = mmn;
+        this.tcaUniforms.uBetaRad.value = beta;
+        this.tcaUniforms.uIsSpiral.value = (Math.abs(beta_deg) > 1e-4 && gearingType !== 'straight_type1') ? 1.0 : 0.0;
+        this.tcaUniforms.uRBore1.value = dBore1 / 2.0;
+        this.tcaUniforms.uRBore2.value = dBore2 / 2.0;
+
         this.updateMeshes();
 
         // 3. Analytical Conjugate Phase Offset (Zero-Collision Conjugate Mesh)
@@ -262,6 +296,10 @@ export class Bevel3DVisualizer {
             roughness: 0.28,
             wireframe: this.wireframeMode
         });
+
+        // Apply TCA (Tooth Contact Analysis) Dynamic Shader
+        this.applyTCAShader(matPinion, true);
+        this.applyTCAShader(matGear, false);
 
         // 1. Pinion BufferGeometry
         const geo1 = new THREE.BufferGeometry();
@@ -401,9 +439,9 @@ export class Bevel3DVisualizer {
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'mesh': // Close up on pitch contact zone looking at engaging teeth
-                this.camera.position.set(360, 200, 260);
+                this.camera.position.set(mx + 70, my + 45, 120);
                 this.camera.up.set(0, 1, 0);
-                this.controls.target.set(240, 95, 0);
+                this.controls.target.set(mx, my, 0);
                 break;
             case 'iso':
             default:
@@ -543,5 +581,114 @@ export class Bevel3DVisualizer {
         ]);
 
         return tPinion.concat(tGear);
+    }
+
+    /**
+     * Tooth Contact Analysis (TCA) - Custom GPU Shader Hook
+     * Colors only the active contact zone/strip where the teeth meet in real time.
+     */
+    applyTCAShader(material, isPinion) {
+        material.onBeforeCompile = (shader) => {
+            Object.assign(shader.uniforms, this.tcaUniforms);
+            shader.uniforms.uIsPinion = { value: isPinion ? 1.0 : 0.0 };
+
+            shader.vertexShader = `
+                varying vec3 vTcaWorldPos;
+                varying vec3 vTcaWorldNorm;
+            ` + shader.vertexShader;
+
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <worldpos_vertex>',
+                `#include <worldpos_vertex>
+                vTcaWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
+                vTcaWorldNorm = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
+                `
+            );
+
+            shader.fragmentShader = `
+                uniform float uTcaEnabled;
+                uniform float uTcaWidth;
+                uniform int uTcaColorMode;
+                uniform float uCosD;
+                uniform float uSinD;
+                uniform float uRe;
+                uniform float uRi;
+                uniform float uRm;
+                uniform float uB;
+                uniform float uMmn;
+                uniform float uBetaRad;
+                uniform float uIsSpiral;
+                uniform float uIsPinion;
+                uniform float uRBore1;
+                uniform float uRBore2;
+                varying vec3 vTcaWorldPos;
+                varying vec3 vTcaWorldNorm;
+            ` + shader.fragmentShader;
+
+            const tcaFragmentLogic = `
+                #include <dithering_fragment>
+                if (uTcaEnabled > 0.5) {
+                    float s = vTcaWorldPos.x * uCosD + vTcaWorldPos.y * uSinD;
+                    float h = -vTcaWorldPos.x * uSinD + vTcaWorldPos.y * uCosD;
+                    float z = vTcaWorldPos.z;
+                    
+                    float rAxis = (uIsPinion > 0.5) ? length(vTcaWorldPos.yz) : length(vTcaWorldPos.xz);
+                    float minBore = (uIsPinion > 0.5) ? (uRBore1 + 2.0) : (uRBore2 + 2.0);
+
+                    if (s >= (uRi - 2.0) && s <= (uRe + 2.0) && abs(h) <= (uMmn * 1.6) && rAxis > minBore) {
+                        float uNorm = clamp((s - uRm) / (uB * 0.5), -1.0, 1.0);
+                        float zOffset = (uIsSpiral > 0.5) ? (uNorm * uB * tan(uBetaRad) * 0.35) : 0.0;
+                        
+                        float dContact = length(vec2(h * 0.85, z - zOffset));
+                        
+                        if (dContact < uTcaWidth) {
+                            float t = clamp(1.0 - (dContact / uTcaWidth), 0.0, 1.0);
+                            t = smoothstep(0.0, 1.0, t);
+                            
+                            vec3 contactCol = vec3(1.0, 0.08, 0.25); // Mode 0: Laser Ruby / Neon Flame
+                            vec3 glowCol = vec3(1.0, 0.95, 0.5);
+                            
+                            if (uTcaColorMode == 1) {
+                                // Mode 1: Prussian Blue (Bột màu rà vết cơ khí)
+                                contactCol = mix(vec3(0.04, 0.32, 0.95), vec3(0.35, 0.8, 1.0), t);
+                                glowCol = vec3(0.65, 0.92, 1.0);
+                            } else if (uTcaColorMode == 2) {
+                                // Mode 2: Thermal Heatmap (Bản đồ nhiệt áp lực)
+                                vec3 colA = vec3(0.08, 0.85, 0.22);
+                                vec3 colB = vec3(1.0, 0.85, 0.1);
+                                vec3 colC = vec3(1.0, 0.08, 0.15);
+                                contactCol = t < 0.5 ? mix(colA, colB, t * 2.0) : mix(colB, colC, (t - 0.5) * 2.0);
+                                glowCol = vec3(1.0, 1.0, 0.4);
+                            }
+                            
+                            gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
+                            gl_FragColor.rgb += glowCol * pow(t, 2.5) * 0.85;
+                        }
+                    }
+                }
+            `;
+
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <dithering_fragment>',
+                tcaFragmentLogic
+            );
+        };
+        material.needsUpdate = true;
+    }
+
+    toggleContactTCA() {
+        this.tcaEnabled = !this.tcaEnabled;
+        this.tcaUniforms.uTcaEnabled.value = this.tcaEnabled ? 1.0 : 0.0;
+        return this.tcaEnabled;
+    }
+
+    setTCAWidth(width) {
+        this.tcaWidth = Math.max(0.5, Math.min(5.0, parseFloat(width) || 2.2));
+        this.tcaUniforms.uTcaWidth.value = this.tcaWidth;
+    }
+
+    setTCAColorMode(mode) {
+        this.tcaColorMode = parseInt(mode) || 0;
+        this.tcaUniforms.uTcaColorMode.value = this.tcaColorMode;
     }
 }
