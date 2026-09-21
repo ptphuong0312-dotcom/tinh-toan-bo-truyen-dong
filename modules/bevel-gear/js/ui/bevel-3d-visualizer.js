@@ -49,14 +49,15 @@ export class Bevel3DVisualizer {
         this.surf2Data = null;
         this.contactMarker = null;
         this.clipPlane = null;
+        this.meshDensityLevel = 1; // 8 Cấp Độ Mịn Lưới Thân Khai (1: Tiêu Chuẩn Mặc Định, 2-8: Tăng Dần)
 
         // Tooth Contact Analysis (TCA) Dynamic Highlighting Engine
         this.tcaEnabled = false;
-        this.tcaWidth = 2.2;
+        this.tcaWidth = 4.0;
         this.tcaColorMode = 0; // 0: Laser Ruby / Neon Flame, 1: Prussian Blue, 2: Thermal Heatmap
         this.tcaUniforms = {
             uTcaEnabled: { value: 0.0 },
-            uTcaWidth: { value: 2.2 },
+            uTcaWidth: { value: 4.0 },
             uTcaColorMode: { value: 0 },
             uCosD: { value: 0.928 },
             uSinD: { value: 0.371 },
@@ -68,7 +69,8 @@ export class Bevel3DVisualizer {
             uBetaRad: { value: 0.0 },
             uIsSpiral: { value: 0.0 },
             uRBore1: { value: 25.0 },
-            uRBore2: { value: 50.0 }
+            uRBore2: { value: 50.0 },
+            uPinionAngle: { value: 0.0 }
         };
 
         this.init();
@@ -248,7 +250,8 @@ export class Bevel3DVisualizer {
             Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
             ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
             Hin: Hin1, Hout: Hout1, dBore: dBore1,
-            hand: hand1, gearingType
+            hand: hand1, gearingType,
+            meshDensityLevel: this.meshDensityLevel
         };
         this.mesh1Data = Bevel3DGenerator.generateGearMesh(opt1);
         this.surf1Data = Bevel3DGenerator.generateGearSurfaceMesh(opt1);
@@ -259,7 +262,8 @@ export class Bevel3DVisualizer {
             Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
             ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
             Hin: Hin2, Hout: Hout2, dBore: dBore2,
-            hand: hand2, gearingType
+            hand: hand2, gearingType,
+            meshDensityLevel: this.meshDensityLevel
         };
         this.mesh2Data = Bevel3DGenerator.generateGearMesh(opt2);
         this.surf2Data = Bevel3DGenerator.generateGearSurfaceMesh(opt2);
@@ -445,6 +449,9 @@ export class Bevel3DVisualizer {
         this.pinionGroup.rotation.x = this.pinionAngle;
         // Gear rotates around Y axis (or axis at angle Sigma)
         this.gearGroup.rotation.y = this.gearAngle;
+        if (this.tcaUniforms && this.tcaUniforms.uPinionAngle) {
+            this.tcaUniforms.uPinionAngle.value = this.pinionAngle;
+        }
     }
 
     animate() {
@@ -500,6 +507,19 @@ export class Bevel3DVisualizer {
         if (this.pinionSurfMesh) this.pinionSurfMesh.material.wireframe = this.wireframeMode;
         if (this.gearSurfMesh) this.gearSurfMesh.material.wireframe = this.wireframeMode;
         return this.wireframeMode;
+    }
+
+    setMeshDensityLevel(level) {
+        this.meshDensityLevel = Math.max(1, Math.min(8, parseInt(level) || 1));
+        if (this.geom) {
+            const curPinionAngle = this.pinionAngle;
+            const curGearAngle = this.gearAngle;
+            this.setGeometry(this.geom);
+            this.pinionAngle = curPinionAngle;
+            this.gearAngle = curGearAngle;
+            this.updateGearRotations();
+        }
+        return this.meshDensityLevel;
     }
 
     resetView() {
@@ -708,6 +728,7 @@ export class Bevel3DVisualizer {
      * Colors only the active contact zone/strip where the teeth meet in real time.
      */
     applyTCAShader(material, isPinion) {
+        material.customProgramCacheKey = () => `tca_${isPinion ? 'pinion' : 'gear'}_mode${this.tcaColorMode}`;
         material.onBeforeCompile = (shader) => {
             Object.assign(shader.uniforms, this.tcaUniforms);
             shader.uniforms.uIsPinion = { value: isPinion ? 1.0 : 0.0 };
@@ -741,6 +762,7 @@ export class Bevel3DVisualizer {
                 uniform float uIsPinion;
                 uniform float uRBore1;
                 uniform float uRBore2;
+                uniform float uPinionAngle;
                 varying vec3 vTcaWorldPos;
                 varying vec3 vTcaWorldNorm;
             ` + shader.fragmentShader;
@@ -755,11 +777,13 @@ export class Bevel3DVisualizer {
                     float rAxis = (uIsPinion > 0.5) ? length(vTcaWorldPos.yz) : length(vTcaWorldPos.xz);
                     float minBore = (uIsPinion > 0.5) ? (uRBore1 + 2.0) : (uRBore2 + 2.0);
 
-                    if (s >= (uRi - 2.0) && s <= (uRe + 2.0) && abs(h) <= (uMmn * 1.6) && rAxis > minBore) {
-                        float uNorm = clamp((s - uRm) / (uB * 0.5), -1.0, 1.0);
-                        float zOffset = (uIsSpiral > 0.5) ? (uNorm * uB * tan(uBetaRad) * 0.35) : 0.0;
+                    if (s >= (uRi - 2.0) && s <= (uRe + 2.0) && abs(h) <= (uMmn * 1.8) && rAxis > minBore) {
+                        float sNorm = (s - uRm) / max(1.0, uB);
+                        float zContact = (uIsSpiral > 0.5) ? (-uMmn * 2.24 - sNorm * uB * 0.075) : 0.0;
                         
-                        float dContact = length(vec2(h * 0.85, z - zOffset));
+                        float dH = abs(h);
+                        float dZ = abs(z - zContact);
+                        float dContact = sqrt(dH * dH * 0.2 + dZ * dZ * 0.8);
                         
                         if (dContact < uTcaWidth) {
                             float t = clamp(1.0 - (dContact / uTcaWidth), 0.0, 1.0);
@@ -803,7 +827,7 @@ export class Bevel3DVisualizer {
     }
 
     setTCAWidth(width) {
-        this.tcaWidth = Math.max(0.5, Math.min(5.0, parseFloat(width) || 2.2));
+        this.tcaWidth = Math.max(0.5, Math.min(20.0, parseFloat(width) || 4.0));
         this.tcaUniforms.uTcaWidth.value = this.tcaWidth;
     }
 

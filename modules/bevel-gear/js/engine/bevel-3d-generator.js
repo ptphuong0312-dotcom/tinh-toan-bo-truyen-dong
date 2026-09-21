@@ -76,9 +76,24 @@ export const Bevel3DGenerator = {
         const z_heel_hub = Re * cosD + (hf_e + Hout) * sinD;
         const r_heel_rim = Math.max(rBore + 5.0, Re * sinD - (hf_e + Hout) * cosD);
 
-        // Discretization parameters
-        const numSlices = isSurfaceOnly ? (isSpiral ? 12 : 6) : Math.max(4, Math.min(14, parseInt(opt.numSlices) || (isSpiral ? 10 : 5)));
-        const ptsPerFlank = Math.max(4, Math.min(12, parseInt(opt.ptsPerFlank) || 6));
+        // 8 Cấp Độ Mịn Lưới Thân Khai (Cấp 1: Tiêu Chuẩn Hiện Tại Mặc Định, Cấp 2-8: 7 Mức Tăng Dần)
+        const densityPresets = {
+            1: { pts: 6,  slicesSpiral: 10, slicesStraight: 5 },  // Cấp 1: Tiêu chuẩn mặc định (siêu nhẹ)
+            2: { pts: 8,  slicesSpiral: 12, slicesStraight: 6 },  // Cấp 2: Mịn mức 2
+            3: { pts: 10, slicesSpiral: 14, slicesStraight: 7 },  // Cấp 3: Mịn mức 3
+            4: { pts: 12, slicesSpiral: 16, slicesStraight: 8 },  // Cấp 4: Mịn mức 4 (Cân bằng)
+            5: { pts: 14, slicesSpiral: 18, slicesStraight: 9 },  // Cấp 5: Rất mịn mức 5
+            6: { pts: 16, slicesSpiral: 20, slicesStraight: 10 }, // Cấp 6: Siêu mịn mức 6 (Chuẩn CAM/CNC)
+            7: { pts: 20, slicesSpiral: 24, slicesStraight: 12 }, // Cấp 7: Cực mịn mức 7 (Độ nét cao)
+            8: { pts: 24, slicesSpiral: 28, slicesStraight: 14 }  // Cấp 8: Tuyệt đối mức 8 (Ultra CAD)
+        };
+
+        const dLevel = Math.max(1, Math.min(8, parseInt(opt.meshDensityLevel) || 1));
+        const preset = densityPresets[dLevel] || densityPresets[1];
+
+        const defaultSlices = isSpiral ? preset.slicesSpiral : preset.slicesStraight;
+        const numSlices = opt.numSlices !== undefined ? Math.max(4, Math.min(36, parseInt(opt.numSlices))) : defaultSlices;
+        const ptsPerFlank = opt.ptsPerFlank !== undefined ? Math.max(4, Math.min(32, parseInt(opt.ptsPerFlank))) : preset.pts;
         const R_tool = 1.5 * b; // MITCalc Section 16.4 cutter radius
 
         // 1. Generate tooth rings for all slices along face width b (Re -> Ri)

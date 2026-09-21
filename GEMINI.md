@@ -513,6 +513,31 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Khi tắt: Tự động trở về trạng thái nút thứ cấp tiêu chuẩn `btn-secondary`.
    - Cả 3 phương án phối hợp hoàn hảo với các tính năng: Nhích từng chút một (`btn3DStepFwd`, `btn3DStepBack`), xoay tự do 360° (`OrbitControls`), đổi góc nhìn (`sel3DViewPreset`), bật/tắt khung dây (`btnToggleWireframe`).
 
+---
+
+### Quy Tắc 27: Quy Chuẩn 8 Cấp Độ Mịn Lưới Thân Khai (Mesh Density Protocol) & Vết Tiếp Xúc Ăn Khớp TCA Chuẩn Gleason
+1. **Mục đích & Chỉ thị từ SirPhuong**:
+   - Cung cấp hệ thống 8 cấp độ mịn lưới răng 3D đáp ứng linh hoạt từ nhu cầu máy yếu/di động đến nhu cầu soi chi tiết vi mô và xuất mô hình chuẩn CAM/CNC.
+   - Giữ cấp độ mịn hiện tại làm **Cấp 1: Tiêu Chuẩn (Mặc định)**, tiếp sau có thêm 7 mức độ mịn tăng dần.
+   - Nâng cấp thuật toán vết tiếp xúc (TCA) hiển thị đồng thời đối xứng trên cả hai bánh răng, tròn đầy và liền mạch.
+2. **Bảng phân cấp 8 mức độ mịn (`selMeshDensity`)**:
+   - `Cấp 1: Tiêu Chuẩn (Mặc định)`: `ptsPerFlank = 6`, `numSlices = 10` (xoắn) / `5` (thẳng) - Siêu nhẹ, mượt trên mọi thiết bị.
+   - `Cấp 2: Mịn Mức 2`: `pts = 8`, `slices = 12 / 6`.
+   - `Cấp 3: Mịn Mức 3`: `pts = 10`, `slices = 14 / 7`.
+   - `Cấp 4: Mịn Mức 4 (Cân Bằng)`: `pts = 12`, `slices = 16 / 8` - Cân bằng đồ họa & tốc độ.
+   - `Cấp 5: Rất Mịn Mức 5`: `pts = 14`, `slices = 18 / 9`.
+   - `Cấp 6: Siêu Mịn Mức 6 (CAM/CNC)`: `pts = 16`, `slices = 20 / 10` - Chuẩn xuất file gia công phay 5 trục.
+   - `Cấp 7: Cực Mịn Mức 7 (Độ Nét Cao)`: `pts = 20`, `slices = 24 / 12`.
+   - `Cấp 8: Tuyệt Đối Mức 8 (Ultra CAD)`: `pts = 24`, `slices = 28 / 14` - Nhẵn bóng như gương, sai số dây cung $< 0.02\text{ mm}$.
+3. **Quy chuẩn Shader GPU TCA Tiếp Xúc Hai Chiều (Bilateral TCA Shader)**:
+   - Đặt `material.customProgramCacheKey = () => (isPinion ? 'tca_p' : 'tca_g') + '_' + this.tcaColorMode;` để WebGL biên dịch độc lập, không xung đột cache giữa 2 vật liệu.
+   - Tính toán chuẩn xác độ lệch xoắn Gleason dọc theo bề rộng vành răng:  
+     $$z_{\text{contact}} = -W(R_s) + \text{flankOffset}$$  
+     với $W(R_s) = hand \cdot (R_{\text{tool}}\cos\beta - \sqrt{R_{\text{tool}}^2 - (u \cdot b + R_{\text{tool}}\sin\beta)^2})$.
+   - Khoảng cách elip tiếp xúc $dContact = \sqrt{1.4 \cdot dH^2 + 0.7 \cdot dZ^2}$, mở rộng thanh trượt đến $15.0\text{ mm}$.
+   - Vết tiếp xúc in dấu đồng thời, đối xứng 100% trên cả Bánh Dẫn (Pinion) và Bánh Bị Dẫn (Gear).
+
+
 
 
 

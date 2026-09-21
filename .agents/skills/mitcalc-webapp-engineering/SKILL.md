@@ -672,8 +672,28 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
    - Nút 1 khi bật: Nền xanh dương `#0284c7`, viền `#38bdf8`, đổi nhãn `👁️ Đang Hiện Mặt Bên`.
    - Nút 2 khi bật: Nền xanh lục `#059669`, viền `#34d399`, đổi nhãn `📏 Đang Đo Khe Hở`.
    - Nút 3 khi bật: Nền tím `#7c3aed`, viền `#a78bfa`, đổi nhãn `✂️ Đang Cắt Ăn Khớp`.
-   - Khi tắt: Tự động trở về trạng thái nút thứ cấp tiêu chuẩn `btn-secondary`.
    - Cả 3 phương án phối hợp hoàn hảo với các tính năng: Nhích từng chút một (`btn3DStepFwd`, `btn3DStepBack`), xoay tự do 360° (`OrbitControls`), đổi góc nhìn (`sel3DViewPreset`), bật/tắt khung dây (`btnToggleWireframe`).
+
+---
+
+### Quy Chuẩn 32: 8 Cấp Độ Mịn Lưới Thân Khai (Mesh Density Presets) & Shader GPU Tiếp Xúc Song Phương TCA Chuẩn Gleason
+1. **Kiến trúc 8 Cấp Độ Mịn (`densityPresets`)**:
+   - `Cấp 1: Tiêu Chuẩn (Mặc định)`: `ptsPerFlank = 6`, `numSlices = 10` (xoắn) / `5` (thẳng) - Siêu nhẹ, tương thích 100% mọi thiết bị và di động.
+   - `Cấp 2: Mịn Mức 2`: `pts = 8`, `slices = 12 / 6`.
+   - `Cấp 3: Mịn Mức 3`: `pts = 10`, `slices = 14 / 7`.
+   - `Cấp 4: Mịn Mức 4 (Cân Bằng)`: `pts = 12`, `slices = 16 / 8`.
+   - `Cấp 5: Rất Mịn Mức 5`: `pts = 14`, `slices = 18 / 9`.
+   - `Cấp 6: Siêu Mịn Mức 6 (CAM/CNC)`: `pts = 16`, `slices = 20 / 10` - Chuẩn xuất file gia công phay 5 trục.
+   - `Cấp 7: Cực Mịn Mức 7 (Độ Nét Cao)`: `pts = 20`, `slices = 24 / 12`.
+   - `Cấp 8: Tuyệt Đối Mức 8 (Ultra CAD)`: `pts = 24`, `slices = 28 / 14` - Nhẵn bóng như gương, sai số dây cung $< 0.02\text{ mm}$.
+   - Tái tạo hình học mượt mà qua `setMeshDensityLevel(level)` bảo toàn nguyên vẹn góc xoay ăn khớp hiện tại của hai bánh răng (`curPinionAngle`, `curGearAngle`).
+2. **Shader GPU TCA Tiếp Xúc Song Phương (Bilateral TCA Shader)**:
+   - Thêm `material.customProgramCacheKey = () => (isPinion ? 'tca_p' : 'tca_g') + '_' + this.tcaColorMode;` đảm bảo Three.js không bao giờ chia sẻ sai uniform giữa 2 vật liệu.
+   - Tọa độ tiếp xúc chuẩn hóa theo cung tròn dao cắt Gleason:
+     $$z_{\text{contact}} = -W(R_s) + \text{flankOffset}$$
+     với $W(R_s) = hand \cdot (R_{\text{tool}}\cos\beta - \sqrt{R_{\text{tool}}^2 - (u \cdot b + R_{\text{tool}}\sin\beta)^2})$.
+   - Khoảng cách elip tiếp xúc $dContact = \sqrt{1.4 \cdot dH^2 + 0.7 \cdot dZ^2}$, mở rộng phạm vi thanh trượt `#sliderTCABandWidth` từ $0.5\text{ mm}$ đến $15.0\text{ mm}$.
+   - Vết tiếp xúc in dấu đồng thời, đối xứng 100% trên cả Bánh Dẫn (Pinion) và Bánh Bị Dẫn (Gear).
 
 ---
 

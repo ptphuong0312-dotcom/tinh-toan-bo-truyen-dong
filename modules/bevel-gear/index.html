@@ -1765,6 +1765,21 @@
                         <button type="button" class="btn btn-secondary" id="btnToggleWireframe" title="Bật/tắt khung dây">🕸️ Khung Dây</button>
                         <button type="button" class="btn btn-secondary" id="btnReset3DView">🎯 Đặt Lại</button>
 
+                        <!-- 8 Cấp Độ Mịn Lưới Thân Khai (Tiêu Chuẩn + 7 Cấp Độ Mịn Cao) -->
+                        <div style="display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);" title="Cấp độ mịn lưới 3D (Cấp 1: Tiêu chuẩn mặc định, Cấp 2-8: Độ mịn tăng dần)">
+                            <label for="selMeshDensity" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">💎 Độ mịn:</label>
+                            <select id="selMeshDensity" class="calc-select" style="padding: 4px 8px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #10b981; border: 1.5px solid #059669; cursor: pointer;">
+                                <option value="1" selected>Cấp 1: Tiêu Chuẩn (Mặc định)</option>
+                                <option value="2">Cấp 2: Mịn Mức 2</option>
+                                <option value="3">Cấp 3: Mịn Mức 3</option>
+                                <option value="4">Cấp 4: Mịn Mức 4 (Cân Bằng)</option>
+                                <option value="5">Cấp 5: Rất Mịn Mức 5</option>
+                                <option value="6">Cấp 6: Siêu Mịn Mức 6 (CAM/CNC)</option>
+                                <option value="7">Cấp 7: Cực Mịn Mức 7 (Độ Nét Cao)</option>
+                                <option value="8">Cấp 8: Tuyệt Đối Mức 8 (Ultra CAD)</option>
+                            </select>
+                        </div>
+
                         <!-- Inspection Controls: 3 Chế Độ Kiểm Tra Ăn Khớp Độc Lập -->
                         <div style="display: flex; align-items: center; gap: 4px; border-left: 1px solid var(--border-color); padding-left: 6px;">
                             <button type="button" class="btn btn-secondary" id="btnToggleFlankOnly" title="Phương Án 1: Ẩn khối phôi, chỉ hiện mặt sườn thân khai của cặp răng ăn khớp">👁️ Chỉ Mặt Bên</button>
@@ -1780,10 +1795,10 @@
                                 <option value="1">🔵 Prussian Blue (Bột Màu)</option>
                                 <option value="2">🌈 Thermal Heatmap (Bản Đồ Nhiệt)</option>
                             </select>
-                            <div id="tcaBandControl" style="display: none; align-items: center; gap: 0.35rem; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);" title="Độ rộng dải tiếp xúc (0.5 - 4.0 mm)">
+                            <div id="tcaBandControl" style="display: none; align-items: center; gap: 0.35rem; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);" title="Độ rộng dải tiếp xúc (0.5 - 15.0 mm)">
                                 <label for="sliderTCABandWidth" style="font-size: 0.75rem; color: var(--text-secondary); white-space: nowrap;">Dải:</label>
-                                <input type="range" id="sliderTCABandWidth" min="0.5" max="4.0" step="0.1" value="2.2" style="width: 65px; cursor: pointer;">
-                                <span id="lblTCABandWidth" style="font-size: 0.75rem; font-weight: 700; color: #f43f5e; width: 32px;">2.2mm</span>
+                                <input type="range" id="sliderTCABandWidth" min="0.5" max="15.0" step="0.5" value="4.0" style="width: 65px; cursor: pointer;">
+                                <span id="lblTCABandWidth" style="font-size: 0.75rem; font-weight: 700; color: #f43f5e; width: 36px;">4.0mm</span>
                             </div>
                         </div>
 

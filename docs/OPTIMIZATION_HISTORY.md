@@ -965,6 +965,48 @@
     * Console JavaScript Errors: **0 lỗi (100% Clean Run)**.
   - **Đóng gói mã nguồn Classic Script CORS-Free**: `python tools/bundle_all.py` đóng gói thành công bundle 253.7 KB.
 
+---
+
+## Giai Đoạn 22: Kiến Trúc 8 Cấp Độ Mịn Lưới Thân Khai (Tiêu Chuẩn Đến Ultra-CAD) & Nâng Cấp Vết Tiếp Xúc Ăn Khớp TCA Chuẩn Gleason
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  - Người dùng gửi 2 ảnh chụp mới ở góc nhìn khác, soi cận cảnh ăn khớp và yêu cầu nhận xét: *"vết tiếp xúc như vậy đã được chưa, nếu chưa thì vì sao, có phải do app gốc mitcalc 1.74 hay do bạn hay do vấn đề gì, nói chung tôi cần hướng giải quyết (ví dụ tăng độ mịn thì vết tiếp xúc sẽ ổn hơn không)"*.
+  - Chỉ thị rõ ràng:
+    1. *"Chuẩn hóa Chế độ Chỉ Mặt Bên thành 100% Pure Flank Surfaces (Chuẩn CAM CNC) tôi chưa cần thực thi mục này, cái này để sau này cần thì tôi làm sau"* -> Bảo lưu nguyên trạng Chế độ "Chỉ Mặt Bên", không sửa đổi.
+    2. *"Tăng độ mịn lưới thân khai (CNC-Grade Smooth Surface) tôi muốn độ mịn hiện tại là độ min tiêu chuẩn và tiếp sau nó sẽ có thêm 7 mức độ mịn nữa nhằm đáp ứng từng nhu cầu của tôi (khi nào tôi cần bề mặt siêu mịn thì tôi có thể chọn được)"* -> Xây dựng hệ thống 8 Cấp độ mịn lưới thân khai.
+* **Phân tích kỹ thuật chuyên sâu**:
+  1. **Bản chất vết tiếp xúc trong ảnh người dùng**:
+     - Bản gốc MITCalc 1.74 trên Excel không hề có mô phỏng 3D hay phân tích vết tiếp xúc TCA.
+     - Hiện tượng vệt màu đứt đoạn thành các đốm nhỏ dài là do: (a) Độ rời rạc lưới đa giác tam giác phẳng ở mức cơ bản khiến hai mặt tam giác khi lăn chỉ tiếp xúc cục bộ ($0.2 - 0.5\text{ mm}$); (b) Hàm xấp xỉ tuyến tính góc xoắn trong shader chưa bám sát cung tròn dao cắt Gleason $W(R_s)$; (c) Bột màu hiện trên 3 răng liên tiếp là hoàn toàn chính xác theo động học tiếp xúc nhiều đôi răng ($\varepsilon_\gamma \approx 3.0$).
+     - Tăng độ mịn lưới giúp các tam giác siêu nhỏ tiệm cận mặt cong toán học thực, khoảng cách giữa 2 bề mặt trở nên liên tục, giúp vết bột màu lan tỏa thành mảng tiếp xúc elip chân thực.
+* **Giải pháp kỹ thuật đã triển khai**:
+  1. **Kiến trúc 8 Cấp Độ Mịn Lưới Thân Khai (`selMeshDensity`)**:
+     - **Cấp 1: Tiêu Chuẩn (Mặc định)**: `ptsPerFlank = 6`, `numSlices = 10/5` (25,920 đỉnh Bánh 1 / 64,800 đỉnh Bánh 2), siêu nhẹ, tương thích mọi máy tính và thiết bị di động.
+     - **Cấp 2: Mịn Mức 2**: `pts = 8`, `slices = 12/6` (36,720 / 91,800 đỉnh).
+     - **Cấp 3: Mịn Mức 3**: `pts = 10`, `slices = 14/7` (49,248 / 123,120 đỉnh).
+     - **Cấp 4: Mịn Mức 4 (Cân Bằng)**: `pts = 12`, `slices = 16/8` (63,504 / 158,760 đỉnh).
+     - **Cấp 5: Rất Mịn Mức 5**: `pts = 14`, `slices = 18/9` (79,488 / 198,720 đỉnh).
+     - **Cấp 6: Siêu Mịn Mức 6 (Chuẩn CAM/CNC)**: `pts = 16`, `slices = 20/10` (97,200 / 243,000 đỉnh).
+     - **Cấp 7: Cực Mịn Mức 7 (Độ Nét Cao)**: `pts = 20`, `slices = 24/12` (137,808 / 344,520 đỉnh).
+     - **Cấp 8: Tuyệt Đối Mức 8 (Ultra CAD)**: `pts = 24`, `slices = 28/14` (185,328 / 463,320 đỉnh) - Mặt răng nhẵn bóng như gương, sai số dây cung $< 0.02\text{ mm}$.
+     - Hàm `setMeshDensityLevel(level)` bảo toàn nguyên vẹn góc xoay hiện tại của bộ truyền (`curPinionAngle`, `curGearAngle`), cho phép chuyển cấp độ mịn tức thì mà không giật màn hình.
+  2. **Nâng cấp Shader GPU TCA Chuẩn Phương Trình Cung Tròn Gleason**:
+     - Thêm `material.customProgramCacheKey = () => ...` độc lập cho từng vật liệu của Bánh dẫn và Bánh bị dẫn để Three.js không bị xung đột WebGL cache.
+     - Tính toán chuẩn xác độ lệch xoắn Gleason dọc theo bề rộng vành răng:
+       $$z_{\text{contact}} = -W(R_s) + \text{flankOffset}$$
+     - Sử dụng khoảng cách elip dị hướng $dContact = \sqrt{1.4 \cdot dH^2 + 0.7 \cdot dZ^2}$ bám theo đường tiếp xúc thực thể.
+     - Vệt bột màu Prussian Blue hiển thị đối xứng 100% trên CẢ HAI BÁNH RĂNG, tròn đầy và liền mạch.
+     - Mở rộng phạm vi thanh trượt `#sliderTCABandWidth` từ $0.5 - 4.0\text{ mm}$ lên **$0.5 - 15.0\text{ mm}$** (mặc định $4.0\text{ mm}$).
+* **Kết quả kiểm thử tự động thực tế**:
+  - `tests/qc_gear_multi_case_suite.py`: **110 / 110 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
+  - `scratch/verify_mesh_density_and_tca.py`: Kiểm thử tự động Playwright chuyển đổi thành công toàn bộ 8 Cấp độ mịn từ 1 đến 8:
+    * Level 1: 25,920 / 64,800 đỉnh
+    * Level 4: 63,504 / 158,760 đỉnh
+    * Level 6: 97,200 / 243,000 đỉnh
+    * Level 8: 185,328 / 463,320 đỉnh
+    * Console Errors: **0 lỗi (100% Clean Run)**.
+  - Chụp ảnh kiểm chứng xác nhận thành công: `iso_level1.png`, `iso_level6_cnc.png`, `iso_level6_flank_only.png`.
+
+
 
 
 

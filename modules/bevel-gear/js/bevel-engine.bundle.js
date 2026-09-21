@@ -2794,9 +2794,24 @@ const Bevel3DGenerator = {
         const z_heel_hub = Re * cosD + (hf_e + Hout) * sinD;
         const r_heel_rim = Math.max(rBore + 5.0, Re * sinD - (hf_e + Hout) * cosD);
 
-        // Discretization parameters
-        const numSlices = isSurfaceOnly ? (isSpiral ? 12 : 6) : Math.max(4, Math.min(14, parseInt(opt.numSlices) || (isSpiral ? 10 : 5)));
-        const ptsPerFlank = Math.max(4, Math.min(12, parseInt(opt.ptsPerFlank) || 6));
+        // 8 Cấp Độ Mịn Lưới Thân Khai (Cấp 1: Tiêu Chuẩn Hiện Tại Mặc Định, Cấp 2-8: 7 Mức Tăng Dần)
+        const densityPresets = {
+            1: { pts: 6,  slicesSpiral: 10, slicesStraight: 5 },  // Cấp 1: Tiêu chuẩn mặc định (siêu nhẹ)
+            2: { pts: 8,  slicesSpiral: 12, slicesStraight: 6 },  // Cấp 2: Mịn mức 2
+            3: { pts: 10, slicesSpiral: 14, slicesStraight: 7 },  // Cấp 3: Mịn mức 3
+            4: { pts: 12, slicesSpiral: 16, slicesStraight: 8 },  // Cấp 4: Mịn mức 4 (Cân bằng)
+            5: { pts: 14, slicesSpiral: 18, slicesStraight: 9 },  // Cấp 5: Rất mịn mức 5
+            6: { pts: 16, slicesSpiral: 20, slicesStraight: 10 }, // Cấp 6: Siêu mịn mức 6 (Chuẩn CAM/CNC)
+            7: { pts: 20, slicesSpiral: 24, slicesStraight: 12 }, // Cấp 7: Cực mịn mức 7 (Độ nét cao)
+            8: { pts: 24, slicesSpiral: 28, slicesStraight: 14 }  // Cấp 8: Tuyệt đối mức 8 (Ultra CAD)
+        };
+
+        const dLevel = Math.max(1, Math.min(8, parseInt(opt.meshDensityLevel) || 1));
+        const preset = densityPresets[dLevel] || densityPresets[1];
+
+        const defaultSlices = isSpiral ? preset.slicesSpiral : preset.slicesStraight;
+        const numSlices = opt.numSlices !== undefined ? Math.max(4, Math.min(36, parseInt(opt.numSlices))) : defaultSlices;
+        const ptsPerFlank = opt.ptsPerFlank !== undefined ? Math.max(4, Math.min(32, parseInt(opt.ptsPerFlank))) : preset.pts;
         const R_tool = 1.5 * b; // MITCalc Section 16.4 cutter radius
 
         // 1. Generate tooth rings for all slices along face width b (Re -> Ri)
@@ -3415,14 +3430,15 @@ class Bevel3DVisualizer {
         this.surf2Data = null;
         this.contactMarker = null;
         this.clipPlane = null;
+        this.meshDensityLevel = 1; // 8 Cấp Độ Mịn Lưới Thân Khai (1: Tiêu Chuẩn Mặc Định, 2-8: Tăng Dần)
 
         // Tooth Contact Analysis (TCA) Dynamic Highlighting Engine
         this.tcaEnabled = false;
-        this.tcaWidth = 2.2;
+        this.tcaWidth = 4.0;
         this.tcaColorMode = 0; // 0: Laser Ruby / Neon Flame, 1: Prussian Blue, 2: Thermal Heatmap
         this.tcaUniforms = {
             uTcaEnabled: { value: 0.0 },
-            uTcaWidth: { value: 2.2 },
+            uTcaWidth: { value: 4.0 },
             uTcaColorMode: { value: 0 },
             uCosD: { value: 0.928 },
             uSinD: { value: 0.371 },
@@ -3434,7 +3450,8 @@ class Bevel3DVisualizer {
             uBetaRad: { value: 0.0 },
             uIsSpiral: { value: 0.0 },
             uRBore1: { value: 25.0 },
-            uRBore2: { value: 50.0 }
+            uRBore2: { value: 50.0 },
+            uPinionAngle: { value: 0.0 }
         };
 
         this.init();
@@ -3614,7 +3631,8 @@ class Bevel3DVisualizer {
             Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
             ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
             Hin: Hin1, Hout: Hout1, dBore: dBore1,
-            hand: hand1, gearingType
+            hand: hand1, gearingType,
+            meshDensityLevel: this.meshDensityLevel
         };
         this.mesh1Data = Bevel3DGenerator.generateGearMesh(opt1);
         this.surf1Data = Bevel3DGenerator.generateGearSurfaceMesh(opt1);
@@ -3625,7 +3643,8 @@ class Bevel3DVisualizer {
             Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
             ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
             Hin: Hin2, Hout: Hout2, dBore: dBore2,
-            hand: hand2, gearingType
+            hand: hand2, gearingType,
+            meshDensityLevel: this.meshDensityLevel
         };
         this.mesh2Data = Bevel3DGenerator.generateGearMesh(opt2);
         this.surf2Data = Bevel3DGenerator.generateGearSurfaceMesh(opt2);
@@ -3811,6 +3830,9 @@ class Bevel3DVisualizer {
         this.pinionGroup.rotation.x = this.pinionAngle;
         // Gear rotates around Y axis (or axis at angle Sigma)
         this.gearGroup.rotation.y = this.gearAngle;
+        if (this.tcaUniforms && this.tcaUniforms.uPinionAngle) {
+            this.tcaUniforms.uPinionAngle.value = this.pinionAngle;
+        }
     }
 
     animate() {
@@ -3866,6 +3888,19 @@ class Bevel3DVisualizer {
         if (this.pinionSurfMesh) this.pinionSurfMesh.material.wireframe = this.wireframeMode;
         if (this.gearSurfMesh) this.gearSurfMesh.material.wireframe = this.wireframeMode;
         return this.wireframeMode;
+    }
+
+    setMeshDensityLevel(level) {
+        this.meshDensityLevel = Math.max(1, Math.min(8, parseInt(level) || 1));
+        if (this.geom) {
+            const curPinionAngle = this.pinionAngle;
+            const curGearAngle = this.gearAngle;
+            this.setGeometry(this.geom);
+            this.pinionAngle = curPinionAngle;
+            this.gearAngle = curGearAngle;
+            this.updateGearRotations();
+        }
+        return this.meshDensityLevel;
     }
 
     resetView() {
@@ -4074,6 +4109,7 @@ class Bevel3DVisualizer {
      * Colors only the active contact zone/strip where the teeth meet in real time.
      */
     applyTCAShader(material, isPinion) {
+        material.customProgramCacheKey = () => `tca_${isPinion ? 'pinion' : 'gear'}_mode${this.tcaColorMode}`;
         material.onBeforeCompile = (shader) => {
             Object.assign(shader.uniforms, this.tcaUniforms);
             shader.uniforms.uIsPinion = { value: isPinion ? 1.0 : 0.0 };
@@ -4107,6 +4143,7 @@ class Bevel3DVisualizer {
                 uniform float uIsPinion;
                 uniform float uRBore1;
                 uniform float uRBore2;
+                uniform float uPinionAngle;
                 varying vec3 vTcaWorldPos;
                 varying vec3 vTcaWorldNorm;
             ` + shader.fragmentShader;
@@ -4121,11 +4158,13 @@ class Bevel3DVisualizer {
                     float rAxis = (uIsPinion > 0.5) ? length(vTcaWorldPos.yz) : length(vTcaWorldPos.xz);
                     float minBore = (uIsPinion > 0.5) ? (uRBore1 + 2.0) : (uRBore2 + 2.0);
 
-                    if (s >= (uRi - 2.0) && s <= (uRe + 2.0) && abs(h) <= (uMmn * 1.6) && rAxis > minBore) {
-                        float uNorm = clamp((s - uRm) / (uB * 0.5), -1.0, 1.0);
-                        float zOffset = (uIsSpiral > 0.5) ? (uNorm * uB * tan(uBetaRad) * 0.35) : 0.0;
+                    if (s >= (uRi - 2.0) && s <= (uRe + 2.0) && abs(h) <= (uMmn * 1.8) && rAxis > minBore) {
+                        float sNorm = (s - uRm) / max(1.0, uB);
+                        float zContact = (uIsSpiral > 0.5) ? (-uMmn * 2.24 - sNorm * uB * 0.075) : 0.0;
                         
-                        float dContact = length(vec2(h * 0.85, z - zOffset));
+                        float dH = abs(h);
+                        float dZ = abs(z - zContact);
+                        float dContact = sqrt(dH * dH * 0.2 + dZ * dZ * 0.8);
                         
                         if (dContact < uTcaWidth) {
                             float t = clamp(1.0 - (dContact / uTcaWidth), 0.0, 1.0);
@@ -4169,7 +4208,7 @@ class Bevel3DVisualizer {
     }
 
     setTCAWidth(width) {
-        this.tcaWidth = Math.max(0.5, Math.min(5.0, parseFloat(width) || 2.2));
+        this.tcaWidth = Math.max(0.5, Math.min(20.0, parseFloat(width) || 4.0));
         this.tcaUniforms.uTcaWidth.value = this.tcaWidth;
     }
 
@@ -5107,9 +5146,18 @@ class BevelGearUI {
 
         if (sliderTCABandWidth && this.visualizer3D) {
             sliderTCABandWidth.addEventListener('input', (e) => {
-                const w = parseFloat(e.target.value) || 2.2;
+                const w = parseFloat(e.target.value) || 4.0;
                 if (lblTCABandWidth) lblTCABandWidth.textContent = w.toFixed(1) + 'mm';
                 this.visualizer3D.setTCAWidth(w);
+            });
+        }
+
+        // 8 Cấp Độ Mịn Lưới Thân Khai (Cấp 1: Tiêu chuẩn mặc định, Cấp 2-8: 7 Mức mịn tăng dần)
+        const selMeshDensity = document.getElementById('selMeshDensity');
+        if (selMeshDensity && this.visualizer3D) {
+            selMeshDensity.addEventListener('change', (e) => {
+                const level = parseInt(e.target.value) || 1;
+                this.visualizer3D.setMeshDensityLevel(level);
             });
         }
 

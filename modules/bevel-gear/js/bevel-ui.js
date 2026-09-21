@@ -456,9 +456,18 @@ class BevelGearUI {
 
         if (sliderTCABandWidth && this.visualizer3D) {
             sliderTCABandWidth.addEventListener('input', (e) => {
-                const w = parseFloat(e.target.value) || 2.2;
+                const w = parseFloat(e.target.value) || 4.0;
                 if (lblTCABandWidth) lblTCABandWidth.textContent = w.toFixed(1) + 'mm';
                 this.visualizer3D.setTCAWidth(w);
+            });
+        }
+
+        // 8 Cấp Độ Mịn Lưới Thân Khai (Cấp 1: Tiêu chuẩn mặc định, Cấp 2-8: 7 Mức mịn tăng dần)
+        const selMeshDensity = document.getElementById('selMeshDensity');
+        if (selMeshDensity && this.visualizer3D) {
+            selMeshDensity.addEventListener('change', (e) => {
+                const level = parseInt(e.target.value) || 1;
+                this.visualizer3D.setMeshDensityLevel(level);
             });
         }
 
