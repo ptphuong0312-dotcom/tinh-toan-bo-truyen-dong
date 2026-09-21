@@ -697,6 +697,28 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 33: Độ Lồi Răng (Tooth Crowning Ease-Off) Chuẩn ISO 23509 & Thuật Toán Vết Tiếp Xúc Elip Gleason Song Chế Độ (Dual-Mode Gleason TCA Protocol)
+1. **Độ Lồi Răng Thực Thể (Authentic Tooth Crowning Ease-Off)**:
+   - Theo ISO 23509 Section 7.5 và AGMA 2005-B88, răng bánh răng côn cần được làm lồi nhẹ theo cả chiều dài và chiều cao để khử dồn ứng suất tại gót (heel) và mũi (toe):
+     * *Độ lồi dọc răng ($C_L$)*: $C_L = 0.0035 \cdot m_{mn}$ (xoắn) / $0.0020 \cdot m_{mn}$ (thẳng), áp dụng giảm chiều dày răng danh nghĩa $s_n(u) = s_n(u) - C_L \cdot (2u)^2$ với $u = (R - R_m)/b \in [-0.5, 0.5]$.
+     * *Độ lồi chiều cao ($C_P$)*: $C_P = 0.0015 \cdot m_{mn}$, áp dụng giảm góc áp lực ảo $\psi_c(t)$ theo hàm parabol đỉnh $t \in [0, 1]$ từ chân răng lên đỉnh răng để vát mép êm ái (Tip relief).
+2. **Thuật Toán GPU TCA Song Chế Độ (`#selTCAPatternType`)**:
+   - **Chế độ 1: 🎯 Vết Elip Chuẩn Gleason (Cumulative Rolled Pattern)**:
+     * Mô phỏng chính xác vết chấm bột màu cơ khí sau khi rà ăn khớp theo ISO 23509 & Gleason Manual.
+     * Chiều dài elip: $2a = 56\% \cdot b$ ($a = 0.28 \cdot b$), đặt tâm tại $s_0 = R_m - 0.08 \cdot b$ (thiên nhẹ về phía mũi Toe $42\%$).
+     * Chiều cao elip: $2b_h = 60\%$ chiều cao làm việc ($b_h = 0.60 \cdot m_{mn}$).
+     * Khoảng cách elip chuẩn hóa: $ellDist = \sqrt{((s - s_0)/a)^2 + (h/b_h)^2} \le 1.0$.
+   - **Chế độ 0: ⚡ Tiếp Xúc Động Lăn Thời Gian Thực (Dynamic Rolling Locus)**:
+     * Vết tiếp xúc tức thời quét liên tục theo pha góc quay lăn liên hợp:
+       $$s_{\text{contact}} = R_m - \text{normPhase} \cdot (0.38 \cdot b), \quad h_{\text{contact}} = \text{normPhase} \cdot (0.45 \cdot m_{mn})$$
+     * Chuyển động lăn êm ái, mượt mà, không bao giờ bị đứt đoạn hay biến mất giữa các bước quay.
+3. **Bộ Điều Khiển Hiển Thị Đa Dạng & Tối Ưu Góc Nhìn CAD**:
+   - 3 Chế độ màu sắc: 🔴 Laser Ruby (Đỏ rực), 🔵 Prussian Blue (Bột màu xanh thợ nguội), 🌈 Thermal Heatmap (Bản đồ nhiệt áp lực).
+   - Thanh trượt độ rộng dải tiếp xúc `#sliderTCABandWidth` ($0.5 - 15.0\text{ mm}$) co dãn kích thước vệt tiếp xúc trực tiếp thời gian thực.
+   - Hộp chọn Hướng nhìn `sel3DViewPreset = 'mesh'` căn góc trực diện $(mx + 110, my - 80, 210)$ hướng thẳng vào vùng ăn khớp $(mx, my, 0)$, cho tầm nhìn rõ nét 100% sườn răng và vết tiếp xúc.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

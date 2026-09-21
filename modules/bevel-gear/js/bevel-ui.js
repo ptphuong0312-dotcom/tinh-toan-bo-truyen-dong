@@ -411,6 +411,7 @@ class BevelGearUI {
 
         // 3D Tooth Contact Analysis (TCA) Controls
         const btnToggleContactTCA = document.getElementById('btnToggleContactTCA');
+        const selTCAPatternType = document.getElementById('selTCAPatternType');
         const selTCAColorMode = document.getElementById('selTCAColorMode');
         const tcaBandControl = document.getElementById('tcaBandControl');
         const sliderTCABandWidth = document.getElementById('sliderTCABandWidth');
@@ -425,6 +426,7 @@ class BevelGearUI {
                     btnToggleContactTCA.style.color = '#ffffff';
                     btnToggleContactTCA.style.borderColor = '#be123c';
                     btnToggleContactTCA.innerHTML = '🔴 Đang Hiện Vết';
+                    if (selTCAPatternType) selTCAPatternType.style.display = 'inline-block';
                     if (selTCAColorMode) selTCAColorMode.style.display = 'inline-block';
                     if (tcaBandControl) tcaBandControl.style.display = 'inline-flex';
                     let tcaBadge = document.getElementById('badgeTCAStatus');
@@ -440,11 +442,18 @@ class BevelGearUI {
                     btnToggleContactTCA.style.color = '';
                     btnToggleContactTCA.style.borderColor = '';
                     btnToggleContactTCA.innerHTML = '🔴 Vết Tiếp Xúc';
+                    if (selTCAPatternType) selTCAPatternType.style.display = 'none';
                     if (selTCAColorMode) selTCAColorMode.style.display = 'none';
                     if (tcaBandControl) tcaBandControl.style.display = 'none';
                     const tcaBadge = document.getElementById('badgeTCAStatus');
                     if (tcaBadge && tcaBadge.parentNode) tcaBadge.parentNode.removeChild(tcaBadge);
                 }
+            });
+        }
+
+        if (selTCAPatternType && this.visualizer3D) {
+            selTCAPatternType.addEventListener('change', (e) => {
+                this.visualizer3D.setTCAPatternType(e.target.value);
             });
         }
 

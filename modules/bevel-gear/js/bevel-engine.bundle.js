@@ -2841,7 +2841,12 @@ const Bevel3DGenerator = {
             const z_pitch = R_s * cosD;
             const ha_s = ha_e * scale_s;
             const hf_s = hf_e * scale_s;
-            const sn_s = sn_e * scale_s;
+            
+            // Gleason Tooth Crowning / Ease-Off (ISO 23509 Section 7.5 & AGMA 2005-B88)
+            // Lengthwise crowning eases off toe and heel to prevent edge stress concentrations
+            const C_L = isSpiral ? (mmn * 0.0035) : (mmn * 0.0020);
+            const crown_L = C_L * Math.pow(2.0 * u, 2.0);
+            const sn_s = Math.max(0.1, (sn_e * scale_s) - crown_L);
 
             // Transverse tooth parameters for virtual gear (Tredgold ISO 23509)
             const cos_beta = isSpiral ? Math.max(0.2, Math.cos(beta)) : 1.0;
@@ -2868,6 +2873,11 @@ const Bevel3DGenerator = {
                     // Radial extension below base circle to root
                     psi_c = (psi_v + inv_alfa_t) * (r_c / rvb);
                 }
+                // Profile crowning (tip/root ease-off per Gleason practice)
+                const C_P = mmn * 0.0015;
+                const crown_P = C_P * Math.pow(2.0 * t - 1.0, 2.0);
+                psi_c = Math.max(0.0001, psi_c - crown_P / rv);
+
                 const h = r_c - rv;
                 const r_pt = r_pitch + h * cosD;
                 const theta = (rv / Math.max(1.0, r_pt)) * psi_c;
@@ -3436,10 +3446,12 @@ class Bevel3DVisualizer {
         this.tcaEnabled = false;
         this.tcaWidth = 4.0;
         this.tcaColorMode = 0; // 0: Laser Ruby / Neon Flame, 1: Prussian Blue, 2: Thermal Heatmap
+        this.tcaPatternType = 0; // 0: Dynamic Real-time Rolling Locus, 1: Cumulative Gleason Rolled Pattern
         this.tcaUniforms = {
             uTcaEnabled: { value: 0.0 },
             uTcaWidth: { value: 4.0 },
-            uTcaColorMode: { value: 0 },
+            uTcaColorMode: { value: 0.0 },
+            uTcaPatternType: { value: 0.0 },
             uCosD: { value: 0.928 },
             uSinD: { value: 0.371 },
             uRe: { value: 338.0 },
@@ -3451,7 +3463,9 @@ class Bevel3DVisualizer {
             uIsSpiral: { value: 0.0 },
             uRBore1: { value: 25.0 },
             uRBore2: { value: 50.0 },
-            uPinionAngle: { value: 0.0 }
+            uPinionAngle: { value: 0.0 },
+            uZ1: { value: 18.0 },
+            uZ2: { value: 45.0 }
         };
 
         this.init();
@@ -3661,6 +3675,8 @@ class Bevel3DVisualizer {
         this.tcaUniforms.uIsSpiral.value = (Math.abs(beta_deg) > 1e-4 && gearingType !== 'straight_type1') ? 1.0 : 0.0;
         this.tcaUniforms.uRBore1.value = dBore1 / 2.0;
         this.tcaUniforms.uRBore2.value = dBore2 / 2.0;
+        this.tcaUniforms.uZ1.value = z1;
+        this.tcaUniforms.uZ2.value = z2;
 
         this.updateMeshes();
 
@@ -3959,8 +3975,8 @@ class Bevel3DVisualizer {
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
-            case 'mesh': // Close up on pitch contact zone looking at engaging teeth
-                this.camera.position.set(mx + 70, my + 45, 120);
+            case 'mesh': // Close up on pitch contact zone looking directly at engaging tooth flank
+                this.camera.position.set(mx + 110, my - 80, 210);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(mx, my, 0);
                 break;
@@ -4107,9 +4123,10 @@ class Bevel3DVisualizer {
     /**
      * Tooth Contact Analysis (TCA) - Custom GPU Shader Hook
      * Colors only the active contact zone/strip where the teeth meet in real time.
+     * Supports both Mode 0 (Dynamic Rolling Locus) and Mode 1 (Cumulative Gleason Ellipse).
      */
     applyTCAShader(material, isPinion) {
-        material.customProgramCacheKey = () => `tca_${isPinion ? 'pinion' : 'gear'}_mode${this.tcaColorMode}`;
+        material.customProgramCacheKey = () => `tca_${isPinion ? 'pinion' : 'gear'}_en${this.tcaEnabled ? 1 : 0}_mode${this.tcaColorMode}_pat${this.tcaPatternType}`;
         material.onBeforeCompile = (shader) => {
             Object.assign(shader.uniforms, this.tcaUniforms);
             shader.uniforms.uIsPinion = { value: isPinion ? 1.0 : 0.0 };
@@ -4130,7 +4147,8 @@ class Bevel3DVisualizer {
             shader.fragmentShader = `
                 uniform float uTcaEnabled;
                 uniform float uTcaWidth;
-                uniform int uTcaColorMode;
+                uniform float uTcaColorMode;
+                uniform float uTcaPatternType;
                 uniform float uCosD;
                 uniform float uSinD;
                 uniform float uRe;
@@ -4144,6 +4162,8 @@ class Bevel3DVisualizer {
                 uniform float uRBore1;
                 uniform float uRBore2;
                 uniform float uPinionAngle;
+                uniform float uZ1;
+                uniform float uZ2;
                 varying vec3 vTcaWorldPos;
                 varying vec3 vTcaWorldNorm;
             ` + shader.fragmentShader;
@@ -4158,36 +4178,77 @@ class Bevel3DVisualizer {
                     float rAxis = (uIsPinion > 0.5) ? length(vTcaWorldPos.yz) : length(vTcaWorldPos.xz);
                     float minBore = (uIsPinion > 0.5) ? (uRBore1 + 2.0) : (uRBore2 + 2.0);
 
+                    // Active tooth zone within face width [Ri, Re], working depth |h| <= 1.8 mmn, and outside bore
                     if (s >= (uRi - 2.0) && s <= (uRe + 2.0) && abs(h) <= (uMmn * 1.8) && rAxis > minBore) {
-                        float sNorm = (s - uRm) / max(1.0, uB);
-                        float zContact = (uIsSpiral > 0.5) ? (-uMmn * 2.24 - sNorm * uB * 0.075) : 0.0;
-                        
-                        float dH = abs(h);
-                        float dZ = abs(z - zContact);
-                        float dContact = sqrt(dH * dH * 0.2 + dZ * dZ * 0.8);
-                        
-                        if (dContact < uTcaWidth) {
-                            float t = clamp(1.0 - (dContact / uTcaWidth), 0.0, 1.0);
-                            t = smoothstep(0.0, 1.0, t);
+                        float intensity = 0.0;
+                        float widthScale = clamp(uTcaWidth / 4.0, 0.25, 3.0);
+
+                        if (uTcaPatternType > 0.5) {
+                            // =========================================================================
+                            // CHẾ ĐỘ 1: VẾT TIẾP XÚC ELIP CHUẨN GLEASON (CUMULATIVE ROLLED PATTERN)
+                            // =========================================================================
+                            // Authentic Gleason & ISO 23509 Standard Rolled Contact Ellipse:
+                            // - Length: 56% of face width b (centered at Rm - 0.08*b with toe bias)
+                            // - Height: 60% of working depth (2.0 * mmn) centered along pitch cone line
+                            float s0 = uRm - 0.08 * uB; // 42% from toe (slight toe bias per ISO 23509)
+                            float h0 = 0.0;             // centered on pitch cone line
+                            float a_len = 0.28 * uB * widthScale;    // 56% of face width b
+                            float b_hgt = 0.60 * uMmn * widthScale;  // 60% of tooth height
                             
-                            vec3 contactCol = vec3(1.0, 0.08, 0.25); // Mode 0: Laser Ruby / Neon Flame
-                            vec3 glowCol = vec3(1.0, 0.95, 0.5);
+                            float dS = (s - s0) / max(1.0, a_len);
+                            float dH = (h - h0) / max(0.5, b_hgt);
+                            float ellDist = sqrt(dS * dS + dH * dH);
                             
-                            if (uTcaColorMode == 1) {
+                            if (ellDist <= 1.0) {
+                                intensity = smoothstep(0.0, 1.0, 1.0 - ellDist);
+                            }
+                        } else {
+                            // =========================================================================
+                            // CHẾ ĐỘ 0: TIẾP XÚC ĐỘNG LĂN LIÊN HỢP THỜI GIAN THỰC (DYNAMIC ROLLING LOCUS)
+                            // =========================================================================
+                            // As pinion rolls, active contact locus sweeps continuously across tooth flank
+                            float p1 = 6.28318530718 / max(1.0, uZ1);
+                            float phiRel = mod(uPinionAngle + p1 * 0.5, p1) - p1 * 0.5;
+                            float normPhase = phiRel / (p1 * 0.5); // normalized roll phase: -1.0 to +1.0
+                            
+                            // Rolling contact center along face width and height
+                            float s_contact = (uIsSpiral > 0.5) 
+                                ? (uRm - normPhase * (uB * 0.38)) 
+                                : uRm;
+                            float h_contact = normPhase * (uMmn * 0.45);
+
+                            // Instantaneous rolling contact spot scaled with width control
+                            float a_roll = uB * 0.22 * widthScale;
+                            float b_roll = uMmn * 0.45 * widthScale;
+                            float dS = (s - s_contact) / max(1.0, a_roll);
+                            float dH = (h - h_contact) / max(0.5, b_roll);
+                            float ellDist = sqrt(dS * dS + dH * dH);
+                            
+                            if (ellDist <= 1.0) {
+                                intensity = smoothstep(0.0, 1.0, 1.0 - ellDist);
+                            }
+                        }
+                        
+                        if (intensity > 0.001) {
+                            float t = intensity;
+                            vec3 contactCol = vec3(1.0, 0.05, 0.22); // Mode 0: Laser Ruby / Neon Flame
+                            vec3 glowCol = vec3(1.0, 0.95, 0.4);
+                            
+                            if (uTcaColorMode > 0.5 && uTcaColorMode < 1.5) {
                                 // Mode 1: Prussian Blue (Bột màu rà vết cơ khí)
-                                contactCol = mix(vec3(0.04, 0.32, 0.95), vec3(0.35, 0.8, 1.0), t);
-                                glowCol = vec3(0.65, 0.92, 1.0);
-                            } else if (uTcaColorMode == 2) {
+                                contactCol = mix(vec3(0.02, 0.25, 0.95), vec3(0.35, 0.85, 1.0), t);
+                                glowCol = vec3(0.7, 0.95, 1.0);
+                            } else if (uTcaColorMode > 1.5) {
                                 // Mode 2: Thermal Heatmap (Bản đồ nhiệt áp lực)
                                 vec3 colA = vec3(0.08, 0.85, 0.22);
                                 vec3 colB = vec3(1.0, 0.85, 0.1);
-                                vec3 colC = vec3(1.0, 0.08, 0.15);
+                                vec3 colC = vec3(1.0, 0.05, 0.15);
                                 contactCol = t < 0.5 ? mix(colA, colB, t * 2.0) : mix(colB, colC, (t - 0.5) * 2.0);
                                 glowCol = vec3(1.0, 1.0, 0.4);
                             }
                             
                             gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
-                            gl_FragColor.rgb += glowCol * pow(t, 2.5) * 0.85;
+                            gl_FragColor.rgb += glowCol * pow(t, 2.0) * 0.85;
                         }
                     }
                 }
@@ -4204,17 +4265,39 @@ class Bevel3DVisualizer {
     toggleContactTCA() {
         this.tcaEnabled = !this.tcaEnabled;
         this.tcaUniforms.uTcaEnabled.value = this.tcaEnabled ? 1.0 : 0.0;
+        if (this.pinionMesh) this.pinionMesh.material.needsUpdate = true;
+        if (this.gearMesh) this.gearMesh.material.needsUpdate = true;
+        if (this.pinionSurfMesh) this.pinionSurfMesh.material.needsUpdate = true;
+        if (this.gearSurfMesh) this.gearSurfMesh.material.needsUpdate = true;
         return this.tcaEnabled;
     }
 
     setTCAWidth(width) {
         this.tcaWidth = Math.max(0.5, Math.min(20.0, parseFloat(width) || 4.0));
         this.tcaUniforms.uTcaWidth.value = this.tcaWidth;
+        if (this.pinionMesh) this.pinionMesh.material.needsUpdate = true;
+        if (this.gearMesh) this.gearMesh.material.needsUpdate = true;
+        if (this.pinionSurfMesh) this.pinionSurfMesh.material.needsUpdate = true;
+        if (this.gearSurfMesh) this.gearSurfMesh.material.needsUpdate = true;
     }
 
     setTCAColorMode(mode) {
         this.tcaColorMode = parseInt(mode) || 0;
-        this.tcaUniforms.uTcaColorMode.value = this.tcaColorMode;
+        this.tcaUniforms.uTcaColorMode.value = parseFloat(mode) || 0.0;
+        if (this.pinionMesh) this.pinionMesh.material.needsUpdate = true;
+        if (this.gearMesh) this.gearMesh.material.needsUpdate = true;
+        if (this.pinionSurfMesh) this.pinionSurfMesh.material.needsUpdate = true;
+        if (this.gearSurfMesh) this.gearSurfMesh.material.needsUpdate = true;
+    }
+
+    setTCAPatternType(patternType) {
+        this.tcaPatternType = parseInt(patternType) || 0;
+        this.tcaUniforms.uTcaPatternType.value = parseFloat(patternType) || 0.0;
+        if (this.pinionMesh) this.pinionMesh.material.needsUpdate = true;
+        if (this.gearMesh) this.gearMesh.material.needsUpdate = true;
+        if (this.pinionSurfMesh) this.pinionSurfMesh.material.needsUpdate = true;
+        if (this.gearSurfMesh) this.gearSurfMesh.material.needsUpdate = true;
+        return this.tcaPatternType;
     }
 
     /**
@@ -5101,6 +5184,7 @@ class BevelGearUI {
 
         // 3D Tooth Contact Analysis (TCA) Controls
         const btnToggleContactTCA = document.getElementById('btnToggleContactTCA');
+        const selTCAPatternType = document.getElementById('selTCAPatternType');
         const selTCAColorMode = document.getElementById('selTCAColorMode');
         const tcaBandControl = document.getElementById('tcaBandControl');
         const sliderTCABandWidth = document.getElementById('sliderTCABandWidth');
@@ -5115,6 +5199,7 @@ class BevelGearUI {
                     btnToggleContactTCA.style.color = '#ffffff';
                     btnToggleContactTCA.style.borderColor = '#be123c';
                     btnToggleContactTCA.innerHTML = '🔴 Đang Hiện Vết';
+                    if (selTCAPatternType) selTCAPatternType.style.display = 'inline-block';
                     if (selTCAColorMode) selTCAColorMode.style.display = 'inline-block';
                     if (tcaBandControl) tcaBandControl.style.display = 'inline-flex';
                     let tcaBadge = document.getElementById('badgeTCAStatus');
@@ -5130,11 +5215,18 @@ class BevelGearUI {
                     btnToggleContactTCA.style.color = '';
                     btnToggleContactTCA.style.borderColor = '';
                     btnToggleContactTCA.innerHTML = '🔴 Vết Tiếp Xúc';
+                    if (selTCAPatternType) selTCAPatternType.style.display = 'none';
                     if (selTCAColorMode) selTCAColorMode.style.display = 'none';
                     if (tcaBandControl) tcaBandControl.style.display = 'none';
                     const tcaBadge = document.getElementById('badgeTCAStatus');
                     if (tcaBadge && tcaBadge.parentNode) tcaBadge.parentNode.removeChild(tcaBadge);
                 }
+            });
+        }
+
+        if (selTCAPatternType && this.visualizer3D) {
+            selTCAPatternType.addEventListener('change', (e) => {
+                this.visualizer3D.setTCAPatternType(e.target.value);
             });
         }
 

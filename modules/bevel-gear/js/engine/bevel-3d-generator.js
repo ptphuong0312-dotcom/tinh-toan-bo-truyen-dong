@@ -123,7 +123,12 @@ export const Bevel3DGenerator = {
             const z_pitch = R_s * cosD;
             const ha_s = ha_e * scale_s;
             const hf_s = hf_e * scale_s;
-            const sn_s = sn_e * scale_s;
+            
+            // Gleason Tooth Crowning / Ease-Off (ISO 23509 Section 7.5 & AGMA 2005-B88)
+            // Lengthwise crowning eases off toe and heel to prevent edge stress concentrations
+            const C_L = isSpiral ? (mmn * 0.0035) : (mmn * 0.0020);
+            const crown_L = C_L * Math.pow(2.0 * u, 2.0);
+            const sn_s = Math.max(0.1, (sn_e * scale_s) - crown_L);
 
             // Transverse tooth parameters for virtual gear (Tredgold ISO 23509)
             const cos_beta = isSpiral ? Math.max(0.2, Math.cos(beta)) : 1.0;
@@ -150,6 +155,11 @@ export const Bevel3DGenerator = {
                     // Radial extension below base circle to root
                     psi_c = (psi_v + inv_alfa_t) * (r_c / rvb);
                 }
+                // Profile crowning (tip/root ease-off per Gleason practice)
+                const C_P = mmn * 0.0015;
+                const crown_P = C_P * Math.pow(2.0 * t - 1.0, 2.0);
+                psi_c = Math.max(0.0001, psi_c - crown_P / rv);
+
                 const h = r_c - rv;
                 const r_pt = r_pitch + h * cosD;
                 const theta = (rv / Math.max(1.0, r_pt)) * psi_c;

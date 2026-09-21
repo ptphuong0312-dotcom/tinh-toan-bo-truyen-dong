@@ -1789,7 +1789,11 @@
 
                         <!-- TCA Contact Analysis Controls -->
                         <div style="display: flex; align-items: center; gap: 4px; border-left: 1px solid var(--border-color); padding-left: 6px;">
-                            <button type="button" class="btn btn-secondary" id="btnToggleContactTCA" title="Bật/tắt hiển thị vết tiếp xúc ăn khớp thời gian thực (Tooth Contact Analysis)">🔴 Vết Tiếp Xúc</button>
+                            <button type="button" class="btn btn-secondary" id="btnToggleContactTCA" title="Bật/tắt hiển thị vết tiếp xúc ăn khớp (Tooth Contact Analysis)">🔴 Vết Tiếp Xúc</button>
+                            <select id="selTCAPatternType" class="calc-select" style="display: none; padding: 4px 8px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #38bdf8; border: 1.5px solid #0284c7; cursor: pointer;" title="Dạng hiển thị vết tiếp xúc">
+                                <option value="0" selected>⚡ Tiếp Xúc Động Lăn (Rolling Locus)</option>
+                                <option value="1">🎯 Vết Elip Chuẩn Gleason (Rolled Pattern)</option>
+                            </select>
                             <select id="selTCAColorMode" class="calc-select" style="display: none; padding: 4px 8px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #f43f5e; border: 1.5px solid #e11d48; cursor: pointer;" title="Chế độ màu sắc vệt tiếp xúc">
                                 <option value="0">🔴 Laser Ruby (Đỏ Rực)</option>
                                 <option value="1">🔵 Prussian Blue (Bột Màu)</option>
