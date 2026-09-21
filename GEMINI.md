@@ -482,6 +482,37 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Chiều dày răng và góc ăn khớp nón ảo Tredgold quy đổi sang ngang diện: $\alpha_t = \arctan(\tan\alpha_n / \cos\beta)$, $s_t = s_n / \cos\beta$.
    - Hai sườn răng xoắn cong cùng chiều lồng khít vào nhau `( (`, không đâm xiên cắt chéo "X" và không ngập răng.
 
+---
+
+### Quy Tắc 26: Quy Chuẩn 3 Chế Độ Kiểm Tra Ăn Khớp Độc Lập Cho Lập Trình Gia Công CNC (Tùy Biến Kết Hợp Tự Do)
+1. **Mục đích & Yêu cầu người dùng (`SirPhuong`)**:
+   - Cung cấp giải pháp thẩm định và kiểm tra trực quan độ chính xác của mô hình 3D ăn khớp bánh răng côn trước khi lập trình gia công phay CNC (Mastercam, PowerMill, SolidCAM, phay nhiều trục).
+   - Triển khai 3 phương án dưới dạng **3 nút bấm độc lập** trên thanh công cụ 3D, hoạt động theo cơ chế bật/tắt (Toggle) và cho phép kết hợp tự do bất kỳ phương án nào (1, 2, 3, 1+2, 1+3, 2+3, 1+2+3).
+   - Mô hình 3D danh nghĩa được dựng theo chuẩn hình học lý thuyết với khe hở sườn răng $j_n = 0.000\text{ mm}$ (Zero Backlash) làm chuẩn đầu vào cho CAM, còn khe hở cạnh răng khi gia công thực tế sẽ do thợ vận hành / phần mềm CAM tạo ra bằng lượng dịch dao (cutter offset) hoặc cắt lẹm sườn răng.
+2. **Bộ 3 công cụ kiểm tra ăn khớp độc lập**:
+   - **Phương Án 1: `[👁️ Chỉ Mặt Bên]` (`#btnToggleFlankOnly`)**:
+     * Ẩn toàn bộ phôi đặc (moay-ơ, lỗ trục, nón đỉnh phẳng, nón đáy phẳng: `pinionMesh.visible = false; gearMesh.visible = false;`).
+     * Hiển thị duy nhất các mặt sườn răng tiếp xúc dạng surface vỏ mỏng 2 mặt (`THREE.DoubleSide`, `pinionSurfMesh.visible = true; gearSurfMesh.visible = true;`).
+     * Cho phép kỹ sư nhìn xuyên thấu vào từng đường sinh thân khai, kiểm tra tiếp xúc liên hợp không bị che khuất bởi thân bánh răng.
+   - **Phương Án 2: `[📏 Thước Đo Khe Hở]` (`#btnToggleClearanceGauge`)**:
+     * Hiển thị bảng điều khiển nổi HUD bán trong suốt (`#hudClearanceGauge`) với hiệu ứng làm mờ nền (backdrop-filter blur).
+     * Đo đạc định lượng số học thời gian thực:
+       - **Khe hở sườn làm việc ($\Delta$)**: $\Delta = 0.000\text{ mm}$ tại vị trí ăn khớp danh nghĩa chuẩn lý thuyết.
+       - **Đèn báo trạng thái trực quan**: `🟢 TIẾP XÚC` khi $\Delta \le 0.015\text{ mm}$, `🟡 HỞ RĂNG (BACKLASH)` khi tách khớp và `🔴 GIAO NHAU (INTERFERENCE)` nếu có va chạm âm.
+       - **Khe hở sườn đối diện**: $0.000\text{ mm}$ (danh nghĩa CAD CAM).
+       - **Khe hở chân răng ($c$)**: $c = 0.200 \cdot m_{mn} = 2.000\text{ mm}$ (khớp chuẩn ISO 23509).
+       - **Vị trí đo đạc**: Vành răng trung bình $R_m = 279.8\text{ mm}$.
+       - **Con trỏ 3D Laser Marker (`this.contactMarker`)**: Một hình cầu phát sáng (Emerald glow sphere) đặt tại tọa độ tiếp xúc $(R_m \cos\delta_1, R_m \sin\delta_1, 0)$ định vị chính xác vị trí đo đạc trong không gian 3D.
+   - **Phương Án 3: `[✂️ Mặt Cắt Ăn Khớp]` (`#btnToggleSectionCut`)**:
+     * Sử dụng mặt phẳng cắt cục bộ GPU Three.js (`renderer.localClippingEnabled = true; THREE.Plane(Vector3(0, 0, -1), 0)`).
+     * Bổ dọc toàn bộ cặp bánh răng qua mặt phẳng ăn khớp $Z = 0$, để lộ mặt cắt 2D của các răng đang ăn khớp liên hợp, cho phép nhìn rõ khe hở chân răng $c$ và biên dạng ăn khớp mà không giảm hiệu năng đồ họa.
+3. **Hiệu ứng giao diện & Khả năng phối hợp (Active State Styling)**:
+   - Nút 1 khi bật: Nền xanh dương `#0284c7`, viền `#38bdf8`, đổi nhãn `👁️ Đang Hiện Mặt Bên`.
+   - Nút 2 khi bật: Nền xanh lục `#059669`, viền `#34d399`, đổi nhãn `📏 Đang Đo Khe Hở`.
+   - Nút 3 khi bật: Nền tím `#7c3aed`, viền `#a78bfa`, đổi nhãn `✂️ Đang Cắt Ăn Khớp`.
+   - Khi tắt: Tự động trở về trạng thái nút thứ cấp tiêu chuẩn `btn-secondary`.
+   - Cả 3 phương án phối hợp hoàn hảo với các tính năng: Nhích từng chút một (`btn3DStepFwd`, `btn3DStepBack`), xoay tự do 360° (`OrbitControls`), đổi góc nhìn (`sel3DViewPreset`), bật/tắt khung dây (`btnToggleWireframe`).
+
 
 
 

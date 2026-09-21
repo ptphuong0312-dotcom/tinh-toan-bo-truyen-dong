@@ -462,6 +462,61 @@ class BevelGearUI {
             });
         }
 
+        // 3 Independent Verification & Inspection Modes (Phương Án 1, 2, 3)
+        const btnToggleFlankOnly = document.getElementById('btnToggleFlankOnly');
+        if (btnToggleFlankOnly && this.visualizer3D) {
+            btnToggleFlankOnly.addEventListener('click', () => {
+                const isFlankOnly = this.visualizer3D.toggleFlankOnly();
+                if (isFlankOnly) {
+                    btnToggleFlankOnly.style.background = '#0284c7';
+                    btnToggleFlankOnly.style.color = '#ffffff';
+                    btnToggleFlankOnly.style.borderColor = '#38bdf8';
+                    btnToggleFlankOnly.innerHTML = '👁️ Đang Hiện Mặt Bên';
+                } else {
+                    btnToggleFlankOnly.style.background = '';
+                    btnToggleFlankOnly.style.color = '';
+                    btnToggleFlankOnly.style.borderColor = '';
+                    btnToggleFlankOnly.innerHTML = '👁️ Chỉ Mặt Bên';
+                }
+            });
+        }
+
+        const btnToggleClearanceGauge = document.getElementById('btnToggleClearanceGauge');
+        if (btnToggleClearanceGauge && this.visualizer3D) {
+            btnToggleClearanceGauge.addEventListener('click', () => {
+                const isGauge = this.visualizer3D.toggleClearanceGauge();
+                if (isGauge) {
+                    btnToggleClearanceGauge.style.background = '#059669';
+                    btnToggleClearanceGauge.style.color = '#ffffff';
+                    btnToggleClearanceGauge.style.borderColor = '#34d399';
+                    btnToggleClearanceGauge.innerHTML = '📏 Đang Đo Khe Hở';
+                } else {
+                    btnToggleClearanceGauge.style.background = '';
+                    btnToggleClearanceGauge.style.color = '';
+                    btnToggleClearanceGauge.style.borderColor = '';
+                    btnToggleClearanceGauge.innerHTML = '📏 Thước Đo Khe Hở';
+                }
+            });
+        }
+
+        const btnToggleSectionCut = document.getElementById('btnToggleSectionCut');
+        if (btnToggleSectionCut && this.visualizer3D) {
+            btnToggleSectionCut.addEventListener('click', () => {
+                const isCut = this.visualizer3D.toggleSectionCut();
+                if (isCut) {
+                    btnToggleSectionCut.style.background = '#7c3aed';
+                    btnToggleSectionCut.style.color = '#ffffff';
+                    btnToggleSectionCut.style.borderColor = '#a78bfa';
+                    btnToggleSectionCut.innerHTML = '✂️ Đang Cắt Ăn Khớp';
+                } else {
+                    btnToggleSectionCut.style.background = '';
+                    btnToggleSectionCut.style.color = '';
+                    btnToggleSectionCut.style.borderColor = '';
+                    btnToggleSectionCut.innerHTML = '✂️ Mặt Cắt Ăn Khớp';
+                }
+            });
+        }
+
         // 3D Export Dropdown & Items Binding
         const btnExport3DMenu = document.getElementById('btnExport3DMenu');
         const export3DDropdown = document.getElementById('export3DDropdown');

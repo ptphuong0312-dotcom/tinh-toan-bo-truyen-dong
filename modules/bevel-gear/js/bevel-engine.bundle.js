@@ -3405,6 +3405,17 @@ class Bevel3DVisualizer {
         this.mesh1Data = null;
         this.mesh2Data = null;
 
+        // 3 Independent Verification & Inspection Modes (Phương Án 1, 2, 3)
+        this.flankOnlyMode = false;      // Mode 1: Hide blanks, show tooth flank surfaces only
+        this.clearanceGaugeMode = false; // Mode 2: Real-time digital clearance HUD gauge
+        this.sectionCutMode = false;     // Mode 3: Dynamic section clipping plane at Z = 0
+        this.pinionSurfMesh = null;
+        this.gearSurfMesh = null;
+        this.surf1Data = null;
+        this.surf2Data = null;
+        this.contactMarker = null;
+        this.clipPlane = null;
+
         // Tooth Contact Analysis (TCA) Dynamic Highlighting Engine
         this.tcaEnabled = false;
         this.tcaWidth = 2.2;
@@ -3450,12 +3461,16 @@ class Bevel3DVisualizer {
 
         // 3. Renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
+        this.renderer.localClippingEnabled = true; // Enables GPU Section Cut Plane (Phương Án 3)
         this.renderer.setSize(width, height);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         this.renderer.shadowMap.enabled = true;
         this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
         this.renderer.toneMappingExposure = 1.15;
+
+        // Dynamic Section Clipping Plane (Z = 0 pitch contact plane, normal pointing along -Z)
+        this.clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);
 
         while (this.container.firstChild) {
             this.container.removeChild(this.container.firstChild);
@@ -3593,23 +3608,27 @@ class Bevel3DVisualizer {
         const hand1 = geom.hand1 !== undefined ? (geom.hand1 === 1 || geom.hand1 === 'left' ? -1 : 1) : -1;
         const hand2 = -hand1;
 
-        // 1. Generate Pinion 1 Mesh (Authentic MITCalc Data1 & Section 3D)
-        this.mesh1Data = Bevel3DGenerator.generateGearMesh({
+        // 1. Generate Pinion 1 Mesh (Solid & Surface)
+        const opt1 = {
             z: z1, mmn, delta: delta1, delta_a: delta_a1, delta_f: delta_f1,
             Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
             ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
             Hin: Hin1, Hout: Hout1, dBore: dBore1,
             hand: hand1, gearingType
-        });
+        };
+        this.mesh1Data = Bevel3DGenerator.generateGearMesh(opt1);
+        this.surf1Data = Bevel3DGenerator.generateGearSurfaceMesh(opt1);
 
-        // 2. Generate Gear 2 Mesh (Authentic MITCalc Data1 & Section 3D)
-        this.mesh2Data = Bevel3DGenerator.generateGearMesh({
+        // 2. Generate Gear 2 Mesh (Solid & Surface)
+        const opt2 = {
             z: z2, mmn, delta: delta2, delta_a: delta_a2, delta_f: delta_f2,
             Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
             ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
             Hin: Hin2, Hout: Hout2, dBore: dBore2,
             hand: hand2, gearingType
-        });
+        };
+        this.mesh2Data = Bevel3DGenerator.generateGearMesh(opt2);
+        this.surf2Data = Bevel3DGenerator.generateGearSurfaceMesh(opt2);
 
         // Update TCA Uniforms for Bevel Gear
         this.tcaUniforms.uCosD.value = Math.cos(delta1);
@@ -3645,7 +3664,7 @@ class Bevel3DVisualizer {
     updateMeshes() {
         if (!this.mesh1Data || !this.mesh2Data) return;
 
-        // Clean previous meshes
+        // Clean previous solid meshes
         if (this.pinionMesh) {
             this.pinionGroup.remove(this.pinionMesh);
             this.pinionMesh.geometry.dispose();
@@ -3657,26 +3676,65 @@ class Bevel3DVisualizer {
             this.gearMesh = null;
         }
 
-        // PBR Materials: Pinion (Cyan Steel), Gear (Gold/Bronze Steel)
+        // Clean previous surface meshes
+        if (this.pinionSurfMesh) {
+            this.pinionGroup.remove(this.pinionSurfMesh);
+            this.pinionSurfMesh.geometry.dispose();
+            this.pinionSurfMesh = null;
+        }
+        if (this.gearSurfMesh) {
+            this.gearGroup.remove(this.gearSurfMesh);
+            this.gearSurfMesh.geometry.dispose();
+            this.gearSurfMesh = null;
+        }
+
+        const clippingPlanes = (this.sectionCutMode && this.clipPlane) ? [this.clipPlane] : [];
+
+        // PBR Materials: Pinion Solid (Cyan Steel), Gear Solid (Gold/Bronze Steel)
         const matPinion = new THREE.MeshStandardMaterial({
             color: 0x0284c7, // Vibrant cyan-blue
             metalness: 0.85,
             roughness: 0.25,
-            wireframe: this.wireframeMode
+            wireframe: this.wireframeMode,
+            clippingPlanes: clippingPlanes,
+            clipShadows: true
         });
 
         const matGear = new THREE.MeshStandardMaterial({
             color: 0xf59e0b, // Warm amber-gold
             metalness: 0.85,
             roughness: 0.28,
-            wireframe: this.wireframeMode
+            wireframe: this.wireframeMode,
+            clippingPlanes: clippingPlanes,
+            clipShadows: true
         });
 
-        // Apply TCA (Tooth Contact Analysis) Dynamic Shader
+        // Surface-Only Materials (Double-Sided, Phương Án 1)
+        const matPinionSurf = new THREE.MeshStandardMaterial({
+            color: 0x38bdf8, // Sky blue for pinion flank
+            metalness: 0.70,
+            roughness: 0.30,
+            side: THREE.DoubleSide,
+            wireframe: this.wireframeMode,
+            clippingPlanes: clippingPlanes
+        });
+
+        const matGearSurf = new THREE.MeshStandardMaterial({
+            color: 0xfbbf24, // Amber gold for gear flank
+            metalness: 0.70,
+            roughness: 0.30,
+            side: THREE.DoubleSide,
+            wireframe: this.wireframeMode,
+            clippingPlanes: clippingPlanes
+        });
+
+        // Apply TCA (Tooth Contact Analysis) Dynamic Shader to all materials
         this.applyTCAShader(matPinion, true);
         this.applyTCAShader(matGear, false);
+        this.applyTCAShader(matPinionSurf, true);
+        this.applyTCAShader(matGearSurf, false);
 
-        // 1. Pinion BufferGeometry
+        // 1. Pinion Solid Mesh
         const geo1 = new THREE.BufferGeometry();
         geo1.setAttribute('position', new THREE.BufferAttribute(this.mesh1Data.vertices, 3));
         geo1.setAttribute('normal', new THREE.BufferAttribute(this.mesh1Data.normals, 3));
@@ -3684,15 +3742,23 @@ class Bevel3DVisualizer {
         this.pinionMesh = new THREE.Mesh(geo1, matPinion);
         this.pinionMesh.castShadow = true;
         this.pinionMesh.receiveShadow = true;
+        this.pinionMesh.visible = !this.flankOnlyMode;
+        this.pinionMesh.rotation.set(0, Math.PI / 2.0, Math.PI / 2.0);
         this.pinionGroup.add(this.pinionMesh);
 
-        // Align Pinion along +X axis:
-        // Local Z -> World +X (Pinion axis)
-        // Local X -> World +Y (Tooth 0 points along +Y, exactly towards the contact line in XY plane)
-        // Local Y -> World +Z
-        this.pinionMesh.rotation.set(0, Math.PI / 2.0, Math.PI / 2.0);
+        // 2. Pinion Surface Mesh (Phương Án 1)
+        if (this.surf1Data) {
+            const geoSurf1 = new THREE.BufferGeometry();
+            geoSurf1.setAttribute('position', new THREE.BufferAttribute(this.surf1Data.vertices, 3));
+            geoSurf1.setAttribute('normal', new THREE.BufferAttribute(this.surf1Data.normals, 3));
+            geoSurf1.setIndex(new THREE.BufferAttribute(this.surf1Data.indices, 1));
+            this.pinionSurfMesh = new THREE.Mesh(geoSurf1, matPinionSurf);
+            this.pinionSurfMesh.visible = this.flankOnlyMode;
+            this.pinionSurfMesh.rotation.set(0, Math.PI / 2.0, Math.PI / 2.0);
+            this.pinionGroup.add(this.pinionSurfMesh);
+        }
 
-        // 2. Gear BufferGeometry
+        // 3. Gear Solid Mesh
         const geo2 = new THREE.BufferGeometry();
         geo2.setAttribute('position', new THREE.BufferAttribute(this.mesh2Data.vertices, 3));
         geo2.setAttribute('normal', new THREE.BufferAttribute(this.mesh2Data.normals, 3));
@@ -3700,17 +3766,43 @@ class Bevel3DVisualizer {
         this.gearMesh = new THREE.Mesh(geo2, matGear);
         this.gearMesh.castShadow = true;
         this.gearMesh.receiveShadow = true;
+        this.gearMesh.visible = !this.flankOnlyMode;
+        this.gearMesh.rotation.set(-Math.PI / 2.0, 0, 0);
         this.gearGroup.add(this.gearMesh);
 
-        // Align Gear along +Y axis (inside gearPivot):
-        // Local Z -> World +Y (Gear axis)
-        // Local X -> World +X (Tooth 0 points along +X, exactly towards the contact line in XY plane)
-        // Local Y -> World -Z
-        this.gearMesh.rotation.set(-Math.PI / 2.0, 0, 0);
+        // 4. Gear Surface Mesh (Phương Án 1)
+        if (this.surf2Data) {
+            const geoSurf2 = new THREE.BufferGeometry();
+            geoSurf2.setAttribute('position', new THREE.BufferAttribute(this.surf2Data.vertices, 3));
+            geoSurf2.setAttribute('normal', new THREE.BufferAttribute(this.surf2Data.normals, 3));
+            geoSurf2.setIndex(new THREE.BufferAttribute(this.surf2Data.indices, 1));
+            this.gearSurfMesh = new THREE.Mesh(geoSurf2, matGearSurf);
+            this.gearSurfMesh.visible = this.flankOnlyMode;
+            this.gearSurfMesh.rotation.set(-Math.PI / 2.0, 0, 0);
+            this.gearGroup.add(this.gearSurfMesh);
+        }
 
         // Rotate gearPivot for general shaft angle Sigma:
         const sigma = this.sigmaRad || (Math.PI / 2.0);
         this.gearPivot.rotation.z = sigma - Math.PI / 2.0;
+
+        // 5. Contact Marker for Real-Time HUD Gauge (Phương Án 2)
+        if (!this.contactMarker) {
+            const markerGeo = new THREE.SphereGeometry(3.5, 16, 16);
+            const markerMat = new THREE.MeshStandardMaterial({
+                color: 0x34d399,
+                emissive: 0x10b981,
+                emissiveIntensity: 0.9,
+                roughness: 0.1,
+                metalness: 0.2
+            });
+            this.contactMarker = new THREE.Mesh(markerGeo, markerMat);
+            this.scene.add(this.contactMarker);
+        }
+        const Rm = this.geom ? (parseFloat(this.geom.Rm) || 279.5) : 279.5;
+        const delta1 = this.geom ? (parseFloat(this.geom.delta1) || (Math.PI / 4.0)) : (Math.PI / 4.0);
+        this.contactMarker.position.set(Rm * Math.cos(delta1), Rm * Math.sin(delta1), 0);
+        this.contactMarker.visible = this.clearanceGaugeMode;
     }
 
     updateGearRotations() {
@@ -3730,6 +3822,9 @@ class Bevel3DVisualizer {
             // Kinematic conjugate synchronization:
             this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
             this.updateGearRotations();
+            if (this.clearanceGaugeMode) {
+                this.updateClearanceHUD();
+            }
         }
 
         if (this.controls) {
@@ -3753,6 +3848,9 @@ class Bevel3DVisualizer {
         this.pinionAngle += stepRad;
         this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
         this.updateGearRotations();
+        if (this.clearanceGaugeMode) {
+            this.updateClearanceHUD();
+        }
         return this.pinionAngle;
     }
 
@@ -3765,6 +3863,8 @@ class Bevel3DVisualizer {
         this.wireframeMode = !this.wireframeMode;
         if (this.pinionMesh) this.pinionMesh.material.wireframe = this.wireframeMode;
         if (this.gearMesh) this.gearMesh.material.wireframe = this.wireframeMode;
+        if (this.pinionSurfMesh) this.pinionSurfMesh.material.wireframe = this.wireframeMode;
+        if (this.gearSurfMesh) this.gearSurfMesh.material.wireframe = this.wireframeMode;
         return this.wireframeMode;
     }
 
@@ -4076,6 +4176,141 @@ class Bevel3DVisualizer {
     setTCAColorMode(mode) {
         this.tcaColorMode = parseInt(mode) || 0;
         this.tcaUniforms.uTcaColorMode.value = this.tcaColorMode;
+    }
+
+    /**
+     * Phương Án 1: Ẩn/Hiện dạng sườn Flank Surface (không có phôi đặc)
+     * Toggles between solid CAD blanks and open flank surfaces
+     */
+    toggleFlankOnly() {
+        this.flankOnlyMode = !this.flankOnlyMode;
+        if (this.pinionMesh) this.pinionMesh.visible = !this.flankOnlyMode;
+        if (this.gearMesh) this.gearMesh.visible = !this.flankOnlyMode;
+        if (this.pinionSurfMesh) this.pinionSurfMesh.visible = this.flankOnlyMode;
+        if (this.gearSurfMesh) this.gearSurfMesh.visible = this.flankOnlyMode;
+        return this.flankOnlyMode;
+    }
+
+    /**
+     * Phương Án 2: Bật/Tắt Thước Đo Khe Hở Định Lượng Thời Gian Thực (Digital HUD Gauge)
+     */
+    toggleClearanceGauge() {
+        this.clearanceGaugeMode = !this.clearanceGaugeMode;
+        const hudEl = document.getElementById('hudClearanceGauge');
+        if (hudEl) {
+            hudEl.style.display = this.clearanceGaugeMode ? 'block' : 'none';
+        }
+        if (this.contactMarker) {
+            this.contactMarker.visible = this.clearanceGaugeMode;
+        }
+        if (this.clearanceGaugeMode) {
+            this.updateClearanceHUD();
+        }
+        return this.clearanceGaugeMode;
+    }
+
+    /**
+     * Phương Án 3: Bật/Tắt Mặt Cắt Ăn Khớp Động (Dynamic Section Clipping Plane Z = 0)
+     */
+    toggleSectionCut() {
+        this.sectionCutMode = !this.sectionCutMode;
+        const planes = (this.sectionCutMode && this.clipPlane) ? [this.clipPlane] : [];
+        if (this.pinionMesh) this.pinionMesh.material.clippingPlanes = planes;
+        if (this.gearMesh) this.gearMesh.material.clippingPlanes = planes;
+        if (this.pinionSurfMesh) this.pinionSurfMesh.material.clippingPlanes = planes;
+        if (this.gearSurfMesh) this.gearSurfMesh.material.clippingPlanes = planes;
+        return this.sectionCutMode;
+    }
+
+    /**
+     * Cập nhật thông số HUD Thước đo khe hở thời gian thực (Phương Án 2)
+     */
+    updateClearanceHUD() {
+        if (!this.clearanceGaugeMode) return;
+        const hudEl = document.getElementById('hudClearanceGauge');
+        if (!hudEl) return;
+
+        const Rm = this.geom ? (parseFloat(this.geom.Rm) || 279.5) : 279.5;
+        const delta1 = this.geom ? (parseFloat(this.geom.delta1) || (Math.PI / 4.0)) : (Math.PI / 4.0);
+        const z1 = this.geom ? (parseInt(this.geom.z1) || 18) : 18;
+        const mmn = this.geom ? (parseFloat(this.geom.mmn) || 10.0) : 10.0;
+        const alfaRad = this.geom ? (parseFloat(this.geom.alfa_deg || 20.0) * Math.PI / 180.0) : (20.0 * Math.PI / 180.0);
+        const ea = this.geom ? (parseFloat(this.geom.ea) || 1.25) : 1.25;
+
+        // Pitch angle per tooth of pinion
+        const toothPitch = (2.0 * Math.PI) / z1;
+        // Current angle relative to tooth pitch
+        let phiRel = (this.pinionAngle % toothPitch + toothPitch) % toothPitch;
+        if (phiRel > toothPitch / 2.0) phiRel -= toothPitch;
+
+        // Engagement angle span based on contact ratio ea (conjugate engagement zone)
+        const engageHalfSpan = (ea * toothPitch) * 0.45;
+        let deltaClearance = 0.0;
+        let isContact = true;
+
+        if (Math.abs(phiRel) <= engageHalfSpan) {
+            deltaClearance = 0.000;
+            isContact = true;
+        } else {
+            const sepAngle = Math.abs(phiRel) - engageHalfSpan;
+            const rPitchM = Rm * Math.sin(delta1);
+            deltaClearance = sepAngle * rPitchM * Math.sin(alfaRad);
+            isContact = false;
+        }
+
+        // Root bottom clearance c = 0.200 * mmn
+        const c_root = 0.200 * mmn;
+
+        // Update DOM elements
+        const valContactEl = document.getElementById('hudValContactClearance');
+        const indEl = document.getElementById('hudClearanceIndicator');
+        const valOppEl = document.getElementById('hudValOppositeClearance');
+        const valRootEl = document.getElementById('hudValRootClearance');
+        const locEl = document.getElementById('hudMeasureLocation');
+
+        if (valContactEl) {
+            valContactEl.textContent = deltaClearance.toFixed(3) + ' mm';
+            valContactEl.style.color = isContact ? '#4ade80' : '#fde047';
+        }
+
+        if (indEl) {
+            if (isContact) {
+                indEl.textContent = '🟢 TIẾP XÚC';
+                indEl.style.background = '#065f46';
+                indEl.style.color = '#34d399';
+            } else {
+                indEl.textContent = '🟡 HỞ RĂNG (BACKLASH)';
+                indEl.style.background = '#854d0e';
+                indEl.style.color = '#fde047';
+            }
+        }
+
+        if (valOppEl) {
+            valOppEl.textContent = '0.000 mm (Danh nghĩa)';
+        }
+
+        if (valRootEl) {
+            valRootEl.textContent = c_root.toFixed(3) + ' mm';
+        }
+
+        if (locEl) {
+            locEl.textContent = `Đoạn giữa vành răng (Rm = ${Rm.toFixed(1)} mm)`;
+        }
+
+        // Update 3D Laser Marker Position & Color
+        if (this.contactMarker) {
+            this.contactMarker.visible = true;
+            const cx = Rm * Math.cos(delta1);
+            const cy = Rm * Math.sin(delta1);
+            const cz = isContact ? 0.0 : Math.min(10.0, deltaClearance);
+            this.contactMarker.position.set(cx, cy, cz);
+            if (this.contactMarker.material) {
+                this.contactMarker.material.color.setHex(isContact ? 0x34d399 : 0xfde047);
+                if (this.contactMarker.material.emissive) {
+                    this.contactMarker.material.emissive.setHex(isContact ? 0x10b981 : 0xb45309);
+                }
+            }
+        }
     }
 }
 
@@ -4875,6 +5110,61 @@ class BevelGearUI {
                 const w = parseFloat(e.target.value) || 2.2;
                 if (lblTCABandWidth) lblTCABandWidth.textContent = w.toFixed(1) + 'mm';
                 this.visualizer3D.setTCAWidth(w);
+            });
+        }
+
+        // 3 Independent Verification & Inspection Modes (Phương Án 1, 2, 3)
+        const btnToggleFlankOnly = document.getElementById('btnToggleFlankOnly');
+        if (btnToggleFlankOnly && this.visualizer3D) {
+            btnToggleFlankOnly.addEventListener('click', () => {
+                const isFlankOnly = this.visualizer3D.toggleFlankOnly();
+                if (isFlankOnly) {
+                    btnToggleFlankOnly.style.background = '#0284c7';
+                    btnToggleFlankOnly.style.color = '#ffffff';
+                    btnToggleFlankOnly.style.borderColor = '#38bdf8';
+                    btnToggleFlankOnly.innerHTML = '👁️ Đang Hiện Mặt Bên';
+                } else {
+                    btnToggleFlankOnly.style.background = '';
+                    btnToggleFlankOnly.style.color = '';
+                    btnToggleFlankOnly.style.borderColor = '';
+                    btnToggleFlankOnly.innerHTML = '👁️ Chỉ Mặt Bên';
+                }
+            });
+        }
+
+        const btnToggleClearanceGauge = document.getElementById('btnToggleClearanceGauge');
+        if (btnToggleClearanceGauge && this.visualizer3D) {
+            btnToggleClearanceGauge.addEventListener('click', () => {
+                const isGauge = this.visualizer3D.toggleClearanceGauge();
+                if (isGauge) {
+                    btnToggleClearanceGauge.style.background = '#059669';
+                    btnToggleClearanceGauge.style.color = '#ffffff';
+                    btnToggleClearanceGauge.style.borderColor = '#34d399';
+                    btnToggleClearanceGauge.innerHTML = '📏 Đang Đo Khe Hở';
+                } else {
+                    btnToggleClearanceGauge.style.background = '';
+                    btnToggleClearanceGauge.style.color = '';
+                    btnToggleClearanceGauge.style.borderColor = '';
+                    btnToggleClearanceGauge.innerHTML = '📏 Thước Đo Khe Hở';
+                }
+            });
+        }
+
+        const btnToggleSectionCut = document.getElementById('btnToggleSectionCut');
+        if (btnToggleSectionCut && this.visualizer3D) {
+            btnToggleSectionCut.addEventListener('click', () => {
+                const isCut = this.visualizer3D.toggleSectionCut();
+                if (isCut) {
+                    btnToggleSectionCut.style.background = '#7c3aed';
+                    btnToggleSectionCut.style.color = '#ffffff';
+                    btnToggleSectionCut.style.borderColor = '#a78bfa';
+                    btnToggleSectionCut.innerHTML = '✂️ Đang Cắt Ăn Khớp';
+                } else {
+                    btnToggleSectionCut.style.background = '';
+                    btnToggleSectionCut.style.color = '';
+                    btnToggleSectionCut.style.borderColor = '';
+                    btnToggleSectionCut.innerHTML = '✂️ Mặt Cắt Ăn Khớp';
+                }
             });
         }
 

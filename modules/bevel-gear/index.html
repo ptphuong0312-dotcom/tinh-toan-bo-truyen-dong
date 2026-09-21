@@ -1765,6 +1765,13 @@
                         <button type="button" class="btn btn-secondary" id="btnToggleWireframe" title="Bật/tắt khung dây">🕸️ Khung Dây</button>
                         <button type="button" class="btn btn-secondary" id="btnReset3DView">🎯 Đặt Lại</button>
 
+                        <!-- Inspection Controls: 3 Chế Độ Kiểm Tra Ăn Khớp Độc Lập -->
+                        <div style="display: flex; align-items: center; gap: 4px; border-left: 1px solid var(--border-color); padding-left: 6px;">
+                            <button type="button" class="btn btn-secondary" id="btnToggleFlankOnly" title="Phương Án 1: Ẩn khối phôi, chỉ hiện mặt sườn thân khai của cặp răng ăn khớp">👁️ Chỉ Mặt Bên</button>
+                            <button type="button" class="btn btn-secondary" id="btnToggleClearanceGauge" title="Phương Án 2: Thước đo khe hở định lượng số học thời gian thực">📏 Thước Đo Khe Hở</button>
+                            <button type="button" class="btn btn-secondary" id="btnToggleSectionCut" title="Phương Án 3: Mặt phẳng cắt bổ ngang động qua vùng ăn khớp">✂️ Mặt Cắt Ăn Khớp</button>
+                        </div>
+
                         <!-- TCA Contact Analysis Controls -->
                         <div style="display: flex; align-items: center; gap: 4px; border-left: 1px solid var(--border-color); padding-left: 6px;">
                             <button type="button" class="btn btn-secondary" id="btnToggleContactTCA" title="Bật/tắt hiển thị vết tiếp xúc ăn khớp thời gian thực (Tooth Contact Analysis)">🔴 Vết Tiếp Xúc</button>
@@ -1826,6 +1833,30 @@
                 <!-- 3D Viewport Container -->
                 <div id="container3D" style="display: none; position: relative; width: 100%; height: 650px; background-color: #0b0f19; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);">
                     <div id="bevel3DContainer" style="width: 100%; height: 100%;"></div>
+                    
+                    <!-- Digital Clearance Gauge HUD Panel (Phương Án 2) -->
+                    <div id="hudClearanceGauge" style="display: none; position: absolute; top: 14px; right: 14px; background: rgba(15, 23, 42, 0.92); backdrop-filter: blur(8px); border: 1.5px solid #0284c7; border-radius: 8px; padding: 12px 16px; min-width: 270px; box-shadow: 0 8px 24px rgba(0,0,0,0.6); z-index: 100; pointer-events: none; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 6px; margin-bottom: 8px;">
+                            <span style="font-weight: 700; color: #38bdf8; font-size: 0.82rem;">📏 THƯỚC ĐO KHE HỞ (HUD)</span>
+                            <span id="hudClearanceIndicator" style="font-size: 0.72rem; padding: 2px 6px; border-radius: 4px; background: #065f46; color: #34d399; font-weight: 700;">🟢 TIẾP XÚC</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.8rem; color: #cbd5e1;">
+                            <span>Khe hở sườn làm việc (Δ):</span>
+                            <strong id="hudValContactClearance" style="color: #4ade80; font-size: 0.95rem;">0.000 mm</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px; font-size: 0.8rem; color: #cbd5e1;">
+                            <span>Khe hở sườn đối diện:</span>
+                            <strong id="hudValOppositeClearance" style="color: #38bdf8;">0.245 mm</strong>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 0.8rem; color: #cbd5e1;">
+                            <span>Khe hở chân răng (c):</span>
+                            <strong id="hudValRootClearance" style="color: #fde047;">2.000 mm</strong>
+                        </div>
+                        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 6px; font-size: 0.72rem; color: #94a3b8;">
+                            * Vị trí đo: <span id="hudMeasureLocation" style="color: #38bdf8; font-weight: 600;">Đoạn giữa vành răng (Rm)</span>
+                        </div>
+                    </div>
+
                     <!-- 3D Overlay Badge Info -->
                     <div id="badge3DInfo" style="position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 8px 14px; font-size: 0.8rem; color: #cbd5e1; pointer-events: none;">
                         <span id="badge3DType" style="color: #f59e0b; font-weight: 700;">⚙️ Bánh Răng Côn (Bevel Gear)</span> | 

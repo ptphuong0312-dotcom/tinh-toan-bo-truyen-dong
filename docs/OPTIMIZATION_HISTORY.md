@@ -918,6 +918,53 @@
     * **110 / 110 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)** xác nhận toàn bộ bộ công thức cơ khí được bảo toàn bất biến 100%.
   - **Đóng gói mã nguồn Classic Script CORS-Free**: `bundle_all.py` cập nhật thành công cả 2 bundle `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js`.
 
+---
+
+## Giai Đoạn 21: Bộ 3 Công Cụ Kiểm Tra Ăn Khớp Độc Lập Phục Vụ Lập Trình Gia Công CNC (Tùy Biến Kết Hợp Tự Do)
+* **Bối cảnh & Yêu cầu người dùng (`SirPhuong`)**:
+  1. Người dùng cần thẩm định và kiểm tra trực quan độ chính xác của mô hình 3D ăn khớp bánh răng côn để tự tin đưa vào lập trình phay CNC (Mastercam, PowerMill, SolidCAM, 5-trục).
+  2. Người dùng đề xuất: Cần có nút ẩn toàn bộ mô hình, chỉ để lại duy nhất 2 mặt bên (dạng surface) của răng.
+  3. Yêu cầu kết hợp: Triển khai 3 phương án dưới dạng **3 nút bấm độc lập** trên thanh công cụ 3D, hoạt động theo cơ chế bật/tắt (Toggle) và cho phép kết hợp tự do bất kỳ phương án nào (1, 2, 3, 1+2, 1+3, 2+3, 1+2+3).
+  4. Làm rõ nguyên lý khe hở: Khẳng định mô hình 3D danh nghĩa được dựng theo hình học lý thuyết chuẩn với khe hở sườn răng $j_n = 0.000\text{ mm}$ (Zero Backlash) làm đầu vào cho CAM, còn khe hở cạnh răng khi gia công thực tế sẽ do thợ vận hành / CAM tạo ra bằng lượng dịch dao (cutter offset) hoặc cắt lẹm sườn răng.
+  5. **Ràng buộc bất biến tuyệt đối**: Khóa cứng 100% các công thức tính toán cơ khí trong `bevel-calc-engine.js`, bảo đảm $\Delta = 0.000000$.
+
+* **Chi tiết kỹ thuật 3 Phương án độc lập**:
+  1. **Phương Án 1: `[👁️ Chỉ Mặt Bên]` (`#btnToggleFlankOnly`)**:
+     - Ẩn toàn bộ phôi đặc (moay-ơ, lỗ trục, nón đỉnh phẳng, nón đáy phẳng: `pinionMesh.visible = false; gearMesh.visible = false;`).
+     - Hiển thị duy nhất các mặt sườn răng tiếp xúc dạng surface vỏ mỏng 2 mặt (`THREE.DoubleSide`, `pinionSurfMesh.visible = true; gearSurfMesh.visible = true;`).
+     - Cho phép kỹ sư nhìn xuyên thấu vào từng đường sinh thân khai, kiểm tra trực quan tiếp xúc liên hợp không bị che khuất bởi thân bánh răng.
+  2. **Phương Án 2: `[📏 Thước Đo Khe Hở]` (`#btnToggleClearanceGauge`)**:
+     - Hiển thị bảng điều khiển nổi HUD bán trong suốt (`#hudClearanceGauge`) với hiệu ứng làm mờ nền (backdrop-filter blur).
+     - Đo đạc định lượng số học thời gian thực:
+       * **Khe hở sườn làm việc ($\Delta$)**: $\Delta = 0.000\text{ mm}$ tại vị trí ăn khớp danh nghĩa chuẩn lý thuyết.
+       * **Đèn báo trạng thái trực quan**: `🟢 TIẾP XÚC` khi $\Delta \le 0.015\text{ mm}$, `🟡 HỞ RĂNG (BACKLASH)` khi tách khớp và `🔴 GIAO NHAU (INTERFERENCE)` nếu có va chạm âm.
+       * **Khe hở sườn đối diện**: $0.000\text{ mm}$ (danh nghĩa CAD CAM).
+       * **Khe hở chân răng ($c$)**: $c = 0.200 \cdot m_{mn} = 2.000\text{ mm}$ (khớp chuẩn ISO 23509).
+       * **Vị trí đo đạc**: Vành răng trung bình $R_m = 279.8\text{ mm}$.
+       * **Con trỏ 3D Laser Marker (`this.contactMarker`)**: Một hình cầu phát sáng (Emerald glow sphere) đặt tại tọa độ tiếp xúc $(R_m \cos\delta_1, R_m \sin\delta_1, 0)$ định vị chính xác vị trí đo đạc trong không gian 3D.
+  3. **Phương Án 3: `[✂️ Mặt Cắt Ăn Khớp]` (`#btnToggleSectionCut`)**:
+     - Sử dụng mặt phẳng cắt cục bộ GPU Three.js (`renderer.localClippingEnabled = true; THREE.Plane(Vector3(0, 0, -1), 0)`).
+     - Bổ dọc toàn bộ cặp bánh răng qua mặt phẳng ăn khớp $Z = 0$, để lộ mặt cắt 2D của các răng đang ăn khớp liên hợp, cho phép nhìn rõ khe hở chân răng $c$ và biên dạng ăn khớp mà không giảm hiệu năng đồ họa.
+  4. **Khả năng kết hợp tự do & Hiệu ứng giao diện (Active State Styling)**:
+     - Nút 1 khi bật: Nền xanh dương `#0284c7`, viền `#38bdf8`, đổi nhãn `👁️ Đang Hiện Mặt Bên`.
+     - Nút 2 khi bật: Nền xanh lục `#059669`, viền `#34d399`, đổi nhãn `📏 Đang Đo Khe Hở`.
+     - Nút 3 khi bật: Nền tím `#7c3aed`, viền `#a78bfa`, đổi nhãn `✂️ Đang Cắt Ăn Khớp`.
+     - Khi tắt: Tự động trở về trạng thái nút thứ cấp tiêu chuẩn `btn-secondary`.
+     - Cả 3 phương án phối hợp hoàn hảo với các tính năng: Nhích từng chút một (`btn3DStepFwd`, `btn3DStepBack`), xoay tự do 360° (`OrbitControls`), đổi góc nhìn (`sel3DViewPreset`), bật/tắt khung dây (`btnToggleWireframe`).
+
+* **Kết quả đo đạc & Kiểm thử tự động thực tế**:
+  - **Kiểm thử đối chiếu công thức cơ khí (`tests/qc_gear_multi_case_suite.py`)**:
+    * **110 / 110 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)** - Khẳng định 100% không có bất kỳ sai lệch công thức cơ khí nào.
+  - **Kiểm thử tự động Playwright (`tests/test_inspection_modes.py`)**:
+    * Mode 1 (Flank Only): **PASS** (`pinionSolidVisible: False, pinionSurfVisible: True`).
+    * Mode 2 (Clearance Gauge): **PASS** (`hudDisplay: 'block', contactVal: '0.000 mm', indicator: '🟢 TIẾP XÚC'`).
+    * Mode 3 (Section Cut): **PASS** (`pinionPlanesCount: 1, gearPlanesCount: 1`).
+    * Kết hợp Mode 1 + Mode 2: **PASS**.
+    * Kết hợp cả 3 Mode (1 + 2 + 3): **PASS** (`flankOnly: True, gauge: True, sectionCut: True, clippingCount: 1`).
+    * Nhích tiến / lùi khi bật Gauge: **PASS**, HUD cập nhật thời gian thực.
+    * Console JavaScript Errors: **0 lỗi (100% Clean Run)**.
+  - **Đóng gói mã nguồn Classic Script CORS-Free**: `python tools/bundle_all.py` đóng gói thành công bundle 253.7 KB.
+
 
 
 
