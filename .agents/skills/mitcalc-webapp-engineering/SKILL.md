@@ -630,6 +630,22 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 30: Điều Khiển CAD 360 Không Khóa Cực, Bộ Nút Nhích Từng Bước 2D & 3D & Mô Phỏng Bánh Răng Côn Xoắn Gleason 3D
+1. **Điều Khiển CAD 360 Không Khóa Cực (CAD Orbit 360 Protocol)**:
+   - Triệt tiêu hạn chế kẹp góc cực cầu $[0, \pi]$ của OrbitControls chuẩn. Khi `cadOrbit360 = true`, hệ thống sử dụng Quaternion quay đồng thời `offset` và `camera.up` quanh trục ngang trực giao tức thời $\vec{right} = \vec{up} \times \vec{forward}$.
+   - Cho phép người dùng nhào lộn xoay tự do 360° xuyên qua mặt đáy bánh lớn (bán cầu dưới $Y < 0$) mà không bị pole stop hay Gimbal Lock.
+2. **Bộ Nút Nhích Từng Chút Một (Step Jog 2D & 3D)**:
+   - Tích hợp cụm nút `[⏮️ Nhích Lùi]` (`btn3DStepBack` / `btn2DStepBack`) và `[⏭️ Nhích Tiến]` (`btn3DStepFwd` / `btn2DStepFwd`).
+   - Tự động tạm dừng hoạt ảnh và bước góc quay vi sai $\Delta\theta_1 = \pm \frac{\pi}{10 \cdot z_1} \approx \pm 1^\circ$, đồng bộ $\Delta\theta_2 = -\Delta\theta_1 / i$, cho phép soi kỹ từng góc ăn khớp của răng.
+3. **Mở Rộng Dải Tốc Độ Siêu Chậm (Ultra-Slow Speed Slider)**:
+   - Dải tốc độ mở rộng xuống `0.01x` với hiển thị thông minh 2 chữ số thập phân (`0.01x`, `0.02x`, `0.05x`) khi tốc độ $< 0.1\text{x}$.
+4. **Chuẩn Hóa Ăn Khớp Bánh Răng Côn Xoắn Gleason 3D**:
+   - Bánh dẫn 1 xoắn trái (`hand1 = -1`), Bánh bị dẫn 2 xoắn phải (`hand2 = +1`).
+   - Chiều dày răng và góc ăn khớp nón ảo Tredgold quy đổi sang ngang diện: $\alpha_t = \arctan(\tan\alpha_n / \cos\beta)$, $s_t = s_n / \cos\beta$.
+   - Hai sườn răng xoắn cong cùng chiều lồng khít vào nhau `( (`, không đâm xiên cắt chéo "X" và không ngập răng.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

@@ -118,7 +118,7 @@ class BevelGearUI {
         if (sliderSpeed) {
             sliderSpeed.addEventListener('input', (e) => {
                 const spd = parseFloat(e.target.value) || 1.0;
-                if (speedVal) speedVal.textContent = spd.toFixed(1) + 'x';
+                if (speedVal) speedVal.textContent = (spd < 0.1 ? spd.toFixed(2) : spd.toFixed(1)) + 'x';
                 if (this.canvasController) this.canvasController.setAnimSpeed(spd);
             });
         }
@@ -134,6 +134,21 @@ class BevelGearUI {
             btnAnimate.addEventListener('click', () => {
                 const running = this.canvasController.toggleAnimation();
                 btnAnimate.textContent = running ? '⏸ Tạm Dừng' : '▶ Chạy Mô Phỏng';
+            });
+        }
+
+        const btn2DStepBack = document.getElementById('btn2DStepBack');
+        const btn2DStepFwd = document.getElementById('btn2DStepFwd');
+        if (btn2DStepBack && this.canvasController) {
+            btn2DStepBack.addEventListener('click', () => {
+                this.canvasController.stepAnimation(-1);
+                if (btnAnimate) btnAnimate.textContent = '▶ Chạy Mô Phỏng';
+            });
+        }
+        if (btn2DStepFwd && this.canvasController) {
+            btn2DStepFwd.addEventListener('click', () => {
+                this.canvasController.stepAnimation(1);
+                if (btnAnimate) btnAnimate.textContent = '▶ Chạy Mô Phỏng';
             });
         }
 
@@ -374,8 +389,23 @@ class BevelGearUI {
         if (slider3DSpeed && this.visualizer3D) {
             slider3DSpeed.addEventListener('input', (e) => {
                 const val = parseFloat(e.target.value) || 1.0;
-                if (anim3DSpeedVal) anim3DSpeedVal.textContent = val.toFixed(1) + 'x';
+                if (anim3DSpeedVal) anim3DSpeedVal.textContent = (val < 0.1 ? val.toFixed(2) : val.toFixed(1)) + 'x';
                 this.visualizer3D.setAnimSpeed(val);
+            });
+        }
+
+        const btn3DStepBack = document.getElementById('btn3DStepBack');
+        const btn3DStepFwd = document.getElementById('btn3DStepFwd');
+        if (btn3DStepBack && this.visualizer3D) {
+            btn3DStepBack.addEventListener('click', () => {
+                this.visualizer3D.stepAnimation(-1);
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Tiếp Tục';
+            });
+        }
+        if (btn3DStepFwd && this.visualizer3D) {
+            btn3DStepFwd.addEventListener('click', () => {
+                this.visualizer3D.stepAnimation(1);
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Tiếp Tục';
             });
         }
 

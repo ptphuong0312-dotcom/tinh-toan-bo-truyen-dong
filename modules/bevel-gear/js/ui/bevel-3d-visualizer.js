@@ -33,6 +33,7 @@ export class Bevel3DVisualizer {
         this.initialGearAngle = 0;
         this.gearRatio = 2.5;
         this.sigmaRad = Math.PI / 2.0;
+        this.viewInitialized = false;
 
         this.wireframeMode = false;
         this.mesh1Data = null;
@@ -95,9 +96,10 @@ export class Bevel3DVisualizer {
         }
         this.container.appendChild(this.renderer.domElement);
 
-        // 4. OrbitControls
+        // 4. OrbitControls with CAD 360 unconstrained rotation
         if (typeof THREE.OrbitControls !== 'undefined') {
             this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+            this.controls.cadOrbit360 = true; // Enables full 360° unconstrained tumble around big gear base
             this.controls.enableDamping = true;
             this.controls.dampingFactor = 0.08;
             this.controls.screenSpacePanning = true;
@@ -221,22 +223,26 @@ export class Bevel3DVisualizer {
         const dBore1 = parseFloat(geom.dBore1) || 50.0;
         const dBore2 = parseFloat(geom.dBore2) || 100.0;
 
+        // Authentic tooth hand: Pinion Left-Hand (-1) by standard default, Gear Right-Hand (+1)
+        const hand1 = geom.hand1 !== undefined ? (geom.hand1 === 1 || geom.hand1 === 'left' ? -1 : 1) : -1;
+        const hand2 = -hand1;
+
         // 1. Generate Pinion 1 Mesh (Authentic MITCalc Data1 & Section 3D)
         this.mesh1Data = Bevel3DGenerator.generateGearMesh({
             z: z1, mmn, delta: delta1, delta_a: delta_a1, delta_f: delta_f1,
             Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
             ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
             Hin: Hin1, Hout: Hout1, dBore: dBore1,
-            hand: 1, gearingType
+            hand: hand1, gearingType
         });
 
-        // 2. Generate Gear 2 Mesh (Authentic MITCalc Data1 & Section 3D, hand: -1)
+        // 2. Generate Gear 2 Mesh (Authentic MITCalc Data1 & Section 3D)
         this.mesh2Data = Bevel3DGenerator.generateGearMesh({
             z: z2, mmn, delta: delta2, delta_a: delta_a2, delta_f: delta_f2,
             Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
             ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
             Hin: Hin2, Hout: Hout2, dBore: dBore2,
-            hand: -1, gearingType
+            hand: hand2, gearingType
         });
 
         // Update TCA Uniforms for Bevel Gear
@@ -264,7 +270,10 @@ export class Bevel3DVisualizer {
         this.gearAngle = this.initialGearAngle;
 
         this.updateGearRotations();
-        this.setViewPreset('iso');
+        if (!this.viewInitialized) {
+            this.setViewPreset('iso');
+            this.viewInitialized = true;
+        }
     }
 
     updateMeshes() {
@@ -367,7 +376,18 @@ export class Bevel3DVisualizer {
     }
 
     setAnimSpeed(speed) {
-        this.animSpeed = Math.max(0.1, Math.min(3.0, parseFloat(speed) || 1.0));
+        this.animSpeed = Math.max(0.01, Math.min(3.0, parseFloat(speed) || 1.0));
+    }
+
+    stepAnimation(direction = 1) {
+        this.isAnimating = false;
+        const z1 = this.geom ? (parseInt(this.geom.z1) || 18) : 18;
+        // Step by 1/20 of a tooth pitch (approx 1 degree for z1=18)
+        const stepRad = (Math.PI / (10.0 * z1)) * direction;
+        this.pinionAngle += stepRad;
+        this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
+        this.updateGearRotations();
+        return this.pinionAngle;
     }
 
     toggleAnimation() {

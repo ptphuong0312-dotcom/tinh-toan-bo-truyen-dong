@@ -1968,7 +1968,15 @@ class BevelGearCanvas {
     }
 
     setAnimSpeed(speed) {
-        this.animSpeed = Math.max(0.1, Math.min(3.0, parseFloat(speed) || 1.0));
+        this.animSpeed = Math.max(0.01, Math.min(3.0, parseFloat(speed) || 1.0));
+    }
+
+    stepAnimation(direction = 1) {
+        this.isRunning = false;
+        const z1 = this.geom ? (parseInt(this.geom.z1) || 18) : 18;
+        this.angle1 += (Math.PI / (10.0 * z1)) * direction;
+        this.render();
+        return this.angle1;
     }
 
     zoomBy(factor) {
@@ -1983,6 +1991,19 @@ class BevelGearCanvas {
     toggleAnimation() {
         this.isRunning = !this.isRunning;
         return this.isRunning;
+    }
+
+    setAnimSpeed(speed) {
+        this.animSpeed = Math.max(0.01, Math.min(3.0, parseFloat(speed) || 1.0));
+    }
+
+    stepAnimation(direction = 1) {
+        this.isRunning = false;
+        const z1 = this.geom ? (parseInt(this.geom.z1) || 18) : 18;
+        const stepRad = (Math.PI / (10.0 * z1)) * direction;
+        this.angle1 = (this.angle1 || 0) + stepRad;
+        this.render();
+        return this.angle1;
     }
 
     setGeometry(geom) {
@@ -2807,19 +2828,31 @@ const Bevel3DGenerator = {
             const hf_s = hf_e * scale_s;
             const sn_s = sn_e * scale_s;
 
+            // Transverse tooth parameters for virtual gear (Tredgold ISO 23509)
+            const cos_beta = isSpiral ? Math.max(0.2, Math.cos(beta)) : 1.0;
+            const tan_alfa_t = Math.tan(alfa) / cos_beta;
+            const alfa_t = Math.atan(tan_alfa_t);
+            const inv_alfa_t = tan_alfa_t - alfa_t;
+            const sn_t = sn_s / cos_beta;
+
             // Tredgold virtual spur gear at cone distance R_s
             const rv = (R_s * sinD) / cosD;
-            const rvb = rv * Math.cos(alfa);
+            const rvb = rv * Math.cos(alfa_t);
             const rva = rv + ha_s;
             const rvf = Math.max(0.1, rv - hf_s);
-            const inv_alfa = Math.tan(alfa) - alfa;
-            const psi_v = sn_s / (2.0 * rv);
+            const psi_v = sn_t / (2.0 * rv);
 
             function eval_flank(t) {
-                const r_c = Math.max(rvb, rvf + t * (rva - rvf));
-                const alpha_c = Math.acos(Math.min(1.0, rvb / r_c));
-                const inv_c = Math.tan(alpha_c) - alpha_c;
-                const psi_c = psi_v + inv_alfa - inv_c;
+                const r_c = rvf + t * (rva - rvf);
+                let psi_c;
+                if (r_c >= rvb) {
+                    const alpha_c = Math.acos(Math.min(1.0, rvb / r_c));
+                    const inv_c = Math.tan(alpha_c) - alpha_c;
+                    psi_c = psi_v + inv_alfa_t - inv_c;
+                } else {
+                    // Radial extension below base circle to root
+                    psi_c = (psi_v + inv_alfa_t) * (r_c / rvb);
+                }
                 const h = r_c - rv;
                 const r_pt = r_pitch + h * cosD;
                 const theta = (rv / Math.max(1.0, r_pt)) * psi_c;
@@ -3366,6 +3399,7 @@ class Bevel3DVisualizer {
         this.initialGearAngle = 0;
         this.gearRatio = 2.5;
         this.sigmaRad = Math.PI / 2.0;
+        this.viewInitialized = false;
 
         this.wireframeMode = false;
         this.mesh1Data = null;
@@ -3428,9 +3462,10 @@ class Bevel3DVisualizer {
         }
         this.container.appendChild(this.renderer.domElement);
 
-        // 4. OrbitControls
+        // 4. OrbitControls with CAD 360 unconstrained rotation
         if (typeof THREE.OrbitControls !== 'undefined') {
             this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+            this.controls.cadOrbit360 = true; // Enables full 360° unconstrained tumble around big gear base
             this.controls.enableDamping = true;
             this.controls.dampingFactor = 0.08;
             this.controls.screenSpacePanning = true;
@@ -3554,22 +3589,26 @@ class Bevel3DVisualizer {
         const dBore1 = parseFloat(geom.dBore1) || 50.0;
         const dBore2 = parseFloat(geom.dBore2) || 100.0;
 
+        // Authentic tooth hand: Pinion Left-Hand (-1) by standard default, Gear Right-Hand (+1)
+        const hand1 = geom.hand1 !== undefined ? (geom.hand1 === 1 || geom.hand1 === 'left' ? -1 : 1) : -1;
+        const hand2 = -hand1;
+
         // 1. Generate Pinion 1 Mesh (Authentic MITCalc Data1 & Section 3D)
         this.mesh1Data = Bevel3DGenerator.generateGearMesh({
             z: z1, mmn, delta: delta1, delta_a: delta_a1, delta_f: delta_f1,
             Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
             ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
             Hin: Hin1, Hout: Hout1, dBore: dBore1,
-            hand: 1, gearingType
+            hand: hand1, gearingType
         });
 
-        // 2. Generate Gear 2 Mesh (Authentic MITCalc Data1 & Section 3D, hand: -1)
+        // 2. Generate Gear 2 Mesh (Authentic MITCalc Data1 & Section 3D)
         this.mesh2Data = Bevel3DGenerator.generateGearMesh({
             z: z2, mmn, delta: delta2, delta_a: delta_a2, delta_f: delta_f2,
             Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
             ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
             Hin: Hin2, Hout: Hout2, dBore: dBore2,
-            hand: -1, gearingType
+            hand: hand2, gearingType
         });
 
         // Update TCA Uniforms for Bevel Gear
@@ -3597,7 +3636,10 @@ class Bevel3DVisualizer {
         this.gearAngle = this.initialGearAngle;
 
         this.updateGearRotations();
-        this.setViewPreset('iso');
+        if (!this.viewInitialized) {
+            this.setViewPreset('iso');
+            this.viewInitialized = true;
+        }
     }
 
     updateMeshes() {
@@ -3700,7 +3742,18 @@ class Bevel3DVisualizer {
     }
 
     setAnimSpeed(speed) {
-        this.animSpeed = Math.max(0.1, Math.min(3.0, parseFloat(speed) || 1.0));
+        this.animSpeed = Math.max(0.01, Math.min(3.0, parseFloat(speed) || 1.0));
+    }
+
+    stepAnimation(direction = 1) {
+        this.isAnimating = false;
+        const z1 = this.geom ? (parseInt(this.geom.z1) || 18) : 18;
+        // Step by 1/20 of a tooth pitch (approx 1 degree for z1=18)
+        const stepRad = (Math.PI / (10.0 * z1)) * direction;
+        this.pinionAngle += stepRad;
+        this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
+        this.updateGearRotations();
+        return this.pinionAngle;
     }
 
     toggleAnimation() {
@@ -4481,7 +4534,7 @@ class BevelGearUI {
         if (sliderSpeed) {
             sliderSpeed.addEventListener('input', (e) => {
                 const spd = parseFloat(e.target.value) || 1.0;
-                if (speedVal) speedVal.textContent = spd.toFixed(1) + 'x';
+                if (speedVal) speedVal.textContent = (spd < 0.1 ? spd.toFixed(2) : spd.toFixed(1)) + 'x';
                 if (this.canvasController) this.canvasController.setAnimSpeed(spd);
             });
         }
@@ -4497,6 +4550,21 @@ class BevelGearUI {
             btnAnimate.addEventListener('click', () => {
                 const running = this.canvasController.toggleAnimation();
                 btnAnimate.textContent = running ? '⏸ Tạm Dừng' : '▶ Chạy Mô Phỏng';
+            });
+        }
+
+        const btn2DStepBack = document.getElementById('btn2DStepBack');
+        const btn2DStepFwd = document.getElementById('btn2DStepFwd');
+        if (btn2DStepBack && this.canvasController) {
+            btn2DStepBack.addEventListener('click', () => {
+                this.canvasController.stepAnimation(-1);
+                if (btnAnimate) btnAnimate.textContent = '▶ Chạy Mô Phỏng';
+            });
+        }
+        if (btn2DStepFwd && this.canvasController) {
+            btn2DStepFwd.addEventListener('click', () => {
+                this.canvasController.stepAnimation(1);
+                if (btnAnimate) btnAnimate.textContent = '▶ Chạy Mô Phỏng';
             });
         }
 
@@ -4737,8 +4805,23 @@ class BevelGearUI {
         if (slider3DSpeed && this.visualizer3D) {
             slider3DSpeed.addEventListener('input', (e) => {
                 const val = parseFloat(e.target.value) || 1.0;
-                if (anim3DSpeedVal) anim3DSpeedVal.textContent = val.toFixed(1) + 'x';
+                if (anim3DSpeedVal) anim3DSpeedVal.textContent = (val < 0.1 ? val.toFixed(2) : val.toFixed(1)) + 'x';
                 this.visualizer3D.setAnimSpeed(val);
+            });
+        }
+
+        const btn3DStepBack = document.getElementById('btn3DStepBack');
+        const btn3DStepFwd = document.getElementById('btn3DStepFwd');
+        if (btn3DStepBack && this.visualizer3D) {
+            btn3DStepBack.addEventListener('click', () => {
+                this.visualizer3D.stepAnimation(-1);
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Tiếp Tục';
+            });
+        }
+        if (btn3DStepFwd && this.visualizer3D) {
+            btn3DStepFwd.addEventListener('click', () => {
+                this.visualizer3D.stepAnimation(1);
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Tiếp Tục';
             });
         }
 

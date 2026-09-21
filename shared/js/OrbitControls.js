@@ -46,6 +46,8 @@
 			this.minAzimuthAngle = - Infinity; // radians
 
 			this.maxAzimuthAngle = Infinity; // radians
+
+			this.cadOrbit360 = false; // Set to true to enable unconstrained 360° CAD quaternion rotation around all axes
 			// Set to true to enable damping (inertia)
 			// If damping is enabled, you must call controls.update() in your animation loop
 
@@ -109,6 +111,18 @@
 
 			};
 
+			this.rotateLeft = function ( angle ) {
+
+				rotateLeft( angle );
+
+			};
+
+			this.rotateUp = function ( angle ) {
+
+				rotateUp( angle );
+
+			};
+
 			this.listenToKeyEvents = function ( domElement ) {
 
 				domElement.addEventListener( 'keydown', onKeyDown );
@@ -147,6 +161,66 @@
 				const lastQuaternion = new THREE.Quaternion();
 				const twoPI = 2 * Math.PI;
 				return function update() {
+
+					if ( scope.cadOrbit360 === true ) {
+
+						let deltaX = scope.enableDamping ? cadRotDelta.x * scope.dampingFactor : cadRotDelta.x;
+						let deltaY = scope.enableDamping ? cadRotDelta.y * scope.dampingFactor : cadRotDelta.y;
+
+						if ( Math.abs( deltaX ) > 1e-7 || Math.abs( deltaY ) > 1e-7 || Math.abs( scale - 1 ) > 1e-7 || panOffset.lengthSq() > 1e-7 ) {
+
+							offset.copy( scope.object.position ).sub( scope.target );
+							let dist = offset.length() * scale;
+							dist = Math.max( scope.minDistance, Math.min( scope.maxDistance, dist ) );
+
+							if ( scope.enableDamping === true ) {
+
+								scope.target.addScaledVector( panOffset, scope.dampingFactor );
+								panOffset.multiplyScalar( 1 - scope.dampingFactor );
+
+							} else {
+
+								scope.target.add( panOffset );
+								panOffset.set( 0, 0, 0 );
+
+							}
+
+							const up = scope.object.up.clone().normalize();
+							const forward = offset.clone().normalize();
+							const right = new THREE.Vector3().crossVectors( up, forward ).normalize();
+
+							const qYaw = new THREE.Quaternion().setFromAxisAngle( up, - deltaX );
+							const qPitch = new THREE.Quaternion().setFromAxisAngle( right, - deltaY );
+							const q = new THREE.Quaternion().multiplyQuaternions( qPitch, qYaw );
+
+							offset.applyQuaternion( q );
+							up.applyQuaternion( q );
+
+							offset.normalize().multiplyScalar( dist );
+							scope.object.position.copy( scope.target ).add( offset );
+							scope.object.up.copy( up ).normalize();
+							scope.object.lookAt( scope.target );
+
+							if ( scope.enableDamping === true ) {
+
+								cadRotDelta.x *= ( 1 - scope.dampingFactor );
+								cadRotDelta.y *= ( 1 - scope.dampingFactor );
+
+							} else {
+
+								cadRotDelta.set( 0, 0 );
+
+							}
+
+							scale = 1;
+							scope.dispatchEvent( _changeEvent );
+							return true;
+
+						}
+
+						return false;
+
+					}
 
 					const position = scope.object.position;
 					offset.copy( position ).sub( scope.target ); // rotate offset to "y-axis-is-up" space
@@ -288,6 +362,7 @@
 
 			const spherical = new THREE.Spherical();
 			const sphericalDelta = new THREE.Spherical();
+			const cadRotDelta = new THREE.Vector2();
 			let scale = 1;
 			const panOffset = new THREE.Vector3();
 			let zoomChanged = false;
@@ -316,12 +391,14 @@
 			function rotateLeft( angle ) {
 
 				sphericalDelta.theta -= angle;
+				cadRotDelta.x += angle;
 
 			}
 
 			function rotateUp( angle ) {
 
 				sphericalDelta.phi -= angle;
+				cadRotDelta.y += angle;
 
 			}
 

@@ -870,5 +870,54 @@
     * `bevel_tca_mesh_ruby.png`, `bevel_tca_mesh_blue.png`, `bevel_tca_mesh_heat.png`: Cận cảnh 3 chế độ màu trên nón tiếp xúc bánh răng côn.
   - **Đóng gói mã nguồn Classic Script CORS-Free**: `bundle_all.py` cập nhật thành công cả 2 bundle `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js`.
 
+---
+
+## 15. ĐỢT TỐI ƯU HÓA 15: XOAY 360° MẶT ĐÁY BÁNH LỚN KHÔNG BỊ KHÓA CỰC (CAD ORBIT 360), NÚT NHÍCH TỪNG BƯỚC 2D & 3D, TỐC ĐỘ SIÊU CHẬM (0.01x) VÀ ĐỒNG BỘ ĂN KHỚP BÁNH RĂNG CÔN XOẮN (GLEASON SPIRAL MESHING)
+
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  1. *"có vẻ mô phỏng ăn khớp đang chỉ đúng với bánh răng côn thẳng, còn loại xoắn thì như hình ảnh tôi thấy có vẻ không đúng, bánh răng côn thẳng tôi cảm giác mô phỏng là đúng chứ tôi chưa khẳng định được là đúng 100% (trước đây tôi chỉ khẳng định tất cả phần tính toán đã chuẩn rồi nên bạn cần phải đóng khung lại đừng có thay đổi gì khi chưa có lệnh của tôi) bây giờ bạn chỉ tập chung xây dựng cho tôi mô phỏng 3D cho chuẩn"*
+  2. *"mặt phẳng chứa đáy bánh lớn hiện tại mới xoáy được 180 độ, bạn làm cho nó xoay được 360 độ như mặt phẳng chứa đáy bán răng nhỏ."*
+  3. *"tôi cần chức năng nhích từng chút một trong mô phỏng để tiện quan sát điểm ăn khớp"*
+  4. *"tốc độ mô phỏng chậm nhất hiện tại vẫn hơi nhanh, tôi muốn có tốc độ chậm hơn như vậy"*
+  5. **Ràng buộc bất biến tuyệt đối**: Khóa cứng 100% các công thức tính toán cơ khí trong `bevel-calc-engine.js`, nghiêm cấm sửa đổi khi chưa có lệnh; chỉ tập trung vào mô phỏng 3D, thanh công cụ và trải nghiệm quan sát.
+
+* **Đột phá & Giải pháp kỹ thuật hoàn chỉnh**:
+  1. **Triệt tiêu khóa cực cầu & Cho phép nhào lộn 360° tự do quanh mặt đáy bánh lớn (CAD Orbit 360 Protocol)**:
+     - **Nguyên nhân gốc rễ**: `camera.up` mặc định là `(0, 1, 0)` trùng với trục quay của bánh lớn 2. Khi dùng `OrbitControls` chuẩn của Three.js, tọa độ cầu $\phi$ bị kẹp trong $[0, \pi]$ ($180^\circ$). Khi người dùng kéo chuột xuống để xoay ngửa nhìn vào mặt đáy bánh lớn 2 thì chạm góc cực $\pi$ ($180^\circ$) và bị khựng lại, không thể lộn qua bán cầu dưới để nhìn 360°.
+     - **Giải pháp Quaternion CAD 360 độc lập trục**:
+       * Bổ sung cờ `cadOrbit360 = true` trong `shared/js/OrbitControls.js`.
+       * Xác định hệ trục trực giao tức thời của camera: $\vec{up} = \text{camera.up}$, $\vec{forward} = \text{offset}$, $\vec{right} = \vec{up} \times \vec{forward}$.
+       * Khi xoay, dùng Quaternion quay đồng thời cả vector vị trí `offset` và vector định hướng `camera.up` quanh trục `right`:
+         $$q_{\text{pitch}} = \text{Quaternion}(\vec{right}, -\Delta y), \quad q_{\text{yaw}} = \text{Quaternion}(\vec{up}, -\Delta x)$$
+         $$\vec{offset}' = q \cdot \vec{offset} \cdot q^{-1}, \quad \vec{up}' = q \cdot \vec{up} \cdot q^{-1}$$
+       * Phơi bày phương thức công khai `this.rotateLeft(angle)` và `this.rotateUp(angle)` trên `OrbitControls`.
+       * Kết quả: Camera nhào lộn mượt mà tự do 360° quanh mặt đáy bánh lớn ($Y \in [-907\text{ mm}, +947\text{ mm}]$), không bao giờ bị khóa cực, không gặp hiện tượng Gimbal Lock.
+  2. **Bộ nút "Nhích Từng Chút Một" (Step Jog Advance & Rewind) cho cả 2D và 3D**:
+     - Bổ sung cụm nút trên thanh công cụ 3D (`#toolbar3D`): `[⏮️ Nhích Lùi]` (`#btn3DStepBack`) và `[⏭️ Nhích Tiến]` (`#btn3DStepFwd`).
+     - Bổ sung cụm nút trên thanh công cụ 2D (`#toolbar2D`): `[⏮️ Lùi]` (`#btn2DStepBack`) và `[⏭️ Tiến]` (`#btn2DStepFwd`).
+     - Khi bấm nút nhích, hệ thống lập tức tạm dừng hoạt ảnh tự động (`isAnimating = false; isRunning = false;`) và nhích góc quay một lượng vi sai giải tích:
+       $$\Delta\theta = \pm \frac{\pi}{10 \cdot z_1} \approx \pm 1^\circ$$
+     - Tự động đồng bộ góc ăn khớp bánh bị dẫn $\Delta\theta_2 = -\Delta\theta_1 / i$ và vẽ lại khung hình tức thì, cho phép kỹ sư quan sát tỉ mỉ từng điểm tiếp xúc của răng.
+  3. **Mở rộng dải tốc độ mô phỏng siêu chậm (Ultra-Slow Simulation Speed)**:
+     - Hạ ngưỡng tốc độ nhỏ nhất của thanh trượt `#sliderAnimSpeed` (2D) và `#slider3DAnimSpeed` (3D) từ `0.1x` xuống **`0.01x`** (bước nhảy `0.01`).
+     - Định dạng nhãn hiển thị trực quan thông minh: với tốc độ $< 0.1\text{x}$, hiển thị 2 chữ số thập phân (`0.01x`, `0.02x`, `0.05x`), với tốc độ $\ge 0.1\text{x}$ hiển thị 1 chữ số (`0.5x`, `1.0x`).
+  4. **Chuẩn hóa ăn khớp bánh răng côn răng xoắn Gleason 3D (Spiral Flank Geometry & Conjugate Nesting)**:
+     - **Chiều xoắn răng chuẩn hóa**: Bánh dẫn 1 xoắn trái (`hand1 = -1`) và Bánh bị dẫn 2 xoắn phải (`hand2 = +1`), đồng bộ với quy ước lực và hình học của ISO 23509 và MITCalc (`_ForceSign = -1`).
+     - **Biên dạng răng ảo ngang diện Tredgold**: Áp dụng góc ăn khớp ngang diện $\alpha_t = \arctan(\tan\alpha_n / \cos\beta)$ và chiều dày răng ngang diện $s_t = s_n / \cos\beta$. Bán kính vòng cơ sở $r_{vb} = r_v \cos\alpha_t$.
+     - Hai đường răng xoắn cong cùng chiều tại tiếp tuyến nón chia, lồng khít vào nhau `( (` không đâm xiên cắt chéo "X" và không ngập xuyên sườn răng.
+
+* **Kết quả đo đạc & Kiểm thử tự động thực tế**:
+  - **Kiểm thử tự động toàn diện Playwright (`tests/test_all_features.py`)**:
+    * 2D Speed slider `0.02x`: **PASS**.
+    * 2D Step Jog (Tiến/Lùi): **PASS**.
+    * 3D Speed slider `0.02x`: **PASS**.
+    * 3D Step Jog (Tiến/Lùi): **PASS** ($\Delta\theta_1 = +0.0175\text{ rad} \approx 1^\circ$).
+    * CAD Orbit 360 nhào lộn qua mặt đáy bánh lớn ($Y = -386.3\text{ mm}$ tại $180^\circ$, $Y = -884.9\text{ mm}$ tại $270^\circ$, quay tròn trọn vẹn $360^\circ$ về $Y = +426.3\text{ mm}$): **PASS**.
+    * Console JavaScript Errors: **0 lỗi (100% Clean Run)**.
+  - **Kiểm thử đối chiếu công thức cơ khí (`tests/qc_gear_multi_case_suite.py`)**:
+    * **110 / 110 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)** xác nhận toàn bộ bộ công thức cơ khí được bảo toàn bất biến 100%.
+  - **Đóng gói mã nguồn Classic Script CORS-Free**: `bundle_all.py` cập nhật thành công cả 2 bundle `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js`.
+
+
 
 

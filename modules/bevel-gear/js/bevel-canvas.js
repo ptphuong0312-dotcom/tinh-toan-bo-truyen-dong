@@ -32,7 +32,15 @@ class BevelGearCanvas {
     }
 
     setAnimSpeed(speed) {
-        this.animSpeed = Math.max(0.1, Math.min(3.0, parseFloat(speed) || 1.0));
+        this.animSpeed = Math.max(0.01, Math.min(3.0, parseFloat(speed) || 1.0));
+    }
+
+    stepAnimation(direction = 1) {
+        this.isRunning = false;
+        const z1 = this.geom ? (parseInt(this.geom.z1) || 18) : 18;
+        this.angle1 += (Math.PI / (10.0 * z1)) * direction;
+        this.render();
+        return this.angle1;
     }
 
     zoomBy(factor) {
@@ -47,6 +55,19 @@ class BevelGearCanvas {
     toggleAnimation() {
         this.isRunning = !this.isRunning;
         return this.isRunning;
+    }
+
+    setAnimSpeed(speed) {
+        this.animSpeed = Math.max(0.01, Math.min(3.0, parseFloat(speed) || 1.0));
+    }
+
+    stepAnimation(direction = 1) {
+        this.isRunning = false;
+        const z1 = this.geom ? (parseInt(this.geom.z1) || 18) : 18;
+        const stepRad = (Math.PI / (10.0 * z1)) * direction;
+        this.angle1 = (this.angle1 || 0) + stepRad;
+        this.render();
+        return this.angle1;
     }
 
     setGeometry(geom) {

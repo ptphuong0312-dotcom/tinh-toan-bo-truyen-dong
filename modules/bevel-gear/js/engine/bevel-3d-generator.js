@@ -110,19 +110,31 @@ export const Bevel3DGenerator = {
             const hf_s = hf_e * scale_s;
             const sn_s = sn_e * scale_s;
 
+            // Transverse tooth parameters for virtual gear (Tredgold ISO 23509)
+            const cos_beta = isSpiral ? Math.max(0.2, Math.cos(beta)) : 1.0;
+            const tan_alfa_t = Math.tan(alfa) / cos_beta;
+            const alfa_t = Math.atan(tan_alfa_t);
+            const inv_alfa_t = tan_alfa_t - alfa_t;
+            const sn_t = sn_s / cos_beta;
+
             // Tredgold virtual spur gear at cone distance R_s
             const rv = (R_s * sinD) / cosD;
-            const rvb = rv * Math.cos(alfa);
+            const rvb = rv * Math.cos(alfa_t);
             const rva = rv + ha_s;
             const rvf = Math.max(0.1, rv - hf_s);
-            const inv_alfa = Math.tan(alfa) - alfa;
-            const psi_v = sn_s / (2.0 * rv);
+            const psi_v = sn_t / (2.0 * rv);
 
             function eval_flank(t) {
-                const r_c = Math.max(rvb, rvf + t * (rva - rvf));
-                const alpha_c = Math.acos(Math.min(1.0, rvb / r_c));
-                const inv_c = Math.tan(alpha_c) - alpha_c;
-                const psi_c = psi_v + inv_alfa - inv_c;
+                const r_c = rvf + t * (rva - rvf);
+                let psi_c;
+                if (r_c >= rvb) {
+                    const alpha_c = Math.acos(Math.min(1.0, rvb / r_c));
+                    const inv_c = Math.tan(alpha_c) - alpha_c;
+                    psi_c = psi_v + inv_alfa_t - inv_c;
+                } else {
+                    // Radial extension below base circle to root
+                    psi_c = (psi_v + inv_alfa_t) * (r_c / rvb);
+                }
                 const h = r_c - rv;
                 const r_pt = r_pitch + h * cosD;
                 const theta = (rv / Math.max(1.0, r_pt)) * psi_c;
