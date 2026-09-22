@@ -127,10 +127,14 @@ export const Bevel3DGenerator = {
             const hf_s = hf_e * scale_s;
             
             // Gleason Tooth Crowning / Ease-Off (ISO 23509 Section 7.5 & AGMA 2005-B88)
+            // Gleason Tooth Crowning / Ease-Off (ISO 23509 Section 7.5 & AGMA 2005-B88)
             // Lengthwise crowning eases off toe and heel to prevent edge stress concentrations
-            const C_L = isSpiral ? (mmn * 0.0035) : (mmn * 0.0020);
+            const C_L = isSpiral ? (mmn * 0.020) : (mmn * 0.005);
             const crown_L = C_L * Math.pow(2.0 * u, 2.0);
-            const sn_s = Math.max(0.1, (sn_e * scale_s) - crown_L);
+
+            // Nominal CAD backlash thinning for smooth physical clearance and zero surface overlap
+            const jn_cad = mmn * 0.095; // 0.95 mm for m=10 (0.475 mm per flank)
+            const sn_s = Math.max(0.1, (sn_e * scale_s) - crown_L - (jn_cad / 2.0));
 
             // Transverse tooth parameters for virtual gear (Tredgold ISO 23509)
             const cos_beta = isSpiral ? Math.max(0.2, Math.cos(beta)) : 1.0;
@@ -147,24 +151,36 @@ export const Bevel3DGenerator = {
             const psi_v = sn_t / (2.0 * rv);
 
             function eval_flank(t) {
-                const r_c = rvf + t * (rva - rvf);
+                // Tip drop at crest to prevent tip-corner digging into mating root
+                let r_drop = 0.0;
+                if (t > 0.65) {
+                    const u_drop = (t - 0.65) / 0.35;
+                    r_drop = (0.050 * mmn) * (u_drop * u_drop);
+                }
+                const r_c = rvf + t * (rva - rvf) - r_drop;
                 let psi_c;
                 if (r_c >= rvb) {
                     const alpha_c = Math.acos(Math.min(1.0, rvb / r_c));
                     const inv_c = Math.tan(alpha_c) - alpha_c;
                     psi_c = psi_v + inv_alfa_t - inv_c;
                 } else {
-                    // Radial continuation below base circle to root
-                    psi_c = psi_v + inv_alfa_t;
+                    // Smooth root undercut / clearance continuation below base circle
+                    const under_t = (rvb - r_c) / Math.max(1.0, rvb - rvf);
+                    const root_relief = (mmn * 0.060 / rv) * under_t;
+                    psi_c = Math.max(0.0001, (psi_v + inv_alfa_t) - root_relief);
                 }
-                // Profile crowning (tip/root ease-off per Gleason practice)
-                const C_P = mmn * 0.0015;
-                const crown_P = C_P * Math.pow(2.0 * t - 1.0, 2.0);
-                psi_c = Math.max(0.0001, psi_c - crown_P / rv);
+
+                // Profile crowning & tip relief (ISO 23509 Section 7.5 & Gleason practice)
+                // Quadratic ease-off towards tip to eliminate tip-digging into mating root
+                const C_P = mmn * 0.095; // 0.95 mm for m=10
+                if (t > 0.30) {
+                    const u_tip = (t - 0.30) / 0.70;
+                    const ease_off = (C_P / rv) * (u_tip * u_tip);
+                    psi_c = Math.max(0.0001, psi_c - ease_off);
+                }
 
                 const h = r_c - rv;
-                const r_pt = r_pitch + h * cosD;
-                // Pure conical development: theta around gear axis preserves physical arc length (r_c * psi_c = r_pt * theta)
+                // Pure conical development: theta around gear axis preserves physical arc length
                 const theta = psi_c / cosD;
                 return { h, theta };
             }
@@ -172,25 +188,33 @@ export const Bevel3DGenerator = {
             const half_pitch = Math.PI / z;
             const tipPt = eval_flank(1.0);
             const rootPt = eval_flank(0.0);
-            const th_fillet = Math.min(half_pitch * 0.9, Math.max(rootPt.theta * 1.15, rootPt.theta + 0.01));
+            const th_fillet = Math.min(half_pitch * 0.85, Math.max(rootPt.theta * 1.30, rootPt.theta + (0.35 * mmn / rv) / cosD));
 
             const toothContour = [];
-            toothContour.push({ h: -hf_s, theta: -half_pitch });
-            toothContour.push({ h: -hf_s, theta: -th_fillet });
+            // Left tooth space bottom land
+            toothContour.push({ h: -hf_s, theta: -half_pitch, flankT: 0.0, isEngageFlank: false });
+            toothContour.push({ h: -hf_s, theta: -th_fillet, flankT: 0.0, isEngageFlank: false });
 
+            // Flank 1 (drive flank on Pinion, coast flank on Gear)
             for (let k = 0; k < ptsPerFlank; k++) {
-                const pt = eval_flank(k / (ptsPerFlank - 1));
-                toothContour.push({ h: pt.h, theta: -pt.theta });
+                const t = k / (ptsPerFlank - 1);
+                const pt = eval_flank(t);
+                toothContour.push({ h: pt.h, theta: -pt.theta, flankT: t, isEngageFlank: true });
             }
 
-            toothContour.push({ h: tipPt.h, theta: 0.0 });
+            // Tooth tip land (crest)
+            toothContour.push({ h: tipPt.h, theta: 0.0, flankT: 1.0, isEngageFlank: false });
 
+            // Flank 2 (coast flank on Pinion, drive flank on Gear)
             for (let k = ptsPerFlank - 1; k >= 0; k--) {
-                const pt = eval_flank(k / (ptsPerFlank - 1));
-                toothContour.push({ h: pt.h, theta: +pt.theta });
+                const t = k / (ptsPerFlank - 1);
+                const pt = eval_flank(t);
+                toothContour.push({ h: pt.h, theta: +pt.theta, flankT: t, isEngageFlank: true });
             }
 
-            toothContour.push({ h: -hf_s, theta: +th_fillet });
+            // Right root fillet and right space bottom land
+            toothContour.push({ h: -hf_s, theta: +th_fillet, flankT: 0.0, isEngageFlank: false });
+            toothContour.push({ h: -hf_s, theta: +half_pitch, flankT: 0.0, isEngageFlank: false });
 
             const ring = [];
             for (let tooth = 0; tooth < z; tooth++) {
@@ -205,7 +229,10 @@ export const Bevel3DGenerator = {
                         y: r_pt * Math.sin(ang),
                         z: z_pt,
                         r: r_pt,
-                        h: pt.h
+                        h: pt.h,
+                        uFace: u,
+                        flankT: pt.flankT,
+                        isEngageFlank: pt.isEngageFlank ? 1.0 : 0.0
                     });
                 }
             }
@@ -217,6 +244,7 @@ export const Bevel3DGenerator = {
         const normals = [];
         const indices = [];
         const rawTriangles = [];
+        const tcaParams = [];
 
         function addTri(p1, p2, p3, nExplicit = null) {
             const ax = p2.x - p1.x, ay = p2.y - p1.y, az = p2.z - p1.z;
@@ -234,6 +262,18 @@ export const Bevel3DGenerator = {
             vertices.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
             normals.push(n.x, n.y, n.z, n.x, n.y, n.z, n.x, n.y, n.z);
             indices.push(idx, idx + 1, idx + 2);
+
+            tcaParams.push(
+                p1.uFace !== undefined ? p1.uFace : 0.0,
+                p1.flankT !== undefined ? p1.flankT : -1.0,
+                p1.isEngageFlank ? 1.0 : 0.0,
+                p2.uFace !== undefined ? p2.uFace : 0.0,
+                p2.flankT !== undefined ? p2.flankT : -1.0,
+                p2.isEngageFlank ? 1.0 : 0.0,
+                p3.uFace !== undefined ? p3.uFace : 0.0,
+                p3.flankT !== undefined ? p3.flankT : -1.0,
+                p3.isEngageFlank ? 1.0 : 0.0
+            );
 
             rawTriangles.push([
                 [p1.x, p1.y, p1.z],
@@ -265,6 +305,7 @@ export const Bevel3DGenerator = {
                 vertices: new Float32Array(vertices),
                 normals: new Float32Array(normals),
                 indices: new Uint32Array(indices),
+                tcaParams: new Float32Array(tcaParams),
                 rawTriangles,
                 bbox,
                 isSurfaceOnly: true,
@@ -321,6 +362,7 @@ export const Bevel3DGenerator = {
             vertices: new Float32Array(vertices),
             normals: new Float32Array(normals),
             indices: new Uint32Array(indices),
+            tcaParams: new Float32Array(tcaParams),
             rawTriangles,
             bbox,
             isSurfaceOnly: false,

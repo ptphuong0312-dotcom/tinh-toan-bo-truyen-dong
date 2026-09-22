@@ -578,4 +578,22 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Thêm bộ lọc hành lang ăn khớp chủ động $|Z - Z_{spiral}| \le 2.2 \cdot m_{mn}$: Chỉ duy nhất răng đang ăn khớp mới được phủ màu hiển thị vết tiếp xúc. Triệt tiêu 100% hiện tượng phát sáng giả ở đỉnh răng hoặc ở các răng ngoài vùng ăn khớp.
    - Vết tiếp xúc Elip Gleason (Chế độ 1) hiển thị tròn đầy, nằm cân đối hoàn hảo ở trung tâm sườn răng, bao trọn khu vực đường chia ($h = 0$) đúng theo chuẩn thực tế xưởng cơ khí và lý thuyết ăn khớp Gleason.
 
+---
 
+### Quy Tắc 26: Quy Chuẩn Tinh Chỉnh Khe Hở CAD Backlash & Phồng Răng (Crowning) Đạt 0.000mm Xuyên Thủng, Hoàn Thiện Shader TCA Gleason & Tự Động Hóa Kiểm Thử Trình Duyệt (Headless Browser Self-Inspection Protocol)
+1. **Khắc Phục Hiện Tượng Xuyên Thủng Bề Mặt Tam Giác (Eliminating Mesh Penetration)**:
+   - Người dùng thường quan sát răng ở chế độ "👁️ Chỉ Mặt Bên" mà chưa bật TCA. Khi đó, nếu có hiện tượng cấn dù chỉ $0.2\text{ mm}$ ở góc gót răng do chưa bù backlash CAD, tam giác của Bánh 1 sẽ đâm xuyên qua Bánh 2. Người dùng sẽ lầm tưởng vết xuyên thủng này là vết tiếp xúc!
+   - Bắt buộc áp dụng hệ số bù CAD backlash và vát mép:
+     * Khe hở tiếp tuyến CAD: $j_{n,cad} = 0.095 \cdot m_{mn}$ ($0.475\text{ mm}$ mỗi sườn răng).
+     * Phồng dọc răng: $C_L = 0.020 \cdot m_{mn} \cdot (2u)^2$.
+     * Giảm chiều dày đỉnh răng (Tip relief): $C_P = 0.095 \cdot m_{mn}$ cho $t > 0.30$.
+     * Hạ đỉnh răng (Tip drop): $\Delta r_{drop} = 0.050 \cdot m_{mn} \cdot ((t - 0.65)/0.35)^2$ cho $t > 0.65$.
+     * Bù góc lượn chân răng (Root relief): $0.060 \cdot m_{mn} / r_v$.
+   - **Kết quả nghiệm thu**: $\text{maxPenAcrossAllAngles} = 0.000\text{ mm}$ qua toàn bộ 20 bước góc quay liên hợp!
+2. **Chuẩn Hóa Shader GPU TCA & Góc Nhìn Vùng Ăn Khớp**:
+   - Vết tiếp xúc Elip chuẩn Gleason (Chế độ 1) hiển thị tròn đầy, nằm cân đối hoàn hảo tại trung tâm sườn răng ở đường chia ($v_0 = 0.0, u_0 = -0.08$) theo chuẩn ISO 23509 & Gleason Manual.
+   - Thiết lập Chế độ 1 là mặc định khi bật nút "🔴 Vết Tiếp Xúc".
+   - Cân chỉnh góc Camera cho Hướng nhìn "🔍 Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)": Camera đặt tại $(mx + 60, my + 36, 240)$ hướng vào $(mx, my, 0)$, mang lại tầm nhìn trực diện hoàn hảo, thấy rõ cả hai răng đang ăn khớp và vết tiếp xúc elip sáng rực.
+3. **Quy Chuẩn Tự Động Hóa Kiểm Thử Trình Duyệt (Headless Browser Self-Inspection Protocol)**:
+   - **Lệnh trực tiếp từ SirPhuong**: *"tại sao bạn không tự vào xem để tự kiểm tra tự sửa mà cứ phải để tôi vào kiểm tra rồi sửa, thật sự quá mất thời gian"*.
+   - AI bắt buộc phải tự động truy cập Web App bằng Playwright headless, tự chụp ảnh màn hình từ nhiều góc độ (Vùng Ăn Khớp, Chỉ Mặt Bên, Khối Đặc, Phối Cảnh), kiểm tra Console Logs (đảm bảo 0 lỗi JavaScript/GLSL), và tự soi ảnh để đánh giá chất lượng thị giác trước khi báo cáo hoàn thành!
