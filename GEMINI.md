@@ -597,3 +597,21 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 3. **Quy Chuẩn Tự Động Hóa Kiểm Thử Trình Duyệt (Headless Browser Self-Inspection Protocol)**:
    - **Lệnh trực tiếp từ SirPhuong**: *"tại sao bạn không tự vào xem để tự kiểm tra tự sửa mà cứ phải để tôi vào kiểm tra rồi sửa, thật sự quá mất thời gian"*.
    - AI bắt buộc phải tự động truy cập Web App bằng Playwright headless, tự chụp ảnh màn hình từ nhiều góc độ (Vùng Ăn Khớp, Chỉ Mặt Bên, Khối Đặc, Phối Cảnh), kiểm tra Console Logs (đảm bảo 0 lỗi JavaScript/GLSL), và tự soi ảnh để đánh giá chất lượng thị giác trước khi báo cáo hoàn thành!
+
+---
+
+### Quy Tắc 28: Quy Chuẩn Tiếp Xúc Mặt Răng Song Diện Không Phồng Qua Mặt Bánh Răng Đối Diện (Zero-Bulge Conjugate Flank Contact Protocol)
+1. **Bản chất hiện tượng quang học mặt sườn hai mặt (DoubleSide Surface Rendering)**:
+   - Khi ở chế độ "👁️ Chỉ Mặt Bên" (`#btnToggleFlankOnly`), các mặt sườn răng là các tấm bề mặt thân khai mỏng (Surface Shell) với vật liệu `side: THREE.DoubleSide`.
+   - Khi hai mặt răng tiếp xúc khít khao tại đường chia ăn khớp liên hợp, màu của mặt răng bánh này (Xanh cyan Bánh 1 hoặc Vàng hổ phách Bánh 2) sẽ hiển thị phẳng phẳng về phía sau mặt răng của bánh răng kia mà không có chiều sâu khối phôi.
+2. **Yêu cầu bất biến từ SirPhuong**:
+   - *"Mặt răng của 2 răng tiếp xúc nhau thì màu của mặt răng bánh này sẽ hiện về sau của mặt răng bánh răng kia và ngược lại. Bạn nhớ là nó chỉ hiện màu thôi nhá, chứ màu của mặt răng bánh này mà hiện về phía sau bánh kia nhưng lại thêm là phồng qua mặt bánh răng kia thì lại không được"*.
+   - Triệt tiêu 100% hiện tượng "phồng qua mặt bánh răng kia" (không để đỉnh răng hay góc răng đâm lồi thành hình khối 3D qua mặt sau của bánh đối diện trên mọi góc quay).
+3. **Giải thuật hình học khử phồng tuyệt đối (Zero-Bulge Geometry Protocol)**:
+   - Phân chia biên dạng răng $t \in [0, 1]$ thành 3 phân vùng chuẩn tắc:
+     * **Vùng chân răng rãnh đáy ($t < 0.35$)**: Tự động nới rộng góc lượn chân răng $u_{\text{root}} = (0.35 - t) / 0.35$ với lượng thoái lui góc áp lực $\psi_{\text{root}} = \frac{0.220 \cdot m_{mn}}{r_v} \cdot u_{\text{root}}^2$, tạo hành lang tự do cho đỉnh răng đối diện lướt qua mà không va quẹt cấn đáy.
+     * **Vùng đỉnh răng ($t > 0.65$)**: Áp dụng hạ đỉnh parabol $r_{\text{drop}} = 0.150 \cdot m_{mn} \cdot u_{\text{tip}}^2$ và vát mỏng góc đỉnh $\psi_{\text{tip}} = \frac{0.180 \cdot m_{mn}}{r_v} \cdot u_{\text{tip}}^2$, loại bỏ hoàn toàn các gờ tam giác nhọn đâm xuyên.
+     * **Vùng ăn khớp làm việc tích cực ($0.35 \le t \le 0.65$)**: Giữ nguyên vẹn 100% đường thân khai cầu liên hợp giải tích toán học ($\Delta = 0.000000$), với khe hở tiếp xúc $j_{n,cad} = 0.010 \cdot m_{mn}$ để hai mặt sườn chạm khít điểm nụ hôn tiếp xúc (Kissing Flank Contact) tại đường chia $t = 0.50$.
+4. **Quy trình tự kiểm tra trực quan tự động với Playwright**:
+   - Chạy kịch bản headless Playwright chụp chuỗi khung hình từ các góc nhìn nghiêng thực tế (Mesh Zone & Zoom Flank), kiểm chứng không còn bất kỳ mảng tam giác hay đỉnh răng nào nhô lồi qua sườn răng đối diện. Mọi bộ kiểm thử số học và hình học đạt chuẩn 100% ($\Delta = 0.0000$).
+

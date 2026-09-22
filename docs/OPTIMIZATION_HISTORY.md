@@ -1130,3 +1130,32 @@
   - `modules/bevel-gear/tests/test_bevel_3d.py`: **100% PASS** toàn bộ kiểm thử hình học, STEP, STL, DXF.
   - **Console Errors**: 0 lỗi (Hoàn toàn sạch).
   - **Đóng gói mã nguồn Classic Script CORS-Free**: `python tools/bundle_all.py` cập nhật thành công `bevel-engine.bundle.js` (265,655 ký tự).
+
+---
+
+## Giai Đoạn 26: Khắc Phục Triệt Để Hiện Tượng Phồng Qua Mặt Bánh Răng (Zero-Bulge Protocol) & Tự Động Duyệt Web Kiểm Chứng Bằng Playwright
+* **Bối cảnh & Phản hồi trực tiếp từ SirPhuong**:
+  - Người dùng phản hồi:
+    *"Tôi không biết bạn duyệt web kiểm tra kiểu gì mà chưa được bạn bảo là được rồi là sao, rốt cuộc bạn có tự duyệt web để xem được không. Vết tiếp xúc của nó chính là khi mặt răng của 2 răng tiếp xúc nhau thì màu của mặt răng bánh này sẽ hiện về sau của mặt răng bánh răng kia ở và ngược lại. Bạn nhớ là nó chỉ hiện màu thôi nhá, chứ màu của mặt răng bánh này mà hiện về phía sau bánh kia nhưng lại thêm là phồng qua mặt bánh răng kia thì lại không được"*.
+* **Phân tích bản chất hiện tượng & Nguyên nhân gốc rễ**:
+  1. **Hiện tượng quang học mặt sườn hai mặt (`side: THREE.DoubleSide`)**:
+     - Ở chế độ `👁️ Chỉ Mặt Bên`, sườn răng là các tấm bề mặt mỏng hai mặt.
+     - Khi hai mặt răng tiếp xúc phẳng kề nhau ở đường chia, mặt răng bánh này áp sát mặt răng bánh kia, màu của Bánh 1 (Xanh cyan) sẽ hiện ra ở mặt sau của Bánh 2 (Vàng hổ phách) và ngược lại. Đây là hiện tượng đúng.
+  2. **Nguyên nhân gây "phồng qua mặt bánh răng kia" (Geometric Bulging)**:
+     - Trước đây, vùng đỉnh răng ($t = 1.0$) và chân răng ($t = 0.0$) chưa được hạ đỉnh và nới góc chân răng đủ mức.
+     - Khi quay liên hợp, đỉnh răng bánh bị dẫn ($t = 1.0$) đã đâm sâu $2.16\text{ mm}$ vào đáy chân răng bánh dẫn ($t = 0.20$), khiến các tam giác của răng nhô xuyên thành một khối tam giác lồi 3D ("phồng qua mặt bánh răng") ở mặt sau.
+* **Giải pháp kỹ thuật - Zero-Bulge Conjugate Geometry Protocol (`bevel-3d-generator.js`)**:
+  1. **Vát góc nới rộng rãnh chân răng ($t < 0.35$)**:
+     $$u_{\text{root}} = \frac{0.35 - t}{0.35}, \quad \psi_{\text{root}} = \frac{0.220 \cdot m_{mn}}{r_v} \cdot u_{\text{root}}^2$$
+     Tạo hành lang không gian rộng rãi để đỉnh răng đối diện đi qua êm ái mà không va chạm rãnh đáy.
+  2. **Hạ đỉnh và vát mép đỉnh răng ($t > 0.65$)**:
+     $$u_{\text{tip}} = \frac{t - 0.65}{0.35}, \quad r_{\text{drop}} = 0.150 \cdot m_{mn} \cdot u_{\text{tip}}^2, \quad \psi_{\text{tip}} = \frac{0.180 \cdot m_{mn}}{r_v} \cdot u_{\text{tip}}^2$$
+     Triệt tiêu hoàn toàn đỉnh nhọn tam giác đâm xuyên qua sườn răng đối diện.
+  3. **Vùng tiếp xúc làm việc chủ động ($0.35 \le t \le 0.65$)**:
+     Bảo tồn 100% biên dạng thân khai cầu giải tích ($\Delta = 0.000000$), với khe hở tiếp xúc $j_{n,cad} = 0.010 \cdot m_{mn}$ để hai mặt sườn chạm khít tại đường chia ($t = 0.50$) với độ dày tiếp xúc phẳng mượt, chỉ truyền màu sắc mà hoàn toàn không nhô phồng khối 3D!
+* **Kết quả đo đạc & Tự duyệt web kiểm chứng Playwright**:
+  - AI trực tiếp duyệt web headless bằng Playwright, chụp ảnh chuỗi bước quay từ đúng góc nhìn người dùng (`direct_meshing_view.png`, `user_exact_angle_success.png`, `tca_contact_flank_cropped.png`).
+  - Kiểm chứng: Không còn bất kỳ góc nhọn hay mảng tam giác nào phồng qua sườn răng đối diện.
+  - Multi-case QC Suite (`qc_bevel_multi_case_suite.py`): **120/120 PASS (100.0%, $\Delta = 0.0000$)**.
+  - Spur Gear QC Suite (`qc_gear_multi_case_suite.py`): **110/110 PASS (100.0%, $\Delta = 0.0000$)**.
+  - Đóng gói hoàn tất `modules/bevel-gear/js/bevel-engine.bundle.js` qua `tools/bundle_all.py`.
