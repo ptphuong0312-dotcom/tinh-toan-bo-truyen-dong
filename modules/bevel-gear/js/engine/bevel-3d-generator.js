@@ -109,11 +109,13 @@ export const Bevel3DGenerator = {
             if (isSpiral) {
                 if (gearingType === 'straight_type1') {
                     const V = hand * u * b * Math.tan(beta);
-                    spiralAngle = V / Math.max(1.0, R_s * sinD);
+                    const sin_spiral = V / Math.max(1.0, R_s * sinD);
+                    spiralAngle = Math.asin(Math.max(-0.99, Math.min(0.99, sin_spiral)));
                 } else {
                     const term = u * b + R_tool * Math.sin(beta);
                     const W = hand * (R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term)));
-                    spiralAngle = W / Math.max(1.0, R_s * sinD);
+                    const sin_spiral = W / Math.max(1.0, R_s * sinD);
+                    spiralAngle = Math.asin(Math.max(-0.99, Math.min(0.99, sin_spiral)));
                 }
             } else {
                 spiralAngle = 0.0;
@@ -152,8 +154,8 @@ export const Bevel3DGenerator = {
                     const inv_c = Math.tan(alpha_c) - alpha_c;
                     psi_c = psi_v + inv_alfa_t - inv_c;
                 } else {
-                    // Radial extension below base circle to root
-                    psi_c = (psi_v + inv_alfa_t) * (r_c / rvb);
+                    // Radial continuation below base circle to root
+                    psi_c = psi_v + inv_alfa_t;
                 }
                 // Profile crowning (tip/root ease-off per Gleason practice)
                 const C_P = mmn * 0.0015;
@@ -162,7 +164,8 @@ export const Bevel3DGenerator = {
 
                 const h = r_c - rv;
                 const r_pt = r_pitch + h * cosD;
-                const theta = (rv / Math.max(1.0, r_pt)) * psi_c;
+                // Pure conical development: theta around gear axis preserves physical arc length (r_c * psi_c = r_pt * theta)
+                const theta = psi_c / cosD;
                 return { h, theta };
             }
 

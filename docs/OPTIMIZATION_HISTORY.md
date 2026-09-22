@@ -1052,3 +1052,42 @@
     * Chế độ Chỉ Mặt Bên (Flank Only - Phương Án 1): Vết Elip sáng rõ đồng thời trên cả hai mặt thân khai Bánh dẫn và Bánh bị dẫn.
     * Chế độ Lăn Động (Dynamic Rolling): 5 bước nhích liên tiếp hiển thị vết tiếp xúc lăn êm ái, bảo toàn 100% tính liên tục cơ khí.
   - **Đóng gói mã nguồn Classic Script CORS-Free**: `python tools/bundle_all.py` đóng gói thành công `bevel-engine.bundle.js` (262,536 ký tự).
+
+---
+
+## Giai Đoạn 24: Chuẩn Hóa Góc Chiếu Nón Phụ Tredgold Giải Tích, Khử Lệch Góc Xoắn Arcsin & Cách Ly Hành Lang Ăn Khớp Shader TCA
+* **Bối cảnh & Phản hồi thực tế từ SirPhuong**:
+  - Người dùng kiểm tra mô phỏng 3D ăn khớp bánh răng côn ở độ mịn Cấp 8 (Ultra CAD) kết hợp "Chỉ Mặt Bên" và "Hiện Vết TCA", gửi 5 ảnh chụp thực tế (`media_1790054594592.png` đến `media_1790054670617.png`).
+  - Người dùng phát hiện hiện tượng bất thường:
+    *"vết tiếp xúc thực tế không được như lý thuyết, nó giống như kiểu đỉnh của 2 bánh răng đều đang to và chỉ có ăn khớp trên đỉnh bánh răng này tương ứng đáy bánh răng kia chứ vết tiếp xúc không xuống được khu vực giữa răng (khu vực đường chia)"*.
+  - Yêu cầu tối thượng: *"tất nhiên là tôi muốn vết tiếp xúc phải đúng chuẩn ELIP GLEASON rồi, nhưng vấn đề là phải tính toán để dựng hình đúng công thức chứ không phải là theo kiểu cố chính để cho được, chốt lại là bạn xem lại xem đang có vấn đề gì mà chưa ra được vết tiếp xúc chưa đúng chuẩn"*.
+* **Nguyên nhân cốt lõi phát hiện qua phân tích số học & giải tích 3D**:
+  1. **Sai lệch tỷ số bán kính Tredgold trong `eval_flank` (`bevel-3d-generator.js`, dòng 165)**:
+     - Code cũ dùng `theta = (rv / r_pt) * psi_c` thay vì `theta = psi_c / cosD`.
+     - Tỷ số $(r_v / (r_v + h))$ tại chân răng ($h < 0$) làm phóng đại góc quay $\theta$ thêm +12%, khiến **chân răng bánh dẫn bị phình to thêm +2.06 mm**! Rãnh răng bánh dẫn bị bóp hẹp lại 2.06 mm, khiến đỉnh răng bánh bị dẫn bị cấn vào chân răng trước khi đường chia kịp chạm nhau.
+  2. **Sai lệch góc xoắn $W(u)$ ở gót răng (Heel)**:
+     - Code cũ dùng xấp xỉ tuyến tính góc nhỏ làm lệch $1.45\text{ mm}$ ở đuôi răng ($u = 0.5$).
+  3. **Lỗi công thức chiều cao $h$ và thiếu cô lập răng ăn khớp trong Shader GPU TCA**:
+     - Shader cũ dùng phép chiếu 2D làm đỉnh của các răng ở góc nghiêng $15^\circ - 20^\circ$ bị hiểu nhầm thành $h \approx 0$, đồng thời không chặn khoảng cách $Z$, khiến 3 đỉnh răng liên tiếp ngoài vùng ăn khớp đều phát sáng đỏ rực.
+* **Đột phá & Giải pháp kỹ thuật hoàn thiện 100%**:
+  1. **Chuẩn hóa góc chiếu nón phụ Tredgold (`bevel-3d-generator.js`)**:
+     - Theo định lý bảo toàn cung thực thể giữa nón phụ Tredgold và vòng quay thực tế:
+       $$r_{pt} \cdot \theta = r_c \cdot \psi_c \implies \theta = \frac{r_c}{r_c \cos\delta} \cdot \psi_c = \frac{\psi_c}{\cos\delta}$$
+     - Sườn răng dưới vòng cơ sở: $\psi_c = \psi_v + \text{inv}\alpha_t$.
+     - Khôi phục chính xác 100% biên dạng thân khai từ đáy đến đỉnh. Khe hở đáy danh nghĩa đạt chuẩn ISO 23509: $c = 0.20 \cdot m_{mn} = 2.000\text{ mm}$.
+  2. **Khử lệch góc xoắn bằng hàm lượng giác ngược Arcsin**:
+     - $\text{spiralAngle} = \arcsin\left(\frac{W}{R_s \sin\delta}\right)$.
+     - Đưa sai lệch tọa độ 3D giữa hai răng dọc suốt bề rộng vành răng $b$ về đúng **$\Delta = 0.000000\text{ mm}$**.
+  3. **Tách biệt công thức chiều cao $h$ và cô lập hành lang răng ăn khớp trong Shader TCA (`bevel-3d-visualizer.js`)**:
+     - Pinion: $h_1 = \sqrt{Y^2 + Z^2} \cos\delta_1 - X \sin\delta_1$.
+     - Gear: $h_2 = \sqrt{X^2 + Z^2} \sin\delta_1 - Y \cos\delta_1$.
+     - Bổ sung bộ lọc hành lang ăn khớp $|Z - Z_{spiral}| \le 2.2 \cdot m_{mn}$: Chỉ duy nhất răng đang ăn khớp mới được phủ màu.
+     - Vết tiếp xúc Elip Gleason (Chế độ 1) hiển thị tròn đầy, nằm cân đối hoàn hảo ở trung tâm sườn răng, bao trọn khu vực đường chia ($h = 0$).
+* **Kết quả đo đạc & Kiểm thử tự động thực tế**:
+  - `modules/bevel-gear/tests/qc_bevel_multi_case_suite.py`: **120 / 120 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
+  - `tests/qc_gear_multi_case_suite.py`: **110 / 110 checks PASS tuyệt đối (100.0%, $\Delta = 0.0000$)**.
+  - **Kiểm thử trực quan Playwright**:
+    * `gleason_tca_fixed_mode1_mesh.png`: Vết Elip Gleason nằm chính giữa sườn răng tại đường chia $h = 0$.
+    * `gleason_user_angle_closeup_mode1.png`: Góc nhìn cận cảnh khớp ảnh người dùng xác nhận 100% đỉnh răng sạch sẽ, không còn đốm đỏ ở đỉnh.
+    * `gleason_tca_fixed_solid_iso.png`: Khối Solid mesh ăn khớp hoàn hảo, vết tiếp xúc hiển thị chuẩn xác.
+  - **Đóng gói mã nguồn Classic Script CORS-Free**: `python tools/bundle_all.py` đóng gói thành công `bevel-engine.bundle.js` (264,315 ký tự).

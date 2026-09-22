@@ -2827,11 +2827,13 @@ const Bevel3DGenerator = {
             if (isSpiral) {
                 if (gearingType === 'straight_type1') {
                     const V = hand * u * b * Math.tan(beta);
-                    spiralAngle = V / Math.max(1.0, R_s * sinD);
+                    const sin_spiral = V / Math.max(1.0, R_s * sinD);
+                    spiralAngle = Math.asin(Math.max(-0.99, Math.min(0.99, sin_spiral)));
                 } else {
                     const term = u * b + R_tool * Math.sin(beta);
                     const W = hand * (R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term)));
-                    spiralAngle = W / Math.max(1.0, R_s * sinD);
+                    const sin_spiral = W / Math.max(1.0, R_s * sinD);
+                    spiralAngle = Math.asin(Math.max(-0.99, Math.min(0.99, sin_spiral)));
                 }
             } else {
                 spiralAngle = 0.0;
@@ -2870,8 +2872,8 @@ const Bevel3DGenerator = {
                     const inv_c = Math.tan(alpha_c) - alpha_c;
                     psi_c = psi_v + inv_alfa_t - inv_c;
                 } else {
-                    // Radial extension below base circle to root
-                    psi_c = (psi_v + inv_alfa_t) * (r_c / rvb);
+                    // Radial continuation below base circle to root
+                    psi_c = psi_v + inv_alfa_t;
                 }
                 // Profile crowning (tip/root ease-off per Gleason practice)
                 const C_P = mmn * 0.0015;
@@ -2880,7 +2882,8 @@ const Bevel3DGenerator = {
 
                 const h = r_c - rv;
                 const r_pt = r_pitch + h * cosD;
-                const theta = (rv / Math.max(1.0, r_pt)) * psi_c;
+                // Pure conical development: theta around gear axis preserves physical arc length (r_c * psi_c = r_pt * theta)
+                const theta = psi_c / cosD;
                 return { h, theta };
             }
 
@@ -4171,15 +4174,39 @@ class Bevel3DVisualizer {
             const tcaFragmentLogic = `
                 #include <dithering_fragment>
                 if (uTcaEnabled > 0.5) {
-                    float s = vTcaWorldPos.x * uCosD + vTcaWorldPos.y * uSinD;
-                    float h = -vTcaWorldPos.x * uSinD + vTcaWorldPos.y * uCosD;
-                    float z = vTcaWorldPos.z;
-                    
+                    // 1. Cone distance s from common apex V(0,0,0)
+                    float s = length(vTcaWorldPos);
+
+                    // 2. True normal height h from pitch cone:
+                    // Pinion axis of rotation is World +X; Gear axis of rotation is World +Y (for Sigma=90).
+                    // rAxis is distance from each gear's physical rotational axis.
                     float rAxis = (uIsPinion > 0.5) ? length(vTcaWorldPos.yz) : length(vTcaWorldPos.xz);
                     float minBore = (uIsPinion > 0.5) ? (uRBore1 + 2.0) : (uRBore2 + 2.0);
 
-                    // Active tooth zone within face width [Ri, Re], working depth |h| <= 1.8 mmn, and outside bore
-                    if (s >= (uRi - 2.0) && s <= (uRe + 2.0) && abs(h) <= (uMmn * 1.8) && rAxis > minBore) {
+                    // True height h:
+                    // Pinion: (rAxis - r_pitch1) * cosD = rAxis * cosD - X * sinD
+                    // Gear:   (rAxis - r_pitch2) * sinD = rAxis * sinD - Y * cosD
+                    float h = (uIsPinion > 0.5)
+                        ? (rAxis * uCosD - vTcaWorldPos.x * uSinD)
+                        : (rAxis * uSinD - vTcaWorldPos.y * uCosD);
+
+                    // 3. Spiral curve displacement Z_spiral at cone distance s:
+                    float u_face = (s - uRm) / max(1.0, uB);
+                    float z_spiral = 0.0;
+                    if (uIsSpiral > 0.5) {
+                        float R_tool = 1.5 * uB;
+                        float term = u_face * uB + R_tool * sin(uBetaRad);
+                        float W = R_tool * cos(uBetaRad) - sqrt(max(0.0, R_tool * R_tool - term * term));
+                        z_spiral = -W;
+                    }
+
+                    // 4. Spatial isolation of active meshing tooth:
+                    // Only points on the tooth within the immediate meshing engagement corridor are highlighted.
+                    float zDist = abs(vTcaWorldPos.z - z_spiral);
+                    float maxActiveToothZ = uMmn * 2.2;
+
+                    // Active tooth zone within face width [Ri, Re], working depth |h| <= 1.8 mmn, outside bore, and in active tooth corridor
+                    if (s >= (uRi - 3.0) && s <= (uRe + 3.0) && abs(h) <= (uMmn * 1.8) && rAxis > minBore && zDist <= maxActiveToothZ) {
                         float intensity = 0.0;
                         float widthScale = clamp(uTcaWidth / 4.0, 0.25, 3.0);
 
@@ -4188,10 +4215,10 @@ class Bevel3DVisualizer {
                             // CHẾ ĐỘ 1: VẾT TIẾP XÚC ELIP CHUẨN GLEASON (CUMULATIVE ROLLED PATTERN)
                             // =========================================================================
                             // Authentic Gleason & ISO 23509 Standard Rolled Contact Ellipse:
-                            // - Length: 56% of face width b (centered at Rm - 0.08*b with toe bias)
-                            // - Height: 60% of working depth (2.0 * mmn) centered along pitch cone line
+                            // - Length: 56% of face width b (centered at Rm - 0.08*b with toe bias per ISO 23509)
+                            // - Height: 60% of working depth (2.0 * mmn) centered PRECISELY along pitch cone line (h0 = 0.0)
                             float s0 = uRm - 0.08 * uB; // 42% from toe (slight toe bias per ISO 23509)
-                            float h0 = 0.0;             // centered on pitch cone line
+                            float h0 = 0.0;             // centered directly on pitch cone line
                             float a_len = 0.28 * uB * widthScale;    // 56% of face width b
                             float b_hgt = 0.60 * uMmn * widthScale;  // 60% of tooth height
                             
@@ -4211,14 +4238,14 @@ class Bevel3DVisualizer {
                             float phiRel = mod(uPinionAngle + p1 * 0.5, p1) - p1 * 0.5;
                             float normPhase = phiRel / (p1 * 0.5); // normalized roll phase: -1.0 to +1.0
                             
-                            // Rolling contact center along face width and height
+                            // Rolling contact center along face width and height (rolls through pitch line h = 0)
                             float s_contact = (uIsSpiral > 0.5) 
-                                ? (uRm - normPhase * (uB * 0.38)) 
+                                ? (uRm - normPhase * (uB * 0.35)) 
                                 : uRm;
-                            float h_contact = normPhase * (uMmn * 0.45);
+                            float h_contact = normPhase * (uMmn * 0.40);
 
                             // Instantaneous rolling contact spot scaled with width control
-                            float a_roll = uB * 0.22 * widthScale;
+                            float a_roll = uB * 0.20 * widthScale;
                             float b_roll = uMmn * 0.45 * widthScale;
                             float dS = (s - s_contact) / max(1.0, a_roll);
                             float dH = (h - h_contact) / max(0.5, b_roll);

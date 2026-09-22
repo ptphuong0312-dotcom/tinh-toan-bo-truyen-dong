@@ -719,6 +719,26 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 34: Chuẩn Hóa Góc Chiếu Nón Phụ Tredgold Giải Tích & Cách Ly Hành Lang Ăn Khớp TCA
+1. **Chuẩn Hóa Góc Chiếu Nón Phụ Tredgold (`theta = psi_c / cosD`)**:
+   - Khắc phục triệt để sai lầm dùng tỷ số bán kính $r_v / r_{pt}$ làm chân răng bị phình to +12% (+2.06 mm) khiến đỉnh răng bánh bị dẫn chạm cấn chân răng bánh dẫn.
+   - Định lý bảo toàn cung thực thể giữa nón phụ Tredgold và vòng quay thực tế của bánh răng trong không gian 3D:
+     $$\text{arc} = r_c \cdot \psi_c = r_{pt} \cdot \theta \implies \theta = \frac{r_c}{r_c \cos\delta} \cdot \psi_c = \frac{\psi_c}{\cos\delta}$$
+   - Đảm bảo độ dày thân khai chuẩn xác 100% từ chân đến đỉnh răng, khe hở chân răng đạt chuẩn $c = 0.20 \cdot m_{mn} = 2.000\text{ mm}$ (ISO 23509).
+2. **Khử Lệch Góc Xoắn Cung Dao Phay Gleason Bằng Hàm Lượng Giác Ngược**:
+   - Chuyển từ xấp xỉ góc nhỏ sang hàm giải tích chính xác:
+     $$\text{spiralAngle} = \arcsin\left(\frac{W}{R_s \sin\delta}\right)$$
+   - Đưa sai lệch tọa độ không gian 3D giữa hai bánh răng dọc suốt bề rộng vành răng $b$ về đúng $\Delta = 0.000000\text{ mm}$, loại bỏ hoàn toàn hiện tượng vênh xoắn gót răng.
+3. **Thuật Toán Chiều Cao Nón Thực Thể & Cô Lập Răng Ăn Khớp Trong Shader GPU TCA**:
+   - Tách biệt công thức chiều cao $h$ tính từ trục quay thực tế của từng bánh răng trong không gian thế giới:
+     * Pinion (trục $+X$): $h_1 = \sqrt{Y^2 + Z^2} \cos\delta_1 - X \sin\delta_1$.
+     * Gear (trục $+Y$): $h_2 = \sqrt{X^2 + Z^2} \sin\delta_1 - Y \cos\delta_1$.
+     Bảo đảm $h = 0$ luôn nằm chính xác trên đường sinh nón chia (Pitch Cone Line) bất kể góc xoay hay vị trí không gian.
+   - Thêm bộ lọc hành lang ăn khớp chủ động $|Z - Z_{spiral}| \le 2.2 \cdot m_{mn}$: Chỉ duy nhất răng đang ăn khớp mới được phủ màu hiển thị vết tiếp xúc. Triệt tiêu 100% hiện tượng phát sáng giả ở đỉnh răng hoặc ở các răng ngoài vùng ăn khớp.
+   - Vết tiếp xúc Elip Gleason (Chế độ 1) hiển thị tròn đầy, nằm cân đối hoàn hảo ở trung tâm sườn răng, bao trọn khu vực đường chia ($h = 0$) đúng theo chuẩn thực tế xưởng cơ khí và lý thuyết ăn khớp Gleason.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

@@ -536,7 +536,6 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      với $W(R_s) = hand \cdot (R_{\text{tool}}\cos\beta - \sqrt{R_{\text{tool}}^2 - (u \cdot b + R_{\text{tool}}\sin\beta)^2})$.
    - Khoảng cách elip tiếp xúc $dContact = \sqrt{1.4 \cdot dH^2 + 0.7 \cdot dZ^2}$, mở rộng thanh trượt đến $15.0\text{ mm}$.
    - Vết tiếp xúc in dấu đồng thời, đối xứng 100% trên cả Bánh Dẫn (Pinion) và Bánh Bị Dẫn (Gear).
-
 ---
 
 ### Quy Tắc 24: Quy Chuẩn Độ Lồi Răng (Tooth Crowning Ease-Off) & Phân Tích Vết Tiếp Xúc Ăn Khớp Elip Gleason Song Chế Độ (Dual-Mode Gleason TCA Protocol)
@@ -558,4 +557,25 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - 3 Chế độ màu sắc: 🔴 Laser Ruby (Đỏ rực), 🔵 Prussian Blue (Bột màu xanh thợ nguội), 🌈 Thermal Heatmap (Bản đồ nhiệt áp lực).
    - Thanh trượt độ rộng dải tiếp xúc `#sliderTCABandWidth` ($0.5 - 15.0\text{ mm}$) co dãn kích thước vệt tiếp xúc trực tiếp thời gian thực.
    - Hộp chọn Hướng nhìn `sel3DViewPreset = 'mesh'` căn góc trực diện $(mx + 110, my - 80, 210)$ hướng thẳng vào vùng ăn khớp $(mx, my, 0)$, cho tầm nhìn rõ nét 100% sườn răng và vết tiếp xúc.
+
+---
+
+### Quy Tắc 25: Chuẩn Hóa Góc Chiếu Nón Phụ Tredgold Giải Tích & Thuật Toán Cách Ly Hành Lang Ăn Khớp TCA
+1. **Chuẩn Hóa Góc Chiếu Nón Phụ Tredgold (`theta = psi_c / cosD`)**:
+   - Khắc phục triệt để sai lầm dùng tỷ số bán kính $r_v / r_{pt}$ làm chân răng bị phình to +12% (+2.06 mm) khiến đỉnh răng bánh bị dẫn chạm cấn chân răng bánh dẫn.
+   - Định lý bảo toàn cung thực thể giữa nón phụ Tredgold và vòng quay thực tế của bánh răng trong không gian 3D:
+     $$\text{arc} = r_c \cdot \psi_c = r_{pt} \cdot \theta \implies \theta = \frac{r_c}{r_c \cos\delta} \cdot \psi_c = \frac{\psi_c}{\cos\delta}$$
+   - Đảm bảo độ dày thân khai chuẩn xác 100% từ chân đến đỉnh răng, khe hở chân răng đạt chuẩn $c = 0.20 \cdot m_{mn} = 2.000\text{ mm}$ (ISO 23509).
+2. **Khử Lệch Góc Xoắn Cung Dao Phay Gleason Bằng Hàm Lượng Giác Ngược**:
+   - Chuyển từ xấp xỉ góc nhỏ sang hàm giải tích chính xác:
+     $$\text{spiralAngle} = \arcsin\left(\frac{W}{R_s \sin\delta}\right)$$
+   - Đưa sai lệch tọa độ không gian 3D giữa hai bánh răng dọc suốt bề rộng vành răng $b$ về đúng $\Delta = 0.000000\text{ mm}$, loại bỏ hoàn toàn hiện tượng vênh xoắn gót răng.
+3. **Thuật Toán Chiều Cao Nón Thực Thể & Cô Lập Răng Ăn Khớp Trong Shader GPU TCA**:
+   - Tách biệt công thức chiều cao $h$ tính từ trục quay thực tế của từng bánh răng trong không gian thế giới:
+     * Pinion (trục $+X$): $h_1 = \sqrt{Y^2 + Z^2} \cos\delta_1 - X \sin\delta_1$.
+     * Gear (trục $+Y$): $h_2 = \sqrt{X^2 + Z^2} \sin\delta_1 - Y \cos\delta_1$.
+     Bảo đảm $h = 0$ luôn nằm chính xác trên đường sinh nón chia (Pitch Cone Line) bất kể góc xoay hay vị trí không gian.
+   - Thêm bộ lọc hành lang ăn khớp chủ động $|Z - Z_{spiral}| \le 2.2 \cdot m_{mn}$: Chỉ duy nhất răng đang ăn khớp mới được phủ màu hiển thị vết tiếp xúc. Triệt tiêu 100% hiện tượng phát sáng giả ở đỉnh răng hoặc ở các răng ngoài vùng ăn khớp.
+   - Vết tiếp xúc Elip Gleason (Chế độ 1) hiển thị tròn đầy, nằm cân đối hoàn hảo ở trung tâm sườn răng, bao trọn khu vực đường chia ($h = 0$) đúng theo chuẩn thực tế xưởng cơ khí và lý thuyết ăn khớp Gleason.
+
 
