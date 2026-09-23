@@ -93,10 +93,10 @@ Sử dụng công cụ `view_file` mở trực tiếp các file ảnh `scratch/c
    - Nếu mặt sau không có màu của bánh răng đối diện -> **FAIL (Chưa tiếp xúc)** -> Tăng chiều dày răng danh nghĩa hoặc giảm khe hở $j_{n,cad}$.
 2. **Kiểm tra vị trí vết in màu**:
    - Vết in phải nằm ở **KHU GIỮA CỦA RĂNG** ($R_m$).
-   - Nếu dồn về nón ngoài ($R_e$) hoặc nón trong ($R_i$) -> **FAIL (Lệch góc xoắn)** -> Kiểm tra lại công thức $\theta = W / r_{\text{pitch}}$.
+   - Nếu dồn về nón ngoài ($R_e$) hoặc nón trong ($R_i$) -> **FAIL (Lệch nón ngoài / Heel contact)** -> Kiểm tra ngay công thức góc pha ban đầu $\psi_{\text{gear}} = \arcsin(\sin\theta_1 / i) + \theta_2$. Tuyệt đối không dùng dấu trừ (`- th2`) vì sẽ kéo bánh 2 va chạm đỉnh-đối-đỉnh với bánh 1, ép tiếp xúc dạt ra nón ngoài!
 3. **Kiểm tra độ lồi / phồng (Bulging)**:
    - Màu in phải phẳng trên mặt sườn.
-   - Nếu có mảng tam giác hay đỉnh răng nhô lồi 3D qua mặt trước -> **FAIL (Cắn răng)** -> Tăng độ vát đỉnh ($r_{\text{drop}}, \psi_{\text{tip}}$) và góc lượn chân ($u_{\text{root}}$).
+   - Nếu có mảng tam giác hay đỉnh răng nhô lồi 3D qua mặt trước -> **FAIL (Cắn răng)** -> Kiểm tra ăn khớp lọt rãnh răng (tooth-into-space) và khôi phục hình học thuần gốc MITCalc 1.74 ($s_{ns} = s_{ne} \cdot R/R_e$).
 
 ### Bước 6: Tinh Chỉnh & Lặp Lại
 Điều chỉnh tham số hình học trong `bevel-3d-generator.js` hoặc góc pha trong `bevel-3d-visualizer.js`, đóng gói lại và lặp lại từ Bước 1 cho đến khi ảnh chụp đạt chuẩn 100% PASS.
@@ -107,6 +107,7 @@ Sử dụng công cụ `view_file` mở trực tiếp các file ảnh `scratch/c
 | Trạng thái | Dấu hiệu thị giác | Đánh giá | Hành động |
 | :--- | :--- | :---: | :--- |
 | **Hở răng (Clearance)** | Mặt sau không in màu của bánh đối diện | ❌ FAIL | Giảm $j_{n,cad}$, cân chỉnh góc pha ăn khớp ban đầu |
-| **Cắn răng (Interference)** | Màu in kèm khối tam giác phồng lồi qua mặt trước | ❌ FAIL | Tăng độ vát đỉnh $r_{\text{drop}}$ và góc chân $u_{\text{root}}$ |
-| **Lệch đầu (Heel/Toe Contact)** | Vết in nằm lệch hẳn ra mép nón ngoài hoặc nón trong | ❌ FAIL | Kiểm tra tỷ số góc xoắn $\text{spiralAngle} = W / (R_s \sin\delta)$ |
+| **Cắn răng (Interference)** | Màu in kèm khối tam giác phồng lồi qua mặt trước | ❌ FAIL | Kiểm tra góc pha ban đầu lọt rãnh $\psi_{\text{gear}} = \arcsin(\sin\theta_1 / i) + \theta_2$ |
+| **Lệch gót ngoài (Heel Contact)** | Vết in nằm lệch hẳn ra mép nón ngoài to nhất ($R_e$) | ❌ FAIL | Sửa dấu trừ thành dấu cộng trong $\psi_{\text{gear}}$ để răng lọt vào giữa rãnh |
 | **Ăn khớp hoàn hảo** | Vết in màu phẳng, sắc nét tại khu giữa răng ($R_m$), hai đầu hở êm ái, zero-bulge | ✅ **PASS** | Đạt chuẩn xưởng cơ khí, sẵn sàng nghiệm thu |
+

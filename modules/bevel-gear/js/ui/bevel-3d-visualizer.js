@@ -289,12 +289,18 @@ export class Bevel3DVisualizer {
 
         this.updateMeshes();
 
-        // 3. Analytical Conjugate Phase Offset (Zero-Collision Conjugate Mesh)
-        // Pinion rotates around X, Gear rotates around Y (or Sigma via gearPivot).
+        // 3. Authentic MITCalc Conjugate Phase Offset (Exact Mid-Zone Kiss Contact at Rm)
+        // Pinion rotates around World X, Gear rotates around World Y.
         // Pitch contact line lies in XY plane (Z = 0) at angle delta1 from X axis.
-        // Pinion tooth 0 crest is at angle 0 along the contact line.
-        // Gear 2 has tooth space (half pitch -pi/z2) at the contact line:
-        this.initialGearAngle = -Math.PI / z2;
+        const st1 = parseFloat(geom.st1) || (mmn * (Math.PI / 2.0 + 2.0 * x1 * Math.tan(alfa) + xt1));
+        const st2 = parseFloat(geom.st2) || (mmn * (Math.PI / 2.0 + 2.0 * x2 * Math.tan(alfa) + xt2));
+        const cosBeta = Math.abs(beta_deg) > 1e-4 ? Math.cos(beta) : 1.0;
+        const th1 = ((st1 / cosBeta) / (2.0 * (Rm * Math.tan(delta1)))) / Math.cos(delta1);
+        const th2 = ((st2 / cosBeta) / (2.0 * (Rm * Math.tan(delta2)))) / Math.cos(delta2);
+        // Exact conjugate kiss contact condition sin(psi - th2) = sin(th1) / i:
+        // Gear Tooth 0 Flank 1 (at psiContact - th2) touches Pinion Drive Flank 1 (at -th1)
+        const psiContact = Math.asin(Math.min(0.999, Math.sin(th1) / this.gearRatio)) + th2;
+        this.initialGearAngle = psiContact;
         this.pinionAngle = 0;
         this.gearAngle = this.initialGearAngle;
 
@@ -386,11 +392,22 @@ export class Bevel3DVisualizer {
         if (this.mesh1Data.tcaParams) {
             geo1.setAttribute('aTcaParam', new THREE.BufferAttribute(this.mesh1Data.tcaParams, 3));
         }
+        // Analytical proper orthogonal transformation matrix for Pinion 1:
+        // Maps local (x, y, z) -> world (z, x, y): local +Z (pinion axis) -> World +X
+        // Pitch generator in local XY plane -> World XY pitch contact line (Z = 0)
+        const mPinion = new THREE.Matrix4().set(
+            0, 0, 1, 0,
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 0, 1
+        );
+
         this.pinionMesh = new THREE.Mesh(geo1, matPinion);
         this.pinionMesh.castShadow = true;
         this.pinionMesh.receiveShadow = true;
         this.pinionMesh.visible = !this.flankOnlyMode;
-        this.pinionMesh.rotation.set(0, Math.PI / 2.0, Math.PI / 2.0);
+        this.pinionMesh.quaternion.setFromRotationMatrix(mPinion);
+        this.pinionMesh.rotation.setFromQuaternion(this.pinionMesh.quaternion);
         this.pinionGroup.add(this.pinionMesh);
 
         // 2. Pinion Surface Mesh (Phương Án 1)
@@ -404,9 +421,20 @@ export class Bevel3DVisualizer {
             }
             this.pinionSurfMesh = new THREE.Mesh(geoSurf1, matPinionSurf);
             this.pinionSurfMesh.visible = this.flankOnlyMode;
-            this.pinionSurfMesh.rotation.set(0, Math.PI / 2.0, Math.PI / 2.0);
+            this.pinionSurfMesh.quaternion.setFromRotationMatrix(mPinion);
+            this.pinionSurfMesh.rotation.setFromQuaternion(this.pinionSurfMesh.quaternion);
             this.pinionGroup.add(this.pinionSurfMesh);
         }
+
+        // Analytical proper orthogonal transformation matrix for Gear 2:
+        // Maps local (x, y, z) -> world (x, z, -y): local +Z (gear axis) -> World +Y
+        // Pitch generator in local XY plane -> World XY pitch contact line (Z = 0)
+        const mGear = new THREE.Matrix4().set(
+            1,  0, 0, 0,
+            0,  0, 1, 0,
+            0, -1, 0, 0,
+            0,  0, 0, 1
+        );
 
         // 3. Gear Solid Mesh
         const geo2 = new THREE.BufferGeometry();
@@ -420,7 +448,8 @@ export class Bevel3DVisualizer {
         this.gearMesh.castShadow = true;
         this.gearMesh.receiveShadow = true;
         this.gearMesh.visible = !this.flankOnlyMode;
-        this.gearMesh.rotation.set(-Math.PI / 2.0, 0, 0);
+        this.gearMesh.quaternion.setFromRotationMatrix(mGear);
+        this.gearMesh.rotation.setFromQuaternion(this.gearMesh.quaternion);
         this.gearGroup.add(this.gearMesh);
 
         // 4. Gear Surface Mesh (Phương Án 1)
@@ -434,7 +463,8 @@ export class Bevel3DVisualizer {
             }
             this.gearSurfMesh = new THREE.Mesh(geoSurf2, matGearSurf);
             this.gearSurfMesh.visible = this.flankOnlyMode;
-            this.gearSurfMesh.rotation.set(-Math.PI / 2.0, 0, 0);
+            this.gearSurfMesh.quaternion.setFromRotationMatrix(mGear);
+            this.gearSurfMesh.rotation.setFromQuaternion(this.gearSurfMesh.quaternion);
             this.gearGroup.add(this.gearSurfMesh);
         }
 
@@ -597,7 +627,7 @@ export class Bevel3DVisualizer {
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'mesh': // Close up on pitch contact zone looking directly at engaging tooth flank
-                this.camera.position.set(mx + 60.0, my + 36.0, 240.0);
+                this.camera.position.set(mx + 70.0, my + 45.0, 110.0);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(mx, my, 0);
                 break;
@@ -789,54 +819,44 @@ export class Bevel3DVisualizer {
             const tcaFragmentLogic = `
                 #include <dithering_fragment>
                 if (uTcaEnabled > 0.5 && vTcaParam.z > 0.5) {
-                    float u = vTcaParam.x;        // Face width: -0.5 (toe) to +0.5 (heel), 0.0 is Rm
+                    float u = vTcaParam.x;        // Face width: -0.5 (toe) to +0.5 (heel), 0.0 is Rm (middle of tooth)
                     float v = vTcaParam.y - 0.5;  // Working depth: -0.5 (root) to +0.5 (tip), 0.0 is EXACT PITCH LINE!
                     float widthScale = clamp(uTcaWidth / 4.0, 0.25, 3.0);
                     float intensity = 0.0;
 
-                    if (uTcaPatternType > 0.5) {
-                        // =========================================================================
-                        // CHẾ ĐỘ 1: VẾT TIẾP XÚC ELIP CHUẨN GLEASON (CUMULATIVE ROLLED PATTERN)
-                        // =========================================================================
-                        // Authentic Gleason & ISO 23509 Standard Rolled Contact Ellipse:
-                        // Imprinted on the flank across face width, centered at pitch line:
-                        // - Centered along face width at u0 = -0.08 (slight toe bias per ISO 23509)
-                        // - Centered vertically PRECISELY on pitch cone line (v0 = 0.0)
-                        // - Major radius a = 0.28 * widthScale (56% of face width b)
-                        // - Minor radius b = 0.28 * widthScale (56% of working depth)
-                        float u0 = -0.08;
-                        float v0 = 0.0;
-                        float a_len = 0.28 * widthScale;
-                        float b_hgt = 0.28 * widthScale;
-                        float du = (u - u0) / max(0.01, a_len);
-                        float dv = (v - v0) / max(0.01, b_hgt);
-                        float ellDist = sqrt(du * du + dv * dv);
-                        if (ellDist <= 1.0) {
-                            intensity = smoothstep(0.0, 1.0, 1.0 - ellDist);
-                        }
-                    } else {
-                        // =========================================================================
-                        // CHẾ ĐỘ 0: TIẾP XÚC ĐỘNG LĂN LIÊN HỢP THỜI GIAN THỰC (DYNAMIC ROLLING LOCUS)
-                        // =========================================================================
-                        // As pinion rolls, active contact locus sweeps continuously across tooth flank through pitch line
-                        float s = length(vTcaWorldPos);
-                        float u_face = (s - uRm) / max(1.0, uB);
-                        float R_tool = 1.5 * uB;
-                        float term = u_face * uB + R_tool * sin(uBetaRad);
-                        float W = R_tool * cos(uBetaRad) - sqrt(max(0.0, R_tool * R_tool - term * term));
-                        vec3 pContact = vec3(s * uCosD, s * uSinD, -W);
-                        float dCorridor = length(vTcaWorldPos - pContact);
-                        float maxCorridor = max(uMmn * 4.5, uB * 0.70);
+                    // Symmetric contact zone corridor around the pitch contact line (shared in World XY plane)
+                    float dPlane = abs(vTcaWorldPos.z);
+                    float dLine = abs(vTcaWorldPos.x * uSinD - vTcaWorldPos.y * uCosD);
+                    float maxCorridor = max(uMmn * 5.0, uB * 0.85);
 
-                        if (dCorridor <= maxCorridor) {
+                    if (dPlane <= maxCorridor && dLine <= maxCorridor) {
+                        if (uTcaPatternType > 0.5) {
+                            // =========================================================================
+                            // CHẾ ĐỘ 1: VẾT TIẾP XÚC ELIP CHUẨN GLEASON (CUMULATIVE ROLLED PATTERN)
+                            // =========================================================================
+                            // Centered exactly in the middle zone (u0 = 0.0 at Rm) and on pitch line (v0 = 0.0):
+                            float u0 = 0.0;
+                            float v0 = 0.0;
+                            float a_len = 0.28 * widthScale;
+                            float b_hgt = 0.28 * widthScale;
+                            float du = (u - u0) / max(0.01, a_len);
+                            float dv = (v - v0) / max(0.01, b_hgt);
+                            float ellDist = sqrt(du * du + dv * dv);
+                            if (ellDist <= 1.0) {
+                                intensity = smoothstep(0.0, 1.0, 1.0 - ellDist);
+                            }
+                        } else {
+                            // =========================================================================
+                            // CHẾ ĐỘ 0: TIẾP XÚC ĐỘNG LĂN LIÊN HỢP THỜI GIAN THỰC (DYNAMIC ROLLING LOCUS)
+                            // =========================================================================
                             float p1 = 6.28318530718 / max(1.0, uZ1);
                             float phiRel = mod(uPinionAngle + p1 * 0.5, p1) - p1 * 0.5;
                             float normPhase = clamp(phiRel / (p1 * 0.45), -1.0, 1.0); // -1.0 to +1.0
                             
-                            // Rolling contact spot center: passes exactly through (u = -0.08, v = 0) at center of roll
-                            float u_roll = -0.08 - normPhase * 0.22;
+                            // Dynamic rolling spot centered at middle zone (u = 0, v = 0) at center of roll
+                            float u_roll = -normPhase * 0.25;
                             float v_roll = normPhase * 0.35;
-                            float a_roll = 0.16 * widthScale;
+                            float a_roll = 0.18 * widthScale;
                             float b_roll = 0.22 * widthScale;
                             float du = (u - u_roll) / max(0.01, a_roll);
                             float dv = (v - v_roll) / max(0.01, b_roll);

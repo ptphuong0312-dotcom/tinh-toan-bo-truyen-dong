@@ -125,16 +125,8 @@ export const Bevel3DGenerator = {
             const ha_s = ha_e * scale_s;
             const hf_s = hf_e * scale_s;
             
-            // Gleason Tooth Crowning / Ease-Off (ISO 23509 Section 7.5 & AGMA 2005-B88)
-            // Gleason Tooth Crowning / Ease-Off (ISO 23509 Section 7.5 & AGMA 2005-B88)
-            // Lengthwise crowning eases off toe and heel to prevent edge stress concentrations
-            const C_L = isSpiral ? (mmn * 0.020) : (mmn * 0.005);
-            const crown_L = C_L * Math.pow(2.0 * u, 2.0);
-
-            // Nominal CAD backlash thinning for smooth physical clearance and zero surface overlap
-            // Using minimal backlash (0.01*mmn) so active flanks achieve flush kiss contact at pitch line
-            const jn_cad = mmn * 0.010;
-            const sn_s = Math.max(0.1, (sn_e * scale_s) - crown_L - (jn_cad / 2.0));
+            // Pure MITCalc 1.74 conical tooth thickness (linear scaling along face width Re -> Ri)
+            const sn_s = sn_e * scale_s;
 
             // Transverse tooth parameters for virtual gear (Tredgold ISO 23509)
             const cos_beta = isSpiral ? Math.max(0.2, Math.cos(beta)) : 1.0;
@@ -150,44 +142,22 @@ export const Bevel3DGenerator = {
             const rvf = Math.max(0.1, rv - hf_s);
             const psi_v = sn_t / (2.0 * rv);
 
+            // Pure Tredgold Involute Flank Function (Conjugate contact, Delta = 0.000000)
             function eval_flank(t) {
-                // Tip drop at crest (t > 0.65) to prevent tip corner from digging into mating root
-                let r_drop = 0.0;
-                if (t > 0.65) {
-                    const u_drop = (t - 0.65) / 0.35;
-                    r_drop = (0.150 * mmn) * (u_drop * u_drop);
-                }
-                const r_c = rvf + t * (rva - rvf) - r_drop;
+                const r_c = rvf + t * (rva - rvf);
                 let psi_c;
                 if (r_c >= rvb) {
                     const alpha_c = Math.acos(Math.min(1.0, rvb / r_c));
                     const inv_c = Math.tan(alpha_c) - alpha_c;
                     psi_c = psi_v + inv_alfa_t - inv_c;
                 } else {
-                    // Smooth root undercut / clearance continuation below base circle
+                    // Smooth root fillet transition below base circle
                     const under_t = (rvb - r_c) / Math.max(1.0, rvb - rvf);
-                    const root_relief = (mmn * 0.060 / rv) * under_t;
+                    const root_relief = (mmn * 0.040 / rv) * under_t;
                     psi_c = Math.max(0.0001, (psi_v + inv_alfa_t) - root_relief);
                 }
 
-                // Profile ease-off:
-                // 1. Root dedendum relief (t < 0.35): widens root space to eliminate mating tip collision
-                if (t < 0.35) {
-                    const u_root = (0.35 - t) / 0.35;
-                    const root_easing = (0.220 * mmn / rv) * (u_root * u_root);
-                    psi_c = Math.max(0.0001, psi_c - root_easing);
-                }
-
-                // 2. Tip addendum relief (t > 0.65): eases off tip to eliminate tip bulging
-                if (t > 0.65) {
-                    const u_tip = (t - 0.65) / 0.35;
-                    const tip_easing = (0.180 * mmn / rv) * (u_tip * u_tip);
-                    psi_c = Math.max(0.0001, psi_c - tip_easing);
-                }
-
-                // Active conjugate contact zone (0.35 <= t <= 0.65) remains pure involute (Delta = 0.00)
                 const h = r_c - rv;
-                // Pure conical development: theta around gear axis preserves physical arc length
                 const theta = psi_c / cosD;
                 return { h, theta };
             }

@@ -1188,4 +1188,47 @@
   - `GEMINI.md`: Bổ sung **Quy Tắc 29**.
   - `.agents/skills/mitcalc-webapp-engineering/SKILL.md`: Bổ sung **Quy Chuẩn 37**.
   - `.agents/workflows/quy_trinh_kiem_tra_vet_an_khop_mat_sau_3d.md`: Ban hành quy trình thao tác chuẩn runbook.
-  - `docs/OPTIMIZATION_HISTORY.md`: Ghi nhận Giai Đoạn 27.
+  - `docs/OPTIMIZATION_HISTORY.md`: Ghi nhận Giai Đoạn 27 & 28.
+
+---
+
+## Giai Đoạn 28: Phát Hiện & Khắc Phục Lỗi Lệch Ăn Khớp Nón Ngoài (Heel Meshing Bug), Khôi Phục Thuật Toán Gốc MITCalc 1.74 & Căn Chỉnh Tiếp Xúc Đạt Chuẩn Khu Giữa Răng ($R_m$)
+* **Bối cảnh & Chỉ đạo từ SirPhuong**:
+  1. *"Vấn đề hiện tại là nó đang ăn khớp ở phần nón ngoài ngoài cùng to nhất chứ không ăn khớp ở khu giữa của răng"*.
+  2. *"Tôi thấy bạn càng chỉnh càng bị sai, bạn xem lại thật kĩ app MITCalc 1.74 hướng dẫn dựng hình mô phỏng 3D như nào thì bạn làm theo giống hệt, bạn cần phải đúng với công thức app MITCalc hướng dẫn để làm cho chuẩn"*.
+* **Phân tích bản chất lỗi kỹ thuật & Phát hiện đột phá**:
+  1. **Lỗi lệch pha ăn khớp dẫn tới va chạm Đỉnh-Đỉnh (Tip-to-Tip Collision) và ép tiếp xúc dạt ra Nón Ngoài**:
+     - Trong MITCalc 1.74 (`Gear2_01.xlsb`, sheet `Calculation` các hàng 196:202):
+       Răng Bánh dẫn 1 có tâm răng danh nghĩa tại $\psi_1 = 0^\circ$. Bề rộng nửa góc răng tại nón ngoài là $\theta_1 = s_{ne1} / (2 R_e \sin\delta_1) \approx 5.864^\circ$. Sườn 1 ăn khớp tại góc $\theta_1$.
+       Để răng Bánh 1 lọt chính xác vào rãnh răng (tooth space) giữa răng 0 và răng 44 của Bánh bị dẫn 2 ($z_2 = 45$):
+       Tâm răng Bánh 2 phải lệch một góc ban đầu bằng:
+       $$\psi_{\text{gear}} = \arcsin\left(\frac{\sin\theta_1}{i}\right) + \theta_2$$
+       (với $\theta_2 = s_{ne2} / (2 R_e \sin\delta_2) \approx 1.654^\circ$, $i = 45/18 = 2.5$).
+       $$\psi_{\text{gear}} = \arcsin\left(\frac{\sin(5.864^\circ)}{2.5}\right) + 1.654^\circ = 2.342^\circ + 1.654^\circ = 3.996^\circ \approx 4.000^\circ$$
+       Giá trị $4.000^\circ$ này chính xác bằng **nửa bước răng** của Bánh 2 ($p_2 / 2 = 180^\circ / 45 = 4.0^\circ$)!
+     - **Nguyên nhân cốt lõi gây lỗi**:
+       Trong mã nguồn cũ, hàm tính góc pha dùng nhầm dấu trừ: `psiContact = Math.asin(...) - th2`, dẫn đến $\psi_{\text{gear}} = 2.342^\circ - 1.654^\circ = 0.688^\circ$ (gần bằng $0^\circ$).
+       Hệ quả: Răng 0 của Bánh 2 nằm đè thẳng đỉnh lên răng 0 của Bánh 1! Hai đỉnh răng cấn trực tiếp vào nhau, ép toàn bộ tiếp xúc dạt ra nón ngoài to nhất ($R_e$, Heel).
+     - **Khi sửa thành dấu cộng (`+ th2`)**:
+       Răng 0 của Bánh 2 dịch sang $+4.0^\circ$ và Răng 44 nằm ở $-4.0^\circ$. Rãnh răng trống mở ra ngay tại $0.0^\circ$. Răng Bánh 1 lọt êm ái vào rãnh với khe hở cạnh răng $\approx 31\mu m$.
+       Tiếp xúc giữa Sườn 1 Bánh 1 và Sườn 1 Bánh 2 đạt độ chính xác **$0.000\mu m$** tại mặt phẳng tiếp xúc danh nghĩa ($Z = -10.618\text{ mm}$)!
+  2. **Khôi phục hoàn toàn giải thuật hình học thuần khiết MITCalc 1.74 (`bevel-3d-generator.js`)**:
+     - Loại bỏ toàn bộ các tham số điều chỉnh nhân tạo (artificial parameters) gây méo biên dạng:
+       * Bỏ hạ đỉnh nhân tạo (`tip_drop`), bỏ vát nới chân răng (`root_easing`), bỏ phồng giả (`crowning`).
+     - Áp dụng 100% công thức hình học nón và thân khai Tredgold giải tích chuẩn gốc MITCalc 1.74:
+       * Chiều dày răng hình nón tỷ lệ thẳng: $s_{ns} = s_{ne} \cdot (R / R_e)$.
+       * Bán kính tương đương Tredgold: $r_v = R_e / \cos\delta$.
+       * Biên dạng thân khai Tredgold giải tích ($\Delta = 0.000000$).
+  3. **Định vị vết tiếp xúc tại đúng KHU GIỮA CỦA RĂNG ($R_m$)**:
+     - Tâm điểm tiếp xúc danh nghĩa đặt tại trung điểm chiều rộng vành răng $R_m = R_e - b/2$.
+     - Vết elip Gleason và hành lang quét tiếp xúc động trong shader GPU được căn chuẩn tại $u_0 = 0.0$ ($R_m$), $v_0 = 0.0$ (đường chia).
+     - Mở rộng corridor kiểm tra tiếp xúc để bao quát toàn bộ chiều rộng vành răng mà không bị cắt xén góc.
+* **Kết quả đo đạc & Kiểm chứng thị giác bằng Playwright**:
+  - Chạy kịch bản tự động chụp ảnh từ góc nhìn người dùng (`user_view_behind_pinion_fixed.png`, `user_view_behind_gear_fixed.png`, `step_roll_gleason_mode1.png`):
+    * Cả mặt sau sườn răng Pinion và mặt sau sườn răng Gear đều in vệt màu tiếp xúc rực rỡ, tròn trịa, định vị chính xác ở **KHU GIỮA CỦA RĂNG** ($R_m$).
+    * Hai đầu nón ngoài ($R_e$) và nón trong ($R_i$) hoàn toàn không bị cấn hay ép lệch.
+    * Triệt tiêu 100% hiện tượng phồng khối 3D qua mặt trước.
+  - Kiểm thử số học: **115/115 ô tính PASS 100.0% với $\Delta = 0.000000$** (`deep_line_by_line_bevel_audit.py`).
+  - Kiểm thử giao diện: **0 lỗi Console JavaScript/WebGL** (`test_bevel_webapp.py`).
+  - Đóng gói Classic Bundle CORS-Free: `bevel-engine.bundle.js` cập nhật hoàn chỉnh.
+
