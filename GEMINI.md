@@ -683,5 +683,27 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * Đảo chiều quay tức thì khi đang hoạt họa mà không gây giật khung hình.
      * Cho phép kiểm tra ăn khớp trên cả hai mặt sườn: Sườn chủ động (Drive Flank) và Sườn bị động/lùi (Coast Flank).
 
+---
+
+### Quy Tắc 14: Quy Chuẩn Dựng Hình 3D Chuẩn Gốc MITCalc 1.74 & Triệt Tiêu Làm Tròn Trung Gian (Zero Premature Rounding)
+1. **Nguyên tắc bảo toàn độ chính xác 64-bit IEEE Double Precision**:
+   - Tuyệt đối **KHÔNG LÀM TRÒN** (`Math.round`, `.toFixed()`, làm tròn 3 chữ số) trong bất kỳ công thức hình học trung gian nào xuyên suốt toàn bộ pipeline tính toán (`bevel-calc-engine.js`, `bevel-3d-generator.js`, `gear-geometry.js`, `gear-3d-generator.js`).
+   - Giữ nguyên số thực dấu phẩy động 64-bit cho các biến hình học quan trọng ($a_1, a_2, b_1, b_2, \delta, \delta_a, \delta_f, R_e, R_m, R_i, d_{ae}, d_{fe}, s_{ne}, s_{te}, \psi_c$). Chỉ định dạng hiển thị ra giao diện người dùng ở bước cuối cùng.
+2. **Chuẩn phương pháp dựng hình 3D khớp 1-to-1 app gốc MITCalc 1.74**:
+   - **Bánh răng trụ & nghiêng (Spur & Helical Gear)**:
+     * Sử dụng đường bao lăn giá dao tiêu chuẩn (`GearFunctions.bas:920-1123`) tạo biên dạng 2D gồm 120 điểm kiểm tra tọa độ đạt $\Delta = 0.000000$ mm so với sheet `Coordinates` của `Gear1_01.xlsb`.
+     * Xoắn không gian liên hợp theo bước xoắn chính xác $\frac{d\theta}{dZ} = \frac{2\tan\beta}{d}$.
+   - **Bánh răng côn răng thẳng & răng xoắn (Bevel Gear - ISO 23509 / DIN 3971 / Gleason)**:
+     * Dựng theo nón phụ ảo Tredgold hội tụ về đỉnh nón chung Apex $V(0, 0, 0)$.
+     * Sử dụng bán kính dao cắt Gleason chuẩn Mục 16.4: $R_{\text{tool}} = 1.5 \cdot b$.
+     * Khử gimbal lock Three.js bằng phép nhân ma trận đồng nhất trực tiếp `BufferGeometry.applyMatrix4(m)` vào dữ liệu đỉnh, triệt tiêu sai lệch góc quay và đưa khe hở ăn khớp mặt răng về mức tiếp xúc vi mô lý tưởng ($0.081\text{ mm}$).
+3. **Phân biệt sườn răng 2 chiều (Bidirectional Tooth Contact Analysis - TCA) & Bảo tồn vết rà bột màu 360°**:
+   - Phân định định danh sườn `flankId` trong dữ liệu đỉnh: `1.0` (Sườn 1), `2.0` (Sườn 2), `0.0` (Đỉnh/đáy/mặt cạnh).
+   - Chiều quay Thuận (`uAnimDirection = +1`): Sườn chủ động tiếp xúc (Bánh dẫn Flank 1, Bánh bị dẫn Flank 2) hiển thị vết bột màu Prussian Blue.
+   - Chiều quay Nghịch (`uAnimDirection = -1`): Chuyển vị trí tiếp xúc tức thời sang sườn lùi (Bánh dẫn Flank 2, Bánh bị dẫn Flank 1).
+   - Ở Chế độ 1 (Vết Elip Chuẩn Gleason - Cumulative Rolled Pattern): Vết tiếp xúc in hằn bền vững trên toàn bộ các răng quanh chu vi, cho phép xoay 360° quan sát từ phía sau răng ("phía sau của bánh răng") hoặc từ bất kỳ góc nhìn CAD nào.
+   - Ở Chế độ 0 (Tiếp Xúc Động Lăn - Dynamic Rolling Locus): Duy trì hành lang ăn khớp thực tế thời gian thực tại mặt phẳng $Z = 0$.
+
+
 
 

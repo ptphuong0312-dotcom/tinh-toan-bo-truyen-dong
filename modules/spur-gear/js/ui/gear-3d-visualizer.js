@@ -44,6 +44,7 @@ export class Gear3DVisualizer {
             uTcaEnabled: { value: 0.0 },
             uTcaWidth: { value: 2.2 },
             uTcaColorMode: { value: 0 },
+            uAnimDirection: { value: 1.0 },
             uRw1: { value: 57.0 },
             uAw: { value: 201.0 },
             uMn: { value: 6.0 },
@@ -379,11 +380,23 @@ export class Gear3DVisualizer {
 
     setAnimDirection(dir) {
         this.animDirection = (dir === -1 || dir < 0) ? -1 : 1;
+        if (this.tcaUniforms && this.tcaUniforms.uAnimDirection) {
+            this.tcaUniforms.uAnimDirection.value = this.animDirection;
+        }
+        if (this.renderer && this.scene && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+        }
         return this.animDirection;
     }
 
     toggleAnimDirection() {
         this.animDirection = (this.animDirection === 1) ? -1 : 1;
+        if (this.tcaUniforms && this.tcaUniforms.uAnimDirection) {
+            this.tcaUniforms.uAnimDirection.value = this.animDirection;
+        }
+        if (this.renderer && this.scene && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+        }
         return this.animDirection;
     }
 
@@ -403,6 +416,9 @@ export class Gear3DVisualizer {
 
             this.pinionGroup.rotation.z = this.pinionAngle;
             this.gearGroup.rotation.z = this.gearAngle;
+            if (this.tcaUniforms && this.tcaUniforms.uAnimDirection) {
+                this.tcaUniforms.uAnimDirection.value = parseFloat(this.animDirection) || 1.0;
+            }
         }
 
         if (this.controls) {
@@ -517,6 +533,7 @@ export class Gear3DVisualizer {
                 uniform float uTcaEnabled;
                 uniform float uTcaWidth;
                 uniform int uTcaColorMode;
+                uniform float uAnimDirection;
                 uniform float uRw1;
                 uniform float uAw;
                 uniform float uMn;
@@ -543,8 +560,8 @@ export class Gear3DVisualizer {
 
                     // Active meshing zone around pitch point (uRw1, 0)
                     if (abs(x - uRw1) <= (uMn * 1.8) && abs(y) <= (uMn * 2.2) && abs(z) <= (uB * 0.5 + 2.0) && rAxis > minBore) {
-                        // Conjugate Line of Action distance: (x - rw1)*cos(alfa) + y*sin(alfa) - z*tan(beta)*sin(alfa)
-                        float dLoa = abs((x - uRw1) * uCosAlfa + y * uSinAlfa - z * uTanBeta * uSinAlfa);
+                        // Conjugate Line of Action distance with direction-aware sign:
+                        float dLoa = abs((x - uRw1) * uCosAlfa + uAnimDirection * y * uSinAlfa - z * uTanBeta * uSinAlfa);
 
                         if (dLoa < uTcaWidth) {
                             float t = clamp(1.0 - (dLoa / uTcaWidth), 0.0, 1.0);

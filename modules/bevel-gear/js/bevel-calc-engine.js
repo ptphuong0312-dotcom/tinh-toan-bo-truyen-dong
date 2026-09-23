@@ -247,10 +247,10 @@ const BevelCalcEngine = {
         // 20. Section 16 CAD Machining parameters (MITCalc 1.74 Rows 362, 364, 365)
         const R_tool1 = 1.5 * b;
         const R_tool2 = 1.5 * b;
-        const a_offset1 = Math.round(((hae1 + hfe1) / (3.0 + i)) * 1000) / 1000;
-        const a_offset2 = Math.round(((hae2 + hfe2) / (2.0 + i)) * 1000) / 1000;
-        const b_offset1 = Math.round(((hae1 + hfe1) / 2.0) * 1000) / 1000;
-        const b_offset2 = Math.round(((hae2 + hfe2) * (0.5 + i / 10.0)) * 1000) / 1000;
+        const a_offset1 = (hae1 + hfe1) / (3.0 + i);
+        const a_offset2 = (hae2 + hfe2) / (2.0 + i);
+        const b_offset1 = (hae1 + hfe1) / 2.0;
+        const b_offset2 = (hae2 + hfe2) * (0.5 + i / 10.0);
 
         return {
             P, n1, n2, Mk1, Mk2, i, z1, z2, Sigma_deg, alfa_deg, beta_deg, gearingType,

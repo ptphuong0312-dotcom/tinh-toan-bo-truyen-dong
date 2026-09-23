@@ -829,6 +829,21 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 40: Dựng Hình 3D Chuẩn Gốc MITCalc 1.74 & Triệt Tiêu Làm Tròn Trung Gian (Zero Premature Rounding)
+1. **Bảo tồn độ chính xác 64-bit IEEE Double Float xuyên suốt**:
+   - Nghiêm cấm làm tròn sớm trong các biến hình học trung gian ($a_1, a_2, b_1, b_2, \delta_1, \delta_2, R_e, R_m, R_i, d_{ae}, d_{fe}, s_{ne}, s_{te}, \psi_c$). Chỉ làm tròn hiển thị ở bước format giao diện người dùng.
+   - Loại bỏ triệt để các lệnh `Math.round` hay `.toFixed()` không cần thiết trong logic tạo lưới 3D (`Bevel3DGenerator`, `Gear3DGenerator`).
+2. **Khử Gimbal Lock Three.js bằng phép biến đổi trực tiếp**:
+   - Sử dụng `geometry.applyMatrix4(m)` trực tiếp vào dữ liệu đỉnh `BufferGeometry` tại thời điểm khởi tạo lưới để triệt tiêu hoàn toàn lỗi suy biến Euler góc quay trục.
+   - Khe hở mặt răng thu về tiếp xúc vi mô $0.081\text{ mm}$ hoàn toàn khít khao.
+3. **Phân định sườn răng 2 chiều (Bidirectional TCA) & Vết bột màu 360°**:
+   - Thuộc tính `flankId` phân biệt rõ Sườn 1 (`1.0`) và Sườn 2 (`2.0`).
+   - Chiều Thuận ($+1$): Tiếp xúc Sườn 1 Bánh dẫn & Sườn 2 Bánh bị dẫn.
+   - Chiều Nghịch ($-1$): Chuyển tiếp xúc tức thì sang Sườn 2 Bánh dẫn & Sườn 1 Bánh bị dẫn.
+   - Chế độ 1 (Cumulative Gleason Rolled Pattern): Vết tiếp xúc elip bột màu Prussian Blue in hằn bền vững trên toàn bộ các răng, cho phép xoay 360° quan sát từ phía sau của bánh răng hoặc từ bất kỳ góc độ nào.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

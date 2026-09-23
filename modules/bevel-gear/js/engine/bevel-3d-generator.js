@@ -61,7 +61,7 @@ export const Bevel3DGenerator = {
 
         // Shaft bore diameter (standard ISO 23509 shaft bore)
         const r_root_toe = Ri * sinD - hf_i * cosD;
-        const defaultBore = Math.max(10.0, Math.round(r_root_toe * 0.45 * 2.0));
+        const defaultBore = Math.max(10.0, r_root_toe * 0.9);
         const dBore = Math.min(r_root_toe * 0.85 * 2.0, Math.max(6.0, parseFloat(opt.dBore) || defaultBore));
         const rBore = dBore / 2.0;
 
@@ -169,29 +169,29 @@ export const Bevel3DGenerator = {
 
             const toothContour = [];
             // Left tooth space bottom land
-            toothContour.push({ h: -hf_s, theta: -half_pitch, flankT: 0.0, isEngageFlank: false });
-            toothContour.push({ h: -hf_s, theta: -th_fillet, flankT: 0.0, isEngageFlank: false });
+            toothContour.push({ h: -hf_s, theta: -half_pitch, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
+            toothContour.push({ h: -hf_s, theta: -th_fillet, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
 
             // Flank 1 (drive flank on Pinion, coast flank on Gear)
             for (let k = 0; k < ptsPerFlank; k++) {
                 const t = k / (ptsPerFlank - 1);
                 const pt = eval_flank(t);
-                toothContour.push({ h: pt.h, theta: -pt.theta, flankT: t, isEngageFlank: true });
+                toothContour.push({ h: pt.h, theta: -pt.theta, flankT: t, isEngageFlank: true, flankId: 1.0 });
             }
 
             // Tooth tip land (crest)
-            toothContour.push({ h: tipPt.h, theta: 0.0, flankT: 1.0, isEngageFlank: false });
+            toothContour.push({ h: tipPt.h, theta: 0.0, flankT: 1.0, isEngageFlank: false, flankId: 0.0 });
 
             // Flank 2 (coast flank on Pinion, drive flank on Gear)
             for (let k = ptsPerFlank - 1; k >= 0; k--) {
                 const t = k / (ptsPerFlank - 1);
                 const pt = eval_flank(t);
-                toothContour.push({ h: pt.h, theta: +pt.theta, flankT: t, isEngageFlank: true });
+                toothContour.push({ h: pt.h, theta: +pt.theta, flankT: t, isEngageFlank: true, flankId: 2.0 });
             }
 
             // Right root fillet and right space bottom land
-            toothContour.push({ h: -hf_s, theta: +th_fillet, flankT: 0.0, isEngageFlank: false });
-            toothContour.push({ h: -hf_s, theta: +half_pitch, flankT: 0.0, isEngageFlank: false });
+            toothContour.push({ h: -hf_s, theta: +th_fillet, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
+            toothContour.push({ h: -hf_s, theta: +half_pitch, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
 
             const ring = [];
             for (let tooth = 0; tooth < z; tooth++) {
@@ -209,7 +209,8 @@ export const Bevel3DGenerator = {
                         h: pt.h,
                         uFace: u,
                         flankT: pt.flankT,
-                        isEngageFlank: pt.isEngageFlank ? 1.0 : 0.0
+                        isEngageFlank: pt.isEngageFlank ? 1.0 : 0.0,
+                        flankId: pt.flankId || 0.0
                     });
                 }
             }
@@ -243,13 +244,13 @@ export const Bevel3DGenerator = {
             tcaParams.push(
                 p1.uFace !== undefined ? p1.uFace : 0.0,
                 p1.flankT !== undefined ? p1.flankT : -1.0,
-                p1.isEngageFlank ? 1.0 : 0.0,
+                p1.flankId !== undefined ? p1.flankId : (p1.isEngageFlank ? 1.0 : 0.0),
                 p2.uFace !== undefined ? p2.uFace : 0.0,
                 p2.flankT !== undefined ? p2.flankT : -1.0,
-                p2.isEngageFlank ? 1.0 : 0.0,
+                p2.flankId !== undefined ? p2.flankId : (p2.isEngageFlank ? 1.0 : 0.0),
                 p3.uFace !== undefined ? p3.uFace : 0.0,
                 p3.flankT !== undefined ? p3.flankT : -1.0,
-                p3.isEngageFlank ? 1.0 : 0.0
+                p3.flankId !== undefined ? p3.flankId : (p3.isEngageFlank ? 1.0 : 0.0)
             );
 
             rawTriangles.push([

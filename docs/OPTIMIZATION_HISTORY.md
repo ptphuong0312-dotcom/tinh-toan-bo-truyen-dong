@@ -1276,4 +1276,34 @@
     * `qc_gear_multi_case_suite.py`: **110/110 checks PASS 100.0% ($\Delta = 0.0000$)**.
   - Đóng gói mã nguồn Classic CORS-Free hoàn tất: `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js`.
 
+---
+
+### [2026-09-23] KIỂM TRA TOÀN DIỆN CÔNG THỨC DỰNG HÌNH 3D CHUẨN GỐC MITCALC 1.74, TRIỆT TIÊU LÀM TRÒN TRUNG GIAN & HOÀN THIỆN MÔ PHỎNG 2 CHIỀU KÈM VẾT RÀ BỘT MÀU 360°
+* **Yêu cầu trực tiếp từ người dùng**:
+  1. Kiểm tra thật kỹ xem đã sử dụng chuẩn công thức chuẩn phương pháp dựng hình mô phỏng 3D của app gốc MITCalc 1.74 chưa.
+  2. **Lưu ý trong tính toán tuyệt đối không làm tròn cho đến kết quả cuối cùng** (Zero Premature Rounding).
+  3. Hoàn thiện tính năng mô phỏng quay 2 chiều, đảm bảo vết tiếp xúc bột màu rà cơ khí (Prussian Blue) hiển thị trên cả 2 bánh răng, chuyển sườn khi đảo chiều và có thể quan sát được từ phía sau của bánh răng khi xoay 360°.
+* **Các tối ưu hóa và hoàn thiện kỹ thuật**:
+  1. **Đối chiếu và xác thực chuẩn công thức dựng hình 3D MITCalc 1.74**:
+     - *Bánh răng trụ (Spur & Helical)*: Đối chiếu trực tiếp với thuật toán bao hình lăn của giá dao sinh thanh răng chuẩn DIN 3960 / ISO 1122-1 (`GearFunctions.bas:920-1123`). Đã chạy script kiểm tra `tests/verify_tooth_profile_mitcalc.py`: So sánh 120 điểm tọa độ Bánh 1 và 120 điểm tọa độ Bánh 2 với dữ liệu trích xuất từ `Gear1_01.xlsb`, **đạt độ chính xác tuyệt đối $\Delta = 0.000000\text{ mm}$ (240/240 điểm PASS 100%)**.
+     - *Bánh răng côn (Bevel Gear)*: Xác thực hình học mặt nón phụ ảo Tredgold (ISO 23509 / DIN 3971) hội tụ về đỉnh nón chung Apex $V(0,0,0)$, bán kính dao cắt chuẩn Mục 16.4 $R_{\text{tool}} = 1.5 \cdot b$, góc nghiêng răng xoắn $\beta = 30^\circ$, góc ăn khớp $\alpha = 20^\circ$. Khử triệt để hiện tượng Euler gimbal lock bằng cách nhân trực tiếp ma trận biến đổi tọa độ $m_{\text{Pinion}}$ và $m_{\text{Gear}}$ vào `BufferGeometry`, đưa khe hở ăn khớp răng mặt tiếp xúc về mức vi mô thực tế ($0.081\text{ mm}$).
+  2. **Triệt tiêu hoàn toàn làm tròn số trung gian (Zero Premature Rounding Protocol)**:
+     - Rà soát toàn bộ các file tính toán cốt lõi (`bevel-calc-engine.js`, `bevel-3d-generator.js`, `gear-geometry.js`, `gear-3d-generator.js`).
+     - Loại bỏ các phép làm tròn trung gian `Math.round(... * 1000) / 1000` tại các biến lượng dịch phôi $a_1, a_2, b_1, b_2$ và bán kính lỗ trục, bảo toàn độ chính xác số thực dấu phẩy động 64-bit IEEE double float trong suốt toàn bộ chuỗi tính toán.
+  3. **Bộ giải phân định sườn răng 2 chiều (Bidirectional Tooth Contact Analysis - TCA)**:
+     - Gán nhãn định danh sườn `flankId` cho từng điểm đỉnh răng trong `Bevel3DGenerator`: `1.0` (Sườn 1), `2.0` (Sườn 2), `0.0` (Đỉnh/đáy/lỗ phôi).
+     - Shader nhận uniform `uAnimDirection` (+1 hoặc -1) và `uIsPinion`:
+       * Khi quay thuận (`uAnimDirection = +1`): Sườn chủ động tiếp xúc (Bánh dẫn Flank 1, Bánh bị dẫn Flank 2) hiển thị vết bột màu Prussian Blue.
+       * Khi quay nghịch (`uAnimDirection = -1`): Tức thời chuyển vị trí tiếp xúc sang sườn lùi (Bánh dẫn Flank 2, Bánh bị dẫn Flank 1).
+     - Ở Chế độ 1 (Vết Elip Chuẩn Gleason - Cumulative Rolled Pattern): Bỏ giới hạn hành lang hẹp thời gian thực để vết bột màu in hằn bền vững trên toàn bộ các răng, cho phép người dùng dừng chuyển động hoặc xoay mô hình 360° để quan sát rõ nét vết rà từ phía sau của bánh răng ("phía sau của bánh răng").
+  4. **Tối ưu hóa góc nhìn 3D chuẩn tâm (CAD Centering Engine)**:
+     - Căn chỉnh điểm trọng tâm cụm nón ăn khớp $(cenX = mx \cdot 0.6, cenY = my \cdot 0.8, cenZ = 0)$ trong `setViewPreset`, giúp mô hình luôn nằm cân đối ngay giữa màn hình khi chọn góc nhìn Phối cảnh (Isometric) hay phóng to Vùng tiếp xúc (Mesh Zone).
+* **Kết quả đo đạc & Kiểm thử**:
+  - `tests/test_bidirectional_rotation.py`: **100% PASS** (Cả 2D và 3D cho cả Bevel Gear và Spur Gear, 0 lỗi console).
+  - `tests/verify_tca_marks_bidirectional.py`: **100% PASS** (Chuyển sườn chính xác khi đảo chiều, giữ vết bột màu khi xoay 360°).
+  - `tests/verify_tooth_profile_mitcalc.py`: **240/240 điểm PASS 100% ($\Delta = 0.000000\text{ mm}$)**.
+  - `modules/bevel-gear/tests/deep_line_by_line_bevel_audit.py`: **115/115 ô tính PASS 100% ($\Delta = 0.000000$)**.
+  - Đóng gói bundle hoàn tất: `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js` cập nhật mới nhất.
+
+
 

@@ -36,6 +36,9 @@ class BevelGearUI {
         const container3DEl = document.getElementById('bevel3DContainer');
         this.visualizer3D = (typeof Bevel3DVisualizer !== 'undefined' && container3DEl) ? new Bevel3DVisualizer(container3DEl) : null;
         window.bevel3DVisualizer = this.visualizer3D;
+        window.bevelCanvas = this.canvasController;
+        window.bevelApp = this;
+        window.appUI = this;
 
         this.initDOM();
         this.initAccordion();

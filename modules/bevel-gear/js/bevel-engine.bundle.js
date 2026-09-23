@@ -1891,10 +1891,10 @@ const BevelCalcEngine = {
         // 20. Section 16 CAD Machining parameters (MITCalc 1.74 Rows 362, 364, 365)
         const R_tool1 = 1.5 * b;
         const R_tool2 = 1.5 * b;
-        const a_offset1 = Math.round(((hae1 + hfe1) / (3.0 + i)) * 1000) / 1000;
-        const a_offset2 = Math.round(((hae2 + hfe2) / (2.0 + i)) * 1000) / 1000;
-        const b_offset1 = Math.round(((hae1 + hfe1) / 2.0) * 1000) / 1000;
-        const b_offset2 = Math.round(((hae2 + hfe2) * (0.5 + i / 10.0)) * 1000) / 1000;
+        const a_offset1 = (hae1 + hfe1) / (3.0 + i);
+        const a_offset2 = (hae2 + hfe2) / (2.0 + i);
+        const b_offset1 = (hae1 + hfe1) / 2.0;
+        const b_offset2 = (hae2 + hfe2) * (0.5 + i / 10.0);
 
         return {
             P, n1, n2, Mk1, Mk2, i, z1, z2, Sigma_deg, alfa_deg, beta_deg, gearingType,
@@ -2778,7 +2778,7 @@ const Bevel3DGenerator = {
 
         // Shaft bore diameter (standard ISO 23509 shaft bore)
         const r_root_toe = Ri * sinD - hf_i * cosD;
-        const defaultBore = Math.max(10.0, Math.round(r_root_toe * 0.45 * 2.0));
+        const defaultBore = Math.max(10.0, r_root_toe * 0.9);
         const dBore = Math.min(r_root_toe * 0.85 * 2.0, Math.max(6.0, parseFloat(opt.dBore) || defaultBore));
         const rBore = dBore / 2.0;
 
@@ -2886,29 +2886,29 @@ const Bevel3DGenerator = {
 
             const toothContour = [];
             // Left tooth space bottom land
-            toothContour.push({ h: -hf_s, theta: -half_pitch, flankT: 0.0, isEngageFlank: false });
-            toothContour.push({ h: -hf_s, theta: -th_fillet, flankT: 0.0, isEngageFlank: false });
+            toothContour.push({ h: -hf_s, theta: -half_pitch, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
+            toothContour.push({ h: -hf_s, theta: -th_fillet, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
 
             // Flank 1 (drive flank on Pinion, coast flank on Gear)
             for (let k = 0; k < ptsPerFlank; k++) {
                 const t = k / (ptsPerFlank - 1);
                 const pt = eval_flank(t);
-                toothContour.push({ h: pt.h, theta: -pt.theta, flankT: t, isEngageFlank: true });
+                toothContour.push({ h: pt.h, theta: -pt.theta, flankT: t, isEngageFlank: true, flankId: 1.0 });
             }
 
             // Tooth tip land (crest)
-            toothContour.push({ h: tipPt.h, theta: 0.0, flankT: 1.0, isEngageFlank: false });
+            toothContour.push({ h: tipPt.h, theta: 0.0, flankT: 1.0, isEngageFlank: false, flankId: 0.0 });
 
             // Flank 2 (coast flank on Pinion, drive flank on Gear)
             for (let k = ptsPerFlank - 1; k >= 0; k--) {
                 const t = k / (ptsPerFlank - 1);
                 const pt = eval_flank(t);
-                toothContour.push({ h: pt.h, theta: +pt.theta, flankT: t, isEngageFlank: true });
+                toothContour.push({ h: pt.h, theta: +pt.theta, flankT: t, isEngageFlank: true, flankId: 2.0 });
             }
 
             // Right root fillet and right space bottom land
-            toothContour.push({ h: -hf_s, theta: +th_fillet, flankT: 0.0, isEngageFlank: false });
-            toothContour.push({ h: -hf_s, theta: +half_pitch, flankT: 0.0, isEngageFlank: false });
+            toothContour.push({ h: -hf_s, theta: +th_fillet, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
+            toothContour.push({ h: -hf_s, theta: +half_pitch, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
 
             const ring = [];
             for (let tooth = 0; tooth < z; tooth++) {
@@ -2926,7 +2926,8 @@ const Bevel3DGenerator = {
                         h: pt.h,
                         uFace: u,
                         flankT: pt.flankT,
-                        isEngageFlank: pt.isEngageFlank ? 1.0 : 0.0
+                        isEngageFlank: pt.isEngageFlank ? 1.0 : 0.0,
+                        flankId: pt.flankId || 0.0
                     });
                 }
             }
@@ -2960,13 +2961,13 @@ const Bevel3DGenerator = {
             tcaParams.push(
                 p1.uFace !== undefined ? p1.uFace : 0.0,
                 p1.flankT !== undefined ? p1.flankT : -1.0,
-                p1.isEngageFlank ? 1.0 : 0.0,
+                p1.flankId !== undefined ? p1.flankId : (p1.isEngageFlank ? 1.0 : 0.0),
                 p2.uFace !== undefined ? p2.uFace : 0.0,
                 p2.flankT !== undefined ? p2.flankT : -1.0,
-                p2.isEngageFlank ? 1.0 : 0.0,
+                p2.flankId !== undefined ? p2.flankId : (p2.isEngageFlank ? 1.0 : 0.0),
                 p3.uFace !== undefined ? p3.uFace : 0.0,
                 p3.flankT !== undefined ? p3.flankT : -1.0,
-                p3.isEngageFlank ? 1.0 : 0.0
+                p3.flankId !== undefined ? p3.flankId : (p3.isEngageFlank ? 1.0 : 0.0)
             );
 
             rawTriangles.push([
@@ -3486,6 +3487,7 @@ class Bevel3DVisualizer {
             uRBore1: { value: 25.0 },
             uRBore2: { value: 50.0 },
             uPinionAngle: { value: 0.0 },
+            uAnimDirection: { value: 1.0 },
             uZ1: { value: 18.0 },
             uZ2: { value: 45.0 }
         };
@@ -3699,6 +3701,7 @@ class Bevel3DVisualizer {
         this.tcaUniforms.uRBore2.value = dBore2 / 2.0;
         this.tcaUniforms.uZ1.value = z1;
         this.tcaUniforms.uZ2.value = z2;
+        this.tcaUniforms.uAnimDirection.value = parseFloat(this.animDirection) || 1.0;
 
         this.updateMeshes();
 
@@ -3814,13 +3817,12 @@ class Bevel3DVisualizer {
             0, 1, 0, 0,
             0, 0, 0, 1
         );
+        geo1.applyMatrix4(mPinion);
 
         this.pinionMesh = new THREE.Mesh(geo1, matPinion);
         this.pinionMesh.castShadow = true;
         this.pinionMesh.receiveShadow = true;
         this.pinionMesh.visible = !this.flankOnlyMode;
-        this.pinionMesh.quaternion.setFromRotationMatrix(mPinion);
-        this.pinionMesh.rotation.setFromQuaternion(this.pinionMesh.quaternion);
         this.pinionGroup.add(this.pinionMesh);
 
         // 2. Pinion Surface Mesh (Phương Án 1)
@@ -3832,10 +3834,9 @@ class Bevel3DVisualizer {
             if (this.surf1Data.tcaParams) {
                 geoSurf1.setAttribute('aTcaParam', new THREE.BufferAttribute(this.surf1Data.tcaParams, 3));
             }
+            geoSurf1.applyMatrix4(mPinion);
             this.pinionSurfMesh = new THREE.Mesh(geoSurf1, matPinionSurf);
             this.pinionSurfMesh.visible = this.flankOnlyMode;
-            this.pinionSurfMesh.quaternion.setFromRotationMatrix(mPinion);
-            this.pinionSurfMesh.rotation.setFromQuaternion(this.pinionSurfMesh.quaternion);
             this.pinionGroup.add(this.pinionSurfMesh);
         }
 
@@ -3848,6 +3849,7 @@ class Bevel3DVisualizer {
             0, -1, 0, 0,
             0,  0, 0, 1
         );
+        geo2.applyMatrix4(mGear);
 
         // 3. Gear Solid Mesh
         const geo2 = new THREE.BufferGeometry();
@@ -3857,12 +3859,12 @@ class Bevel3DVisualizer {
         if (this.mesh2Data.tcaParams) {
             geo2.setAttribute('aTcaParam', new THREE.BufferAttribute(this.mesh2Data.tcaParams, 3));
         }
+        geo2.applyMatrix4(mGear);
+
         this.gearMesh = new THREE.Mesh(geo2, matGear);
         this.gearMesh.castShadow = true;
         this.gearMesh.receiveShadow = true;
         this.gearMesh.visible = !this.flankOnlyMode;
-        this.gearMesh.quaternion.setFromRotationMatrix(mGear);
-        this.gearMesh.rotation.setFromQuaternion(this.gearMesh.quaternion);
         this.gearGroup.add(this.gearMesh);
 
         // 4. Gear Surface Mesh (Phương Án 1)
@@ -3874,10 +3876,9 @@ class Bevel3DVisualizer {
             if (this.surf2Data.tcaParams) {
                 geoSurf2.setAttribute('aTcaParam', new THREE.BufferAttribute(this.surf2Data.tcaParams, 3));
             }
+            geoSurf2.applyMatrix4(mGear);
             this.gearSurfMesh = new THREE.Mesh(geoSurf2, matGearSurf);
             this.gearSurfMesh.visible = this.flankOnlyMode;
-            this.gearSurfMesh.quaternion.setFromRotationMatrix(mGear);
-            this.gearSurfMesh.rotation.setFromQuaternion(this.gearSurfMesh.quaternion);
             this.gearGroup.add(this.gearSurfMesh);
         }
 
@@ -3910,8 +3911,13 @@ class Bevel3DVisualizer {
         this.pinionGroup.rotation.x = this.pinionAngle;
         // Gear rotates around Y axis (or axis at angle Sigma)
         this.gearGroup.rotation.y = this.gearAngle;
-        if (this.tcaUniforms && this.tcaUniforms.uPinionAngle) {
-            this.tcaUniforms.uPinionAngle.value = this.pinionAngle;
+        if (this.tcaUniforms) {
+            if (this.tcaUniforms.uPinionAngle) {
+                this.tcaUniforms.uPinionAngle.value = this.pinionAngle;
+            }
+            if (this.tcaUniforms.uAnimDirection) {
+                this.tcaUniforms.uAnimDirection.value = parseFloat(this.animDirection) || 1.0;
+            }
         }
     }
 
@@ -3944,11 +3950,25 @@ class Bevel3DVisualizer {
 
     setAnimDirection(dir) {
         this.animDirection = (dir === -1 || dir < 0) ? -1 : 1;
+        if (this.tcaUniforms && this.tcaUniforms.uAnimDirection) {
+            this.tcaUniforms.uAnimDirection.value = this.animDirection;
+        }
+        this.updateGearRotations();
+        if (this.renderer && this.scene && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+        }
         return this.animDirection;
     }
 
     toggleAnimDirection() {
         this.animDirection = (this.animDirection === 1) ? -1 : 1;
+        if (this.tcaUniforms && this.tcaUniforms.uAnimDirection) {
+            this.tcaUniforms.uAnimDirection.value = this.animDirection;
+        }
+        this.updateGearRotations();
+        if (this.renderer && this.scene && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+        }
         return this.animDirection;
     }
 
@@ -4001,51 +4021,49 @@ class Bevel3DVisualizer {
         if (!this.camera || !this.controls) return;
 
         const Re = this.geom ? (parseFloat(this.geom.Re) || 300.0) : 300.0;
-        const dist = Re * 2.2;
-
         const Rm = this.geom ? (parseFloat(this.geom.Rm) || (Re * 0.8)) : (Re * 0.8);
         const delta1 = this.geom ? (parseFloat(this.geom.delta1) || (Math.PI / 4)) : (Math.PI / 4);
         const mx = Rm * Math.cos(delta1);
         const my = Rm * Math.sin(delta1);
 
-        const cenX = 0;
-        const cenY = 20;
+        const cenX = mx * 0.6;
+        const cenY = my * 0.8;
         const cenZ = 0;
-        const viewDist = Re * 2.8;
+        const viewDist = Re * 2.2;
 
         switch (preset) {
             case 'front': // Axial Section view (looking straight at XY plane from +Z)
-                this.camera.position.set(cenX, cenY, viewDist * 1.05);
+                this.camera.position.set(cenX, cenY, cenZ + viewDist * 1.05);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'pinion': // Looking along X axis from +X towards Pinion
-                this.camera.position.set(viewDist * 1.1, cenY, 0);
+                this.camera.position.set(cenX + viewDist * 1.1, cenY, cenZ);
                 this.camera.up.set(0, 1, 0);
-                this.controls.target.set(mx, my, 0);
+                this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'gear': // Looking along Y axis from +Y towards Gear
-                this.camera.position.set(cenX, viewDist * 1.1, 0);
+                this.camera.position.set(cenX, cenY + viewDist * 1.1, cenZ);
                 this.camera.up.set(0, 0, -1);
-                this.controls.target.set(mx, my, 0);
+                this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'top': // Top view (looking down Y axis)
-                this.camera.position.set(cenX, viewDist * 1.15, 0);
+                this.camera.position.set(cenX, cenY + viewDist * 1.15, cenZ);
                 this.camera.up.set(0, 0, -1);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'bottom': // Bottom view
-                this.camera.position.set(cenX, -viewDist * 1.15, 0);
+                this.camera.position.set(cenX, cenY - viewDist * 1.15, cenZ);
                 this.camera.up.set(0, 0, 1);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'right': // Right view looking along +X axis
-                this.camera.position.set(viewDist * 1.15, cenY, 0);
+                this.camera.position.set(cenX + viewDist * 1.15, cenY, cenZ);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'left': // Left view
-                this.camera.position.set(-viewDist * 1.15, cenY, 0);
+                this.camera.position.set(cenX - viewDist * 1.15, cenY, cenZ);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
@@ -4056,7 +4074,7 @@ class Bevel3DVisualizer {
                 break;
             case 'iso':
             default:
-                this.camera.position.set(viewDist * 0.65, viewDist * 0.45, viewDist * 0.70);
+                this.camera.position.set(cenX + viewDist * 0.65, cenY + viewDist * 0.45, cenZ + viewDist * 0.70);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
@@ -4233,6 +4251,8 @@ class Bevel3DVisualizer {
                 uniform float uMmn;
                 uniform float uBetaRad;
                 uniform float uPinionAngle;
+                uniform float uAnimDirection;
+                uniform float uIsPinion;
                 uniform float uZ1;
                 varying vec3 vTcaParam;
                 varying vec3 vTcaWorldPos;
@@ -4242,22 +4262,23 @@ class Bevel3DVisualizer {
             const tcaFragmentLogic = `
                 #include <dithering_fragment>
                 if (uTcaEnabled > 0.5 && vTcaParam.z > 0.5) {
-                    float u = vTcaParam.x;        // Face width: -0.5 (toe) to +0.5 (heel), 0.0 is Rm (middle of tooth)
-                    float v = vTcaParam.y - 0.5;  // Working depth: -0.5 (root) to +0.5 (tip), 0.0 is EXACT PITCH LINE!
-                    float widthScale = clamp(uTcaWidth / 4.0, 0.25, 3.0);
-                    float intensity = 0.0;
+                    // Determine which flank is active according to rotation direction
+                    // vTcaParam.z: 1.0 = Flank 1, 2.0 = Flank 2, 0.0 = non-flank
+                    float activeFlank = (uIsPinion > 0.5) ?
+                        ((uAnimDirection > 0.0) ? 1.0 : 2.0) :
+                        ((uAnimDirection > 0.0) ? 2.0 : 1.0);
 
-                    // Symmetric contact zone corridor around the pitch contact line (shared in World XY plane)
-                    float dPlane = abs(vTcaWorldPos.z);
-                    float dLine = abs(vTcaWorldPos.x * uSinD - vTcaWorldPos.y * uCosD);
-                    float maxCorridor = max(uMmn * 5.0, uB * 0.85);
+                    if (abs(vTcaParam.z - activeFlank) < 0.5) {
+                        float u = vTcaParam.x;        // Face width: -0.5 (toe) to +0.5 (heel), 0.0 is Rm (middle of tooth)
+                        float v = vTcaParam.y - 0.5;  // Working depth: -0.5 (root) to +0.5 (tip), 0.0 is EXACT PITCH LINE!
+                        float widthScale = clamp(uTcaWidth / 4.0, 0.25, 3.0);
+                        float intensity = 0.0;
 
-                    if (dPlane <= maxCorridor && dLine <= maxCorridor) {
                         if (uTcaPatternType > 0.5) {
                             // =========================================================================
                             // CHẾ ĐỘ 1: VẾT TIẾP XÚC ELIP CHUẨN GLEASON (CUMULATIVE ROLLED PATTERN)
+                            // Imprinted Prussian Blue dye on engaged flanks, inspectable from 360° including behind
                             // =========================================================================
-                            // Centered exactly in the middle zone (u0 = 0.0 at Rm) and on pitch line (v0 = 0.0):
                             float u0 = 0.0;
                             float v0 = 0.0;
                             float a_len = 0.28 * widthScale;
@@ -4271,24 +4292,33 @@ class Bevel3DVisualizer {
                         } else {
                             // =========================================================================
                             // CHẾ ĐỘ 0: TIẾP XÚC ĐỘNG LĂN LIÊN HỢP THỜI GIAN THỰC (DYNAMIC ROLLING LOCUS)
+                            // Real-time instantaneous contact spot restricted to active engagement corridor
                             // =========================================================================
-                            float p1 = 6.28318530718 / max(1.0, uZ1);
-                            float phiRel = mod(uPinionAngle + p1 * 0.5, p1) - p1 * 0.5;
-                            float normPhase = clamp(phiRel / (p1 * 0.45), -1.0, 1.0); // -1.0 to +1.0
-                            
-                            // Dynamic rolling spot centered at middle zone (u = 0, v = 0) at center of roll
-                            float u_roll = -normPhase * 0.25;
-                            float v_roll = normPhase * 0.35;
-                            float a_roll = 0.18 * widthScale;
-                            float b_roll = 0.22 * widthScale;
-                            float du = (u - u_roll) / max(0.01, a_roll);
-                            float dv = (v - v_roll) / max(0.01, b_roll);
-                            float ellDist = sqrt(du * du + dv * dv);
-                            if (ellDist <= 1.0) {
-                                intensity = smoothstep(0.0, 1.0, 1.0 - ellDist);
+                            float dPlane = abs(vTcaWorldPos.z);
+                            float dLine = abs(vTcaWorldPos.x * uSinD - vTcaWorldPos.y * uCosD);
+                            float maxCorridor = max(uMmn * 4.0, uB * 0.75);
+
+                            if (dPlane <= maxCorridor && dLine <= maxCorridor) {
+                                float p1 = 6.28318530718 / max(1.0, uZ1);
+                                float phiRel = mod(uPinionAngle + p1 * 0.5, p1) - p1 * 0.5;
+                                float normPhase = clamp(phiRel / (p1 * 0.45), -1.0, 1.0); // -1.0 to +1.0
+                                if (uAnimDirection < 0.0) {
+                                    normPhase = -normPhase;
+                                }
+
+                                // Dynamic rolling spot centered at middle zone (u = 0, v = 0) at center of roll
+                                float u_roll = -normPhase * 0.25;
+                                float v_roll = normPhase * 0.35;
+                                float a_roll = 0.18 * widthScale;
+                                float b_roll = 0.22 * widthScale;
+                                float du = (u - u_roll) / max(0.01, a_roll);
+                                float dv = (v - v_roll) / max(0.01, b_roll);
+                                float ellDist = sqrt(du * du + dv * dv);
+                                if (ellDist <= 1.0) {
+                                    intensity = smoothstep(0.0, 1.0, 1.0 - ellDist);
+                                }
                             }
                         }
-                    }
 
                         if (intensity > 0.001) {
                             float t = intensity;
@@ -4311,6 +4341,7 @@ class Bevel3DVisualizer {
                             gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
                             gl_FragColor.rgb += glowCol * pow(t, 2.0) * 0.85;
                         }
+                    }
                 }
             `;
 
@@ -4869,6 +4900,9 @@ class BevelGearUI {
         const container3DEl = document.getElementById('bevel3DContainer');
         this.visualizer3D = (typeof Bevel3DVisualizer !== 'undefined' && container3DEl) ? new Bevel3DVisualizer(container3DEl) : null;
         window.bevel3DVisualizer = this.visualizer3D;
+        window.bevelCanvas = this.canvasController;
+        window.bevelApp = this;
+        window.appUI = this;
 
         this.initDOM();
         this.initAccordion();

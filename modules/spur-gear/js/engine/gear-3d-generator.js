@@ -41,7 +41,7 @@ export const Gear3DGenerator = {
         const da = opt.da;
         const df = opt.df;
         const hand = opt.hand !== undefined ? opt.hand : 1;
-        const dBore = opt.dBore || Math.max(10.0, Math.round((df / 2.0) * 0.45 * 2.0));
+        const dBore = opt.dBore || Math.max(10.0, df * 0.45);
         const rBore = dBore / 2.0;
         const profileStep = opt.profileStep || (z > 30 ? 4 : 2);
 
