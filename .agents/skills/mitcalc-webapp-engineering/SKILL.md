@@ -844,6 +844,18 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 41: Khắc Phục Temporal Dead Zone (TDZ) Trong Dựng Lưới Three.js & Quy Trình Kiểm Thử Sự Tồn Tại Đa Mesh (Multi-Mesh Integrity Protocol)
+1. **Nguyên tắc an toàn biến trong Three.js BufferGeometry (TDZ Safety)**:
+   - Khi áp dụng ma trận biến đổi tọa độ trực tiếp (`geometry.applyMatrix4(matrix)`), tuyệt đối phải đảm bảo mọi đối tượng `BufferGeometry` đã được khai báo và khởi tạo đầy đủ bằng từ khóa `const` / `let` trước dòng gọi lệnh.
+   - Tránh triệt để việc gọi method trên biến trước khi khai báo dẫn tới `ReferenceError: Cannot access variable before initialization` trong JavaScript runtime, làm ngắt quãng chuỗi khởi tạo các mesh tiếp theo (ví dụ: làm mất mesh bánh răng lớn Gear 2).
+2. **Quy trình kiểm thử tự động tính toàn vẹn đa lưới (Multi-Mesh Automated Integrity)**:
+   - Mọi visualizer đa thực thể (cặp bánh răng Pinion - Gear) bắt buộc phải có bài kiểm tra tự động (`verify_mesh_integrity`) qua Playwright để xác nhận:
+     * Cả hai mesh (`pinionMesh` và `gearMesh`) đều tồn tại (`!= null`), cờ `visible: true`.
+     * Cả hai nhóm (`pinionGroup` và `gearGroup`) đều chứa đủ các thành phần con (`children.length >= 2`: Solid mesh + Wireframe edge mesh).
+     * Bánh răng nhỏ ($z_1$) và bánh răng lớn ($z_2$) đồng thời hiển thị hoàn chỉnh, ăn khớp chính xác và phản ứng mượt mà với hoạt họa xoay 2 chiều.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

@@ -436,7 +436,6 @@ export class Bevel3DVisualizer {
             0, -1, 0, 0,
             0,  0, 0, 1
         );
-        geo2.applyMatrix4(mGear);
 
         // 3. Gear Solid Mesh
         const geo2 = new THREE.BufferGeometry();

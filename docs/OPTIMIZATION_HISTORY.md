@@ -33,7 +33,8 @@
    - Đường sinh nón chia tiếp xúc, mặt nón đỉnh/đáy, nón phụ ngoài/trong, moay-ơ, lỗ trục, gạch mặt cắt kim loại ($45^\circ$).
    - Thuật toán căn giữa tự động (Auto-Centering) cân đối hoàn hảo trong Canvas 1200x650.
 2. **Bánh Răng Trụ**:
-   - Chuẩn hóa **Bán kính lượn chân răng $R = ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
+   - Chuẩn hóa **Bán kính lượn chân răng $R = 
+ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
    - Tiếp tuyến mượt $C^1$ với đường thân khai và đường tròn đáy $r_f$.
    - Bảo tồn nguyên vẹn cung tròn đáy rãnh răng (Root land arc) tại bán kính $r_f$. Triệt tiêu sừng nhọn (Horn Elimination).
    - Khớp 100% với 120 điểm tọa độ biên dạng trong sheet `Coordinates` của MITCalc 1.74.
@@ -1304,6 +1305,24 @@
   - `tests/verify_tooth_profile_mitcalc.py`: **240/240 điểm PASS 100% ($\Delta = 0.000000\text{ mm}$)**.
   - `modules/bevel-gear/tests/deep_line_by_line_bevel_audit.py`: **115/115 ô tính PASS 100% ($\Delta = 0.000000$)**.
   - Đóng gói bundle hoàn tất: `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js` cập nhật mới nhất.
+---
 
-
-
+### [2026-09-23] KHẮC PHỤC LỖI HIỂN THỊ BÁNH RĂNG LỚN (BIG GEAR MESH RESTORATION) & KIỂM CHỨNG TOÀN DIỆN MÔ PHỎNG 3D
+* **Bối cảnh & Phản hồi người dùng**:
+  - Người dùng thông báo: *"Trong mô phỏng không xuất hiện bán răng lớn rồi bạn nhá"*.
+* **Nguyên nhân cốt lõi (Root Cause Analysis)**:
+  - Trong quá trình tinh chỉnh thứ tự ma trận biến đổi tọa độ cho hình học 3D nón (`bevel-3d-visualizer.js`), lệnh `geo2.applyMatrix4(mGear);` bị đặt nhầm trước câu lệnh khai báo `const geo2 = new THREE.BufferGeometry();`.
+  - Trong JavaScript hiện đại, việc truy cập biến `geo2` trước dòng khai báo `const` vi phạm vùng chết tạm thời (Temporal Dead Zone - TDZ), phát sinh ngoại lệ `ReferenceError: Cannot access 'geo2' before initialization`.
+  - Lỗi này làm dừng hàm `updateMeshes()` ngay trước khi `this.gearMesh` được khởi tạo và thêm vào `this.gearGroup`, dẫn đến việc bánh răng lớn (Gear 2) hoàn toàn biến mất trên màn hình dù bánh nhỏ (Pinion 1) vẫn hiển thị.
+* **Biện pháp xử lý & Tối ưu hóa**:
+  1. Loại bỏ dòng lệnh trùng lặp đặt sai vị trí trong `modules/bevel-gear/js/ui/bevel-3d-visualizer.js`.
+  2. Đóng gói lại bundle chuẩn 1-Click: `bevel-engine.bundle.js` và `mitcalc-engine.bundle.js` cập nhật đồng bộ.
+  3. Viết kịch bản kiểm tra tự động `scratch/verify_big_gear.py` bằng Playwright để kiểm tra sự tồn tại của cả hai mesh trong Three.js scene:
+     - `hasPinionMesh: True`, `pinionVisible: True`, `pinionGroupChildren: 2` (Mesh đặc + Dây khung viền).
+     - `hasGearMesh: True`, `gearVisible: True`, `gearGroupChildren: 2` (Mesh đặc + Dây khung viền).
+     - Bánh răng lớn màu hổ phách / vàng đồng ($z_2 = 45$) và bánh dẫn màu xanh cyan ($z_1 = 18$) đồng thời hiển thị hoàn hảo và ăn khớp chính xác.
+     - Kiểm tra vết rà bột màu Prussian Blue trên cả 2 bánh răng: Hoạt động trơn tru 100%.
+  4. Chạy lại bộ kiểm thử `tests/test_bidirectional_rotation.py`: Đạt **100% PASS** cho cả Bánh Răng Côn và Bánh Răng Trụ (cả 2D và 3D), 0 lỗi console.
+* **Hình ảnh & Dữ liệu chứng thực**:
+  - `bevel_both_gears_restored.png`: Ảnh chụp thực tế cả 2 bánh răng xuất hiện đầy đủ trong không gian 3D.
+  - `bevel_both_gears_tca_prussian_blue.png`: Vết rà bột màu Prussian Blue hiển thị rõ nét trên cả bánh lớn và bánh nhỏ.

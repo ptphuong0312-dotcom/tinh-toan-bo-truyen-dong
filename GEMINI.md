@@ -704,6 +704,12 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Ở Chế độ 1 (Vết Elip Chuẩn Gleason - Cumulative Rolled Pattern): Vết tiếp xúc in hằn bền vững trên toàn bộ các răng quanh chu vi, cho phép xoay 360° quan sát từ phía sau răng ("phía sau của bánh răng") hoặc từ bất kỳ góc nhìn CAD nào.
    - Ở Chế độ 0 (Tiếp Xúc Động Lăn - Dynamic Rolling Locus): Duy trì hành lang ăn khớp thực tế thời gian thực tại mặt phẳng $Z = 0$.
 
-
-
-
+### Quy Tắc 32: Quy Chuẩn Bảo Toàn Thực Thể Đa Lưới 3D (Multi-Mesh Integrity & Temporal Dead Zone Prevention Protocol)
+1. **Ngăn chặn lỗi Temporal Dead Zone (TDZ) trong khởi tạo Three.js**:
+   - Khi áp dụng các phép biến đổi hình học qua ma trận (`geometry.applyMatrix4(matrix)`), luôn đảm bảo mọi đối tượng `BufferGeometry` đã được khai báo và gán giá trị hợp lệ trước thời điểm gọi lệnh.
+   - Tuyệt đối không gọi method trên đối tượng trong vùng TDZ để tránh `ReferenceError` làm gián đoạn chuỗi khởi tạo các mesh tiếp theo (đặc biệt là lưới bánh răng lớn $z_2$).
+2. **Quy trình kiểm thử tự động tính toàn vẹn đa lưới (Multi-Mesh Automated Verification)**:
+   - Trong các hệ thống mô phỏng cặp bánh răng (Bánh dẫn Pinion $z_1$ và Bánh bị dẫn Gear $z_2$), bài kiểm tra Playwright tự động phải kiểm tra:
+     * Cả hai mesh đặc (`pinionMesh` và `gearMesh`) đều tồn tại, cờ `visible: true`.
+     * Cả hai nhóm (`pinionGroup` và `gearGroup`) đều chứa đủ các thành phần con (`children.length >= 2`).
+     * Vết rà bột màu Prussian Blue hiển thị rõ nét trên cả hai bánh răng, đảo sườn tiếp xúc chính xác khi đổi chiều quay và có thể quan sát từ mọi hướng 360°.
