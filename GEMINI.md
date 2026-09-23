@@ -615,3 +615,31 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 4. **Quy trình tự kiểm tra trực quan tự động với Playwright**:
    - Chạy kịch bản headless Playwright chụp chuỗi khung hình từ các góc nhìn nghiêng thực tế (Mesh Zone & Zoom Flank), kiểm chứng không còn bất kỳ mảng tam giác hay đỉnh răng nào nhô lồi qua sườn răng đối diện. Mọi bộ kiểm thử số học và hình học đạt chuẩn 100% ($\Delta = 0.0000$).
 
+---
+
+### Quy Tắc 29: Quy Chuẩn Soi Vết Ăn Khớp Trực Quan Qua Mặt Sau Sườn Răng & Quy Trình Tự Duyệt Web Tinh Chỉnh (Visual Back-Face Imprint Inspection & Calibration Protocol)
+1. **Chỉ thị cốt lõi & Nguyên tắc tối thượng từ SirPhuong**:
+   - *"Nguyên tắc để xem vết ăn khớp phải như vậy, bạn cần lưu lại để phục vụ cho việc chỉnh vết ăn khớp của cặp bánh răng"*.
+   - *"Phía sau của bánh răng không in màu của bánh răng còn lại thì chứng tỏ hiện tại 2 bánh răng trong quá trình chuyển động vẫn chưa tiếp xúc nhau, còn tiếp xúc như thế nào mới chuẩn thì bạn cũng đã biết rồi tôi không cần nói lại"*.
+   - *"Từ sau trở đi khi bạn sửa để biết đúng hay sai thì bạn có thể tự duyệt web xem theo chế độ tôi chỉ, đây chính là quy trình để bạn làm việc"*.
+2. **Bản chất vật lý & đồ họa của Vết Tiếp Xúc / Vết Ăn Khớp (Contact Imprint)**:
+   - Trong môi trường 3D WebGL (Three.js), khi bật chế độ `👁️ Chỉ Mặt Bên` (`flankOnlyMode`), vật liệu mặt sườn răng là vỏ mỏng hai mặt (`THREE.DoubleSide`) với 2 màu tương phản (Bánh dẫn 1 màu Xanh Cyan `0x38bdf8`, Bánh bị dẫn 2 màu Vàng Hổ Phách `0xfbbf24`).
+   - **Quy tắc nhận diện trạng thái tiếp xúc**:
+     * **Chuẩn xác (PASS)**: Khi 2 răng vào khớp ăn khớp liên hợp, nhìn từ mặt sau của sườn răng bánh này thì **màu của mặt răng bánh kia phải in rõ nét lên mặt sau đó** (Back-face Color Imprint).
+     * **Vị trí vết tiếp xúc**: Bắt buộc phải nằm ở **KHU GIỮA CỦA RĂNG** (trung tâm nón $R_m$). Hai đầu nón ngoài (Heel, $R_e$) và nón trong (Toe, $R_i$) hở tự nhiên nhờ độ lồi dọc răng (Lengthwise Crowning $C_L$).
+     * **Yêu cầu Zero-Bulge**: Vết tiếp xúc CHỈ ĐƯỢC IN MÀU phẳng trên bề mặt sườn răng, TUYỆT ĐỐI KHÔNG ĐƯỢC PHỒNG/LỒI KHỐI 3D qua mặt trước của bánh răng đối diện.
+     * **Chưa tiếp xúc (FAIL - Gap/Hở răng)**: Nếu mặt sau của sườn răng hoàn toàn không in bất kỳ vệt màu nào của sườn răng đối diện, điều đó chứng minh 2 răng đang có khe hở (clearance $> 0$), quay trơn không tiếp xúc nhau.
+     * **Cắn răng / Va đập (FAIL - Interference/Bulging)**: Nếu màu in bị phồng/lồi khối 3D qua mặt trước của bánh răng kia, điều đó chứng minh có hiện tượng cắn răng, đỉnh hoặc góc răng đâm xuyên qua thân răng.
+3. **Quy trình chuẩn để AI tự động duyệt web kiểm tra & tinh chỉnh (Self-Inspection Workflow)**:
+   - **Bước 1**: Sau mỗi lần chỉnh sửa thuật toán hình học hoặc góc xoắn/pha quay, luôn đóng gói lại bundle bằng `python tools/bundle_all.py`.
+   - **Bước 2**: Khởi chạy script Playwright truy cập file HTML thực tế `file:///.../modules/bevel-gear/index.html`.
+   - **Bước 3**: Chuyển sang Tab `📐 Mô Phỏng CAD (Canvas)` -> Kích hoạt chế độ `🧊 3D WebGL`.
+   - **Bước 4**: Bật chế độ `👁️ Chỉ Mặt Bên` (`flankOnlyMode`).
+   - **Bước 5**: Thiết lập góc nhìn Camera cận cảnh soi thẳng vào mặt sau của sườn răng đang ăn khớp (Side / Back view along face width).
+   - **Bước 6**: Cho chuyển động quay nhích từng bước (step by step) qua toàn bộ hành lang ăn khớp ($\theta_1 \in [-3^\circ, +3^\circ]$).
+   - **Bước 7**: Chụp ảnh màn hình độ nét cao và AI tự dùng công cụ đọc ảnh (`view_file`) để trực tiếp kiểm tra:
+     1. Mặt sau của sườn răng có vệt màu in lên không?
+     2. Vệt màu in có nằm tập trung ở khu giữa răng ($R_m$) không?
+     3. Có hiện tượng phồng/lồi qua mặt trước hay không?
+   - **Bước 8**: Dựa trên kết quả thị giác thu được, tiếp tục tinh chỉnh khe hở tiếp tuyến danh nghĩa ($j_{n,cad}$), góc pha tiếp xúc ban đầu (`initialGearAngle`), hoặc độ lồi ($C_L, C_P$) cho đến khi đạt vết in màu hoàn hảo ở giữa răng và triệt tiêu 100% hiện tượng phồng.
+

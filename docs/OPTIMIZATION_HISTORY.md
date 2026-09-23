@@ -1159,3 +1159,33 @@
   - Multi-case QC Suite (`qc_bevel_multi_case_suite.py`): **120/120 PASS (100.0%, $\Delta = 0.0000$)**.
   - Spur Gear QC Suite (`qc_gear_multi_case_suite.py`): **110/110 PASS (100.0%, $\Delta = 0.0000$)**.
   - Đóng gói hoàn tất `modules/bevel-gear/js/bevel-engine.bundle.js` qua `tools/bundle_all.py`.
+
+---
+
+## Giai Đoạn 27: Xác Lập Quy Chuẩn & Quy Trình Soi Vết Ăn Khớp Mặt Sau Sườn Răng (Back-Face Imprint Protocol)
+* **Bối cảnh & Chỉ đạo chiến lược trực tiếp từ SirPhuong**:
+  > *"Nguyên tắc để xem vết ăn khớp phải như vậy, bạn cần lưu lại để phục vụ cho việc chỉnh vết ăn khớp của cặp bánh răng.*
+  > *Bạn đã xem được trực tiếp thì bạn cũng đã thấy hiện tại phía sau của bánh răng không in màu của bánh răng còn lại thì chứng tỏ hiện tại 2 bánh răng trong quá trình chuyển động vẫn chưa tiếp xúc nhau, còn tiếp xúc như thế nào mới chuẩn thì bạn cũng đã biết rồi tôi không cần nói lại.*
+  > *Vậy từ sau trở đi khi bạn sửa để biết đúng hay sai thì bạn có thể tự duyệt web xem theo chế độ tôi chỉ, đây chính là quy trình để bạn làm việc."*
+* **Nguyên lý cốt lõi được hệ thống hóa**:
+  1. **Hiển thị mặt sườn hai mặt (DoubleSide Flank Shell)**:
+     - Chế độ `👁️ Chỉ Mặt Bên` (`flankOnlyMode`) hiển thị sườn răng 2 mặt rỗng.
+     - Bánh 1: Màu xanh Cyan `0x38bdf8`, Bánh 2: Màu vàng hổ phách `0xfbbf24`.
+  2. **Tiêu chuẩn nhận diện tiếp xúc (Visual Contact Verification)**:
+     - Khi 2 sườn răng tiếp xúc thực sự: Màu của sườn răng bánh này sẽ **in rõ nét lên mặt sau** của sườn răng bánh đối diện.
+     - **Vị trí vết in**: Bắt buộc phải nằm ở **KHU GIỮA CỦA RĂNG** ($R_m$), hai đầu nón ngoài ($R_e$) và nón trong ($R_i$) hở tự nhiên nhờ độ lồi $C_L$.
+     - **Yêu cầu Zero-Bulge**: Chỉ in màu phẳng trên bề mặt sườn, tuyệt đối không lồi phồng khối 3D qua mặt trước.
+     - **Trạng thái chưa tiếp xúc**: Nếu mặt sau không in màu, chứng tỏ giữa 2 sườn răng vẫn có khe hở (clearance $> 0$), 2 răng quay mà không chạm nhau.
+  3. **Quy trình làm việc độc lập cho AI**:
+     - Tự động đóng gói bundle (`bundle_all.py`).
+     - Tự động chạy Playwright headless truy cập `modules/bevel-gear/index.html`.
+     - Kích hoạt chế độ 3D và `👁️ Chỉ Mặt Bên`.
+     - Đặt camera soi trực diện vào mặt sau của sườn răng đang ăn khớp.
+     - Quét góc quay từng bước qua vùng ăn khớp ($\theta_1 \in [-3^\circ, +3^\circ]$).
+     - AI tự dùng công cụ đọc ảnh (`view_file`) kiểm chứng vệt in màu, đảm bảo nằm ở khu giữa răng và không bị phồng lồi.
+     - Tinh chỉnh khe hở và góc pha cho đến khi đạt vết in tiếp xúc hoàn hảo.
+* **Đồng bộ tri thức toàn diện**:
+  - `GEMINI.md`: Bổ sung **Quy Tắc 29**.
+  - `.agents/skills/mitcalc-webapp-engineering/SKILL.md`: Bổ sung **Quy Chuẩn 37**.
+  - `.agents/workflows/quy_trinh_kiem_tra_vet_an_khop_mat_sau_3d.md`: Ban hành quy trình thao tác chuẩn runbook.
+  - `docs/OPTIMIZATION_HISTORY.md`: Ghi nhận Giai Đoạn 27.

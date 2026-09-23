@@ -776,6 +776,23 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 37: Quy Chuẩn Soi Vết Ăn Khớp Trực Quan Qua Mặt Sau Sườn Răng & Tự Duyệt Web Tinh Chỉnh (Visual Back-Face Imprint Inspection Protocol)
+1. **Bản chất đồ họa & Nhận diện ăn khớp (Visual Contact Imprint)**:
+   - Trong chế độ `👁️ Chỉ Mặt Bên` (`flankOnlyMode`), bề mặt sườn răng sử dụng vật liệu `THREE.DoubleSide` với màu tương phản (Pinion xanh cyan, Gear vàng hổ phách).
+   - **Định nghĩa tiếp xúc chuẩn**: Khi 2 sườn răng tiếp xúc liên hợp, nhìn từ mặt sau của răng bánh này thì màu của răng bánh đối diện phải in sắc nét lên bề mặt sau đó.
+   - **Vị trí vết in**: Bắt buộc nằm tại **KHU GIỮA CỦA RĂNG** (trung tâm nón $R_m$). Hai đầu nón ngoài ($R_e$) và nón trong ($R_i$) hở tự nhiên nhờ độ lồi $C_L$.
+   - **Yêu cầu Zero-Bulge**: Chỉ in màu phẳng, tuyệt đối không phồng lồi khối 3D qua mặt trước.
+   - **Trường hợp lỗi**:
+     * Mặt sau không in màu: 2 răng chưa tiếp xúc (còn khe hở clearance $> 0$).
+     * Màu in kèm khối tam giác phồng qua mặt trước: Va chạm âm / cắn răng (Interference).
+     * Vết in dồn về nón ngoài hoặc nón trong: Lệch góc xoắn hoặc sai tỷ số xoắn nón.
+2. **Quy trình tự kiểm tra & tinh chỉnh tự động**:
+   - Chạy Playwright headless chụp chuỗi ảnh cận cảnh soi mặt sau răng khi quét góc quay $\theta_1 \in [-3^\circ, +3^\circ]$.
+   - AI tự dùng công cụ đọc ảnh (`view_file`) kiểm chứng vệt in màu ở mặt sau và vị trí tiếp xúc tại $R_m$.
+   - Lặp lại tinh chỉnh $j_{n,cad}$ và góc pha ăn khớp cho đến khi đạt chuẩn hoàn hảo.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):
