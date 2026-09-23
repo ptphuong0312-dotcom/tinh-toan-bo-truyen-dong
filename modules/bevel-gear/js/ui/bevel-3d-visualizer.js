@@ -27,6 +27,7 @@ export class Bevel3DVisualizer {
 
         this.isAnimating = true;
         this.animSpeed = 1.0;
+        this.animDirection = 1; // 1: Thuận (forward), -1: Nghịch (reverse)
         this.rotSpeedBase = 0.015; // rad per frame at 1.0x
         this.pinionAngle = 0;
         this.gearAngle = 0;
@@ -506,7 +507,7 @@ export class Bevel3DVisualizer {
         requestAnimationFrame(() => this.animate());
 
         if (this.isAnimating && this.pinionGroup && this.gearGroup) {
-            const step = this.rotSpeedBase * this.animSpeed;
+            const step = this.rotSpeedBase * this.animSpeed * (this.animDirection || 1);
             this.pinionAngle += step;
             // Kinematic conjugate synchronization:
             this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
@@ -527,6 +528,16 @@ export class Bevel3DVisualizer {
 
     setAnimSpeed(speed) {
         this.animSpeed = Math.max(0.01, Math.min(3.0, parseFloat(speed) || 1.0));
+    }
+
+    setAnimDirection(dir) {
+        this.animDirection = (dir === -1 || dir < 0) ? -1 : 1;
+        return this.animDirection;
+    }
+
+    toggleAnimDirection() {
+        this.animDirection = (this.animDirection === 1) ? -1 : 1;
+        return this.animDirection;
     }
 
     stepAnimation(direction = 1) {

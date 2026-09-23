@@ -3193,6 +3193,7 @@ class GearCanvas {
         this.isAnimating = false;
         this.animFrameId = null;
         this.animSpeed = 1.0;
+        this.animDirection = 1; // 1: Thuận, -1: Nghịch
 
         this.initEvents();
     }
@@ -3291,7 +3292,7 @@ class GearCanvas {
         this.isAnimating = true;
         const loop = () => {
             if (!this.isAnimating) return;
-            this.rotationAngle += 0.008 * (this.animSpeed || 1.0);
+            this.rotationAngle += 0.008 * (this.animSpeed || 1.0) * (this.animDirection || 1);
             this.render();
             this.animFrameId = requestAnimationFrame(loop);
         };
@@ -3308,6 +3309,16 @@ class GearCanvas {
 
     setAnimSpeed(speed) {
         this.animSpeed = Math.max(0.05, Math.min(speed, 10.0));
+    }
+
+    setAnimDirection(dir) {
+        this.animDirection = (dir === -1 || dir < 0) ? -1 : 1;
+        return this.animDirection;
+    }
+
+    toggleAnimDirection() {
+        this.animDirection = (this.animDirection === 1) ? -1 : 1;
+        return this.animDirection;
     }
 
     render() {
@@ -4216,6 +4227,7 @@ class Gear3DVisualizer {
 
         this.isAnimating = true;
         this.animSpeed = 1.0;
+        this.animDirection = 1; // 1: Thuận, -1: Nghịch
         this.rotSpeedBase = 0.015; // rad per frame at 1.0x
         this.pinionAngle = 0;
         this.gearAngle = 0;
@@ -4569,6 +4581,16 @@ class Gear3DVisualizer {
         this.animSpeed = Math.max(0.1, Math.min(5.0, speed));
     }
 
+    setAnimDirection(dir) {
+        this.animDirection = (dir === -1 || dir < 0) ? -1 : 1;
+        return this.animDirection;
+    }
+
+    toggleAnimDirection() {
+        this.animDirection = (this.animDirection === 1) ? -1 : 1;
+        return this.animDirection;
+    }
+
     toggleAnimation() {
         this.isAnimating = !this.isAnimating;
         return this.isAnimating;
@@ -4578,7 +4600,7 @@ class Gear3DVisualizer {
         requestAnimationFrame(this.animate);
 
         if (this.isAnimating && this.pinionGroup && this.gearGroup) {
-            const dTheta = this.rotSpeedBase * this.animSpeed;
+            const dTheta = this.rotSpeedBase * this.animSpeed * (this.animDirection || 1);
             this.pinionAngle += dTheta;
             // Lock gearAngle directly to conjugate rolling phase (zero accumulation drift):
             this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
@@ -5300,6 +5322,22 @@ class SpurGearUI {
             this.canvasController.startAnimation();
         }
 
+        const btn2DDir = document.getElementById('btn2DAnimDirection');
+        if (btn2DDir && this.canvasController) {
+            btn2DDir.addEventListener('click', () => {
+                const dir = this.canvasController.toggleAnimDirection();
+                if (dir === 1) {
+                    btn2DDir.innerHTML = '🔄 Chiều: ↻ Thuận';
+                    btn2DDir.style.color = '';
+                    btn2DDir.style.borderColor = '';
+                } else {
+                    btn2DDir.innerHTML = '🔄 Chiều: ↺ Nghịch';
+                    btn2DDir.style.color = '#f59e0b';
+                    btn2DDir.style.borderColor = '#d97706';
+                }
+            });
+        }
+
         const sliderSpeed = document.getElementById('sliderAnimSpeed');
         const speedVal = document.getElementById('animSpeedVal');
         if (sliderSpeed) {
@@ -5451,6 +5489,22 @@ class SpurGearUI {
             btnToggle3DAnim.addEventListener('click', () => {
                 const isRunning = this.visualizer3D.toggleAnimation();
                 btnToggle3DAnim.textContent = isRunning ? '⏸️ Dừng' : '▶️ Tiếp Tục';
+            });
+        }
+
+        const btn3DDir = document.getElementById('btn3DAnimDirection');
+        if (btn3DDir && this.visualizer3D) {
+            btn3DDir.addEventListener('click', () => {
+                const dir = this.visualizer3D.toggleAnimDirection();
+                if (dir === 1) {
+                    btn3DDir.innerHTML = '🔄 Chiều: ↻ Thuận';
+                    btn3DDir.style.color = '';
+                    btn3DDir.style.borderColor = '';
+                } else {
+                    btn3DDir.innerHTML = '🔄 Chiều: ↺ Nghịch';
+                    btn3DDir.style.color = '#f59e0b';
+                    btn3DDir.style.borderColor = '#d97706';
+                }
             });
         }
 
@@ -7111,4 +7165,5 @@ class SpurGearUI {
 
 document.addEventListener('DOMContentLoaded', () => {
     window.spurApp = new SpurGearUI();
+    window.appUI = window.spurApp;
 });

@@ -815,6 +815,20 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 39: Quy Chuẩn Động Học Mô Phỏng Quay 2 Chiều Thuận - Nghịch (Bidirectional Conjugate Simulation Protocol)
+1. **Nguyên lý động học liên hợp bảo toàn tuyệt đối không tích lũy sai số trôi góc**:
+   - Chuyển động quay của bánh bị dẫn luôn được tính toán đại số từ góc quay tức thời của bánh dẫn theo tỷ số truyền:
+     $$\text{gearAngle} = \text{initialGearAngle} - \frac{\text{pinionAngle}}{i}$$
+   - Tính toán trực tiếp theo hàm số này bảo đảm dù quay theo chiều thuận ($+1$) hay chiều nghịch ($-1$), ăn khớp liên hợp luôn hoàn hảo, không hề bị trôi pha hay lệch rãnh.
+2. **Cơ chế điều khiển trên cả 2D Canvas và 3D WebGL**:
+   - Các visualizer (`Bevel3DVisualizer`, `BevelGearCanvas`, `Gear3DVisualizer`, `GearCanvas`) trang bị thuộc tính `animDirection` ($+1$ / $-1$) cùng hai phương thức chuẩn `setAnimDirection(dir)` và `toggleAnimDirection()`.
+   - Giao diện người dùng cung cấp nút điều khiển trực quan:
+     * Nút `[ 🔄 Chiều: ↻ Thuận ]` chuyển sang `[ 🔄 Chiều: ↺ Nghịch ]` (viền vàng hổ phách `#f59e0b`).
+     * Đảo chiều quay tức thì khi đang hoạt họa mà không gây giật khung hình.
+     * Cho phép kiểm tra ăn khớp trên cả hai mặt sườn: Sườn chủ động (Drive Flank) và Sườn bị động/lùi (Coast Flank).
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

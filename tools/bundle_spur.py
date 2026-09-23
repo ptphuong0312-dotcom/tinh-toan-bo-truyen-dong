@@ -275,6 +275,22 @@ class SpurGearUI {
             this.canvasController.startAnimation();
         }
 
+        const btn2DDir = document.getElementById('btn2DAnimDirection');
+        if (btn2DDir && this.canvasController) {
+            btn2DDir.addEventListener('click', () => {
+                const dir = this.canvasController.toggleAnimDirection();
+                if (dir === 1) {
+                    btn2DDir.innerHTML = '🔄 Chiều: ↻ Thuận';
+                    btn2DDir.style.color = '';
+                    btn2DDir.style.borderColor = '';
+                } else {
+                    btn2DDir.innerHTML = '🔄 Chiều: ↺ Nghịch';
+                    btn2DDir.style.color = '#f59e0b';
+                    btn2DDir.style.borderColor = '#d97706';
+                }
+            });
+        }
+
         const sliderSpeed = document.getElementById('sliderAnimSpeed');
         const speedVal = document.getElementById('animSpeedVal');
         if (sliderSpeed) {
@@ -426,6 +442,22 @@ class SpurGearUI {
             btnToggle3DAnim.addEventListener('click', () => {
                 const isRunning = this.visualizer3D.toggleAnimation();
                 btnToggle3DAnim.textContent = isRunning ? '⏸️ Dừng' : '▶️ Tiếp Tục';
+            });
+        }
+
+        const btn3DDir = document.getElementById('btn3DAnimDirection');
+        if (btn3DDir && this.visualizer3D) {
+            btn3DDir.addEventListener('click', () => {
+                const dir = this.visualizer3D.toggleAnimDirection();
+                if (dir === 1) {
+                    btn3DDir.innerHTML = '🔄 Chiều: ↻ Thuận';
+                    btn3DDir.style.color = '';
+                    btn3DDir.style.borderColor = '';
+                } else {
+                    btn3DDir.innerHTML = '🔄 Chiều: ↺ Nghịch';
+                    btn3DDir.style.color = '#f59e0b';
+                    btn3DDir.style.borderColor = '#d97706';
+                }
             });
         }
 
@@ -2086,6 +2118,7 @@ class SpurGearUI {
 
 document.addEventListener('DOMContentLoaded', () => {
     window.spurApp = new SpurGearUI();
+    window.appUI = window.spurApp;
 });
 '''
 

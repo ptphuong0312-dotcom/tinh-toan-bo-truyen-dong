@@ -18,6 +18,7 @@ class BevelGearCanvas {
         this.dragStartY = 0;
         this.angle1 = 0;
         this.animSpeed = 1.0;
+        this.animDirection = 1; // 1: Thuận, -1: Nghịch
         this.isRunning = true;
 
         // Layer visibility toggles
@@ -35,10 +36,21 @@ class BevelGearCanvas {
         this.animSpeed = Math.max(0.01, Math.min(3.0, parseFloat(speed) || 1.0));
     }
 
+    setAnimDirection(dir) {
+        this.animDirection = (dir === -1 || dir < 0) ? -1 : 1;
+        return this.animDirection;
+    }
+
+    toggleAnimDirection() {
+        this.animDirection = (this.animDirection === 1) ? -1 : 1;
+        return this.animDirection;
+    }
+
     stepAnimation(direction = 1) {
         this.isRunning = false;
         const z1 = this.geom ? (parseInt(this.geom.z1) || 18) : 18;
-        this.angle1 += (Math.PI / (10.0 * z1)) * direction;
+        const stepRad = (Math.PI / (10.0 * z1)) * direction;
+        this.angle1 = (this.angle1 || 0) + stepRad;
         this.render();
         return this.angle1;
     }
@@ -55,19 +67,6 @@ class BevelGearCanvas {
     toggleAnimation() {
         this.isRunning = !this.isRunning;
         return this.isRunning;
-    }
-
-    setAnimSpeed(speed) {
-        this.animSpeed = Math.max(0.01, Math.min(3.0, parseFloat(speed) || 1.0));
-    }
-
-    stepAnimation(direction = 1) {
-        this.isRunning = false;
-        const z1 = this.geom ? (parseInt(this.geom.z1) || 18) : 18;
-        const stepRad = (Math.PI / (10.0 * z1)) * direction;
-        this.angle1 = (this.angle1 || 0) + stepRad;
-        this.render();
-        return this.angle1;
     }
 
     setGeometry(geom) {
@@ -157,7 +156,7 @@ class BevelGearCanvas {
 
     animate() {
         if (this.isRunning && this.geom) {
-            this.angle1 += 0.02 * (this.animSpeed || 1.0);
+            this.angle1 += 0.02 * (this.animSpeed || 1.0) * (this.animDirection || 1);
             this.render();
         }
         requestAnimationFrame(() => this.animate());

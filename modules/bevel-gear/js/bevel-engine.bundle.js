@@ -1954,6 +1954,7 @@ class BevelGearCanvas {
         this.dragStartY = 0;
         this.angle1 = 0;
         this.animSpeed = 1.0;
+        this.animDirection = 1; // 1: Thuận, -1: Nghịch
         this.isRunning = true;
 
         // Layer visibility toggles
@@ -1971,10 +1972,21 @@ class BevelGearCanvas {
         this.animSpeed = Math.max(0.01, Math.min(3.0, parseFloat(speed) || 1.0));
     }
 
+    setAnimDirection(dir) {
+        this.animDirection = (dir === -1 || dir < 0) ? -1 : 1;
+        return this.animDirection;
+    }
+
+    toggleAnimDirection() {
+        this.animDirection = (this.animDirection === 1) ? -1 : 1;
+        return this.animDirection;
+    }
+
     stepAnimation(direction = 1) {
         this.isRunning = false;
         const z1 = this.geom ? (parseInt(this.geom.z1) || 18) : 18;
-        this.angle1 += (Math.PI / (10.0 * z1)) * direction;
+        const stepRad = (Math.PI / (10.0 * z1)) * direction;
+        this.angle1 = (this.angle1 || 0) + stepRad;
         this.render();
         return this.angle1;
     }
@@ -1991,19 +2003,6 @@ class BevelGearCanvas {
     toggleAnimation() {
         this.isRunning = !this.isRunning;
         return this.isRunning;
-    }
-
-    setAnimSpeed(speed) {
-        this.animSpeed = Math.max(0.01, Math.min(3.0, parseFloat(speed) || 1.0));
-    }
-
-    stepAnimation(direction = 1) {
-        this.isRunning = false;
-        const z1 = this.geom ? (parseInt(this.geom.z1) || 18) : 18;
-        const stepRad = (Math.PI / (10.0 * z1)) * direction;
-        this.angle1 = (this.angle1 || 0) + stepRad;
-        this.render();
-        return this.angle1;
     }
 
     setGeometry(geom) {
@@ -2093,7 +2092,7 @@ class BevelGearCanvas {
 
     animate() {
         if (this.isRunning && this.geom) {
-            this.angle1 += 0.02 * (this.animSpeed || 1.0);
+            this.angle1 += 0.02 * (this.animSpeed || 1.0) * (this.animDirection || 1);
             this.render();
         }
         requestAnimationFrame(() => this.animate());
@@ -3440,6 +3439,7 @@ class Bevel3DVisualizer {
 
         this.isAnimating = true;
         this.animSpeed = 1.0;
+        this.animDirection = 1; // 1: Thuận (forward), -1: Nghịch (reverse)
         this.rotSpeedBase = 0.015; // rad per frame at 1.0x
         this.pinionAngle = 0;
         this.gearAngle = 0;
@@ -3919,7 +3919,7 @@ class Bevel3DVisualizer {
         requestAnimationFrame(() => this.animate());
 
         if (this.isAnimating && this.pinionGroup && this.gearGroup) {
-            const step = this.rotSpeedBase * this.animSpeed;
+            const step = this.rotSpeedBase * this.animSpeed * (this.animDirection || 1);
             this.pinionAngle += step;
             // Kinematic conjugate synchronization:
             this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
@@ -3940,6 +3940,16 @@ class Bevel3DVisualizer {
 
     setAnimSpeed(speed) {
         this.animSpeed = Math.max(0.01, Math.min(3.0, parseFloat(speed) || 1.0));
+    }
+
+    setAnimDirection(dir) {
+        this.animDirection = (dir === -1 || dir < 0) ? -1 : 1;
+        return this.animDirection;
+    }
+
+    toggleAnimDirection() {
+        this.animDirection = (this.animDirection === 1) ? -1 : 1;
+        return this.animDirection;
     }
 
     stepAnimation(direction = 1) {
@@ -4961,6 +4971,22 @@ class BevelGearUI {
             });
         }
 
+        const btn2DDir = document.getElementById('btn2DAnimDirection');
+        if (btn2DDir && this.canvasController) {
+            btn2DDir.addEventListener('click', () => {
+                const dir = this.canvasController.toggleAnimDirection();
+                if (dir === 1) {
+                    btn2DDir.innerHTML = '🔄 Chiều: ↻ Thuận';
+                    btn2DDir.style.color = '';
+                    btn2DDir.style.borderColor = '';
+                } else {
+                    btn2DDir.innerHTML = '🔄 Chiều: ↺ Nghịch';
+                    btn2DDir.style.color = '#f59e0b';
+                    btn2DDir.style.borderColor = '#d97706';
+                }
+            });
+        }
+
         const btn2DStepBack = document.getElementById('btn2DStepBack');
         const btn2DStepFwd = document.getElementById('btn2DStepFwd');
         if (btn2DStepBack && this.canvasController) {
@@ -5205,6 +5231,22 @@ class BevelGearUI {
             btnToggle3DAnim.addEventListener('click', () => {
                 const isRunning = this.visualizer3D.toggleAnimation();
                 btnToggle3DAnim.textContent = isRunning ? '⏸️ Dừng' : '▶️ Tiếp Tục';
+            });
+        }
+
+        const btn3DDir = document.getElementById('btn3DAnimDirection');
+        if (btn3DDir && this.visualizer3D) {
+            btn3DDir.addEventListener('click', () => {
+                const dir = this.visualizer3D.toggleAnimDirection();
+                if (dir === 1) {
+                    btn3DDir.innerHTML = '🔄 Chiều: ↻ Thuận';
+                    btn3DDir.style.color = '';
+                    btn3DDir.style.borderColor = '';
+                } else {
+                    btn3DDir.innerHTML = '🔄 Chiều: ↺ Nghịch';
+                    btn3DDir.style.color = '#f59e0b';
+                    btn3DDir.style.borderColor = '#d97706';
+                }
             });
         }
 

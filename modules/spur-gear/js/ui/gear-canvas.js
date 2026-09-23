@@ -21,6 +21,7 @@ export class GearCanvas {
         this.isAnimating = false;
         this.animFrameId = null;
         this.animSpeed = 1.0;
+        this.animDirection = 1; // 1: Thuận, -1: Nghịch
 
         this.initEvents();
     }
@@ -119,7 +120,7 @@ export class GearCanvas {
         this.isAnimating = true;
         const loop = () => {
             if (!this.isAnimating) return;
-            this.rotationAngle += 0.008 * (this.animSpeed || 1.0);
+            this.rotationAngle += 0.008 * (this.animSpeed || 1.0) * (this.animDirection || 1);
             this.render();
             this.animFrameId = requestAnimationFrame(loop);
         };
@@ -136,6 +137,16 @@ export class GearCanvas {
 
     setAnimSpeed(speed) {
         this.animSpeed = Math.max(0.05, Math.min(speed, 10.0));
+    }
+
+    setAnimDirection(dir) {
+        this.animDirection = (dir === -1 || dir < 0) ? -1 : 1;
+        return this.animDirection;
+    }
+
+    toggleAnimDirection() {
+        this.animDirection = (this.animDirection === 1) ? -1 : 1;
+        return this.animDirection;
     }
 
     render() {

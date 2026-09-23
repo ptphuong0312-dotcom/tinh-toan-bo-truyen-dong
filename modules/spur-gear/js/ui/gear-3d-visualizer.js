@@ -23,6 +23,7 @@ export class Gear3DVisualizer {
 
         this.isAnimating = true;
         this.animSpeed = 1.0;
+        this.animDirection = 1; // 1: Thuận, -1: Nghịch
         this.rotSpeedBase = 0.015; // rad per frame at 1.0x
         this.pinionAngle = 0;
         this.gearAngle = 0;
@@ -376,6 +377,16 @@ export class Gear3DVisualizer {
         this.animSpeed = Math.max(0.1, Math.min(5.0, speed));
     }
 
+    setAnimDirection(dir) {
+        this.animDirection = (dir === -1 || dir < 0) ? -1 : 1;
+        return this.animDirection;
+    }
+
+    toggleAnimDirection() {
+        this.animDirection = (this.animDirection === 1) ? -1 : 1;
+        return this.animDirection;
+    }
+
     toggleAnimation() {
         this.isAnimating = !this.isAnimating;
         return this.isAnimating;
@@ -385,7 +396,7 @@ export class Gear3DVisualizer {
         requestAnimationFrame(this.animate);
 
         if (this.isAnimating && this.pinionGroup && this.gearGroup) {
-            const dTheta = this.rotSpeedBase * this.animSpeed;
+            const dTheta = this.rotSpeedBase * this.animSpeed * (this.animDirection || 1);
             this.pinionAngle += dTheta;
             // Lock gearAngle directly to conjugate rolling phase (zero accumulation drift):
             this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;

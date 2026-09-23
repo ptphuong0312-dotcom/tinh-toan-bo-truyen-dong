@@ -1232,3 +1232,48 @@
   - Kiểm thử giao diện: **0 lỗi Console JavaScript/WebGL** (`test_bevel_webapp.py`).
   - Đóng gói Classic Bundle CORS-Free: `bevel-engine.bundle.js` cập nhật hoàn chỉnh.
 
+---
+
+## Giai Đoạn 29: Phát Triển Chức Năng Mô Phỏng Quay 2 Chiều Thuận - Nghịch (Bidirectional Simulation Engine Protocol) Cho Cả 2D & 3D WebGL
+* **Bối cảnh & Chỉ đạo từ SirPhuong**:
+  - *"Tôi muốn chức năng mô phỏng có thể quay 2 chiều"*.
+* **Phân tích kỹ thuật & Bản chất chuyển động ăn khớp liên hợp**:
+  1. **Động học quay hai chiều (Conjugate Reversible Kinematics)**:
+     - Trước đây, vòng lặp hoạt họa `requestAnimationFrame` chỉ cộng một chiều dương (`pinionAngle += step` hoặc `angle1 += step`), chỉ cho phép quay thuận (Clockwise).
+     - Trong thực tế kỹ thuật và quan sát ăn khớp, việc đổi chiều quay cho phép kỹ sư quan sát cả hai mặt sườn:
+       * **Sườn làm việc chủ động (Drive Flank)** khi quay thuận.
+       * **Sườn phụ / Sườn lùi (Coast Flank)** khi quay ngược chiều.
+     - Khi đổi chiều quay, quan hệ động học liên hợp chuẩn xác giữa hai bánh được bảo toàn tuyệt đối không trôi góc:
+       $$\text{gearAngle} = \text{initialGearAngle} - \frac{\text{pinionAngle}}{i}$$
+       Công thức giải tích độc lập với thời gian bảo đảm dù quay tiến hay lùi hàng triệu vòng, độ ăn khớp lọt rãnh và khe hở cạnh răng (backlash) vẫn giữ chuẩn $\Delta = 0.000\mu m$.
+  2. **Nâng cấp Động Cơ Mô Phỏng (Simulation Engines)**:
+     - **Bánh Răng Côn 3D (`bevel-3d-visualizer.js`)**:
+       * Thêm thuộc tính `this.animDirection = 1` (1: Thuận, -1: Nghịch).
+       * Phương thức: `setAnimDirection(dir)` và `toggleAnimDirection()`.
+       * Trong `animate()`: `step = this.rotSpeedBase * this.animSpeed * (this.animDirection || 1);`
+     - **Bánh Răng Côn 2D Canvas (`bevel-canvas.js`)**:
+       * Thêm thuộc tính `this.animDirection = 1`.
+       * Phương thức: `setAnimDirection(dir)` và `toggleAnimDirection()`.
+       * Trong `animate()`: `this.angle1 += 0.02 * (this.animSpeed || 1.0) * (this.animDirection || 1);`
+       * Dải sọc ăn khớp răng `drawToothStripes` tự động di chuyển tiến/lùi đảo chiều mượt mà.
+     - **Bánh Răng Trụ 2D & 3D (`gear-canvas.js`, `gear-3d-visualizer.js`, `bundle_spur.py`)**:
+       * Đồng bộ hóa 100% tính năng quay hai chiều cho cả mô-đun Bánh Răng Trụ.
+  3. **Thiết kế Giao diện Điều khiển (UI / UX)**:
+     - Bổ sung nút chuyển chiều quay chuyên dụng ngay cạnh nút Tạm Dừng:
+       `<button type="button" class="btn btn-secondary" id="btn2DAnimDirection">🔄 Chiều: ↻ Thuận</button>`
+       `<button type="button" class="btn btn-secondary" id="btn3DAnimDirection">🔄 Chiều: ↻ Thuận</button>`
+     - Phản ứng tương tác thời gian thực:
+       * Khi nhấn: Chiều quay đảo ngược tức thì mà không cần dừng chuyển động.
+       * Trạng thái **↻ Thuận**: Text `🔄 Chiều: ↻ Thuận`, viền giao diện tiêu chuẩn.
+       * Trạng thái **↺ Nghịch**: Text `🔄 Chiều: ↺ Nghịch`, màu vàng hổ phách nổi bật (`#f59e0b`).
+* **Kết quả kiểm thử tự động Playwright**:
+  - Kịch bản `tests/test_bidirectional_rotation.py`:
+    * Kiểm thử nút bấm 2D & 3D cho cả Bevel Gear và Spur Gear: **100% PASS**.
+    * Kiểm thử góc quay đảo chiều số học: Khi ở chế độ nghịch, góc quay giảm dần liên tục (`Angle after 400ms < start`); khi ở chế độ thuận, góc quay tăng dần (`Angle after 400ms > start`).
+    * Console errors: 0 lỗi.
+  - Multi-case QC Suites:
+    * `deep_line_by_line_bevel_audit.py`: **115/115 ô tính PASS 100.0% ($\Delta = 0.000000$)**.
+    * `qc_gear_multi_case_suite.py`: **110/110 checks PASS 100.0% ($\Delta = 0.0000$)**.
+  - Đóng gói mã nguồn Classic CORS-Free hoàn tất: `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js`.
+
+
