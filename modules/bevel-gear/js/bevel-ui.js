@@ -16,7 +16,7 @@ class BevelGearUI {
             z2: 45,
             Sigma: 90.0,
             alfa: 20.0,
-            beta: 30.0,
+            beta: 0.0,
             mmn: 10.0,
             b: 117.0,
             x1: 0.32,
@@ -26,7 +26,7 @@ class BevelGearUI {
             Q: 6,
             mat1: '16MnCr5',
             mat2: '16MnCr5',
-            gearingType: 'gleason'
+            gearingType: 'straight_type1'
         };
 
         this.lastGeom = null;
@@ -62,10 +62,13 @@ class BevelGearUI {
             btnReset.addEventListener('click', () => {
                 this.inputs = {
                     P: 50.0, n1: 1000.0, n2: 400.0, i_req: 2.5000,
-                    z1: 18, z2: 45, Sigma: 90.0, alfa: 20.0, beta: 30.0,
+                    z1: 18, z2: 45, Sigma: 90.0, alfa: 20.0, beta: 0.0,
                     mmn: 10.0, b: 117.0, x1: 0.32, xt1: 0.04,
-                    ha0: 1.0, c0: 0.2, Q: 6, mat1: '16MnCr5', mat2: '16MnCr5'
+                    ha0: 1.0, c0: 0.2, Q: 6, mat1: '16MnCr5', mat2: '16MnCr5',
+                    gearingType: 'straight_type1'
                 };
+                const selGT = document.getElementById('selGearingType');
+                if (selGT) selGT.value = 'straight_type1';
                 document.querySelectorAll('.input-eng').forEach(inp => {
                     const k = inp.getAttribute('data-key');
                     if (this.inputs[k] !== undefined) inp.value = this.inputs[k];

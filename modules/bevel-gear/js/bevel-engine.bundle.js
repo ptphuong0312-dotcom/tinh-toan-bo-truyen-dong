@@ -4217,7 +4217,7 @@ class Bevel3DVisualizer {
      * Supports both Mode 0 (Dynamic Rolling Locus) and Mode 1 (Cumulative Gleason Ellipse).
      */
     applyTCAShader(material, isPinion) {
-        material.customProgramCacheKey = () => `tca_${isPinion ? 'pinion' : 'gear'}_en${this.tcaEnabled ? 1 : 0}_mode${this.tcaColorMode}_pat${this.tcaPatternType}`;
+        material.customProgramCacheKey = () => `tca_${isPinion ? 'pinion' : 'gear'}_en${this.tcaEnabled ? 1 : 0}_mode${this.tcaColorMode}_pat${this.tcaPatternType}_sp${this.tcaUniforms && this.tcaUniforms.uIsSpiral ? this.tcaUniforms.uIsSpiral.value : 0}`;
         material.onBeforeCompile = (shader) => {
             Object.assign(shader.uniforms, this.tcaUniforms);
             shader.uniforms.uIsPinion = { value: isPinion ? 1.0 : 0.0 };
@@ -4249,6 +4249,7 @@ class Bevel3DVisualizer {
                 uniform float uB;
                 uniform float uMmn;
                 uniform float uBetaRad;
+                uniform float uIsSpiral;
                 uniform float uPinionAngle;
                 uniform float uAnimDirection;
                 uniform float uIsPinion;
@@ -4261,23 +4262,54 @@ class Bevel3DVisualizer {
             const tcaFragmentLogic = `
                 #include <dithering_fragment>
                 if (uTcaEnabled > 0.5 && vTcaParam.z > 0.5) {
-                    // Determine which flank is active according to rotation direction
-                    // vTcaParam.z: 1.0 = Flank 1, 2.0 = Flank 2, 0.0 = non-flank
-                    float activeFlank = (uIsPinion > 0.5) ?
-                        ((uAnimDirection > 0.0) ? 1.0 : 2.0) :
-                        ((uAnimDirection > 0.0) ? 2.0 : 1.0);
+                    // vTcaParam.z: 1.0 = Flank 1, 2.0 = Flank 2, 0.0 = non-flank (crest/root/hub)
+                    // In theoretical zero-backlash mesh (jn = 0), BOTH Flank 1 and Flank 2 engage mating teeth!
+                    // Both flanks of every tooth exhibit conjugate contact.
+                    float u = vTcaParam.x;        // Face width: -0.5 (toe) to +0.5 (heel), 0.0 is Rm (middle of tooth)
+                    float v = vTcaParam.y - 0.5;  // Working depth: -0.5 (root) to +0.5 (tip), 0.0 is EXACT PITCH LINE!
+                    float flankT = vTcaParam.y;   // 0.0 at root/fillet to 1.0 at tooth tip
+                    float widthScale = clamp(uTcaWidth / 4.0, 0.25, 3.0);
+                    float intensity = 0.0;
 
-                    if (abs(vTcaParam.z - activeFlank) < 0.5) {
-                        float u = vTcaParam.x;        // Face width: -0.5 (toe) to +0.5 (heel), 0.0 is Rm (middle of tooth)
-                        float v = vTcaParam.y - 0.5;  // Working depth: -0.5 (root) to +0.5 (tip), 0.0 is EXACT PITCH LINE!
-                        float widthScale = clamp(uTcaWidth / 4.0, 0.25, 3.0);
-                        float intensity = 0.0;
+                    if (uIsSpiral < 0.5) {
+                        // =========================================================================
+                        // BÁNH RĂNG CÔN RĂNG THẲNG (STRAIGHT BEVEL GEARS - ISO 23509 / DIN 3971)
+                        // Chuẩn "Mặt tiếp xúc mặt như bình thường" (Full Flank Working Contact Band)
+                        // Hiển thị đồng thời trên CẢ HAI BỀ MẶT BÊN (Flank 1 & Flank 2) khi khe hở = 0
+                        // =========================================================================
+                        float uMargin = clamp(0.50 - 0.035 * widthScale, 0.35, 0.495);
+                        float uMask = smoothstep(0.50, uMargin, abs(u));
+
+                        // Active working depth (hw = 2.0*mmn): excludes root clearance c0 (flankT < 0.08) & tip chamfer (flankT > 0.94)
+                        float vMask = smoothstep(0.03, 0.10, flankT) * smoothstep(0.97, 0.90, flankT);
+                        float fullStraightContact = uMask * vMask;
 
                         if (uTcaPatternType > 0.5) {
-                            // =========================================================================
+                            // CHẾ ĐỘ 1: VẾT RÀ BỘT MÀU TÍCH LŨY (CUMULATIVE PRUSSIAN BLUE / ROLLED PATTERN)
+                            // Trải rộng khắp chiều rộng răng và chiều cao làm việc trên CẢ 2 MẶT BÊN
+                            intensity = fullStraightContact;
+                        } else {
+                            // CHẾ ĐỘ 0: VẾT TIẾP XÚC ĐỘNG LĂN THEO THỜI GIAN THỰC (DYNAMIC ROLLING LOCUS)
+                            // Đường tiếp xúc (line contact) quét dọc chiều rộng răng từ chân lên đỉnh theo góc quay
+                            float p1 = 6.28318530718 / max(1.0, uZ1);
+                            float phiRel = mod(uPinionAngle + p1 * 0.5, p1) - p1 * 0.5;
+                            float normPhase = clamp(phiRel / (p1 * 0.45), -1.0, 1.0);
+                            if (uAnimDirection < 0.0) {
+                                normPhase = -normPhase;
+                            }
+                            float v_roll = normPhase * 0.35;
+                            float lineHalfW = 0.08 * widthScale;
+                            float dv = abs(v - v_roll) / max(0.01, lineHalfW);
+                            float rollLineMask = smoothstep(1.0, 0.0, dv);
+                            intensity = fullStraightContact * rollLineMask;
+                        }
+                    } else {
+                        // =========================================================================
+                        // BÁNH RĂNG CÔN RĂNG XOẮN (SPIRAL BEVEL GEARS - GLEASON CIRCULAR ARC)
+                        // Dao cắt Gleason tạo độ vồng dọc răng (crowning) hình elip cục bộ
+                        // =========================================================================
+                        if (uTcaPatternType > 0.5) {
                             // CHẾ ĐỘ 1: VẾT TIẾP XÚC ELIP CHUẨN GLEASON (CUMULATIVE ROLLED PATTERN)
-                            // Imprinted Prussian Blue dye on engaged flanks, inspectable from 360° including behind
-                            // =========================================================================
                             float u0 = 0.0;
                             float v0 = 0.0;
                             float a_len = 0.32 * widthScale;
@@ -4289,10 +4321,7 @@ class Bevel3DVisualizer {
                                 intensity = smoothstep(0.0, 1.0, 1.0 - ellDist);
                             }
                         } else {
-                            // =========================================================================
-                            // CHẾ ĐỘ 0: TIẾP XÚC ĐỘNG LĂN LIÊN HỢP THỜI GIAN THỰC (DYNAMIC ROLLING LOCUS)
-                            // Real-time instantaneous contact spot restricted to active engagement corridor
-                            // =========================================================================
+                            // CHẾ ĐỘ 0: TIẾP XÚC ĐỘNG LĂN LIÊN HỢP THỜI GIAN THỰC
                             float dPlane = abs(vTcaWorldPos.z);
                             float dLine = abs(vTcaWorldPos.x * uSinD - vTcaWorldPos.y * uCosD);
                             float maxCorridor = max(uMmn * 4.0, uB * 0.75);
@@ -4300,12 +4329,11 @@ class Bevel3DVisualizer {
                             if (dPlane <= maxCorridor && dLine <= maxCorridor) {
                                 float p1 = 6.28318530718 / max(1.0, uZ1);
                                 float phiRel = mod(uPinionAngle + p1 * 0.5, p1) - p1 * 0.5;
-                                float normPhase = clamp(phiRel / (p1 * 0.45), -1.0, 1.0); // -1.0 to +1.0
+                                float normPhase = clamp(phiRel / (p1 * 0.45), -1.0, 1.0);
                                 if (uAnimDirection < 0.0) {
                                     normPhase = -normPhase;
                                 }
 
-                                // Dynamic rolling spot centered at middle zone (u = 0, v = 0) at center of roll
                                 float u_roll = -normPhase * 0.25;
                                 float v_roll = normPhase * 0.35;
                                 float a_roll = 0.18 * widthScale;
@@ -4318,6 +4346,7 @@ class Bevel3DVisualizer {
                                 }
                             }
                         }
+                    }
 
                         if (intensity > 0.001) {
                             float t = intensity;
@@ -4348,7 +4377,6 @@ class Bevel3DVisualizer {
                             }
                         }
                     }
-                }
             `;
 
             shader.fragmentShader = shader.fragmentShader.replace(
@@ -4886,7 +4914,7 @@ class BevelGearUI {
             z2: 45,
             Sigma: 90.0,
             alfa: 20.0,
-            beta: 30.0,
+            beta: 0.0,
             mmn: 10.0,
             b: 117.0,
             x1: 0.32,
@@ -4896,7 +4924,7 @@ class BevelGearUI {
             Q: 6,
             mat1: '16MnCr5',
             mat2: '16MnCr5',
-            gearingType: 'gleason'
+            gearingType: 'straight_type1'
         };
 
         this.lastGeom = null;
@@ -4932,10 +4960,13 @@ class BevelGearUI {
             btnReset.addEventListener('click', () => {
                 this.inputs = {
                     P: 50.0, n1: 1000.0, n2: 400.0, i_req: 2.5000,
-                    z1: 18, z2: 45, Sigma: 90.0, alfa: 20.0, beta: 30.0,
+                    z1: 18, z2: 45, Sigma: 90.0, alfa: 20.0, beta: 0.0,
                     mmn: 10.0, b: 117.0, x1: 0.32, xt1: 0.04,
-                    ha0: 1.0, c0: 0.2, Q: 6, mat1: '16MnCr5', mat2: '16MnCr5'
+                    ha0: 1.0, c0: 0.2, Q: 6, mat1: '16MnCr5', mat2: '16MnCr5',
+                    gearingType: 'straight_type1'
                 };
+                const selGT = document.getElementById('selGearingType');
+                if (selGT) selGT.value = 'straight_type1';
                 document.querySelectorAll('.input-eng').forEach(inp => {
                     const k = inp.getAttribute('data-key');
                     if (this.inputs[k] !== undefined) inp.value = this.inputs[k];

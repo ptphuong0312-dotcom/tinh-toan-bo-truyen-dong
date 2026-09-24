@@ -744,3 +744,32 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 3. **Lưu trữ tri thức theo Golden Meta-Rule**:
    - Toàn bộ quy trình tính toán, mã ô Excel MITCalc 1.74 và case study mẫu được lưu giữ độc lập trong `.agents/workflows/tinh_toan_do_ben_uon_banh_rang_iso6336.md` và `.agents/skills/mitcalc-webapp-engineering/SKILL.md`.
 
+---
+
+### Quy Tắc 35: Quy Chuẩn Vết Tiếp Xúc Hai Bề Mặt Bên Răng Côn Thẳng & Thiết Lập Mặc Định Beta = 0 (Both-Flank Contact & Straight Bevel Default Protocol)
+1. **Lệnh trực tiếp từ SirPhuong**:
+   - *"Tôi muốn bây giờ tập trung vào vết của bánh răng côn thẳng trước (để cho dễ hơn nghiên cứu côn xoắn) vậy bộ truyền mặc định bạn cứ để beta=0 đi"*.
+   - *"Trên ảnh tôi gửi là vết tiếp xúc của côn thẳng: rất chuẩn nhưng lại chỉ được 1 bên bề mặt răng. Nếu như theo lý thuyết khe hở = 0 thì vết tiếp xúc phải có ở cả 2 bề mặt bên của răng chứ, bạn tìm nguyên nhân rồi giải quyết cho tôi vấn đề này"*.
+   - *"Bạn nhớ là bạn vẫn tự duyệt web để tự kiểm tra xem lại vết tiếp xúc đã đạt chuẩn hay chưa (trước mắt tôi chưa cần vết tiếp xúc có độ vồng (crowning) mà chỉ cần mặt tiếp xúc mặt như bình thường thôi)"*.
+2. **Nguyên nhân gốc rễ lỗi chỉ hiện vết trên 1 sườn răng (Root Cause Analysis)**:
+   - Trong shader GPU `applyTCAShader` (`modules/bevel-gear/js/ui/bevel-3d-visualizer.js`), đoạn mã cũ lọc sườn:
+     `float activeFlank = (uIsPinion > 0.5) ? ((uAnimDirection > 0.0) ? 1.0 : 2.0) : ...; if (abs(vTcaParam.z - activeFlank) < 0.5) { ... }`
+     đã cố tình loại bỏ sườn răng đối diện.
+   - **Bản chất động học khi khe hở bằng 0 ($j_n = 0$)**:
+     Khi khe hở cạnh răng danh nghĩa bằng 0, chiều dày răng vừa khít rãnh răng, răng Bánh 1 được kẹp đồng thời bởi 2 răng kế cận của Bánh 2. Do đó, **cả 2 bề mặt bên của răng (Flank 1 và Flank 2, ứng với `vTcaParam.z > 0.5`) đều tiếp xúc liên hợp đồng thời**!
+   - Khắc phục triệt để: Gỡ bỏ điều kiện lọc 1 sườn `abs(vTcaParam.z - activeFlank) < 0.5`, cho phép mọi mặt sườn thân khai (`vTcaParam.z > 0.5`) đều hiển thị vết tiếp xúc.
+3. **Giải thuật vết tiếp xúc mặt sườn côn thẳng ("Mặt tiếp xúc mặt như bình thường" - Full Flank Contact Band)**:
+   - Bánh răng côn răng thẳng tiêu chuẩn (ISO 23509 / DIN 3971) không có độ vồng dọc răng nhân tạo (longitudinal crowning). Tiếp xúc tức thời là đường tiếp xúc (line contact) trải dài theo chiều rộng răng $b$.
+   - Khi lăn qua khớp (Chế độ 1 - Cumulative Rolled Pattern / Vết rà bột màu Prussian Blue): Vết tiếp xúc bao phủ đều đặn toàn bộ bề mặt làm việc:
+     * Dọc chiều rộng răng: $u \in [-0.5, +0.5]$ (từ gót Heel đến mũi Toe), $uMask = \text{smoothstep}(0.50, 0.46, |u|)$.
+     * Theo chiều cao làm việc $h_w = 2.0 m_{mn}$: loại trừ khe hở chân răng $c_0$ ($flankT < 0.08$) và vát mép đỉnh ($flankT > 0.94$), $vMask = \text{smoothstep}(0.03, 0.10, flankT) \cdot \text{smoothstep}(0.97, 0.90, flankT)$.
+     * Cường độ tiếp xúc: $\text{intensity} = uMask \cdot vMask$ trải mịn đều khắp 2 mặt sườn của mỗi răng.
+   - Ở Chế độ 0 (Tiếp xúc động lăn thời gian thực): Đường tiếp xúc quét theo góc quay $\phi_1$ từ chân răng lên đỉnh răng dọc theo toàn bộ bề rộng răng $b$.
+4. **Quy chuẩn thiết lập mặc định Bánh Răng Côn Thẳng ($\beta = 0^\circ$)**:
+   - `modules/bevel-gear/index.html`: `selGearingType` mặc định là `straight_type1`, ô nhập `inp_beta` mặc định là `0.0`.
+   - `modules/bevel-gear/js/bevel-ui.js`: Khởi tạo `this.inputs` mặc định `beta: 0.0`, `gearingType: 'straight_type1'`. Nút "🔄 Mặc Định" (`#btnResetDefaults`) phục hồi chính xác $\beta = 0.0^\circ$ và Kiểu răng loại I.
+   - Huy hiệu 3D (`#badge3DInfo`): Hiển thị ngay khi mở trang `⚙️ Bánh Răng Côn Răng Thẳng (Straight Bevel) | Góc trục Σ = 90.0° | Tỷ số i = 2.500 | Re = 300.8 mm`.
+5. **Quy trình kiểm thử trực quan tự động với Playwright**:
+   - Chạy script kiểm thử `scratch/test_straight_bevel_tca.py` tự động duyệt web, chuyển sang 3D WebGL, bật vết tiếp xúc (`#btnToggleContactTCA`) và mặt sườn (`#btnToggleFlankOnly`), chụp ảnh trực tiếp các góc nhìn cực cận (Zoom, Behind, Mesh Preset, Solid).
+   - Tự soi ảnh màn hình kiểm chứng: Cả 2 mặt sườn của tất cả các răng đều phủ kín vệt màu Prussian Blue, không vồng elip nhân tạo, đạt chuẩn xưởng cơ khí 100%.
+

@@ -1386,3 +1386,43 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
   - Cập nhật Quy Tắc 34 trong `GEMINI.md`.
   - Giữ nguyên 100% mã nguồn Web App sạch sẽ, tuân thủ nghiêm ngặt chỉ đạo của người dùng.
 
+---
+
+### [2026-09-24] XỬ LÝ VẾT TIẾP XÚC HAI BỀ MẶT BÊN RĂNG CÔN THẲNG (BOTH-FLANK TCA), CHUẨN MẶT TIẾP XÚC TỰ NHIÊN & THIẾT LẬP MẶC ĐỊNH BETA = 0
+* **Bối cảnh & Chỉ thị trực tiếp từ SirPhuong**:
+  1. *"tôi muốn bây giờ tập trung vào vết của bánh răng côn thẳng trước (để cho dễ hơn nghiên cứu côn xoắn) vậy bộ truyền mặc định bạn cứ để beta=0 đi"*.
+  2. *"trên ảnh tôi gửi là vết tiếp xúc của côn thẳng: rất chuẩn nhưng lại chỉ được 1 bên bề mặt răng. nếu như theo lý thuyết khe hở = 0 thì vết tiếp xúc phải có ở cả 2 bề mặt bên của răng chứ, bạn tìm nguyên nhân rồi giải quyết cho tôi vấn đề này"*.
+  3. *"bạn nhớ là bạn vẫn tự duyệt web để tự kiểm tra xem lại vết tiếp xúc đã đạt chuẩn hay chưa (trước mắt tôi chưa cần vết tiếp xúc có độ vồng (crowning) mà chỉ cần mặt tiếp xúc mặt như bình thường thôi)"*.
+* **Phân tích nguyên nhân gốc rễ (Root Cause Analysis)**:
+  1. **Nguyên nhân vết tiếp xúc chỉ hiện ở 1 mặt sườn**:
+     - Trong GPU Shader `applyTCAShader` (`modules/bevel-gear/js/ui/bevel-3d-visualizer.js`), logic cũ lọc sườn:
+       `float activeFlank = (uIsPinion > 0.5) ? ((uAnimDirection > 0.0) ? 1.0 : 2.0) : ((uAnimDirection > 0.0) ? 2.0 : 1.0); if (abs(vTcaParam.z - activeFlank) < 0.5) { ... }`
+       đã cố tình loại bỏ sườn răng đối diện theo chiều quay.
+     - Trong thực tế động học lý thuyết với khe hở cạnh răng danh nghĩa bằng 0 ($j_n = 0$), chiều dày răng lấp đầy toàn bộ rãnh răng đối diện. Răng Bánh 1 được kẹp đồng thời bởi 2 răng kế cận của Bánh 2. Do đó, **cả 2 bề mặt bên của mỗi răng (Flank 1 và Flank 2) đều tiếp xúc liên hợp đồng thời**!
+  2. **Vết tiếp xúc côn thẳng dạng elip nhân tạo không phù hợp**:
+     - Bánh răng côn răng thẳng tiêu chuẩn (ISO 23509 / DIN 3971) không có độ vồng dọc răng nhân tạo (longitudinal crowning). Tiếp xúc tức thời giữa hai mặt nón thân khai là tiếp xúc đường (line contact) trải dài theo chiều rộng răng $b$.
+     - Khi lăn qua khớp (vết rà màu tích lũy Prussian Blue), đường tiếp xúc quét toàn bộ chiều cao làm việc $h_w$, tạo thành dải tiếp xúc mặt sườn tự nhiên "mặt tiếp xúc mặt như bình thường" chứ không phải hình elip Gleason cô lập.
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Tái thiết kế GPU Shader TCA (`bevel-3d-visualizer.js`)**:
+     - Bổ sung `uniform float uIsSpiral;` và cập nhật `material.customProgramCacheKey`.
+     - Gỡ bỏ hoàn toàn điều kiện lọc 1 sườn `abs(vTcaParam.z - activeFlank) < 0.5`, thay bằng `if (uTcaEnabled > 0.5 && vTcaParam.z > 0.5)` để hiển thị vết tiếp xúc đồng thời trên **CẢ HAI BỀ MẶT BÊN (Flank 1 & Flank 2)** của mọi răng.
+     - Khi `uIsSpiral < 0.5` (Bánh răng côn thẳng):
+       * Dọc chiều rộng răng: `uMask = smoothstep(0.50, uMargin, abs(u))` với `uMargin = clamp(0.50 - 0.035 * widthScale, 0.35, 0.495)`.
+       * Dọc chiều cao làm việc: `vMask = smoothstep(0.03, 0.10, flankT) * smoothstep(0.97, 0.90, flankT)`.
+       * Vết tiếp xúc trải mịn toàn bộ diện tích làm việc: $\text{intensity} = uMask \cdot vMask$ ("mặt tiếp xúc mặt như bình thường").
+       * Ở Chế độ 0 (Tiếp xúc động lăn thời gian thực): Đường tiếp xúc quét theo góc quay $\phi_1$ từ chân lên đỉnh dọc theo chiều rộng răng.
+  2. **Thiết lập mặc định Bánh Răng Côn Thẳng ($\beta = 0.0^\circ$)**:
+     - `modules/bevel-gear/index.html`: `selGearingType` chọn `straight_type1` mặc định, `inp_beta` giá trị `0.0`.
+     - `modules/bevel-gear/js/bevel-ui.js`: Khởi tạo `this.inputs` mặc định `beta: 0.0`, `gearingType: 'straight_type1'`. Nút "🔄 Mặc Định" phục hồi chính xác $\beta = 0.0^\circ$.
+     - Huy hiệu 3D (`#badge3DInfo`): Hiển thị `⚙️ Bánh Răng Côn Răng Thẳng (Straight Bevel) | Góc trục Σ = 90.0° | Tỷ số i = 2.500 | Re = 300.8 mm`.
+  3. **Đóng gói mã nguồn CORS-Free (`bundle_all.py`)**:
+     - Biên dịch thành công `modules/bevel-gear/js/bevel-engine.bundle.js` (271,986 ký tự).
+* **Kết quả kiểm thử tự động trực quan (Playwright E2E Verification)**:
+  - Tự động chạy script `scratch/test_straight_bevel_tca.py` thẩm tra trực tiếp trên trình duyệt Web:
+    * `bevel_straight_both_flanks_extreme_zoom.png`: Kiểm chứng trực quan xác nhận vết tiếp xúc Prussian Blue phủ đều đặn và sáng rõ trên **CẢ HAI BỀ MẶT BÊN** của mọi răng, không có elip nhân tạo.
+    * `bevel_straight_flank_both_sides_behind.png`: Kiểm chứng từ phía sau răng, cả hai mặt sườn đều in dấu bột màu liên hợp hoàn hảo.
+    * `bevel_straight_solid_iso_tca.png`: Khối phôi đặc ăn khớp khít khao, vết tiếp xúc hiển thị rõ nét trên toàn bộ các răng.
+    * `bevel_straight_calculator_tab.png`: Bảng tính hiển thị đúng góc xoắn $\beta = 0.0^\circ$, đạt chuẩn ISO 23509 / DIN 3971.
+    * 0 lỗi JavaScript/GLSL Console.
+
+
