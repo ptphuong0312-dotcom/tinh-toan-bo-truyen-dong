@@ -1349,3 +1349,40 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
   - `tests/test_bidirectional_rotation.py`: **100% PASS** (Cả 2D & 3D cho cả Bevel Gear và Spur Gear, 0 lỗi console).
   - `modules/bevel-gear/tests/deep_line_by_line_bevel_audit.py`: **115/115 ô tính PASS 100.0% ($\Delta = 0.000000$)**.
   - Đóng gói Classic Bundle hoàn tất: `bevel-engine.bundle.js` và `mitcalc-engine.bundle.js` cập nhật mới nhất.
+
+---
+
+### [2026-09-24] TÍNH TOÁN ĐỘ BỀN UỐN BÁNH RĂNG CÔNG NGHIỆP NẶNG (ISO 6336-3 METHOD B / DIN 3990) & PHÂN TÍCH TOÀN DIỆN HỆ SỐ AN TOÀN S_F
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  1. Yêu cầu tính toán độc lập độ bền uốn chân răng cho bộ truyền công nghiệp nặng: $z_2 = 81, z_1 = 20, m_n = 12\text{ mm}, \alpha_n = 20^\circ, \beta = 12^\circ, b = 410\text{ mm}, D_w = 990\text{ mm}, n_2 = 10\text{ rpm}, P = 250\text{ kW}, n_{\text{đc}} = 730\text{ rpm}, i_{\text{tổng}} = 73$, vật liệu thép SCM420 thấm carbon tôi cứng bề mặt 58-60 HRC.
+  2. Phân tích rõ nguyên nhân sai lệch giữa cách tính lý thuyết tĩnh ($K_A = 1.0, S_F = 2.62$) và điều kiện vận hành thực tế xưởng máy công nghiệp ($K_A = 1.50 \div 1.75, S_F = 1.40 \div 1.63$).
+  3. Giải thích rõ bản chất toán học từ các thông số ứng suất uốn ($\sigma_{F0}, \sigma_F, \sigma_{FG}, \sigma_{FP}$) suy ra hệ số an toàn $S_F$.
+  4. Lưu trữ lại toàn bộ kỹ năng, công thức, mã ô Excel MITCalc 1.74 và cẩm nang vào hệ thống tri thức dự án để sử dụng lâu dài mà không đưa vào Web App.
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Hình học ăn khớp & Dịch chỉnh ngược từ $D_w = 990\text{ mm}$**:
+     - Đường kính chia chuẩn: $d_1 = 245.362\text{ mm}, d_2 = 993.715\text{ mm}, a = 619.538\text{ mm}$.
+     - Đường kính lăn làm việc: $d_{w1} = 244.444\text{ mm}, d_{w2} = 990.000\text{ mm}, a_w = 617.222\text{ mm}$.
+     - Góc ăn khớp làm việc: $\cos\alpha_{wt} = 0.94075 \implies \alpha_{wt} = 19.822^\circ$.
+     - Tổng hệ số dịch chỉnh: $\Sigma x = -0.1904$ (Bánh dẫn $x_1 = 0$, bánh bị dẫn $x_2 = -0.1904$).
+  2. **Giải mã động học & Tải trọng lớn**:
+     - Tốc độ trục: Bánh lớn $n_2 = 10\text{ rpm}$, bánh nhỏ $n_1 = 40.5\text{ rpm}$.
+     - Mô-men xoắn trục bánh lớn: $T_2 = 238,750\text{ N}\cdot\text{m}$ (gần 24 tấn-mét).
+     - Lực vòng danh nghĩa tại vòng lăn: $F_t = 482,323\text{ N}$ (hơn 48 tấn lực).
+  3. **Hệ số dạng răng Lewis-Hofer & Tập trung ứng suất (ISO 6336 Method B)**:
+     - $Y_{F2} = 1.257$, $Y_{S2} = 2.070$, $Y_\beta = 0.900 \implies$ Ứng suất uốn danh nghĩa $\sigma_{F0} = \mathbf{229.65\text{ MPa}}$.
+     - Khả năng chịu uốn mỏi tối đa của vật liệu SCM420 tôi thấm sau khi nhân các hệ số $Y_X = 0.930, Y_R = 1.004, Y_\delta = 0.996, Y_{NT} = 0.973$: $\sigma_{FG} = \mathbf{633.50\text{ MPa}}$.
+  4. **Phân tích độ nhạy tải trọng & Hệ số an toàn thực tế**:
+     - *Chế độ 1 (Tải êm lý thuyết, $K_A = 1.0, K_{F\beta} = 1.053$)*: $\sigma_F = 242.11\text{ MPa} \implies S_F = \mathbf{2.62}$ (Dư bền lý thuyết).
+     - *Chế độ 2 (Va đập vừa - thực tế máy công nghiệp $250\text{ kW}$, $K_A = 1.50, K_{F\beta} = 1.125$)*: $\sigma_F = 388.10\text{ MPa} \implies S_F = \mathbf{1.63}$ (**Chuẩn tối ưu thiết kế**).
+     - *Chế độ 3 (Va đập mạnh, $K_A = 1.75, K_{F\beta} = 1.125$)*: $\sigma_F = 452.87\text{ MPa} \implies S_F = \mathbf{1.40}$ (Ngưỡng an toàn tối thiểu).
+     - *Chế độ 4 (Va đập mạnh + Vành răng hở/công xôn, $K_{F\beta} = 1.375$)*: $\sigma_F = 553.14\text{ MPa} \implies S_F = \mathbf{1.14}$ (Nguy cơ nứt mỏi).
+  5. **Hệ thống hóa công thức suy ra hệ số an toàn $S_F$**:
+     - Công thức bản chất vật lý: $S_F = \frac{\sigma_{FG}}{\sigma_F}$.
+     - Công thức qua ứng suất cho phép: $S_F = \frac{\sigma_{FP}}{\sigma_F} \cdot S_{F\min}$.
+     - Bảng đối chiếu so sánh giữa ISO 6336 và TCVN 5586 / GOST 21354.
+* **Lưu trữ tri thức (Golden Meta-Rule)**:
+  - Tạo mới workflow hoàn chỉnh: `.agents/workflows/tinh_toan_do_ben_uon_banh_rang_iso6336.md`.
+  - Cập nhật Quy Chuẩn 43 trong `.agents/skills/mitcalc-webapp-engineering/SKILL.md`.
+  - Cập nhật Quy Tắc 34 trong `GEMINI.md`.
+  - Giữ nguyên 100% mã nguồn Web App sạch sẽ, tuân thủ nghiêm ngặt chỉ đạo của người dùng.
+

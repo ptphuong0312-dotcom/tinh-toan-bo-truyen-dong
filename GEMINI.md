@@ -725,3 +725,22 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 2. **Quy chuẩn tỷ lệ elip Gleason 60/50 & Sắc thái Prussian Blue**:
    - Vết tiếp xúc elip Gleason quy chuẩn tỷ lệ xưởng: Bán trục dài $a_{\text{len}} = 0.32$ (chiếm 64% bề rộng răng), bán trục ngắn $b_{\text{hgt}} = 0.22$ (chiếm ~50% chiều cao làm việc).
    - Shader mô phỏng sắc thái bột màu rà cơ khí Prussian Blue thực tế: Xanh cobalt đậm ở tâm tiếp xúc và xanh lam cerulean nhạt ở biên ngoài mỏng, tự động đảo sườn khi chuyển chiều quay.
+
+---
+
+### Quy Tắc 34: Quy Chuẩn Tính Toán Độ Bền Uốn Bánh Răng ISO 6336-3 / DIN 3990 & Phân Tích Hệ Số An Toàn Thực Tế $S_F$
+1. **Phạm vi áp dụng & Bản đồ công thức (Standalone Engineering Calculation)**:
+   - Áp dụng khi người dùng yêu cầu tính toán độ bền uốn chân răng ngoài phạm vi Web App hoặc phân tích kỹ thuật độc lập.
+   - Tuân thủ nghiêm ngặt phương pháp B của ISO 6336-3 và DIN 3990:
+     * Ứng suất uốn thực tế: $\sigma_F = \sigma_{F0} \cdot K_A \cdot K_v \cdot K_{F\beta} \cdot K_{F\alpha}$ với $\sigma_{F0} = \frac{F_t}{b \cdot m_n} \cdot Y_F \cdot Y_S \cdot Y_\beta \cdot Y_B$.
+     * Khả năng chịu uốn giới hạn của răng thực tế: $\sigma_{FG} = \sigma_{F\lim} \cdot Y_X \cdot Y_R \cdot Y_\delta \cdot Y_{NT} \cdot Y_A \cdot Y_T$.
+     * **Hệ số an toàn uốn**: $S_F = \frac{\sigma_{FG}}{\sigma_F} = \frac{\sigma_{FP} \cdot S_{F\min}}{\sigma_F}$.
+2. **Khắc phục sai lệch giữa điều kiện lý thuyết và thực tế công nghiệp nặng**:
+   - Với bộ truyền công nghiệp tải nặng ($P \ge 200\text{ kW}, n \le 15\text{ rpm}, T \ge 200\text{ kNm}, b \ge 400\text{ mm}$):
+     * Không sử dụng $K_A = 1.0$ (tải tĩnh lý thuyết) vì sẽ gây sai số dư bền ảo ($S_F > 2.5$). Bắt buộc phân tích dải $K_A = 1.25 \div 1.75$ tương ứng với tải va đập của máy công tác.
+     * Khi tỉ số $\frac{b}{d_1} > 1.5$, hệ số biến dạng trục $K_{F\beta}$ tăng từ $1.05$ lên $1.13 \div 1.38$.
+     * Vùng an toàn uốn chuẩn công nghiệp tối ưu: **$1.4 \le S_F \le 1.8$**.
+   - Đối chiếu chuẩn Việt Nam (TCVN / GOST): Giới hạn mỏi uốn tính theo độ cứng lõi phôi thép ($\sigma^0_{-1F} \approx 450 \div 500\text{ MPa}$), cho ra ứng suất uốn cho phép $[\sigma_F] \approx 250 \div 280\text{ MPa}$ và $S_F \approx 1.1 \div 1.3$.
+3. **Lưu trữ tri thức theo Golden Meta-Rule**:
+   - Toàn bộ quy trình tính toán, mã ô Excel MITCalc 1.74 và case study mẫu được lưu giữ độc lập trong `.agents/workflows/tinh_toan_do_ben_uon_banh_rang_iso6336.md` và `.agents/skills/mitcalc-webapp-engineering/SKILL.md`.
+

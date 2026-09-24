@@ -868,6 +868,22 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
    - Vết tiếp xúc elip Gleason quy chuẩn được căn đúng tỷ lệ xưởng máy: Bán trục dài $a_{\text{len}} = 0.32$ (chiếm 64% bề rộng răng), bán trục ngắn $b_{\text{hgt}} = 0.22$ (chiếm ~50% chiều cao làm việc).
    - Shader mô phỏng sắc thái bột màu rà cơ khí Prussian Blue thực tế: Xanh cobalt đậm ở tâm tiếp xúc và xanh lam cerulean nhạt ở biên ngoài mỏng, tự động đảo sườn khi chuyển chiều quay.
 
+### Quy Chuẩn 43: Quy Chuẩn Tính Toán Độ Bền Uốn Bánh Răng ISO 6336-3 / DIN 3990 & Xác Định Hệ Số An Toàn $S_F$ Thực Tế Chế Tạo Máy
+1. **Bản chất toán học và quan hệ đại số giữa các đại lượng uốn**:
+   - Ứng suất uốn danh nghĩa: $\sigma_{F0} = \frac{F_t}{b \cdot m_n} \cdot Y_F \cdot Y_S \cdot Y_\beta \cdot Y_B \cdot Y_{DT}$.
+   - Ứng suất uốn thực tế: $\sigma_F = \sigma_{F0} \cdot K_A \cdot K_v \cdot K_{F\beta} \cdot K_{F\alpha}$.
+   - Khả năng chịu uốn mỏi tối đa của răng thực tế: $\sigma_{FG} = \sigma_{F\lim} \cdot Y_X \cdot Y_R \cdot Y_\delta \cdot Y_{NT} \cdot Y_A \cdot Y_T$.
+   - **Hệ số an toàn uốn chân răng**: $S_F = \frac{\sigma_{FG}}{\sigma_F}$.
+2. **Khắc phục sai lệch giữa tính toán lý thuyết và thực tế công nghiệp**:
+   - Khi tính với $K_A = 1.0$ (tải tĩnh êm) và $K_{F\beta} = 1.05$ (lý thuyết), hệ số an toàn tính ra có thể lên đến $S_F > 2.5$ gây ảo giác "thừa bền".
+   - Với bộ truyền công nghiệp nặng ($P \ge 200\text{ kW}, n \le 15\text{ rpm}, T \ge 200\text{ kNm}, b \ge 400\text{ mm}$ như máy nghiền bi, lò quay, tang tời mỏ, máy cán):
+     * $K_A$ bắt buộc lấy từ $1.25 \div 1.75$ (va đập nhẹ đến va đập mạnh).
+     * Tỉ số $\frac{b}{d_1} > 1.5$ đòi hỏi phân tích biến dạng trục gối đỡ qua macro `KcoefKHbeta` trong MITCalc ($K_{F\beta} = 1.125 \div 1.375$).
+     * Giá trị $S_F$ thực tế công nghiệp đạt chuẩn tối ưu khi nằm trong khoảng **$1.4 \le S_F \le 1.8$**.
+   - Đối chiếu chuẩn Việt Nam (TCVN / GOST): Giới hạn mỏi uốn lấy theo độ cứng lõi răng ($\sigma^0_{-1F} \approx 450 \div 500\text{ MPa}$), $[\sigma_F] \approx 250 \div 280\text{ MPa}$, hệ số an toàn thực tế $S_F \approx 1.1 \div 1.3$.
+3. **Quy trình lưu trữ độc lập không can thiệp Web App**:
+   - Toàn bộ tri thức, công thức, mã ô Excel MITCalc 1.74 và bảng đối chiếu độ nhạy tải trọng được lưu trữ vĩnh viễn trong `.agents/workflows/tinh_toan_do_ben_uon_banh_rang_iso6336.md`.
+
 ---
 
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
