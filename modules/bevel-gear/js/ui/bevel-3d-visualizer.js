@@ -50,17 +50,17 @@ export class Bevel3DVisualizer {
         this.surf2Data = null;
         this.contactMarker = null;
         this.clipPlane = null;
-        this.meshDensityLevel = 1; // 8 Cấp Độ Mịn Lưới Thân Khai (1: Tiêu Chuẩn Mặc Định, 2-8: Tăng Dần)
+        this.meshDensityLevel = 6; // 8 Cấp Độ Mịn Lưới Thân Khai (Mặc định Cấp 6: Siêu Mịn CAM/CNC)
 
         // Tooth Contact Analysis (TCA) Dynamic Highlighting Engine
         this.tcaEnabled = false;
         this.tcaWidth = 4.0;
-        this.tcaColorMode = 0; // 0: Laser Ruby / Neon Flame, 1: Prussian Blue, 2: Thermal Heatmap
+        this.tcaColorMode = 1; // 0: Laser Ruby / Neon Flame, 1: Prussian Blue (Chuẩn xưởng), 2: Thermal Heatmap
         this.tcaPatternType = 1; // 0: Dynamic Real-time Rolling Locus, 1: Cumulative Gleason Rolled Pattern (Default)
         this.tcaUniforms = {
             uTcaEnabled: { value: 0.0 },
             uTcaWidth: { value: 4.0 },
-            uTcaColorMode: { value: 0.0 },
+            uTcaColorMode: { value: 1.0 },
             uTcaPatternType: { value: 1.0 },
             uCosD: { value: 0.928 },
             uSinD: { value: 0.371 },
@@ -587,7 +587,7 @@ export class Bevel3DVisualizer {
     }
 
     setMeshDensityLevel(level) {
-        this.meshDensityLevel = Math.max(1, Math.min(8, parseInt(level) || 1));
+        this.meshDensityLevel = Math.max(1, Math.min(8, parseInt(level) || 6));
         if (this.geom) {
             const curPinionAngle = this.pinionAngle;
             const curGearAngle = this.gearAngle;
@@ -867,8 +867,8 @@ export class Bevel3DVisualizer {
                             // =========================================================================
                             float u0 = 0.0;
                             float v0 = 0.0;
-                            float a_len = 0.28 * widthScale;
-                            float b_hgt = 0.28 * widthScale;
+                            float a_len = 0.32 * widthScale;
+                            float b_hgt = 0.22 * widthScale;
                             float du = (u - u0) / max(0.01, a_len);
                             float dv = (v - v0) / max(0.01, b_hgt);
                             float ellDist = sqrt(du * du + dv * dv);
@@ -912,9 +912,13 @@ export class Bevel3DVisualizer {
                             vec3 glowCol = vec3(1.0, 0.95, 0.4);
 
                             if (uTcaColorMode > 0.5 && uTcaColorMode < 1.5) {
-                                // Mode 1: Prussian Blue (Bột màu rà vết cơ khí)
-                                contactCol = mix(vec3(0.02, 0.25, 0.95), vec3(0.35, 0.85, 1.0), t);
-                                glowCol = vec3(0.7, 0.95, 1.0);
+                                // Mode 1: Prussian Blue (Bột màu rà vết cơ khí chuẩn xưởng công nghiệp)
+                                vec3 deepCobalt = vec3(0.01, 0.18, 0.85); // Xanh lam đậm đặc trưng vùng tâm
+                                vec3 cerulean = vec3(0.20, 0.70, 0.98);   // Xanh lam mỏng viền ngoài
+                                contactCol = mix(deepCobalt, cerulean, 1.0 - t);
+                                glowCol = vec3(0.15, 0.55, 0.95);
+                                gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.92);
+                                gl_FragColor.rgb += glowCol * pow(t, 2.5) * 0.45;
                             } else if (uTcaColorMode > 1.5) {
                                 // Mode 2: Thermal Heatmap (Bản đồ nhiệt áp lực)
                                 vec3 colA = vec3(0.08, 0.85, 0.22);
@@ -922,10 +926,13 @@ export class Bevel3DVisualizer {
                                 vec3 colC = vec3(1.0, 0.05, 0.15);
                                 contactCol = t < 0.5 ? mix(colA, colB, t * 2.0) : mix(colB, colC, (t - 0.5) * 2.0);
                                 glowCol = vec3(1.0, 1.0, 0.4);
+                                gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
+                                gl_FragColor.rgb += glowCol * pow(t, 2.0) * 0.85;
+                            } else {
+                                // Mode 0: Laser Ruby
+                                gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
+                                gl_FragColor.rgb += glowCol * pow(t, 2.0) * 0.85;
                             }
-
-                            gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
-                            gl_FragColor.rgb += glowCol * pow(t, 2.0) * 0.85;
                         }
                     }
                 }

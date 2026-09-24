@@ -1326,3 +1326,26 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
 * **Hình ảnh & Dữ liệu chứng thực**:
   - `bevel_both_gears_restored.png`: Ảnh chụp thực tế cả 2 bánh răng xuất hiện đầy đủ trong không gian 3D.
   - `bevel_both_gears_tca_prussian_blue.png`: Vết rà bột màu Prussian Blue hiển thị rõ nét trên cả bánh lớn và bánh nhỏ.
+---
+
+### [2026-09-24] NÂNG CẤP ĐỘ MỊN LƯỚI THÂN KHAI (HIGH MESH DENSITY PROTOCOL) & HOÀN THIỆN VẾT TIẾP XÚC TCA CHUẨN XƯỞNG GLEASON
+* **Yêu cầu trực tiếp từ người dùng**:
+  - *"Hiện tại tôi thấy vết tiếp xúc chưa tốt nhưng Tôi thấy khi độ mịn cao hơn thì vết tiếp xúc sẽ tốt hơn, bạn hay tăng cao độ mịn cho tôi"*.
+* **Phân tích kỹ thuật & Đột phá tối ưu**:
+  1. **Nguyên nhân vết tiếp xúc bị thô ở cấp độ cũ**:
+     - Trước đây, hệ thống đặt mặc định ở Cấp 1 (Tiêu Chuẩn Nhanh) với `pts = 6` và `slicesStraight = 5` (chỉ 5 lát cắt trên toàn bộ chiều rộng vành răng $b = 117\text{ mm}$, mỗi lát rộng tới $23.4\text{ mm}$).
+     - Do GPU nội suy tuyến tính tọa độ mặt sườn $(u, v)$ qua các tam giác quá lớn, vết tiếp xúc elip bị gãy khúc theo các mặt đa giác (faceting) và méo mó hình học.
+  2. **Nâng cấp toàn diện 8 cấp độ mịn (High Mesh Density Presets)**:
+     - Tăng vọt số điểm biên dạng sườn răng `pts`: Cấp 6 từ 16 lên 28; Cấp 8 từ 24 lên 40.
+     - Tăng số lát cắt dọc chiều rộng vành răng `slicesStraight`: Cấp 6 từ 10 lên 32 (gấp hơn 3 lần); Cấp 8 từ 14 lên 44 (gấp hơn 3 lần).
+     - Thiết lập **Cấp 6: Siêu Mịn Mức 6 (CAM/CNC)** làm mặc định khi tải trang (`this.meshDensityLevel = 6`, `<option value="6" selected>`).
+     - Số lượng tam giác tổng thể của cặp bánh răng tăng từ ~28,000 lên **315,126 tam giác** (Bánh dẫn 90,036; Bánh bị dẫn 225,090).
+     - Ở **Cấp 8 (Tuyệt Đối - Ultra Precision CAD)**: Đạt tới **567,630 tam giác** (Bánh dẫn 162,180; Bánh bị dẫn 405,450), độ mịn đạt mức sub-millimeter.
+  3. **Hoàn thiện Shader vết tiếp xúc Prussian Blue chuẩn xưởng Gleason**:
+     - Căn chỉnh tỷ lệ hình học elip Gleason chuẩn 60/50: $a_{\text{len}} = 0.32$, $b_{\text{hgt}} = 0.22$.
+     - Phối màu bột màu rà cơ khí chuẩn: Vùng tâm áp lực cao xanh cobalt đậm `vec3(0.01, 0.18, 0.85)`, viền mỏng xanh lam nhạt `vec3(0.20, 0.70, 0.98)` với ánh mờ tinh tế, triệt tiêu ánh chói bóng đèn neon.
+     - Tự động đồng bộ chuẩn màu Prussian Blue khi bật tính năng vết tiếp xúc.
+* **Kết quả đo đạc & Kiểm thử tự động**:
+  - `tests/test_bidirectional_rotation.py`: **100% PASS** (Cả 2D & 3D cho cả Bevel Gear và Spur Gear, 0 lỗi console).
+  - `modules/bevel-gear/tests/deep_line_by_line_bevel_audit.py`: **115/115 ô tính PASS 100.0% ($\Delta = 0.000000$)**.
+  - Đóng gói Classic Bundle hoàn tất: `bevel-engine.bundle.js` và `mitcalc-engine.bundle.js` cập nhật mới nhất.

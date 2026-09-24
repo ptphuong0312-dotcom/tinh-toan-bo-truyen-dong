@@ -462,8 +462,14 @@ class BevelGearUI {
                     btnToggleContactTCA.style.color = '#ffffff';
                     btnToggleContactTCA.style.borderColor = '#be123c';
                     btnToggleContactTCA.innerHTML = '🔴 Đang Hiện Vết';
-                    if (selTCAPatternType) selTCAPatternType.style.display = 'inline-block';
-                    if (selTCAColorMode) selTCAColorMode.style.display = 'inline-block';
+                    if (selTCAPatternType) {
+                        selTCAPatternType.style.display = 'inline-block';
+                        this.visualizer3D.setTCAPatternType(selTCAPatternType.value);
+                    }
+                    if (selTCAColorMode) {
+                        selTCAColorMode.style.display = 'inline-block';
+                        this.visualizer3D.setTCAColorMode(selTCAColorMode.value);
+                    }
                     if (tcaBandControl) tcaBandControl.style.display = 'inline-flex';
                     let tcaBadge = document.getElementById('badgeTCAStatus');
                     if (!tcaBadge && badge3DInfo) {
@@ -507,11 +513,13 @@ class BevelGearUI {
             });
         }
 
-        // 8 Cấp Độ Mịn Lưới Thân Khai (Cấp 1: Tiêu chuẩn mặc định, Cấp 2-8: 7 Mức mịn tăng dần)
+        // 8 Cấp Độ Mịn Lưới Thân Khai (Cấp 1-8, mặc định Cấp 6: Siêu Mịn CAM/CNC)
         const selMeshDensity = document.getElementById('selMeshDensity');
         if (selMeshDensity && this.visualizer3D) {
+            const initDensity = parseInt(selMeshDensity.value) || 6;
+            this.visualizer3D.setMeshDensityLevel(initDensity);
             selMeshDensity.addEventListener('change', (e) => {
-                const level = parseInt(e.target.value) || 1;
+                const level = parseInt(e.target.value) || 6;
                 this.visualizer3D.setMeshDensityLevel(level);
             });
         }

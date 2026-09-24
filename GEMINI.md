@@ -713,3 +713,15 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * Cả hai mesh đặc (`pinionMesh` và `gearMesh`) đều tồn tại, cờ `visible: true`.
      * Cả hai nhóm (`pinionGroup` và `gearGroup`) đều chứa đủ các thành phần con (`children.length >= 2`).
      * Vết rà bột màu Prussian Blue hiển thị rõ nét trên cả hai bánh răng, đảo sườn tiếp xúc chính xác khi đổi chiều quay và có thể quan sát từ mọi hướng 360°.
+
+### Quy Tắc 33: Quy Chuẩn Độ Mịn Lưới Thân Khai Cao (High Mesh Density Protocol) & Vết Tiếp Xúc Ăn Khớp Elip Gleason Chuẩn Xưởng
+1. **Kiến trúc phân bổ lưới độ mịn cao (Mesh Density Presets)**:
+   - Triệt tiêu hoàn toàn hiện tượng đa giác hóa và gãy khúc vết tiếp xúc do nội suy tuyến tính GPU trên các tam giác lớn.
+   - Nâng cấp số điểm biên dạng sườn `pts` và số lát cắt dọc vành răng `slicesStraight`:
+     * Cấp 1 (Nhanh): `pts: 10, slices: 12-14`.
+     * **Cấp 6 (Mặc định khi mở trang - Chuẩn CAM/CNC)**: `pts: 28, slices: 32-36` (~315,126 tam giác, hoạt họa 60 FPS mượt mà).
+     * **Cấp 8 (Tuyệt Đối - Ultra Precision CAD)**: `pts: 40, slices: 44-48` (~567,630 tam giác, độ mịn sub-millimeter).
+   - Thiết lập mặc định tự động kích hoạt Cấp 6 khi tải ứng dụng để người dùng có ngay trải nghiệm hình ảnh sắc nét và vết tiếp xúc mịn đẹp.
+2. **Quy chuẩn tỷ lệ elip Gleason 60/50 & Sắc thái Prussian Blue**:
+   - Vết tiếp xúc elip Gleason quy chuẩn tỷ lệ xưởng: Bán trục dài $a_{\text{len}} = 0.32$ (chiếm 64% bề rộng răng), bán trục ngắn $b_{\text{hgt}} = 0.22$ (chiếm ~50% chiều cao làm việc).
+   - Shader mô phỏng sắc thái bột màu rà cơ khí Prussian Blue thực tế: Xanh cobalt đậm ở tâm tiếp xúc và xanh lam cerulean nhạt ở biên ngoài mỏng, tự động đảo sườn khi chuyển chiều quay.

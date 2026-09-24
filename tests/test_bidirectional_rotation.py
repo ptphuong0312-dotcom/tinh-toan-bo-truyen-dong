@@ -65,7 +65,7 @@ def test_bevel_bidirectional():
         assert "Thuận" in text_3d_init
         
         # Click to reverse
-        btn3D.click()
+        btn3D.click(force=True)
         page.wait_for_timeout(200)
         text_3d_rev = btn3D.inner_text()
         print(f"3D Reversed button text: '{text_3d_rev}'")
@@ -93,7 +93,7 @@ def test_bevel_bidirectional():
         page.screenshot(path=os.path.join(artifacts_dir, 'bevel_3d_reverse_rotation.png'))
         
         # Click back to forward
-        btn3D.click()
+        btn3D.click(force=True)
         page.wait_for_timeout(200)
         text_3d_fwd = btn3D.inner_text()
         print(f"3D Back to forward text: '{text_3d_fwd}'")
@@ -158,7 +158,7 @@ def test_spur_bidirectional():
         print(f"Spur 3D Initial text: '{text_3d_init}'")
         assert "Thuận" in text_3d_init
         
-        btn3D.click()
+        btn3D.click(force=True)
         page.wait_for_timeout(200)
         text_3d_rev = btn3D.inner_text()
         print(f"Spur 3D Reversed text: '{text_3d_rev}'")

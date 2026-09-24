@@ -856,6 +856,20 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 42: Quy Chuẩn Độ Mịn Lưới Thân Khai Cao (High Mesh Density Protocol) & Vết Tiếp Xúc Ăn Khớp Elip Gleason Chuẩn Xưởng
+1. **Kiến trúc phân cấp 8 mức độ mịn tối ưu hóa thực tế**:
+   - Để triệt tiêu hoàn toàn hiện tượng gãy góc và méo mó hình học do nội suy tuyến tính GPU trên các tam giác lớn, hệ thống phân bổ số điểm biên dạng sườn `pts` và số lát cắt vành răng `slices` vượt bậc:
+     * Cấp 1 (Nhanh): `pts: 10, slicesStraight: 12, slicesSpiral: 14`.
+     * Cấp 4 (Cân bằng): `pts: 20, slicesStraight: 24, slicesSpiral: 26`.
+     * **Cấp 6 (Mặc định - CAM/CNC)**: `pts: 28, slicesStraight: 32, slicesSpiral: 36` (Tổng cộng ~315,126 tam giác, mượt mà 60 FPS).
+     * **Cấp 8 (Tuyệt Đối - Ultra Precision CAD)**: `pts: 40, slicesStraight: 44, slicesSpiral: 48` (Tổng cộng ~567,630 tam giác, độ mịn sub-millimeter).
+   - Thiết lập mặc định khi khởi động ứng dụng là **Cấp 6**, đảm bảo người dùng vừa mở mô hình là có ngay độ nét cao và vết tiếp xúc mịn đẹp mà không cần thao tác thủ công.
+2. **Hình học vết tiếp xúc Gleason 60/50 & Bột màu rà Prussian Blue**:
+   - Vết tiếp xúc elip Gleason quy chuẩn được căn đúng tỷ lệ xưởng máy: Bán trục dài $a_{\text{len}} = 0.32$ (chiếm 64% bề rộng răng), bán trục ngắn $b_{\text{hgt}} = 0.22$ (chiếm ~50% chiều cao làm việc).
+   - Shader mô phỏng sắc thái bột màu rà cơ khí Prussian Blue thực tế: Xanh cobalt đậm ở tâm tiếp xúc và xanh lam cerulean nhạt ở biên ngoài mỏng, tự động đảo sườn khi chuyển chiều quay.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

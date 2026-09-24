@@ -76,24 +76,24 @@ export const Bevel3DGenerator = {
         const z_heel_hub = Re * cosD + (hf_e + Hout) * sinD;
         const r_heel_rim = Math.max(rBore + 5.0, Re * sinD - (hf_e + Hout) * cosD);
 
-        // 8 Cấp Độ Mịn Lưới Thân Khai (Cấp 1: Tiêu Chuẩn Hiện Tại Mặc Định, Cấp 2-8: 7 Mức Tăng Dần)
+        // 8 Cấp Độ Mịn Lưới Thân Khai (Tối ưu hóa độ mịn cao & hiệu năng 60 FPS mượt mà)
         const densityPresets = {
-            1: { pts: 6,  slicesSpiral: 10, slicesStraight: 5 },  // Cấp 1: Tiêu chuẩn mặc định (siêu nhẹ)
-            2: { pts: 8,  slicesSpiral: 12, slicesStraight: 6 },  // Cấp 2: Mịn mức 2
-            3: { pts: 10, slicesSpiral: 14, slicesStraight: 7 },  // Cấp 3: Mịn mức 3
-            4: { pts: 12, slicesSpiral: 16, slicesStraight: 8 },  // Cấp 4: Mịn mức 4 (Cân bằng)
-            5: { pts: 14, slicesSpiral: 18, slicesStraight: 9 },  // Cấp 5: Rất mịn mức 5
-            6: { pts: 16, slicesSpiral: 20, slicesStraight: 10 }, // Cấp 6: Siêu mịn mức 6 (Chuẩn CAM/CNC)
-            7: { pts: 20, slicesSpiral: 24, slicesStraight: 12 }, // Cấp 7: Cực mịn mức 7 (Độ nét cao)
-            8: { pts: 24, slicesSpiral: 28, slicesStraight: 14 }  // Cấp 8: Tuyệt đối mức 8 (Ultra CAD)
+            1: { pts: 10, slicesSpiral: 14, slicesStraight: 12 }, // Cấp 1: Tiêu Chuẩn Nhanh
+            2: { pts: 12, slicesSpiral: 18, slicesStraight: 16 }, // Cấp 2: Mịn Mức 2
+            3: { pts: 16, slicesSpiral: 22, slicesStraight: 20 }, // Cấp 3: Mịn Mức 3
+            4: { pts: 20, slicesSpiral: 26, slicesStraight: 24 }, // Cấp 4: Mịn Mức 4 (Cân Bằng)
+            5: { pts: 24, slicesSpiral: 30, slicesStraight: 28 }, // Cấp 5: Rất Mịn Mức 5
+            6: { pts: 28, slicesSpiral: 36, slicesStraight: 32 }, // Cấp 6: Siêu Mịn Mức 6 (CAM/CNC) [Mặc Định Cao]
+            7: { pts: 34, slicesSpiral: 42, slicesStraight: 38 }, // Cấp 7: Cực Mịn Mức 7 (Độ Nét Cao)
+            8: { pts: 40, slicesSpiral: 48, slicesStraight: 44 }  // Cấp 8: Tuyệt Đối Mức 8 (Ultra Precision CAD)
         };
 
-        const dLevel = Math.max(1, Math.min(8, parseInt(opt.meshDensityLevel) || 1));
-        const preset = densityPresets[dLevel] || densityPresets[1];
+        const dLevel = Math.max(1, Math.min(8, parseInt(opt.meshDensityLevel) || 6));
+        const preset = densityPresets[dLevel] || densityPresets[6];
 
         const defaultSlices = isSpiral ? preset.slicesSpiral : preset.slicesStraight;
-        const numSlices = opt.numSlices !== undefined ? Math.max(4, Math.min(36, parseInt(opt.numSlices))) : defaultSlices;
-        const ptsPerFlank = opt.ptsPerFlank !== undefined ? Math.max(4, Math.min(32, parseInt(opt.ptsPerFlank))) : preset.pts;
+        const numSlices = opt.numSlices !== undefined ? Math.max(4, Math.min(64, parseInt(opt.numSlices))) : defaultSlices;
+        const ptsPerFlank = opt.ptsPerFlank !== undefined ? Math.max(4, Math.min(50, parseInt(opt.ptsPerFlank))) : preset.pts;
         const R_tool = 1.5 * b; // MITCalc Section 16.4 cutter radius
 
         // 1. Generate tooth rings for all slices along face width b (Re -> Ri)

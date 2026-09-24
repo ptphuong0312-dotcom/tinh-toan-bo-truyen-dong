@@ -1771,14 +1771,14 @@
                         <div style="display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);" title="Cấp độ mịn lưới 3D (Cấp 1: Tiêu chuẩn mặc định, Cấp 2-8: Độ mịn tăng dần)">
                             <label for="selMeshDensity" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">💎 Độ mịn:</label>
                             <select id="selMeshDensity" class="calc-select" style="padding: 4px 8px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #10b981; border: 1.5px solid #059669; cursor: pointer;">
-                                <option value="1" selected>Cấp 1: Tiêu Chuẩn (Mặc định)</option>
+                                <option value="1">Cấp 1: Tiêu Chuẩn Nhanh</option>
                                 <option value="2">Cấp 2: Mịn Mức 2</option>
                                 <option value="3">Cấp 3: Mịn Mức 3</option>
                                 <option value="4">Cấp 4: Mịn Mức 4 (Cân Bằng)</option>
                                 <option value="5">Cấp 5: Rất Mịn Mức 5</option>
-                                <option value="6">Cấp 6: Siêu Mịn Mức 6 (CAM/CNC)</option>
+                                <option value="6" selected>Cấp 6: Siêu Mịn Mức 6 (CAM/CNC) [Mặc định cao]</option>
                                 <option value="7">Cấp 7: Cực Mịn Mức 7 (Độ Nét Cao)</option>
-                                <option value="8">Cấp 8: Tuyệt Đối Mức 8 (Ultra CAD)</option>
+                                <option value="8">Cấp 8: Tuyệt Đối Mức 8 (Ultra Precision 8K CAD)</option>
                             </select>
                         </div>
 
@@ -1796,9 +1796,9 @@
                                 <option value="1" selected>🎯 Vết Elip Chuẩn Gleason (Rolled Pattern)</option>
                                 <option value="0">⚡ Tiếp Xúc Động Lăn (Rolling Locus)</option>
                             </select>
-                            <select id="selTCAColorMode" class="calc-select" style="display: none; padding: 4px 8px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #f43f5e; border: 1.5px solid #e11d48; cursor: pointer;" title="Chế độ màu sắc vệt tiếp xúc">
+                            <select id="selTCAColorMode" class="calc-select" style="display: none; padding: 4px 8px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #38bdf8; border: 1.5px solid #0284c7; cursor: pointer;" title="Chế độ màu sắc vệt tiếp xúc">
                                 <option value="0">🔴 Laser Ruby (Đỏ Rực)</option>
-                                <option value="1">🔵 Prussian Blue (Bột Màu)</option>
+                                <option value="1" selected>🔵 Prussian Blue (Bột Màu)</option>
                                 <option value="2">🌈 Thermal Heatmap (Bản Đồ Nhiệt)</option>
                             </select>
                             <div id="tcaBandControl" style="display: none; align-items: center; gap: 0.35rem; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);" title="Độ rộng dải tiếp xúc (0.5 - 15.0 mm)">

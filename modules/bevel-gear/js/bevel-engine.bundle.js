@@ -2793,24 +2793,24 @@ const Bevel3DGenerator = {
         const z_heel_hub = Re * cosD + (hf_e + Hout) * sinD;
         const r_heel_rim = Math.max(rBore + 5.0, Re * sinD - (hf_e + Hout) * cosD);
 
-        // 8 Cấp Độ Mịn Lưới Thân Khai (Cấp 1: Tiêu Chuẩn Hiện Tại Mặc Định, Cấp 2-8: 7 Mức Tăng Dần)
+        // 8 Cấp Độ Mịn Lưới Thân Khai (Tối ưu hóa độ mịn cao & hiệu năng 60 FPS mượt mà)
         const densityPresets = {
-            1: { pts: 6,  slicesSpiral: 10, slicesStraight: 5 },  // Cấp 1: Tiêu chuẩn mặc định (siêu nhẹ)
-            2: { pts: 8,  slicesSpiral: 12, slicesStraight: 6 },  // Cấp 2: Mịn mức 2
-            3: { pts: 10, slicesSpiral: 14, slicesStraight: 7 },  // Cấp 3: Mịn mức 3
-            4: { pts: 12, slicesSpiral: 16, slicesStraight: 8 },  // Cấp 4: Mịn mức 4 (Cân bằng)
-            5: { pts: 14, slicesSpiral: 18, slicesStraight: 9 },  // Cấp 5: Rất mịn mức 5
-            6: { pts: 16, slicesSpiral: 20, slicesStraight: 10 }, // Cấp 6: Siêu mịn mức 6 (Chuẩn CAM/CNC)
-            7: { pts: 20, slicesSpiral: 24, slicesStraight: 12 }, // Cấp 7: Cực mịn mức 7 (Độ nét cao)
-            8: { pts: 24, slicesSpiral: 28, slicesStraight: 14 }  // Cấp 8: Tuyệt đối mức 8 (Ultra CAD)
+            1: { pts: 10, slicesSpiral: 14, slicesStraight: 12 }, // Cấp 1: Tiêu Chuẩn Nhanh
+            2: { pts: 12, slicesSpiral: 18, slicesStraight: 16 }, // Cấp 2: Mịn Mức 2
+            3: { pts: 16, slicesSpiral: 22, slicesStraight: 20 }, // Cấp 3: Mịn Mức 3
+            4: { pts: 20, slicesSpiral: 26, slicesStraight: 24 }, // Cấp 4: Mịn Mức 4 (Cân Bằng)
+            5: { pts: 24, slicesSpiral: 30, slicesStraight: 28 }, // Cấp 5: Rất Mịn Mức 5
+            6: { pts: 28, slicesSpiral: 36, slicesStraight: 32 }, // Cấp 6: Siêu Mịn Mức 6 (CAM/CNC) [Mặc Định Cao]
+            7: { pts: 34, slicesSpiral: 42, slicesStraight: 38 }, // Cấp 7: Cực Mịn Mức 7 (Độ Nét Cao)
+            8: { pts: 40, slicesSpiral: 48, slicesStraight: 44 }  // Cấp 8: Tuyệt Đối Mức 8 (Ultra Precision CAD)
         };
 
-        const dLevel = Math.max(1, Math.min(8, parseInt(opt.meshDensityLevel) || 1));
-        const preset = densityPresets[dLevel] || densityPresets[1];
+        const dLevel = Math.max(1, Math.min(8, parseInt(opt.meshDensityLevel) || 6));
+        const preset = densityPresets[dLevel] || densityPresets[6];
 
         const defaultSlices = isSpiral ? preset.slicesSpiral : preset.slicesStraight;
-        const numSlices = opt.numSlices !== undefined ? Math.max(4, Math.min(36, parseInt(opt.numSlices))) : defaultSlices;
-        const ptsPerFlank = opt.ptsPerFlank !== undefined ? Math.max(4, Math.min(32, parseInt(opt.ptsPerFlank))) : preset.pts;
+        const numSlices = opt.numSlices !== undefined ? Math.max(4, Math.min(64, parseInt(opt.numSlices))) : defaultSlices;
+        const ptsPerFlank = opt.ptsPerFlank !== undefined ? Math.max(4, Math.min(50, parseInt(opt.ptsPerFlank))) : preset.pts;
         const R_tool = 1.5 * b; // MITCalc Section 16.4 cutter radius
 
         // 1. Generate tooth rings for all slices along face width b (Re -> Ri)
@@ -3463,17 +3463,17 @@ class Bevel3DVisualizer {
         this.surf2Data = null;
         this.contactMarker = null;
         this.clipPlane = null;
-        this.meshDensityLevel = 1; // 8 Cấp Độ Mịn Lưới Thân Khai (1: Tiêu Chuẩn Mặc Định, 2-8: Tăng Dần)
+        this.meshDensityLevel = 6; // 8 Cấp Độ Mịn Lưới Thân Khai (Mặc định Cấp 6: Siêu Mịn CAM/CNC)
 
         // Tooth Contact Analysis (TCA) Dynamic Highlighting Engine
         this.tcaEnabled = false;
         this.tcaWidth = 4.0;
-        this.tcaColorMode = 0; // 0: Laser Ruby / Neon Flame, 1: Prussian Blue, 2: Thermal Heatmap
+        this.tcaColorMode = 1; // 0: Laser Ruby / Neon Flame, 1: Prussian Blue (Chuẩn xưởng), 2: Thermal Heatmap
         this.tcaPatternType = 1; // 0: Dynamic Real-time Rolling Locus, 1: Cumulative Gleason Rolled Pattern (Default)
         this.tcaUniforms = {
             uTcaEnabled: { value: 0.0 },
             uTcaWidth: { value: 4.0 },
-            uTcaColorMode: { value: 0.0 },
+            uTcaColorMode: { value: 1.0 },
             uTcaPatternType: { value: 1.0 },
             uCosD: { value: 0.928 },
             uSinD: { value: 0.371 },
@@ -4000,7 +4000,7 @@ class Bevel3DVisualizer {
     }
 
     setMeshDensityLevel(level) {
-        this.meshDensityLevel = Math.max(1, Math.min(8, parseInt(level) || 1));
+        this.meshDensityLevel = Math.max(1, Math.min(8, parseInt(level) || 6));
         if (this.geom) {
             const curPinionAngle = this.pinionAngle;
             const curGearAngle = this.gearAngle;
@@ -4280,8 +4280,8 @@ class Bevel3DVisualizer {
                             // =========================================================================
                             float u0 = 0.0;
                             float v0 = 0.0;
-                            float a_len = 0.28 * widthScale;
-                            float b_hgt = 0.28 * widthScale;
+                            float a_len = 0.32 * widthScale;
+                            float b_hgt = 0.22 * widthScale;
                             float du = (u - u0) / max(0.01, a_len);
                             float dv = (v - v0) / max(0.01, b_hgt);
                             float ellDist = sqrt(du * du + dv * dv);
@@ -4325,9 +4325,13 @@ class Bevel3DVisualizer {
                             vec3 glowCol = vec3(1.0, 0.95, 0.4);
 
                             if (uTcaColorMode > 0.5 && uTcaColorMode < 1.5) {
-                                // Mode 1: Prussian Blue (Bột màu rà vết cơ khí)
-                                contactCol = mix(vec3(0.02, 0.25, 0.95), vec3(0.35, 0.85, 1.0), t);
-                                glowCol = vec3(0.7, 0.95, 1.0);
+                                // Mode 1: Prussian Blue (Bột màu rà vết cơ khí chuẩn xưởng công nghiệp)
+                                vec3 deepCobalt = vec3(0.01, 0.18, 0.85); // Xanh lam đậm đặc trưng vùng tâm
+                                vec3 cerulean = vec3(0.20, 0.70, 0.98);   // Xanh lam mỏng viền ngoài
+                                contactCol = mix(deepCobalt, cerulean, 1.0 - t);
+                                glowCol = vec3(0.15, 0.55, 0.95);
+                                gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.92);
+                                gl_FragColor.rgb += glowCol * pow(t, 2.5) * 0.45;
                             } else if (uTcaColorMode > 1.5) {
                                 // Mode 2: Thermal Heatmap (Bản đồ nhiệt áp lực)
                                 vec3 colA = vec3(0.08, 0.85, 0.22);
@@ -4335,10 +4339,13 @@ class Bevel3DVisualizer {
                                 vec3 colC = vec3(1.0, 0.05, 0.15);
                                 contactCol = t < 0.5 ? mix(colA, colB, t * 2.0) : mix(colB, colC, (t - 0.5) * 2.0);
                                 glowCol = vec3(1.0, 1.0, 0.4);
+                                gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
+                                gl_FragColor.rgb += glowCol * pow(t, 2.0) * 0.85;
+                            } else {
+                                // Mode 0: Laser Ruby
+                                gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
+                                gl_FragColor.rgb += glowCol * pow(t, 2.0) * 0.85;
                             }
-
-                            gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
-                            gl_FragColor.rgb += glowCol * pow(t, 2.0) * 0.85;
                         }
                     }
                 }
@@ -5325,8 +5332,14 @@ class BevelGearUI {
                     btnToggleContactTCA.style.color = '#ffffff';
                     btnToggleContactTCA.style.borderColor = '#be123c';
                     btnToggleContactTCA.innerHTML = '🔴 Đang Hiện Vết';
-                    if (selTCAPatternType) selTCAPatternType.style.display = 'inline-block';
-                    if (selTCAColorMode) selTCAColorMode.style.display = 'inline-block';
+                    if (selTCAPatternType) {
+                        selTCAPatternType.style.display = 'inline-block';
+                        this.visualizer3D.setTCAPatternType(selTCAPatternType.value);
+                    }
+                    if (selTCAColorMode) {
+                        selTCAColorMode.style.display = 'inline-block';
+                        this.visualizer3D.setTCAColorMode(selTCAColorMode.value);
+                    }
                     if (tcaBandControl) tcaBandControl.style.display = 'inline-flex';
                     let tcaBadge = document.getElementById('badgeTCAStatus');
                     if (!tcaBadge && badge3DInfo) {
@@ -5370,11 +5383,13 @@ class BevelGearUI {
             });
         }
 
-        // 8 Cấp Độ Mịn Lưới Thân Khai (Cấp 1: Tiêu chuẩn mặc định, Cấp 2-8: 7 Mức mịn tăng dần)
+        // 8 Cấp Độ Mịn Lưới Thân Khai (Cấp 1-8, mặc định Cấp 6: Siêu Mịn CAM/CNC)
         const selMeshDensity = document.getElementById('selMeshDensity');
         if (selMeshDensity && this.visualizer3D) {
+            const initDensity = parseInt(selMeshDensity.value) || 6;
+            this.visualizer3D.setMeshDensityLevel(initDensity);
             selMeshDensity.addEventListener('change', (e) => {
-                const level = parseInt(e.target.value) || 1;
+                const level = parseInt(e.target.value) || 6;
                 this.visualizer3D.setMeshDensityLevel(level);
             });
         }
