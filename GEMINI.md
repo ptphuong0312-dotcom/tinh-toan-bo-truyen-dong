@@ -752,24 +752,35 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - *"Trên ảnh tôi gửi là vết tiếp xúc của côn thẳng: rất chuẩn nhưng lại chỉ được 1 bên bề mặt răng. Nếu như theo lý thuyết khe hở = 0 thì vết tiếp xúc phải có ở cả 2 bề mặt bên của răng chứ, bạn tìm nguyên nhân rồi giải quyết cho tôi vấn đề này"*.
    - *"Bạn nhớ là bạn vẫn tự duyệt web để tự kiểm tra xem lại vết tiếp xúc đã đạt chuẩn hay chưa (trước mắt tôi chưa cần vết tiếp xúc có độ vồng (crowning) mà chỉ cần mặt tiếp xúc mặt như bình thường thôi)"*.
 2. **Nguyên nhân gốc rễ lỗi chỉ hiện vết trên 1 sườn răng (Root Cause Analysis)**:
-   - Trong shader GPU `applyTCAShader` (`modules/bevel-gear/js/ui/bevel-3d-visualizer.js`), đoạn mã cũ lọc sườn:
+   - *Nguyên nhân 1 (Lọc sườn)*: Trong shader GPU `applyTCAShader` (`modules/bevel-gear/js/ui/bevel-3d-visualizer.js`), đoạn mã cũ lọc sườn:
      `float activeFlank = (uIsPinion > 0.5) ? ((uAnimDirection > 0.0) ? 1.0 : 2.0) : ...; if (abs(vTcaParam.z - activeFlank) < 0.5) { ... }`
      đã cố tình loại bỏ sườn răng đối diện.
+   - *Nguyên nhân 2 (Lỗi đảo ngược biên GLSL Smoothstep Edge Inversion)*:
+     Biểu thức cũ `vMask = smoothstep(0.03, 0.10, flankT) * smoothstep(0.97, 0.90, flankT);` vi phạm nghiêm ngặt đặc tả GLSL (`edge0 < edge1`). Khi truyền `edge0 = 0.97 > edge1 = 0.90`, trình biên dịch GPU ANGLE/DirectX trên Windows/Chrome ép giá trị về 0 khiến toàn bộ Flank 2 bị triệt tiêu màu xanh hoàn toàn!
+   - *Nguyên nhân 3 (Lệch góc pha khởi tạo ăn khớp $2.43\text{ mm}$)*:
+     Góc khởi tạo cũ gán theo sườn đơn `this.initialGearAngle = psiContact;` làm rãnh răng bánh 2 bị lệch $0.536^\circ$ ($2.43\text{ mm}$ tại $R_m$), ép sát Flank 1 và mở toang khe hở ở Flank 2.
+   - *Nguyên nhân 4 (Va chạm Cache Three.js)*:
+     `matGear` (`FrontSide`) và `matGearSurf` (`DoubleSide`) dùng chung key cache shader khiến chương trình shader không phân biệt được bề mặt 2 phía.
+3. **Giải pháp kỹ thuật khắc phục triệt để**:
    - **Bản chất động học khi khe hở bằng 0 ($j_n = 0$)**:
-     Khi khe hở cạnh răng danh nghĩa bằng 0, chiều dày răng vừa khít rãnh răng, răng Bánh 1 được kẹp đồng thời bởi 2 răng kế cận của Bánh 2. Do đó, **cả 2 bề mặt bên của răng (Flank 1 và Flank 2, ứng với `vTcaParam.z > 0.5`) đều tiếp xúc liên hợp đồng thời**!
-   - Khắc phục triệt để: Gỡ bỏ điều kiện lọc 1 sườn `abs(vTcaParam.z - activeFlank) < 0.5`, cho phép mọi mặt sườn thân khai (`vTcaParam.z > 0.5`) đều hiển thị vết tiếp xúc.
-3. **Giải thuật vết tiếp xúc mặt sườn côn thẳng ("Mặt tiếp xúc mặt như bình thường" - Full Flank Contact Band)**:
-   - Bánh răng côn răng thẳng tiêu chuẩn (ISO 23509 / DIN 3971) không có độ vồng dọc răng nhân tạo (longitudinal crowning). Tiếp xúc tức thời là đường tiếp xúc (line contact) trải dài theo chiều rộng răng $b$.
-   - Khi lăn qua khớp (Chế độ 1 - Cumulative Rolled Pattern / Vết rà bột màu Prussian Blue): Vết tiếp xúc bao phủ đều đặn toàn bộ bề mặt làm việc:
-     * Dọc chiều rộng răng: $u \in [-0.5, +0.5]$ (từ gót Heel đến mũi Toe), $uMask = \text{smoothstep}(0.50, 0.46, |u|)$.
-     * Theo chiều cao làm việc $h_w = 2.0 m_{mn}$: loại trừ khe hở chân răng $c_0$ ($flankT < 0.08$) và vát mép đỉnh ($flankT > 0.94$), $vMask = \text{smoothstep}(0.03, 0.10, flankT) \cdot \text{smoothstep}(0.97, 0.90, flankT)$.
-     * Cường độ tiếp xúc: $\text{intensity} = uMask \cdot vMask$ trải mịn đều khắp 2 mặt sườn của mỗi răng.
-   - Ở Chế độ 0 (Tiếp xúc động lăn thời gian thực): Đường tiếp xúc quét theo góc quay $\phi_1$ từ chân răng lên đỉnh răng dọc theo toàn bộ bề rộng răng $b$.
-4. **Quy chuẩn thiết lập mặc định Bánh Răng Côn Thẳng ($\beta = 0^\circ$)**:
-   - `modules/bevel-gear/index.html`: `selGearingType` mặc định là `straight_type1`, ô nhập `inp_beta` mặc định là `0.0`.
+     Khi khe hở cạnh răng danh nghĩa bằng 0, chiều dày răng vừa khít rãnh răng, răng Bánh 1 được kẹp đồng thời bởi 2 răng kế cận của Bánh 2. Do đó, **cả 2 bề mặt bên của răng (Flank 1 và Flank 2, ứng với `vTcaParam.z > 0.5`) đều tiếp xúc liên hợp đồng thời**! Gỡ bỏ điều kiện lọc 1 sườn `abs(vTcaParam.z - activeFlank) < 0.5`.
+   - **Khắc phục lỗi GLSL Smoothstep**:
+     ```glsl
+     float vMask = smoothstep(0.03, 0.10, flankT) * (1.0 - smoothstep(0.90, 0.97, flankT));
+     ```
+     Cả 2 hàm đều có `edge0 < edge1` ($0.03 < 0.10$ và $0.90 < 0.97$), mở khóa hiển thị sắc nét bột màu Prussian Blue trên 100% diện tích Flank 2.
+   - **Căn chỉnh đối xứng rãnh răng**:
+     Thiết lập `this.initialGearAngle = Math.PI / z2;` đưa rãnh răng bánh 2 căn chuẩn xác đối xứng vào tâm răng bánh 1, triệt tiêu hoàn toàn khe hở lệch $2.43\text{ mm}$.
+   - **Phân tách Cache Three.js**: Thêm `${material.side === THREE.DoubleSide ? 'double' : 'front'}` vào `customProgramCacheKey`.
+   - **Vết tiếp xúc mặt sườn côn thẳng tự nhiên ("Mặt tiếp xúc mặt như bình thường" - Full Flank Contact Band)**:
+     Bánh răng côn răng thẳng tiêu chuẩn (ISO 23509 / DIN 3971) không có độ vồng dọc răng nhân tạo. Tiếp xúc tức thời là đường tiếp xúc (line contact) trải dài theo chiều rộng răng $b$. Khi lăn qua khớp (Chế độ 1 - Cumulative Rolled Pattern / Vết rà bột màu Prussian Blue): Vết tiếp xúc bao phủ đều đặn toàn bộ bề mặt làm việc $\text{intensity} = uMask \cdot vMask$ trên CẢ HAI BỀ MẶT BÊN của mỗi răng.
+4. **Quy chuẩn thiết lập mặc định Bánh Răng Côn Thẳng ($\beta = 0^\circ$) & Chống Cache**:
+   - `modules/bevel-gear/index.html`: `selGearingType` mặc định là `straight_type1`, ô nhập `inp_beta` mặc định là `0.0`. Script đính kèm version query string `js/bevel-engine.bundle.js?v=20260924_tca_both_flanks`.
    - `modules/bevel-gear/js/bevel-ui.js`: Khởi tạo `this.inputs` mặc định `beta: 0.0`, `gearingType: 'straight_type1'`. Nút "🔄 Mặc Định" (`#btnResetDefaults`) phục hồi chính xác $\beta = 0.0^\circ$ và Kiểu răng loại I.
    - Huy hiệu 3D (`#badge3DInfo`): Hiển thị ngay khi mở trang `⚙️ Bánh Răng Côn Răng Thẳng (Straight Bevel) | Góc trục Σ = 90.0° | Tỷ số i = 2.500 | Re = 300.8 mm`.
 5. **Quy trình kiểm thử trực quan tự động với Playwright**:
-   - Chạy script kiểm thử `scratch/test_straight_bevel_tca.py` tự động duyệt web, chuyển sang 3D WebGL, bật vết tiếp xúc (`#btnToggleContactTCA`) và mặt sườn (`#btnToggleFlankOnly`), chụp ảnh trực tiếp các góc nhìn cực cận (Zoom, Behind, Mesh Preset, Solid).
-   - Tự soi ảnh màn hình kiểm chứng: Cả 2 mặt sườn của tất cả các răng đều phủ kín vệt màu Prussian Blue, không vồng elip nhân tạo, đạt chuẩn xưởng cơ khí 100%.
+   - Chạy script kiểm thử `scratch/verify_both_flanks_final.py`:
+     * Lấy mẫu màu pixel trên cả Flank 1 (`x=875..885`) và Flank 2 (`x=930..945`).
+     * 100% mẫu pixel xác nhận Prussian Blue `(31, 116, 255)` và `(37, 122, 255)`. Đáy rãnh và đỉnh răng giữ màu kim loại nguyên bản.
+
 

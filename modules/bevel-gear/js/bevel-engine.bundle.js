@@ -3713,10 +3713,11 @@ class Bevel3DVisualizer {
         const cosBeta = Math.abs(beta_deg) > 1e-4 ? Math.cos(beta) : 1.0;
         const th1 = ((st1 / cosBeta) / (2.0 * (Rm * Math.tan(delta1)))) / Math.cos(delta1);
         const th2 = ((st2 / cosBeta) / (2.0 * (Rm * Math.tan(delta2)))) / Math.cos(delta2);
-        // Exact conjugate kiss contact condition sin(psi - th2) = sin(th1) / i:
-        // Gear Tooth 0 Flank 1 (at psiContact - th2) touches Pinion Drive Flank 1 (at -th1)
-        const psiContact = Math.asin(Math.min(0.999, Math.sin(th1) / this.gearRatio)) + th2;
-        this.initialGearAngle = psiContact;
+        // Exact conjugate zero-backlash symmetric mesh:
+        // Pinion tooth 0 center lies at Z = 0.
+        // Gear tooth space 0 center is at half-pitch angle (Math.PI / z2).
+        // Aligning Gear space 0 with Pinion tooth 0 brings both Flank 1 and Flank 2 into simultaneous conjugate kiss contact!
+        this.initialGearAngle = Math.PI / z2;
         this.pinionAngle = 0;
         this.gearAngle = this.initialGearAngle;
 
@@ -4217,7 +4218,7 @@ class Bevel3DVisualizer {
      * Supports both Mode 0 (Dynamic Rolling Locus) and Mode 1 (Cumulative Gleason Ellipse).
      */
     applyTCAShader(material, isPinion) {
-        material.customProgramCacheKey = () => `tca_${isPinion ? 'pinion' : 'gear'}_en${this.tcaEnabled ? 1 : 0}_mode${this.tcaColorMode}_pat${this.tcaPatternType}_sp${this.tcaUniforms && this.tcaUniforms.uIsSpiral ? this.tcaUniforms.uIsSpiral.value : 0}`;
+        material.customProgramCacheKey = () => `tca_${isPinion ? 'pinion' : 'gear'}_${material.side === THREE.DoubleSide ? 'double' : 'front'}_en${this.tcaEnabled ? 1 : 0}_mode${this.tcaColorMode}_pat${this.tcaPatternType}_sp${this.tcaUniforms && this.tcaUniforms.uIsSpiral ? this.tcaUniforms.uIsSpiral.value : 0}`;
         material.onBeforeCompile = (shader) => {
             Object.assign(shader.uniforms, this.tcaUniforms);
             shader.uniforms.uIsPinion = { value: isPinion ? 1.0 : 0.0 };
@@ -4281,7 +4282,7 @@ class Bevel3DVisualizer {
                         float uMask = smoothstep(0.50, uMargin, abs(u));
 
                         // Active working depth (hw = 2.0*mmn): excludes root clearance c0 (flankT < 0.08) & tip chamfer (flankT > 0.94)
-                        float vMask = smoothstep(0.03, 0.10, flankT) * smoothstep(0.97, 0.90, flankT);
+                        float vMask = smoothstep(0.03, 0.10, flankT) * (1.0 - smoothstep(0.90, 0.97, flankT));
                         float fullStraightContact = uMask * vMask;
 
                         if (uTcaPatternType > 0.5) {

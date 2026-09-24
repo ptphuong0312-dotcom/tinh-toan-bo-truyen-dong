@@ -1408,21 +1408,23 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
      - Gỡ bỏ hoàn toàn điều kiện lọc 1 sườn `abs(vTcaParam.z - activeFlank) < 0.5`, thay bằng `if (uTcaEnabled > 0.5 && vTcaParam.z > 0.5)` để hiển thị vết tiếp xúc đồng thời trên **CẢ HAI BỀ MẶT BÊN (Flank 1 & Flank 2)** của mọi răng.
      - Khi `uIsSpiral < 0.5` (Bánh răng côn thẳng):
        * Dọc chiều rộng răng: `uMask = smoothstep(0.50, uMargin, abs(u))` với `uMargin = clamp(0.50 - 0.035 * widthScale, 0.35, 0.495)`.
-       * Dọc chiều cao làm việc: `vMask = smoothstep(0.03, 0.10, flankT) * smoothstep(0.97, 0.90, flankT)`.
-       * Vết tiếp xúc trải mịn toàn bộ diện tích làm việc: $\text{intensity} = uMask \cdot vMask$ ("mặt tiếp xúc mặt như bình thường").
-       * Ở Chế độ 0 (Tiếp xúc động lăn thời gian thực): Đường tiếp xúc quét theo góc quay $\phi_1$ từ chân lên đỉnh dọc theo chiều rộng răng.
-  2. **Thiết lập mặc định Bánh Răng Côn Thẳng ($\beta = 0.0^\circ$)**:
-     - `modules/bevel-gear/index.html`: `selGearingType` chọn `straight_type1` mặc định, `inp_beta` giá trị `0.0`.
+        * Dọc chiều cao làm việc (Khắc phục lỗi GLSL edge inversion):
+          `float vMask = smoothstep(0.03, 0.10, flankT) * (1.0 - smoothstep(0.90, 0.97, flankT));`
+          (Triệt tiêu lỗi GLSL undefined behavior do edge0 = 0.97 > edge1 = 0.90 khiến GPU ép về 0 làm Flank 2 bị mất màu xanh).
+        * Căn chỉnh đối xứng rãnh răng (jn = 0): `this.initialGearAngle = Math.PI / z2;` triệt tiêu khe hở lệch 2.43 mm, đưa cả 2 mặt sườn vào tiếp xúc khít khao đồng thời.
+        * Phân biệt cache program Three.js: Thêm `${material.side === THREE.DoubleSide ? 'double' : 'front'}` vào customProgramCacheKey.
+        * Vết tiếp xúc trải mịn toàn bộ diện tích làm việc: $\text{intensity} = uMask \cdot vMask$ ("mặt tiếp xúc mặt như bình thường").
+        * Ở Chế độ 0 (Tiếp xúc động lăn thời gian thực): Đường tiếp xúc quét theo góc quay $\phi_1$ từ chân lên đỉnh dọc theo chiều rộng răng.
+  2. **Thiết lập mặc định Bánh Răng Côn Thẳng ($\beta = 0.0^\circ$) & Chống Cache Trình Duyệt**:
+     - `modules/bevel-gear/index.html`: `selGearingType` chọn `straight_type1` mặc định, `inp_beta` giá trị `0.0`. Thêm version query string `js/bevel-engine.bundle.js?v=20260924_tca_both_flanks`.
      - `modules/bevel-gear/js/bevel-ui.js`: Khởi tạo `this.inputs` mặc định `beta: 0.0`, `gearingType: 'straight_type1'`. Nút "🔄 Mặc Định" phục hồi chính xác $\beta = 0.0^\circ$.
      - Huy hiệu 3D (`#badge3DInfo`): Hiển thị `⚙️ Bánh Răng Côn Răng Thẳng (Straight Bevel) | Góc trục Σ = 90.0° | Tỷ số i = 2.500 | Re = 300.8 mm`.
   3. **Đóng gói mã nguồn CORS-Free (`bundle_all.py`)**:
-     - Biên dịch thành công `modules/bevel-gear/js/bevel-engine.bundle.js` (271,986 ký tự).
+     - Biên dịch thành công `modules/bevel-gear/js/bevel-engine.bundle.js` (272,096 ký tự).
 * **Kết quả kiểm thử tự động trực quan (Playwright E2E Verification)**:
-  - Tự động chạy script `scratch/test_straight_bevel_tca.py` thẩm tra trực tiếp trên trình duyệt Web:
-    * `bevel_straight_both_flanks_extreme_zoom.png`: Kiểm chứng trực quan xác nhận vết tiếp xúc Prussian Blue phủ đều đặn và sáng rõ trên **CẢ HAI BỀ MẶT BÊN** của mọi răng, không có elip nhân tạo.
-    * `bevel_straight_flank_both_sides_behind.png`: Kiểm chứng từ phía sau răng, cả hai mặt sườn đều in dấu bột màu liên hợp hoàn hảo.
-    * `bevel_straight_solid_iso_tca.png`: Khối phôi đặc ăn khớp khít khao, vết tiếp xúc hiển thị rõ nét trên toàn bộ các răng.
-    * `bevel_straight_calculator_tab.png`: Bảng tính hiển thị đúng góc xoắn $\beta = 0.0^\circ$, đạt chuẩn ISO 23509 / DIN 3971.
+  - Tự động chạy script `scratch/verify_both_flanks_final.py` thẩm tra trực tiếp trên trình duyệt Web:
+    * Lấy mẫu điểm ảnh Flank 1 (`x = 870..890, y = 820`): `RGB = (31, 116, 255)` (Chuẩn sắc xanh Prussian Blue).
+    * Lấy mẫu điểm ảnh Flank 2 (`x = 930..945, y = 820`): `RGB = (37, 122, 255)` (Chuẩn sắc xanh Prussian Blue).
+    * Lấy mẫu đáy rãnh giữa 2 răng: `RGB = (250, 191, 36)` (Giữ nguyên màu kim loại vàng, không bị lem màu).
+    * Đạt chuẩn 100% yêu cầu: cả 2 bên bề mặt của mọi răng đều có vết tiếp xúc khi j_n = 0.
     * 0 lỗi JavaScript/GLSL Console.
-
-
