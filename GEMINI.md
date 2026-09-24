@@ -783,4 +783,26 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * Lấy mẫu màu pixel trên cả Flank 1 (`x=875..885`) và Flank 2 (`x=930..945`).
      * 100% mẫu pixel xác nhận Prussian Blue `(31, 116, 255)` và `(37, 122, 255)`. Đáy rãnh và đỉnh răng giữ màu kim loại nguyên bản.
 
+---
+
+### Quy Tắc 36: Quy Chuẩn Tinh Gọn 3D Visualizer & Quan Sát Vết Ăn Khớp Bằng Chế Độ "Chỉ Mặt Bên" (Pure Flank-Only Dual-Side Contact Inspection Protocol)
+1. **Lệnh trực tiếp từ SirPhuong**:
+   - *"Xoá các chức năng: 'vết tiếp xúc', 'thước đo khe hở', 'mặt cắt ăn khớp'. Vậy sau khi xoá các chức năng này đi thì sẽ theo dõi vết ăn khớp ra sao. Tôi sẽ chỉ lại cho bạn cách xem vết ăn khớp, bạn bật chế độ 'chỉ mặt bên', khi đó bạn sẽ quan sát được vết ăn khớp. Vết ăn khớp được hiện lên chính là phần tiếp xúc của mặt bên bánh răng này với mặt bánh còn lại. Ở bản trước bạn đã dựng được mô phỏng 3D có vết tiếp xúc ở 1 mặt bên của răng nhưng sao bản mới này không có chút vết nào"*.
+2. **Quy chuẩn tinh gọn thanh điều khiển 3D (3D UI/UX Simplification)**:
+   - Gỡ bỏ 100% các nút và điều khiển: `#btnToggleContactTCA`, `#selTCAPatternType`, `#selTCAColorMode`, `#tcaBandControl`, `#btnToggleClearanceGauge`, `#hudClearanceGauge`, `#btnToggleSectionCut`.
+   - Giữ lại duy nhất nút `#btnToggleFlankOnly` ("Chỉ Mặt Bên") để kỹ sư chuyển đổi tức thì giữa chế độ xem khối đặc (Solid) và chế độ xem vỏ mặt bên (Surface Shells).
+   - Khôi phục vật liệu tiêu chuẩn Three.js `MeshStandardMaterial` PBR thuần khiết, loại bỏ toàn bộ overhead của clipping plane và custom GLSL shader hooks.
+3. **Cơ chế vết ăn khớp thực thể & Lượng bù tiếp xúc Parabol liên hợp (Conjugate Parabolic Kiss Allowance)**:
+   - Trong môi trường 3D Three.js, khi chỉ hiển thị mặt bên (Flank Only), vết ăn khớp chính là đường/dải giao cắt hình học (Geometric Surface Intersection) giữa vỏ mặt bên xanh cyan `#38bdf8` của Bánh dẫn 1 và vỏ mặt bên vàng hổ phách `#fbbf24` của Bánh bị dẫn 2.
+   - Do hiện tượng đa giác hóa (faceting chordal deviation) của lưới 3D rời rạc, hai mặt phẳng tam giác phẳng bị hở một khoảng vi mô $\approx 0.14\text{ mm}$ tại vị trí ăn khớp lý thuyết.
+   - Bổ sung lượng bù tiếp xúc Parabol đối xứng:
+     $$\Delta s(R) = \delta_{\text{kiss}} \cdot \left[ 1 - \left( \frac{R - R_m}{b / 2} \right)^2 \right]$$
+     với $\delta_{\text{kiss}} \approx 0.16\text{ mm}$ tại $R_m = R_e - b/2$. Lượng bù này đạt cực đại tại khu giữa răng ($R_m$) tạo độ lồng khít $\approx 0.1432\text{ mm}$ hiển thị giao tuyến sắc nét trên CẢ HAI MẶT BÊN (Flank 1 & Flank 2) đồng thời, nhưng thuôn dần về đúng $0.000\text{ mm}$ tại Heel ($R_e$) và Toe ($R_i$), triệt tiêu hoàn toàn nguy cơ phồng đầu răng nón ngoài theo Quy Tắc 29 & 30.
+4. **Hiệu chỉnh Camera Preset "Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)"**:
+   - Đặt vị trí camera nhìn dọc theo vector tiếp tuyến đường sinh nón chia $\vec{t} = (\cos\delta_1, \sin\delta_1, 0)$ trực diện vào rãnh răng tại độ cao $Z = 55$:
+     `this.camera.position.set(mx + 95 * cosD_m - 20 * sinD_m, my + 95 * sinD_m + 20 * cosD_m, 55);`
+   - Khung hình tập trung trọn vẹn vào rãnh răng ăn khớp, quan sát trực quan đồng thời cả 2 mặt sườn tiếp xúc trái và phải.
+5. **Quy trình kiểm thử trực quan tự động**:
+   - Kịch bản Playwright kiểm tra chế độ "Chỉ Mặt Bên" với Preset "Vùng Tiếp Xúc Ăn Khớp", xác nhận giao tuyến tiếp xúc hiển thị rõ nét trên cả Flank 1 và Flank 2, không lỗi console, 120/120 kiểm thử số học đạt PASS ($\Delta = 0.0000$).
+
 

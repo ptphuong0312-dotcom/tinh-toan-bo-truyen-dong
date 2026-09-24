@@ -448,74 +448,6 @@ class BevelGearUI {
             });
         }
 
-        // 3D Tooth Contact Analysis (TCA) Controls
-        const btnToggleContactTCA = document.getElementById('btnToggleContactTCA');
-        const selTCAPatternType = document.getElementById('selTCAPatternType');
-        const selTCAColorMode = document.getElementById('selTCAColorMode');
-        const tcaBandControl = document.getElementById('tcaBandControl');
-        const sliderTCABandWidth = document.getElementById('sliderTCABandWidth');
-        const lblTCABandWidth = document.getElementById('lblTCABandWidth');
-        const badge3DInfo = document.getElementById('badge3DInfo');
-
-        if (btnToggleContactTCA && this.visualizer3D) {
-            btnToggleContactTCA.addEventListener('click', () => {
-                const isEnabled = this.visualizer3D.toggleContactTCA();
-                if (isEnabled) {
-                    btnToggleContactTCA.style.background = '#e11d48';
-                    btnToggleContactTCA.style.color = '#ffffff';
-                    btnToggleContactTCA.style.borderColor = '#be123c';
-                    btnToggleContactTCA.innerHTML = '🔴 Đang Hiện Vết';
-                    if (selTCAPatternType) {
-                        selTCAPatternType.style.display = 'inline-block';
-                        this.visualizer3D.setTCAPatternType(selTCAPatternType.value);
-                    }
-                    if (selTCAColorMode) {
-                        selTCAColorMode.style.display = 'inline-block';
-                        this.visualizer3D.setTCAColorMode(selTCAColorMode.value);
-                    }
-                    if (tcaBandControl) tcaBandControl.style.display = 'inline-flex';
-                    let tcaBadge = document.getElementById('badgeTCAStatus');
-                    if (!tcaBadge && badge3DInfo) {
-                        tcaBadge = document.createElement('span');
-                        tcaBadge.id = 'badgeTCAStatus';
-                        tcaBadge.style.cssText = 'color: #f43f5e; font-weight: 700; margin-left: 8px;';
-                        tcaBadge.innerHTML = ' | 🔴 Vết Tiếp Xúc: <span style="color:#fde047;">Đang Ăn Khớp</span>';
-                        badge3DInfo.appendChild(tcaBadge);
-                    }
-                } else {
-                    btnToggleContactTCA.style.background = '';
-                    btnToggleContactTCA.style.color = '';
-                    btnToggleContactTCA.style.borderColor = '';
-                    btnToggleContactTCA.innerHTML = '🔴 Vết Tiếp Xúc';
-                    if (selTCAPatternType) selTCAPatternType.style.display = 'none';
-                    if (selTCAColorMode) selTCAColorMode.style.display = 'none';
-                    if (tcaBandControl) tcaBandControl.style.display = 'none';
-                    const tcaBadge = document.getElementById('badgeTCAStatus');
-                    if (tcaBadge && tcaBadge.parentNode) tcaBadge.parentNode.removeChild(tcaBadge);
-                }
-            });
-        }
-
-        if (selTCAPatternType && this.visualizer3D) {
-            selTCAPatternType.addEventListener('change', (e) => {
-                this.visualizer3D.setTCAPatternType(e.target.value);
-            });
-        }
-
-        if (selTCAColorMode && this.visualizer3D) {
-            selTCAColorMode.addEventListener('change', (e) => {
-                this.visualizer3D.setTCAColorMode(e.target.value);
-            });
-        }
-
-        if (sliderTCABandWidth && this.visualizer3D) {
-            sliderTCABandWidth.addEventListener('input', (e) => {
-                const w = parseFloat(e.target.value) || 4.0;
-                if (lblTCABandWidth) lblTCABandWidth.textContent = w.toFixed(1) + 'mm';
-                this.visualizer3D.setTCAWidth(w);
-            });
-        }
-
         // 8 Cấp Độ Mịn Lưới Thân Khai (Cấp 1-8, mặc định Cấp 6: Siêu Mịn CAM/CNC)
         const selMeshDensity = document.getElementById('selMeshDensity');
         if (selMeshDensity && this.visualizer3D) {
@@ -527,7 +459,7 @@ class BevelGearUI {
             });
         }
 
-        // 3 Independent Verification & Inspection Modes (Phương Án 1, 2, 3)
+        // Chế Độ "Chỉ Mặt Bên": Ẩn khối phôi đặc, chỉ hiện bề mặt sườn thân khai để quan sát vết ăn khớp tiếp xúc
         const btnToggleFlankOnly = document.getElementById('btnToggleFlankOnly');
         if (btnToggleFlankOnly && this.visualizer3D) {
             btnToggleFlankOnly.addEventListener('click', () => {
@@ -542,42 +474,6 @@ class BevelGearUI {
                     btnToggleFlankOnly.style.color = '';
                     btnToggleFlankOnly.style.borderColor = '';
                     btnToggleFlankOnly.innerHTML = '👁️ Chỉ Mặt Bên';
-                }
-            });
-        }
-
-        const btnToggleClearanceGauge = document.getElementById('btnToggleClearanceGauge');
-        if (btnToggleClearanceGauge && this.visualizer3D) {
-            btnToggleClearanceGauge.addEventListener('click', () => {
-                const isGauge = this.visualizer3D.toggleClearanceGauge();
-                if (isGauge) {
-                    btnToggleClearanceGauge.style.background = '#059669';
-                    btnToggleClearanceGauge.style.color = '#ffffff';
-                    btnToggleClearanceGauge.style.borderColor = '#34d399';
-                    btnToggleClearanceGauge.innerHTML = '📏 Đang Đo Khe Hở';
-                } else {
-                    btnToggleClearanceGauge.style.background = '';
-                    btnToggleClearanceGauge.style.color = '';
-                    btnToggleClearanceGauge.style.borderColor = '';
-                    btnToggleClearanceGauge.innerHTML = '📏 Thước Đo Khe Hở';
-                }
-            });
-        }
-
-        const btnToggleSectionCut = document.getElementById('btnToggleSectionCut');
-        if (btnToggleSectionCut && this.visualizer3D) {
-            btnToggleSectionCut.addEventListener('click', () => {
-                const isCut = this.visualizer3D.toggleSectionCut();
-                if (isCut) {
-                    btnToggleSectionCut.style.background = '#7c3aed';
-                    btnToggleSectionCut.style.color = '#ffffff';
-                    btnToggleSectionCut.style.borderColor = '#a78bfa';
-                    btnToggleSectionCut.innerHTML = '✂️ Đang Cắt Ăn Khớp';
-                } else {
-                    btnToggleSectionCut.style.background = '';
-                    btnToggleSectionCut.style.color = '';
-                    btnToggleSectionCut.style.borderColor = '';
-                    btnToggleSectionCut.innerHTML = '✂️ Mặt Cắt Ăn Khớp';
                 }
             });
         }

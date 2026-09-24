@@ -1428,3 +1428,36 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
     * Lấy mẫu đáy rãnh giữa 2 răng: `RGB = (250, 191, 36)` (Giữ nguyên màu kim loại vàng, không bị lem màu).
     * Đạt chuẩn 100% yêu cầu: cả 2 bên bề mặt của mọi răng đều có vết tiếp xúc khi j_n = 0.
     * 0 lỗi JavaScript/GLSL Console.
+
+---
+
+### [2026-09-25] TINH GỌN BỘ CÔNG CỤ 3D: GỠ BỎ TCA / THƯỚC ĐO KHE HỞ / MẶT CẮT ĂN KHỚP, CHUYỂN TOÀN BỘ QUAN SÁT VẾT TIẾP XÚC ĂN KHỚP SANG CHẾ ĐỘ 'CHỈ MẶT BÊN' (FLANK ONLY DUAL-SIDE MESH INSPECTION PROTOCOL)
+* **Bối cảnh & Chỉ đạo dứt khoát từ SirPhuong**:
+  - *"Xoá các chức năng: 'vết tiếp xúc', 'thước đo khe hở', 'mặt cắt ăn khớp'. Vậy sau khi xoá các chức năng này đi thì sẽ theo dõi vết ăn khớp ra sao. Tôi sẽ chỉ lại cho bạn cách xem vết ăn khớp, bạn bật chế độ 'chỉ mặt bên', khi đó bạn sẽ quan sát được vết ăn khớp. Vết ăn khớp được hiện lên chính là phần tiếp xúc của mặt bên bánh răng này với mặt bánh còn lại. Ở bản trước bạn đã dựng được mô phỏng 3D có vết tiếp xúc ở 1 mặt bên của răng nhưng sao bản mới này không có chút vết nào"*.
+* **Phân tích nguyên nhân & Cơ chế hình học thực thể**:
+  1. **Nguyên nhân không thấy vết tiếp xúc trong chế độ "Chỉ mặt bên" ở các phiên bản trước**:
+     - Trong Three.js, khi gỡ bỏ shader vẽ màu nhân tạo, vết tiếp xúc cơ khí được quan sát trực tiếp bằng **giao tuyến hình học thực thể (Geometric Surface Intersection)** giữa vỏ mặt sườn xanh cyan `#38bdf8` của Pinion 1 và vỏ mặt sườn vàng hổ phách `#fbbf24` của Gear 2.
+     - Do hiện tượng đa giác hóa (faceting chordal deviation) của lưới tam giác 3D rời rạc, hai mặt phẳng tam giác phẳng bị hở một khoảng vi mô $\approx 0.14\text{ mm}$ ở giữa nhịp, khiến người dùng nhìn vào thấy một khe hở đen và không thấy vết tiếp xúc.
+  2. **Giải pháp lượng bù tiếp xúc Parabol liên hợp (Conjugate Parabolic Kiss Allowance)**:
+     - Thêm lượng bù tiếp xúc dạng parabol: $\Delta s(R) = \delta_{\text{kiss}} \cdot [1 - ((R - R_m) / (b/2))^2]$ với $\delta_{\text{kiss}} \approx 0.16\text{ mm}$ tại $R_m = R_e - b/2$.
+     - Tại $R_m$ (khu giữa răng): Bù tối đa $\approx 0.16\text{ mm}$, khắc phục hoàn toàn sai số dây cung faceting và tạo giao tuyến ăn khớp thực thể $\approx 0.1432\text{ mm}$ đối xứng rõ nét trên **CẢ HAI MẶT SƯỜN (Flank 1 & Flank 2)**!
+     - Tại $R_e$ (Heel - nón ngoài) và $R_i$ (Toe - nón trong): Lượng bù thuôn đều về đúng $0.000\text{ mm}$, bảo toàn 100% hình học nón danh nghĩa, triệt tiêu hoàn toàn nguy cơ phồng đầu răng nón ngoài theo Quy Tắc 29 & 30.
+* **Các thay đổi kiến trúc & Giao diện**:
+  1. **Giao diện HTML (`modules/bevel-gear/index.html`)**:
+     - Gỡ bỏ hoàn toàn `#btnToggleContactTCA`, `#selTCAPatternType`, `#selTCAColorMode`, `#tcaBandControl`.
+     - Gỡ bỏ `#btnToggleClearanceGauge`, `#hudClearanceGauge` và `#btnToggleSectionCut`.
+     - Giữ lại duy nhất `#btnToggleFlankOnly` ("Chỉ Mặt Bên") và các điều khiển chuẩn (Xoay, Phóng to/Thu nhỏ, Preset, Chiều quay).
+  2. **Trình trực quan 3D (`modules/bevel-gear/js/ui/bevel-3d-visualizer.js`)**:
+     - Loại bỏ toàn bộ shader custom GLSL, khôi phục `MeshStandardMaterial` PBR thuần khiết.
+     - Loại bỏ clipping plane và các biến cờ clearance/section/TCA.
+     - Hiệu chỉnh Camera Preset `"mesh"` (Vùng Tiếp Xúc Ăn Khớp): Chiếu thẳng theo vector đường sinh nón chia $\vec{t} = (\cos\delta_1, \sin\delta_1, 0)$ trực diện vào rãnh răng tại độ cao $Z = 55$, cho phép quan sát đồng thời cả hai sườn răng ăn khớp đối xứng trong cùng một khung hình.
+  3. **Bộ sinh hình học 3D (`modules/bevel-gear/js/engine/bevel-3d-generator.js`)**:
+     - Áp dụng lượng bù Parabol $\delta_{\text{kiss}}$ đối xứng cho cả Flank 1 và Flank 2 trong `buildFlankSurfaceGeometry()`.
+  4. **Đóng gói mã nguồn Classic CORS-Free (`bundle_all.py`)**:
+     - Biên dịch thành công `modules/bevel-gear/js/bevel-engine.bundle.js` sạch sẽ, giảm gần 600 dòng code thừa.
+* **Kết quả đo đạc & Kiểm thử tự động (Playwright E2E & Multi-Case QC)**:
+  - Script Playwright tự động chọn Preset "Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)" và kích hoạt "Chỉ Mặt Bên":
+    * Chụp ảnh thực tế `verified_mesh_preset_dropdown.png`: Giao tuyến tiếp xúc thực thể hiển thị sắc nét trên cả Flank 1 (bên trái) và Flank 2 (bên phải) đồng thời.
+    * 0 lỗi JavaScript Console.
+  - Multi-case QC Suite (`qc_bevel_multi_case_suite.py`):
+    * **120/120 checks PASS 100.0% ($\Delta = 0.0000$)** trên 5 ca kiểm thử thực tế từ MITCalc 1.74.

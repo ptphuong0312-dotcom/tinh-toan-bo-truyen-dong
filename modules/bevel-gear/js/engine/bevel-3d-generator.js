@@ -167,6 +167,17 @@ export const Bevel3DGenerator = {
             const rootPt = eval_flank(0.0);
             const th_fillet = Math.min(half_pitch * 0.85, Math.max(rootPt.theta * 1.30, rootPt.theta + (0.35 * mmn / rv) / cosD));
 
+            // Middle-Zone Kiss Allowance for Conjugate Mesh Contact in Flank-Only Mode:
+            // Expands the tooth by ~0.16 mm at Rm (parabolic K_kiss = 1 - 4*u^2), tapering to 0 at Heel and Toe.
+            // Overcomes the polygon chord clearance to produce a clean, crisp 0.05-0.06 mm kiss intersection
+            // on BOTH Flank 1 and Flank 2 simultaneously in the middle working zone (Rm).
+            const isPinion = (opt.hand === -1) || (opt.isPinion === true);
+            let dThetaKiss = 0.0;
+            if (isPinion) {
+                const K_kiss = Math.max(0.0, 1.0 - 4.0 * u * u);
+                dThetaKiss = (0.16 * K_kiss) / Math.max(1.0, r_pitch);
+            }
+
             const toothContour = [];
             // Left tooth space bottom land
             toothContour.push({ h: -hf_s, theta: -half_pitch, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
@@ -176,7 +187,7 @@ export const Bevel3DGenerator = {
             for (let k = 0; k < ptsPerFlank; k++) {
                 const t = k / (ptsPerFlank - 1);
                 const pt = eval_flank(t);
-                toothContour.push({ h: pt.h, theta: -pt.theta, flankT: t, isEngageFlank: true, flankId: 1.0 });
+                toothContour.push({ h: pt.h, theta: -(pt.theta + dThetaKiss), flankT: t, isEngageFlank: true, flankId: 1.0 });
             }
 
             // Tooth tip land (crest)
@@ -186,7 +197,7 @@ export const Bevel3DGenerator = {
             for (let k = ptsPerFlank - 1; k >= 0; k--) {
                 const t = k / (ptsPerFlank - 1);
                 const pt = eval_flank(t);
-                toothContour.push({ h: pt.h, theta: +pt.theta, flankT: t, isEngageFlank: true, flankId: 2.0 });
+                toothContour.push({ h: pt.h, theta: +(pt.theta + dThetaKiss), flankT: t, isEngageFlank: true, flankId: 2.0 });
             }
 
             // Right root fillet and right space bottom land

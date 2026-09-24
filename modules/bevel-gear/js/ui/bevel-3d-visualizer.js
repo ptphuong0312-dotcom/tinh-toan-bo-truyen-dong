@@ -40,44 +40,13 @@ export class Bevel3DVisualizer {
         this.mesh1Data = null;
         this.mesh2Data = null;
 
-        // 3 Independent Verification & Inspection Modes (Phương Án 1, 2, 3)
-        this.flankOnlyMode = false;      // Mode 1: Hide blanks, show tooth flank surfaces only
-        this.clearanceGaugeMode = false; // Mode 2: Real-time digital clearance HUD gauge
-        this.sectionCutMode = false;     // Mode 3: Dynamic section clipping plane at Z = 0
+        // Inspection Mode: Chỉ Mặt Bên (Flank Only - Ẩn khối phôi đặc, chỉ hiện bề mặt sườn thân khai để quan sát vết ăn khớp)
+        this.flankOnlyMode = false;
         this.pinionSurfMesh = null;
         this.gearSurfMesh = null;
         this.surf1Data = null;
         this.surf2Data = null;
-        this.contactMarker = null;
-        this.clipPlane = null;
         this.meshDensityLevel = 6; // 8 Cấp Độ Mịn Lưới Thân Khai (Mặc định Cấp 6: Siêu Mịn CAM/CNC)
-
-        // Tooth Contact Analysis (TCA) Dynamic Highlighting Engine
-        this.tcaEnabled = false;
-        this.tcaWidth = 4.0;
-        this.tcaColorMode = 1; // 0: Laser Ruby / Neon Flame, 1: Prussian Blue (Chuẩn xưởng), 2: Thermal Heatmap
-        this.tcaPatternType = 1; // 0: Dynamic Real-time Rolling Locus, 1: Cumulative Gleason Rolled Pattern (Default)
-        this.tcaUniforms = {
-            uTcaEnabled: { value: 0.0 },
-            uTcaWidth: { value: 4.0 },
-            uTcaColorMode: { value: 1.0 },
-            uTcaPatternType: { value: 1.0 },
-            uCosD: { value: 0.928 },
-            uSinD: { value: 0.371 },
-            uRe: { value: 338.0 },
-            uRi: { value: 221.0 },
-            uRm: { value: 279.5 },
-            uB: { value: 117.0 },
-            uMmn: { value: 10.0 },
-            uBetaRad: { value: 0.0 },
-            uIsSpiral: { value: 0.0 },
-            uRBore1: { value: 25.0 },
-            uRBore2: { value: 50.0 },
-            uPinionAngle: { value: 0.0 },
-            uAnimDirection: { value: 1.0 },
-            uZ1: { value: 18.0 },
-            uZ2: { value: 45.0 }
-        };
 
         this.init();
     }
@@ -103,16 +72,7 @@ export class Bevel3DVisualizer {
 
         // 3. Renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
-        this.renderer.localClippingEnabled = true; // Enables GPU Section Cut Plane (Phương Án 3)
         this.renderer.setSize(width, height);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.15;
-
-        // Dynamic Section Clipping Plane (Z = 0 pitch contact plane, normal pointing along -Z)
-        this.clipPlane = new THREE.Plane(new THREE.Vector3(0, 0, -1), 0);
 
         while (this.container.firstChild) {
             this.container.removeChild(this.container.firstChild);
@@ -273,23 +233,6 @@ export class Bevel3DVisualizer {
         };
         this.mesh2Data = Bevel3DGenerator.generateGearMesh(opt2);
         this.surf2Data = Bevel3DGenerator.generateGearSurfaceMesh(opt2);
-
-        // Update TCA Uniforms for Bevel Gear
-        this.tcaUniforms.uCosD.value = Math.cos(delta1);
-        this.tcaUniforms.uSinD.value = Math.sin(delta1);
-        this.tcaUniforms.uRe.value = Re;
-        this.tcaUniforms.uRi.value = Ri;
-        this.tcaUniforms.uRm.value = Rm;
-        this.tcaUniforms.uB.value = b;
-        this.tcaUniforms.uMmn.value = mmn;
-        this.tcaUniforms.uBetaRad.value = beta;
-        this.tcaUniforms.uIsSpiral.value = (Math.abs(beta_deg) > 1e-4 && gearingType !== 'straight_type1') ? 1.0 : 0.0;
-        this.tcaUniforms.uRBore1.value = dBore1 / 2.0;
-        this.tcaUniforms.uRBore2.value = dBore2 / 2.0;
-        this.tcaUniforms.uZ1.value = z1;
-        this.tcaUniforms.uZ2.value = z2;
-        this.tcaUniforms.uAnimDirection.value = parseFloat(this.animDirection) || 1.0;
-
         this.updateMeshes();
 
         // 3. Authentic MITCalc Conjugate Phase Offset (Exact Mid-Zone Kiss Contact at Rm)
@@ -342,35 +285,29 @@ export class Bevel3DVisualizer {
             this.gearSurfMesh = null;
         }
 
-        const clippingPlanes = (this.sectionCutMode && this.clipPlane) ? [this.clipPlane] : [];
-
         // PBR Materials: Pinion Solid (Cyan Steel), Gear Solid (Gold/Bronze Steel)
         const matPinion = new THREE.MeshStandardMaterial({
             color: 0x0284c7, // Vibrant cyan-blue
             metalness: 0.85,
             roughness: 0.25,
-            wireframe: this.wireframeMode,
-            clippingPlanes: clippingPlanes,
-            clipShadows: true
+            wireframe: this.wireframeMode
         });
 
         const matGear = new THREE.MeshStandardMaterial({
             color: 0xf59e0b, // Warm amber-gold
             metalness: 0.85,
             roughness: 0.28,
-            wireframe: this.wireframeMode,
-            clippingPlanes: clippingPlanes,
-            clipShadows: true
+            wireframe: this.wireframeMode
         });
 
-        // Surface-Only Materials (Double-Sided, Phương Án 1)
+        // Surface-Only Materials: Pinion Flank (Sky Blue #38bdf8), Gear Flank (Amber Gold #fbbf24)
+        // In "Chỉ Mặt Bên" mode, contact is directly observed through the conjugate surface intersection
         const matPinionSurf = new THREE.MeshStandardMaterial({
             color: 0x38bdf8, // Sky blue for pinion flank
             metalness: 0.70,
             roughness: 0.30,
             side: THREE.DoubleSide,
-            wireframe: this.wireframeMode,
-            clippingPlanes: clippingPlanes
+            wireframe: this.wireframeMode
         });
 
         const matGearSurf = new THREE.MeshStandardMaterial({
@@ -378,15 +315,8 @@ export class Bevel3DVisualizer {
             metalness: 0.70,
             roughness: 0.30,
             side: THREE.DoubleSide,
-            wireframe: this.wireframeMode,
-            clippingPlanes: clippingPlanes
+            wireframe: this.wireframeMode
         });
-
-        // Apply TCA (Tooth Contact Analysis) Dynamic Shader to all materials
-        this.applyTCAShader(matPinion, true);
-        this.applyTCAShader(matGear, false);
-        this.applyTCAShader(matPinionSurf, true);
-        this.applyTCAShader(matGearSurf, false);
 
         // 1. Pinion Solid Mesh
         const geo1 = new THREE.BufferGeometry();
@@ -473,23 +403,6 @@ export class Bevel3DVisualizer {
         const sigma = this.sigmaRad || (Math.PI / 2.0);
         this.gearPivot.rotation.z = sigma - Math.PI / 2.0;
 
-        // 5. Contact Marker for Real-Time HUD Gauge (Phương Án 2)
-        if (!this.contactMarker) {
-            const markerGeo = new THREE.SphereGeometry(3.5, 16, 16);
-            const markerMat = new THREE.MeshStandardMaterial({
-                color: 0x34d399,
-                emissive: 0x10b981,
-                emissiveIntensity: 0.9,
-                roughness: 0.1,
-                metalness: 0.2
-            });
-            this.contactMarker = new THREE.Mesh(markerGeo, markerMat);
-            this.scene.add(this.contactMarker);
-        }
-        const Rm = this.geom ? (parseFloat(this.geom.Rm) || 279.5) : 279.5;
-        const delta1 = this.geom ? (parseFloat(this.geom.delta1) || (Math.PI / 4.0)) : (Math.PI / 4.0);
-        this.contactMarker.position.set(Rm * Math.cos(delta1), Rm * Math.sin(delta1), 0);
-        this.contactMarker.visible = this.clearanceGaugeMode;
     }
 
     updateGearRotations() {
@@ -498,14 +411,6 @@ export class Bevel3DVisualizer {
         this.pinionGroup.rotation.x = this.pinionAngle;
         // Gear rotates around Y axis (or axis at angle Sigma)
         this.gearGroup.rotation.y = this.gearAngle;
-        if (this.tcaUniforms) {
-            if (this.tcaUniforms.uPinionAngle) {
-                this.tcaUniforms.uPinionAngle.value = this.pinionAngle;
-            }
-            if (this.tcaUniforms.uAnimDirection) {
-                this.tcaUniforms.uAnimDirection.value = parseFloat(this.animDirection) || 1.0;
-            }
-        }
     }
 
     animate() {
@@ -517,9 +422,6 @@ export class Bevel3DVisualizer {
             // Kinematic conjugate synchronization:
             this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
             this.updateGearRotations();
-            if (this.clearanceGaugeMode) {
-                this.updateClearanceHUD();
-            }
         }
 
         if (this.controls) {
@@ -537,9 +439,6 @@ export class Bevel3DVisualizer {
 
     setAnimDirection(dir) {
         this.animDirection = (dir === -1 || dir < 0) ? -1 : 1;
-        if (this.tcaUniforms && this.tcaUniforms.uAnimDirection) {
-            this.tcaUniforms.uAnimDirection.value = this.animDirection;
-        }
         this.updateGearRotations();
         if (this.renderer && this.scene && this.camera) {
             this.renderer.render(this.scene, this.camera);
@@ -549,9 +448,6 @@ export class Bevel3DVisualizer {
 
     toggleAnimDirection() {
         this.animDirection = (this.animDirection === 1) ? -1 : 1;
-        if (this.tcaUniforms && this.tcaUniforms.uAnimDirection) {
-            this.tcaUniforms.uAnimDirection.value = this.animDirection;
-        }
         this.updateGearRotations();
         if (this.renderer && this.scene && this.camera) {
             this.renderer.render(this.scene, this.camera);
@@ -567,9 +463,6 @@ export class Bevel3DVisualizer {
         this.pinionAngle += stepRad;
         this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
         this.updateGearRotations();
-        if (this.clearanceGaugeMode) {
-            this.updateClearanceHUD();
-        }
         return this.pinionAngle;
     }
 
@@ -654,9 +547,15 @@ export class Bevel3DVisualizer {
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
-            case 'mesh': // Close up on pitch contact zone looking directly at engaging tooth flank
-                this.camera.position.set(mx + 70.0, my + 45.0, 110.0);
-                this.camera.up.set(0, 1, 0);
+            case 'mesh': // Close up on pitch contact zone looking directly along tooth groove (shows contact on both flanks)
+                const cosD_m = Math.cos(delta1);
+                const sinD_m = Math.sin(delta1);
+                this.camera.position.set(
+                    mx + 95 * cosD_m - 20 * sinD_m,
+                    my + 95 * sinD_m + 20 * cosD_m,
+                    55
+                );
+                this.camera.up.set(0, 0, 1);
                 this.controls.target.set(mx, my, 0);
                 break;
             case 'iso':
@@ -800,222 +699,9 @@ export class Bevel3DVisualizer {
     }
 
     /**
-     * Tooth Contact Analysis (TCA) - Custom GPU Shader Hook
-     * Colors only the active contact zone/strip where the teeth meet in real time.
-     * Supports both Mode 0 (Dynamic Rolling Locus) and Mode 1 (Cumulative Gleason Ellipse).
-     */
-    applyTCAShader(material, isPinion) {
-        material.customProgramCacheKey = () => `tca_${isPinion ? 'pinion' : 'gear'}_${material.side === THREE.DoubleSide ? 'double' : 'front'}_en${this.tcaEnabled ? 1 : 0}_mode${this.tcaColorMode}_pat${this.tcaPatternType}_sp${this.tcaUniforms && this.tcaUniforms.uIsSpiral ? this.tcaUniforms.uIsSpiral.value : 0}`;
-        material.onBeforeCompile = (shader) => {
-            Object.assign(shader.uniforms, this.tcaUniforms);
-            shader.uniforms.uIsPinion = { value: isPinion ? 1.0 : 0.0 };
-
-            shader.vertexShader = `
-                attribute vec3 aTcaParam;
-                varying vec3 vTcaParam;
-                varying vec3 vTcaWorldPos;
-                varying vec3 vTcaWorldNorm;
-            ` + shader.vertexShader;
-
-            shader.vertexShader = shader.vertexShader.replace(
-                '#include <worldpos_vertex>',
-                `#include <worldpos_vertex>
-                vTcaWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
-                vTcaWorldNorm = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
-                vTcaParam = aTcaParam;
-                `
-            );
-
-            shader.fragmentShader = `
-                uniform float uTcaEnabled;
-                uniform float uTcaWidth;
-                uniform float uTcaColorMode;
-                uniform float uTcaPatternType;
-                uniform float uCosD;
-                uniform float uSinD;
-                uniform float uRm;
-                uniform float uB;
-                uniform float uMmn;
-                uniform float uBetaRad;
-                uniform float uIsSpiral;
-                uniform float uPinionAngle;
-                uniform float uAnimDirection;
-                uniform float uIsPinion;
-                uniform float uZ1;
-                varying vec3 vTcaParam;
-                varying vec3 vTcaWorldPos;
-                varying vec3 vTcaWorldNorm;
-            ` + shader.fragmentShader;
-
-            const tcaFragmentLogic = `
-                #include <dithering_fragment>
-                if (uTcaEnabled > 0.5 && vTcaParam.z > 0.5) {
-                    // vTcaParam.z: 1.0 = Flank 1, 2.0 = Flank 2, 0.0 = non-flank (crest/root/hub)
-                    // In theoretical zero-backlash mesh (jn = 0), BOTH Flank 1 and Flank 2 engage mating teeth!
-                    // Both flanks of every tooth exhibit conjugate contact.
-                    float u = vTcaParam.x;        // Face width: -0.5 (toe) to +0.5 (heel), 0.0 is Rm (middle of tooth)
-                    float v = vTcaParam.y - 0.5;  // Working depth: -0.5 (root) to +0.5 (tip), 0.0 is EXACT PITCH LINE!
-                    float flankT = vTcaParam.y;   // 0.0 at root/fillet to 1.0 at tooth tip
-                    float widthScale = clamp(uTcaWidth / 4.0, 0.25, 3.0);
-                    float intensity = 0.0;
-
-                    if (uIsSpiral < 0.5) {
-                        // =========================================================================
-                        // BÁNH RĂNG CÔN RĂNG THẲNG (STRAIGHT BEVEL GEARS - ISO 23509 / DIN 3971)
-                        // Chuẩn "Mặt tiếp xúc mặt như bình thường" (Full Flank Working Contact Band)
-                        // Hiển thị đồng thời trên CẢ HAI BỀ MẶT BÊN (Flank 1 & Flank 2) khi khe hở = 0
-                        // =========================================================================
-                        float uMargin = clamp(0.50 - 0.035 * widthScale, 0.35, 0.495);
-                        float uMask = smoothstep(0.50, uMargin, abs(u));
-
-                        // Active working depth (hw = 2.0*mmn): excludes root clearance c0 (flankT < 0.08) & tip chamfer (flankT > 0.94)
-                        float vMask = smoothstep(0.03, 0.10, flankT) * (1.0 - smoothstep(0.90, 0.97, flankT));
-                        float fullStraightContact = uMask * vMask;
-
-                        if (uTcaPatternType > 0.5) {
-                            // CHẾ ĐỘ 1: VẾT RÀ BỘT MÀU TÍCH LŨY (CUMULATIVE PRUSSIAN BLUE / ROLLED PATTERN)
-                            // Trải rộng khắp chiều rộng răng và chiều cao làm việc trên CẢ 2 MẶT BÊN
-                            intensity = fullStraightContact;
-                        } else {
-                            // CHẾ ĐỘ 0: VẾT TIẾP XÚC ĐỘNG LĂN THEO THỜI GIAN THỰC (DYNAMIC ROLLING LOCUS)
-                            // Đường tiếp xúc (line contact) quét dọc chiều rộng răng từ chân lên đỉnh theo góc quay
-                            float p1 = 6.28318530718 / max(1.0, uZ1);
-                            float phiRel = mod(uPinionAngle + p1 * 0.5, p1) - p1 * 0.5;
-                            float normPhase = clamp(phiRel / (p1 * 0.45), -1.0, 1.0);
-                            if (uAnimDirection < 0.0) {
-                                normPhase = -normPhase;
-                            }
-                            float v_roll = normPhase * 0.35;
-                            float lineHalfW = 0.08 * widthScale;
-                            float dv = abs(v - v_roll) / max(0.01, lineHalfW);
-                            float rollLineMask = smoothstep(1.0, 0.0, dv);
-                            intensity = fullStraightContact * rollLineMask;
-                        }
-                    } else {
-                        // =========================================================================
-                        // BÁNH RĂNG CÔN RĂNG XOẮN (SPIRAL BEVEL GEARS - GLEASON CIRCULAR ARC)
-                        // Dao cắt Gleason tạo độ vồng dọc răng (crowning) hình elip cục bộ
-                        // =========================================================================
-                        if (uTcaPatternType > 0.5) {
-                            // CHẾ ĐỘ 1: VẾT TIẾP XÚC ELIP CHUẨN GLEASON (CUMULATIVE ROLLED PATTERN)
-                            float u0 = 0.0;
-                            float v0 = 0.0;
-                            float a_len = 0.32 * widthScale;
-                            float b_hgt = 0.22 * widthScale;
-                            float du = (u - u0) / max(0.01, a_len);
-                            float dv = (v - v0) / max(0.01, b_hgt);
-                            float ellDist = sqrt(du * du + dv * dv);
-                            if (ellDist <= 1.0) {
-                                intensity = smoothstep(0.0, 1.0, 1.0 - ellDist);
-                            }
-                        } else {
-                            // CHẾ ĐỘ 0: TIẾP XÚC ĐỘNG LĂN LIÊN HỢP THỜI GIAN THỰC
-                            float dPlane = abs(vTcaWorldPos.z);
-                            float dLine = abs(vTcaWorldPos.x * uSinD - vTcaWorldPos.y * uCosD);
-                            float maxCorridor = max(uMmn * 4.0, uB * 0.75);
-
-                            if (dPlane <= maxCorridor && dLine <= maxCorridor) {
-                                float p1 = 6.28318530718 / max(1.0, uZ1);
-                                float phiRel = mod(uPinionAngle + p1 * 0.5, p1) - p1 * 0.5;
-                                float normPhase = clamp(phiRel / (p1 * 0.45), -1.0, 1.0);
-                                if (uAnimDirection < 0.0) {
-                                    normPhase = -normPhase;
-                                }
-
-                                float u_roll = -normPhase * 0.25;
-                                float v_roll = normPhase * 0.35;
-                                float a_roll = 0.18 * widthScale;
-                                float b_roll = 0.22 * widthScale;
-                                float du = (u - u_roll) / max(0.01, a_roll);
-                                float dv = (v - v_roll) / max(0.01, b_roll);
-                                float ellDist = sqrt(du * du + dv * dv);
-                                if (ellDist <= 1.0) {
-                                    intensity = smoothstep(0.0, 1.0, 1.0 - ellDist);
-                                }
-                            }
-                        }
-                    }
-
-                        if (intensity > 0.001) {
-                            float t = intensity;
-                            vec3 contactCol = vec3(1.0, 0.05, 0.22); // Mode 0: Laser Ruby / Neon Flame
-                            vec3 glowCol = vec3(1.0, 0.95, 0.4);
-
-                            if (uTcaColorMode > 0.5 && uTcaColorMode < 1.5) {
-                                // Mode 1: Prussian Blue (Bột màu rà vết cơ khí chuẩn xưởng công nghiệp)
-                                vec3 deepCobalt = vec3(0.01, 0.18, 0.85); // Xanh lam đậm đặc trưng vùng tâm
-                                vec3 cerulean = vec3(0.20, 0.70, 0.98);   // Xanh lam mỏng viền ngoài
-                                contactCol = mix(deepCobalt, cerulean, 1.0 - t);
-                                glowCol = vec3(0.15, 0.55, 0.95);
-                                gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.92);
-                                gl_FragColor.rgb += glowCol * pow(t, 2.5) * 0.45;
-                            } else if (uTcaColorMode > 1.5) {
-                                // Mode 2: Thermal Heatmap (Bản đồ nhiệt áp lực)
-                                vec3 colA = vec3(0.08, 0.85, 0.22);
-                                vec3 colB = vec3(1.0, 0.85, 0.1);
-                                vec3 colC = vec3(1.0, 0.05, 0.15);
-                                contactCol = t < 0.5 ? mix(colA, colB, t * 2.0) : mix(colB, colC, (t - 0.5) * 2.0);
-                                glowCol = vec3(1.0, 1.0, 0.4);
-                                gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
-                                gl_FragColor.rgb += glowCol * pow(t, 2.0) * 0.85;
-                            } else {
-                                // Mode 0: Laser Ruby
-                                gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
-                                gl_FragColor.rgb += glowCol * pow(t, 2.0) * 0.85;
-                            }
-                        }
-                    }
-            `;
-
-            shader.fragmentShader = shader.fragmentShader.replace(
-                '#include <dithering_fragment>',
-                tcaFragmentLogic
-            );
-        };
-        material.needsUpdate = true;
-    }
-
-    toggleContactTCA() {
-        this.tcaEnabled = !this.tcaEnabled;
-        this.tcaUniforms.uTcaEnabled.value = this.tcaEnabled ? 1.0 : 0.0;
-        if (this.pinionMesh) this.pinionMesh.material.needsUpdate = true;
-        if (this.gearMesh) this.gearMesh.material.needsUpdate = true;
-        if (this.pinionSurfMesh) this.pinionSurfMesh.material.needsUpdate = true;
-        if (this.gearSurfMesh) this.gearSurfMesh.material.needsUpdate = true;
-        return this.tcaEnabled;
-    }
-
-    setTCAWidth(width) {
-        this.tcaWidth = Math.max(0.5, Math.min(20.0, parseFloat(width) || 4.0));
-        this.tcaUniforms.uTcaWidth.value = this.tcaWidth;
-        if (this.pinionMesh) this.pinionMesh.material.needsUpdate = true;
-        if (this.gearMesh) this.gearMesh.material.needsUpdate = true;
-        if (this.pinionSurfMesh) this.pinionSurfMesh.material.needsUpdate = true;
-        if (this.gearSurfMesh) this.gearSurfMesh.material.needsUpdate = true;
-    }
-
-    setTCAColorMode(mode) {
-        this.tcaColorMode = parseInt(mode) || 0;
-        this.tcaUniforms.uTcaColorMode.value = parseFloat(mode) || 0.0;
-        if (this.pinionMesh) this.pinionMesh.material.needsUpdate = true;
-        if (this.gearMesh) this.gearMesh.material.needsUpdate = true;
-        if (this.pinionSurfMesh) this.pinionSurfMesh.material.needsUpdate = true;
-        if (this.gearSurfMesh) this.gearSurfMesh.material.needsUpdate = true;
-    }
-
-    setTCAPatternType(patternType) {
-        this.tcaPatternType = parseInt(patternType) || 0;
-        this.tcaUniforms.uTcaPatternType.value = parseFloat(patternType) || 0.0;
-        if (this.pinionMesh) this.pinionMesh.material.needsUpdate = true;
-        if (this.gearMesh) this.gearMesh.material.needsUpdate = true;
-        if (this.pinionSurfMesh) this.pinionSurfMesh.material.needsUpdate = true;
-        if (this.gearSurfMesh) this.gearSurfMesh.material.needsUpdate = true;
-        return this.tcaPatternType;
-    }
-
-    /**
-     * Phương Án 1: Ẩn/Hiện dạng sườn Flank Surface (không có phôi đặc)
-     * Toggles between solid CAD blanks and open flank surfaces
+     * Chế Độ "Chỉ Mặt Bên" (Flank Only Mode)
+     * Ẩn toàn bộ khối phôi đặc, chỉ hiển thị bề mặt sườn thân khai của 2 bánh răng
+     * Vết ăn khớp tiếp xúc hình học được quan sát trực tiếp qua giao tuyến ăn khớp giữa 2 mặt bên
      */
     toggleFlankOnly() {
         this.flankOnlyMode = !this.flankOnlyMode;
@@ -1024,127 +710,5 @@ export class Bevel3DVisualizer {
         if (this.pinionSurfMesh) this.pinionSurfMesh.visible = this.flankOnlyMode;
         if (this.gearSurfMesh) this.gearSurfMesh.visible = this.flankOnlyMode;
         return this.flankOnlyMode;
-    }
-
-    /**
-     * Phương Án 2: Bật/Tắt Thước Đo Khe Hở Định Lượng Thời Gian Thực (Digital HUD Gauge)
-     */
-    toggleClearanceGauge() {
-        this.clearanceGaugeMode = !this.clearanceGaugeMode;
-        const hudEl = document.getElementById('hudClearanceGauge');
-        if (hudEl) {
-            hudEl.style.display = this.clearanceGaugeMode ? 'block' : 'none';
-        }
-        if (this.contactMarker) {
-            this.contactMarker.visible = this.clearanceGaugeMode;
-        }
-        if (this.clearanceGaugeMode) {
-            this.updateClearanceHUD();
-        }
-        return this.clearanceGaugeMode;
-    }
-
-    /**
-     * Phương Án 3: Bật/Tắt Mặt Cắt Ăn Khớp Động (Dynamic Section Clipping Plane Z = 0)
-     */
-    toggleSectionCut() {
-        this.sectionCutMode = !this.sectionCutMode;
-        const planes = (this.sectionCutMode && this.clipPlane) ? [this.clipPlane] : [];
-        if (this.pinionMesh) this.pinionMesh.material.clippingPlanes = planes;
-        if (this.gearMesh) this.gearMesh.material.clippingPlanes = planes;
-        if (this.pinionSurfMesh) this.pinionSurfMesh.material.clippingPlanes = planes;
-        if (this.gearSurfMesh) this.gearSurfMesh.material.clippingPlanes = planes;
-        return this.sectionCutMode;
-    }
-
-    /**
-     * Cập nhật thông số HUD Thước đo khe hở thời gian thực (Phương Án 2)
-     */
-    updateClearanceHUD() {
-        if (!this.clearanceGaugeMode) return;
-        const hudEl = document.getElementById('hudClearanceGauge');
-        if (!hudEl) return;
-
-        const Rm = this.geom ? (parseFloat(this.geom.Rm) || 279.5) : 279.5;
-        const delta1 = this.geom ? (parseFloat(this.geom.delta1) || (Math.PI / 4.0)) : (Math.PI / 4.0);
-        const z1 = this.geom ? (parseInt(this.geom.z1) || 18) : 18;
-        const mmn = this.geom ? (parseFloat(this.geom.mmn) || 10.0) : 10.0;
-        const alfaRad = this.geom ? (parseFloat(this.geom.alfa_deg || 20.0) * Math.PI / 180.0) : (20.0 * Math.PI / 180.0);
-        const ea = this.geom ? (parseFloat(this.geom.ea) || 1.25) : 1.25;
-
-        // Pitch angle per tooth of pinion
-        const toothPitch = (2.0 * Math.PI) / z1;
-        // Current angle relative to tooth pitch
-        let phiRel = (this.pinionAngle % toothPitch + toothPitch) % toothPitch;
-        if (phiRel > toothPitch / 2.0) phiRel -= toothPitch;
-
-        // Engagement angle span based on contact ratio ea (conjugate engagement zone)
-        const engageHalfSpan = (ea * toothPitch) * 0.45;
-        let deltaClearance = 0.0;
-        let isContact = true;
-
-        if (Math.abs(phiRel) <= engageHalfSpan) {
-            deltaClearance = 0.000;
-            isContact = true;
-        } else {
-            const sepAngle = Math.abs(phiRel) - engageHalfSpan;
-            const rPitchM = Rm * Math.sin(delta1);
-            deltaClearance = sepAngle * rPitchM * Math.sin(alfaRad);
-            isContact = false;
-        }
-
-        // Root bottom clearance c = 0.200 * mmn
-        const c_root = 0.200 * mmn;
-
-        // Update DOM elements
-        const valContactEl = document.getElementById('hudValContactClearance');
-        const indEl = document.getElementById('hudClearanceIndicator');
-        const valOppEl = document.getElementById('hudValOppositeClearance');
-        const valRootEl = document.getElementById('hudValRootClearance');
-        const locEl = document.getElementById('hudMeasureLocation');
-
-        if (valContactEl) {
-            valContactEl.textContent = deltaClearance.toFixed(3) + ' mm';
-            valContactEl.style.color = isContact ? '#4ade80' : '#fde047';
-        }
-
-        if (indEl) {
-            if (isContact) {
-                indEl.textContent = '🟢 TIẾP XÚC';
-                indEl.style.background = '#065f46';
-                indEl.style.color = '#34d399';
-            } else {
-                indEl.textContent = '🟡 HỞ RĂNG (BACKLASH)';
-                indEl.style.background = '#854d0e';
-                indEl.style.color = '#fde047';
-            }
-        }
-
-        if (valOppEl) {
-            valOppEl.textContent = '0.000 mm (Danh nghĩa)';
-        }
-
-        if (valRootEl) {
-            valRootEl.textContent = c_root.toFixed(3) + ' mm';
-        }
-
-        if (locEl) {
-            locEl.textContent = `Đoạn giữa vành răng (Rm = ${Rm.toFixed(1)} mm)`;
-        }
-
-        // Update 3D Laser Marker Position & Color
-        if (this.contactMarker) {
-            this.contactMarker.visible = true;
-            const cx = Rm * Math.cos(delta1);
-            const cy = Rm * Math.sin(delta1);
-            const cz = isContact ? 0.0 : Math.min(10.0, deltaClearance);
-            this.contactMarker.position.set(cx, cy, cz);
-            if (this.contactMarker.material) {
-                this.contactMarker.material.color.setHex(isContact ? 0x34d399 : 0xfde047);
-                if (this.contactMarker.material.emissive) {
-                    this.contactMarker.material.emissive.setHex(isContact ? 0x10b981 : 0xb45309);
-                }
-            }
-        }
     }
 }
