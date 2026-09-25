@@ -47,6 +47,7 @@ export class Bevel3DVisualizer {
         this.surf1Data = null;
         this.surf2Data = null;
         this.meshDensityLevel = 6; // 8 Cấp Độ Mịn Lưới Thân Khai (Mặc định Cấp 6: Siêu Mịn CAM/CNC)
+        this.contactMode = 'theory'; // 'theory' (Mặc định: Chuẩn lý thuyết đường thẳng dọc nón) | 'gleason' (Vết elip có độ vồng)
 
         this.init();
     }
@@ -217,7 +218,8 @@ export class Bevel3DVisualizer {
             ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
             Hin: Hin1, Hout: Hout1, dBore: dBore1,
             hand: hand1, gearingType,
-            meshDensityLevel: this.meshDensityLevel
+            meshDensityLevel: this.meshDensityLevel,
+            contactMode: this.contactMode || 'theory'
         };
         this.mesh1Data = Bevel3DGenerator.generateGearMesh(opt1);
         this.surf1Data = Bevel3DGenerator.generateGearSurfaceMesh(opt1);
@@ -229,7 +231,8 @@ export class Bevel3DVisualizer {
             ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
             Hin: Hin2, Hout: Hout2, dBore: dBore2,
             hand: hand2, gearingType,
-            meshDensityLevel: this.meshDensityLevel
+            meshDensityLevel: this.meshDensityLevel,
+            contactMode: this.contactMode || 'theory'
         };
         this.mesh2Data = Bevel3DGenerator.generateGearMesh(opt2);
         this.surf2Data = Bevel3DGenerator.generateGearSurfaceMesh(opt2);
@@ -491,6 +494,19 @@ export class Bevel3DVisualizer {
             this.updateGearRotations();
         }
         return this.meshDensityLevel;
+    }
+
+    setContactMode(mode) {
+        this.contactMode = (mode === 'gleason') ? 'gleason' : 'theory';
+        if (this.geom) {
+            const curPinionAngle = this.pinionAngle;
+            const curGearAngle = this.gearAngle;
+            this.setGeometry(this.geom);
+            this.pinionAngle = curPinionAngle;
+            this.gearAngle = curGearAngle;
+            this.updateGearRotations();
+        }
+        return this.contactMode;
     }
 
     resetView() {

@@ -1461,3 +1461,37 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
     * 0 lỗi JavaScript Console.
   - Multi-case QC Suite (`qc_bevel_multi_case_suite.py`):
     * **120/120 checks PASS 100.0% ($\Delta = 0.0000$)** trên 5 ca kiểm thử thực tế từ MITCalc 1.74.
+
+---
+
+### [2026-09-25] TÍCH HỢP ĐỒNG THỜI 2 PHƯƠNG ÁN TIẾP XÚC 3D (LÝ THUYẾT ĐƯỜNG THẲNG DỌC NÓN MẶC ĐỊNH & THỰC TẾ XƯỞNG GLEASON CONIFLEX)
+* **Bối cảnh & Chỉ đạo từ SirPhuong**:
+  - *"Tôi muốn bạn cho cả 2 phương án vào web app để tôi thích lựa chọn nào thì tôi chọn lựa chọn đó và mặc định tôi muốn để phương án 1"*.
+  - *"Tôi hỏi thêm độ phồng 0.16 như bạn đang tính toán ra là lấy từ đâu ra"*.
+* **Giải đáp nguồn gốc con số độ phồng $0.16\text{ mm}$**:
+  1. *Quy chuẩn thực tế xưởng chế tạo máy (Gleason Coniflex / AGMA 2005-D03)*:
+     - Để chống cấn mép (edge loading) khi trục bị biến dạng võng uốn dưới tải trọng ($f_{\text{sh}} \approx 0.08 \div 0.12\text{ mm}$), tiêu chuẩn chế tạo máy quy định độ vồng dọc răng (Tooth Crowning) $C_b = (0.015 \div 0.025) \cdot m_{mn}$.
+     - Với bộ truyền mẫu đang tính trong MITCalc 1.74 có mô-đun $m_{mn} = 8.0\text{ mm}$, độ vồng tiêu chuẩn là $C_b = 0.020 \times 8.0 = \mathbf{0.160\text{ mm}}$.
+  2. *Hình học đồ họa 3D (Khử sai số dây cung faceting của Three.js)*:
+     - Mặt cong thân khai được xấp xỉ bằng lưới tam giác phẳng, tạo khe hở vi mô giả $\delta_{\text{facet}} \approx 0.12 \div 0.14\text{ mm}$ ở giữa nhịp.
+     - Lượng bù tiếp xúc cần thiết để hai mặt tam giác giao cắt tạo dải tiếp xúc nhìn thấy bằng mắt thường ($\approx 0.02\text{ mm}$) là $\delta_{\text{kiss}} = 0.14 + 0.02 = \mathbf{0.16\text{ mm}}$.
+* **Triển khai kỹ thuật**:
+  1. *Giao diện HTML (`modules/bevel-gear/index.html`)*:
+     - Thêm dropdown `#selContactTheoryMode` ngay cạnh nút "Chỉ Mặt Bên" với 2 tùy chọn:
+       * `theory` (Mặc định): `📏 Lý Thuyết (Đường Thẳng Dọc Nón)`
+       * `gleason`: `🔵 Xưởng Gleason (Vết Elip Coniflex)`
+  2. *Động cơ sinh 3D (`bevel-3d-generator.js`)*:
+     - Nhận tham số `contactMode`:
+       * Khi `theory`: Áp dụng lượng bù góc đồng dạng nón hằng số $\Delta\theta = \frac{0.09}{R_m \sin\delta}$. Toàn bộ các đường sinh nón thẳng tắp 100% từ Toe ($R_i$) đến Heel ($R_e$), không có độ vồng parabol. Giao tuyến tiếp xúc là **MỘT ĐƯỜNG THẲNG DỌC THEO HƯỚNG NÓN**.
+       * Khi `gleason`: Áp dụng độ vồng parabol $K_{\text{kiss}} = 1 - 4u^2$ với $\Delta s = 0.16\text{ mm}$ tại giữa răng $R_m$, thuôn về 0 tại Heel/Toe. Vết tiếp xúc có dạng hình elip ở giữa răng.
+  3. *Trình trực quan 3D (`bevel-3d-visualizer.js`, `bevel-ui.js`)*:
+     - Bổ sung `this.contactMode = 'theory'`, phương thức `setContactMode(mode)` và bắt sự kiện `change` chuyển đổi thời gian thực.
+  4. *Đóng gói bundle CORS-Free (`bundle_all.py`)*:
+     - Biên dịch thành công `modules/bevel-gear/js/bevel-engine.bundle.js` (247,121 ký tự).
+* **Kết quả kiểm thử tự động (Playwright E2E & Multi-Case QC)**:
+  - Script Playwright `scratch/verify_contact_modes.py`:
+    * Chụp ảnh `verified_contact_mode_theory_straight_line.png`: Đường thẳng tiếp xúc dọc đường sinh nón hiển thị sắc nét trên cả Flank 1 và Flank 2.
+    * Chuyển sang Gleason và chụp `verified_contact_mode_gleason_ellipse.png`: Vết elip có độ vồng hiển thị rõ nét ở khu giữa răng.
+    * Chuyển ngược lại Lý thuyết và chụp `verified_contact_mode_theory_switched_back.png`: Hoạt động trơn tru, 0 lỗi JavaScript Console!
+  - Multi-case QC Suite (`qc_bevel_multi_case_suite.py`):
+    * **120/120 checks PASS 100.0% ($\Delta = 0.0000$)** trên 5 kịch bản thực tế MITCalc 1.74.

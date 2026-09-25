@@ -167,15 +167,25 @@ export const Bevel3DGenerator = {
             const rootPt = eval_flank(0.0);
             const th_fillet = Math.min(half_pitch * 0.85, Math.max(rootPt.theta * 1.30, rootPt.theta + (0.35 * mmn / rv) / cosD));
 
-            // Middle-Zone Kiss Allowance for Conjugate Mesh Contact in Flank-Only Mode:
-            // Expands the tooth by ~0.16 mm at Rm (parabolic K_kiss = 1 - 4*u^2), tapering to 0 at Heel and Toe.
-            // Overcomes the polygon chord clearance to produce a clean, crisp 0.05-0.06 mm kiss intersection
-            // on BOTH Flank 1 and Flank 2 simultaneously in the middle working zone (Rm).
+            // Conjugate Mesh Contact Mode in Flank-Only Mode:
+            // 1. 'theory' (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc đường thẳng dọc theo đường sinh nón (Line Contact).
+            //    Không có độ vồng parabol (K_kiss = 0), sườn răng thẳng tắp 100% theo các đường sinh nón từ Toe (Ri) đến Heel (Re).
+            //    Lượng bù góc đồng dạng nón hằng số dTheta = 0.09 / (Rm * sinD) để khắc phục sai số dây cung
+            //    của đa giác Three.js và hiển thị MỘT ĐƯỜNG THẲNG HOÀN TOÀN dọc theo đường sinh nón.
+            // 2. 'gleason': Thực Tế Xưởng Gleason Coniflex - Vết tiếp xúc elip có độ vồng dọc răng (Crowning).
+            //    Áp dụng hàm parabol K_kiss = 1 - 4*u^2 với biên độ 0.16 mm (bằng 0.02 * mmn) tại Rm, thuôn về 0 tại Heel/Toe.
+            const contactMode = opt.contactMode || 'theory';
             const isPinion = (opt.hand === -1) || (opt.isPinion === true);
             let dThetaKiss = 0.0;
             if (isPinion) {
-                const K_kiss = Math.max(0.0, 1.0 - 4.0 * u * u);
-                dThetaKiss = (0.16 * K_kiss) / Math.max(1.0, r_pitch);
+                if (contactMode === 'gleason') {
+                    const K_kiss = Math.max(0.0, 1.0 - 4.0 * u * u);
+                    dThetaKiss = (0.16 * K_kiss) / Math.max(1.0, r_pitch);
+                } else {
+                    // Chuẩn lý thuyết: Góc bù đồng dạng nón bảo toàn 100% đường sinh nón thẳng tắp từ Ri đến Re
+                    const linearScale = R_s / Rm;
+                    dThetaKiss = (0.09 * linearScale) / Math.max(1.0, r_pitch);
+                }
             }
 
             const toothContour = [];

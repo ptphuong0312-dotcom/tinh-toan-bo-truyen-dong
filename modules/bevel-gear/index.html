@@ -1782,9 +1782,16 @@
                             </select>
                         </div>
 
-                        <!-- Inspection Controls: Chỉ Mặt Bên -->
-                        <div style="display: flex; align-items: center; gap: 4px; border-left: 1px solid var(--border-color); padding-left: 6px;">
+                        <!-- Inspection Controls: Chỉ Mặt Bên & Kiểu Tiếp Xúc -->
+                        <div style="display: flex; align-items: center; gap: 6px; border-left: 1px solid var(--border-color); padding-left: 6px;">
                             <button type="button" class="btn btn-secondary" id="btnToggleFlankOnly" title="Ẩn khối phôi, chỉ hiện mặt sườn thân khai để quan sát vết ăn khớp tiếp xúc của cặp răng">👁️ Chỉ Mặt Bên</button>
+                            <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);" title="Chọn phương án tiếp xúc: Lý thuyết đường thẳng dọc nón (mặc định) hoặc Thực tế xưởng Gleason có độ vồng">
+                                <label for="selContactTheoryMode" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">📐 Tiếp xúc:</label>
+                                <select id="selContactTheoryMode" class="calc-select" style="padding: 4px 8px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #38bdf8; border: 1.5px solid #0284c7; cursor: pointer;">
+                                    <option value="theory" selected>📏 Lý Thuyết (Đường Thẳng Dọc Nón)</option>
+                                    <option value="gleason">🔵 Xưởng Gleason (Vết Elip Coniflex)</option>
+                                </select>
+                            </div>
                         </div>
 
                         <!-- 3D Export Dropdown -->

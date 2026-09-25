@@ -2884,15 +2884,25 @@ const Bevel3DGenerator = {
             const rootPt = eval_flank(0.0);
             const th_fillet = Math.min(half_pitch * 0.85, Math.max(rootPt.theta * 1.30, rootPt.theta + (0.35 * mmn / rv) / cosD));
 
-            // Middle-Zone Kiss Allowance for Conjugate Mesh Contact in Flank-Only Mode:
-            // Expands the tooth by ~0.16 mm at Rm (parabolic K_kiss = 1 - 4*u^2), tapering to 0 at Heel and Toe.
-            // Overcomes the polygon chord clearance to produce a clean, crisp 0.05-0.06 mm kiss intersection
-            // on BOTH Flank 1 and Flank 2 simultaneously in the middle working zone (Rm).
+            // Conjugate Mesh Contact Mode in Flank-Only Mode:
+            // 1. 'theory' (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc đường thẳng dọc theo đường sinh nón (Line Contact).
+            //    Không có độ vồng parabol (K_kiss = 0), sườn răng thẳng tắp 100% theo các đường sinh nón từ Toe (Ri) đến Heel (Re).
+            //    Lượng bù góc đồng dạng nón hằng số dTheta = 0.09 / (Rm * sinD) để khắc phục sai số dây cung
+            //    của đa giác Three.js và hiển thị MỘT ĐƯỜNG THẲNG HOÀN TOÀN dọc theo đường sinh nón.
+            // 2. 'gleason': Thực Tế Xưởng Gleason Coniflex - Vết tiếp xúc elip có độ vồng dọc răng (Crowning).
+            //    Áp dụng hàm parabol K_kiss = 1 - 4*u^2 với biên độ 0.16 mm (bằng 0.02 * mmn) tại Rm, thuôn về 0 tại Heel/Toe.
+            const contactMode = opt.contactMode || 'theory';
             const isPinion = (opt.hand === -1) || (opt.isPinion === true);
             let dThetaKiss = 0.0;
             if (isPinion) {
-                const K_kiss = Math.max(0.0, 1.0 - 4.0 * u * u);
-                dThetaKiss = (0.16 * K_kiss) / Math.max(1.0, r_pitch);
+                if (contactMode === 'gleason') {
+                    const K_kiss = Math.max(0.0, 1.0 - 4.0 * u * u);
+                    dThetaKiss = (0.16 * K_kiss) / Math.max(1.0, r_pitch);
+                } else {
+                    // Chuẩn lý thuyết: Góc bù đồng dạng nón bảo toàn 100% đường sinh nón thẳng tắp từ Ri đến Re
+                    const linearScale = R_s / Rm;
+                    dThetaKiss = (0.09 * linearScale) / Math.max(1.0, r_pitch);
+                }
             }
 
             const toothContour = [];
@@ -3471,6 +3481,7 @@ class Bevel3DVisualizer {
         this.surf1Data = null;
         this.surf2Data = null;
         this.meshDensityLevel = 6; // 8 Cấp Độ Mịn Lưới Thân Khai (Mặc định Cấp 6: Siêu Mịn CAM/CNC)
+        this.contactMode = 'theory'; // 'theory' (Mặc định: Chuẩn lý thuyết đường thẳng dọc nón) | 'gleason' (Vết elip có độ vồng)
 
         this.init();
     }
@@ -3641,7 +3652,8 @@ class Bevel3DVisualizer {
             ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
             Hin: Hin1, Hout: Hout1, dBore: dBore1,
             hand: hand1, gearingType,
-            meshDensityLevel: this.meshDensityLevel
+            meshDensityLevel: this.meshDensityLevel,
+            contactMode: this.contactMode || 'theory'
         };
         this.mesh1Data = Bevel3DGenerator.generateGearMesh(opt1);
         this.surf1Data = Bevel3DGenerator.generateGearSurfaceMesh(opt1);
@@ -3653,7 +3665,8 @@ class Bevel3DVisualizer {
             ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
             Hin: Hin2, Hout: Hout2, dBore: dBore2,
             hand: hand2, gearingType,
-            meshDensityLevel: this.meshDensityLevel
+            meshDensityLevel: this.meshDensityLevel,
+            contactMode: this.contactMode || 'theory'
         };
         this.mesh2Data = Bevel3DGenerator.generateGearMesh(opt2);
         this.surf2Data = Bevel3DGenerator.generateGearSurfaceMesh(opt2);
@@ -3915,6 +3928,19 @@ class Bevel3DVisualizer {
             this.updateGearRotations();
         }
         return this.meshDensityLevel;
+    }
+
+    setContactMode(mode) {
+        this.contactMode = (mode === 'gleason') ? 'gleason' : 'theory';
+        if (this.geom) {
+            const curPinionAngle = this.pinionAngle;
+            const curGearAngle = this.gearAngle;
+            this.setGeometry(this.geom);
+            this.pinionAngle = curPinionAngle;
+            this.gearAngle = curGearAngle;
+            this.updateGearRotations();
+        }
+        return this.contactMode;
     }
 
     resetView() {
@@ -4949,6 +4975,14 @@ class BevelGearUI {
                     btnToggleFlankOnly.style.borderColor = '';
                     btnToggleFlankOnly.innerHTML = '👁️ Chỉ Mặt Bên';
                 }
+            });
+        }
+
+        // Kiểu Tiếp Xúc 3D: 'theory' (Lý thuyết đường thẳng dọc nón) hoặc 'gleason' (Vết elip có độ vồng)
+        const selContactTheoryMode = document.getElementById('selContactTheoryMode');
+        if (selContactTheoryMode && this.visualizer3D) {
+            selContactTheoryMode.addEventListener('change', (e) => {
+                this.visualizer3D.setContactMode(e.target.value);
             });
         }
 

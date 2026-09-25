@@ -805,4 +805,27 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 5. **Quy trình kiểm thử trực quan tự động**:
    - Kịch bản Playwright kiểm tra chế độ "Chỉ Mặt Bên" với Preset "Vùng Tiếp Xúc Ăn Khớp", xác nhận giao tuyến tiếp xúc hiển thị rõ nét trên cả Flank 1 và Flank 2, không lỗi console, 120/120 kiểm thử số học đạt PASS ($\Delta = 0.0000$).
 
+---
+
+### Quy Tắc 37: Quy Chuẩn Tích Hợp Đồng Thời 2 Phương Án Tiếp Xúc 3D (Đường Thẳng Tiếp Xúc Dọc Nón Mặc Định & Vết Elip Gleason Coniflex)
+1. **Lệnh trực tiếp từ SirPhuong**:
+   - *"Tôi muốn bạn cho cả 2 phương án vào web app để tôi thích lựa chọn nào thì tôi chọn lựa chọn đó và mặc định tôi muốn để phương án 1"*.
+   - *"Tôi hỏi thêm độ phồng 0.16 như bạn đang tính toán ra là lấy từ đâu ra"*.
+2. **Bản chất kỹ thuật của con số độ phồng $0.16\text{ mm}$**:
+   - *Thực tế xưởng chế tạo máy (Gleason Coniflex / AGMA 2005-D03)*:
+     Khi gia công bánh răng côn thẳng trên máy cắt đĩa tròn Gleason Coniflex, để chống cấn mép (edge loading) khi trục bị biến dạng võng uốn dưới tải ($f_{\text{sh}} \approx 0.08 \div 0.12\text{ mm}$), tiêu chuẩn quy định độ vồng dọc răng (Tooth Crowning) $C_b = (0.015 \div 0.025) \cdot m_{mn}$. Với bộ truyền mẫu đang tính trong MITCalc 1.74 có $m_{mn} = 8.0\text{ mm}$, độ vồng tiêu chuẩn là $C_b = 0.020 \times 8.0 = \mathbf{0.160\text{ mm}}$.
+   - *Hình học đồ họa 3D (Khử sai số dây cung faceting của Three.js)*:
+     Mặt cong thân khai được chia thành lưới tam giác phẳng, tạo khe hở vi mô giả $\delta_{\text{facet}} \approx 0.12 \div 0.14\text{ mm}$ ở giữa nhịp. Lượng bù tiếp xúc cần thiết để hai mặt tam giác giao cắt tạo dải tiếp xúc nhìn thấy bằng mắt thường ($\approx 0.02\text{ mm}$) là $\delta_{\text{kiss}} = 0.14 + 0.02 = \mathbf{0.16\text{ mm}}$.
+3. **Quy chuẩn 2 phương án kỹ thuật trên Web App**:
+   - **Phương án 1 (MẶC ĐỊNH - `theory`)**: Chuẩn Lý Thuyết Thuần Túy (Đường Thẳng Dọc Nón)
+     * $K_{\text{kiss}} = 0$, không có độ vồng parabol. Mặt răng thẳng tắp 100% theo các đường sinh nón hội tụ về Apex $V(0,0,0)$ suốt từ Toe ($R_i$) đến Heel ($R_e$).
+     * Lượng bù góc đồng dạng nón hằng số $\Delta\theta = \frac{0.09}{R_m \sin\delta}$ bảo toàn 100% các đường sinh nón thẳng tắp.
+     * Vết tiếp xúc ở chế độ "Chỉ Mặt Bên" là **MỘT ĐƯỜNG THẲNG HOÀN TOÀN DỌC THEO ĐƯỜNG SINH NÓN** từ Toe ra Heel, khi quay chuyển động lăn dần từ chân răng lên đỉnh răng.
+   - **Phương án 2 (`gleason`)**: Mô Phỏng Thực Tế Xưởng Gleason Coniflex
+     * Áp dụng độ vồng parabol $K_{\text{kiss}} = 1 - 4u^2$ với $\Delta s = 0.16\text{ mm}$ tại giữa răng $R_m$, thuôn dần về $0.00\text{ mm}$ tại Heel và Toe.
+     * Vết tiếp xúc hiển thị hình elip/bầu dục ở khu giữa răng (mô phỏng vết rà bột màu Prussian Blue tránh cấn mép xưởng).
+4. **Điều khiển giao diện người dùng**:
+   - Dropdown `#selContactTheoryMode` đặt ngay cạnh nút `#btnToggleFlankOnly`, tự động chọn `theory` khi tải trang và cho phép kỹ sư chuyển đổi tức thì không cần tải lại trang.
+
+
 

@@ -478,6 +478,14 @@ class BevelGearUI {
             });
         }
 
+        // Kiểu Tiếp Xúc 3D: 'theory' (Lý thuyết đường thẳng dọc nón) hoặc 'gleason' (Vết elip có độ vồng)
+        const selContactTheoryMode = document.getElementById('selContactTheoryMode');
+        if (selContactTheoryMode && this.visualizer3D) {
+            selContactTheoryMode.addEventListener('change', (e) => {
+                this.visualizer3D.setContactMode(e.target.value);
+            });
+        }
+
         // 3D Export Dropdown & Items Binding
         const btnExport3DMenu = document.getElementById('btnExport3DMenu');
         const export3DDropdown = document.getElementById('export3DDropdown');

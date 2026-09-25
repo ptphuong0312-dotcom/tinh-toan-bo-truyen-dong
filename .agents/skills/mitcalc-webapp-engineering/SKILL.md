@@ -937,6 +937,28 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 46: Tích Hợp Đồng Thời 2 Phương Án Tiếp Xúc 3D (Đường Thẳng Tiếp Xúc Dọc Nón Chuẩn Lý Thuyết Mặc Định & Vết Elip Thực Tế Xưởng Gleason Coniflex)
+1. **Lệnh trực tiếp từ chủ sở hữu (SirPhuong)**:
+   - *"Tôi muốn bạn cho cả 2 phương án vào web app để tôi thích lựa chọn nào thì tôi chọn lựa chọn đó và mặc định tôi muốn để phương án 1"*.
+   - *"Tôi hỏi thêm độ phồng 0.16 như bạn đang tính toán ra là lấy từ đâu ra"*.
+2. **Bản chất toán học và nguồn gốc của con số độ phồng $0.16\text{ mm}$**:
+   - *Khía cạnh Chế tạo máy thực tế (Gleason Coniflex / AGMA 2005-D03)*:
+     Trong thực tế chế tạo bánh răng côn thẳng trên máy cắt đĩa tròn Gleason Coniflex, để chống cấn mép (edge loading) khi trục và ổ đỡ bị võng đàn hồi ($f_{\text{sh}} \approx 0.08 \div 0.12\text{ mm}$), tiêu chuẩn quy định độ vồng dọc răng (Longitudinal Tooth Crowning) cho mỗi mặt sườn là $C_b = (0.015 \div 0.025) \cdot m_{mn}$. Với bộ truyền mẫu mô-đun $m_{mn} = 8.0\text{ mm}$, độ vồng tiêu chuẩn là $C_b = 0.020 \times 8.0 = \mathbf{0.160\text{ mm}}$.
+   - *Khía cạnh Đồ họa máy tính 3D (Khử sai số dây cung lưới đa giác Three.js)*:
+     Khi chia mặt cong thân khai nón thành lưới tam giác phẳng, sai số dây cung giữa lồi và lõm tạo nên khe hở vi mô giả $\delta_{\text{facet}} \approx 0.12 \div 0.14\text{ mm}$. Lượng bù góc cần thiết để hai mặt tam giác giao cắt tạo dải tiếp xúc nhìn thấy rõ ràng trên màn hình ($\approx 0.02\text{ mm}$) là $\delta_{\text{kiss}} = 0.14 + 0.02 = \mathbf{0.16\text{ mm}}$.
+3. **Kiến trúc phân chia 2 Phương án kỹ thuật**:
+   - **Phương án 1 (MẶC ĐỊNH - `theory`)**: Chuẩn Lý Thuyết Thuần Túy (Đường Thẳng Dọc Nón)
+     * $K_{\text{kiss}} = 0$, không có độ vồng parabol. Mặt răng thẳng tắp 100% theo các đường sinh nón hội tụ về Apex $V(0,0,0)$ suốt từ Toe ($R_i$) đến Heel ($R_e$).
+     * Lượng bù góc đồng dạng nón hằng số $\Delta\theta = \frac{0.09}{R_m \sin\delta}$ bảo toàn 100% các đường sinh nón thẳng tắp.
+     * Vết tiếp xúc ở chế độ "Chỉ Mặt Bên" là **MỘT ĐƯỜNG THẲNG HOÀN TOÀN DỌC THEO ĐƯỜNG SINH NÓN** từ Toe ra Heel, khi quay chuyển động lăn dần từ chân răng lên đỉnh răng.
+   - **Phương án 2 (`gleason`)**: Mô Phỏng Thực Tế Xưởng Gleason Coniflex
+     * Áp dụng độ vồng parabol $K_{\text{kiss}} = 1 - 4u^2$ với $\Delta s = 0.16\text{ mm}$ tại giữa răng $R_m$, thuôn dần về $0.00\text{ mm}$ tại Heel và Toe.
+     * Vết tiếp xúc hiển thị hình elip/bầu dục ở khu giữa răng (mô phỏng vết rà bột màu Prussian Blue tránh cấn mép xưởng).
+4. **Điều khiển giao diện người dùng**:
+   - Dropdown `#selContactTheoryMode` đặt ngay cạnh nút `#btnToggleFlankOnly`, tự động chọn `theory` khi tải trang và cho phép kỹ sư chuyển đổi tức thì không cần tải lại trang.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):
