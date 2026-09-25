@@ -860,3 +860,27 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Khung hình tự động căn tiêu cự vào tâm ăn khớp $(d_1 / 2, 0, 0)$.
    - Vị trí camera: $X = d_1 / 2 + 0.25 \cdot b, Y = -1.15 \cdot b, Z = 0.90 \cdot b$, vector hướng lên $\vec{up} = (0, 0, 1)$.
    - Mang lại góc nhìn xiên isometric hoàn hảo, phóng to trực diện vào rãnh răng ăn khớp, quan sát trọn vẹn cả hai mặt sườn và vệt tiếp xúc dọc suốt chiều dài răng.
+
+---
+
+### Quy Tắc 39: Quy Chuẩn Tính Toán Độ Bền Uốn Bánh Răng & Xuất Báo Cáo Kỹ Thuật Độc Lập Sang File Word (Zero-Web Standalone Protocol)
+1. **Lệnh trực tiếp từ SirPhuong**:
+   - *'Công việc này sẽ không đưa lên web app tuy nhiên bạn lưu lại kĩ năng để sau tôi cần thì bạn làm cho tôi'*.
+   - *'phần 2. TÍNH TOÁN ĐỘNG HỌC, HÌNH HỌC ĂN KHỚP & DỊCH CHỈNH NGƯỢC sẽ không cho vào trong tài liệu báo cáo mà kết quả của nó chỉ dùng để phục vụ tính toán'*.
+   - *'tôi muốn bạn cho cả 2 thông số 357 MPa và 388 MPa vào trong bảng. hộp số bên tôi hoạt động ở chế độ 2 nên bạn không cần cho thêm các chế độ khác vào bảng làm gì'*.
+   - *'ngoài ra thì thông số đầu vào bạn xem thông số nào cần thiết cho tính toán thì dữ lại còn thông số nào không cần thì bạn lược bỏ (rút gọn) cho tôi để bảng gọn gàng hơn'*.
+2. **Nguyên tắc bảo tồn tính thuần khiết của Web App (Zero-Web Policy)**:
+   - Giữ nguyên 100% mã nguồn Web App (index.html, các JS bundles, CSS) thuần túy không chứa các phân mục tính lực và ứng suất theo Quy Tắc 1.
+   - Toàn bộ nghiệp vụ tính toán độ bền uốn, thẩm tra ứng suất mỏi theo ISO 6336-3 (Method B) và xuất báo cáo Word được thực hiện độc lập qua công cụ Python và workflow kỹ năng dự án (tools/generate_bending_stress_word_report.py).
+3. **Quy chuẩn rút gọn thông số đầu vào thiết yếu (Essential Input Filtering Protocol)**:
+   - Lược bỏ toàn bộ các biến số trung gian không tham gia trực tiếp vào tính toán uốn (n_đc, i_tổng, mt, alfa_t, alfa_wt, da, df).
+   - Giữ lại đúng 14 thông số cốt lõi trong Bảng 1: Công suất P, Tốc độ n1, n2, Tỉ số truyền i, Số răng z1, z2, Mô đun mn, Góc áp lực alfa_n, Góc nghiêng beta, Bề rộng b, Đường kính lăn dw2, Hệ số dịch chỉnh x1, x2, Hệ số tải ngoài KA, Vật liệu SCM420 và Giới hạn mỏi cơ sở sigma_Flim.
+4. **Quy chuẩn phân tích Chế độ 2 (KA = 1.50) & Hiển thị song song 357 MPa và 388 MPa**:
+   - Khóa chặt vào chế độ vận hành thực tế của hộp số công nghiệp (Chế độ 2: KA = 1.50). Lược bỏ hoàn toàn các chế độ tải tĩnh hoặc cực đoan không liên quan (Chế độ 1, 4, 5).
+   - Hiển thị song song 2 kịch bản lắp đặt thực tế của xưởng trong Bảng 5.1 và 5.2:
+     * Trường hợp 2A (Thiết kế tối ưu - Gối đỡ đối xứng chuẩn, KFbeta = 1.035): sigma_F2 = 356.97 MPa (~357 MPa) => SF2 = 1.77 (Bánh nhỏ sigma_F1 = 369.62 MPa, SF1 = 1.66).
+     * Trường hợp 2B (Dự phòng độ lệch trục đàn hồi nhẹ, KFbeta = 1.125): sigma_F2 = 388.10 MPa (~388 MPa) => SF2 = 1.63 (Bánh nhỏ sigma_F1 = 401.83 MPa, SF1 = 1.53).
+   - Khẳng định bộ truyền đạt chuẩn vàng an toàn chế tạo máy (1.4 <= SF <= 1.8), đảm bảo tuổi thọ > 50,000 h.
+5. **Cơ chế tự động hóa xuất bản Word chất lượng cao (python-docx)**:
+   - Tự động định dạng văn bản chuẩn Times New Roman, kẻ bảng 2 tông màu Navy #1e3a8a / Slate, canh lề tiêu chuẩn 2 cm, đầy đủ công thức giải tích và khối chữ ký nghiệm thu 3 bên.
+   - Xuất file .docx trực tiếp tại thư mục gốc dự án (BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG.docx) và đồng bộ vào thư mục artifacts, sẵn sàng in ấn hoặc gửi ngay cho đối tác chỉ với một yêu cầu từ người dùng.

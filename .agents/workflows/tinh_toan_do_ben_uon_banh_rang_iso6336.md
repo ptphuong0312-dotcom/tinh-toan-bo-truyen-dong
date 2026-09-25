@@ -111,7 +111,27 @@ $$S_F = \frac{\sigma_{FP}}{\sigma_F} \cdot S_{F\min}$$
   * $Y_{F2} = 1.257, Y_{S2} = 2.070, Y_\beta = 0.900 \implies \sigma_{F0} = \mathbf{229.65\text{ MPa}}$.
   * Khả năng chịu uốn giới hạn của răng: $\sigma_{FG} = \mathbf{633.50\text{ MPa}}$.
 * **Kết quả theo các chế độ vận hành thực tế**:
-  1. *Lý thuyết tải êm ($K_A = 1.0, K_{F\beta} = 1.053$)*: $\sigma_F = 242.11\text{ MPa} \implies S_F = \mathbf{2.62}$ (Dư bền).
-  2. *Thực tế va đập vừa ($K_A = 1.50, K_{F\beta} = 1.125$)*: $\sigma_F = 388.10\text{ MPa} \implies S_F = \mathbf{1.63}$ (**Chuẩn tối ưu**).
-  3. *Va đập mạnh ($K_A = 1.75, K_{F\beta} = 1.125$)*: $\sigma_F = 452.87\text{ MPa} \implies S_F = \mathbf{1.40}$ (Ngưỡng an toàn tối thiểu).
-  4. *Va đập mạnh + Vành răng hở/công xôn ($K_{F\beta} = 1.375$)*: $\sigma_F = 553.14\text{ MPa} \implies S_F = \mathbf{1.14}$ (Nguy cơ nứt mỏi).
+  1. *Lý thuyết tải êm ($K_A = 1.0, K_{F\beta} = 1.035$)*: $\sigma_{F2} = 237.98\text{ MPa} \implies S_F = \mathbf{2.66}$ (Dư bền lý thuyết).
+  2. *Thực tế xưởng chuẩn gối đối xứng ($K_A = 1.50, K_{F\beta} = 1.035$)*: $\sigma_{F2} = \mathbf{356.97\text{ MPa}} \approx \mathbf{357\text{ MPa}} \implies S_{F2} = \mathbf{1.77}$ (Bánh nhỏ $\sigma_{F1} = 369.62\text{ MPa} \implies S_{F1} = \mathbf{1.66}$ - **Chuẩn vàng tối ưu**).
+  3. *Thực tế xưởng có độ lệch trục nhẹ ($K_A = 1.50, K_{F\beta} = 1.125$)*: $\sigma_{F2} = 388.10\text{ MPa} \implies S_{F2} = \mathbf{1.63}$ (Vẫn rất an toàn).
+  4. *Va đập mạnh ($K_A = 1.75, K_{F\beta} = 1.125$)*: $\sigma_{F2} = 452.87\text{ MPa} \implies S_{F2} = \mathbf{1.40}$ (Ngưỡng an toàn tối thiểu theo ISO).
+  5. *Va đập mạnh + Vành răng hở/công xôn ($K_A = 1.75, K_{F\beta} = 1.375$)*: $\sigma_{F2} = 553.14\text{ MPa} \implies S_{F2} = \mathbf{1.14}$ (Nguy cơ nứt mỏi).
+
+---
+
+## 5. Quy Chuẩn Biên Soạn Báo Cáo Chuyên Nghiệp & Xuất File Word Bàn Giao Đối Tác
+
+1. **Nguyên tắc vận hành Zero-Web**:
+   - Theo chỉ đạo của SirPhuong: Toàn bộ nghiệp vụ tính toán độ bền uốn và xuất báo cáo Word được thực hiện hoàn toàn độc lập, **tuyệt đối không đưa lên Web App** nhằm bảo tồn sự tinh gọn của giao diện theo Quy Tắc 1.
+2. **Quy chuẩn lọc thông số đầu vào (14 thông số thiết yếu)**:
+   - Khi đưa vào Báo cáo kỹ thuật bàn giao đối tác, lược bỏ toàn bộ các đại lượng trung gian ({\\text{đc}}, i_{\\text{tổng}}, m_t, \\alpha_t, \\alpha_{wt}, d_a, d_f$).
+   - Giữ lại đúng 14 thông số đầu vào cốt lõi: , n_1, n_2, i, z_1, z_2, m_n, \\alpha_n, \\beta, b, d_{w2}, x_1, x_2, K_A$, Vật liệu SCM420, $\\sigma_{F\\lim}$.
+3. **Quy chuẩn phân tích Chế độ 2 ( = 1.50$) & Hiển thị song song \\text{ MPa}$ và \\text{ MPa}$**:
+   - Tập trung 100% vào chế độ vận hành thực tế của hộp số, loại bỏ các chế độ không sử dụng.
+   - Hiển thị song song 2 kịch bản lắp đặt:
+     * *Trường hợp 2A (Gối đối xứng chuẩn - Tối ưu)*: $\\sigma_{F2} = 356.97\\text{ MPa} \\approx 357\\text{ MPa} \\implies S_{F2} = 1.77$ (Bánh nhỏ $\\sigma_{F1} = 369.62\\text{ MPa}, S_{F1} = 1.66$).
+     * *Trường hợp 2B (Dự phòng độ lệch trục đàn hồi nhẹ)*: $\\sigma_{F2} = 388.10\\text{ MPa} \\approx 388\\text{ MPa} \\implies S_{F2} = 1.63$ (Bánh nhỏ $\\sigma_{F1} = 401.83\\text{ MPa}, S_{F1} = 1.53$).
+4. **Bộ script xuất bản tự động 1-Click**:
+   - File thực thi: 	ools/generate_bending_stress_word_report.py.
+   - Lệnh chạy: python tools/generate_bending_stress_word_report.py.
+   - File đầu ra: BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG.docx tại thư mục gốc dự án.

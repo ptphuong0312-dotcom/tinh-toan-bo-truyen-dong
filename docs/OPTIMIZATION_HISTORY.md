@@ -1569,3 +1569,21 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
        * `spur_contact_crowning_flank_only.png`: Vết elip tiếp xúc hiển thị rõ nét ở giữa sườn răng.
        * `spur_solid_mesh_closeup.png`: Khối Solid zoom cận cảnh rãnh ăn khớp.
        * `helical_mesh_contact_flank_only.png`: Bánh răng nghiêng ($\beta = 15^\circ$) hiển thị ăn khớp mặt sườn xoắn chuẩn xác.
+
+---
+
+### [2026-09-25] XUẤT BẢN BÁO CÁO THẨM TRA ĐỘ BỀN UỐN BÁNH RĂNG WORD (.DOCX) & TỐI ƯU HÓA CẤU TRÚC THEO CHỈ ĐẠO CỦA SIRPHUONG
+* **Bối cảnh & Chỉ thị trực tiếp từ SirPhuong**:
+  1. *'bạn còn nhớ bộ bánh răng hôm trước tôi nhờ bạn tính toán ứng suất uốn không, bạn hay viết lại cho tôi toàn bộ tính toán đó theo kiểu bài báo cáo để tôi chuyển cho đối tác (hay suất báo cáo ra file word cho tôi trong dự án)'*.
+  2. *'phần 2. TÍNH TOÁN ĐỘNG HỌC, HÌNH HỌC ĂN KHỚP & DỊCH CHỈNH NGƯỢC sẽ không cho vào trong tài liệu báo cáo mà kết quả của nó chỉ dùng để phục vụ tính toán'*.
+  3. *'tôi muốn bạn cho cả 2 thông số 357 MPa và 388 MPa vào trong bảng. hộp số bên tôi hoạt động ở chế độ 2 nên bạn không cần cho thêm các chế độ khác vào bảng làm gì'*.
+  4. *'ngoài ra thì thông số đầu vào bạn xem thông số nào cần thiết cho tính toán thì dữ lại còn thông số nào không cần thì bạn lược bỏ (rút gọn) cho tôi để bảng gọn gàng hơn'*.
+* **Giải pháp kỹ thuật thực thi**:
+  1. **Lập trình công cụ tự động xuất Word chuyên nghiệp (	ools/generate_bending_stress_word_report.py)**:
+     - Định dạng chuẩn Times New Roman, kẻ bảng 2 tông màu Navy/Slate, viền xám mảnh, lề trang tiêu chuẩn 2 cm.
+     - Xuất trực tiếp file Word tại gốc dự án: BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG.docx.
+  2. **Rút gọn triệt để Bảng Thông số đầu vào (Mục 1)**:
+     - Giữ lại đúng 14 thông số cốt lõi tham gia trực tiếp vào tính uốn ISO 6336 (, n_1, n_2, i, z_1, z_2, m_n, lpha_n, eta, b, d_{w2}, x_1, x_2, K_A$, SCM420, $\sigma_{F\lim}$).
+  3. **Tập trung 100% vào Chế độ 2 ( = 1.50$) với 2 thông số 	ext{ MPa}$ và 	ext{ MPa}$**:
+     - *Trường hợp 2A (Gối đối xứng chuẩn)*: $\sigma_{F2} = 356.97	ext{ MPa} pprox 357	ext{ MPa} \implies S_{F2} = 1.77$ (Bánh nhỏ $\sigma_{F1} = 369.62	ext{ MPa}, S_{F1} = 1.66$).
+     - *Trường hợp 2B (Dự phòng độ lệch trục nhẹ)*: $\sigma_{F2} = 388.10	ext{ MPa} pprox 388	ext{ MPa} \implies S_{F2} = 1.63$ (Bánh nhỏ $\sigma_{F1} = 401.83	ext{ MPa}, S_{F1} = 1.53$).
