@@ -75,14 +75,14 @@ export const Gear3DGenerator = {
         let numSlices = opt.numSlices;
         if (!numSlices) {
             if (contactMode === 'crowning') {
-                numSlices = 20; // Discretize parabolic crowning along face width Z
+                numSlices = 24; // Discretize parabolic crowning along face width Z
             } else if (!isHelical) {
-                numSlices = isSurfaceOnly ? 12 : 1; // 2 layers for solid spur, 12 layers for smooth surface
+                numSlices = 16; // 16 slices along face width Z for smooth TCA contact line rendering
             } else {
                 // For helical gear, adapt slices to helix twist
                 const twistTotalRad = Math.abs((b * Math.tan(betaRad)) / (d / 2.0));
                 const slicesFromTwist = Math.ceil(twistTotalRad / (Math.PI / 45.0));
-                numSlices = Math.max(8, Math.min(24, slicesFromTwist));
+                numSlices = Math.max(16, Math.min(32, slicesFromTwist));
             }
         }
 
@@ -106,6 +106,7 @@ export const Gear3DGenerator = {
 
         const positions = new Float32Array(totalVertices * 3);
         const normals = new Float32Array(totalVertices * 3);
+        const tcaParams = new Float32Array(totalVertices * 3);
         const indices = [];
         const rawTriangles = [];
 
@@ -140,6 +141,7 @@ export const Gear3DGenerator = {
         const lateralBase = 0;
         let vIdx = lateralBase;
         const isPinion = (opt.isPinion !== undefined) ? (opt.isPinion === true) : (opt.hand === +1);
+        const rSpan = Math.max(0.01, (da - df) / 2.0);
 
         for (let k = 0; k < numLayers; k++) {
             const { zCoord, theta } = getLayerGeom(k);
@@ -168,6 +170,14 @@ export const Gear3DGenerator = {
                 positions[vIdx * 3] = pt.x * cosT - pt.y * sinT;
                 positions[vIdx * 3 + 1] = pt.x * sinT + pt.y * cosT;
                 positions[vIdx * 3 + 2] = zCoord;
+
+                const fT = Math.max(0.0, Math.min(1.0, (pt.r - df / 2.0) / rSpan));
+                const fId = (side === 1.0) ? 1.0 : ((side === -1.0) ? 2.0 : 0.0);
+
+                tcaParams[vIdx * 3] = uNorm * 0.5; // u: -0.5 to +0.5
+                tcaParams[vIdx * 3 + 1] = fT;       // flankT: 0.0 at root, 1.0 at tip
+                tcaParams[vIdx * 3 + 2] = fId;      // flankId: 1.0 drive, 2.0 coast, 0.0 land
+
                 vIdx++;
             }
         }
@@ -375,6 +385,7 @@ export const Gear3DGenerator = {
             positions,
             normals,
             indices: triIndices,
+            tcaParams,
             rawTriangles,
             triangleCount: numTriangles,
             vertexCount: totalVertices,

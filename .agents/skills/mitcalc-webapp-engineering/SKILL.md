@@ -1018,6 +1018,32 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+
+### Quy Chuẩn 49: Quy Chuẩn Vết Tiếp Xúc Ăn Khớp 3D TCA (Prussian Blue & Laser Ruby Red) & Điểm Ăn Khớp Động 2D Cho Bánh Răng Trụ & Nghiêng
+1. **Bản chất kỹ thuật vết rà tiếp xúc 3D TCA (Tooth Contact Analysis)**:
+   - Thay vì chỉ dựa vào giao tuyến hình học kim loại PBR đơn sắc, hệ thống tích hợp trực tiếp **GLSL Custom Shader** vào vật liệu `MeshStandardMaterial` thông qua `material.onBeforeCompile`.
+   - Thuộc tính tọa độ chuẩn hóa `aTcaParam (vec3: u, flankT, flankId)`:
+     * `u = zCoord / (b / 2)`: Tọa độ chuẩn hóa dọc chiều rộng vành răng $[-0.5, +0.5]$.
+     * `flankT = (r - r_f) / (r_a - r_f)`: Chiều cao sườn thân khai chuẩn hóa từ chân răng $0.0$ đến đỉnh răng $1.0$.
+     * `flankId = 1.0`: Gán cho toàn bộ các đỉnh thuộc mặt sườn thân khai làm việc (cả Solid Mesh và Flank-Only Surface Mesh).
+   - Tăng mật độ lưới dọc trục $Z$ lên `16 - 32 slices` để hiển thị vết ăn khớp mượt mà, triệt tiêu gãy khúc.
+2. **Hai chế độ màu bột rà cơ khí chuẩn xưởng công nghiệp**:
+   - `🔵 Bột Rà Prussian Blue (Chuẩn Xưởng)`: Màu xanh lam coban đậm đặc trưng (`vec3(0.01, 0.18, 0.85)`) ở tâm tiếp xúc và xanh lơ mỏng (`vec3(0.20, 0.70, 0.98)`) ở viền ngoài, kèm ánh sáng phản chiếu kim loại PBR.
+   - `🔴 Vệt Sáng Laser Ruby Red`: Đỏ hồng ngọc (`vec3(1.0, 0.05, 0.22)`) chuyển sắc vàng hổ phách viền (`vec3(1.0, 0.85, 0.10)`) cho tương phản tối đa khi chiếu trên nền kim loại thép sáng.
+3. **Đồng bộ hóa 2 phương án tiếp xúc và góc xoắn răng**:
+   - `📏 Lý Thuyết (Đường Thẳng Tiếp Xúc)`:
+     * Bánh răng trụ thẳng ($\beta = 0^\circ$): Vết tiếp xúc là dải màu sắc nét chạy thẳng tắp 100% dọc theo toàn bộ chiều rộng vành răng $b$.
+     * Bánh răng trụ nghiêng ($\beta \ne 0^\circ$): Đường tiếp xúc nghiêng chéo một góc $\beta_b$ theo phương tiếp xúc thân khai không gian, di chuyển tịnh tiến liên tục.
+   - `🔵 Thực Tế Xưởng (Vết Elip Crowning)`: Khu trú vết tiếp xúc dạng elip tròn đầy ở chính giữa mặt sườn nhờ độ vồng parabol, triệt tiêu cấn mép đầu răng.
+4. **Mô phỏng 2D CAD Động học liên hợp & Điểm tiếp xúc K**:
+   - Pha lăn chuẩn xác: `angle1 = -Math.PI / 2.0 + rotationAngle`, `angle2 = (Math.PI / 2.0 - Math.PI / z2) - rotationAngle * (z1 / z2)` đảm bảo độ hở $0.000\text{ mm}$ không va lấn.
+   - Vẽ đường ăn khớp $N_1 N_2$, đoạn ăn khớp thực tế $A-B$ (màu hổ phách), điểm tâm ăn khớp $C$ (sky-blue) và **Điểm ăn khớp động tức thời $K$ (`K (Ăn Khớp)`)** màu đỏ rực di chuyển dọc $A-B$.
+   - Tích hợp các nút vi phân `⏮️ Lùi` / `⏭️ Tiến` trên cả 2D Canvas và 3D WebGL để dừng quay và quan sát vết ăn khớp từng bước góc vi mô.
+5. **Thanh trạng thái 3D thời gian thực (`#badge3DInfo`)**:
+   - Hiển thị đầy đủ: Loại bánh răng (Thẳng / Nghiêng), khoảng cách trục $a_w$, tỉ số truyền $i$, góc xoắn $\beta$, và trạng thái màu vết tiếp xúc rà cơ khí (`🔴 Vết Tiếp Xúc: Đang Ăn Khớp (Prussian Blue / Laser Ruby Red)`).
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

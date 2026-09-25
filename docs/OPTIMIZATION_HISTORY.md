@@ -1587,3 +1587,60 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
   3. **Tập trung 100% vào Chế độ 2 ( = 1.50$) với 2 thông số 	ext{ MPa}$ và 	ext{ MPa}$**:
      - *Trường hợp 2A (Gối đối xứng chuẩn)*: $\sigma_{F2} = 356.97	ext{ MPa} pprox 357	ext{ MPa} \implies S_{F2} = 1.77$ (Bánh nhỏ $\sigma_{F1} = 369.62	ext{ MPa}, S_{F1} = 1.66$).
      - *Trường hợp 2B (Dự phòng độ lệch trục nhẹ)*: $\sigma_{F2} = 388.10	ext{ MPa} pprox 388	ext{ MPa} \implies S_{F2} = 1.63$ (Bánh nhỏ $\sigma_{F1} = 401.83	ext{ MPa}, S_{F1} = 1.53$).
+
+---
+
+### [2026-09-25] ĐỒNG BỘ 1-TO-1 VẾT TIẾP XÚC ĂN KHỚP 3D TCA (PRUSSIAN BLUE / RUBY RED) & ĐIỂM ĂN KHỚP ĐỘNG 2D CHO MODULE BÁNH RĂNG TRỤ & NGHIÊNG
+* **Bối cảnh & Chỉ thị trực tiếp từ SirPhuong**:
+  - *"Tiếp tục chỉnh sửa mô phỏng 2D/3D module tính toán bánh răng trụ, Hiện tại tôi thấy phần mô phỏng module tính toán bánh răng trụ chưa có vết ăn khớp như mô phỏng bên module bánh răng côn vậy nên tôi cần bạn xem lại cách dựng mô phỏng 3D của app mitcalc 1.74 để chỉnh sửa cho web app."*
+* **Nguyên nhân kỹ thuật được làm rõ**:
+  - Ở module Bánh Răng Côn (`bevel-gear`), các sườn răng được gắn tọa độ tham số bề mặt `aTcaParam (uFace, flankT, flankId)` và được tô màu bột rà cơ khí **Prussian Blue** / **Laser Ruby Red** qua custom GLSL Shader.
+  - Ở module Bánh Răng Trụ (`spur-gear`) trước đó chỉ dùng vật liệu kim loại PBR đơn sắc (`MeshStandardMaterial`) nên mắt thường chỉ thấy 2 khối kim loại mà chưa có **vết màu rà tiếp xúc (TCA Contact Marking)** nổi bật trên sườn răng.
+  - Mô phỏng 2D Canvas trước đó chưa vẽ đoạn ăn khớp thực tế $A-B$, điểm ăn khớp tức thời $K$ và bảng thẻ thông số chuẩn ISO 6336.
+* **Giải pháp kỹ thuật thực thi**:
+  1. **Nâng cấp Bộ sinh lưới 3D (`gear-3d-generator.js`)**:
+     - Tăng độ phân giải lát cắt dọc chiều rộng răng $Z$ lên `16 - 32 layers` cho cả bánh răng thẳng và nghiêng.
+     - Tính toán mảng `tcaParams` (`u = zCoord / b` in [-0.5, +0.5], `flankT` in [0.0, 1.0] từ vòng đáy đến vòng đỉnh, `flankId = 1.0` trên vùng sườn thân khai làm việc) cho cả Solid Mesh và Surface Mesh.
+  2. **Tích hợp GLSL Shader TCA vào Bộ hiển thị 3D (`gear-3d-visualizer.js`)**:
+     - Hàm `_applyTcaShader(material, isPinion)` can thiệp `material.onBeforeCompile` để pha màu vết tiếp xúc ngay trong Fragment Shader mà vẫn giữ nguyên ánh sáng kim loại PBR.
+     - Hỗ trợ 2 chế độ màu bột rà xưởng:
+       * `🔵 Bột Rà Prussian Blue (Chuẩn Xưởng)`: Xanh coban đậm tâm tiếp xúc chuyển sắc lam ngọc ở viền.
+       * `🔴 Vệt Sáng Laser Ruby Red`: Đỏ hồng ngọc - vàng hổ phách tương phản cao.
+     - Hỗ trợ cả 2 kiểu hình học tiếp xúc: `Lý Thuyết (Đường Thẳng Tiếp Xúc)` và `Thực Tế Xưởng (Vết Elip Crowning)`.
+  3. **Nâng cấp Mô phỏng 2D CAD (`gear-canvas.js`)**:
+     - Chuẩn hóa pha lăn giải tích: `angle1 = -Math.PI/2 + rot`, `angle2 = (Math.PI/2 - Math.PI/z2) - rot*(z1/z2)` đạt khe hở chuẩn 0.000 mm không đâm xuyên.
+     - Vẽ đường ăn khớp lý thuyết $N_1 N_2$, đoạn ăn khớp thực tế $A-B$, điểm tâm ăn khớp $C$, điểm ăn khớp động $K$ (`K (Ăn Khớp)`), kích thước $a_w$ và thẻ `BẢNG THÔNG SỐ CHUẨN ISO 6336`.
+  4. **Đồng bộ Giao diện & Điều khiển (`modules/spur-gear/index.html` & `tools/bundle_spur.py`)**:
+     - Thêm nút `🔴 Vết Tiếp Xúc: BẬT/TẮT`, menu `🎨 Màu vết`, nút vi phân `⏮️ Nhích Lùi` / `⏭️ Nhích Tiến` (cả 2D & 3D) và cập nhật thời gian thực trên `#badge3DInfo`.
+     - Chạy `python tools/bundle_all.py` đóng gói hoàn chỉnh `mitcalc-engine.bundle.js`.
+* **Kết quả nghiệm thu tự động bằng Playwright (`scratch/run_full_visual_suite.py`)**:
+  - **0 lỗi Console / WebGL**.
+  - Hình ảnh chụp trực tiếp từ trình duyệt xác nhận 100% vết tiếp xúc Prussian Blue, Ruby Red, Crowning Elip và Helical (beta = 15 deg) hiển thị rõ nét, chuẩn xác.
+
+---
+
+### [2026-09-25] CHUẨN HÓA MÔ PHỎNG ĂN KHỚP 3D THEO CHUẨN THỰC THỂ BÁNH RĂNG CÔN (LƯỢC BỎ MÀU VẾT NHÂN TẠO) & ĐƠN GIẢN HÓA MÔ PHỎNG 2D
+* **Chỉ thị trực tiếp từ SirPhuong**:
+  1. *"tôi muốn bạn làm Mô Phỏng Ăn Khớp 3D giống như bên modul tính toán bánh răng côn mà, mục 'vết tiếp xúc' lúc trước bên bánh răng côn tôi cũng đã bảo bạn bỏ rồi mà giờ bạn lại cho vào tính toán bánh răng trụ (cả cái mục 'màu vết' nữa). tôi muốn vết tiếp xúc bên bánh răng trụ bạn làm thế nào hiển thị được như kiểu bên bánh răng côn cho tôi"*
+  2. *"phần mô phỏng 2D bên tính toán bánh răng trụ tôi muốn bạn cho về đơn giản như bản trước, không cần phức tạp như hiện tại"*
+* **Bản chất kỹ thuật chuẩn hóa**:
+  1. **Mô phỏng 3D chuẩn Bánh Răng Côn (Chế độ Chỉ Mặt Bên - Flank Only)**:
+     - Lược bỏ hoàn toàn nút `#btnToggleTCA` và danh sách chọn `#selTcaColor`.
+     - Không sử dụng GLSL shader tô màu nhân tạo (Prussian Blue / Ruby Red).
+     - Áp dụng hệ vật liệu PBR tiêu chuẩn đồng bộ 100% với Bánh Răng Côn:
+       * Pinion Solid: Cyan Blue `0x0284c7`, Metalness 0.85, Roughness 0.25.
+       * Gear Solid: Warm Amber Gold `0xf59e0b`, Metalness 0.85, Roughness 0.28.
+       * Pinion Flank (Surface): Sky Blue `#38bdf8`, Metalness 0.70, Roughness 0.30, `DoubleSide`.
+       * Gear Flank (Surface): Amber Gold `#fbbf24`, Metalness 0.70, Roughness 0.30, `DoubleSide`.
+     - Khi chuyển sang chế độ **"👁️ Chỉ Mặt Bên" (`#btnToggleFlankOnly`)**, khối phôi đặc được ẩn đi, chỉ còn 2 vỏ sườn răng mỏng tiếp xúc nhau. Vùng giao tuyến thực thể giữa 2 sườn răng Sky Blue và Amber Gold tương phản chính là vết tiếp xúc cơ khí chuẩn xác (đường thẳng trong `theory` và vết elip vồng ở giữa trong `crowning`).
+     - Tối ưu góc quay camera preset `"mesh"` căn thẳng vào vùng tiếp xúc rãnh răng tại $X = d_{w1}/2$.
+  2. **Đơn giản hóa Mô phỏng 2D CAD**:
+     - Lược bỏ thẻ thông số nổi to che khuất góc trên bên trái (`BẢNG THÔNG SỐ CHUẨN ISO 6336`).
+     - Lược bỏ điểm chấm đỏ và nhãn `K (Ăn Khớp)`.
+     - Lược bỏ đường kích thước khoảng cách trục $a_w$.
+     - Lược bỏ 2 nút `#btn2DStepBack` và `#btn2DStepFwd` trên toolbar.
+     - Giữ nguyên cặp bánh răng 2D chuyển động lăn liên hợp mượt mà không va chạm, đường tâm gạch đứt, vòng chia lăn $d_{w1}, d_{w2}$, đường ăn khớp mảnh và tâm pitch point $C$.
+  3. **Đóng gói Bundle & Kiểm thử tự động E2E**:
+     - Cập nhật `tools/bundle_spur.py` và chạy `python tools/bundle_all.py` đóng gói thành công `modules/spur-gear/js/mitcalc-engine.bundle.js`.
+     - Bộ kiểm thử đa trường hợp `qc_gear_multi_case_suite.py`: **110/110 checks PASS (100.0%)** ($\Delta = 0.0000$).
+     - Kiểm thử giao diện bằng Playwright xác nhận 0 lỗi Console/WebGL. Hình ảnh chụp trực quan xác nhận 2D đơn giản thanh thoát và 3D Chỉ Mặt Bên hiển thị vết tiếp xúc tự nhiên chuẩn xác 100%.

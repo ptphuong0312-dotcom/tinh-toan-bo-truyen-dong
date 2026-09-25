@@ -20,6 +20,8 @@ scratch/
 .tempmediaStorage/
 test_*.png
 test_*.dxf
+*_tab2_*.png
+~$*
 docs/*.step
 docs/*.stl
 docs/*.obj

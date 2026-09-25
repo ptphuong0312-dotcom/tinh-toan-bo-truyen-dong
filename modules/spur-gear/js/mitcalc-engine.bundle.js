@@ -3373,7 +3373,7 @@ class GearCanvas {
         ctx.stroke();
 
         // 2. Line of Action (Passing through Pitch Point C at working pressure angle)
-        const alphaWtRad = (g.alfawt || g.alfa_n) * Math.PI / 180.0;
+        const alphaWtRad = (g.alfawt || g.alfa_n || 20.0) * Math.PI / 180.0;
         const pitchPointX = g.dw1 / 2.0;
         const loaLen = Math.min(g.da1, g.da2) * 0.45;
         const cosA = Math.cos(alphaWtRad);
@@ -3405,20 +3405,24 @@ class GearCanvas {
         const m_canvas = isHelical ? (g.mt || (g.mn / Math.cos(betaRad))) : g.mn;
         const alpha_canvas = isHelical ? (g.alfat || (Math.atan(Math.tan((g.alfa_n || 20) * Math.PI / 180.0) / Math.cos(betaRad)) * 180.0 / Math.PI)) : g.alfa_n;
 
+        // Exact analytical conjugate rolling phase (zero penetration):
+        // Pinion tooth 0 centerline is initially at +90 deg (+Y).
+        // Rotate Pinion by (-PI/2 + rotationAngle) so tooth 0 faces +X (pitch point).
+        // Gear tooth space 0 centerline is initially at +90 deg + PI/z2.
+        // Rotate Gear by (PI/2 - PI/z2 - rotationAngle * z1/z2) so space 0 faces -X towards Pinion!
+        const angle1 = -Math.PI / 2.0 + this.rotationAngle;
+        const angle2 = (Math.PI / 2.0 - Math.PI / g.z2) - this.rotationAngle * (g.z1 / g.z2);
+
         // Draw Pinion (Green)
         ctx.save();
         ctx.translate(c1x, c1y);
-        ctx.rotate(this.rotationAngle);
+        ctx.rotate(angle1);
         this.drawGearOutline(g.z1, m_canvas, alpha_canvas, g.x1, g.d1, g.db1, g.da1, g.df1, '#22c55e', '#15803d');
         ctx.restore();
 
         // Draw Gear (Blue)
         ctx.save();
         ctx.translate(c2x, c2y);
-        // Conjugate meshing phase offset: opposite rotation, tooth entering space cleanly
-        // Exact conjugate rolling phase: tooth crest of Pinion meshes cleanly into tooth gap of Gear
-        const phaseOffset = (Math.PI / g.z2) + (Math.PI / 2.0) * (1.0 - g.z1 / g.z2);
-        const angle2 = phaseOffset - this.rotationAngle * (g.z1 / g.z2);
         ctx.rotate(angle2);
         this.drawGearOutline(g.z2, m_canvas, alpha_canvas, g.x2, g.d2, g.db2, g.da2, g.df2, '#38bdf8', '#1d4ed8');
         ctx.restore();
@@ -3468,6 +3472,12 @@ class GearCanvas {
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = 1.2 / this.scale;
         ctx.stroke();
+    }
+
+    stepAngle(dir = 1) {
+        this.stopAnimation();
+        this.rotationAngle += 0.02 * (dir > 0 ? 1 : -1);
+        this.render();
     }
 }
 
@@ -3546,14 +3556,14 @@ const Gear3DGenerator = {
         let numSlices = opt.numSlices;
         if (!numSlices) {
             if (contactMode === 'crowning') {
-                numSlices = 20; // Discretize parabolic crowning along face width Z
+                numSlices = 24; // Discretize parabolic crowning along face width Z
             } else if (!isHelical) {
-                numSlices = isSurfaceOnly ? 12 : 1; // 2 layers for solid spur, 12 layers for smooth surface
+                numSlices = 16; // 16 slices along face width Z for smooth TCA contact line rendering
             } else {
                 // For helical gear, adapt slices to helix twist
                 const twistTotalRad = Math.abs((b * Math.tan(betaRad)) / (d / 2.0));
                 const slicesFromTwist = Math.ceil(twistTotalRad / (Math.PI / 45.0));
-                numSlices = Math.max(8, Math.min(24, slicesFromTwist));
+                numSlices = Math.max(16, Math.min(32, slicesFromTwist));
             }
         }
 
@@ -3577,6 +3587,7 @@ const Gear3DGenerator = {
 
         const positions = new Float32Array(totalVertices * 3);
         const normals = new Float32Array(totalVertices * 3);
+        const tcaParams = new Float32Array(totalVertices * 3);
         const indices = [];
         const rawTriangles = [];
 
@@ -3611,6 +3622,7 @@ const Gear3DGenerator = {
         const lateralBase = 0;
         let vIdx = lateralBase;
         const isPinion = (opt.isPinion !== undefined) ? (opt.isPinion === true) : (opt.hand === +1);
+        const rSpan = Math.max(0.01, (da - df) / 2.0);
 
         for (let k = 0; k < numLayers; k++) {
             const { zCoord, theta } = getLayerGeom(k);
@@ -3639,6 +3651,14 @@ const Gear3DGenerator = {
                 positions[vIdx * 3] = pt.x * cosT - pt.y * sinT;
                 positions[vIdx * 3 + 1] = pt.x * sinT + pt.y * cosT;
                 positions[vIdx * 3 + 2] = zCoord;
+
+                const fT = Math.max(0.0, Math.min(1.0, (pt.r - df / 2.0) / rSpan));
+                const fId = (side === 1.0) ? 1.0 : ((side === -1.0) ? 2.0 : 0.0);
+
+                tcaParams[vIdx * 3] = uNorm * 0.5; // u: -0.5 to +0.5
+                tcaParams[vIdx * 3 + 1] = fT;       // flankT: 0.0 at root, 1.0 at tip
+                tcaParams[vIdx * 3 + 2] = fId;      // flankId: 1.0 drive, 2.0 coast, 0.0 land
+
                 vIdx++;
             }
         }
@@ -3846,6 +3866,7 @@ const Gear3DGenerator = {
             positions,
             normals,
             indices: triIndices,
+            tcaParams,
             rawTriangles,
             triangleCount: numTriangles,
             vertexCount: totalVertices,
@@ -4479,29 +4500,32 @@ class Gear3DVisualizer {
         geo1.setAttribute('position', new THREE.BufferAttribute(this.mesh1Data.positions, 3));
         geo1.setAttribute('normal', new THREE.BufferAttribute(this.mesh1Data.normals, 3));
         geo1.setIndex(new THREE.BufferAttribute(this.mesh1Data.indices, 1));
+        if (this.mesh1Data && this.mesh1Data.tcaParams) {
+            geo1.setAttribute('aTcaParam', new THREE.BufferAttribute(this.mesh1Data.tcaParams, 3));
+        }
 
         const geo2 = new THREE.BufferGeometry();
         geo2.setAttribute('position', new THREE.BufferAttribute(this.mesh2Data.positions, 3));
         geo2.setAttribute('normal', new THREE.BufferAttribute(this.mesh2Data.normals, 3));
         geo2.setIndex(new THREE.BufferAttribute(this.mesh2Data.indices, 1));
+        if (this.mesh2Data && this.mesh2Data.tcaParams) {
+            geo2.setAttribute('aTcaParam', new THREE.BufferAttribute(this.mesh2Data.tcaParams, 3));
+        }
 
-        // 5. Materials (PBR Metallic)
-        // Pinion Solid: Golden Amber / Brass
+        // 5. Materials (Standard PBR Metallic - 1-to-1 Bevel Gear Standard)
+        // Solid Materials: Pinion (Cyan Blue), Gear (Warm Amber Gold)
         const mat1 = new THREE.MeshStandardMaterial({
-            color: 0xf59e0b,
-            metalness: 0.7,
-            roughness: 0.3,
-            wireframe: this.wireframeMode,
-            side: THREE.DoubleSide
+            color: 0x0284c7, // Vibrant cyan-blue
+            metalness: 0.85,
+            roughness: 0.25,
+            wireframe: this.wireframeMode
         });
 
-        // Gear Solid: Engineering Cyan / Titanium Steel
         const mat2 = new THREE.MeshStandardMaterial({
-            color: 0x38bdf8,
-            metalness: 0.75,
-            roughness: 0.25,
-            wireframe: this.wireframeMode,
-            side: THREE.DoubleSide
+            color: 0xf59e0b, // Warm amber-gold
+            metalness: 0.85,
+            roughness: 0.28,
+            wireframe: this.wireframeMode
         });
 
         this.pinionMesh = new THREE.Mesh(geo1, mat1);
@@ -4512,19 +4536,22 @@ class Gear3DVisualizer {
         this.pinionGroup.add(this.pinionMesh);
         this.gearGroup.add(this.gearMesh);
 
-        // 6. Surface-Only Meshes (Chế độ "Chỉ Mặt Bên" quan sát vết tiếp xúc)
+        // 6. Surface-Only Meshes (Chế độ "Chỉ Mặt Bên" - quan sát vết tiếp xúc thực thể)
+        // Pinion Flank: Sky Blue #38bdf8 | Gear Flank: Amber Gold #fbbf24
         if (this.surf1Data) {
             const geoSurf1 = new THREE.BufferGeometry();
             geoSurf1.setAttribute('position', new THREE.BufferAttribute(this.surf1Data.positions, 3));
             geoSurf1.setAttribute('normal', new THREE.BufferAttribute(this.surf1Data.normals, 3));
             geoSurf1.setIndex(new THREE.BufferAttribute(this.surf1Data.indices, 1));
+
             const matPinionSurf = new THREE.MeshStandardMaterial({
-                color: 0xf59e0b,
-                metalness: 0.7,
-                roughness: 0.3,
-                wireframe: this.wireframeMode,
-                side: THREE.DoubleSide
+                color: 0x38bdf8, // Sky blue for pinion flank
+                metalness: 0.70,
+                roughness: 0.30,
+                side: THREE.DoubleSide,
+                wireframe: this.wireframeMode
             });
+
             this.pinionSurfMesh = new THREE.Mesh(geoSurf1, matPinionSurf);
             this.pinionSurfMesh.visible = this.flankOnlyMode;
             this.pinionGroup.add(this.pinionSurfMesh);
@@ -4535,13 +4562,15 @@ class Gear3DVisualizer {
             geoSurf2.setAttribute('position', new THREE.BufferAttribute(this.surf2Data.positions, 3));
             geoSurf2.setAttribute('normal', new THREE.BufferAttribute(this.surf2Data.normals, 3));
             geoSurf2.setIndex(new THREE.BufferAttribute(this.surf2Data.indices, 1));
+
             const matGearSurf = new THREE.MeshStandardMaterial({
-                color: 0x38bdf8,
-                metalness: 0.75,
-                roughness: 0.25,
-                wireframe: this.wireframeMode,
-                side: THREE.DoubleSide
+                color: 0xfbbf24, // Amber gold for gear flank
+                metalness: 0.70,
+                roughness: 0.30,
+                side: THREE.DoubleSide,
+                wireframe: this.wireframeMode
             });
+
             this.gearSurfMesh = new THREE.Mesh(geoSurf2, matGearSurf);
             this.gearSurfMesh.visible = this.flankOnlyMode;
             this.gearGroup.add(this.gearSurfMesh);
@@ -4634,7 +4663,7 @@ class Gear3DVisualizer {
                 this.camera.up.set(0, 0, 1);
                 break;
             case 'mesh': // Close-up on the pitch point contact zone
-                const pitchPtX = (this.geom.d1 || 100) / 2.0;
+                const pitchPtX = (this.geom.dw1 || this.geom.d1 || 100) / 2.0;
                 const b = this.geom.b1 || 40.0;
                 if (this.controls) this.controls.target.set(pitchPtX, 0, 0);
                 this.camera.position.set(pitchPtX + b * 0.25, -b * 1.15, b * 0.90);
@@ -4820,6 +4849,39 @@ class Gear3DVisualizer {
             this.gearGroup.rotation.z = this.gearAngle;
         }
         return this.contactMode;
+    }
+
+    /**
+     * Toggles Tooth Contact Analysis (TCA) contact pattern visualization
+     */
+    toggleTCA() {
+        this.tcaEnabled = !this.tcaEnabled;
+        this.updateTcaUniforms();
+        if (this.renderer && this.scene && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+        }
+        return this.tcaEnabled;
+    }
+
+    /**
+     * Steps gear rotation by a differential angle for inspection
+     * @param {number} dir - +1 for forward step, -1 for reverse step
+     */
+    stepAngle(dir = 1) {
+        if (this.isAnimating) {
+            this.isAnimating = false;
+        }
+        const z1 = (this.geom && this.geom.z1) ? this.geom.z1 : 19;
+        const dTheta = (2.0 * Math.PI / (z1 * 40.0)) * (dir > 0 ? 1 : -1);
+        this.pinionAngle += dTheta;
+        this.gearAngle = this.initialGearAngle - (this.pinionAngle - this.initialPinionAngle) / this.gearRatio;
+
+        if (this.pinionGroup) this.pinionGroup.rotation.z = this.pinionAngle;
+        if (this.gearGroup) this.gearGroup.rotation.z = this.gearAngle;
+
+        if (this.renderer && this.scene && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+        }
     }
 }
 
@@ -5359,6 +5421,7 @@ class SpurGearUI {
             });
         }
 
+
         const sliderSpeed = document.getElementById('sliderAnimSpeed');
         const speedVal = document.getElementById('animSpeedVal');
         if (sliderSpeed) {
@@ -5565,6 +5628,25 @@ class SpurGearUI {
                 this.visualizer3D.setContactMode(e.target.value);
             });
         }
+
+        const btn3DStepBack = document.getElementById('btn3DStepBack');
+        const btn3DStepFwd = document.getElementById('btn3DStepFwd');
+        if (btn3DStepBack && this.visualizer3D) {
+            btn3DStepBack.addEventListener('click', () => {
+                this.visualizer3D.stepAngle(-1);
+                const btnToggle3DAnim = document.getElementById('btnToggle3DAnim');
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Tiếp Tục';
+            });
+        }
+        if (btn3DStepFwd && this.visualizer3D) {
+            btn3DStepFwd.addEventListener('click', () => {
+                this.visualizer3D.stepAngle(1);
+                const btnToggle3DAnim = document.getElementById('btnToggle3DAnim');
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Tiếp Tục';
+            });
+        }
+
+
 
         // 3D Export Dropdown
         const btnExport3DMenu = document.getElementById('btnExport3DMenu');

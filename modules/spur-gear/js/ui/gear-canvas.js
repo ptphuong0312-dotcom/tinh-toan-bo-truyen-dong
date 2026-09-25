@@ -196,7 +196,7 @@ export class GearCanvas {
         ctx.stroke();
 
         // 2. Line of Action (Passing through Pitch Point C at working pressure angle)
-        const alphaWtRad = (g.alfawt || g.alfa_n) * Math.PI / 180.0;
+        const alphaWtRad = (g.alfawt || g.alfa_n || 20.0) * Math.PI / 180.0;
         const pitchPointX = g.dw1 / 2.0;
         const loaLen = Math.min(g.da1, g.da2) * 0.45;
         const cosA = Math.cos(alphaWtRad);
@@ -228,20 +228,24 @@ export class GearCanvas {
         const m_canvas = isHelical ? (g.mt || (g.mn / Math.cos(betaRad))) : g.mn;
         const alpha_canvas = isHelical ? (g.alfat || (Math.atan(Math.tan((g.alfa_n || 20) * Math.PI / 180.0) / Math.cos(betaRad)) * 180.0 / Math.PI)) : g.alfa_n;
 
+        // Exact analytical conjugate rolling phase (zero penetration):
+        // Pinion tooth 0 centerline is initially at +90 deg (+Y).
+        // Rotate Pinion by (-PI/2 + rotationAngle) so tooth 0 faces +X (pitch point).
+        // Gear tooth space 0 centerline is initially at +90 deg + PI/z2.
+        // Rotate Gear by (PI/2 - PI/z2 - rotationAngle * z1/z2) so space 0 faces -X towards Pinion!
+        const angle1 = -Math.PI / 2.0 + this.rotationAngle;
+        const angle2 = (Math.PI / 2.0 - Math.PI / g.z2) - this.rotationAngle * (g.z1 / g.z2);
+
         // Draw Pinion (Green)
         ctx.save();
         ctx.translate(c1x, c1y);
-        ctx.rotate(this.rotationAngle);
+        ctx.rotate(angle1);
         this.drawGearOutline(g.z1, m_canvas, alpha_canvas, g.x1, g.d1, g.db1, g.da1, g.df1, '#22c55e', '#15803d');
         ctx.restore();
 
         // Draw Gear (Blue)
         ctx.save();
         ctx.translate(c2x, c2y);
-        // Conjugate meshing phase offset: opposite rotation, tooth entering space cleanly
-        // Exact conjugate rolling phase: tooth crest of Pinion meshes cleanly into tooth gap of Gear
-        const phaseOffset = (Math.PI / g.z2) + (Math.PI / 2.0) * (1.0 - g.z1 / g.z2);
-        const angle2 = phaseOffset - this.rotationAngle * (g.z1 / g.z2);
         ctx.rotate(angle2);
         this.drawGearOutline(g.z2, m_canvas, alpha_canvas, g.x2, g.d2, g.db2, g.da2, g.df2, '#38bdf8', '#1d4ed8');
         ctx.restore();
@@ -291,5 +295,11 @@ export class GearCanvas {
         ctx.strokeStyle = strokeColor;
         ctx.lineWidth = 1.2 / this.scale;
         ctx.stroke();
+    }
+
+    stepAngle(dir = 1) {
+        this.stopAnimation();
+        this.rotationAngle += 0.02 * (dir > 0 ? 1 : -1);
+        this.render();
     }
 }

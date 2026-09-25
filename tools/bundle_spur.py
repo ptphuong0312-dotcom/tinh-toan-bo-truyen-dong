@@ -291,6 +291,7 @@ class SpurGearUI {
             });
         }
 
+
         const sliderSpeed = document.getElementById('sliderAnimSpeed');
         const speedVal = document.getElementById('animSpeedVal');
         if (sliderSpeed) {
@@ -497,6 +498,25 @@ class SpurGearUI {
                 this.visualizer3D.setContactMode(e.target.value);
             });
         }
+
+        const btn3DStepBack = document.getElementById('btn3DStepBack');
+        const btn3DStepFwd = document.getElementById('btn3DStepFwd');
+        if (btn3DStepBack && this.visualizer3D) {
+            btn3DStepBack.addEventListener('click', () => {
+                this.visualizer3D.stepAngle(-1);
+                const btnToggle3DAnim = document.getElementById('btnToggle3DAnim');
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Tiếp Tục';
+            });
+        }
+        if (btn3DStepFwd && this.visualizer3D) {
+            btn3DStepFwd.addEventListener('click', () => {
+                this.visualizer3D.stepAngle(1);
+                const btnToggle3DAnim = document.getElementById('btnToggle3DAnim');
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Tiếp Tục';
+            });
+        }
+
+
 
         // 3D Export Dropdown
         const btnExport3DMenu = document.getElementById('btnExport3DMenu');

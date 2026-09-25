@@ -246,29 +246,32 @@ export class Gear3DVisualizer {
         geo1.setAttribute('position', new THREE.BufferAttribute(this.mesh1Data.positions, 3));
         geo1.setAttribute('normal', new THREE.BufferAttribute(this.mesh1Data.normals, 3));
         geo1.setIndex(new THREE.BufferAttribute(this.mesh1Data.indices, 1));
+        if (this.mesh1Data && this.mesh1Data.tcaParams) {
+            geo1.setAttribute('aTcaParam', new THREE.BufferAttribute(this.mesh1Data.tcaParams, 3));
+        }
 
         const geo2 = new THREE.BufferGeometry();
         geo2.setAttribute('position', new THREE.BufferAttribute(this.mesh2Data.positions, 3));
         geo2.setAttribute('normal', new THREE.BufferAttribute(this.mesh2Data.normals, 3));
         geo2.setIndex(new THREE.BufferAttribute(this.mesh2Data.indices, 1));
+        if (this.mesh2Data && this.mesh2Data.tcaParams) {
+            geo2.setAttribute('aTcaParam', new THREE.BufferAttribute(this.mesh2Data.tcaParams, 3));
+        }
 
-        // 5. Materials (PBR Metallic)
-        // Pinion Solid: Golden Amber / Brass
+        // 5. Materials (Standard PBR Metallic - 1-to-1 Bevel Gear Standard)
+        // Solid Materials: Pinion (Cyan Blue), Gear (Warm Amber Gold)
         const mat1 = new THREE.MeshStandardMaterial({
-            color: 0xf59e0b,
-            metalness: 0.7,
-            roughness: 0.3,
-            wireframe: this.wireframeMode,
-            side: THREE.DoubleSide
+            color: 0x0284c7, // Vibrant cyan-blue
+            metalness: 0.85,
+            roughness: 0.25,
+            wireframe: this.wireframeMode
         });
 
-        // Gear Solid: Engineering Cyan / Titanium Steel
         const mat2 = new THREE.MeshStandardMaterial({
-            color: 0x38bdf8,
-            metalness: 0.75,
-            roughness: 0.25,
-            wireframe: this.wireframeMode,
-            side: THREE.DoubleSide
+            color: 0xf59e0b, // Warm amber-gold
+            metalness: 0.85,
+            roughness: 0.28,
+            wireframe: this.wireframeMode
         });
 
         this.pinionMesh = new THREE.Mesh(geo1, mat1);
@@ -279,19 +282,22 @@ export class Gear3DVisualizer {
         this.pinionGroup.add(this.pinionMesh);
         this.gearGroup.add(this.gearMesh);
 
-        // 6. Surface-Only Meshes (Chế độ "Chỉ Mặt Bên" quan sát vết tiếp xúc)
+        // 6. Surface-Only Meshes (Chế độ "Chỉ Mặt Bên" - quan sát vết tiếp xúc thực thể)
+        // Pinion Flank: Sky Blue #38bdf8 | Gear Flank: Amber Gold #fbbf24
         if (this.surf1Data) {
             const geoSurf1 = new THREE.BufferGeometry();
             geoSurf1.setAttribute('position', new THREE.BufferAttribute(this.surf1Data.positions, 3));
             geoSurf1.setAttribute('normal', new THREE.BufferAttribute(this.surf1Data.normals, 3));
             geoSurf1.setIndex(new THREE.BufferAttribute(this.surf1Data.indices, 1));
+
             const matPinionSurf = new THREE.MeshStandardMaterial({
-                color: 0xf59e0b,
-                metalness: 0.7,
-                roughness: 0.3,
-                wireframe: this.wireframeMode,
-                side: THREE.DoubleSide
+                color: 0x38bdf8, // Sky blue for pinion flank
+                metalness: 0.70,
+                roughness: 0.30,
+                side: THREE.DoubleSide,
+                wireframe: this.wireframeMode
             });
+
             this.pinionSurfMesh = new THREE.Mesh(geoSurf1, matPinionSurf);
             this.pinionSurfMesh.visible = this.flankOnlyMode;
             this.pinionGroup.add(this.pinionSurfMesh);
@@ -302,13 +308,15 @@ export class Gear3DVisualizer {
             geoSurf2.setAttribute('position', new THREE.BufferAttribute(this.surf2Data.positions, 3));
             geoSurf2.setAttribute('normal', new THREE.BufferAttribute(this.surf2Data.normals, 3));
             geoSurf2.setIndex(new THREE.BufferAttribute(this.surf2Data.indices, 1));
+
             const matGearSurf = new THREE.MeshStandardMaterial({
-                color: 0x38bdf8,
-                metalness: 0.75,
-                roughness: 0.25,
-                wireframe: this.wireframeMode,
-                side: THREE.DoubleSide
+                color: 0xfbbf24, // Amber gold for gear flank
+                metalness: 0.70,
+                roughness: 0.30,
+                side: THREE.DoubleSide,
+                wireframe: this.wireframeMode
             });
+
             this.gearSurfMesh = new THREE.Mesh(geoSurf2, matGearSurf);
             this.gearSurfMesh.visible = this.flankOnlyMode;
             this.gearGroup.add(this.gearSurfMesh);
@@ -401,7 +409,7 @@ export class Gear3DVisualizer {
                 this.camera.up.set(0, 0, 1);
                 break;
             case 'mesh': // Close-up on the pitch point contact zone
-                const pitchPtX = (this.geom.d1 || 100) / 2.0;
+                const pitchPtX = (this.geom.dw1 || this.geom.d1 || 100) / 2.0;
                 const b = this.geom.b1 || 40.0;
                 if (this.controls) this.controls.target.set(pitchPtX, 0, 0);
                 this.camera.position.set(pitchPtX + b * 0.25, -b * 1.15, b * 0.90);
@@ -587,5 +595,38 @@ export class Gear3DVisualizer {
             this.gearGroup.rotation.z = this.gearAngle;
         }
         return this.contactMode;
+    }
+
+    /**
+     * Toggles Tooth Contact Analysis (TCA) contact pattern visualization
+     */
+    toggleTCA() {
+        this.tcaEnabled = !this.tcaEnabled;
+        this.updateTcaUniforms();
+        if (this.renderer && this.scene && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+        }
+        return this.tcaEnabled;
+    }
+
+    /**
+     * Steps gear rotation by a differential angle for inspection
+     * @param {number} dir - +1 for forward step, -1 for reverse step
+     */
+    stepAngle(dir = 1) {
+        if (this.isAnimating) {
+            this.isAnimating = false;
+        }
+        const z1 = (this.geom && this.geom.z1) ? this.geom.z1 : 19;
+        const dTheta = (2.0 * Math.PI / (z1 * 40.0)) * (dir > 0 ? 1 : -1);
+        this.pinionAngle += dTheta;
+        this.gearAngle = this.initialGearAngle - (this.pinionAngle - this.initialPinionAngle) / this.gearRatio;
+
+        if (this.pinionGroup) this.pinionGroup.rotation.z = this.pinionAngle;
+        if (this.gearGroup) this.gearGroup.rotation.z = this.gearAngle;
+
+        if (this.renderer && this.scene && this.camera) {
+            this.renderer.render(this.scene, this.camera);
+        }
     }
 }
