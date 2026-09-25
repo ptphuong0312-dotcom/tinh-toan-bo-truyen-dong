@@ -288,7 +288,8 @@ export const MitcalcToothSolver = {
 
         toothPolar[M - 1] = {
             r: halfProfile[0].r,
-            th: 0.0
+            th: 0.0,
+            side: 0.0
         };
 
         for (let i = 1; i < M; i++) {
@@ -297,14 +298,15 @@ export const MitcalcToothSolver = {
             const th = Math.atan(pt.x / pt.y);
 
             // Right side:
-            toothPolar[M - 1 + i] = { r, th };
+            toothPolar[M - 1 + i] = { r, th, side: 1.0 };
             // Left side (mirrored):
-            toothPolar[M - 1 - i] = { r, th: -th };
+            toothPolar[M - 1 - i] = { r, th: -th, side: -1.0 };
         }
 
         toothPolar[numPtsPerTooth - 1] = {
             r: toothPolar[0].r,
-            th: toothPolar[0].th + (2.0 * pi) / z
+            th: toothPolar[0].th + (2.0 * pi) / z,
+            side: 0.0
         };
 
         const pitchAngle = (2.0 * pi) / z;
@@ -318,7 +320,10 @@ export const MitcalcToothSolver = {
                 const angle = toothPolar[k].th + toothOffset;
                 contour.push({
                     x: r * Math.sin(angle),
-                    y: r * Math.cos(angle)
+                    y: r * Math.cos(angle),
+                    r: r,
+                    angle: angle,
+                    side: toothPolar[k].side || 0.0
                 });
             }
         }

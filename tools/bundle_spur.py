@@ -471,56 +471,30 @@ class SpurGearUI {
             });
         }
 
-        // 3D Tooth Contact Analysis (TCA) Controls
-        const btnToggleContactTCA = document.getElementById('btnToggleContactTCA');
-        const selTCAColorMode = document.getElementById('selTCAColorMode');
-        const tcaBandControl = document.getElementById('tcaBandControl');
-        const sliderTCABandWidth = document.getElementById('sliderTCABandWidth');
-        const lblTCABandWidth = document.getElementById('lblTCABandWidth');
-        const badge3DInfo = document.getElementById('badge3DInfo');
-
-        if (btnToggleContactTCA && this.visualizer3D) {
-            btnToggleContactTCA.addEventListener('click', () => {
-                const isEnabled = this.visualizer3D.toggleContactTCA();
-                if (isEnabled) {
-                    btnToggleContactTCA.style.background = '#e11d48';
-                    btnToggleContactTCA.style.color = '#ffffff';
-                    btnToggleContactTCA.style.borderColor = '#be123c';
-                    btnToggleContactTCA.innerHTML = '🔴 Đang Hiện Vết';
-                    if (selTCAColorMode) selTCAColorMode.style.display = 'inline-block';
-                    if (tcaBandControl) tcaBandControl.style.display = 'inline-flex';
-                    let tcaBadge = document.getElementById('badgeTCAStatus');
-                    if (!tcaBadge && badge3DInfo) {
-                        tcaBadge = document.createElement('span');
-                        tcaBadge.id = 'badgeTCAStatus';
-                        tcaBadge.style.cssText = 'color: #f43f5e; font-weight: 700; margin-left: 8px;';
-                        tcaBadge.innerHTML = ' | 🔴 Vết Tiếp Xúc: <span style="color:#fde047;">Đang Ăn Khớp</span>';
-                        badge3DInfo.appendChild(tcaBadge);
-                    }
+        // Chế độ "Chỉ Mặt Bên" (Flank Only Mode) - Quan sát trực tiếp vết tiếp xúc ăn khớp 2 mặt bên
+        const btnToggleFlankOnly = document.getElementById('btnToggleFlankOnly');
+        if (btnToggleFlankOnly && this.visualizer3D) {
+            btnToggleFlankOnly.addEventListener('click', () => {
+                const isFlankOnly = this.visualizer3D.toggleFlankOnly();
+                if (isFlankOnly) {
+                    btnToggleFlankOnly.style.background = '#0284c7';
+                    btnToggleFlankOnly.style.color = '#ffffff';
+                    btnToggleFlankOnly.style.borderColor = '#38bdf8';
+                    btnToggleFlankOnly.innerHTML = '👁️ Đang Xem Mặt Bên';
                 } else {
-                    btnToggleContactTCA.style.background = '';
-                    btnToggleContactTCA.style.color = '';
-                    btnToggleContactTCA.style.borderColor = '';
-                    btnToggleContactTCA.innerHTML = '🔴 Vết Tiếp Xúc';
-                    if (selTCAColorMode) selTCAColorMode.style.display = 'none';
-                    if (tcaBandControl) tcaBandControl.style.display = 'none';
-                    const tcaBadge = document.getElementById('badgeTCAStatus');
-                    if (tcaBadge && tcaBadge.parentNode) tcaBadge.parentNode.removeChild(tcaBadge);
+                    btnToggleFlankOnly.style.background = '';
+                    btnToggleFlankOnly.style.color = '';
+                    btnToggleFlankOnly.style.borderColor = '';
+                    btnToggleFlankOnly.innerHTML = '👁️ Chỉ Mặt Bên';
                 }
             });
         }
 
-        if (selTCAColorMode && this.visualizer3D) {
-            selTCAColorMode.addEventListener('change', (e) => {
-                this.visualizer3D.setTCAColorMode(e.target.value);
-            });
-        }
-
-        if (sliderTCABandWidth && this.visualizer3D) {
-            sliderTCABandWidth.addEventListener('input', (e) => {
-                const w = parseFloat(e.target.value) || 2.2;
-                if (lblTCABandWidth) lblTCABandWidth.textContent = w.toFixed(1) + 'mm';
-                this.visualizer3D.setTCAWidth(w);
+        // Kiểu Tiếp Xúc 3D: 'theory' (Lý thuyết đường thẳng) hoặc 'crowning' (Vết elip có độ vồng)
+        const selContactTheoryMode = document.getElementById('selContactTheoryMode');
+        if (selContactTheoryMode && this.visualizer3D) {
+            selContactTheoryMode.addEventListener('change', (e) => {
+                this.visualizer3D.setContactMode(e.target.value);
             });
         }
 

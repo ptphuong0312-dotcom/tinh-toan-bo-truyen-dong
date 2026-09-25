@@ -1495,3 +1495,40 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
     * Chuyển ngược lại Lý thuyết và chụp `verified_contact_mode_theory_switched_back.png`: Hoạt động trơn tru, 0 lỗi JavaScript Console!
   - Multi-case QC Suite (`qc_bevel_multi_case_suite.py`):
     * **120/120 checks PASS 100.0% ($\Delta = 0.0000$)** trên 5 kịch bản thực tế MITCalc 1.74.
+
+---
+
+### [2026-09-25] ĐỒNG BỘ CHẾ ĐỘ QUAN SÁT VẾT TIẾP XÚC ĂN KHỚP 3D CHO BÁNH RĂNG TRỤ VÀ BÁNH RĂNG NGHIÊNG (SPUR & HELICAL FLANK-ONLY & DUAL CONTACT THEORIES)
+* **Bối cảnh & Chỉ đạo từ SirPhuong**:
+  - *"bên phần 'mô phỏng ăn khớp 2D/3D Cad' của module bánh răng trụ bạn cũng làm các chức năng giống như bên bánh răng côn cho tôi để tôi cũng quan sát kiểm tra vết tiếp xúc của module này, nhớ cũng bỏ chức năng 'vết tiếp xúc' của module này"*.
+* **Triển khai kỹ thuật**:
+  1. *Lược bỏ bộ công cụ TCA cũ khỏi giao diện (`modules/spur-gear/index.html`)*:
+     - Gỡ bỏ hoàn toàn nút `#btnToggleContactTCA`, dropdown `#selTCAColorMode`, slider `#sliderTCABandWidth` và khối `#tcaBandControl`.
+     - Thêm nút `👁️ Chỉ Mặt Bên` (`#btnToggleFlankOnly`) và dropdown `#selContactTheoryMode` với 2 tùy chọn:
+       * `theory` (Mặc định): `📏 Lý Thuyết (Đường Thẳng Tiếp Xúc)`
+       * `crowning`: `🔵 Thực Tế Xưởng (Vết Elip Crowning)`
+  2. *Động cơ hình học giải tích (`mitcalc-tooth-solver.js`, `gear-3d-generator.js`)*:
+     - Phân định sườn trái (`side = -1.0`), sườn phải (`side = +1.0`) và vùng đỉnh/đáy (`side = 0.0`) trong `generateCompleteWheelContour`.
+     - Hỗ trợ đầy đủ tham số `contactMode` ('theory' | 'crowning') và `isPinion` trong `generateGearMesh` và `generateGearSurfaceMesh`.
+     - Phân chia lưới linh hoạt: 20 lát cắt cho chế độ crowning, 12 lát cắt cho spur surface, phân bố đều theo bước xoắn đối với helical gear.
+     - Cơ chế tiếp xúc:
+       * Khi `theory`: $d\theta = 0.07 / r_{\text{pitch}}$ đồng đều dọc chiều dài răng $b$. Vết tiếp xúc là một đường thẳng chạy dọc bề rộng răng (hoặc theo đường xoắn ốc đối với bánh răng nghiêng).
+       * Khi `crowning`: $d\theta = \frac{0.14 \cdot (1 - u^2)}{r_{\text{pitch}}}$ với $u = Z / (b / 2)$. Vết tiếp xúc có dạng hình elip tập trung ở giữa răng ($Z = 0$), thuôn mượt về 0 tại 2 đầu mút.
+  3. *Trình trực quan 3D (`gear-3d-visualizer.js`, `tools/bundle_spur.py`)*:
+     - Gỡ bỏ 100% shader GPU TCA và các uniforms liên quan.
+     - Khởi tạo vỏ mặt bên rỗng `pinionSurfMesh` và `gearSurfMesh` bằng vật liệu PBR kim loại `DoubleSide`.
+     - Tích hợp phương thức `toggleFlankOnly()` và `setContactMode(mode)`.
+     - Hiệu chỉnh camera preset `mesh` zoom sát tâm ăn khớp $(d_1 / 2, 0, 0)$ từ tọa độ $(d_1 / 2, -12 \cdot m_n, 14 \cdot m_n)$.
+     - Cố định trạng thái camera `viewInitialized` giúp chuyển đổi giữa 2 chế độ tiếp xúc mượt mà không bị văng góc nhìn.
+  4. *Đóng gói bundle CORS-Free (`bundle_all.py`)*:
+     - Biên dịch thành công `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js`.
+* **Kết quả kiểm thử tự động (Playwright E2E & Multi-Case QC)**:
+  - Playwright test (`scratch/verify_spur_contact_modes.py`):
+    * Kiểm tra loại bỏ hoàn toàn các điều khiển TCA cũ: PASS.
+    * Kiểm tra dropdown `#selContactTheoryMode` mặc định `theory`: PASS.
+    * Chụp ảnh `spur_verified_contact_mode_theory_straight_line.png`: Đường thẳng tiếp xúc hiển thị rõ nét trên cả Flank 1 và Flank 2.
+    * Chụp ảnh `spur_verified_contact_mode_crowning_ellipse.png`: Vết elip crowning hiển thị sắc nét ở giữa răng.
+    * Chụp ảnh `spur_verified_helical_contact_flank_only.png`: Bánh răng nghiêng ($\beta = 15^\circ$) hiển thị ăn khớp mặt sườn xoắn chuẩn xác.
+    * 0 lỗi JavaScript Console!
+  - Multi-case QC Suite (`qc_gear_multi_case_suite.py`):
+    * **110/110 checks PASS 100.0% ($\Delta = 0.0000$)** trên 5 kịch bản thực tế MITCalc 1.74.

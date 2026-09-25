@@ -69,15 +69,20 @@ export const Gear3DGenerator = {
         }
 
         // 3. Determine slice count along face width b (Z axis)
+        const contactMode = opt.contactMode || 'theory';
+        const isSurfaceOnly = !!opt.surfaceOnly;
+
         let numSlices = opt.numSlices;
         if (!numSlices) {
-            if (!isHelical) {
-                numSlices = 1; // 2 layers (front & back) is mathematically exact for spur gears
+            if (contactMode === 'crowning') {
+                numSlices = 20; // Discretize parabolic crowning along face width Z
+            } else if (!isHelical) {
+                numSlices = isSurfaceOnly ? 12 : 1; // 2 layers for solid spur, 12 layers for smooth surface
             } else {
                 // For helical gear, adapt slices to helix twist
                 const twistTotalRad = Math.abs((b * Math.tan(betaRad)) / (d / 2.0));
                 const slicesFromTwist = Math.ceil(twistTotalRad / (Math.PI / 45.0));
-                numSlices = Math.max(6, Math.min(10, slicesFromTwist));
+                numSlices = Math.max(8, Math.min(24, slicesFromTwist));
             }
         }
 
@@ -94,8 +99,6 @@ export const Gear3DGenerator = {
         // Group 2: Front end cap at Z = +halfB (2 * N vertices: N outer + N bore, normal strictly [0, 0, 1])
         // Group 3: Back end cap at Z = -halfB (2 * N vertices: N outer + N bore, normal strictly [0, 0, -1])
         // Group 4: Inner bore cylinder surface (numLayers * N vertices, normal pointing radially inwards)
-        const isSurfaceOnly = !!opt.surfaceOnly;
-
         const lateralVCount = numLayers * N;
         const capVCount = isSurfaceOnly ? 0 : (2 * N);
         const boreVCount = isSurfaceOnly ? 0 : (numLayers * N);
@@ -136,13 +139,34 @@ export const Gear3DGenerator = {
         // --- GROUP 1: Lateral Tooth Outer Surface ---
         const lateralBase = 0;
         let vIdx = lateralBase;
+        const isPinion = (opt.hand === -1) || (opt.isPinion === true);
+
         for (let k = 0; k < numLayers; k++) {
-            const { zCoord, cosT, sinT } = getLayerGeom(k);
+            const { zCoord, theta } = getLayerGeom(k);
+            const uNorm = halfB > 1e-6 ? (zCoord / halfB) : 0.0; // -1.0 to +1.0
+
+            let dThetaKiss = 0.0;
+            if (isPinion) {
+                if (contactMode === 'crowning') {
+                    // Phương án 2: Độ vồng Parabol dọc trục Z (tập trung ở Z = 0, về 0 ở 2 đầu)
+                    const K_crown = Math.max(0.0, 1.0 - uNorm * uNorm);
+                    dThetaKiss = (0.14 * K_crown) / Math.max(1.0, d / 2.0);
+                } else {
+                    // Phương án 1 (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc đường thẳng song song Z
+                    dThetaKiss = 0.07 / Math.max(1.0, d / 2.0);
+                }
+            }
+
             for (let j = 0; j < N; j++) {
-                const px = contour[j].x;
-                const py = contour[j].y;
-                positions[vIdx * 3] = px * cosT - py * sinT;
-                positions[vIdx * 3 + 1] = px * sinT + py * cosT;
+                const pt = contour[j];
+                const side = pt.side || 0.0;
+                const kissAngle = side * dThetaKiss;
+                const totalTheta = theta + kissAngle;
+                const cosT = Math.cos(totalTheta);
+                const sinT = Math.sin(totalTheta);
+
+                positions[vIdx * 3] = pt.x * cosT - pt.y * sinT;
+                positions[vIdx * 3 + 1] = pt.x * sinT + pt.y * cosT;
                 positions[vIdx * 3 + 2] = zCoord;
                 vIdx++;
             }

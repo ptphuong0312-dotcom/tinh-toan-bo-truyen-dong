@@ -827,5 +827,24 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 4. **Điều khiển giao diện người dùng**:
    - Dropdown `#selContactTheoryMode` đặt ngay cạnh nút `#btnToggleFlankOnly`, tự động chọn `theory` khi tải trang và cho phép kỹ sư chuyển đổi tức thì không cần tải lại trang.
 
+---
 
-
+### Quy Tắc 38: Quy Chuẩn Đồng Bộ Chế Độ Quan Sát Vết Tiếp Xúc Ăn Khớp 3D Bánh Răng Trụ & Nghiêng (Spur & Helical Flank-Only & Contact Theory Protocol)
+1. **Lược bỏ bộ công cụ TCA cũ**:
+   - Gỡ bỏ hoàn toàn nút `#btnToggleContactTCA`, dropdown `#selTCAColorMode`, slider `#sliderTCABandWidth` và khối `#tcaBandControl`.
+   - Vết tiếp xúc không dùng shader GPU tô màu giả lập mà được nhận biết trực quan 100% qua hình học ăn khớp của 2 mặt răng.
+2. **Chế độ "Chỉ Mặt Bên" (`#btnToggleFlankOnly`)**:
+   - Khi kích hoạt, ẩn toàn bộ khối phôi đặc (`pinionMesh`, `gearMesh`), chỉ hiển thị các vỏ mặt bên thân khai rỗng (`pinionSurfMesh`, `gearSurfMesh`) được tạo ra từ `Gear3DGenerator.generateGearSurfaceMesh`.
+   - Cả hai mặt sườn (Flank 1 bên phải và Flank 2 bên trái) đều được gắn cờ `side = +1.0` và `side = -1.0` trong `MitcalcToothSolver.generateCompleteWheelContour`, cho phép hiển thị vết ăn khớp đồng thời trên cả 2 mặt bên.
+3. **Quy chuẩn 2 phương án tiếp xúc qua `#selContactTheoryMode`**:
+   - **Phương án 1 (MẶC ĐỊNH - `theory`)**: Chuẩn Lý Thuyết Thuần Túy (Đường Thẳng Tiếp Xúc Dọc Bề Rộng Răng)
+     * Lượng bù góc tiếp xúc hằng số $d\theta = 0.07 / r_{\text{pitch}}$ đồng đều trên toàn bộ bề rộng vành răng $b$.
+     * Đối với bánh răng trụ thẳng ($\beta = 0^\circ$): Toàn bộ đường sinh răng song song 100% với trục quay $Z$. Vết tiếp xúc ăn khớp là **MỘT ĐƯỜNG THẲNG CHẠY DỌC THEO BỀ RỘNG RĂNG**.
+     * Đối với bánh răng trụ răng nghiêng ($\beta \ne 0^\circ$): Đường tiếp xúc nghiêng một góc $\beta_b$ trên mặt phẳng ăn khớp, di chuyển tịnh tiến liên tục dọc chiều dài ăn khớp.
+   - **Phương án 2 (`crowning`)**: Mô Phỏng Thực Tế Xưởng Gia Công Bánh Răng (Vết Elip Độ Vồng Longitudinal Crowning)
+     * Áp dụng hàm độ vồng parabol: $d\theta = \frac{0.14 \cdot (1 - u^2)}{r_{\text{pitch}}}$ với $u = Z / (b / 2)$.
+     * Độ phồng lớn nhất $0.14\text{ mm}$ ở chính giữa bề rộng vành răng ($Z = 0$), thuôn mượt về đúng $0.00\text{ mm}$ tại 2 mặt đầu ($Z = \pm b / 2$).
+     * Vết tiếp xúc tạo thành hình elip tập trung ở khu vực giữa răng, đúng chuẩn vết rà kiểm tra ăn khớp tại xưởng cơ khí chính xác.
+4. **Hiệu chỉnh Camera Preset "Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)"**:
+   - Camera đặt tại $X = d_1 / 2, Y = -12 \cdot m_n, Z = 14 \cdot m_n$, nhìn trực diện vào tâm ăn khớp $(d_1 / 2, 0, 0)$.
+   - Cung cấp góc nhìn tối ưu cho việc quan sát trực tiếp vết tiếp xúc của cả 2 mặt bên khi bánh răng quay.

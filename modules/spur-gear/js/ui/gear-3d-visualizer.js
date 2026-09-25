@@ -36,25 +36,14 @@ export class Gear3DVisualizer {
         this.mesh1Data = null;
         this.mesh2Data = null;
 
-        // Tooth Contact Analysis (TCA) Dynamic Highlighting Engine
-        this.tcaEnabled = false;
-        this.tcaWidth = 2.2;
-        this.tcaColorMode = 0; // 0: Laser Ruby / Neon Flame, 1: Prussian Blue, 2: Thermal Heatmap
-        this.tcaUniforms = {
-            uTcaEnabled: { value: 0.0 },
-            uTcaWidth: { value: 2.2 },
-            uTcaColorMode: { value: 0 },
-            uAnimDirection: { value: 1.0 },
-            uRw1: { value: 57.0 },
-            uAw: { value: 201.0 },
-            uMn: { value: 6.0 },
-            uB: { value: 120.0 },
-            uCosAlfa: { value: 0.93969 },
-            uSinAlfa: { value: 0.34202 },
-            uTanBeta: { value: 0.0 },
-            uRBore1: { value: 20.0 },
-            uRBore2: { value: 50.0 }
-        };
+        // Inspection Mode: Chỉ Mặt Bên (Flank Only - Ẩn khối phôi đặc, chỉ hiện bề mặt sườn thân khai để quan sát vết ăn khớp)
+        this.flankOnlyMode = false;
+        this.pinionSurfMesh = null;
+        this.gearSurfMesh = null;
+        this.surf1Data = null;
+        this.surf2Data = null;
+        this.contactMode = 'theory'; // 'theory' (Mặc định: Đường thẳng tiếp xúc) | 'crowning' (Vết elip có độ vồng)
+        this.viewInitialized = false;
 
         this.init();
     }
@@ -173,6 +162,10 @@ export class Gear3DVisualizer {
             if (obj.geometry) obj.geometry.dispose();
             this.gearGroup.remove(obj);
         }
+        this.pinionMesh = null;
+        this.gearMesh = null;
+        this.pinionSurfMesh = null;
+        this.gearSurfMesh = null;
 
         const resOpts = this.resolution || {};
 
@@ -189,7 +182,9 @@ export class Gear3DVisualizer {
             da: geom.da1,
             df: geom.df1,
             hand: +1,
-            dBore: geom.df1 * 0.45
+            dBore: geom.df1 * 0.45,
+            isPinion: true,
+            contactMode: this.contactMode || 'theory'
         }, resOpts));
 
         // 2. Generate 3D mesh for Gear 2 (Hand: -1 for helical conjugate mesh!)
@@ -205,10 +200,47 @@ export class Gear3DVisualizer {
             da: geom.da2,
             df: geom.df2,
             hand: -1,
-            dBore: geom.df2 * 0.45
+            dBore: geom.df2 * 0.45,
+            isPinion: false,
+            contactMode: this.contactMode || 'theory'
         }, resOpts));
 
-        // 3. Create Three.js BufferGeometries
+        // 3. Generate Hollow Surface Meshes for Flank Only Mode
+        this.surf1Data = Gear3DGenerator.generateGearSurfaceMesh(Object.assign({
+            z: geom.z1,
+            mn: geom.mn,
+            alfa_n: geom.alfa_n,
+            beta: geom.beta,
+            b: geom.b1,
+            x: geom.x1,
+            d: geom.d1,
+            db: geom.db1,
+            da: geom.da1,
+            df: geom.df1,
+            hand: +1,
+            dBore: geom.df1 * 0.45,
+            isPinion: true,
+            contactMode: this.contactMode || 'theory'
+        }, resOpts));
+
+        this.surf2Data = Gear3DGenerator.generateGearSurfaceMesh(Object.assign({
+            z: geom.z2,
+            mn: geom.mn,
+            alfa_n: geom.alfa_n,
+            beta: geom.beta,
+            b: geom.b2,
+            x: geom.x2,
+            d: geom.d2,
+            db: geom.db2,
+            da: geom.da2,
+            df: geom.df2,
+            hand: -1,
+            dBore: geom.df2 * 0.45,
+            isPinion: false,
+            contactMode: this.contactMode || 'theory'
+        }, resOpts));
+
+        // 4. Create Three.js BufferGeometries (Solid)
         const geo1 = new THREE.BufferGeometry();
         geo1.setAttribute('position', new THREE.BufferAttribute(this.mesh1Data.positions, 3));
         geo1.setAttribute('normal', new THREE.BufferAttribute(this.mesh1Data.normals, 3));
@@ -219,8 +251,8 @@ export class Gear3DVisualizer {
         geo2.setAttribute('normal', new THREE.BufferAttribute(this.mesh2Data.normals, 3));
         geo2.setIndex(new THREE.BufferAttribute(this.mesh2Data.indices, 1));
 
-        // 4. Materials (PBR Metallic)
-        // Pinion: Golden Amber / Brass
+        // 5. Materials (PBR Metallic)
+        // Pinion Solid: Golden Amber / Brass
         const mat1 = new THREE.MeshStandardMaterial({
             color: 0xf59e0b,
             metalness: 0.7,
@@ -229,7 +261,7 @@ export class Gear3DVisualizer {
             side: THREE.DoubleSide
         });
 
-        // Gear: Engineering Cyan / Titanium Steel
+        // Gear Solid: Engineering Cyan / Titanium Steel
         const mat2 = new THREE.MeshStandardMaterial({
             color: 0x38bdf8,
             metalness: 0.75,
@@ -238,31 +270,48 @@ export class Gear3DVisualizer {
             side: THREE.DoubleSide
         });
 
-        // Update TCA Uniforms for Spur / Helical Gears
-        const rw1 = geom.d1 / 2.0;
-        const bMax = Math.max(geom.b1, geom.b2) || 120.0;
-        const alfaVal = (geom.alfa_t || geom.alfa_n || 20.0) * Math.PI / 180.0;
-        const betaVal = (geom.beta || 0.0) * Math.PI / 180.0;
-
-        this.tcaUniforms.uRw1.value = rw1;
-        this.tcaUniforms.uAw.value = geom.aw;
-        this.tcaUniforms.uMn.value = geom.mn;
-        this.tcaUniforms.uB.value = bMax;
-        this.tcaUniforms.uCosAlfa.value = Math.cos(alfaVal);
-        this.tcaUniforms.uSinAlfa.value = Math.sin(alfaVal);
-        this.tcaUniforms.uTanBeta.value = Math.tan(betaVal);
-        this.tcaUniforms.uRBore1.value = geom.df1 * 0.225;
-        this.tcaUniforms.uRBore2.value = geom.df2 * 0.225;
-
-        // Apply TCA (Tooth Contact Analysis) Dynamic Shader
-        this.applyTCAShader(mat1, true);
-        this.applyTCAShader(mat2, false);
-
         this.pinionMesh = new THREE.Mesh(geo1, mat1);
+        this.pinionMesh.visible = !this.flankOnlyMode;
         this.gearMesh = new THREE.Mesh(geo2, mat2);
+        this.gearMesh.visible = !this.flankOnlyMode;
 
         this.pinionGroup.add(this.pinionMesh);
         this.gearGroup.add(this.gearMesh);
+
+        // 6. Surface-Only Meshes (Chế độ "Chỉ Mặt Bên" quan sát vết tiếp xúc)
+        if (this.surf1Data) {
+            const geoSurf1 = new THREE.BufferGeometry();
+            geoSurf1.setAttribute('position', new THREE.BufferAttribute(this.surf1Data.positions, 3));
+            geoSurf1.setAttribute('normal', new THREE.BufferAttribute(this.surf1Data.normals, 3));
+            geoSurf1.setIndex(new THREE.BufferAttribute(this.surf1Data.indices, 1));
+            const matPinionSurf = new THREE.MeshStandardMaterial({
+                color: 0xf59e0b,
+                metalness: 0.7,
+                roughness: 0.3,
+                wireframe: this.wireframeMode,
+                side: THREE.DoubleSide
+            });
+            this.pinionSurfMesh = new THREE.Mesh(geoSurf1, matPinionSurf);
+            this.pinionSurfMesh.visible = this.flankOnlyMode;
+            this.pinionGroup.add(this.pinionSurfMesh);
+        }
+
+        if (this.surf2Data) {
+            const geoSurf2 = new THREE.BufferGeometry();
+            geoSurf2.setAttribute('position', new THREE.BufferAttribute(this.surf2Data.positions, 3));
+            geoSurf2.setAttribute('normal', new THREE.BufferAttribute(this.surf2Data.normals, 3));
+            geoSurf2.setIndex(new THREE.BufferAttribute(this.surf2Data.indices, 1));
+            const matGearSurf = new THREE.MeshStandardMaterial({
+                color: 0x38bdf8,
+                metalness: 0.75,
+                roughness: 0.25,
+                wireframe: this.wireframeMode,
+                side: THREE.DoubleSide
+            });
+            this.gearSurfMesh = new THREE.Mesh(geoSurf2, matGearSurf);
+            this.gearSurfMesh.visible = this.flankOnlyMode;
+            this.gearGroup.add(this.gearSurfMesh);
+        }
 
         // 5. Kinematic positioning
         this.pinionGroup.position.set(0, 0, 0);
@@ -281,8 +330,11 @@ export class Gear3DVisualizer {
         const maxRadius = Math.max(geom.da1, geom.da2) / 2.0;
         this.gridHelper.position.set(geom.aw / 2.0, 0, -(Math.max(geom.b1, geom.b2) / 2.0 + 15));
 
-        // Auto-fit camera
-        this.autoFitCamera();
+        // Auto-fit camera on first load only
+        if (!this.viewInitialized) {
+            this.autoFitCamera();
+            this.viewInitialized = true;
+        }
     }
 
     autoFitCamera() {
@@ -349,7 +401,7 @@ export class Gear3DVisualizer {
             case 'mesh': // Close-up on the pitch point contact zone
                 const pitchPtX = (this.geom.d1 || 100) / 2.0;
                 if (this.controls) this.controls.target.set(pitchPtX, 0, 0);
-                this.camera.position.set(pitchPtX, -(this.geom.mn * 14), this.geom.mn * 16);
+                this.camera.position.set(pitchPtX, -(this.geom.mn * 12), this.geom.mn * 14);
                 this.camera.up.set(0, 0, 1);
                 break;
             case 'iso': // Standard Isometric view
@@ -372,6 +424,12 @@ export class Gear3DVisualizer {
         if (this.gearMesh && this.gearMesh.material) {
             this.gearMesh.material.wireframe = this.wireframeMode;
         }
+        if (this.pinionSurfMesh && this.pinionSurfMesh.material) {
+            this.pinionSurfMesh.material.wireframe = this.wireframeMode;
+        }
+        if (this.gearSurfMesh && this.gearSurfMesh.material) {
+            this.gearSurfMesh.material.wireframe = this.wireframeMode;
+        }
     }
 
     setAnimSpeed(speed) {
@@ -380,9 +438,6 @@ export class Gear3DVisualizer {
 
     setAnimDirection(dir) {
         this.animDirection = (dir === -1 || dir < 0) ? -1 : 1;
-        if (this.tcaUniforms && this.tcaUniforms.uAnimDirection) {
-            this.tcaUniforms.uAnimDirection.value = this.animDirection;
-        }
         if (this.renderer && this.scene && this.camera) {
             this.renderer.render(this.scene, this.camera);
         }
@@ -391,9 +446,6 @@ export class Gear3DVisualizer {
 
     toggleAnimDirection() {
         this.animDirection = (this.animDirection === 1) ? -1 : 1;
-        if (this.tcaUniforms && this.tcaUniforms.uAnimDirection) {
-            this.tcaUniforms.uAnimDirection.value = this.animDirection;
-        }
         if (this.renderer && this.scene && this.camera) {
             this.renderer.render(this.scene, this.camera);
         }
@@ -416,9 +468,6 @@ export class Gear3DVisualizer {
 
             this.pinionGroup.rotation.z = this.pinionAngle;
             this.gearGroup.rotation.z = this.gearAngle;
-            if (this.tcaUniforms && this.tcaUniforms.uAnimDirection) {
-                this.tcaUniforms.uAnimDirection.value = parseFloat(this.animDirection) || 1.0;
-            }
         }
 
         if (this.controls) {
@@ -508,109 +557,30 @@ export class Gear3DVisualizer {
     }
 
     /**
-     * Tooth Contact Analysis (TCA) - Custom GPU Shader Hook for Spur & Helical Gears
-     * Colors only the active contact zone where the teeth meet in real time.
+     * Chế Độ "Chỉ Mặt Bên" (Flank Only Mode)
+     * Ẩn toàn bộ khối phôi đặc, chỉ hiển thị bề mặt sườn thân khai của 2 bánh răng
+     * Vết ăn khớp tiếp xúc hình học được quan sát trực tiếp qua giao tuyến ăn khớp giữa 2 mặt bên
      */
-    applyTCAShader(material, isPinion) {
-        material.onBeforeCompile = (shader) => {
-            Object.assign(shader.uniforms, this.tcaUniforms);
-            shader.uniforms.uIsPinion = { value: isPinion ? 1.0 : 0.0 };
-
-            shader.vertexShader = `
-                varying vec3 vTcaWorldPos;
-                varying vec3 vTcaWorldNorm;
-            ` + shader.vertexShader;
-
-            shader.vertexShader = shader.vertexShader.replace(
-                '#include <worldpos_vertex>',
-                `#include <worldpos_vertex>
-                vTcaWorldPos = (modelMatrix * vec4(transformed, 1.0)).xyz;
-                vTcaWorldNorm = normalize((modelMatrix * vec4(normal, 0.0)).xyz);
-                `
-            );
-
-            shader.fragmentShader = `
-                uniform float uTcaEnabled;
-                uniform float uTcaWidth;
-                uniform int uTcaColorMode;
-                uniform float uAnimDirection;
-                uniform float uRw1;
-                uniform float uAw;
-                uniform float uMn;
-                uniform float uB;
-                uniform float uCosAlfa;
-                uniform float uSinAlfa;
-                uniform float uTanBeta;
-                uniform float uIsPinion;
-                uniform float uRBore1;
-                uniform float uRBore2;
-                varying vec3 vTcaWorldPos;
-                varying vec3 vTcaWorldNorm;
-            ` + shader.fragmentShader;
-
-            const tcaFragmentLogic = `
-                #include <dithering_fragment>
-                if (uTcaEnabled > 0.5) {
-                    float x = vTcaWorldPos.x;
-                    float y = vTcaWorldPos.y;
-                    float z = vTcaWorldPos.z;
-
-                    float rAxis = (uIsPinion > 0.5) ? length(vec2(x, y)) : length(vec2(x - uAw, y));
-                    float minBore = (uIsPinion > 0.5) ? (uRBore1 + 2.0) : (uRBore2 + 2.0);
-
-                    // Active meshing zone around pitch point (uRw1, 0)
-                    if (abs(x - uRw1) <= (uMn * 1.8) && abs(y) <= (uMn * 2.2) && abs(z) <= (uB * 0.5 + 2.0) && rAxis > minBore) {
-                        // Conjugate Line of Action distance with direction-aware sign:
-                        float dLoa = abs((x - uRw1) * uCosAlfa + uAnimDirection * y * uSinAlfa - z * uTanBeta * uSinAlfa);
-
-                        if (dLoa < uTcaWidth) {
-                            float t = clamp(1.0 - (dLoa / uTcaWidth), 0.0, 1.0);
-                            t = smoothstep(0.0, 1.0, t);
-
-                            vec3 contactCol = vec3(1.0, 0.08, 0.25); // Mode 0: Laser Ruby / Neon Flame
-                            vec3 glowCol = vec3(1.0, 0.95, 0.5);
-
-                            if (uTcaColorMode == 1) {
-                                // Mode 1: Prussian Blue (Bột màu rà vết cơ khí)
-                                contactCol = mix(vec3(0.04, 0.32, 0.95), vec3(0.35, 0.8, 1.0), t);
-                                glowCol = vec3(0.65, 0.92, 1.0);
-                            } else if (uTcaColorMode == 2) {
-                                // Mode 2: Thermal Heatmap (Bản đồ nhiệt áp lực)
-                                vec3 colA = vec3(0.08, 0.85, 0.22);
-                                vec3 colB = vec3(1.0, 0.85, 0.1);
-                                vec3 colC = vec3(1.0, 0.08, 0.15);
-                                contactCol = t < 0.5 ? mix(colA, colB, t * 2.0) : mix(colB, colC, (t - 0.5) * 2.0);
-                                glowCol = vec3(1.0, 1.0, 0.4);
-                            }
-
-                            gl_FragColor.rgb = mix(gl_FragColor.rgb, contactCol, t * 0.95);
-                            gl_FragColor.rgb += glowCol * pow(t, 2.5) * 0.85;
-                        }
-                    }
-                }
-            `;
-
-            shader.fragmentShader = shader.fragmentShader.replace(
-                '#include <dithering_fragment>',
-                tcaFragmentLogic
-            );
-        };
-        material.needsUpdate = true;
+    toggleFlankOnly() {
+        this.flankOnlyMode = !this.flankOnlyMode;
+        if (this.pinionMesh) this.pinionMesh.visible = !this.flankOnlyMode;
+        if (this.gearMesh) this.gearMesh.visible = !this.flankOnlyMode;
+        if (this.pinionSurfMesh) this.pinionSurfMesh.visible = this.flankOnlyMode;
+        if (this.gearSurfMesh) this.gearSurfMesh.visible = this.flankOnlyMode;
+        return this.flankOnlyMode;
     }
 
-    toggleContactTCA() {
-        this.tcaEnabled = !this.tcaEnabled;
-        this.tcaUniforms.uTcaEnabled.value = this.tcaEnabled ? 1.0 : 0.0;
-        return this.tcaEnabled;
-    }
-
-    setTCAWidth(width) {
-        this.tcaWidth = Math.max(0.5, Math.min(5.0, parseFloat(width) || 2.2));
-        this.tcaUniforms.uTcaWidth.value = this.tcaWidth;
-    }
-
-    setTCAColorMode(mode) {
-        this.tcaColorMode = parseInt(mode) || 0;
-        this.tcaUniforms.uTcaColorMode.value = this.tcaColorMode;
+    setContactMode(mode) {
+        this.contactMode = (mode === 'crowning') ? 'crowning' : 'theory';
+        if (this.geom) {
+            const curPinionAngle = this.pinionAngle;
+            const curGearAngle = this.gearAngle;
+            this.setGeometry(this.geom);
+            this.pinionAngle = curPinionAngle;
+            this.gearAngle = curGearAngle;
+            this.pinionGroup.rotation.z = this.pinionAngle;
+            this.gearGroup.rotation.z = this.gearAngle;
+        }
+        return this.contactMode;
     }
 }
