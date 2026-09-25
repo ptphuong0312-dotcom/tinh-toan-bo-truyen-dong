@@ -411,9 +411,11 @@ export class Gear3DVisualizer {
             case 'mesh': // Close-up on the pitch point contact zone
                 const pitchPtX = (this.geom.dw1 || this.geom.d1 || 100) / 2.0;
                 const b = this.geom.b1 || 40.0;
+                const mn = this.geom.mn || 6.0;
+                const meshDist = Math.max(b, 10.0 * mn) * 1.15;
                 if (this.controls) this.controls.target.set(pitchPtX, 0, 0);
-                this.camera.position.set(pitchPtX + b * 0.25, -b * 1.15, b * 0.90);
-                this.camera.up.set(0, 0, 1);
+                this.camera.position.set(pitchPtX, -meshDist * 0.36, meshDist * 0.93);
+                this.camera.up.set(0, 1, 0);
                 break;
             case 'iso': // Standard Isometric view
             default:

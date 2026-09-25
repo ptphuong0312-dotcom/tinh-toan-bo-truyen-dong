@@ -1644,3 +1644,39 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
      - Cập nhật `tools/bundle_spur.py` và chạy `python tools/bundle_all.py` đóng gói thành công `modules/spur-gear/js/mitcalc-engine.bundle.js`.
      - Bộ kiểm thử đa trường hợp `qc_gear_multi_case_suite.py`: **110/110 checks PASS (100.0%)** ($\Delta = 0.0000$).
      - Kiểm thử giao diện bằng Playwright xác nhận 0 lỗi Console/WebGL. Hình ảnh chụp trực quan xác nhận 2D đơn giản thanh thoát và 3D Chỉ Mặt Bên hiển thị vết tiếp xúc tự nhiên chuẩn xác 100%.
+
+
+---
+
+### [2026-09-25] ĐỘT PHÁ TOÁN HỌC KHẮC PHỤC TRIỆT ĐỂ DẤU GÓC QUAY SƯỜN RĂNG (KISS ANGLE SIGN INVERSION) & HIỂN THỊ VẾT IN MÀU THỰC THỂ 1-TO-1 CHUẨN BÁNH RĂNG CÔN
+* **Bối cảnh & Chỉ đạo dứt khoát từ SirPhuong**:
+  - *"Tôi nói là bạn mô phỏng làm sao để vết tiếp xúc hiện lên được như bên bánh răng côn (vết tiếp xúc này tôi với bạn cũng đã thống nhất là thực chất nó xuất hiện khi 2 mặt răng tiếp xúc vào nhau thì khi đó màu của bánh răng này sẽ hiện (in) lên mặt sau của bánh răng kia giống với mô phỏng bên bánh răng côn)."*
+* **Nguyên nhân cốt lõi phát hiện qua giải tích tọa độ cực (`scratch/analyze_flank.js`)**:
+  - Trong `MitcalcToothSolver`, tọa độ các điểm biên dạng răng được lưu dưới dạng góc cực theo chiều kim đồng hồ (CW) xuất phát từ trục $+Y$: $x = r \sin\theta, y = r \cos\theta$.
+  - Khi thực hiện phép quay ngược chiều kim đồng hồ (CCW) bằng ma trận phẳng Cartesian: $x' = x\cos T - y\sin T, y' = x\sin T + y\cos T$, góc cực thực tế bị trừ đi góc quay: $\theta' = \theta - T$.
+  - Mã nguồn cũ đặt: `const kissAngle = side * dThetaKiss;`. Với sườn bên phải (`side = +1.0`), `kissAngle > 0`, dẫn đến $\theta' = \theta - d\theta_{\text{kiss}} < \theta$.
+  - Hậu quả nghiêm trọng: **Răng bánh Pinion bị co hẹp (shrunk) $-0.16\text{ mm}$ ở cả hai sườn thay vì nở rộng ra ngoài!** Giữa 2 mặt bên xuất hiện khe hở danh nghĩa $\approx 0.188\text{ mm}$, khiến hai vỏ mỏng không bao giờ chạm nhau, do đó màu bánh này không thể hiện/in lên mặt sau của bánh kia!
+* **Giải pháp kỹ thuật triệt để**:
+  1. **Đảo ngược dấu góc quay sườn răng trong `gear-3d-generator.js`**:
+     - Đổi công thức thành: `const kissAngle = -side * dThetaKiss;` (dấu âm làm tăng góc cực, mở rộng sườn răng ra ngoài cả 2 phía).
+     - Thiết lập độ dôi tiếp xúc:
+       * Chế độ Lý Thuyết (`theory`): `allowance = Math.max(0.18, 0.035 * mn); dThetaKiss = allowance / (d / 2);`
+       * Chế độ Thực Tế Xưởng (`crowning`): `allowance = Math.max(0.24, 0.045 * mn) * K_crown; dThetaKiss = allowance / (d / 2);`
+     - Độ dôi thực tế sau khi trừ khe hở lưới đạt **$+0.1883\text{ mm}$** trên cả sườn trên và sườn dưới.
+     - Vỏ sườn răng Bánh 2 (Amber Gold `#fbbf24`, `THREE.DoubleSide`) xuyên nhẹ qua vỏ sườn răng Bánh 1 (Sky Blue `#38bdf8`) và lộ rõ ở mặt sau/trong. Mắt người nhìn vào thấy vệt màu vàng in nổi bật trên nền xanh, và vệt màu xanh in trên nền vàng, đúng 1-to-1 cơ chế thực thể của Bánh Răng Côn!
+  2. **Tối ưu hóa Camera Preset `mesh` (Vùng Tiếp Xúc Ăn Khớp)**:
+     - Tự động co dãn theo quy mô bánh răng:
+       `const meshDist = Math.max(b, 10.0 * mn) * 1.15;`
+       `this.camera.position.set(pitchPtX, -meshDist * 0.36, meshDist * 0.93);`
+       `this.camera.up.set(0, 1, 0);`
+       `this.controls.target.set(pitchPtX, 0, 0);`
+     - Góc nhìn nghiêng $20^\circ$ từ trên xuống trục $Z$, căn thẳng vào rãnh ăn khớp tại bán kính chia, hiển thị sắc nét toàn bộ chiều rộng răng.
+  3. **Đóng gói Bundle & Nghiệm thu Playwright**:
+     - Đóng gói thành công qua `bundle_all.py` vào `modules/spur-gear/js/mitcalc-engine.bundle.js`.
+     - Bộ kiểm nghiệm Playwright E2E (`scratch/e2e_verify_spur_3d.py`) xác nhận:
+       * `e2e_1_spur_2d_clean.png`: Bản vẽ 2D đơn giản, thanh thoát, mượt mà.
+       * `e2e_2_spur_flank_mesh_theory.png`: Đường in màu thẳng tắp suốt chiều rộng sườn răng.
+       * `e2e_3_spur_flank_mesh_crowning.png`: Vết in màu elip crowning khép kín ở giữa mặt răng.
+       * `e2e_4_helical_flank_mesh_crowning.png`: Bánh răng nghiêng $\beta = 15^\circ$ vết elip nghiêng xoắn chuẩn xác.
+       * `e2e_5_helical_flank_mesh_theory.png`: Bánh răng nghiêng $\beta = 15^\circ$ đường thẳng tiếp xúc nghiêng theo góc xoắn.
+       * **0 lỗi Console / WebGL**!

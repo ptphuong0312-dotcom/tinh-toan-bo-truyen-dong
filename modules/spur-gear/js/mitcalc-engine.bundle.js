@@ -3524,7 +3524,8 @@ const Gear3DGenerator = {
         const hand = opt.hand !== undefined ? opt.hand : 1;
         const dBore = opt.dBore || Math.max(10.0, df * 0.45);
         const rBore = dBore / 2.0;
-        const profileStep = opt.profileStep || (z > 30 ? 4 : 2);
+        const isSurfaceOnly = !!opt.surfaceOnly;
+        const profileStep = opt.profileStep || (isSurfaceOnly ? 1 : (z > 30 ? 4 : 2));
 
         const isHelical = Math.abs(betaDeg) > 1e-4;
         const betaRad = (betaDeg * Math.PI) / 180.0;
@@ -3551,7 +3552,6 @@ const Gear3DGenerator = {
 
         // 3. Determine slice count along face width b (Z axis)
         const contactMode = opt.contactMode || 'theory';
-        const isSurfaceOnly = !!opt.surfaceOnly;
 
         let numSlices = opt.numSlices;
         if (!numSlices) {
@@ -3633,17 +3633,21 @@ const Gear3DGenerator = {
                 if (contactMode === 'crowning') {
                     // Phương án 2: Độ vồng Parabol dọc trục Z (tập trung ở Z = 0, về 0 ở 2 đầu)
                     const K_crown = Math.max(0.0, 1.0 - uNorm * uNorm);
-                    dThetaKiss = (0.22 * K_crown) / Math.max(1.0, d / 2.0);
+                    const allowance = Math.max(0.24, 0.045 * mn) * K_crown;
+                    dThetaKiss = allowance / Math.max(1.0, d / 2.0);
                 } else {
                     // Phương án 1 (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc đường thẳng song song Z
-                    dThetaKiss = 0.16 / Math.max(1.0, d / 2.0);
+                    const allowance = Math.max(0.18, 0.035 * mn);
+                    dThetaKiss = allowance / Math.max(1.0, d / 2.0);
                 }
             }
 
             for (let j = 0; j < N; j++) {
                 const pt = contour[j];
                 const side = pt.side || 0.0;
-                const kissAngle = side * dThetaKiss;
+                // Sign correction: rotation CCW by totalTheta subtracts kissAngle from polar angle
+                // Therefore, kissAngle = -side * dThetaKiss expands the tooth outwards on BOTH flanks (+side for right, -side for left)
+                const kissAngle = -side * dThetaKiss;
                 const totalTheta = theta + kissAngle;
                 const cosT = Math.cos(totalTheta);
                 const sinT = Math.sin(totalTheta);
@@ -4665,9 +4669,11 @@ class Gear3DVisualizer {
             case 'mesh': // Close-up on the pitch point contact zone
                 const pitchPtX = (this.geom.dw1 || this.geom.d1 || 100) / 2.0;
                 const b = this.geom.b1 || 40.0;
+                const mn = this.geom.mn || 6.0;
+                const meshDist = Math.max(b, 10.0 * mn) * 1.15;
                 if (this.controls) this.controls.target.set(pitchPtX, 0, 0);
-                this.camera.position.set(pitchPtX + b * 0.25, -b * 1.15, b * 0.90);
-                this.camera.up.set(0, 0, 1);
+                this.camera.position.set(pitchPtX, -meshDist * 0.36, meshDist * 0.93);
+                this.camera.up.set(0, 1, 0);
                 break;
             case 'iso': // Standard Isometric view
             default:
