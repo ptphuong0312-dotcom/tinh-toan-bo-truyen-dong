@@ -139,7 +139,7 @@ export const Gear3DGenerator = {
         // --- GROUP 1: Lateral Tooth Outer Surface ---
         const lateralBase = 0;
         let vIdx = lateralBase;
-        const isPinion = (opt.hand === -1) || (opt.isPinion === true);
+        const isPinion = (opt.isPinion !== undefined) ? (opt.isPinion === true) : (opt.hand === +1);
 
         for (let k = 0; k < numLayers; k++) {
             const { zCoord, theta } = getLayerGeom(k);
@@ -150,10 +150,10 @@ export const Gear3DGenerator = {
                 if (contactMode === 'crowning') {
                     // Phương án 2: Độ vồng Parabol dọc trục Z (tập trung ở Z = 0, về 0 ở 2 đầu)
                     const K_crown = Math.max(0.0, 1.0 - uNorm * uNorm);
-                    dThetaKiss = (0.14 * K_crown) / Math.max(1.0, d / 2.0);
+                    dThetaKiss = (0.22 * K_crown) / Math.max(1.0, d / 2.0);
                 } else {
                     // Phương án 1 (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc đường thẳng song song Z
-                    dThetaKiss = 0.07 / Math.max(1.0, d / 2.0);
+                    dThetaKiss = 0.16 / Math.max(1.0, d / 2.0);
                 }
             }
 

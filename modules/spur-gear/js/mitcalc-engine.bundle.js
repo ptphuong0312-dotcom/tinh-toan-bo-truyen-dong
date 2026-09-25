@@ -3610,7 +3610,7 @@ const Gear3DGenerator = {
         // --- GROUP 1: Lateral Tooth Outer Surface ---
         const lateralBase = 0;
         let vIdx = lateralBase;
-        const isPinion = (opt.hand === -1) || (opt.isPinion === true);
+        const isPinion = (opt.isPinion !== undefined) ? (opt.isPinion === true) : (opt.hand === +1);
 
         for (let k = 0; k < numLayers; k++) {
             const { zCoord, theta } = getLayerGeom(k);
@@ -3621,10 +3621,10 @@ const Gear3DGenerator = {
                 if (contactMode === 'crowning') {
                     // Phương án 2: Độ vồng Parabol dọc trục Z (tập trung ở Z = 0, về 0 ở 2 đầu)
                     const K_crown = Math.max(0.0, 1.0 - uNorm * uNorm);
-                    dThetaKiss = (0.14 * K_crown) / Math.max(1.0, d / 2.0);
+                    dThetaKiss = (0.22 * K_crown) / Math.max(1.0, d / 2.0);
                 } else {
                     // Phương án 1 (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc đường thẳng song song Z
-                    dThetaKiss = 0.07 / Math.max(1.0, d / 2.0);
+                    dThetaKiss = 0.16 / Math.max(1.0, d / 2.0);
                 }
             }
 
@@ -4260,6 +4260,7 @@ class Gear3DVisualizer {
         this.rotSpeedBase = 0.015; // rad per frame at 1.0x
         this.pinionAngle = 0;
         this.gearAngle = 0;
+        this.initialPinionAngle = -Math.PI / 2.0;
         this.initialGearAngle = 0;
         this.gearRatio = 2.5;
 
@@ -4552,8 +4553,9 @@ class Gear3DVisualizer {
 
         // Exact conjugate rolling phase: tooth crest of Pinion 1 meshes cleanly into tooth gap of Gear 2
         this.gearRatio = geom.z2 / geom.z1;
-        this.initialGearAngle = (Math.PI / geom.z2) + (Math.PI / 2.0) * (1.0 - geom.z1 / geom.z2);
-        this.pinionAngle = 0.0;
+        this.initialPinionAngle = -Math.PI / 2.0;
+        this.initialGearAngle = Math.PI / 2.0 - Math.PI / geom.z2;
+        this.pinionAngle = this.initialPinionAngle;
         this.gearAngle = this.initialGearAngle;
 
         this.pinionGroup.rotation.z = this.pinionAngle;
@@ -4633,8 +4635,9 @@ class Gear3DVisualizer {
                 break;
             case 'mesh': // Close-up on the pitch point contact zone
                 const pitchPtX = (this.geom.d1 || 100) / 2.0;
+                const b = this.geom.b1 || 40.0;
                 if (this.controls) this.controls.target.set(pitchPtX, 0, 0);
-                this.camera.position.set(pitchPtX, -(this.geom.mn * 12), this.geom.mn * 14);
+                this.camera.position.set(pitchPtX + b * 0.25, -b * 1.15, b * 0.90);
                 this.camera.up.set(0, 0, 1);
                 break;
             case 'iso': // Standard Isometric view
@@ -4697,7 +4700,7 @@ class Gear3DVisualizer {
             const dTheta = this.rotSpeedBase * this.animSpeed * (this.animDirection || 1);
             this.pinionAngle += dTheta;
             // Lock gearAngle directly to conjugate rolling phase (zero accumulation drift):
-            this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
+            this.gearAngle = this.initialGearAngle - (this.pinionAngle - this.initialPinionAngle) / this.gearRatio;
 
             this.pinionGroup.rotation.z = this.pinionAngle;
             this.gearGroup.rotation.z = this.gearAngle;
@@ -4739,6 +4742,7 @@ class Gear3DVisualizer {
                 da: this.geom.da1,
                 df: this.geom.df1,
                 hand: +1,
+                isPinion: true,
                 dBore: this.geom.df1 * 0.45
             }, resOpts));
             m2 = Gear3DGenerator.generateGearSurfaceMesh(Object.assign({
@@ -4753,6 +4757,7 @@ class Gear3DVisualizer {
                 da: this.geom.da2,
                 df: this.geom.df2,
                 hand: -1,
+                isPinion: false,
                 dBore: this.geom.df2 * 0.45
             }, resOpts));
         }
@@ -4806,11 +4811,11 @@ class Gear3DVisualizer {
     setContactMode(mode) {
         this.contactMode = (mode === 'crowning') ? 'crowning' : 'theory';
         if (this.geom) {
-            const curPinionAngle = this.pinionAngle;
-            const curGearAngle = this.gearAngle;
+            const curPinionOffset = (this.pinionAngle !== undefined && this.initialPinionAngle !== undefined)
+                ? (this.pinionAngle - this.initialPinionAngle) : 0.0;
             this.setGeometry(this.geom);
-            this.pinionAngle = curPinionAngle;
-            this.gearAngle = curGearAngle;
+            this.pinionAngle = this.initialPinionAngle + curPinionOffset;
+            this.gearAngle = this.initialGearAngle - curPinionOffset / this.gearRatio;
             this.pinionGroup.rotation.z = this.pinionAngle;
             this.gearGroup.rotation.z = this.gearAngle;
         }

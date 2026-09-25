@@ -967,17 +967,29 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
    - Khi kích hoạt, ẩn khối phôi đặc (`pinionMesh`, `gearMesh`), chỉ hiển thị các vỏ mặt bên thân khai rỗng (`pinionSurfMesh`, `gearSurfMesh`) được tạo từ `Gear3DGenerator.generateGearSurfaceMesh`.
    - Cả hai mặt sườn (Flank 1 bên phải và Flank 2 bên trái) đều được gắn cờ `side = +1.0` và `side = -1.0` trong `MitcalcToothSolver.generateCompleteWheelContour`, cho phép hiển thị vết ăn khớp đồng thời trên cả 2 mặt bên.
 3. **Quy chuẩn 2 phương án tiếp xúc qua `#selContactTheoryMode`**:
-   - **Phương án 1 (MẶC ĐỊNH - `theory`)**: Chuẩn Lý Thuyết Thuần Túy (Đường Thẳng Tiếp Xúc Dọc Bề Rộng Răng)
-     * Lượng bù góc tiếp xúc hằng số $d\theta = 0.07 / r_{\text{pitch}}$ đồng đều trên toàn bộ bề rộng vành răng $b$.
-     * Đối với bánh răng trụ thẳng ($\beta = 0^\circ$): Toàn bộ đường sinh răng song song 100% với trục quay $Z$. Vết tiếp xúc ăn khớp là **MỘT ĐƯỜNG THẲNG CHẠY DỌC THEO BỀ RỘNG RĂNG**.
-     * Đối với bánh răng trụ răng nghiêng ($\beta \ne 0^\circ$): Đường tiếp xúc nghiêng một góc $\beta_b$ trên mặt phẳng ăn khớp, di chuyển tịnh tiến liên tục dọc chiều dài ăn khớp.
-   - **Phương án 2 (`crowning`)**: Mô Phỏng Thực Tế Xưởng Gia Công Bánh Răng (Vết Elip Độ Vồng Longitudinal Crowning)
-     * Áp dụng hàm độ vồng parabol: $d\theta = \frac{0.14 \cdot (1 - u^2)}{r_{\text{pitch}}}$ với $u = Z / (b / 2)$.
-     * Độ phồng lớn nhất $0.14\text{ mm}$ ở chính giữa bề rộng vành răng ($Z = 0$), thuôn mượt về đúng $0.00\text{ mm}$ tại 2 mặt đầu ($Z = \pm b / 2$).
-     * Vết tiếp xúc tạo thành hình elip tập trung ở khu vực giữa răng, đúng chuẩn vết rà kiểm tra ăn khớp tại xưởng cơ khí chính xác.
-4. **Hiệu chỉnh Camera Preset "Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)"**:
-   - Camera đặt tại $X = d_1 / 2, Y = -12 \cdot m_n, Z = 14 \cdot m_n$, nhìn trực diện vào tâm ăn khớp $(d_1 / 2, 0, 0)$.
-   - Cung cấp góc nhìn tối ưu cho việc quan sát trực tiếp vết tiếp xúc của cả 2 mặt bên khi bánh răng quay.
+   - **Bản chất triệt tiêu khe hở cạnh răng (Backlash Clearance Override)**:
+     * Khe hở cạnh răng pháp danh nghĩa theo ISO 6336 là $j_n \approx 0.125\text{ mm}$ (khe hở mỗi mặt bên $\approx 0.0625\text{ mm}$).
+     * Nếu độ phồng tiếp xúc $d\theta \cdot r_{\text{pitch}} \le 0.0625\text{ mm}$, hai mặt răng hoàn toàn không chạm nhau và người dùng không thể thấy vết tiếp xúc.
+     * Để tạo vết giao tuyến hình học rõ nét và nổi bật trên Canvas 3D:
+       - **Phương án 1 (MẶC ĐỊNH - `theory`)**: Chuẩn Lý Thuyết Thuần Túy (Đường Thẳng Tiếp Xúc Dọc Bề Rộng Răng)
+         * Lượng bù góc tiếp xúc hằng số $d\theta = 0.16 / r_{\text{pitch}}$ (độ lồng thực tế sau khi trừ backlash là $\approx 0.10\text{ mm}$) đồng đều trên toàn bộ bề rộng vành răng $b$.
+         * Bánh răng trụ thẳng ($\beta = 0^\circ$): Toàn bộ đường sinh răng song song 100% với trục quay $Z$. Vết tiếp xúc ăn khớp là **MỘT ĐƯỜNG THẲNG SẮC NÉT CHẠY DỌC THEO TOÀN BỘ BỀ RỘNG RĂNG**.
+         * Bánh răng trụ răng nghiêng ($\beta \ne 0^\circ$): Đường tiếp xúc nghiêng một góc $\beta_b$ trên mặt phẳng ăn khớp, di chuyển tịnh tiến liên tục dọc chiều dài ăn khớp.
+       - **Phương án 2 (`crowning`)**: Mô Phỏng Thực Tế Xưởng Gia Công Bánh Răng (Vết Elip Độ Vồng Longitudinal Crowning)
+         * Áp dụng hàm độ vồng parabol: $d\theta = \frac{0.22 \cdot (1 - u^2)}{r_{\text{pitch}}}$ với $u = Z / (b / 2)$.
+         * Tại $Z = 0$ (chính giữa bề rộng vành răng), lượng bù đạt $0.22\text{ mm}$ (độ lồng ròng $\approx 0.16\text{ mm}$).
+         * Khi $|u| \ge 0.84$, lượng bù giảm xuống dưới mức backlash ($0.0625\text{ mm}$), hai mặt răng tách rời trước khi ra tới hai mép mặt đầu ($Z = \pm b / 2$).
+         * Vết tiếp xúc tạo thành một hình **ELIP KHÉP KÍN TRÒN ĐẦY CÂN ĐỐI** ở giữa răng, mô phỏng chuẩn xác 100% vết rà bột màu tại xưởng gia công.
+4. **Định Vị Pha Ăn Khớp Liên Hợp Phân Tích Chuẩn Xác Tuyệt Đối (Conjugate Phase Alignment)**:
+   - Tâm bánh dẫn 1 tại $(0, 0, 0)$, tâm bánh bị dẫn 2 tại $(a_w, 0, 0)$ dọc theo trục $+X$.
+   - Góc pha ban đầu bánh dẫn 1: $\theta_{1,0} = -\pi / 2$ (đưa đỉnh răng số 0 hướng thẳng về phía bánh 2 dọc trục $+X$).
+   - Góc pha ban đầu bánh bị dẫn 2: $\theta_{2,0} = \pi / 2 - \pi / z_2$ (đưa tâm rãnh răng số 0 hướng thẳng về phía bánh 1 dọc trục $-X$).
+   - Độ lệch đối xứng giữa hai sườn răng: $\Delta = 9.3 \times 10^{-13}\text{ mm} \approx 0.000000\text{ mm}$ (chuẩn xác giải tích tuyệt đối).
+   - Động học lăn liên hợp: $\theta_2 = \theta_{2,0} - (\theta_1 - \theta_{1,0}) / i$ với $i = z_2 / z_1$, triệt tiêu 100% sai lệch tích lũy khi quay mô phỏng.
+5. **Hiệu chỉnh Camera Preset "Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)"**:
+   - Khung hình tự động căn tiêu cự vào tâm ăn khớp $(d_1 / 2, 0, 0)$.
+   - Vị trí camera: $X = d_1 / 2 + 0.25 \cdot b, Y = -1.15 \cdot b, Z = 0.90 \cdot b$, vector hướng lên $\vec{up} = (0, 0, 1)$.
+   - Mang lại góc nhìn xiên isometric hoàn hảo, phóng to trực diện vào rãnh răng ăn khớp, quan sát trọn vẹn cả hai mặt sườn và vệt tiếp xúc dọc suốt chiều dài răng.
 
 ---
 

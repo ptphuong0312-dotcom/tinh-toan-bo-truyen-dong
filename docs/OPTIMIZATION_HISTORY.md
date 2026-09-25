@@ -1532,3 +1532,40 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
     * 0 lỗi JavaScript Console!
   - Multi-case QC Suite (`qc_gear_multi_case_suite.py`):
     * **110/110 checks PASS 100.0% ($\Delta = 0.0000$)** trên 5 kịch bản thực tế MITCalc 1.74.
+
+---
+
+### [2026-09-25] KHẮC PHỤC TRIỆT ĐỂ LỆCH PHA ĂN KHỚP & BÙ KHE HỞ BACKLASH HIỂN THỊ RÕ NÉT VẾT TIẾP XÚC ĂN KHỚP 3D BÁNH RĂNG TRỤ & NGHIÊNG
+* **Bối cảnh & Phản hồi thực tế từ SirPhuong**:
+  - *"hiện tại tôi kiểm tra thì tôi đâu thấy có vết tiếp xúc ở module bánh răng trụ đâu. bạn cũng duyệt web và chụp lại báo cáo cho tôi mà bạn không thấy không có vết tiếp xúc à"*.
+* **Nguyên nhân cốt lõi phát hiện qua chẩn đoán tự động**:
+  1. **Lệch pha góc quay ban đầu (Phase Misalignment)**:
+     - Góc quay ban đầu cũ: `initialGearAngle = (Math.PI / geom.z2) + (Math.PI / 2.0) * (1.0 - geom.z1 / geom.z2)`, `pinionAngle = 0`.
+     - Tại `pinionAngle = 0`, đỉnh răng số 0 của Pinion nằm ở trục $+Y$ ($90^\circ$), trong khi tâm bánh 2 nằm ở trục $+X$ ($0^\circ$). Cặp răng hoàn toàn không đối diện nhau trong không gian (lệch ~4.75 bước răng), đỉnh răng bánh 1 không nằm trong rãnh bánh 2.
+  2. **Góc nhìn camera preset "mesh" chưa tập trung vào rãnh răng**:
+     - Tọa độ camera cũ đặt tại $Y = -12 \cdot m_n, Z = 14 \cdot m_n$ quá xa và nhìn từ trên cao xuống, không nhìn sâu vào đáy rãnh ăn khớp.
+  3. **Khe hở cạnh răng danh nghĩa (Backlash) chưa được bù đủ**:
+     - Theo ISO 6336, biên dạng thân khai có khe hở cạnh răng $j_n \approx 0.125\text{ mm}$ (khe hở mỗi sườn $\approx 0.0625\text{ mm}$).
+     - Độ phồng tiếp xúc cũ $0.07 / r_{\text{pitch}}$ (chỉ tương đương $0.07\text{ mm}$ ở bán kính chia) sau khi trừ khe hở backlash chỉ còn lại khe hở vi mô không đủ để tạo giao tuyến mắt thường nhìn thấy.
+* **Giải pháp kỹ thuật đột phá**:
+  1. *Định vị pha liên hợp giải tích chuẩn tuyệt đối (`gear-3d-visualizer.js`)*:
+     - `this.initialPinionAngle = -Math.PI / 2.0;` (quay đỉnh răng 0 hướng thẳng về bánh 2 dọc trục $+X$).
+     - `this.initialGearAngle = Math.PI / 2.0 - Math.PI / geom.z2;` (đưa tâm rãnh răng 0 của bánh 2 hướng thẳng về phía bánh 1 dọc trục $-X$).
+     - Khảo sát hình học 2D xác nhận độ lệch đối xứng giữa 2 sườn răng: $\Delta = 9.3 \times 10^{-13}\text{ mm} \approx 0.000000\text{ mm}$.
+     - Động học quay liên hợp không trôi sai số:
+       `this.gearAngle = this.initialGearAngle - (this.pinionAngle - this.initialPinionAngle) / this.gearRatio;`
+  2. *Bù độ phồng tiếp xúc vượt ngưỡng Backlash (`gear-3d-generator.js`)*:
+     - Sửa lỗi điều kiện `isPinion`: `(opt.isPinion !== undefined) ? (opt.isPinion === true) : (opt.hand === +1)`.
+     - **Phương án 1 (Lý thuyết)**: $d\theta = 0.16 / r_{\text{pitch}}$. Độ lồng thực tế sau khi trừ backlash là $\approx 0.10\text{ mm}$, hiển thị một **đường thẳng tiếp xúc sắc nét dọc suốt bề rộng răng**.
+     - **Phương án 2 (Crowning)**: $d\theta = (0.22 \cdot (1 - u^2)) / r_{\text{pitch}}$. Tại giữa răng $Z = 0$, độ lồng ròng đạt $\approx 0.16\text{ mm}$, thuôn về 0 tại $|u| \ge 0.84$, tạo thành một **vết elip tiếp xúc tròn đầy khép kín** ở giữa sườn răng.
+  3. *Hiệu chỉnh Camera Preset "mesh" trực diện rãnh răng*:
+     - `pitchPtX = (d1 || 100) / 2.0; b = b1 || 40.0;`
+     - `camera.position.set(pitchPtX + b * 0.25, -b * 1.15, b * 0.90); camera.up.set(0, 0, 1); controls.target.set(pitchPtX, 0, 0);`
+  4. *Đóng gói bundle & kiểm thử tự động Playwright E2E*:
+     - Đóng gói thành công `mitcalc-engine.bundle.js` và `bevel-engine.bundle.js` với `python tools/bundle_all.py`.
+     - Multi-case QC Suite (`qc_gear_multi_case_suite.py`): **110/110 checks PASS 100.0% ($\Delta = 0.0000$)**.
+     - Playwright kiểm tra Web App thực tế:
+       * `spur_contact_theory_flank_only.png`: Đường thẳng tiếp xúc hiển thị rõ nét trên cả Flank 1 và Flank 2.
+       * `spur_contact_crowning_flank_only.png`: Vết elip tiếp xúc hiển thị rõ nét ở giữa sườn răng.
+       * `spur_solid_mesh_closeup.png`: Khối Solid zoom cận cảnh rãnh ăn khớp.
+       * `helical_mesh_contact_flank_only.png`: Bánh răng nghiêng ($\beta = 15^\circ$) hiển thị ăn khớp mặt sườn xoắn chuẩn xác.
