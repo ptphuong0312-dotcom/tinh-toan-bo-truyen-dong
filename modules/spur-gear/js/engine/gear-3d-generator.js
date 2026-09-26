@@ -44,7 +44,7 @@ export const Gear3DGenerator = {
         const dBore = opt.dBore || Math.max(10.0, df * 0.45);
         const rBore = dBore / 2.0;
         const isSurfaceOnly = !!opt.surfaceOnly;
-        const profileStep = opt.profileStep || (isSurfaceOnly ? 1 : (z > 30 ? 4 : 2));
+        const profileStep = opt.profileStep || 1;
 
         const isHelical = Math.abs(betaDeg) > 1e-4;
         const betaRad = (betaDeg * Math.PI) / 180.0;
@@ -54,7 +54,11 @@ export const Gear3DGenerator = {
             noPtHead: Math.max(opt.noPtHead || 20, 24),
             noPtEv: Math.max(opt.noPtEv || 100, 200),
             cuttStep: Math.min(opt.cuttStep || 0.5, 0.20)
-        }) : opt;
+        }) : Object.assign({}, opt, {
+            noPtHead: opt.noPtHead || 20,
+            noPtEv: opt.noPtEv || 100,
+            cuttStep: opt.cuttStep || 0.5
+        });
         const rawContour = ToothProfileGenerator.generateProfile(z, mn, alfa_n, x, d, db, da, df, opt.ra0 || 0.38, optContour);
 
         // Downsample contour if step > 1 for high-performance watertight 3D CAD mesh

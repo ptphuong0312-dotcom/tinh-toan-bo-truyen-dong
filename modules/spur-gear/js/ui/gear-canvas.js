@@ -222,11 +222,13 @@ export class GearCanvas {
         ctx.stroke();
         ctx.setLineDash([]); // Reset dash for gear bodies
 
-        // 4. Involute Tooth Outlines (Transverse Cross-Section):
-        const isHelical = Math.abs(g.beta || 0) > 1e-4;
-        const betaRad = (g.beta || 0) * Math.PI / 180.0;
-        const m_canvas = isHelical ? (g.mt || (g.mn / Math.cos(betaRad))) : g.mn;
-        const alpha_canvas = isHelical ? (g.alfat || (Math.atan(Math.tan((g.alfa_n || 20) * Math.PI / 180.0) / Math.cos(betaRad)) * 180.0 / Math.PI)) : g.alfa_n;
+        // 4. Involute Tooth Outlines (Transverse Cross-Section from exact MITCalc Rack Cutter):
+        const toolOpts = {
+            beta: g.beta || 0.0,
+            ha0: g.ha0,
+            hf0: g.hf0,
+            ra0: g.ra0
+        };
 
         // Exact analytical conjugate rolling phase (zero penetration):
         // Pinion tooth 0 centerline is initially at +90 deg (+Y).
@@ -240,14 +242,14 @@ export class GearCanvas {
         ctx.save();
         ctx.translate(c1x, c1y);
         ctx.rotate(angle1);
-        this.drawGearOutline(g.z1, m_canvas, alpha_canvas, g.x1, g.d1, g.db1, g.da1, g.df1, '#22c55e', '#15803d');
+        this.drawGearOutline(g.z1, g.mn, g.alfa_n, g.x1, g.d1, g.db1, g.da1, g.df1, '#22c55e', '#15803d', toolOpts);
         ctx.restore();
 
         // Draw Gear (Blue)
         ctx.save();
         ctx.translate(c2x, c2y);
         ctx.rotate(angle2);
-        this.drawGearOutline(g.z2, m_canvas, alpha_canvas, g.x2, g.d2, g.db2, g.da2, g.df2, '#38bdf8', '#1d4ed8');
+        this.drawGearOutline(g.z2, g.mn, g.alfa_n, g.x2, g.d2, g.db2, g.da2, g.df2, '#38bdf8', '#1d4ed8', toolOpts);
         ctx.restore();
 
         // 5. Operating Pitch Point C
@@ -259,9 +261,9 @@ export class GearCanvas {
         ctx.restore();
     }
 
-    drawGearOutline(z, m, alpha, x, d, db, da, df, strokeColor, fillColor) {
+    drawGearOutline(z, m, alpha, x, d, db, da, df, strokeColor, fillColor, optExtra = {}) {
         const ctx = this.ctx;
-        const pts = ToothProfileGenerator.generateProfile(z, m, alpha, x, d, db, da, df);
+        const pts = ToothProfileGenerator.generateProfile(z, m, alpha, x, d, db, da, df, optExtra.ra0 || 0.38, optExtra);
         if (!pts || pts.length === 0) return;
 
         // Draw gear outer profile with smooth filled body

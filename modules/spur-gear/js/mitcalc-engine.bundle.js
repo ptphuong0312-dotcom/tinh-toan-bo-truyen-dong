@@ -2600,8 +2600,8 @@ const ToothProfileGenerator = {
      * @returns {Array<{x: number, y: number}>} continuous contour points
      */
     generateProfile(z, m, alphaDeg, x, d, db, da, df, filletFactor = 0.38, optExtra = {}) {
-        const noPtHead = optExtra.noPtHead || (optExtra.highQuality ? 20 : 10);
-        const noPtEv = optExtra.noPtEv || (optExtra.highQuality ? 100 : 30);
+        const noPtHead = optExtra.noPtHead || 20;
+        const noPtEv = optExtra.noPtEv || 100;
         const cuttStep = optExtra.cuttStep || 0.5;
 
         return MitcalcToothSolver.generateCompleteWheelContour({
@@ -3399,11 +3399,13 @@ class GearCanvas {
         ctx.stroke();
         ctx.setLineDash([]); // Reset dash for gear bodies
 
-        // 4. Involute Tooth Outlines (Transverse Cross-Section):
-        const isHelical = Math.abs(g.beta || 0) > 1e-4;
-        const betaRad = (g.beta || 0) * Math.PI / 180.0;
-        const m_canvas = isHelical ? (g.mt || (g.mn / Math.cos(betaRad))) : g.mn;
-        const alpha_canvas = isHelical ? (g.alfat || (Math.atan(Math.tan((g.alfa_n || 20) * Math.PI / 180.0) / Math.cos(betaRad)) * 180.0 / Math.PI)) : g.alfa_n;
+        // 4. Involute Tooth Outlines (Transverse Cross-Section from exact MITCalc Rack Cutter):
+        const toolOpts = {
+            beta: g.beta || 0.0,
+            ha0: g.ha0,
+            hf0: g.hf0,
+            ra0: g.ra0
+        };
 
         // Exact analytical conjugate rolling phase (zero penetration):
         // Pinion tooth 0 centerline is initially at +90 deg (+Y).
@@ -3417,14 +3419,14 @@ class GearCanvas {
         ctx.save();
         ctx.translate(c1x, c1y);
         ctx.rotate(angle1);
-        this.drawGearOutline(g.z1, m_canvas, alpha_canvas, g.x1, g.d1, g.db1, g.da1, g.df1, '#22c55e', '#15803d');
+        this.drawGearOutline(g.z1, g.mn, g.alfa_n, g.x1, g.d1, g.db1, g.da1, g.df1, '#22c55e', '#15803d', toolOpts);
         ctx.restore();
 
         // Draw Gear (Blue)
         ctx.save();
         ctx.translate(c2x, c2y);
         ctx.rotate(angle2);
-        this.drawGearOutline(g.z2, m_canvas, alpha_canvas, g.x2, g.d2, g.db2, g.da2, g.df2, '#38bdf8', '#1d4ed8');
+        this.drawGearOutline(g.z2, g.mn, g.alfa_n, g.x2, g.d2, g.db2, g.da2, g.df2, '#38bdf8', '#1d4ed8', toolOpts);
         ctx.restore();
 
         // 5. Operating Pitch Point C
@@ -3436,9 +3438,9 @@ class GearCanvas {
         ctx.restore();
     }
 
-    drawGearOutline(z, m, alpha, x, d, db, da, df, strokeColor, fillColor) {
+    drawGearOutline(z, m, alpha, x, d, db, da, df, strokeColor, fillColor, optExtra = {}) {
         const ctx = this.ctx;
-        const pts = ToothProfileGenerator.generateProfile(z, m, alpha, x, d, db, da, df);
+        const pts = ToothProfileGenerator.generateProfile(z, m, alpha, x, d, db, da, df, optExtra.ra0 || 0.38, optExtra);
         if (!pts || pts.length === 0) return;
 
         // Draw gear outer profile with smooth filled body
@@ -3525,7 +3527,7 @@ const Gear3DGenerator = {
         const dBore = opt.dBore || Math.max(10.0, df * 0.45);
         const rBore = dBore / 2.0;
         const isSurfaceOnly = !!opt.surfaceOnly;
-        const profileStep = opt.profileStep || (isSurfaceOnly ? 1 : (z > 30 ? 4 : 2));
+        const profileStep = opt.profileStep || 1;
 
         const isHelical = Math.abs(betaDeg) > 1e-4;
         const betaRad = (betaDeg * Math.PI) / 180.0;
@@ -3535,7 +3537,11 @@ const Gear3DGenerator = {
             noPtHead: Math.max(opt.noPtHead || 20, 24),
             noPtEv: Math.max(opt.noPtEv || 100, 200),
             cuttStep: Math.min(opt.cuttStep || 0.5, 0.20)
-        }) : opt;
+        }) : Object.assign({}, opt, {
+            noPtHead: opt.noPtHead || 20,
+            noPtEv: opt.noPtEv || 100,
+            cuttStep: opt.cuttStep || 0.5
+        });
         const rawContour = ToothProfileGenerator.generateProfile(z, mn, alfa_n, x, d, db, da, df, opt.ra0 || 0.38, optContour);
 
         // Downsample contour if step > 1 for high-performance watertight 3D CAD mesh
@@ -4445,6 +4451,9 @@ class Gear3DVisualizer {
             db: geom.db1,
             da: geom.da1,
             df: geom.df1,
+            ha0: geom.ha0,
+            hf0: geom.hf0,
+            ra0: geom.ra0,
             hand: +1,
             dBore: geom.df1 * 0.45,
             isPinion: true,
@@ -4463,6 +4472,9 @@ class Gear3DVisualizer {
             db: geom.db2,
             da: geom.da2,
             df: geom.df2,
+            ha0: geom.ha0,
+            hf0: geom.hf0,
+            ra0: geom.ra0,
             hand: -1,
             dBore: geom.df2 * 0.45,
             isPinion: false,
@@ -4481,6 +4493,9 @@ class Gear3DVisualizer {
             db: geom.db1,
             da: geom.da1,
             df: geom.df1,
+            ha0: geom.ha0,
+            hf0: geom.hf0,
+            ra0: geom.ra0,
             hand: +1,
             dBore: geom.df1 * 0.45,
             isPinion: true,
@@ -4498,6 +4513,9 @@ class Gear3DVisualizer {
             db: geom.db2,
             da: geom.da2,
             df: geom.df2,
+            ha0: geom.ha0,
+            hf0: geom.hf0,
+            ra0: geom.ra0,
             hand: -1,
             dBore: geom.df2 * 0.45,
             isPinion: false,
@@ -4788,6 +4806,9 @@ class Gear3DVisualizer {
                 db: this.geom.db1,
                 da: this.geom.da1,
                 df: this.geom.df1,
+                ha0: this.geom.ha0,
+                hf0: this.geom.hf0,
+                ra0: this.geom.ra0,
                 hand: +1,
                 isPinion: true,
                 dBore: this.geom.df1 * 0.45
@@ -4803,6 +4824,9 @@ class Gear3DVisualizer {
                 db: this.geom.db2,
                 da: this.geom.da2,
                 df: this.geom.df2,
+                ha0: this.geom.ha0,
+                hf0: this.geom.hf0,
+                ra0: this.geom.ra0,
                 hand: -1,
                 isPinion: false,
                 dBore: this.geom.df2 * 0.45
@@ -4816,27 +4840,45 @@ class Gear3DVisualizer {
         } else if (type === 'gear') {
             return m2.rawTriangles;
         } else if (type === 'assembly') {
-            // Transform gear 2 triangles to center distance aw and initial mesh angle
+            // Transform Pinion 1 and Gear 2 triangles to exact center distance aw and conjugate mesh angles
             const aw = (this.geom && this.geom.aw) ? this.geom.aw : 100.0;
-            const rotZ = this.initialGearAngle;
-            const cosR = Math.cos(rotZ);
-            const sinR = Math.sin(rotZ);
+            const rotZ1 = (this.initialPinionAngle !== undefined) ? this.initialPinionAngle : -Math.PI / 2.0;
+            const cosR1 = Math.cos(rotZ1);
+            const sinR1 = Math.sin(rotZ1);
 
-            const transformedGear2 = m2.rawTriangles.map(([p1, p2, p3, n]) => {
-                const trPt = (p) => [
-                    p[0] * cosR - p[1] * sinR + aw,
-                    p[0] * sinR + p[1] * cosR,
+            const transformedPinion1 = m1.rawTriangles.map(([p1, p2, p3, n]) => {
+                const trPt1 = (p) => [
+                    p[0] * cosR1 - p[1] * sinR1,
+                    p[0] * sinR1 + p[1] * cosR1,
                     p[2]
                 ];
-                const trVec = (v) => [
-                    v[0] * cosR - v[1] * sinR,
-                    v[0] * sinR + v[1] * cosR,
+                const trVec1 = (v) => [
+                    v[0] * cosR1 - v[1] * sinR1,
+                    v[0] * sinR1 + v[1] * cosR1,
                     v[2]
                 ];
-                return [trPt(p1), trPt(p2), trPt(p3), trVec(n)];
+                return [trPt1(p1), trPt1(p2), trPt1(p3), trVec1(n)];
             });
 
-            return m1.rawTriangles.concat(transformedGear2);
+            const rotZ2 = (this.initialGearAngle !== undefined) ? this.initialGearAngle : (Math.PI / 2.0 - Math.PI / this.geom.z2);
+            const cosR2 = Math.cos(rotZ2);
+            const sinR2 = Math.sin(rotZ2);
+
+            const transformedGear2 = m2.rawTriangles.map(([p1, p2, p3, n]) => {
+                const trPt2 = (p) => [
+                    p[0] * cosR2 - p[1] * sinR2 + aw,
+                    p[0] * sinR2 + p[1] * cosR2,
+                    p[2]
+                ];
+                const trVec2 = (v) => [
+                    v[0] * cosR2 - v[1] * sinR2,
+                    v[0] * sinR2 + v[1] * cosR2,
+                    v[2]
+                ];
+                return [trPt2(p1), trPt2(p2), trPt2(p3), trVec2(n)];
+            });
+
+            return transformedPinion1.concat(transformedGear2);
         }
         return [];
     }
@@ -6947,11 +6989,7 @@ class SpurGearUI {
         const g = this.g;
         if (!g) return;
 
-        // Transverse parameters for 2D profile
         const isHelical = Math.abs(g.beta || 0) > 1e-4;
-        const betaRad = (g.beta || 0) * Math.PI / 180.0;
-        const m_canvas = isHelical ? (g.mt || (g.mn / Math.cos(betaRad))) : g.mn;
-        const alpha_canvas = isHelical ? (g.alfat || (Math.atan(Math.tan((g.alfa_n || 20) * Math.PI / 180.0) / Math.cos(betaRad)) * 180.0 / Math.PI)) : g.alfa_n;
 
         const res = (typeof PROFILE_RESOLUTION_LEVELS !== 'undefined')
             ? (PROFILE_RESOLUTION_LEVELS[this.profileResolution || 6] || PROFILE_RESOLUTION_LEVELS[6])
@@ -6962,8 +7000,8 @@ class SpurGearUI {
 
         if (target === 'pinion' || target === 'assembly') {
             pts1 = ToothProfileGenerator.generateProfile(
-                g.z1, m_canvas, alpha_canvas, g.x1, g.d1, g.db1, g.da1, g.df1, g.ra0 || 0.38,
-                { noPtHead: res.noPtHead, noPtEv: res.noPtEv, cuttStep: res.cuttStep, beta: g.beta || 0.0 }
+                g.z1, g.mn, g.alfa_n, g.x1, g.d1, g.db1, g.da1, g.df1, g.ra0 || 0.38,
+                { noPtHead: res.noPtHead, noPtEv: res.noPtEv, cuttStep: res.cuttStep, beta: g.beta || 0.0, ha0: g.ha0, hf0: g.hf0, ra0: g.ra0 }
             );
             if (!pts1 || pts1.length === 0) {
                 alert('Không thể tạo biên dạng bánh 1 để xuất DXF.');
@@ -6973,8 +7011,8 @@ class SpurGearUI {
 
         if (target === 'gear' || target === 'assembly') {
             pts2 = ToothProfileGenerator.generateProfile(
-                g.z2, m_canvas, alpha_canvas, g.x2, g.d2, g.db2, g.da2, g.df2, g.ra0 || 0.38,
-                { noPtHead: res.noPtHead, noPtEv: res.noPtEv, cuttStep: res.cuttStep, beta: g.beta || 0.0 }
+                g.z2, g.mn, g.alfa_n, g.x2, g.d2, g.db2, g.da2, g.df2, g.ra0 || 0.38,
+                { noPtHead: res.noPtHead, noPtEv: res.noPtEv, cuttStep: res.cuttStep, beta: g.beta || 0.0, ha0: g.ha0, hf0: g.hf0, ra0: g.ra0 }
             );
             if (!pts2 || pts2.length === 0) {
                 alert('Không thể tạo biên dạng bánh 2 để xuất DXF.');
@@ -7149,10 +7187,9 @@ class SpurGearUI {
         } else {
             // Assembly Pair
             filename = `Cap_Banh_Rang_Tru_${typeStr}_z${g.z1}x${g.z2}_aw${g.aw.toFixed(2)}_muc${this.profileResolution || 6}.dxf`;
-            addPolyline(pts1, 'GEAR1_PINION', 0, 0, 0);
-
-            // Exact conjugate meshing phase
-            const initialGearAngle = (Math.PI / g.z2) + (Math.PI / 2.0) * (1.0 - g.z1 / g.z2);
+            const initialPinionAngle = -Math.PI / 2.0;
+            const initialGearAngle = Math.PI / 2.0 - Math.PI / g.z2;
+            addPolyline(pts1, 'GEAR1_PINION', 0, 0, initialPinionAngle);
             addPolyline(pts2, 'GEAR2_WHEEL', g.aw, 0, initialGearAngle);
 
             // Pitch circles

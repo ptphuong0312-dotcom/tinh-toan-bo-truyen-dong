@@ -26,8 +26,8 @@ export const ToothProfileGenerator = {
      * @returns {Array<{x: number, y: number}>} continuous contour points
      */
     generateProfile(z, m, alphaDeg, x, d, db, da, df, filletFactor = 0.38, optExtra = {}) {
-        const noPtHead = optExtra.noPtHead || (optExtra.highQuality ? 20 : 10);
-        const noPtEv = optExtra.noPtEv || (optExtra.highQuality ? 100 : 30);
+        const noPtHead = optExtra.noPtHead || 20;
+        const noPtEv = optExtra.noPtEv || 100;
         const cuttStep = optExtra.cuttStep || 0.5;
 
         return MitcalcToothSolver.generateCompleteWheelContour({

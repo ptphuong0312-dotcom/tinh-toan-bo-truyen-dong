@@ -1799,11 +1799,7 @@ class SpurGearUI {
         const g = this.g;
         if (!g) return;
 
-        // Transverse parameters for 2D profile
         const isHelical = Math.abs(g.beta || 0) > 1e-4;
-        const betaRad = (g.beta || 0) * Math.PI / 180.0;
-        const m_canvas = isHelical ? (g.mt || (g.mn / Math.cos(betaRad))) : g.mn;
-        const alpha_canvas = isHelical ? (g.alfat || (Math.atan(Math.tan((g.alfa_n || 20) * Math.PI / 180.0) / Math.cos(betaRad)) * 180.0 / Math.PI)) : g.alfa_n;
 
         const res = (typeof PROFILE_RESOLUTION_LEVELS !== 'undefined')
             ? (PROFILE_RESOLUTION_LEVELS[this.profileResolution || 6] || PROFILE_RESOLUTION_LEVELS[6])
@@ -1814,8 +1810,8 @@ class SpurGearUI {
 
         if (target === 'pinion' || target === 'assembly') {
             pts1 = ToothProfileGenerator.generateProfile(
-                g.z1, m_canvas, alpha_canvas, g.x1, g.d1, g.db1, g.da1, g.df1, g.ra0 || 0.38,
-                { noPtHead: res.noPtHead, noPtEv: res.noPtEv, cuttStep: res.cuttStep, beta: g.beta || 0.0 }
+                g.z1, g.mn, g.alfa_n, g.x1, g.d1, g.db1, g.da1, g.df1, g.ra0 || 0.38,
+                { noPtHead: res.noPtHead, noPtEv: res.noPtEv, cuttStep: res.cuttStep, beta: g.beta || 0.0, ha0: g.ha0, hf0: g.hf0, ra0: g.ra0 }
             );
             if (!pts1 || pts1.length === 0) {
                 alert('Không thể tạo biên dạng bánh 1 để xuất DXF.');
@@ -1825,8 +1821,8 @@ class SpurGearUI {
 
         if (target === 'gear' || target === 'assembly') {
             pts2 = ToothProfileGenerator.generateProfile(
-                g.z2, m_canvas, alpha_canvas, g.x2, g.d2, g.db2, g.da2, g.df2, g.ra0 || 0.38,
-                { noPtHead: res.noPtHead, noPtEv: res.noPtEv, cuttStep: res.cuttStep, beta: g.beta || 0.0 }
+                g.z2, g.mn, g.alfa_n, g.x2, g.d2, g.db2, g.da2, g.df2, g.ra0 || 0.38,
+                { noPtHead: res.noPtHead, noPtEv: res.noPtEv, cuttStep: res.cuttStep, beta: g.beta || 0.0, ha0: g.ha0, hf0: g.hf0, ra0: g.ra0 }
             );
             if (!pts2 || pts2.length === 0) {
                 alert('Không thể tạo biên dạng bánh 2 để xuất DXF.');
@@ -2001,10 +1997,9 @@ class SpurGearUI {
         } else {
             // Assembly Pair
             filename = `Cap_Banh_Rang_Tru_${typeStr}_z${g.z1}x${g.z2}_aw${g.aw.toFixed(2)}_muc${this.profileResolution || 6}.dxf`;
-            addPolyline(pts1, 'GEAR1_PINION', 0, 0, 0);
-
-            // Exact conjugate meshing phase
-            const initialGearAngle = (Math.PI / g.z2) + (Math.PI / 2.0) * (1.0 - g.z1 / g.z2);
+            const initialPinionAngle = -Math.PI / 2.0;
+            const initialGearAngle = Math.PI / 2.0 - Math.PI / g.z2;
+            addPolyline(pts1, 'GEAR1_PINION', 0, 0, initialPinionAngle);
             addPolyline(pts2, 'GEAR2_WHEEL', g.aw, 0, initialGearAngle);
 
             // Pitch circles

@@ -1723,4 +1723,19 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
       - Bánh nhỏ ($z_1 = 17$): $\sigma_{F1} = \mathbf{368.96\text{ MPa}}$ ($\sim \mathbf{369\text{ MPa}}$) $\implies S_{F1} = \mathbf{1.63}$.
   - Đã xuất file Word hoàn chỉnh tại `BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG.docx` và `BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG_Z17_69_M14.docx` (Bảng 1 gồm 12 dòng cốt lõi, đã lược bỏ hệ số dịch chỉnh và đường kính bánh lớn).
 
+---
 
+### [2026-09-26] KIỂM ĐỊNH TOÀN DIỆN & TỐI ƯU HÓA ĐỘ CHÍNH XÁC BIÊN DẠNG THÂN KHAI 3D + KHOẢNG CÁCH TRỤC $a_w$ SO VỚI MITCALC 1.74 EXCEL COM
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  - *"Tiếp tục về phần mô phỏng 3d tính toán bánh răng trụ : bạn kiểm tra thật kĩ xem biên dạng mô phỏng đã chuẩn chưa ( biên dạng profile răng đã chuẩn đường thân khai chưa, đã chuẩn so với app mitcalc chưa) khoảng cách trục mô phỏng đã chuẩn khoảng cách trục tính toán chưa"*
+* **Kết quả kiểm định toán học & Phát hiện 3 điểm cần chuẩn hóa**:
+  1. **Kiểm định phương trình đường thân khai & MITCalc 1.74 `Coordinates`**:
+     - Bộ giải `MitcalcToothSolver.calculateToothCoordinates` khớp 100% ($\Delta = 0.000000\text{ mm}$) với thuật toán lăn bao hình thanh răng `GearFunctions.bas` của MITCalc 1.74.
+     - Đối chiếu trực tiếp với phương trình thân khai giải tích $\theta(r) = \psi_b - \text{inv}(\arccos(r_b/r))$: sai số dây cung tại bước cắt chuẩn `cuttStep = 0.5°` chỉ là $0.29\text{ \mu m}$ (bánh nhỏ) và $0.59\text{ \mu m}$ (bánh lớn), giảm xuống $0.013\text{ \mu m}$ ở `cuttStep = 0.1°`.
+  2. **Kiểm định khoảng cách trục mô phỏng 3D & 2D ($a_w$)**:
+     - Tâm bánh dẫn 1 đặt tại $(0, 0, 0)$, tâm bánh bị dẫn 2 đặt tại $(a_w, 0, 0)$ trong cả 3D (`gear-3d-visualizer.js`) và 2D (`gear-canvas.js`).
+     - Đối chiếu trực tiếp với ô `O250` (`aw`) của `Gear1_01.xlsb` qua Excel COM trên 3 kịch bản (Răng thẳng tiêu chuẩn $z_1=19, z_2=48, m_n=6$; Răng thẳng dịch chỉnh $x_1=0.35, x_2=0.15$; Răng nghiêng $z_1=17, z_2=69, m_n=14, \beta=12^\circ$): **khớp tuyệt đối $\Delta = 0.00000000\text{ mm}$** trên toàn bộ 11 thông số đường kính & khoảng cách trục ($a_w, d_1, d_2, d_{w1}, d_{w2}, d_{a1}, d_{a2}, d_{f1}, d_{f2}, d_{b1}, d_{b2}$).
+  3. **Khắc phục triệt để 3 điểm lệch độ phân giải & tham số dao cắt trong 3D/2D/DXF**:
+     - **Loại bỏ giảm mẫu nhảy cóc (`profileStep = 2, 4`) trong `Gear3DGenerator`**: Trước đó, khối đặc 3D (`isSurfaceOnly = false`) dùng `profileStep = 2` (với $z \le 30$) và `profileStep = 4` (với $z > 30$) trên mảng `rawContour` có $239$ điểm/răng (số lẻ không chia hết cho $2$ hay $4$), làm lệch pha điểm lấy mẫu giữa các răng kế tiếp (`239 % 4 = 3`) và làm thô biên dạng thân khai của bánh lớn. Đã cố định mặc định `profileStep = 1` và `noPtHead = 20, noPtEv = 100, cuttStep = 0.5` trong `Gear3DGenerator` và `ToothProfileGenerator`, giúp **mọi răng trên khối 3D đặc đều giữ nguyên trọn vẹn 239 điểm/răng chuẩn MITCalc 1.74** (sai số đỉnh Float32 tại $Z=0$ chỉ còn $0.0000027\text{ mm}$).
+     - **Truyền đầy đủ tham số dao cắt (`ha0, hf0, ra0`) và góc xoay lắp ráp chuẩn trong `Gear3DVisualizer`**: Bổ sung `ha0, hf0, ra0` từ `geom` vào `Gear3DGenerator` và xoay bánh dẫn 1 đúng góc `initialPinionAngle = -Math.PI / 2.0` khi xuất file 3D Assembly STEP/STL.
+     - **Chuẩn hóa tham số pháp tuyến ($m_n, \alpha_n, \beta$) cho Răng Nghiêng trong `GearCanvas` (2D) & `exportDXF`**: Sửa lỗi truyền nhầm `m_canvas = mt, alpha_canvas = alfat` vào `ToothProfileGenerator` (vốn đã tự chia $\cos\beta$ bên trong `MitcalcToothSolver`), đảm bảo biên dạng 2D Canvas, DXF và 3D WebGL đồng nhất 100%.

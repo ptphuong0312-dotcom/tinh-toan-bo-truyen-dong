@@ -182,6 +182,9 @@ export class Gear3DVisualizer {
             db: geom.db1,
             da: geom.da1,
             df: geom.df1,
+            ha0: geom.ha0,
+            hf0: geom.hf0,
+            ra0: geom.ra0,
             hand: +1,
             dBore: geom.df1 * 0.45,
             isPinion: true,
@@ -200,6 +203,9 @@ export class Gear3DVisualizer {
             db: geom.db2,
             da: geom.da2,
             df: geom.df2,
+            ha0: geom.ha0,
+            hf0: geom.hf0,
+            ra0: geom.ra0,
             hand: -1,
             dBore: geom.df2 * 0.45,
             isPinion: false,
@@ -218,6 +224,9 @@ export class Gear3DVisualizer {
             db: geom.db1,
             da: geom.da1,
             df: geom.df1,
+            ha0: geom.ha0,
+            hf0: geom.hf0,
+            ra0: geom.ra0,
             hand: +1,
             dBore: geom.df1 * 0.45,
             isPinion: true,
@@ -235,6 +244,9 @@ export class Gear3DVisualizer {
             db: geom.db2,
             da: geom.da2,
             df: geom.df2,
+            ha0: geom.ha0,
+            hf0: geom.hf0,
+            ra0: geom.ra0,
             hand: -1,
             dBore: geom.df2 * 0.45,
             isPinion: false,
@@ -525,6 +537,9 @@ export class Gear3DVisualizer {
                 db: this.geom.db1,
                 da: this.geom.da1,
                 df: this.geom.df1,
+                ha0: this.geom.ha0,
+                hf0: this.geom.hf0,
+                ra0: this.geom.ra0,
                 hand: +1,
                 isPinion: true,
                 dBore: this.geom.df1 * 0.45
@@ -540,6 +555,9 @@ export class Gear3DVisualizer {
                 db: this.geom.db2,
                 da: this.geom.da2,
                 df: this.geom.df2,
+                ha0: this.geom.ha0,
+                hf0: this.geom.hf0,
+                ra0: this.geom.ra0,
                 hand: -1,
                 isPinion: false,
                 dBore: this.geom.df2 * 0.45
@@ -553,27 +571,45 @@ export class Gear3DVisualizer {
         } else if (type === 'gear') {
             return m2.rawTriangles;
         } else if (type === 'assembly') {
-            // Transform gear 2 triangles to center distance aw and initial mesh angle
+            // Transform Pinion 1 and Gear 2 triangles to exact center distance aw and conjugate mesh angles
             const aw = (this.geom && this.geom.aw) ? this.geom.aw : 100.0;
-            const rotZ = this.initialGearAngle;
-            const cosR = Math.cos(rotZ);
-            const sinR = Math.sin(rotZ);
+            const rotZ1 = (this.initialPinionAngle !== undefined) ? this.initialPinionAngle : -Math.PI / 2.0;
+            const cosR1 = Math.cos(rotZ1);
+            const sinR1 = Math.sin(rotZ1);
 
-            const transformedGear2 = m2.rawTriangles.map(([p1, p2, p3, n]) => {
-                const trPt = (p) => [
-                    p[0] * cosR - p[1] * sinR + aw,
-                    p[0] * sinR + p[1] * cosR,
+            const transformedPinion1 = m1.rawTriangles.map(([p1, p2, p3, n]) => {
+                const trPt1 = (p) => [
+                    p[0] * cosR1 - p[1] * sinR1,
+                    p[0] * sinR1 + p[1] * cosR1,
                     p[2]
                 ];
-                const trVec = (v) => [
-                    v[0] * cosR - v[1] * sinR,
-                    v[0] * sinR + v[1] * cosR,
+                const trVec1 = (v) => [
+                    v[0] * cosR1 - v[1] * sinR1,
+                    v[0] * sinR1 + v[1] * cosR1,
                     v[2]
                 ];
-                return [trPt(p1), trPt(p2), trPt(p3), trVec(n)];
+                return [trPt1(p1), trPt1(p2), trPt1(p3), trVec1(n)];
             });
 
-            return m1.rawTriangles.concat(transformedGear2);
+            const rotZ2 = (this.initialGearAngle !== undefined) ? this.initialGearAngle : (Math.PI / 2.0 - Math.PI / this.geom.z2);
+            const cosR2 = Math.cos(rotZ2);
+            const sinR2 = Math.sin(rotZ2);
+
+            const transformedGear2 = m2.rawTriangles.map(([p1, p2, p3, n]) => {
+                const trPt2 = (p) => [
+                    p[0] * cosR2 - p[1] * sinR2 + aw,
+                    p[0] * sinR2 + p[1] * cosR2,
+                    p[2]
+                ];
+                const trVec2 = (v) => [
+                    v[0] * cosR2 - v[1] * sinR2,
+                    v[0] * sinR2 + v[1] * cosR2,
+                    v[2]
+                ];
+                return [trPt2(p1), trPt2(p2), trPt2(p3), trVec2(n)];
+            });
+
+            return transformedPinion1.concat(transformedGear2);
         }
         return [];
     }

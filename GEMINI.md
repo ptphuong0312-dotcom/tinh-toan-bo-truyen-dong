@@ -858,6 +858,9 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Khung hình tự động căn tiêu cự vào tâm ăn khớp $(d_{w1} / 2, 0, 0)$.
    - Vị trí camera: `position.set(pitchPtX, -meshDist * 0.36, meshDist * 0.93)`, vector hướng lên $\vec{up} = (0, 1, 0)$.
    - Siết chặt khoảng cách mặt phẳng cắt: `camera.near = Math.max(2.0, meshDist * 0.12)`, `camera.far = Math.max(2000.0, meshDist * 15.0)`, tăng độ chính xác Z-buffer lên gấp 16 lần để đường chỉ tiếp xúc hiển thị liền mạch, sắc nét tuyệt đối.
+6. **Bảo Toàn Tuyệt Đối Biên Dạng 240 Điểm/Răng Trên Lưới 3D Khối Đặc (`profileStep = 1`) & Đồng Bộ Tham Số Pháp Tuyến ($m_n, \alpha_n, \beta, h_{a0}^*, h_{f0}^*, r_{a0}^*$)**:
+   - Cố định mặc định `profileStep = 1` và `noPtHead = 20, noPtEv = 100, cuttStep = 0.5` trong cả `ToothProfileGenerator` và `Gear3DGenerator` (vì số điểm mỗi răng là $239$ — số lẻ không chia hết cho $2$ hoặc $4$, nhảy cóc `profileStep > 1` sẽ gây lệch pha điểm lấy mẫu giữa các răng kế tiếp).
+   - Truyền trực tiếp `g.mn, g.alfa_n` và `{ beta: g.beta, ha0: g.ha0, hf0: g.hf0, ra0: g.ra0 }` vào `ToothProfileGenerator` trên cả 3D WebGL, 2D Canvas và xuất DXF/STEP/STL (tuyệt đối không truyền `mt, alfat` vào tham số `mn, alfa_n` để tránh nhân nhầm chiều cao dao với $m_t$ hoặc chia $\cos\beta$ hai lần).
 
 ---
 
