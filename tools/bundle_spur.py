@@ -154,6 +154,10 @@ class SpurGearUI {
         if (slider1) slider1.value = lvl;
         const slider2 = document.getElementById('sliderProfileResolutionCanvas');
         if (slider2) slider2.value = lvl;
+        const slider3 = document.getElementById('sliderProfileResolution3D');
+        if (slider3) slider3.value = lvl;
+        const selDensity = document.getElementById('selMeshDensity');
+        if (selDensity) selDensity.value = String(lvl);
 
         const lbl1 = document.getElementById('lblProfileResolution');
         if (lbl1) lbl1.textContent = `${resInfo.name} (${resInfo.ptsPerTooth} điểm/răng, Δψ=${resInfo.cuttStep}°)`;
@@ -170,13 +174,23 @@ class SpurGearUI {
         this.inputs.sec20_no_pt_ev = resInfo.noPtEv;
         this.inputs.sec20_cutt_step = resInfo.cuttStep;
 
+        const resObj = {
+            noPtHead: resInfo.noPtHead,
+            noPtEv: resInfo.noPtEv,
+            cuttStep: resInfo.cuttStep
+        };
+
+        if (this.canvasController) {
+            this.canvasController.setResolution(resObj);
+        }
+
         if (this.g) {
             if (this.visualizer3D) {
-                this.visualizer3D.setGeometry(this.g, {
-                    noPtHead: resInfo.noPtHead,
-                    noPtEv: resInfo.noPtEv,
-                    cuttStep: resInfo.cuttStep
-                });
+                if (typeof this.visualizer3D.setResolution === 'function') {
+                    this.visualizer3D.setResolution(resObj);
+                } else {
+                    this.visualizer3D.setGeometry(this.g, resObj);
+                }
             }
             this.renderCoordinatesTable(this.g);
         }
@@ -354,6 +368,14 @@ class SpurGearUI {
         };
         setupResSlider('sliderProfileResolution');
         setupResSlider('sliderProfileResolutionCanvas');
+        setupResSlider('sliderProfileResolution3D');
+
+        const selMeshDensity = document.getElementById('selMeshDensity');
+        if (selMeshDensity) {
+            selMeshDensity.addEventListener('change', (e) => {
+                this.setProfileResolution(parseInt(e.target.value, 10) || 6);
+            });
+        }
 
         const btnSolveAw = document.getElementById('btnSolveAw');
         if (btnSolveAw) {
@@ -408,7 +430,14 @@ class SpurGearUI {
                 if (visualizerDesc) visualizerDesc.textContent = 'Mô hình 3D thực thể xoay chuyển động ăn khớp liên tục. Tự động xoắn răng theo góc nghiêng beta, xuất file STEP/STL cho SolidWorks & Mastercam.';
                 if (this.visualizer3D) {
                     this.visualizer3D.onResize();
-                    if (this.g) this.visualizer3D.setGeometry(this.g);
+                    const resInfo = (typeof PROFILE_RESOLUTION_LEVELS !== 'undefined')
+                        ? (PROFILE_RESOLUTION_LEVELS[this.profileResolution || 6] || PROFILE_RESOLUTION_LEVELS[6])
+                        : { noPtHead: 20, noPtEv: 100, cuttStep: 0.5 };
+                    if (this.g) this.visualizer3D.setGeometry(this.g, {
+                        noPtHead: resInfo.noPtHead,
+                        noPtEv: resInfo.noPtEv,
+                        cuttStep: resInfo.cuttStep
+                    });
                 }
             });
         }
@@ -1172,19 +1201,21 @@ class SpurGearUI {
         this.renderAuditTable(g);
         this.renderCoordinatesTable(g);
 
-        if (this.canvasController) {
-            this.canvasController.setGeometry(g);
-        }
         const resInfo = (typeof PROFILE_RESOLUTION_LEVELS !== 'undefined')
             ? (PROFILE_RESOLUTION_LEVELS[this.profileResolution || 6] || PROFILE_RESOLUTION_LEVELS[6])
             : { noPtHead: 20, noPtEv: 100, cuttStep: 0.5 };
+        const resObj = {
+            noPtHead: resInfo.noPtHead,
+            noPtEv: resInfo.noPtEv,
+            cuttStep: resInfo.cuttStep
+        };
+
+        if (this.canvasController) {
+            this.canvasController.setGeometry(g, resObj);
+        }
 
         if (this.visualizer3D) {
-            this.visualizer3D.setGeometry(g, {
-                noPtHead: resInfo.noPtHead,
-                noPtEv: resInfo.noPtEv,
-                cuttStep: resInfo.cuttStep
-            });
+            this.visualizer3D.setGeometry(g, resObj);
         }
 
         const badge3DType = document.getElementById('badge3DType');

@@ -78,20 +78,23 @@ export const Gear3DGenerator = {
             boreAngles[j] = Math.atan2(contour[j].y, contour[j].x);
         }
 
-        // 3. Determine slice count along face width b (Z axis)
+        // 3. Determine slice count along face width b (Z axis), scaling with profile resolution
         const contactMode = opt.contactMode || 'theory';
+        const resFactor = Math.max(0.5, (optContour.noPtEv || 100) / 100.0); // 0.5 at L1, 1.0 at L6, 2.6 at L11
+        const buildRawTriangles = !!opt.buildRawTriangles;
 
         let numSlices = opt.numSlices;
         if (!numSlices) {
             if (contactMode === 'crowning') {
-                numSlices = 24; // Discretize parabolic crowning along face width Z
+                numSlices = Math.max(12, Math.min(32, Math.round(8 * resFactor) * 2));
             } else if (!isHelical) {
-                numSlices = 16; // 16 slices along face width Z for smooth TCA contact line rendering
+                numSlices = Math.max(2, Math.min(12, Math.round(2 * resFactor) * 2));
             } else {
-                // For helical gear, adapt slices to helix twist
+                // For helical gear, adapt slices to both helix twist and user resolution level
                 const twistTotalRad = Math.abs((b * Math.tan(betaRad)) / (d / 2.0));
-                const slicesFromTwist = Math.ceil(twistTotalRad / (Math.PI / 45.0));
-                numSlices = Math.max(16, Math.min(32, slicesFromTwist));
+                const slicesFromTwist = Math.ceil((twistTotalRad / (Math.PI / 36.0)) * resFactor);
+                const baseHelicalSlices = Math.round(8 * resFactor) * 2;
+                numSlices = Math.max(12, Math.min(40, Math.ceil(Math.max(baseHelicalSlices, slicesFromTwist) / 2) * 2));
             }
         }
 
@@ -113,10 +116,15 @@ export const Gear3DGenerator = {
         const boreVCount = isSurfaceOnly ? 0 : (numLayers * N);
         const totalVertices = lateralVCount + capVCount + capVCount + boreVCount;
 
+        const totalTriangles = isSurfaceOnly
+            ? (numSlices * N * 2)
+            : (numSlices * N * 2 + N * 2 + N * 2 + numSlices * N * 2);
+
         const positions = new Float32Array(totalVertices * 3);
         const normals = new Float32Array(totalVertices * 3);
         const tcaParams = new Float32Array(totalVertices * 3);
-        const indices = [];
+        const triIndices = new Uint32Array(totalTriangles * 3);
+        let idxPtr = 0;
         const rawTriangles = [];
 
         // Helper to compute slice rotation and Z
@@ -195,7 +203,7 @@ export const Gear3DGenerator = {
             }
         }
 
-        // Lateral Triangles & Normals
+        // Lateral Triangles & Outward-Pointing Normals (contour[j] progresses Clockwise in XY plane)
         for (let k = 0; k < numSlices; k++) {
             for (let j = 0; j < N; j++) {
                 const jNext = (j + 1) % N;
@@ -204,25 +212,33 @@ export const Gear3DGenerator = {
                 const v10 = lateralBase + (k + 1) * N + j;
                 const v11 = lateralBase + (k + 1) * N + jNext;
 
-                indices.push(v00, v01, v11);
-                indices.push(v00, v11, v10);
+                // CCW winding when viewed from outside the gear (normal points radially outwards)
+                triIndices[idxPtr++] = v00;
+                triIndices[idxPtr++] = v11;
+                triIndices[idxPtr++] = v01;
+                triIndices[idxPtr++] = v00;
+                triIndices[idxPtr++] = v10;
+                triIndices[idxPtr++] = v11;
 
                 const ax = positions[v00 * 3], ay = positions[v00 * 3 + 1], az = positions[v00 * 3 + 2];
                 const bx = positions[v01 * 3], by = positions[v01 * 3 + 1], bz = positions[v01 * 3 + 2];
                 const cx = positions[v11 * 3], cy = positions[v11 * 3 + 1], cz = positions[v11 * 3 + 2];
                 const dx = positions[v10 * 3], dy = positions[v10 * 3 + 1], dz = positions[v10 * 3 + 2];
 
-                const n1 = computeFaceNormal(ax, ay, az, bx, by, bz, cx, cy, cz);
+                const n1 = computeFaceNormal(ax, ay, az, cx, cy, cz, bx, by, bz);
                 accumulateNormal(v00, n1);
-                accumulateNormal(v01, n1);
                 accumulateNormal(v11, n1);
-                rawTriangles.push([[ax, ay, az], [bx, by, bz], [cx, cy, cz], n1]);
+                accumulateNormal(v01, n1);
 
-                const n2 = computeFaceNormal(ax, ay, az, cx, cy, cz, dx, dy, dz);
+                const n2 = computeFaceNormal(ax, ay, az, dx, dy, dz, cx, cy, cz);
                 accumulateNormal(v00, n2);
-                accumulateNormal(v11, n2);
                 accumulateNormal(v10, n2);
-                rawTriangles.push([[ax, ay, az], [cx, cy, cz], [dx, dy, dz], n2]);
+                accumulateNormal(v11, n2);
+
+                if (buildRawTriangles) {
+                    rawTriangles.push([[ax, ay, az], [cx, cy, cz], [bx, by, bz], n1]);
+                    rawTriangles.push([[ax, ay, az], [dx, dy, dz], [cx, cy, cz], n2]);
+                }
             }
         }
 
@@ -266,7 +282,7 @@ export const Gear3DGenerator = {
                 vIdx++;
             }
 
-            // Front Cap Triangles (CCW when viewed from +Z)
+            // Front Cap Triangles (CCW when viewed from +Z, since contour[j] is Clockwise)
             const frontNormal = [0.0, 0.0, 1.0];
             for (let j = 0; j < N; j++) {
                 const jNext = (j + 1) % N;
@@ -275,21 +291,27 @@ export const Gear3DGenerator = {
                 const b0 = frontBase + N + j;
                 const b1 = frontBase + N + jNext;
 
-                indices.push(o0, o1, b1);
-                indices.push(o0, b1, b0);
+                triIndices[idxPtr++] = o0;
+                triIndices[idxPtr++] = b1;
+                triIndices[idxPtr++] = o1;
+                triIndices[idxPtr++] = o0;
+                triIndices[idxPtr++] = b0;
+                triIndices[idxPtr++] = b1;
 
-                rawTriangles.push([
-                    [positions[o0 * 3], positions[o0 * 3 + 1], halfB],
-                    [positions[o1 * 3], positions[o1 * 3 + 1], halfB],
-                    [positions[b1 * 3], positions[b1 * 3 + 1], halfB],
-                    frontNormal
-                ]);
-                rawTriangles.push([
-                    [positions[o0 * 3], positions[o0 * 3 + 1], halfB],
-                    [positions[b1 * 3], positions[b1 * 3 + 1], halfB],
-                    [positions[b0 * 3], positions[b0 * 3 + 1], halfB],
-                    frontNormal
-                ]);
+                if (buildRawTriangles) {
+                    rawTriangles.push([
+                        [positions[o0 * 3], positions[o0 * 3 + 1], halfB],
+                        [positions[b1 * 3], positions[b1 * 3 + 1], halfB],
+                        [positions[o1 * 3], positions[o1 * 3 + 1], halfB],
+                        frontNormal
+                    ]);
+                    rawTriangles.push([
+                        [positions[o0 * 3], positions[o0 * 3 + 1], halfB],
+                        [positions[b0 * 3], positions[b0 * 3 + 1], halfB],
+                        [positions[b1 * 3], positions[b1 * 3 + 1], halfB],
+                        frontNormal
+                    ]);
+                }
             }
 
             // --- GROUP 3: Back End Cap at Z = -halfB ---
@@ -320,7 +342,7 @@ export const Gear3DGenerator = {
                 vIdx++;
             }
 
-            // Back Cap Triangles (CCW when viewed from -Z)
+            // Back Cap Triangles (CCW when viewed from -Z, since contour[j] is Clockwise from +Z)
             const backNormal = [0.0, 0.0, -1.0];
             for (let j = 0; j < N; j++) {
                 const jNext = (j + 1) % N;
@@ -329,21 +351,27 @@ export const Gear3DGenerator = {
                 const b0 = backBase + N + j;
                 const b1 = backBase + N + jNext;
 
-                indices.push(o1, o0, b1);
-                indices.push(b1, o0, b0);
+                triIndices[idxPtr++] = o0;
+                triIndices[idxPtr++] = o1;
+                triIndices[idxPtr++] = b1;
+                triIndices[idxPtr++] = o0;
+                triIndices[idxPtr++] = b1;
+                triIndices[idxPtr++] = b0;
 
-                rawTriangles.push([
-                    [positions[o1 * 3], positions[o1 * 3 + 1], -halfB],
-                    [positions[o0 * 3], positions[o0 * 3 + 1], -halfB],
-                    [positions[b1 * 3], positions[b1 * 3 + 1], -halfB],
-                    backNormal
-                ]);
-                rawTriangles.push([
-                    [positions[b1 * 3], positions[b1 * 3 + 1], -halfB],
-                    [positions[o0 * 3], positions[o0 * 3 + 1], -halfB],
-                    [positions[b0 * 3], positions[b0 * 3 + 1], -halfB],
-                    backNormal
-                ]);
+                if (buildRawTriangles) {
+                    rawTriangles.push([
+                        [positions[o0 * 3], positions[o0 * 3 + 1], -halfB],
+                        [positions[o1 * 3], positions[o1 * 3 + 1], -halfB],
+                        [positions[b1 * 3], positions[b1 * 3 + 1], -halfB],
+                        backNormal
+                    ]);
+                    rawTriangles.push([
+                        [positions[o0 * 3], positions[o0 * 3 + 1], -halfB],
+                        [positions[b1 * 3], positions[b1 * 3 + 1], -halfB],
+                        [positions[b0 * 3], positions[b0 * 3 + 1], -halfB],
+                        backNormal
+                    ]);
+                }
             }
 
             // --- GROUP 4: Inner Bore Cylinder Surface ---
@@ -366,7 +394,7 @@ export const Gear3DGenerator = {
                 }
             }
 
-            // Bore Triangles (Facing inwards)
+            // Bore Triangles (Facing inwards towards shaft axis)
             for (let k = 0; k < numSlices; k++) {
                 for (let j = 0; j < N; j++) {
                     const jNext = (j + 1) % N;
@@ -375,24 +403,27 @@ export const Gear3DGenerator = {
                     const b10 = boreBase + (k + 1) * N + j;
                     const b11 = boreBase + (k + 1) * N + jNext;
 
-                    indices.push(b00, b11, b01);
-                    indices.push(b00, b10, b11);
+                    triIndices[idxPtr++] = b00;
+                    triIndices[idxPtr++] = b01;
+                    triIndices[idxPtr++] = b11;
+                    triIndices[idxPtr++] = b00;
+                    triIndices[idxPtr++] = b11;
+                    triIndices[idxPtr++] = b10;
 
-                    const ax = positions[b00 * 3], ay = positions[b00 * 3 + 1], az = positions[b00 * 3 + 2];
-                    const bx = positions[b01 * 3], by = positions[b01 * 3 + 1], bz = positions[b01 * 3 + 2];
-                    const cx = positions[b11 * 3], cy = positions[b11 * 3 + 1], cz = positions[b11 * 3 + 2];
-                    const dx = positions[b10 * 3], dy = positions[b10 * 3 + 1], dz = positions[b10 * 3 + 2];
+                    if (buildRawTriangles) {
+                        const ax = positions[b00 * 3], ay = positions[b00 * 3 + 1], az = positions[b00 * 3 + 2];
+                        const bx = positions[b01 * 3], by = positions[b01 * 3 + 1], bz = positions[b01 * 3 + 2];
+                        const cx = positions[b11 * 3], cy = positions[b11 * 3 + 1], cz = positions[b11 * 3 + 2];
+                        const dx = positions[b10 * 3], dy = positions[b10 * 3 + 1], dz = positions[b10 * 3 + 2];
 
-                    const n1 = computeFaceNormal(ax, ay, az, cx, cy, cz, bx, by, bz);
-                    const n2 = computeFaceNormal(ax, ay, az, dx, dy, dz, cx, cy, cz);
-                    rawTriangles.push([[ax, ay, az], [cx, cy, cz], [bx, by, bz], n1]);
-                    rawTriangles.push([[ax, ay, az], [dx, dy, dz], [cx, cy, cz], n2]);
+                        const n1 = computeFaceNormal(ax, ay, az, bx, by, bz, cx, cy, cz);
+                        const n2 = computeFaceNormal(ax, ay, az, cx, cy, cz, dx, dy, dz);
+                        rawTriangles.push([[ax, ay, az], [bx, by, bz], [cx, cy, cz], n1]);
+                        rawTriangles.push([[ax, ay, az], [cx, cy, cz], [dx, dy, dz], n2]);
+                    }
                 }
             }
         }
-
-        const triIndices = new Uint32Array(indices);
-        const numTriangles = rawTriangles.length;
 
         return {
             positions,
@@ -400,7 +431,7 @@ export const Gear3DGenerator = {
             indices: triIndices,
             tcaParams,
             rawTriangles,
-            triangleCount: numTriangles,
+            triangleCount: totalTriangles,
             vertexCount: totalVertices,
             radiusTip: da / 2.0,
             radiusRoot: df / 2.0,
@@ -409,6 +440,36 @@ export const Gear3DGenerator = {
             dBore,
             isSurfaceOnly
         };
+    },
+
+    /**
+     * Extracts rawTriangles array on demand from a generated meshData object (for STEP/STL/OBJ CAD export)
+     */
+    extractRawTriangles: function(meshData) {
+        if (!meshData) return [];
+        if (meshData.rawTriangles && meshData.rawTriangles.length > 0) return meshData.rawTriangles;
+        const pos = meshData.positions;
+        const ind = meshData.indices;
+        const numTris = Math.floor(ind.length / 3);
+        const tris = new Array(numTris);
+        for (let i = 0; i < numTris; i++) {
+            const i0 = ind[i * 3] * 3;
+            const i1 = ind[i * 3 + 1] * 3;
+            const i2 = ind[i * 3 + 2] * 3;
+            const ax = pos[i0], ay = pos[i0 + 1], az = pos[i0 + 2];
+            const bx = pos[i1], by = pos[i1 + 1], bz = pos[i1 + 2];
+            const cx = pos[i2], cy = pos[i2 + 1], cz = pos[i2 + 2];
+            const abx = bx - ax, aby = by - ay, abz = bz - az;
+            const acx = cx - ax, acy = cy - ay, acz = cz - az;
+            let nx = aby * acz - abz * acy;
+            let ny = abz * acx - abx * acz;
+            let nz = abx * acy - aby * acx;
+            const len = Math.hypot(nx, ny, nz);
+            if (len > 1e-12) { nx /= len; ny /= len; nz /= len; }
+            tris[i] = [[ax, ay, az], [bx, by, bz], [cx, cy, cz], [nx, ny, nz]];
+        }
+        meshData.rawTriangles = tris;
+        return tris;
     },
 
     /**

@@ -1901,6 +1901,25 @@
                         <button type="button" class="btn btn-secondary" id="btnToggleWireframe" title="Bật/tắt khung dây">🕸️ Khung Dây</button>
                         <button type="button" class="btn btn-secondary" id="btnReset3DView">🎯 Đặt Lại</button>
 
+                        <!-- 11 Cấp Độ Mịn Lưới Thân Khai 2D & 3D (Đồng bộ Trụ Thẳng & Trụ Nghiêng) -->
+                        <div style="display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);" title="Độ mịn biên dạng thân khai & lưới 3D (Đồng bộ 2D & 3D cho cả bánh răng trụ thẳng và trụ nghiêng)">
+                            <label for="selMeshDensity" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">💎 Độ mịn:</label>
+                            <input type="range" id="sliderProfileResolution3D" min="1" max="11" value="6" step="1" style="width: 70px; cursor: pointer;">
+                            <select id="selMeshDensity" class="calc-select" style="padding: 4px 8px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #10b981; border: 1.5px solid #059669; cursor: pointer;">
+                                <option value="1">Cấp 1: Thô (80 pts/răng)</option>
+                                <option value="2">Cấp 2: Nhanh (110 pts/răng)</option>
+                                <option value="3">Cấp 3: Trung Bình (140 pts/răng)</option>
+                                <option value="4">Cấp 4: Khá Mịn (172 pts/răng)</option>
+                                <option value="5">Cấp 5: Mịn (206 pts/răng)</option>
+                                <option value="6" selected>Cấp 6: Chuẩn Gốc MITCalc (240 pts/răng)</option>
+                                <option value="7">Cấp 7: Rất Mịn (288 pts/răng)</option>
+                                <option value="8">Cấp 8: Siêu Mịn (346 pts/răng)</option>
+                                <option value="9">Cấp 9: Cực Mịn CAM (414 pts/răng)</option>
+                                <option value="10">Cấp 10: Độ Nét Cao (492 pts/răng)</option>
+                                <option value="11">Cấp 11: Tuyệt Đối CNC/EDM (600 pts/răng)</option>
+                            </select>
+                        </div>
+
                         <!-- Inspection Controls: Chỉ Mặt Bên & Kiểu Tiếp Xúc -->
                         <div style="display: flex; align-items: center; gap: 6px; border-left: 1px solid var(--border-color); padding-left: 6px;">
                             <button type="button" class="btn btn-secondary" id="btnToggleFlankOnly" title="Ẩn khối phôi, chỉ hiện mặt sườn thân khai để quan sát vết ăn khớp tiếp xúc của cặp răng">👁️ Chỉ Mặt Bên</button>
@@ -1956,7 +1975,7 @@
                 </div>
 
                 <!-- 3D Viewport Container -->
-                <div id="container3D" style="display: none; position: relative; width: 100%; height: 650px; background-color: #0b0f19; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);">
+                <div id="container3D" style="display: none; position: relative; width: 100%; height: 650px; background-color: #111827; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border-color);">
                     <div id="gear3DContainer" style="width: 100%; height: 100%;"></div>
                     <!-- 3D Overlay Badge Info -->
                     <div id="badge3DInfo" style="position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 8px 14px; font-size: 0.8rem; color: #cbd5e1; pointer-events: none;">

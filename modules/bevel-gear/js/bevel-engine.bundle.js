@@ -3499,7 +3499,7 @@ class Bevel3DVisualizer {
 
         // 1. Scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x0b0f19);
+        this.scene.background = new THREE.Color(0x111827);
 
         // 2. Camera
         this.camera = new THREE.PerspectiveCamera(45, width / height, 1.0, 10000);
@@ -3508,6 +3508,10 @@ class Bevel3DVisualizer {
         // 3. Renderer
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
         this.renderer.setSize(width, height);
+        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        this.renderer.shadowMap.enabled = false;
+        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        this.renderer.toneMappingExposure = 1.22;
 
         while (this.container.firstChild) {
             this.container.removeChild(this.container.firstChild);
@@ -3537,7 +3541,7 @@ class Bevel3DVisualizer {
         this.scene.add(this.gearPivot);
 
         // 7. Grid helper at apex
-        this.gridHelper = new THREE.GridHelper(1000, 50, 0x1e293b, 0x0f172a);
+        this.gridHelper = new THREE.GridHelper(1000, 50, 0x334155, 0x1e293b);
         this.gridHelper.position.set(0, 0, -50);
         this.scene.add(this.gridHelper);
 
@@ -3549,27 +3553,32 @@ class Bevel3DVisualizer {
     }
 
     setupLighting() {
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x475569, 0.95);
+        hemiLight.position.set(0, 400, 400);
+        this.scene.add(hemiLight);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
         this.scene.add(ambientLight);
 
         // Main key light
-        const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.4);
-        dirLight1.position.set(300, 500, 400);
-        dirLight1.castShadow = true;
-        dirLight1.shadow.mapSize.width = 2048;
-        dirLight1.shadow.mapSize.height = 2048;
-        dirLight1.shadow.bias = -0.0001;
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.35);
+        dirLight1.position.set(350, 500, 450);
         this.scene.add(dirLight1);
 
-        // Fill light (blue tone)
-        const dirLight2 = new THREE.DirectionalLight(0x93c5fd, 0.7);
-        dirLight2.position.set(-400, -200, -300);
+        // Fill light (sky-blue tone)
+        const dirLight2 = new THREE.DirectionalLight(0xe0f2fe, 0.95);
+        dirLight2.position.set(-400, -250, -350);
         this.scene.add(dirLight2);
 
-        // Rim light (amber tone)
-        const dirLight3 = new THREE.DirectionalLight(0xfef08a, 0.8);
-        dirLight3.position.set(0, -400, 300);
+        // Rim light (warm amber tone)
+        const dirLight3 = new THREE.DirectionalLight(0xfef3c7, 0.85);
+        dirLight3.position.set(0, -450, 350);
         this.scene.add(dirLight3);
+
+        // Back-top light for bevel hub & tooth backs
+        const dirLight4 = new THREE.DirectionalLight(0xcbd5e1, 0.65);
+        dirLight4.position.set(-200, 400, -400);
+        this.scene.add(dirLight4);
     }
 
     onResize() {
@@ -3722,34 +3731,44 @@ class Bevel3DVisualizer {
             this.gearSurfMesh = null;
         }
 
-        // PBR Materials: Pinion Solid (Cyan Steel), Gear Solid (Gold/Bronze Steel)
+        // PBR Materials: Pinion Solid (Bright Sky-Cyan CAD Steel), Gear Solid (Warm Gold-Amber CAD Bronze/Steel)
         const matPinion = new THREE.MeshStandardMaterial({
-            color: 0x0284c7, // Vibrant cyan-blue
-            metalness: 0.85,
-            roughness: 0.25,
+            color: 0x38bdf8, // Bright Sky-Cyan CAD Steel
+            emissive: 0x0369a1,
+            emissiveIntensity: 0.12,
+            metalness: 0.28,
+            roughness: 0.35,
+            side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
         const matGear = new THREE.MeshStandardMaterial({
-            color: 0xf59e0b, // Warm amber-gold
-            metalness: 0.85,
-            roughness: 0.28,
+            color: 0xfbbf24, // Bright Warm Gold-Amber CAD Bronze/Steel
+            emissive: 0xb45309,
+            emissiveIntensity: 0.12,
+            metalness: 0.28,
+            roughness: 0.35,
+            side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
-        // Surface-Only Materials: Pinion Flank (Sky Blue #38bdf8), Gear Flank (Amber Gold #fbbf24)
+        // Surface-Only Materials: Pinion Flank (Luminous Cyan #22d3ee), Gear Flank (Luminous Gold #facc15)
         // In "Chỉ Mặt Bên" mode, contact is directly observed through the conjugate surface intersection
         const matPinionSurf = new THREE.MeshStandardMaterial({
-            color: 0x38bdf8, // Sky blue for pinion flank
-            metalness: 0.70,
+            color: 0x22d3ee, // Luminous cyan for pinion flank
+            emissive: 0x0284c7,
+            emissiveIntensity: 0.15,
+            metalness: 0.25,
             roughness: 0.30,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
         const matGearSurf = new THREE.MeshStandardMaterial({
-            color: 0xfbbf24, // Amber gold for gear flank
-            metalness: 0.70,
+            color: 0xfacc15, // Luminous amber gold for gear flank
+            emissive: 0xd97706,
+            emissiveIntensity: 0.15,
+            metalness: 0.25,
             roughness: 0.30,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode

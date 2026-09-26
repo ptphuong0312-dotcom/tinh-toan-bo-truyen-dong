@@ -3273,10 +3273,40 @@ class GearCanvas {
         }, { passive: true });
     }
 
-    setGeometry(geom) {
+    setGeometry(geom, resolution = null) {
         this.geom = geom;
+        if (resolution) this.resolution = resolution;
+        this.rebuildCachedProfiles();
         this.autoFit();
         this.render();
+    }
+
+    setResolution(resolution) {
+        if (!resolution) return;
+        this.resolution = resolution;
+        this.rebuildCachedProfiles();
+        this.render();
+    }
+
+    rebuildCachedProfiles() {
+        const g = this.geom;
+        if (!g) {
+            this.cachedPts1 = null;
+            this.cachedPts2 = null;
+            return;
+        }
+        const resOpts = this.resolution || {};
+        const toolOpts = {
+            beta: g.beta || 0.0,
+            ha0: g.ha0,
+            hf0: g.hf0,
+            ra0: g.ra0,
+            noPtHead: resOpts.noPtHead || 20,
+            noPtEv: resOpts.noPtEv || 100,
+            cuttStep: resOpts.cuttStep || 0.5
+        };
+        this.cachedPts1 = ToothProfileGenerator.generateProfile(g.z1, g.mn, g.alfa_n, g.x1, g.d1, g.db1, g.da1, g.df1, g.ra0 || 0.38, toolOpts);
+        this.cachedPts2 = ToothProfileGenerator.generateProfile(g.z2, g.mn, g.alfa_n, g.x2, g.d2, g.db2, g.da2, g.df2, g.ra0 || 0.38, toolOpts);
     }
 
     autoFit() {
@@ -3400,11 +3430,15 @@ class GearCanvas {
         ctx.setLineDash([]); // Reset dash for gear bodies
 
         // 4. Involute Tooth Outlines (Transverse Cross-Section from exact MITCalc Rack Cutter):
+        const resOpts = this.resolution || {};
         const toolOpts = {
             beta: g.beta || 0.0,
             ha0: g.ha0,
             hf0: g.hf0,
-            ra0: g.ra0
+            ra0: g.ra0,
+            noPtHead: resOpts.noPtHead || 20,
+            noPtEv: resOpts.noPtEv || 100,
+            cuttStep: resOpts.cuttStep || 0.5
         };
 
         // Exact analytical conjugate rolling phase (zero penetration):
@@ -3419,14 +3453,14 @@ class GearCanvas {
         ctx.save();
         ctx.translate(c1x, c1y);
         ctx.rotate(angle1);
-        this.drawGearOutline(g.z1, g.mn, g.alfa_n, g.x1, g.d1, g.db1, g.da1, g.df1, '#22c55e', '#15803d', toolOpts);
+        this.drawGearOutline(g.z1, g.mn, g.alfa_n, g.x1, g.d1, g.db1, g.da1, g.df1, '#22c55e', '#15803d', toolOpts, this.cachedPts1);
         ctx.restore();
 
         // Draw Gear (Blue)
         ctx.save();
         ctx.translate(c2x, c2y);
         ctx.rotate(angle2);
-        this.drawGearOutline(g.z2, g.mn, g.alfa_n, g.x2, g.d2, g.db2, g.da2, g.df2, '#38bdf8', '#1d4ed8', toolOpts);
+        this.drawGearOutline(g.z2, g.mn, g.alfa_n, g.x2, g.d2, g.db2, g.da2, g.df2, '#38bdf8', '#1d4ed8', toolOpts, this.cachedPts2);
         ctx.restore();
 
         // 5. Operating Pitch Point C
@@ -3438,9 +3472,9 @@ class GearCanvas {
         ctx.restore();
     }
 
-    drawGearOutline(z, m, alpha, x, d, db, da, df, strokeColor, fillColor, optExtra = {}) {
+    drawGearOutline(z, m, alpha, x, d, db, da, df, strokeColor, fillColor, optExtra = {}, cachedPts = null) {
         const ctx = this.ctx;
-        const pts = ToothProfileGenerator.generateProfile(z, m, alpha, x, d, db, da, df, optExtra.ra0 || 0.38, optExtra);
+        const pts = cachedPts || ToothProfileGenerator.generateProfile(z, m, alpha, x, d, db, da, df, optExtra.ra0 || 0.38, optExtra);
         if (!pts || pts.length === 0) return;
 
         // Draw gear outer profile with smooth filled body
@@ -3561,20 +3595,23 @@ const Gear3DGenerator = {
             boreAngles[j] = Math.atan2(contour[j].y, contour[j].x);
         }
 
-        // 3. Determine slice count along face width b (Z axis)
+        // 3. Determine slice count along face width b (Z axis), scaling with profile resolution
         const contactMode = opt.contactMode || 'theory';
+        const resFactor = Math.max(0.5, (optContour.noPtEv || 100) / 100.0); // 0.5 at L1, 1.0 at L6, 2.6 at L11
+        const buildRawTriangles = !!opt.buildRawTriangles;
 
         let numSlices = opt.numSlices;
         if (!numSlices) {
             if (contactMode === 'crowning') {
-                numSlices = 24; // Discretize parabolic crowning along face width Z
+                numSlices = Math.max(12, Math.min(32, Math.round(8 * resFactor) * 2));
             } else if (!isHelical) {
-                numSlices = 16; // 16 slices along face width Z for smooth TCA contact line rendering
+                numSlices = Math.max(2, Math.min(12, Math.round(2 * resFactor) * 2));
             } else {
-                // For helical gear, adapt slices to helix twist
+                // For helical gear, adapt slices to both helix twist and user resolution level
                 const twistTotalRad = Math.abs((b * Math.tan(betaRad)) / (d / 2.0));
-                const slicesFromTwist = Math.ceil(twistTotalRad / (Math.PI / 45.0));
-                numSlices = Math.max(16, Math.min(32, slicesFromTwist));
+                const slicesFromTwist = Math.ceil((twistTotalRad / (Math.PI / 36.0)) * resFactor);
+                const baseHelicalSlices = Math.round(8 * resFactor) * 2;
+                numSlices = Math.max(12, Math.min(40, Math.ceil(Math.max(baseHelicalSlices, slicesFromTwist) / 2) * 2));
             }
         }
 
@@ -3596,10 +3633,15 @@ const Gear3DGenerator = {
         const boreVCount = isSurfaceOnly ? 0 : (numLayers * N);
         const totalVertices = lateralVCount + capVCount + capVCount + boreVCount;
 
+        const totalTriangles = isSurfaceOnly
+            ? (numSlices * N * 2)
+            : (numSlices * N * 2 + N * 2 + N * 2 + numSlices * N * 2);
+
         const positions = new Float32Array(totalVertices * 3);
         const normals = new Float32Array(totalVertices * 3);
         const tcaParams = new Float32Array(totalVertices * 3);
-        const indices = [];
+        const triIndices = new Uint32Array(totalTriangles * 3);
+        let idxPtr = 0;
         const rawTriangles = [];
 
         // Helper to compute slice rotation and Z
@@ -3678,7 +3720,7 @@ const Gear3DGenerator = {
             }
         }
 
-        // Lateral Triangles & Normals
+        // Lateral Triangles & Outward-Pointing Normals (contour[j] progresses Clockwise in XY plane)
         for (let k = 0; k < numSlices; k++) {
             for (let j = 0; j < N; j++) {
                 const jNext = (j + 1) % N;
@@ -3687,25 +3729,33 @@ const Gear3DGenerator = {
                 const v10 = lateralBase + (k + 1) * N + j;
                 const v11 = lateralBase + (k + 1) * N + jNext;
 
-                indices.push(v00, v01, v11);
-                indices.push(v00, v11, v10);
+                // CCW winding when viewed from outside the gear (normal points radially outwards)
+                triIndices[idxPtr++] = v00;
+                triIndices[idxPtr++] = v11;
+                triIndices[idxPtr++] = v01;
+                triIndices[idxPtr++] = v00;
+                triIndices[idxPtr++] = v10;
+                triIndices[idxPtr++] = v11;
 
                 const ax = positions[v00 * 3], ay = positions[v00 * 3 + 1], az = positions[v00 * 3 + 2];
                 const bx = positions[v01 * 3], by = positions[v01 * 3 + 1], bz = positions[v01 * 3 + 2];
                 const cx = positions[v11 * 3], cy = positions[v11 * 3 + 1], cz = positions[v11 * 3 + 2];
                 const dx = positions[v10 * 3], dy = positions[v10 * 3 + 1], dz = positions[v10 * 3 + 2];
 
-                const n1 = computeFaceNormal(ax, ay, az, bx, by, bz, cx, cy, cz);
+                const n1 = computeFaceNormal(ax, ay, az, cx, cy, cz, bx, by, bz);
                 accumulateNormal(v00, n1);
-                accumulateNormal(v01, n1);
                 accumulateNormal(v11, n1);
-                rawTriangles.push([[ax, ay, az], [bx, by, bz], [cx, cy, cz], n1]);
+                accumulateNormal(v01, n1);
 
-                const n2 = computeFaceNormal(ax, ay, az, cx, cy, cz, dx, dy, dz);
+                const n2 = computeFaceNormal(ax, ay, az, dx, dy, dz, cx, cy, cz);
                 accumulateNormal(v00, n2);
-                accumulateNormal(v11, n2);
                 accumulateNormal(v10, n2);
-                rawTriangles.push([[ax, ay, az], [cx, cy, cz], [dx, dy, dz], n2]);
+                accumulateNormal(v11, n2);
+
+                if (buildRawTriangles) {
+                    rawTriangles.push([[ax, ay, az], [cx, cy, cz], [bx, by, bz], n1]);
+                    rawTriangles.push([[ax, ay, az], [dx, dy, dz], [cx, cy, cz], n2]);
+                }
             }
         }
 
@@ -3749,7 +3799,7 @@ const Gear3DGenerator = {
                 vIdx++;
             }
 
-            // Front Cap Triangles (CCW when viewed from +Z)
+            // Front Cap Triangles (CCW when viewed from +Z, since contour[j] is Clockwise)
             const frontNormal = [0.0, 0.0, 1.0];
             for (let j = 0; j < N; j++) {
                 const jNext = (j + 1) % N;
@@ -3758,21 +3808,27 @@ const Gear3DGenerator = {
                 const b0 = frontBase + N + j;
                 const b1 = frontBase + N + jNext;
 
-                indices.push(o0, o1, b1);
-                indices.push(o0, b1, b0);
+                triIndices[idxPtr++] = o0;
+                triIndices[idxPtr++] = b1;
+                triIndices[idxPtr++] = o1;
+                triIndices[idxPtr++] = o0;
+                triIndices[idxPtr++] = b0;
+                triIndices[idxPtr++] = b1;
 
-                rawTriangles.push([
-                    [positions[o0 * 3], positions[o0 * 3 + 1], halfB],
-                    [positions[o1 * 3], positions[o1 * 3 + 1], halfB],
-                    [positions[b1 * 3], positions[b1 * 3 + 1], halfB],
-                    frontNormal
-                ]);
-                rawTriangles.push([
-                    [positions[o0 * 3], positions[o0 * 3 + 1], halfB],
-                    [positions[b1 * 3], positions[b1 * 3 + 1], halfB],
-                    [positions[b0 * 3], positions[b0 * 3 + 1], halfB],
-                    frontNormal
-                ]);
+                if (buildRawTriangles) {
+                    rawTriangles.push([
+                        [positions[o0 * 3], positions[o0 * 3 + 1], halfB],
+                        [positions[b1 * 3], positions[b1 * 3 + 1], halfB],
+                        [positions[o1 * 3], positions[o1 * 3 + 1], halfB],
+                        frontNormal
+                    ]);
+                    rawTriangles.push([
+                        [positions[o0 * 3], positions[o0 * 3 + 1], halfB],
+                        [positions[b0 * 3], positions[b0 * 3 + 1], halfB],
+                        [positions[b1 * 3], positions[b1 * 3 + 1], halfB],
+                        frontNormal
+                    ]);
+                }
             }
 
             // --- GROUP 3: Back End Cap at Z = -halfB ---
@@ -3803,7 +3859,7 @@ const Gear3DGenerator = {
                 vIdx++;
             }
 
-            // Back Cap Triangles (CCW when viewed from -Z)
+            // Back Cap Triangles (CCW when viewed from -Z, since contour[j] is Clockwise from +Z)
             const backNormal = [0.0, 0.0, -1.0];
             for (let j = 0; j < N; j++) {
                 const jNext = (j + 1) % N;
@@ -3812,21 +3868,27 @@ const Gear3DGenerator = {
                 const b0 = backBase + N + j;
                 const b1 = backBase + N + jNext;
 
-                indices.push(o1, o0, b1);
-                indices.push(b1, o0, b0);
+                triIndices[idxPtr++] = o0;
+                triIndices[idxPtr++] = o1;
+                triIndices[idxPtr++] = b1;
+                triIndices[idxPtr++] = o0;
+                triIndices[idxPtr++] = b1;
+                triIndices[idxPtr++] = b0;
 
-                rawTriangles.push([
-                    [positions[o1 * 3], positions[o1 * 3 + 1], -halfB],
-                    [positions[o0 * 3], positions[o0 * 3 + 1], -halfB],
-                    [positions[b1 * 3], positions[b1 * 3 + 1], -halfB],
-                    backNormal
-                ]);
-                rawTriangles.push([
-                    [positions[b1 * 3], positions[b1 * 3 + 1], -halfB],
-                    [positions[o0 * 3], positions[o0 * 3 + 1], -halfB],
-                    [positions[b0 * 3], positions[b0 * 3 + 1], -halfB],
-                    backNormal
-                ]);
+                if (buildRawTriangles) {
+                    rawTriangles.push([
+                        [positions[o0 * 3], positions[o0 * 3 + 1], -halfB],
+                        [positions[o1 * 3], positions[o1 * 3 + 1], -halfB],
+                        [positions[b1 * 3], positions[b1 * 3 + 1], -halfB],
+                        backNormal
+                    ]);
+                    rawTriangles.push([
+                        [positions[o0 * 3], positions[o0 * 3 + 1], -halfB],
+                        [positions[b1 * 3], positions[b1 * 3 + 1], -halfB],
+                        [positions[b0 * 3], positions[b0 * 3 + 1], -halfB],
+                        backNormal
+                    ]);
+                }
             }
 
             // --- GROUP 4: Inner Bore Cylinder Surface ---
@@ -3849,7 +3911,7 @@ const Gear3DGenerator = {
                 }
             }
 
-            // Bore Triangles (Facing inwards)
+            // Bore Triangles (Facing inwards towards shaft axis)
             for (let k = 0; k < numSlices; k++) {
                 for (let j = 0; j < N; j++) {
                     const jNext = (j + 1) % N;
@@ -3858,24 +3920,27 @@ const Gear3DGenerator = {
                     const b10 = boreBase + (k + 1) * N + j;
                     const b11 = boreBase + (k + 1) * N + jNext;
 
-                    indices.push(b00, b11, b01);
-                    indices.push(b00, b10, b11);
+                    triIndices[idxPtr++] = b00;
+                    triIndices[idxPtr++] = b01;
+                    triIndices[idxPtr++] = b11;
+                    triIndices[idxPtr++] = b00;
+                    triIndices[idxPtr++] = b11;
+                    triIndices[idxPtr++] = b10;
 
-                    const ax = positions[b00 * 3], ay = positions[b00 * 3 + 1], az = positions[b00 * 3 + 2];
-                    const bx = positions[b01 * 3], by = positions[b01 * 3 + 1], bz = positions[b01 * 3 + 2];
-                    const cx = positions[b11 * 3], cy = positions[b11 * 3 + 1], cz = positions[b11 * 3 + 2];
-                    const dx = positions[b10 * 3], dy = positions[b10 * 3 + 1], dz = positions[b10 * 3 + 2];
+                    if (buildRawTriangles) {
+                        const ax = positions[b00 * 3], ay = positions[b00 * 3 + 1], az = positions[b00 * 3 + 2];
+                        const bx = positions[b01 * 3], by = positions[b01 * 3 + 1], bz = positions[b01 * 3 + 2];
+                        const cx = positions[b11 * 3], cy = positions[b11 * 3 + 1], cz = positions[b11 * 3 + 2];
+                        const dx = positions[b10 * 3], dy = positions[b10 * 3 + 1], dz = positions[b10 * 3 + 2];
 
-                    const n1 = computeFaceNormal(ax, ay, az, cx, cy, cz, bx, by, bz);
-                    const n2 = computeFaceNormal(ax, ay, az, dx, dy, dz, cx, cy, cz);
-                    rawTriangles.push([[ax, ay, az], [cx, cy, cz], [bx, by, bz], n1]);
-                    rawTriangles.push([[ax, ay, az], [dx, dy, dz], [cx, cy, cz], n2]);
+                        const n1 = computeFaceNormal(ax, ay, az, bx, by, bz, cx, cy, cz);
+                        const n2 = computeFaceNormal(ax, ay, az, cx, cy, cz, dx, dy, dz);
+                        rawTriangles.push([[ax, ay, az], [bx, by, bz], [cx, cy, cz], n1]);
+                        rawTriangles.push([[ax, ay, az], [cx, cy, cz], [dx, dy, dz], n2]);
+                    }
                 }
             }
         }
-
-        const triIndices = new Uint32Array(indices);
-        const numTriangles = rawTriangles.length;
 
         return {
             positions,
@@ -3883,7 +3948,7 @@ const Gear3DGenerator = {
             indices: triIndices,
             tcaParams,
             rawTriangles,
-            triangleCount: numTriangles,
+            triangleCount: totalTriangles,
             vertexCount: totalVertices,
             radiusTip: da / 2.0,
             radiusRoot: df / 2.0,
@@ -3892,6 +3957,36 @@ const Gear3DGenerator = {
             dBore,
             isSurfaceOnly
         };
+    },
+
+    /**
+     * Extracts rawTriangles array on demand from a generated meshData object (for STEP/STL/OBJ CAD export)
+     */
+    extractRawTriangles: function(meshData) {
+        if (!meshData) return [];
+        if (meshData.rawTriangles && meshData.rawTriangles.length > 0) return meshData.rawTriangles;
+        const pos = meshData.positions;
+        const ind = meshData.indices;
+        const numTris = Math.floor(ind.length / 3);
+        const tris = new Array(numTris);
+        for (let i = 0; i < numTris; i++) {
+            const i0 = ind[i * 3] * 3;
+            const i1 = ind[i * 3 + 1] * 3;
+            const i2 = ind[i * 3 + 2] * 3;
+            const ax = pos[i0], ay = pos[i0 + 1], az = pos[i0 + 2];
+            const bx = pos[i1], by = pos[i1 + 1], bz = pos[i1 + 2];
+            const cx = pos[i2], cy = pos[i2 + 1], cz = pos[i2 + 2];
+            const abx = bx - ax, aby = by - ay, abz = bz - az;
+            const acx = cx - ax, acy = cy - ay, acz = cz - az;
+            let nx = aby * acz - abz * acy;
+            let ny = abz * acx - abx * acz;
+            let nz = abx * acy - aby * acx;
+            const len = Math.hypot(nx, ny, nz);
+            if (len > 1e-12) { nx /= len; ny /= len; nz /= len; }
+            tris[i] = [[ax, ay, az], [bx, by, bz], [cx, cy, cz], [nx, ny, nz]];
+        }
+        meshData.rawTriangles = tris;
+        return tris;
     },
 
     /**
@@ -4329,7 +4424,7 @@ class Gear3DVisualizer {
 
         // 1. Scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x0b0f19);
+        this.scene.background = new THREE.Color(0x111827);
 
         // 2. Camera
         this.camera = new THREE.PerspectiveCamera(45, width / height, 1.0, 10000);
@@ -4339,10 +4434,9 @@ class Gear3DVisualizer {
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
         this.renderer.setSize(width, height);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.shadowMap.enabled = false;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.1;
+        this.renderer.toneMappingExposure = 1.22;
 
         // Clean existing children
         while (this.container.firstChild) {
@@ -4370,7 +4464,7 @@ class Gear3DVisualizer {
         this.scene.add(this.gearGroup);
 
         // 7. Grid helper
-        this.gridHelper = new THREE.GridHelper(1000, 50, 0x1e293b, 0x0f172a);
+        this.gridHelper = new THREE.GridHelper(1000, 50, 0x334155, 0x1e293b);
         this.gridHelper.rotation.x = Math.PI / 2; // Lie on XY or XZ plane
         this.gridHelper.position.z = -100;
         this.scene.add(this.gridHelper);
@@ -4384,20 +4478,28 @@ class Gear3DVisualizer {
     }
 
     setupLighting() {
-        const ambLight = new THREE.AmbientLight(0xffffff, 0.7);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x475569, 0.95);
+        hemiLight.position.set(0, 0, 600);
+        this.scene.add(hemiLight);
+
+        const ambLight = new THREE.AmbientLight(0xffffff, 0.75);
         this.scene.add(ambLight);
 
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        keyLight.position.set(200, 300, 500);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.35);
+        keyLight.position.set(250, -350, 550);
         this.scene.add(keyLight);
 
-        const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.7);
-        fillLight.position.set(-300, -200, 300);
+        const fillLight = new THREE.DirectionalLight(0xe0f2fe, 0.95);
+        fillLight.position.set(-350, 300, 400);
         this.scene.add(fillLight);
 
-        const backLight = new THREE.DirectionalLight(0xfef08a, 0.6);
-        backLight.position.set(0, 400, -300);
+        const backLight = new THREE.DirectionalLight(0xfef3c7, 0.85);
+        backLight.position.set(0, 450, -450);
         this.scene.add(backLight);
+
+        const bottomLight = new THREE.DirectionalLight(0xcbd5e1, 0.55);
+        bottomLight.position.set(0, -400, -300);
+        this.scene.add(bottomLight);
     }
 
     onResize() {
@@ -4539,19 +4641,25 @@ class Gear3DVisualizer {
             geo2.setAttribute('aTcaParam', new THREE.BufferAttribute(this.mesh2Data.tcaParams, 3));
         }
 
-        // 5. Materials (Standard PBR Metallic - 1-to-1 Bevel Gear Standard)
-        // Solid Materials: Pinion (Cyan Blue), Gear (Warm Amber Gold)
+        // 5. Materials (Bright CAD Satin-Metallic - Clear 3D Solid Visibility)
+        // Solid Materials: Pinion (Bright Sky Cyan #38bdf8), Gear (Warm Gold Amber #fbbf24)
         const mat1 = new THREE.MeshStandardMaterial({
-            color: 0x0284c7, // Vibrant cyan-blue
-            metalness: 0.85,
-            roughness: 0.25,
+            color: 0x38bdf8, // Bright Sky-Cyan CAD Steel
+            emissive: 0x0369a1,
+            emissiveIntensity: 0.12,
+            metalness: 0.28,
+            roughness: 0.35,
+            side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
         const mat2 = new THREE.MeshStandardMaterial({
-            color: 0xf59e0b, // Warm amber-gold
-            metalness: 0.85,
-            roughness: 0.28,
+            color: 0xfbbf24, // Bright Warm Gold-Amber CAD Bronze/Steel
+            emissive: 0xb45309,
+            emissiveIntensity: 0.12,
+            metalness: 0.28,
+            roughness: 0.35,
+            side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
@@ -4564,7 +4672,7 @@ class Gear3DVisualizer {
         this.gearGroup.add(this.gearMesh);
 
         // 6. Surface-Only Meshes (Chế độ "Chỉ Mặt Bên" - quan sát vết tiếp xúc thực thể)
-        // Pinion Flank: Sky Blue #38bdf8 | Gear Flank: Amber Gold #fbbf24
+        // Pinion Flank: Luminous Cyan #22d3ee | Gear Flank: Luminous Gold #facc15
         if (this.surf1Data) {
             const geoSurf1 = new THREE.BufferGeometry();
             geoSurf1.setAttribute('position', new THREE.BufferAttribute(this.surf1Data.positions, 3));
@@ -4572,8 +4680,10 @@ class Gear3DVisualizer {
             geoSurf1.setIndex(new THREE.BufferAttribute(this.surf1Data.indices, 1));
 
             const matPinionSurf = new THREE.MeshStandardMaterial({
-                color: 0x38bdf8, // Sky blue for pinion flank
-                metalness: 0.70,
+                color: 0x22d3ee, // Luminous cyan for pinion flank
+                emissive: 0x0284c7,
+                emissiveIntensity: 0.15,
+                metalness: 0.25,
                 roughness: 0.30,
                 side: THREE.DoubleSide,
                 wireframe: this.wireframeMode
@@ -4591,8 +4701,10 @@ class Gear3DVisualizer {
             geoSurf2.setIndex(new THREE.BufferAttribute(this.surf2Data.indices, 1));
 
             const matGearSurf = new THREE.MeshStandardMaterial({
-                color: 0xfbbf24, // Amber gold for gear flank
-                metalness: 0.70,
+                color: 0xfacc15, // Luminous amber gold for gear flank
+                emissive: 0xd97706,
+                emissiveIntensity: 0.15,
+                metalness: 0.25,
                 roughness: 0.30,
                 side: THREE.DoubleSide,
                 wireframe: this.wireframeMode
@@ -4835,10 +4947,13 @@ class Gear3DVisualizer {
 
         if (!m1 || !m2) return [];
 
+        const raw1 = Gear3DGenerator.extractRawTriangles(m1);
+        const raw2 = Gear3DGenerator.extractRawTriangles(m2);
+
         if (type === 'pinion') {
-            return m1.rawTriangles;
+            return raw1;
         } else if (type === 'gear') {
-            return m2.rawTriangles;
+            return raw2;
         } else if (type === 'assembly') {
             // Transform Pinion 1 and Gear 2 triangles to exact center distance aw and conjugate mesh angles
             const aw = (this.geom && this.geom.aw) ? this.geom.aw : 100.0;
@@ -4846,7 +4961,7 @@ class Gear3DVisualizer {
             const cosR1 = Math.cos(rotZ1);
             const sinR1 = Math.sin(rotZ1);
 
-            const transformedPinion1 = m1.rawTriangles.map(([p1, p2, p3, n]) => {
+            const transformedPinion1 = raw1.map(([p1, p2, p3, n]) => {
                 const trPt1 = (p) => [
                     p[0] * cosR1 - p[1] * sinR1,
                     p[0] * sinR1 + p[1] * cosR1,
@@ -4864,7 +4979,7 @@ class Gear3DVisualizer {
             const cosR2 = Math.cos(rotZ2);
             const sinR2 = Math.sin(rotZ2);
 
-            const transformedGear2 = m2.rawTriangles.map(([p1, p2, p3, n]) => {
+            const transformedGear2 = raw2.map(([p1, p2, p3, n]) => {
                 const trPt2 = (p) => [
                     p[0] * cosR2 - p[1] * sinR2 + aw,
                     p[0] * sinR2 + p[1] * cosR2,
@@ -4902,13 +5017,31 @@ class Gear3DVisualizer {
         if (this.geom) {
             const curPinionOffset = (this.pinionAngle !== undefined && this.initialPinionAngle !== undefined)
                 ? (this.pinionAngle - this.initialPinionAngle) : 0.0;
-            this.setGeometry(this.geom);
+            this.setGeometry(this.geom, this.resolution);
             this.pinionAngle = this.initialPinionAngle + curPinionOffset;
             this.gearAngle = this.initialGearAngle - curPinionOffset / this.gearRatio;
             this.pinionGroup.rotation.z = this.pinionAngle;
             this.gearGroup.rotation.z = this.gearAngle;
         }
         return this.contactMode;
+    }
+
+    setResolution(resolution) {
+        if (!resolution) return;
+        this.resolution = resolution;
+        if (this.geom) {
+            const curPinionOffset = (this.pinionAngle !== undefined && this.initialPinionAngle !== undefined)
+                ? (this.pinionAngle - this.initialPinionAngle) : 0.0;
+            this.setGeometry(this.geom, this.resolution);
+            this.pinionAngle = this.initialPinionAngle + curPinionOffset;
+            this.gearAngle = this.initialGearAngle - curPinionOffset / this.gearRatio;
+            if (this.pinionGroup) this.pinionGroup.rotation.z = this.pinionAngle;
+            if (this.gearGroup) this.gearGroup.rotation.z = this.gearAngle;
+            if (this.renderer && this.scene && this.camera) {
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+        return this.resolution;
     }
 
     /**
@@ -5344,6 +5477,10 @@ class SpurGearUI {
         if (slider1) slider1.value = lvl;
         const slider2 = document.getElementById('sliderProfileResolutionCanvas');
         if (slider2) slider2.value = lvl;
+        const slider3 = document.getElementById('sliderProfileResolution3D');
+        if (slider3) slider3.value = lvl;
+        const selDensity = document.getElementById('selMeshDensity');
+        if (selDensity) selDensity.value = String(lvl);
 
         const lbl1 = document.getElementById('lblProfileResolution');
         if (lbl1) lbl1.textContent = `${resInfo.name} (${resInfo.ptsPerTooth} điểm/răng, Δψ=${resInfo.cuttStep}°)`;
@@ -5360,13 +5497,23 @@ class SpurGearUI {
         this.inputs.sec20_no_pt_ev = resInfo.noPtEv;
         this.inputs.sec20_cutt_step = resInfo.cuttStep;
 
+        const resObj = {
+            noPtHead: resInfo.noPtHead,
+            noPtEv: resInfo.noPtEv,
+            cuttStep: resInfo.cuttStep
+        };
+
+        if (this.canvasController) {
+            this.canvasController.setResolution(resObj);
+        }
+
         if (this.g) {
             if (this.visualizer3D) {
-                this.visualizer3D.setGeometry(this.g, {
-                    noPtHead: resInfo.noPtHead,
-                    noPtEv: resInfo.noPtEv,
-                    cuttStep: resInfo.cuttStep
-                });
+                if (typeof this.visualizer3D.setResolution === 'function') {
+                    this.visualizer3D.setResolution(resObj);
+                } else {
+                    this.visualizer3D.setGeometry(this.g, resObj);
+                }
             }
             this.renderCoordinatesTable(this.g);
         }
@@ -5544,6 +5691,14 @@ class SpurGearUI {
         };
         setupResSlider('sliderProfileResolution');
         setupResSlider('sliderProfileResolutionCanvas');
+        setupResSlider('sliderProfileResolution3D');
+
+        const selMeshDensity = document.getElementById('selMeshDensity');
+        if (selMeshDensity) {
+            selMeshDensity.addEventListener('change', (e) => {
+                this.setProfileResolution(parseInt(e.target.value, 10) || 6);
+            });
+        }
 
         const btnSolveAw = document.getElementById('btnSolveAw');
         if (btnSolveAw) {
@@ -5598,7 +5753,14 @@ class SpurGearUI {
                 if (visualizerDesc) visualizerDesc.textContent = 'Mô hình 3D thực thể xoay chuyển động ăn khớp liên tục. Tự động xoắn răng theo góc nghiêng beta, xuất file STEP/STL cho SolidWorks & Mastercam.';
                 if (this.visualizer3D) {
                     this.visualizer3D.onResize();
-                    if (this.g) this.visualizer3D.setGeometry(this.g);
+                    const resInfo = (typeof PROFILE_RESOLUTION_LEVELS !== 'undefined')
+                        ? (PROFILE_RESOLUTION_LEVELS[this.profileResolution || 6] || PROFILE_RESOLUTION_LEVELS[6])
+                        : { noPtHead: 20, noPtEv: 100, cuttStep: 0.5 };
+                    if (this.g) this.visualizer3D.setGeometry(this.g, {
+                        noPtHead: resInfo.noPtHead,
+                        noPtEv: resInfo.noPtEv,
+                        cuttStep: resInfo.cuttStep
+                    });
                 }
             });
         }
@@ -6362,19 +6524,21 @@ class SpurGearUI {
         this.renderAuditTable(g);
         this.renderCoordinatesTable(g);
 
-        if (this.canvasController) {
-            this.canvasController.setGeometry(g);
-        }
         const resInfo = (typeof PROFILE_RESOLUTION_LEVELS !== 'undefined')
             ? (PROFILE_RESOLUTION_LEVELS[this.profileResolution || 6] || PROFILE_RESOLUTION_LEVELS[6])
             : { noPtHead: 20, noPtEv: 100, cuttStep: 0.5 };
+        const resObj = {
+            noPtHead: resInfo.noPtHead,
+            noPtEv: resInfo.noPtEv,
+            cuttStep: resInfo.cuttStep
+        };
+
+        if (this.canvasController) {
+            this.canvasController.setGeometry(g, resObj);
+        }
 
         if (this.visualizer3D) {
-            this.visualizer3D.setGeometry(g, {
-                noPtHead: resInfo.noPtHead,
-                noPtEv: resInfo.noPtEv,
-                cuttStep: resInfo.cuttStep
-            });
+            this.visualizer3D.setGeometry(g, resObj);
         }
 
         const badge3DType = document.getElementById('badge3DType');

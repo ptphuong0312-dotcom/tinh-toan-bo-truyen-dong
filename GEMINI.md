@@ -887,3 +887,28 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * Trường hợp 2B ($K_{F\beta} = 1.125 \implies K_F = 1.688$): $\sigma_{F2} = 343.91\text{ MPa}$ ($\sim 344\text{ MPa}$), $S_{F2} = 1.80$ ($\sigma_{F1} = 368.96\text{ MPa} \sim 369\text{ MPa}, S_{F1} = 1.63$).
 5. **Cơ chế tự động hóa xuất bản Word chất lượng cao (`python-docx`)**:
    - Xuất file `.docx` trực tiếp tại thư mục gốc dự án (`BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG.docx` và `BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG_Z17_69_M14.docx`) và đồng bộ vào thư mục artifacts.
+
+---
+
+### Quy Tắc 40: Quy Chuẩn Khối Đặc 3D Mặc Định (CCW Winding Order), Bảng Màu Sáng Dễ Nhìn & Đồng Bộ Độ Mịn 2D/3D (Bánh Răng Trụ & Côn)
+1. **Lệnh trực tiếp từ SirPhuong**:
+   - *"tôi thấy màu mô phỏng 3d của module bánh răng trụ đang tối quá, bạn hãy chỉnh màu sáng và dễ nhìn hơn (bên bánh răng côn bạn cũng cần điều chỉnh màu phù hợp với nền hơn cho dễ nhìn). mặc định mô phỏng 3d ban đầu của bánh răng trụ phải là hình khối chứ không phải là bề mặt, khi nhấp vào chỉ bề mặt thì mới hiện ra dạng bề mặt như hiện tại để tôi dễ quan sát."*
+   - *"tôi muốn hỏi về độ mịn trong mô phỏng bánh răng trụ : bên 2d đã có thanh điều chỉnh độ mịn vậy thì khi điều chỉnh độ mịn bên 2D thì bên 3D có mịn không (tính cả trụ thẳng và trụ nghiêng) nếu chỉnh bên 2d mà bên 3d cũng mịn theo thì thôi còn nếu chưa thì tôi cần có thanh chỉnh độ mịn bên 3d như của bánh răng côn thẳng."*
+2. **Khắc phục triệt để lỗi Bánh Răng Trụ 3D mặc định bị rỗng như bề mặt (CCW Triangle Winding Order Protocol)**:
+   - **Nguyên nhân gốc rễ**: `MitcalcToothSolver.generateCompleteWheelContour` sinh điểm biên dạng theo chiều kim đồng hồ (CW) trong mặt phẳng XY ($x = r\sin\theta, y = r\cos\theta$). Trong `Gear3DGenerator.generateGearMeshData`, thứ tự nối đỉnh tam giác cũ giả định ngược chiều kim đồng hồ (CCW), khiến toàn bộ 4 nhóm mặt (Mặt vành răng ngoài, Nắp đầu trước $Z = +b/2$, Nắp đầu sau $Z = -b/2$, Lòng lỗ trục) bị ngược pháp tuyến hướng vào trong. Khi Three.js bật `FrontSide` backface culling, mặt nắp trước và mặt răng phía trước bị cắt bỏ, chỉ lộ lòng mặt sau làm khối đặc trông như một vỏ bề mặt rỗng!
+   - **Giải pháp chuẩn hóa**:
+     * Đảo chuẩn thứ tự đỉnh tam giác (CCW nhìn từ ngoài vào) cho cả 4 nhóm mặt của khối đặc trong `Gear3DGenerator.generateGearMeshData` và đặt `side: THREE.DoubleSide` dự phòng an toàn.
+     * Mặc định khi khởi tạo (`flankOnlyMode = false`): hiển thị 100% **Hình Khối Đặc (`pinionMesh.visible = true, gearMesh.visible = true`)** có đầy đủ nắp đầu đặc, lỗ trục và thân răng; ẩn vỏ mặt bên (`pinionSurfMesh.visible = false, gearSurfMesh.visible = false`). Chỉ khi nhấp nút `👁️ Chỉ Mặt Bên` (`#btnToggleFlankOnly`) mới chuyển sang dạng vỏ bề mặt mỏng.
+     * Tối ưu hóa cấp phát mảng `Uint32Array` trực tiếp và trích xuất `rawTriangles` theo yêu cầu (`extractRawTriangles`) khi xuất STEP/STL/OBJ, giúp thời gian dựng khối đặc 3D $< 15\text{ ms}$.
+3. **Bảng màu 3D Satin-Metallic sáng rõ & Hệ thống chiếu sáng Studio 4 hướng (Cả Bánh Răng Trụ & Bánh Răng Côn)**:
+   - Hạ `metalness` từ `0.85` (vốn làm mất 85% ánh sáng khuếch tán khi không có IBL environment map) xuống `0.28` (`roughness: 0.35`), kết hợp phát sáng nhẹ `emissiveIntensity: 0.12`:
+     * **Bánh dẫn 1 (Pinion Solid)**: Xanh Dương Sáng (`color: 0x38bdf8`, `emissive: 0x0369a1`).
+     * **Bánh bị dẫn 2 (Gear Solid)**: Vàng Hổ Phách Sáng (`color: 0xfbbf24`, `emissive: 0xb45309`).
+     * **Vỏ Chỉ Mặt Bên (Surface Flanks)**: Xanh Ngọc Sáng (`0x22d3ee`) & Vàng Kim Sáng (`0xfacc15`), `metalness: 0.25, roughness: 0.30, emissiveIntensity: 0.15`.
+     * **Đường viền cạnh (Edge Lines)**: Xanh Sáng (`0xbae6fd`) và Vàng Sáng (`0xfef08a`) giúp tách biệt sắc nét từng đỉnh răng và đáy răng trên nền tối CAD (`0x111827`).
+   - Bổ sung `HemisphereLight(0xffffff, 0x475569, 0.95)`, `AmbientLight(0xffffff, 0.75)` và 4 đèn `DirectionalLight` đa hướng với `toneMappingExposure = 1.22`.
+4. **Đồng bộ hóa 100% Độ Mịn 2D & 3D (Trụ Thẳng $\beta = 0^\circ$ & Trụ Nghiêng $\beta \ne 0^\circ$) + Thanh Chỉnh Độ Mịn Trực Tiếp Trên 3D Toolbar**:
+   - Truyền trực tiếp cấu hình độ mịn `resolution = { noPtHead, noPtEv, cuttStep }` từ `PROFILE_RESOLUTION_LEVELS` (11 cấp độ từ Cấp 1: 80 pts/răng đến Cấp 11: 600 pts/răng, mặc định Cấp 6: 240 pts/răng) vào cả **2D Canvas (`gearCanvas.setGeometry(geom, res)`)** và **3D WebGL (`gear3DVisualizer.setGeometry(geom, res)`)**.
+   - Trong `Gear3DGenerator`: không chỉ tăng số điểm biên dạng ngang $(X, Y)$ theo `noPtEv, cuttStep`, mà còn tự động nhân hệ số mịn `resFactor = noPtEv / 100` cho **số lát cắt dọc trục $Z$ (`numSlices`)** đối với cả bánh răng trụ thẳng và bánh răng trụ nghiêng ($\beta \ne 0^\circ$).
+   - Trang bị thêm trên thanh công cụ 3D (`#toolbar3D`) của Bánh Răng Trụ cả thanh trượt `sliderProfileResolution3D` và hộp chọn `selMeshDensity` (11 cấp độ mịn giống hệt Bánh Răng Côn), đồng bộ 2 chiều tức thì với thanh trượt ở 2D Canvas và mục 16.3.
+

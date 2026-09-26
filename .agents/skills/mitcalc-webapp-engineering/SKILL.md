@@ -1021,6 +1021,17 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 49: Quy Chuẩn Khối Đặc 3D Mặc Định (CCW Winding Order), Bảng Màu Sáng Dễ Nhìn & Đồng Bộ Độ Mịn 2D/3D (Bánh Răng Trụ & Côn)
+1. **Khắc phục lỗi Bánh Răng Trụ 3D mặc định bị rỗng như bề mặt (CCW Triangle Winding Order Protocol)**:
+   - `MitcalcToothSolver.generateCompleteWheelContour` sinh điểm biên dạng theo chiều kim đồng hồ (CW) trong mặt phẳng XY. `Gear3DGenerator.generateGearMeshData` phải nối đỉnh tam giác theo chiều ngược kim đồng hồ (CCW nhìn từ ngoài vào) cho cả 4 nhóm mặt (Vành răng ngoài, Nắp trước $Z = +b/2$, Nắp sau $Z = -b/2$, Lỗ trục trong) để pháp tuyến hướng ra ngoài chuẩn xác.
+   - Mặc định khi mở mô phỏng 3D (`flankOnlyMode = false`), hiển thị khối đặc hoàn chỉnh (`pinionMesh.visible = true, gearMesh.visible = true`), chỉ khi bấm `#btnToggleFlankOnly` ("👁️ Chỉ Mặt Bên") mới chuyển sang hiển thị vỏ bề mặt răng (`pinionSurfMesh`, `gearSurfMesh`).
+2. **Vật liệu PBR Satin-Metallic sáng rõ & Ánh sáng Studio 4 hướng**:
+   - Sử dụng `metalness: 0.28, roughness: 0.35, emissiveIntensity: 0.12` (Pinion: Sky-Cyan `0x38bdf8`, Gear: Warm Gold-Amber `0xfbbf24`), kết hợp `HemisphereLight`, `AmbientLight` và 4 đèn `DirectionalLight` (`toneMappingExposure = 1.22`) trên nền tối CAD `0x111827` cho cả Module Bánh Răng Trụ và Module Bánh Răng Côn.
+3. **Đồng bộ 2 chiều Độ Mịn 2D & 3D (`sliderProfileResolution3D` & `selMeshDensity`)**:
+   - Khi thay đổi độ mịn ở 2D hoặc 3D (11 cấp từ 80 đến 600 điểm/răng), cả biên dạng 2D Canvas lẫn lưới 3D WebGL (bao gồm mật độ điểm thân khai XY và số lát cắt dọc trục $Z$ cho cả răng thẳng và răng nghiêng) đều tự động cập nhật đồng bộ.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 
 Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):

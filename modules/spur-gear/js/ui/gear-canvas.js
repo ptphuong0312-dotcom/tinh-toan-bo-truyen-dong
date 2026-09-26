@@ -96,10 +96,40 @@ export class GearCanvas {
         }, { passive: true });
     }
 
-    setGeometry(geom) {
+    setGeometry(geom, resolution = null) {
         this.geom = geom;
+        if (resolution) this.resolution = resolution;
+        this.rebuildCachedProfiles();
         this.autoFit();
         this.render();
+    }
+
+    setResolution(resolution) {
+        if (!resolution) return;
+        this.resolution = resolution;
+        this.rebuildCachedProfiles();
+        this.render();
+    }
+
+    rebuildCachedProfiles() {
+        const g = this.geom;
+        if (!g) {
+            this.cachedPts1 = null;
+            this.cachedPts2 = null;
+            return;
+        }
+        const resOpts = this.resolution || {};
+        const toolOpts = {
+            beta: g.beta || 0.0,
+            ha0: g.ha0,
+            hf0: g.hf0,
+            ra0: g.ra0,
+            noPtHead: resOpts.noPtHead || 20,
+            noPtEv: resOpts.noPtEv || 100,
+            cuttStep: resOpts.cuttStep || 0.5
+        };
+        this.cachedPts1 = ToothProfileGenerator.generateProfile(g.z1, g.mn, g.alfa_n, g.x1, g.d1, g.db1, g.da1, g.df1, g.ra0 || 0.38, toolOpts);
+        this.cachedPts2 = ToothProfileGenerator.generateProfile(g.z2, g.mn, g.alfa_n, g.x2, g.d2, g.db2, g.da2, g.df2, g.ra0 || 0.38, toolOpts);
     }
 
     autoFit() {
@@ -223,11 +253,15 @@ export class GearCanvas {
         ctx.setLineDash([]); // Reset dash for gear bodies
 
         // 4. Involute Tooth Outlines (Transverse Cross-Section from exact MITCalc Rack Cutter):
+        const resOpts = this.resolution || {};
         const toolOpts = {
             beta: g.beta || 0.0,
             ha0: g.ha0,
             hf0: g.hf0,
-            ra0: g.ra0
+            ra0: g.ra0,
+            noPtHead: resOpts.noPtHead || 20,
+            noPtEv: resOpts.noPtEv || 100,
+            cuttStep: resOpts.cuttStep || 0.5
         };
 
         // Exact analytical conjugate rolling phase (zero penetration):
@@ -242,14 +276,14 @@ export class GearCanvas {
         ctx.save();
         ctx.translate(c1x, c1y);
         ctx.rotate(angle1);
-        this.drawGearOutline(g.z1, g.mn, g.alfa_n, g.x1, g.d1, g.db1, g.da1, g.df1, '#22c55e', '#15803d', toolOpts);
+        this.drawGearOutline(g.z1, g.mn, g.alfa_n, g.x1, g.d1, g.db1, g.da1, g.df1, '#22c55e', '#15803d', toolOpts, this.cachedPts1);
         ctx.restore();
 
         // Draw Gear (Blue)
         ctx.save();
         ctx.translate(c2x, c2y);
         ctx.rotate(angle2);
-        this.drawGearOutline(g.z2, g.mn, g.alfa_n, g.x2, g.d2, g.db2, g.da2, g.df2, '#38bdf8', '#1d4ed8', toolOpts);
+        this.drawGearOutline(g.z2, g.mn, g.alfa_n, g.x2, g.d2, g.db2, g.da2, g.df2, '#38bdf8', '#1d4ed8', toolOpts, this.cachedPts2);
         ctx.restore();
 
         // 5. Operating Pitch Point C
@@ -261,9 +295,9 @@ export class GearCanvas {
         ctx.restore();
     }
 
-    drawGearOutline(z, m, alpha, x, d, db, da, df, strokeColor, fillColor, optExtra = {}) {
+    drawGearOutline(z, m, alpha, x, d, db, da, df, strokeColor, fillColor, optExtra = {}, cachedPts = null) {
         const ctx = this.ctx;
-        const pts = ToothProfileGenerator.generateProfile(z, m, alpha, x, d, db, da, df, optExtra.ra0 || 0.38, optExtra);
+        const pts = cachedPts || ToothProfileGenerator.generateProfile(z, m, alpha, x, d, db, da, df, optExtra.ra0 || 0.38, optExtra);
         if (!pts || pts.length === 0) return;
 
         // Draw gear outer profile with smooth filled body

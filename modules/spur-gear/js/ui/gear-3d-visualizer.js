@@ -60,7 +60,7 @@ export class Gear3DVisualizer {
 
         // 1. Scene
         this.scene = new THREE.Scene();
-        this.scene.background = new THREE.Color(0x0b0f19);
+        this.scene.background = new THREE.Color(0x111827);
 
         // 2. Camera
         this.camera = new THREE.PerspectiveCamera(45, width / height, 1.0, 10000);
@@ -70,10 +70,9 @@ export class Gear3DVisualizer {
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: 'high-performance' });
         this.renderer.setSize(width, height);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-        this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        this.renderer.shadowMap.enabled = false;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.1;
+        this.renderer.toneMappingExposure = 1.22;
 
         // Clean existing children
         while (this.container.firstChild) {
@@ -101,7 +100,7 @@ export class Gear3DVisualizer {
         this.scene.add(this.gearGroup);
 
         // 7. Grid helper
-        this.gridHelper = new THREE.GridHelper(1000, 50, 0x1e293b, 0x0f172a);
+        this.gridHelper = new THREE.GridHelper(1000, 50, 0x334155, 0x1e293b);
         this.gridHelper.rotation.x = Math.PI / 2; // Lie on XY or XZ plane
         this.gridHelper.position.z = -100;
         this.scene.add(this.gridHelper);
@@ -115,20 +114,28 @@ export class Gear3DVisualizer {
     }
 
     setupLighting() {
-        const ambLight = new THREE.AmbientLight(0xffffff, 0.7);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x475569, 0.95);
+        hemiLight.position.set(0, 0, 600);
+        this.scene.add(hemiLight);
+
+        const ambLight = new THREE.AmbientLight(0xffffff, 0.75);
         this.scene.add(ambLight);
 
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.2);
-        keyLight.position.set(200, 300, 500);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 1.35);
+        keyLight.position.set(250, -350, 550);
         this.scene.add(keyLight);
 
-        const fillLight = new THREE.DirectionalLight(0x93c5fd, 0.7);
-        fillLight.position.set(-300, -200, 300);
+        const fillLight = new THREE.DirectionalLight(0xe0f2fe, 0.95);
+        fillLight.position.set(-350, 300, 400);
         this.scene.add(fillLight);
 
-        const backLight = new THREE.DirectionalLight(0xfef08a, 0.6);
-        backLight.position.set(0, 400, -300);
+        const backLight = new THREE.DirectionalLight(0xfef3c7, 0.85);
+        backLight.position.set(0, 450, -450);
         this.scene.add(backLight);
+
+        const bottomLight = new THREE.DirectionalLight(0xcbd5e1, 0.55);
+        bottomLight.position.set(0, -400, -300);
+        this.scene.add(bottomLight);
     }
 
     onResize() {
@@ -270,19 +277,25 @@ export class Gear3DVisualizer {
             geo2.setAttribute('aTcaParam', new THREE.BufferAttribute(this.mesh2Data.tcaParams, 3));
         }
 
-        // 5. Materials (Standard PBR Metallic - 1-to-1 Bevel Gear Standard)
-        // Solid Materials: Pinion (Cyan Blue), Gear (Warm Amber Gold)
+        // 5. Materials (Bright CAD Satin-Metallic - Clear 3D Solid Visibility)
+        // Solid Materials: Pinion (Bright Sky Cyan #38bdf8), Gear (Warm Gold Amber #fbbf24)
         const mat1 = new THREE.MeshStandardMaterial({
-            color: 0x0284c7, // Vibrant cyan-blue
-            metalness: 0.85,
-            roughness: 0.25,
+            color: 0x38bdf8, // Bright Sky-Cyan CAD Steel
+            emissive: 0x0369a1,
+            emissiveIntensity: 0.12,
+            metalness: 0.28,
+            roughness: 0.35,
+            side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
         const mat2 = new THREE.MeshStandardMaterial({
-            color: 0xf59e0b, // Warm amber-gold
-            metalness: 0.85,
-            roughness: 0.28,
+            color: 0xfbbf24, // Bright Warm Gold-Amber CAD Bronze/Steel
+            emissive: 0xb45309,
+            emissiveIntensity: 0.12,
+            metalness: 0.28,
+            roughness: 0.35,
+            side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
@@ -295,7 +308,7 @@ export class Gear3DVisualizer {
         this.gearGroup.add(this.gearMesh);
 
         // 6. Surface-Only Meshes (Chế độ "Chỉ Mặt Bên" - quan sát vết tiếp xúc thực thể)
-        // Pinion Flank: Sky Blue #38bdf8 | Gear Flank: Amber Gold #fbbf24
+        // Pinion Flank: Luminous Cyan #22d3ee | Gear Flank: Luminous Gold #facc15
         if (this.surf1Data) {
             const geoSurf1 = new THREE.BufferGeometry();
             geoSurf1.setAttribute('position', new THREE.BufferAttribute(this.surf1Data.positions, 3));
@@ -303,8 +316,10 @@ export class Gear3DVisualizer {
             geoSurf1.setIndex(new THREE.BufferAttribute(this.surf1Data.indices, 1));
 
             const matPinionSurf = new THREE.MeshStandardMaterial({
-                color: 0x38bdf8, // Sky blue for pinion flank
-                metalness: 0.70,
+                color: 0x22d3ee, // Luminous cyan for pinion flank
+                emissive: 0x0284c7,
+                emissiveIntensity: 0.15,
+                metalness: 0.25,
                 roughness: 0.30,
                 side: THREE.DoubleSide,
                 wireframe: this.wireframeMode
@@ -322,8 +337,10 @@ export class Gear3DVisualizer {
             geoSurf2.setIndex(new THREE.BufferAttribute(this.surf2Data.indices, 1));
 
             const matGearSurf = new THREE.MeshStandardMaterial({
-                color: 0xfbbf24, // Amber gold for gear flank
-                metalness: 0.70,
+                color: 0xfacc15, // Luminous amber gold for gear flank
+                emissive: 0xd97706,
+                emissiveIntensity: 0.15,
+                metalness: 0.25,
                 roughness: 0.30,
                 side: THREE.DoubleSide,
                 wireframe: this.wireframeMode
@@ -566,10 +583,13 @@ export class Gear3DVisualizer {
 
         if (!m1 || !m2) return [];
 
+        const raw1 = Gear3DGenerator.extractRawTriangles(m1);
+        const raw2 = Gear3DGenerator.extractRawTriangles(m2);
+
         if (type === 'pinion') {
-            return m1.rawTriangles;
+            return raw1;
         } else if (type === 'gear') {
-            return m2.rawTriangles;
+            return raw2;
         } else if (type === 'assembly') {
             // Transform Pinion 1 and Gear 2 triangles to exact center distance aw and conjugate mesh angles
             const aw = (this.geom && this.geom.aw) ? this.geom.aw : 100.0;
@@ -577,7 +597,7 @@ export class Gear3DVisualizer {
             const cosR1 = Math.cos(rotZ1);
             const sinR1 = Math.sin(rotZ1);
 
-            const transformedPinion1 = m1.rawTriangles.map(([p1, p2, p3, n]) => {
+            const transformedPinion1 = raw1.map(([p1, p2, p3, n]) => {
                 const trPt1 = (p) => [
                     p[0] * cosR1 - p[1] * sinR1,
                     p[0] * sinR1 + p[1] * cosR1,
@@ -595,7 +615,7 @@ export class Gear3DVisualizer {
             const cosR2 = Math.cos(rotZ2);
             const sinR2 = Math.sin(rotZ2);
 
-            const transformedGear2 = m2.rawTriangles.map(([p1, p2, p3, n]) => {
+            const transformedGear2 = raw2.map(([p1, p2, p3, n]) => {
                 const trPt2 = (p) => [
                     p[0] * cosR2 - p[1] * sinR2 + aw,
                     p[0] * sinR2 + p[1] * cosR2,
@@ -633,13 +653,31 @@ export class Gear3DVisualizer {
         if (this.geom) {
             const curPinionOffset = (this.pinionAngle !== undefined && this.initialPinionAngle !== undefined)
                 ? (this.pinionAngle - this.initialPinionAngle) : 0.0;
-            this.setGeometry(this.geom);
+            this.setGeometry(this.geom, this.resolution);
             this.pinionAngle = this.initialPinionAngle + curPinionOffset;
             this.gearAngle = this.initialGearAngle - curPinionOffset / this.gearRatio;
             this.pinionGroup.rotation.z = this.pinionAngle;
             this.gearGroup.rotation.z = this.gearAngle;
         }
         return this.contactMode;
+    }
+
+    setResolution(resolution) {
+        if (!resolution) return;
+        this.resolution = resolution;
+        if (this.geom) {
+            const curPinionOffset = (this.pinionAngle !== undefined && this.initialPinionAngle !== undefined)
+                ? (this.pinionAngle - this.initialPinionAngle) : 0.0;
+            this.setGeometry(this.geom, this.resolution);
+            this.pinionAngle = this.initialPinionAngle + curPinionOffset;
+            this.gearAngle = this.initialGearAngle - curPinionOffset / this.gearRatio;
+            if (this.pinionGroup) this.pinionGroup.rotation.z = this.pinionAngle;
+            if (this.gearGroup) this.gearGroup.rotation.z = this.gearAngle;
+            if (this.renderer && this.scene && this.camera) {
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+        return this.resolution;
     }
 
     /**
