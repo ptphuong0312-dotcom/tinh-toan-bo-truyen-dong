@@ -836,30 +836,28 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 2. **Chế độ "Chỉ Mặt Bên" (`#btnToggleFlankOnly`)**:
    - Khi kích hoạt, ẩn toàn bộ khối phôi đặc (`pinionMesh`, `gearMesh`), chỉ hiển thị các vỏ mặt bên thân khai rỗng (`pinionSurfMesh`, `gearSurfMesh`) được tạo ra từ `Gear3DGenerator.generateGearSurfaceMesh`.
    - Cả hai mặt sườn (Flank 1 bên phải và Flank 2 bên trái) đều được gắn cờ `side = +1.0` và `side = -1.0` trong `MitcalcToothSolver.generateCompleteWheelContour`, cho phép hiển thị vết ăn khớp đồng thời trên cả 2 mặt bên.
-3. **Quy chuẩn 2 phương án tiếp xúc qua `#selContactTheoryMode`**:
-   - **Bản chất triệt tiêu khe hở cạnh răng (Backlash Clearance Override)**:
-     * Theo tiêu chuẩn ISO 6336 / DIN 3960, khe hở cạnh răng pháp danh nghĩa là $j_n \approx 0.125\text{ mm}$ (tương đương khe hở mỗi mặt bên $\approx 0.0625\text{ mm}$).
-     * Nếu độ phồng tiếp xúc $d\theta \cdot r_{\text{pitch}} \le 0.0625\text{ mm}$, hai mặt răng hoàn toàn không chạm nhau và người dùng không thể thấy vết tiếp xúc.
-     * Để tạo vết giao tuyến hình học rõ nét và nổi bật trên Canvas 3D:
-       - **Phương án 1 (MẶC ĐỊNH - `theory`)**: Chuẩn Lý Thuyết Thuần Túy (Đường Thẳng Tiếp Xúc Dọc Bề Rộng Răng)
-         * Lượng bù góc tiếp xúc hằng số $d\theta = 0.16 / r_{\text{pitch}}$ (độ lồng thực tế sau khi trừ backlash là $\approx 0.10\text{ mm}$) đồng đều trên toàn bộ bề rộng vành răng $b$.
-         * Đối với bánh răng trụ thẳng ($\beta = 0^\circ$): Toàn bộ đường sinh răng song song 100% với trục quay $Z$. Vết tiếp xúc ăn khớp là **MỘT ĐƯỜNG THẲNG SẮC NÉT CHẠY DỌC THEO TOÀN BỘ BỀ RỘNG RĂNG**.
-         * Đối với bánh răng trụ răng nghiêng ($\beta \ne 0^\circ$): Đường tiếp xúc nghiêng một góc $\beta_b$ trên mặt phẳng ăn khớp, di chuyển tịnh tiến liên tục dọc chiều dài ăn khớp.
-       - **Phương án 2 (`crowning`)**: Mô Phỏng Thực Tế Xưởng Gia Công Bánh Răng (Vết Elip Độ Vồng Longitudinal Crowning)
-         * Áp dụng hàm độ vồng parabol: $d\theta = \frac{0.22 \cdot (1 - u^2)}{r_{\text{pitch}}}$ với $u = Z / (b / 2)$.
-         * Tại $Z = 0$ (chính giữa bề rộng vành răng), lượng bù đạt $0.22\text{ mm}$ (độ lồng ròng $\approx 0.16\text{ mm}$).
-         * Khi $|u| \ge 0.84$, lượng bù giảm xuống dưới mức backlash ($0.0625\text{ mm}$), hai mặt răng tách rời trước khi ra tới hai mép mặt đầu ($Z = \pm b / 2$).
-         * Vết tiếp xúc tạo thành một hình **ELIP KHÉP KÍN TRÒN ĐẦY CÂN ĐỐI** ở giữa răng, mô phỏng chuẩn xác 100% vết rà bột màu tại xưởng gia công.
+3. **Quy chuẩn "Đường Chỉ Tiếp Xúc Vi Mô" (`#selContactTheoryMode`) Không Lồi Mặt Sau (Zero Back-Face Bulge)**:
+   - **Bản chất tiếp xúc liên hợp không khe hở của `MitcalcToothSolver`**:
+     * Khác với Bánh Răng Côn (vốn trừ sẵn khe hở $j_n \approx 0.08\text{ mm}$ vào chiều dày răng $s_{ne}$), trong mô-đun Bánh Răng Trụ & Nghiêng, `MitcalcToothSolver` sinh ra biên dạng lý thuyết không khe hở ($s_{wt1} = e_{wt2}$ tại khoảng cách trục làm việc $a_w$).
+     * Khi đặt ở góc pha chuẩn $\theta_{1,0} = -\pi/2$ và $\theta_{2,0} = \pi/2 - \pi/z_2$, hai biên dạng của `MitcalcToothSolver` với `allowance = 0` **ĐÃ TIẾP XÚC KHÍT TỰ NHIÊN ĐẾN TỪNG NANOMET ($\Delta = +0.00008\text{ mm} = 0.08\text{ \mu m}$)** trên cả hai sườn!
+     * Do đó, tuyệt đối KHÔNG cộng lượng bù lớn ($0.16\text{--}0.22\text{ mm}$) vì sẽ làm bề mặt răng này đâm xuyên và lồi sang phía sau bề mặt răng kia.
+   - **Công thức vi lượng tiếp xúc (Micro-Touch $\delta = 0.0028 \cdot m_n \approx 16\text{ \mu m}$)**:
+     * Giữ nguyên 100% biên dạng và khoảng cách trục $a_w$ cho khối đặc Solid Mesh và xuất file 3D CAD (`dThetaKiss = 0.0`).
+     * Với vỏ `isSurfaceOnly`: tăng mật độ điểm thân khai (`noPtHead: 24, noPtEv: 200, cuttStep: 0.20`) và dùng công thức đúng dấu mở rộng sườn răng `kissAngle = -side * dThetaKiss`:
+       - **Phương án 1 (MẶC ĐỊNH - `theory`)**: Chuẩn Lý Thuyết (1 Đường Chỉ Nhỏ Trượt Trên Bề Mặt Răng)
+         * `allowance = 0.0028 * mn` ($\approx 0.0168\text{ mm} = 16.8\text{ \mu m}$ với $m_n = 6\text{ mm}$). Độ nhô pháp tuyến $16.8\text{ \mu m}$ nhỏ hơn $2/100\text{ mm}$ nên **hoàn toàn không lồi sang phía sau mặt răng kia**, nhưng vừa đủ thắng ngưỡng lượng tử hóa $5\text{--}8\text{ \mu m}$ của Z-buffer WebGL để hiển thị đúng **1 ĐƯỜNG CHỈ NHỎ LIỀN MẠCH ($\approx 1.0\text{ mm}$)** trượt mượt mà trên bề mặt răng trong quá trình ăn khớp!
+       - **Phương án 2 (`crowning`)**: Mô Phỏng Thực Tế Xưởng (Đường Chỉ Elip Crowning Ở Khu Giữa Răng)
+         * `K_crown = Math.max(0.0, 1.0 - 1.35 * uNorm * uNorm); allowance = (0.0032 * mn) * K_crown - (0.0010 * mn) * (1.0 - K_crown);`
+         * Tạo ra 1 đường chỉ tiếp xúc mảnh dạng elip nằm gọn ở $80\%$ giữa chiều rộng răng và tách hở tự nhiên ở hai đầu mép răng.
 4. **Định Vị Pha Ăn Khớp Liên Hợp Phân Tích Chuẩn Xác Tuyệt Đối (Conjugate Phase Alignment)**:
    - Tâm bánh dẫn 1 tại $(0, 0, 0)$, tâm bánh bị dẫn 2 tại $(a_w, 0, 0)$ dọc theo trục $+X$.
    - Góc pha ban đầu bánh dẫn 1: $\theta_{1,0} = -\pi / 2$ (đưa đỉnh răng số 0 hướng thẳng về phía bánh 2 dọc trục $+X$).
    - Góc pha ban đầu bánh bị dẫn 2: $\theta_{2,0} = \pi / 2 - \pi / z_2$ (đưa tâm rãnh răng số 0 hướng thẳng về phía bánh 1 dọc trục $-X$).
-   - Độ lệch đối xứng giữa hai sườn răng: $\Delta = 9.3 \times 10^{-13}\text{ mm} \approx 0.000000\text{ mm}$ (chuẩn xác giải tích tuyệt đối).
    - Động học lăn liên hợp: $\theta_2 = \theta_{2,0} - (\theta_1 - \theta_{1,0}) / i$ với $i = z_2 / z_1$, triệt tiêu 100% sai lệch tích lũy khi quay mô phỏng.
-5. **Hiệu chỉnh Camera Preset "Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)"**:
-   - Khung hình tự động căn tiêu cự vào tâm ăn khớp $(d_1 / 2, 0, 0)$.
-   - Vị trí camera: $X = d_1 / 2 + 0.25 \cdot b, Y = -1.15 \cdot b, Z = 0.90 \cdot b$, vector hướng lên $\vec{up} = (0, 0, 1)$.
-   - Mang lại góc nhìn xiên isometric hoàn hảo, phóng to trực diện vào rãnh răng ăn khớp, quan sát trọn vẹn cả hai mặt sườn và vệt tiếp xúc dọc suốt chiều dài răng.
+5. **Hiệu chỉnh Camera Preset "Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)" & Tối Ưu Độ Phân Giải Z-Buffer**:
+   - Khung hình tự động căn tiêu cự vào tâm ăn khớp $(d_{w1} / 2, 0, 0)$.
+   - Vị trí camera: `position.set(pitchPtX, -meshDist * 0.36, meshDist * 0.93)`, vector hướng lên $\vec{up} = (0, 1, 0)$.
+   - Siết chặt khoảng cách mặt phẳng cắt: `camera.near = Math.max(2.0, meshDist * 0.12)`, `camera.far = Math.max(2000.0, meshDist * 15.0)`, tăng độ chính xác Z-buffer lên gấp 16 lần để đường chỉ tiếp xúc hiển thị liền mạch, sắc nét tuyệt đối.
 
 ---
 

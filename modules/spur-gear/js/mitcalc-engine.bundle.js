@@ -3531,7 +3531,12 @@ const Gear3DGenerator = {
         const betaRad = (betaDeg * Math.PI) / 180.0;
 
         // 1. Generate base 2D transverse profile using exact MITCalc rack cutter envelope
-        const rawContour = ToothProfileGenerator.generateProfile(z, mn, alfa_n, x, d, db, da, df, opt.ra0 || 0.38, opt);
+        const optContour = isSurfaceOnly ? Object.assign({}, opt, {
+            noPtHead: Math.max(opt.noPtHead || 20, 24),
+            noPtEv: Math.max(opt.noPtEv || 100, 200),
+            cuttStep: Math.min(opt.cuttStep || 0.5, 0.20)
+        }) : opt;
+        const rawContour = ToothProfileGenerator.generateProfile(z, mn, alfa_n, x, d, db, da, df, opt.ra0 || 0.38, optContour);
 
         // Downsample contour if step > 1 for high-performance watertight 3D CAD mesh
         let contour = [];
@@ -3629,15 +3634,15 @@ const Gear3DGenerator = {
             const uNorm = halfB > 1e-6 ? (zCoord / halfB) : 0.0; // -1.0 to +1.0
 
             let dThetaKiss = 0.0;
-            if (isPinion) {
+            if (isSurfaceOnly && isPinion) {
                 if (contactMode === 'crowning') {
-                    // Phương án 2: Độ vồng Parabol dọc trục Z (tập trung ở Z = 0, về 0 ở 2 đầu)
-                    const K_crown = Math.max(0.0, 1.0 - uNorm * uNorm);
-                    const allowance = Math.max(0.24, 0.045 * mn) * K_crown;
+                    // Phương án 2: Độ vồng Parabol vi mô dọc trục Z (đường chỉ tiếp xúc mảnh ở 80% giữa răng, không lồi qua mặt sau)
+                    const K_crown = Math.max(0.0, 1.0 - 1.35 * uNorm * uNorm);
+                    const allowance = (0.0032 * mn) * K_crown - (0.0010 * mn) * (1.0 - K_crown);
                     dThetaKiss = allowance / Math.max(1.0, d / 2.0);
                 } else {
-                    // Phương án 1 (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc đường thẳng song song Z
-                    const allowance = Math.max(0.18, 0.035 * mn);
+                    // Phương án 1 (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc 1 đường chỉ nhỏ liền mạch trượt trên mặt răng (0.0028 * mn ~ 16 um)
+                    const allowance = 0.0028 * mn;
                     dThetaKiss = allowance / Math.max(1.0, d / 2.0);
                 }
             }
@@ -4641,6 +4646,9 @@ class Gear3DVisualizer {
             this.controls.target.set(centerX, 0, 0);
         }
 
+        this.camera.near = Math.max(2.0, dist * 0.02);
+        this.camera.far = Math.max(5000.0, dist * 10.0);
+
         switch (viewType) {
             case 'front': // Looking down +Z at XY front face
                 this.camera.position.set(centerX, 0, dist * 1.3);
@@ -4674,6 +4682,8 @@ class Gear3DVisualizer {
                 if (this.controls) this.controls.target.set(pitchPtX, 0, 0);
                 this.camera.position.set(pitchPtX, -meshDist * 0.36, meshDist * 0.93);
                 this.camera.up.set(0, 1, 0);
+                this.camera.near = Math.max(2.0, meshDist * 0.12);
+                this.camera.far = Math.max(2000.0, meshDist * 15.0);
                 break;
             case 'iso': // Standard Isometric view
             default:
@@ -4681,6 +4691,8 @@ class Gear3DVisualizer {
                 this.camera.up.set(0, 0, 1);
                 break;
         }
+
+        this.camera.updateProjectionMatrix();
 
         if (this.controls) {
             this.controls.update();

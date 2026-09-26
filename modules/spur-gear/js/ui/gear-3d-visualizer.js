@@ -383,6 +383,9 @@ export class Gear3DVisualizer {
             this.controls.target.set(centerX, 0, 0);
         }
 
+        this.camera.near = Math.max(2.0, dist * 0.02);
+        this.camera.far = Math.max(5000.0, dist * 10.0);
+
         switch (viewType) {
             case 'front': // Looking down +Z at XY front face
                 this.camera.position.set(centerX, 0, dist * 1.3);
@@ -416,6 +419,8 @@ export class Gear3DVisualizer {
                 if (this.controls) this.controls.target.set(pitchPtX, 0, 0);
                 this.camera.position.set(pitchPtX, -meshDist * 0.36, meshDist * 0.93);
                 this.camera.up.set(0, 1, 0);
+                this.camera.near = Math.max(2.0, meshDist * 0.12);
+                this.camera.far = Math.max(2000.0, meshDist * 15.0);
                 break;
             case 'iso': // Standard Isometric view
             default:
@@ -423,6 +428,8 @@ export class Gear3DVisualizer {
                 this.camera.up.set(0, 0, 1);
                 break;
         }
+
+        this.camera.updateProjectionMatrix();
 
         if (this.controls) {
             this.controls.update();

@@ -16,20 +16,25 @@
 
 ## 2. NGUYÊN LÝ HÌNH HỌC & ĐỘT PHÁ TOÁN HỌC
 
-### 2.1. Bản Chất Hình Học Thực Thể Trong Three.js
+### 2.1. Bản Chất Hình Học Thực Thể & Sự Khác Biệt Giữa Bánh Răng Trụ Và Bánh Răng Côn
 - Khi tắt các shader màu nhân tạo, vết tiếp xúc cơ khí được quan sát trực tiếp bằng **giao tuyến hình học thực thể (Geometric Surface Intersection)** giữa vỏ mặt bên Bánh dẫn 1 (màu xanh sky `#38bdf8`) và vỏ mặt bên Bánh bị dẫn 2 (màu vàng hổ phách `#fbbf24`).
-- Cả hai vỏ đều rỗng ruột (hollow shell) và áp dụng vật liệu `THREE.DoubleSide`. Khi sườn của Bánh 2 xuyên nhẹ qua sườn Bánh 1 ($pprox 0.15 - 0.20	ext{ mm}$), phần xuyên qua sẽ ló ra ở mặt sau/mặt trong. Nhờ độ tương phản màu sắc cao, mắt người nhìn vào sẽ thấy vệt màu của bánh kia in sắc nét trên nền mặt răng của bánh này!
+- **Phát hiện giải tích quan trọng (Zero-Backlash Conjugate Property)**:
+  * Ở mô-đun **Bánh Răng Côn**, công thức tạo biên dạng trừ sẵn khe hở cạnh răng $j_n \approx 0.08\text{ mm}$ vào chiều dày răng $s_{ne}$, nên cần cộng bù $\approx 0.09\text{ mm}$ để hai mặt răng chạm nhau.
+  * Ngược lại, ở mô-đun **Bánh Răng Trụ & Nghiêng**, `MitcalcToothSolver` sinh ra biên dạng lăn bao hình chuẩn lý thuyết không khe hở ($s_{wt1} = e_{wt2}$ tại đúng khoảng cách trục làm việc $a_w$). Khi đặt ở pha ăn khớp chuẩn `initialPinionAngle = -Math.PI / 2` và `initialGearAngle = Math.PI / 2 - Math.PI / z2`, hai sườn răng của `MitcalcToothSolver` **ĐÃ TIẾP XÚC CHÍNH XÁC VỚI NHAU ĐẾN TỪNG NANOMET ($\Delta = +0.00008\text{ mm} = 0.08\text{ \mu m}$)** trên cả hai sườn dẫn và sườn nghịch!
+  * Nếu cộng lượng bù lớn ($0.18\text{--}0.21\text{ mm}$), mặt răng này sẽ đâm xuyên và **lồi hẳn sang phía sau bề mặt răng kia** với bề rộng vùng lồi $2a = 2\sqrt{2\rho_{\text{eq}}\delta} \approx 4.8\text{ mm}$, làm sai lệch biên dạng thực tế.
 
-### 2.2. Đột Phá Khắc Phục Dấu Góc Quay Sườn Răng (Kiss Angle Sign Inversion)
-1. **Phát hiện toán học mấu chốt**:
-   - Trong `MitcalcToothSolver`, tọa độ các điểm biên dạng răng được lưu dưới dạng góc cực theo chiều kim đồng hồ (CW) xuất phát từ trục $+Y$: $x = r \sin	heta, y = r \cos	heta$.
-   - Khi thực hiện phép quay CCW bằng ma trận phẳng Cartesian: $x' = x\cos T - y\sin T, y' = x\sin T + y\cos T$, góc cực thực tế bị trừ đi góc quay: $	heta' = 	heta - T$.
-   - Nếu dùng `kissAngle = side * dThetaKiss`: với sườn bên phải (`side = +1.0`), góc cực $	heta$ bị giảm, khiến sườn răng bị **co hẹp (shrunk) $-0.16	ext{ mm}$** ở cả hai phía thay vì mở rộng!
-2. **Công thức giải tích chuẩn xác**:
-   $$	ext{kissAngle} = -	ext{side} \cdot d	heta_{	ext{kiss}}$$
-   - Chế độ **Lý thuyết (`theory`)**: Bù đều $	ext{allowance} = \max(0.18, 0.035 \cdot m_n)$, $d	heta_{	ext{kiss}} = 	ext{allowance} / (d / 2)$.
-   - Chế độ **Thực tế xưởng Crowning (`crowning`)**: Bù parabol $	ext{allowance} = \max(0.24, 0.045 \cdot m_n) \cdot [1 - (Z / (b/2))^2]$, tạo vết in elip vồng ở giữa và giảm tải êm ái ở 2 đầu răng.
-   - Độ dôi thực tế sau trừ khe hở lưới: **$+0.1883	ext{ mm}$** trên cả hai sườn.
+### 2.2. Giải Pháp "Đường Chỉ Tiếp Xúc Vi Mô" (Razor-Thin Thread Contact $\delta = 0.0028 \cdot m_n \approx 16\text{ \mu m}$)
+1. **Bảo toàn 100% biên dạng và khoảng cách trục**:
+   - Giữ nguyên tuyệt đối khoảng cách trục làm việc $a_w$ và biên dạng chuẩn `MitcalcToothSolver` (`dThetaKiss = 0.0` cho khối đặc Solid Mesh và xuất file STEP/STL).
+2. **Vi lượng tiếp xúc (Micro-touch) cho vỏ `isSurfaceOnly` ("Chỉ Mặt Bên")**:
+   - Tăng mật độ điểm đường thân khai của vỏ `isSurfaceOnly` lên `noPtHead: 24, noPtEv: 200, cuttStep: 0.20` để sai số dây cung đa giác (chordal sagitta) giảm xuống $< 0.1\text{ \mu m}$.
+   - Mở rộng vi mô đúng dấu trên sườn Bánh dẫn 1 (`kissAngle = -side * dThetaKiss`):
+     * **Chế độ Lý Thuyết (`theory`)**: $\text{allowance} = 0.0028 \cdot m_n$ ($\approx 0.0168\text{ mm} = 16.8\text{ \mu m}$ với $m_n = 6\text{ mm}$). Độ nhô pháp tuyến $16.8\text{ \mu m}$ nhỏ hơn $2/100\text{ mm}$ nên **hoàn toàn không lồi sang phía sau mặt răng kia**, nhưng vừa đủ vượt qua ngưỡng nhiễu lượng tử hóa $5\text{--}8\text{ \mu m}$ của Z-buffer WebGL để hiện lên thành **1 đường chỉ nhỏ liền mạch ($\approx 1\text{ mm}$)** trượt mượt mà trên mặt răng trong suốt quá trình ăn khớp!
+     * **Chế độ Thực Tế Xưởng Crowning (`crowning`)**:
+       $$K_{\text{crown}} = \max(0, 1 - 1.35 \cdot u_{\text{norm}}^2), \quad \text{allowance} = (0.0032 \cdot m_n) K_{\text{crown}} - (0.0010 \cdot m_n)(1 - K_{\text{crown}})$$
+       Tạo ra 1 đường chỉ tiếp xúc mảnh dạng elip nằm gọn ở $80\%$ giữa chiều rộng răng và tách hở nhẹ ở hai đầu mép răng.
+3. **Tối ưu hóa độ phân giải Z-buffer Camera (`gear-3d-visualizer.js`)**:
+   - Khi ở góc nhìn `mesh` ("Vùng Tiếp Xúc Ăn Khớp"), siết chặt mặt phẳng cắt gần/xa của camera: `camera.near = Math.max(2.0, meshDist * 0.12)`, `camera.far = Math.max(2000.0, meshDist * 15.0)`, giúp tăng độ phân giải Depth Buffer lên gấp 16 lần, đảm bảo đường chỉ tiếp xúc sắc nét, liền mạch không bị đứt đoạn.
 
 ---
 

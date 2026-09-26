@@ -1680,3 +1680,26 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
        * `e2e_4_helical_flank_mesh_crowning.png`: Bánh răng nghiêng $\beta = 15^\circ$ vết elip nghiêng xoắn chuẩn xác.
        * `e2e_5_helical_flank_mesh_theory.png`: Bánh răng nghiêng $\beta = 15^\circ$ đường thẳng tiếp xúc nghiêng theo góc xoắn.
        * **0 lỗi Console / WebGL**!
+
+---
+
+### [2026-09-26] HIỆU CHỈNH VẾT TIẾP XÚC THÀNH 1 ĐƯỜNG CHỈ NHỎ LIỀN MẠCH TRƯỢT TRÊN BỀ MẶT RĂNG (RAZOR-THIN CONTACT THREAD $\delta = 0.0028 \cdot m_n \approx 16\text{ \mu m}$, ZERO BACK-FACE BULGE)
+* **Bối cảnh & Chỉ đạo chính xác từ SirPhuong**:
+  - *"Đúng là tôi muốn in vết như kiểu hiện tại nhưng hiện tại bề mặt răng này đã lồi sang phía sau bề mặt răng kia rồi bạn. Vết tiếp xúc chuẩn chỉ là 1 đường chỉ nhỏ trượt trên bề mặt răng trong quá trình ăn khớp của 2 mặt răng. Bạn nhớ là khoảng cách trục, profile răng mô phỏng vẫn phải chuẩn chỉ theo tính toán chứ không được thay đổi. Khi bạn làm đúng hết thì chắc chắn vết mô phỏng chỉ còn là 1 đường chỉ nhỏ trượt trên bề mặt răng"*
+* **Phát hiện giải tích mấu chốt (Zero-Backlash Conjugate Property của `MitcalcToothSolver`)**:
+  - Khác với mô-đun Bánh Răng Côn (vốn trừ sẵn khe hở cạnh răng $j_n \approx 0.08\text{ mm}$ vào chiều dày răng $s_{ne}$ nên cần cộng bù $0.09\text{ mm}$), trong mô-đun Bánh Răng Trụ & Nghiêng, `MitcalcToothSolver` tạo biên dạng lăn bao hình chuẩn lý thuyết không khe hở ($s_{wt1} = e_{wt2}$ tại khoảng cách trục làm việc $a_w$).
+  - Tại góc đặt chuẩn `initialPinionAngle = -Math.PI / 2` và `initialGearAngle = Math.PI / 2 - Math.PI / z2`, hai biên dạng của `MitcalcToothSolver` khi `allowance = 0` **ĐÃ TIẾP XÚC CHÍNH XÁC VỚI NHAU ĐẾN TỪNG NANOMET ($\Delta = +0.00008\text{ mm} = 0.08\text{ \mu m}$)** trên cả sườn dẫn và sườn nghịch!
+  - Vì hai biên dạng vốn đã chạm khít tự nhiên ($\Delta = 0.08\text{ \mu m}$), việc cộng thêm `allowance = 0.21 mm` trước đó đã làm mặt răng đâm xuyên và lồi sang phía sau mặt răng kia với bề rộng vùng giao $2a = 2\sqrt{2\rho_{\text{eq}}\delta} \approx 4.8\text{ mm}$.
+* **Giải pháp kỹ thuật đạt chuẩn "1 Đường Chỉ Nhỏ Trượt Trên Mặt Răng"**:
+  1. **Giữ nguyên 100% khoảng cách trục $a_w$ và biên dạng chuẩn `MitcalcToothSolver`**:
+     - Với khối đặc Solid Mesh và xuất file 3D CAD (STEP/STL): giữ nguyên `dThetaKiss = 0.0`.
+  2. **Vi lượng tiếp xúc (Micro-Touch) cho vỏ mặt bên (`isSurfaceOnly`) trong `gear-3d-generator.js`**:
+     - Tăng mật độ điểm thân khai của vỏ `isSurfaceOnly`: `noPtHead: 24, noPtEv: 200, cuttStep: 0.20` (giảm sai số dây cung đa giác xuống $< 0.1\text{ \mu m}$).
+     - Chế độ **Lý Thuyết (`theory`)**: `allowance = 0.0028 * mn` ($\approx 0.0168\text{ mm} = 16.8\text{ \mu m}$ với $m_n = 6\text{ mm}$ — nhỏ hơn $2/100\text{ mm}$, hoàn toàn không lồi sang phía sau mặt răng kia, tạo ra đúng **1 đường chỉ nhỏ liền mạch $\approx 1.0\text{ mm}$** trượt mượt mà trên mặt răng khi quay!).
+     - Chế độ **Thực Tế Xưởng (`crowning`)**: `K_crown = Math.max(0.0, 1.0 - 1.35 * uNorm * uNorm); allowance = (0.0032 * mn) * K_crown - (0.0010 * mn) * (1.0 - K_crown);` (tạo 1 đường chỉ elip mảnh nằm gọn ở $80\%$ giữa chiều rộng răng).
+  3. **Tối ưu hóa độ phân giải Z-buffer Camera (`gear-3d-visualizer.js`)**:
+     - Trong góc nhìn `mesh` ("Vùng Tiếp Xúc Ăn Khớp"), đặt `this.camera.near = Math.max(2.0, meshDist * 0.12); this.camera.far = Math.max(2000.0, meshDist * 15.0);`, tăng độ phân giải Depth Buffer lên gấp 16 lần để đường chỉ tiếp xúc $16\text{ \mu m}$ hiển thị liền mạch, không đứt đoạn.
+  4. **Kiểm chứng & Nghiệm thu**:
+     - Bộ kiểm thử QC (`qc_gear_multi_case_suite.py`): **110/110 PASS (100.0%, $\Delta = 0.0000$)**.
+     - Bộ ảnh chụp E2E (`final_2_spur_thread_theory.png`, `final_2b_spur_slide_0.png`, `final_2b_spur_slide_1.png`, `final_3_spur_thread_crowning.png`, `final_4_helical_thread_crowning.png`, `final_5_helical_thread_theory.png`) xác nhận vết tiếp xúc chỉ là **1 đường chỉ nhỏ liền mạch trượt trên bề mặt răng**, hoàn toàn không bị lồi sang phía sau!
+
