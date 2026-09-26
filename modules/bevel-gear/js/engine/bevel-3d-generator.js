@@ -177,14 +177,14 @@ export const Bevel3DGenerator = {
             const contactMode = opt.contactMode || 'theory';
             const isPinion = (opt.hand === -1) || (opt.isPinion === true);
             let dThetaKiss = 0.0;
-            if (isPinion) {
+            if (isPinion && isSurfaceOnly) {
                 if (contactMode === 'gleason') {
                     const K_kiss = Math.max(0.0, 1.0 - 4.0 * u * u);
-                    dThetaKiss = (0.16 * K_kiss) / Math.max(1.0, r_pitch);
+                    dThetaKiss = (0.065 * K_kiss) / Math.max(1.0, r_pitch);
                 } else {
                     // Chuẩn lý thuyết: Góc bù đồng dạng nón bảo toàn 100% đường sinh nón thẳng tắp từ Ri đến Re
                     const linearScale = R_s / Rm;
-                    dThetaKiss = (0.09 * linearScale) / Math.max(1.0, r_pitch);
+                    dThetaKiss = (0.028 * linearScale) / Math.max(1.0, r_pitch);
                 }
             }
 

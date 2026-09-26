@@ -3567,10 +3567,12 @@ const Gear3DGenerator = {
         const betaRad = (betaDeg * Math.PI) / 180.0;
 
         // 1. Generate base 2D transverse profile using exact MITCalc rack cutter envelope
+        // Note: For isSurfaceOnly, noPtEv=120 & cuttStep=0.25 ensures triangle width (~0.11mm) >= 1 screen pixel,
+        // preventing sub-pixel 2x2 quad depth derivative overshoot in 4x MSAA rasterization.
         const optContour = isSurfaceOnly ? Object.assign({}, opt, {
-            noPtHead: Math.max(opt.noPtHead || 20, 24),
-            noPtEv: Math.max(opt.noPtEv || 100, 200),
-            cuttStep: Math.min(opt.cuttStep || 0.5, 0.20)
+            noPtHead: 20,
+            noPtEv: 120,
+            cuttStep: 0.25
         }) : Object.assign({}, opt, {
             noPtHead: opt.noPtHead || 20,
             noPtEv: opt.noPtEv || 100,
@@ -3602,8 +3604,10 @@ const Gear3DGenerator = {
 
         let numSlices = opt.numSlices;
         if (!numSlices) {
-            if (contactMode === 'crowning') {
-                numSlices = Math.max(12, Math.min(32, Math.round(8 * resFactor) * 2));
+            if (isSurfaceOnly && !isHelical && contactMode !== 'crowning') {
+                numSlices = 20;
+            } else if (contactMode === 'crowning') {
+                numSlices = Math.max(16, Math.min(32, Math.round(8 * resFactor) * 2));
             } else if (!isHelical) {
                 numSlices = Math.max(2, Math.min(12, Math.round(2 * resFactor) * 2));
             } else {
@@ -3611,7 +3615,7 @@ const Gear3DGenerator = {
                 const twistTotalRad = Math.abs((b * Math.tan(betaRad)) / (d / 2.0));
                 const slicesFromTwist = Math.ceil((twistTotalRad / (Math.PI / 36.0)) * resFactor);
                 const baseHelicalSlices = Math.round(8 * resFactor) * 2;
-                numSlices = Math.max(12, Math.min(40, Math.ceil(Math.max(baseHelicalSlices, slicesFromTwist) / 2) * 2));
+                numSlices = Math.max(16, Math.min(40, Math.ceil(Math.max(baseHelicalSlices, slicesFromTwist) / 2) * 2));
             }
         }
 
@@ -3684,13 +3688,13 @@ const Gear3DGenerator = {
             let dThetaKiss = 0.0;
             if (isSurfaceOnly && isPinion) {
                 if (contactMode === 'crowning') {
-                    // Phương án 2: Độ vồng Parabol vi mô dọc trục Z (đường chỉ tiếp xúc mảnh ở 80% giữa răng, không lồi qua mặt sau)
-                    const K_crown = Math.max(0.0, 1.0 - 1.35 * uNorm * uNorm);
-                    const allowance = (0.0032 * mn) * K_crown - (0.0010 * mn) * (1.0 - K_crown);
+                    // Phương án 2: Độ vồng Parabol vi mô dọc trục Z (đường kẻ tiếp xúc elip mảnh ở 75% giữa răng)
+                    const K_crown = Math.max(0.0, 1.0 - 1.50 * uNorm * uNorm);
+                    const allowance = (0.0016 * mn) * K_crown - (0.0008 * mn) * (1.0 - K_crown);
                     dThetaKiss = allowance / Math.max(1.0, d / 2.0);
                 } else {
-                    // Phương án 1 (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc 1 đường chỉ nhỏ liền mạch trượt trên mặt răng (0.0028 * mn ~ 16 um)
-                    const allowance = 0.0028 * mn;
+                    // Phương án 1 (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc 1 đường kẻ mảnh liền mạch chạy dọc theo răng (0.0014 * mn ~ 8.4 um)
+                    const allowance = 0.0014 * mn;
                     dThetaKiss = allowance / Math.max(1.0, d / 2.0);
                 }
             }
@@ -4436,7 +4440,7 @@ class Gear3DVisualizer {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         this.renderer.shadowMap.enabled = false;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.22;
+        this.renderer.toneMappingExposure = 1.0;
 
         // Clean existing children
         while (this.container.firstChild) {
@@ -4478,26 +4482,26 @@ class Gear3DVisualizer {
     }
 
     setupLighting() {
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x475569, 0.95);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x334155, 0.55);
         hemiLight.position.set(0, 0, 600);
         this.scene.add(hemiLight);
 
-        const ambLight = new THREE.AmbientLight(0xffffff, 0.75);
+        const ambLight = new THREE.AmbientLight(0xffffff, 0.38);
         this.scene.add(ambLight);
 
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.35);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 0.92);
         keyLight.position.set(250, -350, 550);
         this.scene.add(keyLight);
 
-        const fillLight = new THREE.DirectionalLight(0xe0f2fe, 0.95);
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.55);
         fillLight.position.set(-350, 300, 400);
         this.scene.add(fillLight);
 
-        const backLight = new THREE.DirectionalLight(0xfef3c7, 0.85);
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.45);
         backLight.position.set(0, 450, -450);
         this.scene.add(backLight);
 
-        const bottomLight = new THREE.DirectionalLight(0xcbd5e1, 0.55);
+        const bottomLight = new THREE.DirectionalLight(0xffffff, 0.25);
         bottomLight.position.set(0, -400, -300);
         this.scene.add(bottomLight);
     }
@@ -4641,24 +4645,24 @@ class Gear3DVisualizer {
             geo2.setAttribute('aTcaParam', new THREE.BufferAttribute(this.mesh2Data.tcaParams, 3));
         }
 
-        // 5. Materials (Bright CAD Satin-Metallic - Clear 3D Solid Visibility)
-        // Solid Materials: Pinion (Bright Sky Cyan #38bdf8), Gear (Warm Gold Amber #fbbf24)
+        // 5. Materials (High-Contrast Vivid CAD Satin-Metallic - Unmistakable Color Separation)
+        // Pinion 1: Vivid Cobalt-Cyan (#0284c7) | Gear 2: Vivid Coral-Orange (#ea580c)
         const mat1 = new THREE.MeshStandardMaterial({
-            color: 0x38bdf8, // Bright Sky-Cyan CAD Steel
+            color: 0x0284c7, // Vivid Cobalt-Cyan Blue
             emissive: 0x0369a1,
             emissiveIntensity: 0.12,
-            metalness: 0.28,
-            roughness: 0.35,
+            metalness: 0.18,
+            roughness: 0.42,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
         const mat2 = new THREE.MeshStandardMaterial({
-            color: 0xfbbf24, // Bright Warm Gold-Amber CAD Bronze/Steel
-            emissive: 0xb45309,
+            color: 0xea580c, // Vivid Coral-Orange Copper
+            emissive: 0x9a3412,
             emissiveIntensity: 0.12,
-            metalness: 0.28,
-            roughness: 0.35,
+            metalness: 0.18,
+            roughness: 0.42,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
@@ -4672,7 +4676,7 @@ class Gear3DVisualizer {
         this.gearGroup.add(this.gearMesh);
 
         // 6. Surface-Only Meshes (Chế độ "Chỉ Mặt Bên" - quan sát vết tiếp xúc thực thể)
-        // Pinion Flank: Luminous Cyan #22d3ee | Gear Flank: Luminous Gold #facc15
+        // Pinion Flank: Vivid Electric Blue #00a8ff | Gear Flank: Vivid Flame Orange #ff5722
         if (this.surf1Data) {
             const geoSurf1 = new THREE.BufferGeometry();
             geoSurf1.setAttribute('position', new THREE.BufferAttribute(this.surf1Data.positions, 3));
@@ -4680,11 +4684,11 @@ class Gear3DVisualizer {
             geoSurf1.setIndex(new THREE.BufferAttribute(this.surf1Data.indices, 1));
 
             const matPinionSurf = new THREE.MeshStandardMaterial({
-                color: 0x22d3ee, // Luminous cyan for pinion flank
+                color: 0x00a8ff, // Vivid electric cyan-blue for pinion flank
                 emissive: 0x0284c7,
-                emissiveIntensity: 0.15,
-                metalness: 0.25,
-                roughness: 0.30,
+                emissiveIntensity: 0.14,
+                metalness: 0.15,
+                roughness: 0.40,
                 side: THREE.DoubleSide,
                 wireframe: this.wireframeMode
             });
@@ -4701,11 +4705,11 @@ class Gear3DVisualizer {
             geoSurf2.setIndex(new THREE.BufferAttribute(this.surf2Data.indices, 1));
 
             const matGearSurf = new THREE.MeshStandardMaterial({
-                color: 0xfacc15, // Luminous amber gold for gear flank
-                emissive: 0xd97706,
-                emissiveIntensity: 0.15,
-                metalness: 0.25,
-                roughness: 0.30,
+                color: 0xff5722, // Vivid flame coral-orange for gear flank
+                emissive: 0xc2410c,
+                emissiveIntensity: 0.14,
+                metalness: 0.15,
+                roughness: 0.40,
                 side: THREE.DoubleSide,
                 wireframe: this.wireframeMode
             });
@@ -4812,8 +4816,8 @@ class Gear3DVisualizer {
                 if (this.controls) this.controls.target.set(pitchPtX, 0, 0);
                 this.camera.position.set(pitchPtX, -meshDist * 0.36, meshDist * 0.93);
                 this.camera.up.set(0, 1, 0);
-                this.camera.near = Math.max(2.0, meshDist * 0.12);
-                this.camera.far = Math.max(2000.0, meshDist * 15.0);
+                this.camera.near = Math.max(15.0, meshDist * 0.25);
+                this.camera.far = Math.max(700.0, meshDist * 4.5);
                 break;
             case 'iso': // Standard Isometric view
             default:
@@ -4885,6 +4889,16 @@ class Gear3DVisualizer {
 
         if (this.controls) {
             this.controls.update();
+            if (this.camera) {
+                const camDist = this.camera.position.distanceTo(this.controls.target);
+                const newNear = Math.max(2.0, Math.min(80.0, camDist * 0.18));
+                const newFar = Math.max(600.0, camDist * 6.0);
+                if (Math.abs(this.camera.near - newNear) > 1.0 || Math.abs(this.camera.far - newFar) > 20.0) {
+                    this.camera.near = newNear;
+                    this.camera.far = newFar;
+                    this.camera.updateProjectionMatrix();
+                }
+            }
         }
 
         if (this.renderer && this.scene && this.camera) {

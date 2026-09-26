@@ -72,7 +72,7 @@ export class Gear3DVisualizer {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         this.renderer.shadowMap.enabled = false;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.22;
+        this.renderer.toneMappingExposure = 1.0;
 
         // Clean existing children
         while (this.container.firstChild) {
@@ -114,26 +114,26 @@ export class Gear3DVisualizer {
     }
 
     setupLighting() {
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x475569, 0.95);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x334155, 0.55);
         hemiLight.position.set(0, 0, 600);
         this.scene.add(hemiLight);
 
-        const ambLight = new THREE.AmbientLight(0xffffff, 0.75);
+        const ambLight = new THREE.AmbientLight(0xffffff, 0.38);
         this.scene.add(ambLight);
 
-        const keyLight = new THREE.DirectionalLight(0xffffff, 1.35);
+        const keyLight = new THREE.DirectionalLight(0xffffff, 0.92);
         keyLight.position.set(250, -350, 550);
         this.scene.add(keyLight);
 
-        const fillLight = new THREE.DirectionalLight(0xe0f2fe, 0.95);
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.55);
         fillLight.position.set(-350, 300, 400);
         this.scene.add(fillLight);
 
-        const backLight = new THREE.DirectionalLight(0xfef3c7, 0.85);
+        const backLight = new THREE.DirectionalLight(0xffffff, 0.45);
         backLight.position.set(0, 450, -450);
         this.scene.add(backLight);
 
-        const bottomLight = new THREE.DirectionalLight(0xcbd5e1, 0.55);
+        const bottomLight = new THREE.DirectionalLight(0xffffff, 0.25);
         bottomLight.position.set(0, -400, -300);
         this.scene.add(bottomLight);
     }
@@ -277,24 +277,24 @@ export class Gear3DVisualizer {
             geo2.setAttribute('aTcaParam', new THREE.BufferAttribute(this.mesh2Data.tcaParams, 3));
         }
 
-        // 5. Materials (Bright CAD Satin-Metallic - Clear 3D Solid Visibility)
-        // Solid Materials: Pinion (Bright Sky Cyan #38bdf8), Gear (Warm Gold Amber #fbbf24)
+        // 5. Materials (High-Contrast Vivid CAD Satin-Metallic - Unmistakable Color Separation)
+        // Pinion 1: Vivid Cobalt-Cyan (#0284c7) | Gear 2: Vivid Coral-Orange (#ea580c)
         const mat1 = new THREE.MeshStandardMaterial({
-            color: 0x38bdf8, // Bright Sky-Cyan CAD Steel
+            color: 0x0284c7, // Vivid Cobalt-Cyan Blue
             emissive: 0x0369a1,
             emissiveIntensity: 0.12,
-            metalness: 0.28,
-            roughness: 0.35,
+            metalness: 0.18,
+            roughness: 0.42,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
         const mat2 = new THREE.MeshStandardMaterial({
-            color: 0xfbbf24, // Bright Warm Gold-Amber CAD Bronze/Steel
-            emissive: 0xb45309,
+            color: 0xea580c, // Vivid Coral-Orange Copper
+            emissive: 0x9a3412,
             emissiveIntensity: 0.12,
-            metalness: 0.28,
-            roughness: 0.35,
+            metalness: 0.18,
+            roughness: 0.42,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
@@ -308,7 +308,7 @@ export class Gear3DVisualizer {
         this.gearGroup.add(this.gearMesh);
 
         // 6. Surface-Only Meshes (Chế độ "Chỉ Mặt Bên" - quan sát vết tiếp xúc thực thể)
-        // Pinion Flank: Luminous Cyan #22d3ee | Gear Flank: Luminous Gold #facc15
+        // Pinion Flank: Vivid Electric Blue #00a8ff | Gear Flank: Vivid Flame Orange #ff5722
         if (this.surf1Data) {
             const geoSurf1 = new THREE.BufferGeometry();
             geoSurf1.setAttribute('position', new THREE.BufferAttribute(this.surf1Data.positions, 3));
@@ -316,11 +316,11 @@ export class Gear3DVisualizer {
             geoSurf1.setIndex(new THREE.BufferAttribute(this.surf1Data.indices, 1));
 
             const matPinionSurf = new THREE.MeshStandardMaterial({
-                color: 0x22d3ee, // Luminous cyan for pinion flank
+                color: 0x00a8ff, // Vivid electric cyan-blue for pinion flank
                 emissive: 0x0284c7,
-                emissiveIntensity: 0.15,
-                metalness: 0.25,
-                roughness: 0.30,
+                emissiveIntensity: 0.14,
+                metalness: 0.15,
+                roughness: 0.40,
                 side: THREE.DoubleSide,
                 wireframe: this.wireframeMode
             });
@@ -337,11 +337,11 @@ export class Gear3DVisualizer {
             geoSurf2.setIndex(new THREE.BufferAttribute(this.surf2Data.indices, 1));
 
             const matGearSurf = new THREE.MeshStandardMaterial({
-                color: 0xfacc15, // Luminous amber gold for gear flank
-                emissive: 0xd97706,
-                emissiveIntensity: 0.15,
-                metalness: 0.25,
-                roughness: 0.30,
+                color: 0xff5722, // Vivid flame coral-orange for gear flank
+                emissive: 0xc2410c,
+                emissiveIntensity: 0.14,
+                metalness: 0.15,
+                roughness: 0.40,
                 side: THREE.DoubleSide,
                 wireframe: this.wireframeMode
             });
@@ -448,8 +448,8 @@ export class Gear3DVisualizer {
                 if (this.controls) this.controls.target.set(pitchPtX, 0, 0);
                 this.camera.position.set(pitchPtX, -meshDist * 0.36, meshDist * 0.93);
                 this.camera.up.set(0, 1, 0);
-                this.camera.near = Math.max(2.0, meshDist * 0.12);
-                this.camera.far = Math.max(2000.0, meshDist * 15.0);
+                this.camera.near = Math.max(15.0, meshDist * 0.25);
+                this.camera.far = Math.max(700.0, meshDist * 4.5);
                 break;
             case 'iso': // Standard Isometric view
             default:
@@ -521,6 +521,16 @@ export class Gear3DVisualizer {
 
         if (this.controls) {
             this.controls.update();
+            if (this.camera) {
+                const camDist = this.camera.position.distanceTo(this.controls.target);
+                const newNear = Math.max(2.0, Math.min(80.0, camDist * 0.18));
+                const newFar = Math.max(600.0, camDist * 6.0);
+                if (Math.abs(this.camera.near - newNear) > 1.0 || Math.abs(this.camera.far - newFar) > 20.0) {
+                    this.camera.near = newNear;
+                    this.camera.far = newFar;
+                    this.camera.updateProjectionMatrix();
+                }
+            }
         }
 
         if (this.renderer && this.scene && this.camera) {

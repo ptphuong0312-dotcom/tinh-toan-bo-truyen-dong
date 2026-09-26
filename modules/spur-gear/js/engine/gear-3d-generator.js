@@ -50,10 +50,12 @@ export const Gear3DGenerator = {
         const betaRad = (betaDeg * Math.PI) / 180.0;
 
         // 1. Generate base 2D transverse profile using exact MITCalc rack cutter envelope
+        // Note: For isSurfaceOnly, noPtEv=120 & cuttStep=0.25 ensures triangle width (~0.11mm) >= 1 screen pixel,
+        // preventing sub-pixel 2x2 quad depth derivative overshoot in 4x MSAA rasterization.
         const optContour = isSurfaceOnly ? Object.assign({}, opt, {
-            noPtHead: Math.max(opt.noPtHead || 20, 24),
-            noPtEv: Math.max(opt.noPtEv || 100, 200),
-            cuttStep: Math.min(opt.cuttStep || 0.5, 0.20)
+            noPtHead: 20,
+            noPtEv: 120,
+            cuttStep: 0.25
         }) : Object.assign({}, opt, {
             noPtHead: opt.noPtHead || 20,
             noPtEv: opt.noPtEv || 100,
@@ -85,8 +87,10 @@ export const Gear3DGenerator = {
 
         let numSlices = opt.numSlices;
         if (!numSlices) {
-            if (contactMode === 'crowning') {
-                numSlices = Math.max(12, Math.min(32, Math.round(8 * resFactor) * 2));
+            if (isSurfaceOnly && !isHelical && contactMode !== 'crowning') {
+                numSlices = 20;
+            } else if (contactMode === 'crowning') {
+                numSlices = Math.max(16, Math.min(32, Math.round(8 * resFactor) * 2));
             } else if (!isHelical) {
                 numSlices = Math.max(2, Math.min(12, Math.round(2 * resFactor) * 2));
             } else {
@@ -94,7 +98,7 @@ export const Gear3DGenerator = {
                 const twistTotalRad = Math.abs((b * Math.tan(betaRad)) / (d / 2.0));
                 const slicesFromTwist = Math.ceil((twistTotalRad / (Math.PI / 36.0)) * resFactor);
                 const baseHelicalSlices = Math.round(8 * resFactor) * 2;
-                numSlices = Math.max(12, Math.min(40, Math.ceil(Math.max(baseHelicalSlices, slicesFromTwist) / 2) * 2));
+                numSlices = Math.max(16, Math.min(40, Math.ceil(Math.max(baseHelicalSlices, slicesFromTwist) / 2) * 2));
             }
         }
 
@@ -167,13 +171,13 @@ export const Gear3DGenerator = {
             let dThetaKiss = 0.0;
             if (isSurfaceOnly && isPinion) {
                 if (contactMode === 'crowning') {
-                    // Phương án 2: Độ vồng Parabol vi mô dọc trục Z (đường chỉ tiếp xúc mảnh ở 80% giữa răng, không lồi qua mặt sau)
-                    const K_crown = Math.max(0.0, 1.0 - 1.35 * uNorm * uNorm);
-                    const allowance = (0.0032 * mn) * K_crown - (0.0010 * mn) * (1.0 - K_crown);
+                    // Phương án 2: Độ vồng Parabol vi mô dọc trục Z (đường kẻ tiếp xúc elip mảnh ở 75% giữa răng)
+                    const K_crown = Math.max(0.0, 1.0 - 1.50 * uNorm * uNorm);
+                    const allowance = (0.0016 * mn) * K_crown - (0.0008 * mn) * (1.0 - K_crown);
                     dThetaKiss = allowance / Math.max(1.0, d / 2.0);
                 } else {
-                    // Phương án 1 (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc 1 đường chỉ nhỏ liền mạch trượt trên mặt răng (0.0028 * mn ~ 16 um)
-                    const allowance = 0.0028 * mn;
+                    // Phương án 1 (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc 1 đường kẻ mảnh liền mạch chạy dọc theo răng (0.0014 * mn ~ 8.4 um)
+                    const allowance = 0.0014 * mn;
                     dThetaKiss = allowance / Math.max(1.0, d / 2.0);
                 }
             }

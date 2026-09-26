@@ -77,7 +77,7 @@ export class Bevel3DVisualizer {
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
         this.renderer.shadowMap.enabled = false;
         this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.22;
+        this.renderer.toneMappingExposure = 1.0;
 
         while (this.container.firstChild) {
             this.container.removeChild(this.container.firstChild);
@@ -119,30 +119,30 @@ export class Bevel3DVisualizer {
     }
 
     setupLighting() {
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x475569, 0.95);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x334155, 0.55);
         hemiLight.position.set(0, 400, 400);
         this.scene.add(hemiLight);
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.38);
         this.scene.add(ambientLight);
 
         // Main key light
-        const dirLight1 = new THREE.DirectionalLight(0xffffff, 1.35);
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.92);
         dirLight1.position.set(350, 500, 450);
         this.scene.add(dirLight1);
 
-        // Fill light (sky-blue tone)
-        const dirLight2 = new THREE.DirectionalLight(0xe0f2fe, 0.95);
+        // Fill light
+        const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.55);
         dirLight2.position.set(-400, -250, -350);
         this.scene.add(dirLight2);
 
-        // Rim light (warm amber tone)
-        const dirLight3 = new THREE.DirectionalLight(0xfef3c7, 0.85);
+        // Rim light
+        const dirLight3 = new THREE.DirectionalLight(0xffffff, 0.45);
         dirLight3.position.set(0, -450, 350);
         this.scene.add(dirLight3);
 
         // Back-top light for bevel hub & tooth backs
-        const dirLight4 = new THREE.DirectionalLight(0xcbd5e1, 0.65);
+        const dirLight4 = new THREE.DirectionalLight(0xffffff, 0.30);
         dirLight4.position.set(-200, 400, -400);
         this.scene.add(dirLight4);
     }
@@ -297,45 +297,45 @@ export class Bevel3DVisualizer {
             this.gearSurfMesh = null;
         }
 
-        // PBR Materials: Pinion Solid (Bright Sky-Cyan CAD Steel), Gear Solid (Warm Gold-Amber CAD Bronze/Steel)
+        // PBR Materials: Pinion Solid (Vivid Cobalt-Cyan #0284c7), Gear Solid (Vivid Coral-Orange #ea580c)
         const matPinion = new THREE.MeshStandardMaterial({
-            color: 0x38bdf8, // Bright Sky-Cyan CAD Steel
+            color: 0x0284c7, // Vivid Cobalt-Cyan Blue
             emissive: 0x0369a1,
             emissiveIntensity: 0.12,
-            metalness: 0.28,
-            roughness: 0.35,
+            metalness: 0.18,
+            roughness: 0.42,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
         const matGear = new THREE.MeshStandardMaterial({
-            color: 0xfbbf24, // Bright Warm Gold-Amber CAD Bronze/Steel
-            emissive: 0xb45309,
+            color: 0xea580c, // Vivid Coral-Orange Copper
+            emissive: 0x9a3412,
             emissiveIntensity: 0.12,
-            metalness: 0.28,
-            roughness: 0.35,
+            metalness: 0.18,
+            roughness: 0.42,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
-        // Surface-Only Materials: Pinion Flank (Luminous Cyan #22d3ee), Gear Flank (Luminous Gold #facc15)
+        // Surface-Only Materials: Pinion Flank (Vivid Electric Blue #00a8ff), Gear Flank (Vivid Flame Orange #ff5722)
         // In "Chỉ Mặt Bên" mode, contact is directly observed through the conjugate surface intersection
         const matPinionSurf = new THREE.MeshStandardMaterial({
-            color: 0x22d3ee, // Luminous cyan for pinion flank
+            color: 0x00a8ff, // Vivid electric cyan-blue for pinion flank
             emissive: 0x0284c7,
-            emissiveIntensity: 0.15,
-            metalness: 0.25,
-            roughness: 0.30,
+            emissiveIntensity: 0.14,
+            metalness: 0.15,
+            roughness: 0.40,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
         const matGearSurf = new THREE.MeshStandardMaterial({
-            color: 0xfacc15, // Luminous amber gold for gear flank
-            emissive: 0xd97706,
-            emissiveIntensity: 0.15,
-            metalness: 0.25,
-            roughness: 0.30,
+            color: 0xff5722, // Vivid flame coral-orange for gear flank
+            emissive: 0xc2410c,
+            emissiveIntensity: 0.14,
+            metalness: 0.15,
+            roughness: 0.40,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
@@ -448,6 +448,16 @@ export class Bevel3DVisualizer {
 
         if (this.controls) {
             this.controls.update();
+            if (this.camera) {
+                const camDist = this.camera.position.distanceTo(this.controls.target);
+                const newNear = Math.max(2.0, Math.min(60.0, camDist * 0.18));
+                const newFar = Math.max(500.0, camDist * 6.0);
+                if (Math.abs(this.camera.near - newNear) > 1.0 || Math.abs(this.camera.far - newFar) > 20.0) {
+                    this.camera.near = newNear;
+                    this.camera.far = newFar;
+                    this.camera.updateProjectionMatrix();
+                }
+            }
         }
 
         if (this.renderer && this.scene && this.camera) {

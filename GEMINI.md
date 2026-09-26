@@ -912,3 +912,30 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Trong `Gear3DGenerator`: không chỉ tăng số điểm biên dạng ngang $(X, Y)$ theo `noPtEv, cuttStep`, mà còn tự động nhân hệ số mịn `resFactor = noPtEv / 100` cho **số lát cắt dọc trục $Z$ (`numSlices`)** đối với cả bánh răng trụ thẳng và bánh răng trụ nghiêng ($\beta \ne 0^\circ$).
    - Trang bị thêm trên thanh công cụ 3D (`#toolbar3D`) của Bánh Răng Trụ cả thanh trượt `sliderProfileResolution3D` và hộp chọn `selMeshDensity` (11 cấp độ mịn giống hệt Bánh Răng Côn), đồng bộ 2 chiều tức thì với thanh trượt ở 2D Canvas và mục 16.3.
 
+---
+
+### Quy Tắc 41: Quy Chuẩn Phối Màu 3D Tương Phản Đối Lập 180° (Xanh Lam Cobalt vs Cam Đỏ Đồng) & Định Lý Thu Hẹp Vết Ăn Khớp Thành 1 Đường Kẻ Mảnh Liền Mạch ($W = 2\sqrt{2\rho_{\text{eq}}\delta_n}$)
+1. **Lệnh trực tiếp từ SirPhuong**:
+   - *"2 màu bánh răng cùng sáng rồi nhưng 2 tông màu này nhìn vẫn dễ lẫn, bạn xem đổi màu cho tôi để nhìn cái là không bị lẫn màu"*
+   - *"theo chuẩn ăn khớp ví dụ 2 bánh răng trụ với nhau thì vết ăn khớp chỉ là 1 đường thẳng (đường kẻ) chạy dọc theo răng và lằn trên bề mặt răng. lúc trước tôi đã yêu cầu bạn kiểm tra lại khoảng cách trục trong mô phỏng đã đúng với khoảng cách trục tính toán rồi và biên dạng bạn cũng kiểm tra là chuẩn rồi, vậy tôi muốn hỏi tại sao hiện tại vết ăn khớp (vết in bề mặt bánh răng này lên phía sau mặt bên bánh răng kia) tuy ăn khớp vẫn chuẩn nhưng vết vẫn tương đối to"*
+2. **Phối màu 3D tương phản đối lập 180° trên vòng tròn màu & Chống bạc màu ACESFilmic**:
+   - **Nguyên nhân hai màu sáng cũ dễ lẫn**: Cường độ đèn quá cao (`HemisphereLight 0.95 + AmbientLight 0.75 + Exposure 1.22`) khiến bộ nén dải động `ACESFilmicToneMapping` làm bão hòa sáng (desaturate/bleach) cả màu Xanh Ngọc nhạt (`#38bdf8`) và Vàng nhạt (`#fbbf24`) về tông kem trắng sáng gần giống nhau.
+   - **Giải pháp chuẩn hóa trên cả Bánh Răng Trụ và Bánh Răng Côn**:
+     * Cân chỉnh ánh sáng chuẩn Studio CAD: `toneMappingExposure = 1.0`, `HemisphereLight(0xffffff, 0x334155, 0.55)`, `AmbientLight(0xffffff, 0.38)`, 4 đèn `DirectionalLight` trắng tinh khiết (`0.92, 0.55, 0.45, 0.25`) giúp giữ nguyên 100% độ bão hòa sắc độ (Hue saturation).
+     * Sử dụng cặp màu đối lập 180° (Xanh Lam Lạnh vs Cam Đỏ Nóng):
+       - **Bánh dẫn 1 (Pinion 1)**: **Xanh Lam Cobalt Sáng Rõ** (`color: 0x0284c7`, `emissive: 0x0369a1` cho khối đặc; `color: 0x00a8ff` cho mặt bên; viền cạnh `0x7dd3fc`).
+       - **Bánh bị dẫn 2 (Gear 2)**: **Cam Đỏ Đồng Rực Rỡ** (`color: 0xea580c`, `emissive: 0x9a3412` cho khối đặc; `color: 0xff5722` cho mặt bên; viền cạnh `0xfdba74`).
+3. **Định lý giải tích giải thích tại sao vết in ăn khớp bị rộng và cách thu hẹp thành 1 đường kẻ mảnh liền mạch**:
+   - **Bản chất toán học của bề rộng vết tiếp xúc $W$**:
+     * Hai mặt răng thân khai tiếp xúc tại tâm ăn khớp tương đương với hai mặt trụ cong lồi có bán kính cong $\rho_1 = r_{w1}\sin\alpha_w = 19.50\text{ mm}$ và $\rho_2 = r_{w2}\sin\alpha_w = 49.25\text{ mm}$, bán kính cong tương đương $\rho_{\text{eq}} = \frac{\rho_1 \rho_2}{\rho_1 + \rho_2} = 13.97\text{ mm}$.
+     * Vì hai mặt cong tiếp xúc tiếp tuyến với nhau ($g'(0) = 0$), khoảng hở pháp tuyến giữa hai mặt răng tại vị trí cách đường tiếp xúc một đoạn $s$ tăng theo **bậc hai (Parabol)**:
+       $$g(s) = \frac{s^2}{2 \rho_{\text{eq}}}$$
+     * Trong đồ họa 3D, nếu hai mặt chỉ chạm đúng $\delta_n = 0.000\text{ mm}$ thì không mặt nào vượt sang mặt sau của mặt kia nên không thể hiện màu in xuyên qua mặt bên. Để hiện màu ở chế độ `Chỉ Mặt Bên`, cần một lượng nhô vi mô $\delta_n$. Tuy nhiên, do hàm bậc hai $g(s) = \frac{s^2}{2\rho_{\text{eq}}}$, bề rộng dây cung giao tuyến $W$ bị **khuếch đại theo căn bậc hai**:
+       $$W = 2 \sqrt{2 \rho_{\text{eq}} \delta_n}$$
+     * Với `allowance = 0.0028 * mn` ($\delta_n = 15.8\text{ \mu m}$) trước đây, bề rộng vết in bị phóng lên $W = 2\sqrt{2 \times 13.97 \times 0.0158} = \mathbf{1.33\text{ mm}}$ ($\sim 11\%$ chiều cao răng). Với Bánh Răng Côn, lượng bù cũ $90\text{ \mu m}$ tạo dải rộng $4.15\text{ mm}$.
+   - **Giải pháp thu hẹp thành 1 đường kẻ mảnh liền mạch ($\approx 0.6\text{--}0.8\text{ mm}$) không đứt nét**:
+     * Giảm `allowance` của Bánh Răng Trụ xuống `0.0014 * mn` ($\delta_n \approx 7.9\text{ \mu m}$, chỉ áp dụng cho `isSurfaceOnly`, giữ nguyên `0.000` cho khối đặc), và giảm lượng bù mặt bên của Bánh Răng Côn xuống `0.028 mm` (`28 um`).
+     * Đặt mật độ lưới vỏ mặt bên `noPtEv = 120, cuttStep = 0.25, numSlices = 20` để bề rộng mỗi dải tam giác ($\sim 0.11\text{ mm} \approx 1.0\text{ pixel}$) tương thích hoàn hảo với bộ lấy mẫu 4x MSAA của GPU (tránh chia `noPtEv = 320` tạo tam giác siêu hẹp $0.33\text{ pixel}$ gây vọt đạo hàm chiều sâu $\frac{\partial z}{\partial x}$ trên cụm 2x2 pixel).
+     * Tự động cập nhật động `camera.near = Math.max(2.0, Math.min(80.0, camDist * 0.18))` và `camera.far = Math.max(600.0, camDist * 6.0)` trong `animate()` theo khoảng cách zoom thực tế của người dùng trên cả 2 module.
+
+

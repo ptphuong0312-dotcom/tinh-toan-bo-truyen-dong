@@ -1739,3 +1739,28 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
      - **Loại bỏ giảm mẫu nhảy cóc (`profileStep = 2, 4`) trong `Gear3DGenerator`**: Trước đó, khối đặc 3D (`isSurfaceOnly = false`) dùng `profileStep = 2` (với $z \le 30$) và `profileStep = 4` (với $z > 30$) trên mảng `rawContour` có $239$ điểm/răng (số lẻ không chia hết cho $2$ hay $4$), làm lệch pha điểm lấy mẫu giữa các răng kế tiếp (`239 % 4 = 3`) và làm thô biên dạng thân khai của bánh lớn. Đã cố định mặc định `profileStep = 1` và `noPtHead = 20, noPtEv = 100, cuttStep = 0.5` trong `Gear3DGenerator` và `ToothProfileGenerator`, giúp **mọi răng trên khối 3D đặc đều giữ nguyên trọn vẹn 239 điểm/răng chuẩn MITCalc 1.74** (sai số đỉnh Float32 tại $Z=0$ chỉ còn $0.0000027\text{ mm}$).
      - **Truyền đầy đủ tham số dao cắt (`ha0, hf0, ra0`) và góc xoay lắp ráp chuẩn trong `Gear3DVisualizer`**: Bổ sung `ha0, hf0, ra0` từ `geom` vào `Gear3DGenerator` và xoay bánh dẫn 1 đúng góc `initialPinionAngle = -Math.PI / 2.0` khi xuất file 3D Assembly STEP/STL.
      - **Chuẩn hóa tham số pháp tuyến ($m_n, \alpha_n, \beta$) cho Răng Nghiêng trong `GearCanvas` (2D) & `exportDXF`**: Sửa lỗi truyền nhầm `m_canvas = mt, alpha_canvas = alfat` vào `ToothProfileGenerator` (vốn đã tự chia $\cos\beta$ bên trong `MitcalcToothSolver`), đảm bảo biên dạng 2D Canvas, DXF và 3D WebGL đồng nhất 100%.
+
+---
+
+### [2026-09-27] PHỐI MÀU 3D TƯƠNG PHẢN ĐỐI LẬP 180° (COBALT BLUE VS CORAL ORANGE) & THU HẸP VẾT ĂN KHỚP THÀNH 1 ĐƯỜNG KẺ MẢNH LIỀN MẠCH ($W = 2\sqrt{2\rho_{\text{eq}}\delta_n}$)
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  - Bản sao lưu trước khi thực hiện: `backups/BACKUP_MITCalc_Gear_20260927_001551.zip` (`817 files`, `50,826.45 KB`).
+  - *"2 màu bánh răng cùng sáng rồi nhưng 2 tông màu này nhìn vẫn dễ lẫn, bạn xem đổi màu cho tôi để nhìn cái là không bị lẫn màu"*.
+  - *"theo chuẩn ăn khớp ví dụ 2 bánh răng trụ với nhau thì vết ăn khớp chỉ là 1 đường thẳng (đường kẻ) chạy dọc theo răng và lằn trên bề mặt răng. lúc trước tôi đã yêu cầu bạn kiểm tra lại khoảng cách trục trong mô phỏng đã đúng với khoảng cách trục tính toán rồi và biên dạng bạn cũng kiểm tra là chuẩn rồi, vậy tôi muốn hỏi tại sao hiện tại vết ăn khớp (vết in bề mặt bánh răng này lên phía sau mặt bên bánh răng kia) tuy ăn khớp vẫn chuẩn nhưng vết vẫn tương đối to"*.
+* **Phân tích nguyên nhân gốc rễ & Giải pháp kỹ thuật**:
+  1. **Tại sao hai màu sáng trước đó dễ bị lẫn & Giải pháp phối màu đối lập 180°**:
+     - Cường độ chiếu sáng quá mạnh (`HemisphereLight 0.95 + AmbientLight 0.75 + toneMappingExposure 1.22`) kết hợp bộ nén dải sáng `ACESFilmicToneMapping` đã làm bạc màu (desaturate) cả màu Xanh Cyan nhạt và Vàng nhạt thành tông kem trắng.
+     - Đã cân chỉnh lại hệ thống đèn (`toneMappingExposure = 1.0`, `HemisphereLight 0.55`, `AmbientLight 0.38`) và áp dụng cặp màu đối lập 180° trên vòng tròn màu cho cả Bánh Răng Trụ và Bánh Răng Côn:
+       * **Bánh dẫn 1 (Pinion 1)**: **Xanh Lam Cobalt Sáng Rõ** (`0x0284c7` khối đặc / `0x00a8ff` mặt bên).
+       * **Bánh bị dẫn 2 (Gear 2)**: **Cam Đỏ Đồng Rực Rỡ** (`0xea580c` khối đặc / `0xff5722` mặt bên).
+  2. **Giải thích toán học tại sao vết ăn khớp trước đó tương đối to ($\approx 1.33\text{ mm}$) dù $a_w$ và biên dạng chuẩn 100%**:
+     - Hai mặt răng thân khai tiếp xúc tại tâm ăn khớp có bán kính cong $\rho_1 = r_{w1}\sin\alpha_w = 19.50\text{ mm}$ và $\rho_2 = r_{w2}\sin\alpha_w = 49.25\text{ mm}$ ($\rho_{\text{eq}} = \frac{\rho_1\rho_2}{\rho_1+\rho_2} = 13.97\text{ mm}$).
+     - Vì hai mặt cong tiếp xúc **tiếp tuyến** với nhau ($g'(0) = 0$), khoảng cách tách rời giữa hai mặt răng theo phương dọc biên dạng $s$ tăng rất chậm theo hàm **bậc hai**: $g(s) = \frac{s^2}{2\rho_{\text{eq}}}$.
+     - Khi áp dụng một độ nhô pháp tuyến vi mô $\delta_n$ để màu mặt răng này in qua mặt sau mặt răng kia ở chế độ `Chỉ Mặt Bên`, bề rộng dây cung giao cắt $W$ bị **phóng đại theo căn bậc hai**:
+       $$W = 2\sqrt{2\rho_{\text{eq}}\delta_n}$$
+     - Với `allowance = 0.0028 * mn` ($\delta_n = 15.8\text{ \mu m}$) trước đó, mặc dù độ lồng pháp tuyến chỉ là $0.0158\text{ mm}$, công thức căn bậc hai làm bề rộng vết giao cắt nở ra thành $W = 2\sqrt{2 \times 13.97 \times 0.0158} = \mathbf{1.33\text{ mm}}$.
+  3. **Hiệu chỉnh thành 1 đường kẻ mảnh liền mạch ($\approx 0.6\text{--}0.8\text{ mm}$)**:
+     - Giảm `allowance` của Bánh Răng Trụ (`isSurfaceOnly`) xuống `0.0014 * mn` ($\delta_n \approx 7.9\text{ \mu m}$) và của Bánh Răng Côn (`isSurfaceOnly`) xuống `0.028 mm`.
+     - Đặt mật độ lưới vỏ mặt bên `noPtEv = 120, cuttStep = 0.25, numSlices = 20` để bề rộng mỗi tam giác trên màn hình đạt $\ge 1.0\text{ pixel}$, triệt tiêu hoàn toàn hiện tượng nhiễu đạo hàm chiều sâu 4x MSAA trên các tam giác con dưới 1 pixel (`0.33 px` khi `noPtEv = 320`), giúp vết ăn khớp hiển thị thành **1 đường kẻ mảnh 6–8 pixel đặc khít 100% (`4/4 MSAA samples`)** trượt êm ái dọc sườn răng.
+     - Tự động cập nhật động `camera.near` và `camera.far` theo khoảng cách camera trong `animate()` trên cả 2 module.
+

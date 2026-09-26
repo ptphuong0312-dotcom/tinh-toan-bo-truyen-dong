@@ -1025,10 +1025,19 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 1. **Khắc phục lỗi Bánh Răng Trụ 3D mặc định bị rỗng như bề mặt (CCW Triangle Winding Order Protocol)**:
    - `MitcalcToothSolver.generateCompleteWheelContour` sinh điểm biên dạng theo chiều kim đồng hồ (CW) trong mặt phẳng XY. `Gear3DGenerator.generateGearMeshData` phải nối đỉnh tam giác theo chiều ngược kim đồng hồ (CCW nhìn từ ngoài vào) cho cả 4 nhóm mặt (Vành răng ngoài, Nắp trước $Z = +b/2$, Nắp sau $Z = -b/2$, Lỗ trục trong) để pháp tuyến hướng ra ngoài chuẩn xác.
    - Mặc định khi mở mô phỏng 3D (`flankOnlyMode = false`), hiển thị khối đặc hoàn chỉnh (`pinionMesh.visible = true, gearMesh.visible = true`), chỉ khi bấm `#btnToggleFlankOnly` ("👁️ Chỉ Mặt Bên") mới chuyển sang hiển thị vỏ bề mặt răng (`pinionSurfMesh`, `gearSurfMesh`).
-2. **Vật liệu PBR Satin-Metallic sáng rõ & Ánh sáng Studio 4 hướng**:
-   - Sử dụng `metalness: 0.28, roughness: 0.35, emissiveIntensity: 0.12` (Pinion: Sky-Cyan `0x38bdf8`, Gear: Warm Gold-Amber `0xfbbf24`), kết hợp `HemisphereLight`, `AmbientLight` và 4 đèn `DirectionalLight` (`toneMappingExposure = 1.22`) trên nền tối CAD `0x111827` cho cả Module Bánh Răng Trụ và Module Bánh Răng Côn.
-3. **Đồng bộ 2 chiều Độ Mịn 2D & 3D (`sliderProfileResolution3D` & `selMeshDensity`)**:
+2. **Đồng bộ 2 chiều Độ Mịn 2D & 3D (`sliderProfileResolution3D` & `selMeshDensity`)**:
    - Khi thay đổi độ mịn ở 2D hoặc 3D (11 cấp từ 80 đến 600 điểm/răng), cả biên dạng 2D Canvas lẫn lưới 3D WebGL (bao gồm mật độ điểm thân khai XY và số lát cắt dọc trục $Z$ cho cả răng thẳng và răng nghiêng) đều tự động cập nhật đồng bộ.
+
+---
+
+### Quy Chuẩn 50: Phối Màu 3D Tương Phản Đối Lập 180° (Cobalt Blue vs Coral Orange) & Thuật Toán Đường Kẻ Tiếp Xúc Mảnh Liền Mạch ($W = 2\sqrt{2\rho_{\text{eq}}\delta_n}$)
+1. **Phối màu 3D tương phản đối lập & Cân bằng Exposure**:
+   - Đặt `toneMappingExposure = 1.0`, `HemisphereLight(0xffffff, 0x334155, 0.55)`, `AmbientLight(0xffffff, 0.38)` để `ACESFilmicToneMapping` không làm bạc màu vật liệu.
+   - **Bánh dẫn 1 (Pinion 1)**: Xanh Lam Cobalt (`0x0284c7` khối đặc / `0x00a8ff` mặt bên, `emissive: 0x0369a1`).
+   - **Bánh bị dẫn 2 (Gear 2)**: Cam Đỏ Đồng (`0xea580c` khối đặc / `0xff5722` mặt bên, `emissive: 0x9a3412`).
+2. **Công thức bề rộng giao tuyến tiếp xúc & Tối ưu lưới MSAA**:
+   - Bề rộng vết giao tuyến giữa hai mặt cong tiếp tuyến có bán kính cong tương đương $\rho_{\text{eq}} = \frac{\rho_1 \rho_2}{\rho_1 + \rho_2}$ với lượng nhô pháp tuyến $\delta_n$ là $W = 2\sqrt{2\rho_{\text{eq}}\delta_n}$.
+   - Sử dụng `allowance = 0.0014 * mn` ($\delta_n \approx 7.9\text{ \mu m}$) cùng `noPtEv = 120, cuttStep = 0.25, numSlices = 20` cho `isSurfaceOnly` của Bánh Răng Trụ (và `0.028 mm` cho `isSurfaceOnly` của Bánh Răng Côn), kết hợp cập nhật động `camera.near / camera.far` trong `animate()` để tạo đường kẻ tiếp xúc mảnh ($\approx 6\text{--}8\text{ px}$), sắc nét và liền mạch 100%.
 
 ---
 
