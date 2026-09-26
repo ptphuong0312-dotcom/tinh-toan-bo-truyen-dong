@@ -867,18 +867,20 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - *'phần 2. TÍNH TOÁN ĐỘNG HỌC, HÌNH HỌC ĂN KHỚP & DỊCH CHỈNH NGƯỢC sẽ không cho vào trong tài liệu báo cáo mà kết quả của nó chỉ dùng để phục vụ tính toán'*.
    - *'tôi muốn bạn cho cả 2 thông số 357 MPa và 388 MPa vào trong bảng. hộp số bên tôi hoạt động ở chế độ 2 nên bạn không cần cho thêm các chế độ khác vào bảng làm gì'*.
    - *'ngoài ra thì thông số đầu vào bạn xem thông số nào cần thiết cho tính toán thì dữ lại còn thông số nào không cần thì bạn lược bỏ (rút gọn) cho tôi để bảng gọn gàng hơn'*.
+   - *'lưu ý cho tôi trong bảng thông số đầu vào bỏ các thông số này trong bảng : bỏ hệ số dịch chỉnh, bỏ đường kính bánh lớn'*.
 2. **Nguyên tắc bảo tồn tính thuần khiết của Web App (Zero-Web Policy)**:
    - Giữ nguyên 100% mã nguồn Web App (index.html, các JS bundles, CSS) thuần túy không chứa các phân mục tính lực và ứng suất theo Quy Tắc 1.
-   - Toàn bộ nghiệp vụ tính toán độ bền uốn, thẩm tra ứng suất mỏi theo ISO 6336-3 (Method B) và xuất báo cáo Word được thực hiện độc lập qua công cụ Python và workflow kỹ năng dự án (tools/generate_bending_stress_word_report.py).
-3. **Quy chuẩn rút gọn thông số đầu vào thiết yếu (Essential Input Filtering Protocol)**:
-   - Lược bỏ toàn bộ các biến số trung gian không tham gia trực tiếp vào tính toán uốn (n_đc, i_tổng, mt, alfa_t, alfa_wt, da, df).
-   - Giữ lại đúng 14 thông số cốt lõi trong Bảng 1: Công suất P, Tốc độ n1, n2, Tỉ số truyền i, Số răng z1, z2, Mô đun mn, Góc áp lực alfa_n, Góc nghiêng beta, Bề rộng b, Đường kính lăn dw2, Hệ số dịch chỉnh x1, x2, Hệ số tải ngoài KA, Vật liệu SCM420 và Giới hạn mỏi cơ sở sigma_Flim.
-4. **Quy chuẩn phân tích Chế độ 2 (KA = 1.50) & Hiển thị song song 357 MPa và 388 MPa**:
-   - Khóa chặt vào chế độ vận hành thực tế của hộp số công nghiệp (Chế độ 2: KA = 1.50). Lược bỏ hoàn toàn các chế độ tải tĩnh hoặc cực đoan không liên quan (Chế độ 1, 4, 5).
-   - Hiển thị song song 2 kịch bản lắp đặt thực tế của xưởng trong Bảng 5.1 và 5.2:
-     * Trường hợp 2A (Thiết kế tối ưu - Gối đỡ đối xứng chuẩn, KFbeta = 1.035): sigma_F2 = 356.97 MPa (~357 MPa) => SF2 = 1.77 (Bánh nhỏ sigma_F1 = 369.62 MPa, SF1 = 1.66).
-     * Trường hợp 2B (Dự phòng độ lệch trục đàn hồi nhẹ, KFbeta = 1.125): sigma_F2 = 388.10 MPa (~388 MPa) => SF2 = 1.63 (Bánh nhỏ sigma_F1 = 401.83 MPa, SF1 = 1.53).
-   - Khẳng định bộ truyền đạt chuẩn vàng an toàn chế tạo máy (1.4 <= SF <= 1.8), đảm bảo tuổi thọ > 50,000 h.
-5. **Cơ chế tự động hóa xuất bản Word chất lượng cao (python-docx)**:
-   - Tự động định dạng văn bản chuẩn Times New Roman, kẻ bảng 2 tông màu Navy #1e3a8a / Slate, canh lề tiêu chuẩn 2 cm, đầy đủ công thức giải tích và khối chữ ký nghiệm thu 3 bên.
-   - Xuất file .docx trực tiếp tại thư mục gốc dự án (BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG.docx) và đồng bộ vào thư mục artifacts, sẵn sàng in ấn hoặc gửi ngay cho đối tác chỉ với một yêu cầu từ người dùng.
+   - Toàn bộ nghiệp vụ tính toán độ bền uốn, thẩm tra ứng suất mỏi theo ISO 6336-3 (Method B) và xuất báo cáo Word được thực hiện độc lập qua công cụ Python và workflow kỹ năng dự án (`tools/generate_bending_stress_word_report.py`).
+3. **Quy chuẩn rút gọn thông số đầu vào thiết yếu (12 Thông Số Cốt Lõi — Essential Input Filtering Protocol)**:
+   - Lược bỏ toàn bộ các biến số trung gian và lược bỏ cả `Hệ số dịch chỉnh (x1 / x2)` cùng `Đường kính bánh lớn (dw2 / Dw)` khỏi Bảng 1 theo yêu cầu trực tiếp.
+   - Giữ lại đúng 12 thông số cốt lõi trong Bảng 1: Công suất $P$, Tốc độ $n_1, n_2$, Tỉ số truyền $i$, Số răng $z_1 / z_2$, Mô đun $m_n$, Góc áp lực $\alpha_n$, Góc nghiêng $\beta$, Bề rộng $b$, Hệ số tải ngoài $K_A$, Vật liệu SCM420 và Giới hạn mỏi cơ sở $\sigma_{F\lim}$.
+4. **Quy chuẩn phân tích Chế độ 2 ($K_A = 1.50$) & Hiển thị song song 2 kịch bản lắp đặt (2A & 2B)**:
+   - **Bộ 1 ($z_1 = 20, z_2 = 81, m_n = 12\text{ mm}, b = 410\text{ mm}$)**:
+     * Trường hợp 2A ($K_{F\beta} = 1.035$): $\sigma_{F2} = 356.97\text{ MPa}$ ($\sim 357\text{ MPa}$), $S_{F2} = 1.77$ ($\sigma_{F1} = 369.62\text{ MPa}, S_{F1} = 1.66$).
+     * Trường hợp 2B ($K_{F\beta} = 1.125$): $\sigma_{F2} = 388.10\text{ MPa}$ ($\sim 388\text{ MPa}$), $S_{F2} = 1.63$ ($\sigma_{F1} = 401.83\text{ MPa}, S_{F1} = 1.53$).
+   - **Bộ 2 ($z_1 = 17, z_2 = 69, m_n = 14\text{ mm}, \alpha_n = 20^\circ, \beta = 12^\circ, x_1 = x_2 = 0, b = 410\text{ mm}$)**:
+     * Ứng suất danh nghĩa: $\sigma_{F0,1} = 218.58\text{ MPa}, \sigma_{F0,2} = 203.74\text{ MPa}$; Giới hạn mỏi thực tế: $\sigma_{FG1} = 600.17\text{ MPa}, \sigma_{FG2} = 619.88\text{ MPa}$.
+     * Trường hợp 2A ($K_{F\beta} = 1.035 \implies K_F = 1.554$): $\sigma_{F2} = 316.61\text{ MPa}$ ($\sim 317\text{ MPa}$), $S_{F2} = 1.96$ ($\sigma_{F1} = 339.67\text{ MPa} \sim 340\text{ MPa}, S_{F1} = 1.77$).
+     * Trường hợp 2B ($K_{F\beta} = 1.125 \implies K_F = 1.688$): $\sigma_{F2} = 343.91\text{ MPa}$ ($\sim 344\text{ MPa}$), $S_{F2} = 1.80$ ($\sigma_{F1} = 368.96\text{ MPa} \sim 369\text{ MPa}, S_{F1} = 1.63$).
+5. **Cơ chế tự động hóa xuất bản Word chất lượng cao (`python-docx`)**:
+   - Xuất file `.docx` trực tiếp tại thư mục gốc dự án (`BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG.docx` và `BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG_Z17_69_M14.docx`) và đồng bộ vào thư mục artifacts.

@@ -1703,3 +1703,24 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
      - Bộ kiểm thử QC (`qc_gear_multi_case_suite.py`): **110/110 PASS (100.0%, $\Delta = 0.0000$)**.
      - Bộ ảnh chụp E2E (`final_2_spur_thread_theory.png`, `final_2b_spur_slide_0.png`, `final_2b_spur_slide_1.png`, `final_3_spur_thread_crowning.png`, `final_4_helical_thread_crowning.png`, `final_5_helical_thread_theory.png`) xác nhận vết tiếp xúc chỉ là **1 đường chỉ nhỏ liền mạch trượt trên bề mặt răng**, hoàn toàn không bị lồi sang phía sau!
 
+---
+
+### [2026-09-26] TÍNH TOÁN ĐỘ BỀN UỐN & XUẤT BÁO CÁO WORD BỘ BÁNH RĂNG $Z_1 = 17, Z_2 = 69, M_N = 14\text{ MM}$ ($\alpha_n = 20^\circ, \beta = 12^\circ, X_1 = X_2 = 0$)
+* **Chỉ đạo từ SirPhuong**:
+  - *"tôi lại cần tính toán bền uốn như lần trước (và xuất file word cho tôi) : tôi vẫn muốn tính toán với thông số đầu vào y hệt như lần trước nhưng thay đổi các thông số sau : tính cho cặp bánh răng Z17-69 m14 alpha20 beta12 (tốc độ quay bánh lớn vẫn 10 vòng/phút) hệ số dịch chỉnh x1=x2=0, ngoài ra thì thông số đầu vào còn lại thì y hệt như bộ trước Z20-81"*
+  - *"lưu ý cho tôi trong bảng thông số đầu vào bỏ các thông số này trong bảng : bỏ hệ số dịch chỉnh, bỏ đường kính bánh lớn"*
+* **Kết quả tính toán giải tích chuẩn ISO 6336-3 Method B & MITCalc 1.74 (`Gear1_01.xlsb`)**:
+  - Thông số hình học & lực: $i = 69/17 = 4.059$, $n_1 = 40.59\text{ rpm}$, $d_1 = d_{w1} = 243.317\text{ mm}$, $d_2 = d_{w2} = 987.581\text{ mm}$, $a = a_w = 615.449\text{ mm}$, $F_t = 483,504.6\text{ N}$, $F_r = 179,912.8\text{ N}$, $F_a = 102,772.1\text{ N}$, $F_n = 526,029.9\text{ N}$.
+  - Hệ số dạng răng & tập trung ứng suất: $Y_{F1} = 1.596, Y_{S1} = 1.807$ ($Y_{FS1} = 2.883$); $Y_{F2} = 1.270, Y_{S2} = 2.117$ ($Y_{FS2} = 2.688$); $Y_\beta = 0.900$.
+  - Ứng suất uốn danh nghĩa: $\sigma_{F0,1} = \mathbf{218.58\text{ MPa}}$, $\sigma_{F0,2} = \mathbf{203.74\text{ MPa}}$ (giảm $11.3\%$ so với bộ $z_1=20, z_2=81, m_n=12$).
+  - Khả năng chịu uốn giới hạn ($Y_X = 0.910$ cho $m_n = 14\text{ mm}$): $\sigma_{FG1} = \mathbf{600.17\text{ MPa}}$, $\sigma_{FG2} = \mathbf{619.88\text{ MPa}}$.
+  - **Chế độ 2 ($K_A = 1.50$)**:
+    * *Trường hợp 2A (Gối đỡ đối xứng chuẩn, $K_{F\beta} = 1.035, K_F = 1.554$)*:
+      - Bánh lớn ($z_2 = 69$): $\sigma_{F2} = \mathbf{316.61\text{ MPa}}$ ($\sim \mathbf{317\text{ MPa}}$) $\implies S_{F2} = \mathbf{1.96}$.
+      - Bánh nhỏ ($z_1 = 17$): $\sigma_{F1} = \mathbf{339.67\text{ MPa}}$ ($\sim \mathbf{340\text{ MPa}}$) $\implies S_{F1} = \mathbf{1.77}$.
+    * *Trường hợp 2B (Dự phòng lệch trục đàn hồi nhẹ, $K_{F\beta} = 1.125, K_F = 1.688$)*:
+      - Bánh lớn ($z_2 = 69$): $\sigma_{F2} = \mathbf{343.91\text{ MPa}}$ ($\sim \mathbf{344\text{ MPa}}$) $\implies S_{F2} = \mathbf{1.80}$.
+      - Bánh nhỏ ($z_1 = 17$): $\sigma_{F1} = \mathbf{368.96\text{ MPa}}$ ($\sim \mathbf{369\text{ MPa}}$) $\implies S_{F1} = \mathbf{1.63}$.
+  - Đã xuất file Word hoàn chỉnh tại `BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG.docx` và `BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG_Z17_69_M14.docx` (Bảng 1 gồm 12 dòng cốt lõi, đã lược bỏ hệ số dịch chỉnh và đường kính bánh lớn).
+
+

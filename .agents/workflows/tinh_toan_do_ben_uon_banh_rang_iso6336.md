@@ -119,19 +119,45 @@ $$S_F = \frac{\sigma_{FP}}{\sigma_F} \cdot S_{F\min}$$
 
 ---
 
+## 4.2. Case Study Thực Nghiệm 2: Bộ Bánh Răng Công Nghiệp Nặng $z_1 = 17, z_2 = 69, m_n = 14\text{ mm}$ ($x_1 = x_2 = 0$)
+
+* **Thông số đầu vào**:
+  * Công suất $P = 250\text{ kW}$, tốc độ bánh lớn $n_2 = 10.0\text{ rpm} \implies n_1 = 10 \times \frac{69}{17} = 40.59\text{ rpm}$ ($i = 4.059$).
+  * Hình học: $z_1 = 17, z_2 = 69, m_n = 14.0\text{ mm}, \alpha_n = 20^\circ, \beta = 12^\circ, x_1 = x_2 = 0, b = 410\text{ mm}$.
+  * Đường kính chia = lăn: $d_1 = d_{w1} = 243.317\text{ mm}, d_2 = d_{w2} = 987.581\text{ mm}, a = a_w = 615.449\text{ mm}$.
+  * Vật liệu: Thép SCM420 thấm carbon tôi bề mặt 58-62 HRC ($\sigma_{F\lim} = 700\text{ MPa}$).
+* **Lực & Ứng suất danh nghĩa (Khớp 100% với MITCalc 1.74)**:
+  * $T_1 = 58,822.5\text{ N}\cdot\text{m}$, $T_2 = 238,750.0\text{ N}\cdot\text{m}$.
+  * $F_t = 483,504.6\text{ N}$, $F_r = 179,912.8\text{ N}$, $F_a = 102,772.1\text{ N}$, $F_n = 526,029.9\text{ N}$, $v = 0.517\text{ m/s}$.
+  * Hệ số dạng răng & tập trung ứng suất:
+    - Bánh nhỏ ($z_1 = 17, z_{n1} = 18.07$): $Y_{F1} = 1.596, Y_{S1} = 1.807 \implies Y_{FS1} = 2.883$.
+    - Bánh lớn ($z_2 = 69, z_{n2} = 73.34$): $Y_{F2} = 1.270, Y_{S2} = 2.117 \implies Y_{FS2} = 2.688$.
+    - $Y_\beta = 0.900$ ($\varepsilon_\beta = 1.938 > 1.0$), $Y_B = 1.000$.
+  * Ứng suất uốn danh nghĩa:
+    - Bánh nhỏ: $\sigma_{F0,1} = \mathbf{218.58\text{ MPa}}$ (giảm $8.1\%$ so với bộ $m_n = 12$).
+    - Bánh lớn: $\sigma_{F0,2} = \mathbf{203.74\text{ MPa}}$ (giảm $11.3\%$ so với bộ $m_n = 12$).
+  * Khả năng chịu uốn giới hạn của răng ($Y_X = 1.05 - 0.01 \cdot m_n = 0.910$):
+    - Bánh nhỏ: $\sigma_{FG1} = \mathbf{600.17\text{ MPa}}$.
+    - Bánh lớn: $\sigma_{FG2} = \mathbf{619.88\text{ MPa}}$.
+* **Kết quả ở Chế độ 2 ($K_A = 1.50$)**:
+  1. *Trường hợp 2A — Gối đỡ đối xứng chuẩn ($K_{F\beta} = 1.035 \implies K_F = 1.554$)*:
+     - Bánh lớn ($z_2 = 69$): $\sigma_{F2} = \mathbf{316.61\text{ MPa}} \approx \mathbf{317\text{ MPa}} \implies S_{F2} = \mathbf{1.96}$ (**An toàn cao**).
+     - Bánh nhỏ ($z_1 = 17$): $\sigma_{F1} = \mathbf{339.67\text{ MPa}} \approx \mathbf{340\text{ MPa}} \implies S_{F1} = \mathbf{1.77}$ (**Chuẩn vàng tối ưu**).
+  2. *Trường hợp 2B — Dự phòng độ lệch trục đàn hồi nhẹ ($K_{F\beta} = 1.125 \implies K_F = 1.688$)*:
+     - Bánh lớn ($z_2 = 69$): $\sigma_{F2} = \mathbf{343.91\text{ MPa}} \approx \mathbf{344\text{ MPa}} \implies S_{F2} = \mathbf{1.80}$ (**Chuẩn vàng tối ưu**).
+     - Bánh nhỏ ($z_1 = 17$): $\sigma_{F1} = \mathbf{368.96\text{ MPa}} \approx \mathbf{369\text{ MPa}} \implies S_{F1} = \mathbf{1.63}$ (**An toàn rất tốt**).
+
+---
+
 ## 5. Quy Chuẩn Biên Soạn Báo Cáo Chuyên Nghiệp & Xuất File Word Bàn Giao Đối Tác
 
 1. **Nguyên tắc vận hành Zero-Web**:
    - Theo chỉ đạo của SirPhuong: Toàn bộ nghiệp vụ tính toán độ bền uốn và xuất báo cáo Word được thực hiện hoàn toàn độc lập, **tuyệt đối không đưa lên Web App** nhằm bảo tồn sự tinh gọn của giao diện theo Quy Tắc 1.
-2. **Quy chuẩn lọc thông số đầu vào (14 thông số thiết yếu)**:
-   - Khi đưa vào Báo cáo kỹ thuật bàn giao đối tác, lược bỏ toàn bộ các đại lượng trung gian ({\\text{đc}}, i_{\\text{tổng}}, m_t, \\alpha_t, \\alpha_{wt}, d_a, d_f$).
-   - Giữ lại đúng 14 thông số đầu vào cốt lõi: , n_1, n_2, i, z_1, z_2, m_n, \\alpha_n, \\beta, b, d_{w2}, x_1, x_2, K_A$, Vật liệu SCM420, $\\sigma_{F\\lim}$.
-3. **Quy chuẩn phân tích Chế độ 2 ( = 1.50$) & Hiển thị song song \\text{ MPa}$ và \\text{ MPa}$**:
-   - Tập trung 100% vào chế độ vận hành thực tế của hộp số, loại bỏ các chế độ không sử dụng.
-   - Hiển thị song song 2 kịch bản lắp đặt:
-     * *Trường hợp 2A (Gối đối xứng chuẩn - Tối ưu)*: $\\sigma_{F2} = 356.97\\text{ MPa} \\approx 357\\text{ MPa} \\implies S_{F2} = 1.77$ (Bánh nhỏ $\\sigma_{F1} = 369.62\\text{ MPa}, S_{F1} = 1.66$).
-     * *Trường hợp 2B (Dự phòng độ lệch trục đàn hồi nhẹ)*: $\\sigma_{F2} = 388.10\\text{ MPa} \\approx 388\\text{ MPa} \\implies S_{F2} = 1.63$ (Bánh nhỏ $\\sigma_{F1} = 401.83\\text{ MPa}, S_{F1} = 1.53$).
-4. **Bộ script xuất bản tự động 1-Click**:
-   - File thực thi: 	ools/generate_bending_stress_word_report.py.
-   - Lệnh chạy: python tools/generate_bending_stress_word_report.py.
-   - File đầu ra: BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG.docx tại thư mục gốc dự án.
+2. **Quy chuẩn lọc thông số đầu vào (12 thông số thiết yếu — Lược bỏ $x_1/x_2$ và $d_{w2}$)**:
+   - Theo lệnh trực tiếp từ SirPhuong: *"lưu ý cho tôi trong bảng thông số đầu vào bỏ các thông số này trong bảng : bỏ hệ số dịch chỉnh, bỏ đường kính bánh lớn"*.
+   - Giữ lại đúng 12 thông số đầu vào cốt lõi trong Bảng 1: $P, n_1, n_2, i, z_1 / z_2, m_n, \alpha_n, \beta, b, K_A$, Vật liệu SCM420, $\sigma_{F\lim}$.
+3. **Bộ script xuất bản tự động 1-Click**:
+   - File thực thi: `tools/generate_bending_stress_word_report.py`.
+   - Lệnh chạy: `python tools/generate_bending_stress_word_report.py`.
+   - File đầu ra: `BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG.docx` và `BAO_CAO_TINH_TOAN_UNG_SUAT_UON_BANH_RANG_Z17_69_M14.docx` tại thư mục gốc dự án.
+
