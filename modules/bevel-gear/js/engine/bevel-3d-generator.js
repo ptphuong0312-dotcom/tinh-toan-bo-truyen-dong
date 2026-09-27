@@ -328,6 +328,12 @@ export const Bevel3DGenerator = {
         const z_heel_hub = Re * cosD + (hf_e + Hout) * sinD;
         const r_heel_rim = Math.max(rBore + 5.0, Re * sinD - (hf_e + Hout) * cosD);
 
+        // Extended Cylindrical Hub (May-ơ kéo dài đồng bộ 1-to-1 với bản vẽ 2D mặt cắt dọc trục)
+        const defaultDHub = Math.max(dBore + 2.0 * mmn, Math.min(2.0 * r_heel_rim - 0.5 * mmn, (z < 30 ? 11.5 : 18.0) * mmn));
+        const rHub = Math.max(rBore + 1.0, Math.min(r_heel_rim, opt.rHub !== undefined ? parseFloat(opt.rHub) : (defaultDHub / 2.0)));
+        const defaultZHubEnd = z_heel_hub + (z < 30 ? 4.5 : 4.0) * mmn;
+        const z_hub_end = Math.max(z_heel_hub, opt.z_hub_end !== undefined ? parseFloat(opt.z_hub_end) : defaultZHubEnd);
+
         // 8 Cấp Độ Mịn Lưới Thân Khai (Tối ưu hóa độ mịn cao & hiệu năng 60 FPS mượt mà)
         const densityPresets = {
             1: { pts: 10, slicesSpiral: 14, slicesStraight: 12 }, // Cấp 1: Tiêu Chuẩn Nhanh
@@ -376,7 +382,8 @@ export const Bevel3DGenerator = {
             const r_pitch = R_s * sinD;
             const z_pitch = R_s * cosD;
             const ha_s = ha_e * scale_s;
-            const hf_s = hf_e * scale_s;
+            const hf_s = hf_s_val(hf_e, scale_s);
+            function hf_s_val(hfe, sc) { return hfe * sc; }
             const sn_s = sn_e * scale_s;
 
             // Conjugate Mesh Contact Mode in Flank-Only Mode:
@@ -500,15 +507,21 @@ export const Bevel3DGenerator = {
             };
         }
 
-        // GROUP 2: OUTER HEEL BLANK BODY (R = Re, SLICE 0)
+        // GROUP 2: OUTER HEEL BLANK BODY & EXTENDED CYLINDRICAL HUB (R = Re, SLICE 0 -> z_hub_end)
         const L_heel = layers[0];
         const heelRimPts = [];
-        const heelBorePts = [];
+        const hubStepPts = [];
+        const hubEndOutPts = [];
+        const hubEndBorePts = [];
 
         for (let j = 0; j < N; j++) {
             const ang = Math.atan2(L_heel[j].y, L_heel[j].x);
-            heelRimPts.push({ x: r_heel_rim * Math.cos(ang), y: r_heel_rim * Math.sin(ang), z: z_heel_hub });
-            heelBorePts.push({ x: rBore * Math.cos(ang), y: rBore * Math.sin(ang), z: z_heel_hub });
+            const cA = Math.cos(ang);
+            const sA = Math.sin(ang);
+            heelRimPts.push({ x: r_heel_rim * cA, y: r_heel_rim * sA, z: z_heel_hub });
+            hubStepPts.push({ x: rHub * cA, y: rHub * sA, z: z_heel_hub });
+            hubEndOutPts.push({ x: rHub * cA, y: rHub * sA, z: z_hub_end });
+            hubEndBorePts.push({ x: rBore * cA, y: rBore * sA, z: z_hub_end });
         }
 
         const nHeelFace = { x: 0, y: 0, z: 1.0 };
@@ -519,8 +532,20 @@ export const Bevel3DGenerator = {
                 0.5 * (L_heel[j].x + L_heel[nextJ].x)
             );
             const nHeelCone = { x: sinD * Math.cos(angMid), y: sinD * Math.sin(angMid), z: cosD };
+            const nHubCyl = { x: Math.cos(angMid), y: Math.sin(angMid), z: 0.0 };
+
+            // 1. Back cone face (from outer tooth root ring L_heel down to heelRimPts)
             addQuad(heelRimPts[j], L_heel[j], L_heel[nextJ], heelRimPts[nextJ], nHeelCone);
-            addQuad(heelBorePts[j], heelRimPts[j], heelRimPts[nextJ], heelBorePts[nextJ], nHeelFace);
+            // 2. Vertical radial step from heelRimPts (r_heel_rim) down to hubStepPts (rHub) at z_heel_hub
+            if (Math.abs(r_heel_rim - rHub) > 1e-4) {
+                addQuad(hubStepPts[j], heelRimPts[j], heelRimPts[nextJ], hubStepPts[nextJ], nHeelFace);
+            }
+            // 3. Extended cylindrical hub outer cylinder from z_heel_hub to z_hub_end at radius rHub
+            if (Math.abs(z_hub_end - z_heel_hub) > 1e-4) {
+                addQuad(hubEndOutPts[j], hubStepPts[j], hubStepPts[nextJ], hubEndOutPts[nextJ], nHubCyl);
+            }
+            // 4. Back end annular face of extended hub at z_hub_end (from rHub down to rBore)
+            addQuad(hubEndBorePts[j], hubEndOutPts[j], hubEndOutPts[nextJ], hubEndBorePts[nextJ], nHeelFace);
         }
 
         // GROUP 3: INNER TOE BLANK BODY (R = Ri, SLICE numSlices)
@@ -546,12 +571,12 @@ export const Bevel3DGenerator = {
             addQuad(toeRimPts[j], toeBorePts[j], toeBorePts[nextJ], toeRimPts[nextJ], nToeFace);
         }
 
-        // GROUP 4: INNER CYLINDRICAL SHAFT BORE (RADIUS rBore, FROM z_toe TO z_heel)
+        // GROUP 4: INNER CYLINDRICAL SHAFT BORE (RADIUS rBore, FROM z_toe_hub ALL THE WAY TO z_hub_end)
         for (let j = 0; j < N; j++) {
             const nextJ = (j + 1) % N;
-            const angMid = Math.atan2(heelBorePts[j].y, heelBorePts[j].x);
+            const angMid = Math.atan2(hubEndBorePts[j].y, hubEndBorePts[j].x);
             const nBore = { x: -Math.cos(angMid), y: -Math.sin(angMid), z: 0 };
-            addQuad(heelBorePts[j], heelBorePts[nextJ], toeBorePts[nextJ], toeBorePts[j], nBore);
+            addQuad(hubEndBorePts[j], hubEndBorePts[nextJ], toeBorePts[nextJ], toeBorePts[j], nBore);
         }
 
         const bbox = Bevel3DGenerator._computeBBox(vertices);

@@ -1102,3 +1102,17 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 3. **Khe hở pháp tuyến lý thuyết bổ sung theo Cấp chính xác $Q$ (`modules/spur-gear/` & `modules/bevel-gear/`)**:
    - Tích hợp chọn Cấp chính xác $Q \in [3..12]$ ngay trong Mục 4.0 (Bánh răng trụ dòng `4.14`, Bánh răng côn dòng `4.11`), đồng bộ 2 chiều với mục dung sai lắp ráp.
    - Tự động tính `jn min / max` và giá trị `jn` ban đầu theo cấp chính xác $Q$, đồng thời cho phép người dùng chỉnh sửa `jn` theo chế độ gia công mà **tuyệt đối không làm thay đổi bất kỳ thông số hình học hay mô phỏng 2D/3D hiện tại nào**.
+
+---
+
+### Quy Chuẩn 54: Rà Soát 1-to-1 Khe Hở Pháp Tuyến Theo Cấp Chính Xác $Q$ Chuẩn MITCalc 1.74, Đồng Bộ May-Ơ Kéo Dài 3D & 2D Bánh Răng Côn, Mặc Định Đứng Im Mô Phỏng & Bổ Sung Khe Hở Hướng Tâm ($c, j_r$)
+1. **Khe hở pháp tuyến theo cấp chính xác $Q$ chuẩn `Gear1_01.xlsb` & `Gear2_01.xlsb`**:
+   - **Bánh răng trụ (`Gear1_01.xlsb`)**: Mặc định $Q = 6$, `Tự động` tắt mặc định (`O193 = 0, P193 = 4`), ngưỡng vận tốc theo bảng `T_MaxV` (`Tables!G215:H224`), hiển thị đồng thời chuẩn MITCalc $j_{n,\min} = 6\sqrt{a_w}\cdot 10^{-3}$, $j_{n,\max} = 24\sqrt{a_w}\cdot 10^{-3}$ và dãy theo cấp $Q$ ($2^{0.5(Q-5)}$), kèm $j_{tb}$ (`V193`), $j_{tw}$ (`V194`), $\Delta a_j = j_r = \frac{j_n}{2\sin\alpha_{wn}}$ (`V195`).
+   - **Bánh răng côn (`Gear2_01.xlsb`)**: Mặc định `5 / 6` ($Q = 6$), `Tự động (v)` tắt mặc định (`O141 = 0, P141 = 4`), tự động đổi danh sách `v max` trong dropdown `T_AG` (`Tables!B277:K286`) giữa răng thẳng ($\beta_m = 0^\circ$: `5, 5, 5, 5, 5, 5, 3, 3, 3, 2`) và răng xoắn ($\beta_m \ne 0^\circ$: `50, 40, 30, 20, 12, 8, 5, 3, 3, 2`), hiển thị đầy đủ $j_{n,\min}, j_{n,\max}, j_n, j_{tm}, j_{te}, \Delta A_1, \Delta A_2, j_r$.
+2. **Đồng bộ May-Ơ Kéo Dài 3D & 2D Bánh Răng Côn**:
+   - `Bevel3DGenerator.generateGearMesh` dựng đầy đủ bậc chuyển tiếp hướng tâm, mặt trụ ngoài may-ơ bán kính `rHub = d_m / 2` kéo dài đến `z_hub_end = L_Apex = Z_tip_max + L_Tip`, nắp phẳng đuôi may-ơ và lỗ trục xuyên suốt.
+   - `#hubControlPanel2D` hiển thị ở cả chế độ 2D và 3D để hiệu chỉnh trực tiếp và xuất ra STEP/STL/OBJ.
+3. **Mặc định ban đầu Đứng Im (`Paused`) cho toàn bộ mô phỏng 2D & 3D**:
+   - Mọi trình mô phỏng 2D/3D khởi động ở trạng thái tĩnh (`isAnimating = false`, `isRunning = false`) cho đến khi người dùng nhấn nút `▶️ Chạy Mô Phỏng`.
+4. **Khe hở hướng tâm đỉnh - đáy răng ($c_1, c_2$ & $c_e, c_m, c_i$)**:
+   - Bổ sung tại Mục `3.10, 3.12, 4.18, 6.23b, 6.23c` (Bánh răng trụ) và Mục `4.14, 4.15, 6.24b, 6.24c` (Bánh răng côn).

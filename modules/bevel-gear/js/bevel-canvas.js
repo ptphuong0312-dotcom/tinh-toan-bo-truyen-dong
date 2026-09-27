@@ -19,7 +19,7 @@ class BevelGearCanvas {
         this.angle1 = 0;
         this.animSpeed = 1.0;
         this.animDirection = 1; // 1: Thuận, -1: Nghịch
-        this.isRunning = true;
+        this.isRunning = false;
         this.profileResolution = 6;
 
         // Layer visibility toggles

@@ -1014,3 +1014,36 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - **Bánh Răng Trụ (`modules/spur-gear/`)**: Dòng `4.14` chọn cấp chính xác ISO 1328 (`#selSec4Accuracy`, $Q = 3..12$, đồng bộ 2 chiều với `#selSec11Accuracy`); Dòng `4.15` tính $j_{n,\min}(Q) = j_{n,\min}(7) \cdot 2^{0.5(Q - 7)}$, $j_{n,\max}(Q) = 4 j_{n,\min}(Q)$; Dòng `4.16` tự động tính $j_{n,\text{auto}}(Q) = 0.5(j_{n,\min} + j_{n,\max})$ ban đầu và cho phép sửa tay theo chế độ gia công.
    - **Bánh Răng Côn (`modules/bevel-gear/`)**: Dòng `4.11` chọn cấp chính xác DIN 3965 / ISO 1328 (`#selAccuracySec4`, $Q = 3..12$, đồng bộ 2 chiều với `#selAccuracySec14`); Dòng `4.12` tính $j_{n,\min}(Q) = (R_e/6000 + 0.020 + 0.009 m_{mn}) \cdot 2^{0.5(Q-6)}$, $j_{n,\max}(Q) = 3.7 j_{n,\min}(Q)$; Dòng `4.13–4.14` tự động tính $j_n$ ban đầu theo cấp $Q$ và cho phép sửa tay để tính $j_{te}, \Delta A_1, \Delta A_2$.
    - **Cách ly tuyệt đối (Zero Side-Effect Isolation)**: Toàn bộ tính toán khe hở pháp tuyến chỉ phục vụ tra cứu lý thuyết và chế độ gia công, bảo toàn 100.0% ($\Delta = 0.000000$) mọi thông số hình học và mô phỏng 2D/3D hiện có.
+
+---
+
+### Quy Tắc 45: Quy Chuẩn Rà Soát 1-to-1 "3. Khe Hở Pháp Tuyến Theo Cấp Chính Xác $Q$" Chuẩn Gốc MITCalc 1.74, Đồng Bộ May-Ơ Kéo Dài 3D & 2D Bánh Răng Côn, Mặc Định Đứng Im Toàn Bộ Mô Phỏng Ban Đầu & Bổ Sung Khe Hở Hướng Tâm ($c, j_r$)
+1. **Rà soát & Chuẩn hóa 1-to-1 mục `3. Khe hở pháp tuyến theo cấp chính xác Q` theo `Gear1_01.xlsb` & `Gear2_01.xlsb`**:
+   - **Bánh răng trụ & nghiêng (`Gear1_01.xlsb` `Calculation!Rows 193–195` & `Tables!G215:H224`)**:
+     * Cấp chính xác mặc định: $Q = 6$ (`P193 = 4`), hộp kiểm `Tự động` tắt mặc định (`O193 = 0`).
+     * Bảng vận tốc vòng tối đa `T_MaxV` (`Tables!G215:H224`):
+       - Răng thẳng ($\beta = 0^\circ$): $Q3..12 \to [80, 60, 35, 15, 8, 5, 3, 3, 3, 3]\text{ m/s}$.
+       - Răng nghiêng ($\beta \ne 0^\circ$): $Q3..12 \to [100, 80, 50, 30, 12, 8, 5, 3, 3, 3]\text{ m/s}$.
+     * Khe hở pháp tuyến chuẩn MITCalc: $j_{n,\min} = 6 \sqrt{a_w} \cdot 0.001$ (`O194`), $j_{n,\max} = 24 \sqrt{a_w} \cdot 0.001$ (`P194`), và dãy khuyến nghị theo từng cấp $Q$ (bước nhảy $\sqrt{2}$ theo ISO 1328 / DIN 3967): $j_{n,\text{rec}}(Q) = 6 \sqrt{a_w} \cdot 0.001 \cdot 2^{0.5(Q - 5)}$.
+     * Khe hở vòng trên trụ cơ sở $j_{tb} = \frac{j_n}{\cos\beta_b}$ (`V193`), khe hở vòng trên mặt lăn làm việc $j_{tw} = \frac{j_n}{\cos\beta_b \cos\alpha_{wt}}$ (`V194`), và độ dịch tâm / khe hở hướng tâm tương đương do $j_n$: $\Delta a_j = j_r = \frac{j_n}{2\sin\alpha_{wn}}$ (`V195`).
+   - **Bánh răng côn (`Gear2_01.xlsb` `Calculation!Rows 141–143` & `Tables!B277:K286`)**:
+     * Cấp chính xác mặc định: `5 / 6` ($Q = 6$, `P141 = 4`), hộp kiểm `Tự động (v)` tắt mặc định (`O141 = 0`).
+     * Tự động cập nhật chuỗi hiển thị dropdown `T_AG` theo góc xoắn $\beta_m$:
+       - Côn răng thẳng ($\beta_m = 0^\circ$, `Tables!G277:G286`): $v_{\max} = [5, 5, 5, 5, 5, 5, 3, 3, 3, 2]\text{ m/s}$.
+       - Côn răng xoắn ($\beta_m \ne 0^\circ$, `Tables!F277:F286`): $v_{\max} = [50, 40, 30, 20, 12, 8, 5, 3, 3, 2]\text{ m/s}$.
+     * Hiển thị đầy đủ: $j_{n,\min}, j_{n,\max}$ (`O142, P142`), $j_n$ (`O143`), khe hở vòng mặt côn trung bình $j_{tm} = \frac{j_n}{\cos\beta_m \cos\alpha_n}$ (`V141`), khe hở vòng mặt côn ngoài $j_{te} = j_{tm} \frac{R_e}{R_m}$, hiệu chỉnh khoảng cách lắp ghép $\Delta A_1, \Delta A_2$ (`V142, V143`), và khe hở hướng tâm do $j_n$: $j_r = \frac{j_n}{2\sin\alpha_n}$.
+2. **Đồng bộ 1-to-1 May-Ơ Kéo Dài (`Extended Cylindrical Hub`) giữa 3D và 2D Bánh Răng Côn (`bevel-3d-generator.js`, `bevel-3d-visualizer.js`, `bevel-ui.js`)**:
+   - Trong `Bevel3DGenerator.generateGearMesh`: Bổ sung đầy đủ kết cấu may-ơ hình trụ kéo dài ở mặt sau gót răng (Group 2 & Group 4):
+     * Mặt nón phụ lưng từ chân răng gót ngoài $L_{\text{heel}}$ xuống vành ngoài `r_heel_rim` tại $Z = z_{\text{heel,hub}}$.
+     * Bậc chuyển tiếp hướng tâm từ `r_heel_rim` xuống bán kính ngoài may-ơ `rHub = d_m / 2` tại $Z = z_{\text{heel,hub}}$.
+     * Mặt trụ ngoài may-ơ kéo dài từ $Z = z_{\text{heel,hub}}$ đến $Z = z_{\text{hub,end}} = L_{\text{Apex}} = Z_{\text{tip,max}} + L_{\text{Tip}}$.
+     * Mặt phẳng đầu cuối may-ơ tại $Z = z_{\text{hub,end}}$ từ `rHub` xuống `rBore`, và lỗ trục hình trụ xuyên suốt từ `z_toe_hub` đến `z_hub_end`.
+   - Thanh điều khiển `#hubControlPanel2D` luôn hiển thị (`display: flex`) ở cả chế độ **2D** và **3D** trên Tab 2, đồng bộ thời gian thực mọi thay đổi ($d_{m1}, L_{\text{Apex}1}, L_{\text{Tip}1}, d_{m2}, L_{\text{Apex}2}, L_{\text{Tip}2}$) sang mô hình 3D WebGL và tệp xuất 3D CAD (`STEP AP214`, `Binary STL`, `OBJ`).
+3. **Quy chuẩn mặc định ban đầu Đứng Im (`Paused / Static`) cho toàn bộ mô phỏng 2D & 3D**:
+   - Cả 4 trình mô phỏng (`GearCanvasRenderer`, `Gear3DVisualizer`, `BevelGearCanvas`, `Bevel3DVisualizer`) đều khởi tạo với `isAnimating = false` / `isRunning = false` và nhãn nút `▶️ Chạy Mô Phỏng` / `▶ Chạy Mô Phỏng`. Mô phỏng chỉ bắt đầu chuyển động quay khi người dùng chủ động nhấn nút chạy mô phỏng.
+4. **Bổ sung đầy đủ Khe Hở Hướng Tâm (`Radial Clearance` $c$ & $j_r$) ở cả 2 Module**:
+   - **Bánh Răng Trụ & Nghiêng (`modules/spur-gear/`)**:
+     * Mục `3.10`: Hệ số khe hở hướng tâm tối thiểu chuẩn MITCalc `Row 146`: $c_{a,\min}^* = \max\left(0.15,\; h_{a0}^* - h_{f0}^* - r_{a0}^*(1 - \sin\alpha_n)\right)$.
+     * Mục `3.12`, `4.18` & `6.23c`: Khe hở hướng tâm đỉnh - đáy răng thực tế $c_1 = a_w - \frac{d_{a1} + d_{f2}}{2} = c_a^* m_n$, $c_2 = a_w - \frac{d_{a2} + d_{f1}}{2} = c_a^* m_n$, cùng chiều cao toàn bộ răng $h_1, h_2$ (`6.23b`) và khe hở hướng tâm do khe hở cạnh răng $j_r = \frac{j_n}{2\sin\alpha_{wn}}$ (`4.17`).
+   - **Bánh Răng Côn (`modules/bevel-gear/`)**:
+     * Mục `4.14`, `4.15` & `6.24b`, `6.24c`: Chiều cao răng toàn bộ $h_e, h_m, h_i$, khe hở hướng tâm đỉnh - đáy răng trên cả 3 mặt cắt Ngoài / Trung bình / Trong ($c_e = h_{fe1} - h_{ae2}$, $c_m = h_{f1} - h_{a2} = c_0^* m_{mn}$, $c_i = h_{fi1} - h_{ai2}$), và khe hở hướng tâm do khe hở cạnh răng pháp tuyến $j_r = \frac{j_n}{2\sin\alpha_n}$.

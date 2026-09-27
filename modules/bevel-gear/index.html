@@ -499,7 +499,7 @@
                                     <tr style="background: rgba(30, 58, 138, 0.28); font-weight: 700;">
                                         <td>4.11</td>
                                         <td>
-                                            <div><strong>Khe hở cạnh răng pháp tuyến (Normal backlash)</strong></div>
+                                            <div><strong>3. Khe hở pháp tuyến theo cấp chính xác Q (Normal backlash - DIN 3965 / ISO 1328)</strong></div>
                                             <div style="font-size: 0.78rem; color: var(--text-secondary); font-weight: normal; margin-top: 2px;">
                                                 Chọn cấp chính xác (Accuracy grade - DIN 3965 / ISO 1328 | Ra max | v max)
                                             </div>
@@ -537,12 +537,19 @@
                                     </tr>
                                     <tr>
                                         <td>4.13</td>
-                                        <td>- Khe hở cạnh răng pháp tuyến được chọn (Selected normal / outer rotational backlash)</td>
-                                        <td>jn / jte</td>
+                                        <td>- Khe hở pháp tuyến chọn / Khe hở vòng trên mặt côn TB &amp; Ngoài (Selected normal / mean &amp; outer rotational backlash)</td>
+                                        <td>jn / jtm / jte</td>
                                         <td>
                                             <input type="text" inputmode="decimal" class="input-eng user-input" id="inp_bevel_jn" value="0.3305" title="Tự động theo cấp chính xác Q, có thể nhập lại theo chế độ gia công">
                                         </td>
-                                        <td><span class="output-eng" id="out_bevel_jte">0.4258</span> <span style="font-size:0.75rem; color:var(--text-muted);">(jte)</span></td>
+                                        <td>
+                                            <div style="display:flex; align-items:center; gap:6px;">
+                                                <span class="output-eng" id="out_bevel_jtm" style="flex:1;" title="Khe hở vòng mặt côn trung bình jtm">0.4258</span>
+                                                <small style="font-size:0.72rem; color:var(--text-muted); white-space:nowrap;">(jtm)</small>
+                                                <span class="output-eng" id="out_bevel_jte" style="flex:1;" title="Khe hở vòng mặt côn ngoài jte">0.5179</span>
+                                                <small style="font-size:0.72rem; color:var(--text-muted); white-space:nowrap;">(jte)</small>
+                                            </div>
+                                        </td>
                                         <td>mm</td>
                                         <td>
                                             <button type="button" class="btn-smart" id="btnResetBevelJnAuto" title="Đặt lại khe hở jn tự động theo cấp chính xác đã chọn">↺ Theo cấp Q</button>
@@ -550,12 +557,36 @@
                                     </tr>
                                     <tr>
                                         <td>4.14</td>
-                                        <td>- Hiệu chỉnh khoảng cách lắp ghép đỉnh nón lý thuyết do khe hở (Mounting distance mod.)</td>
-                                        <td>ΔA1 / ΔA2</td>
+                                        <td>- Hiệu chỉnh khoảng cách lắp ghép đỉnh nón lý thuyết &amp; khe hở hướng tâm do jn (Mounting distance mod. ΔA1, ΔA2 | Radial play jr)</td>
+                                        <td>ΔA1 / ΔA2 / jr</td>
                                         <td><span class="output-eng" id="out_bevel_dA1">0.1301</span></td>
-                                        <td><span class="output-eng" id="out_bevel_dA2">0.5204</span></td>
+                                        <td>
+                                            <div style="display:flex; align-items:center; gap:6px;">
+                                                <span class="output-eng" id="out_bevel_dA2" style="flex:1;">0.5204</span>
+                                                <small style="font-size:0.72rem; color:var(--text-muted); white-space:nowrap;">(ΔA2)</small>
+                                                <span class="output-eng" id="out_bevel_jr" style="flex:1;" title="Khe hở hướng tâm sinh ra do khe hở cạnh răng pháp tuyến jr = jn / (2·sin αn)">0.4832</span>
+                                                <small style="font-size:0.72rem; color:var(--text-muted); white-space:nowrap;">(jr)</small>
+                                            </div>
+                                        </td>
                                         <td>mm</td>
                                         <td>-</td>
+                                    </tr>
+                                    <tr class="highlight-key-param">
+                                        <td>4.15</td>
+                                        <td>- Khe hở hướng tâm đỉnh - đáy răng thực tế mặt cắt Ngoài | TB | Trong (Radial tip-root clearance ce | cm | ci)</td>
+                                        <td>ce / cm / ci</td>
+                                        <td colspan="2">
+                                            <div style="display:flex; align-items:center; gap:8px;">
+                                                <small style="color:#cbd5e1; white-space:nowrap;">Ngoài (ce):</small>
+                                                <span class="output-eng" id="out_bevel_ce" style="flex:1; font-weight:700;">1.3182</span>
+                                                <small style="color:#cbd5e1; white-space:nowrap;">TB (cm):</small>
+                                                <span class="output-eng" id="out_bevel_cm" style="flex:1; font-weight:700;">1.3182</span>
+                                                <small style="color:#cbd5e1; white-space:nowrap;">Trong (ci):</small>
+                                                <span class="output-eng" id="out_bevel_ci" style="flex:1; font-weight:700;">1.3182</span>
+                                            </div>
+                                        </td>
+                                        <td>mm</td>
+                                        <td><span style="font-size:0.75rem; color:var(--text-secondary);">c = hf - ha (ISO 23509)</span></td>
                                     </tr>
                                     <!-- Embedded Visual Showcase: Sơ đồ hình học & Tọa độ mặt cắt 2D (Chuẩn MITCalc 1.74 Image 1) -->
                                     <tr>
@@ -950,6 +981,24 @@
                                         <td><span class="output-eng" id="out_hfi1">6.960</span></td>
                                         <td><span class="output-eng" id="out_hfi2">12.022</span></td>
                                         <td>-</td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.24b</td>
+                                        <td>Chiều cao toàn bộ răng ngoài / trung bình / trong (Total tooth depth $h_e, h_m, h_i$)</td>
+                                        <td>he / hm / hi</td>
+                                        <td><span class="output-eng" id="out_he1">26.599</span></td>
+                                        <td><span class="output-eng" id="out_hm1">22.000</span></td>
+                                        <td><span class="output-eng" id="out_hi1">17.401</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.24c</td>
+                                        <td>Khe hở hướng tâm đỉnh - đáy răng ngoài / trung bình / trong (Radial tip-root clearance $c_e, c_m, c_i$)</td>
+                                        <td>ce / cm / ci</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_ce1">2.418</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_cm1">2.000</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_ci1">1.582</span></td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -1777,7 +1826,7 @@
                         <button type="button" class="btn btn-secondary" id="btnCanvasZoomIn">🔍 Phóng To (+)</button>
                         <button type="button" class="btn btn-secondary" id="btnCanvasZoomOut">🔎 Thu Nhỏ (-)</button>
                         <button type="button" class="btn btn-secondary" id="btnCanvasReset">🔄 Đặt Lại</button>
-                        <button type="button" class="btn btn-primary" id="btnCanvasAnimate">⏸ Tạm Dừng</button>
+                        <button type="button" class="btn btn-primary" id="btnCanvasAnimate">▶ Chạy Mô Phỏng</button>
                         <button type="button" class="btn btn-secondary" id="btn2DAnimDirection" title="Đổi chiều quay mô phỏng (Thuận ↻ / Nghịch ↺)">🔄 Chiều: ↻ Thuận</button>
                         <button type="button" class="btn btn-secondary" id="btn2DStepBack" title="Nhích lùi 1 bước vi phân (quan sát ăn khớp)">⏮️ Lùi</button>
                         <button type="button" class="btn btn-secondary" id="btn2DStepFwd" title="Nhích tiến 1 bước vi phân (quan sát ăn khớp)">⏭️ Tiến</button>
@@ -1821,7 +1870,7 @@
                             <input type="range" id="slider3DAnimSpeed" min="0.01" max="2.0" step="0.01" value="1.0" style="width: 80px; cursor: pointer;">
                             <span id="anim3DSpeedVal" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); width: 42px;">1.0x</span>
                         </div>
-                        <button type="button" class="btn btn-secondary" id="btnToggle3DAnim">⏸️ Dừng</button>
+                        <button type="button" class="btn btn-primary" id="btnToggle3DAnim">▶️ Chạy Mô Phỏng</button>
                         <button type="button" class="btn btn-secondary" id="btn3DAnimDirection" title="Đổi chiều quay mô phỏng (Thuận ↻ / Nghịch ↺)">🔄 Chiều: ↻ Thuận</button>
                         <button type="button" class="btn btn-secondary" id="btn3DStepBack" title="Nhích lùi 1 bước vi phân (quan sát điểm ăn khớp)">⏮️ Nhích Lùi</button>
                         <button type="button" class="btn btn-secondary" id="btn3DStepFwd" title="Nhích tiến 1 bước vi phân (quan sát điểm ăn khớp)">⏭️ Nhích Tiến</button>

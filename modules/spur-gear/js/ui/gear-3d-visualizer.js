@@ -21,7 +21,7 @@ export class Gear3DVisualizer {
         this.gearMesh = null;
         this.gridHelper = null;
 
-        this.isAnimating = true;
+        this.isAnimating = false;
         this.animSpeed = 1.0;
         this.animDirection = 1; // 1: Thuận, -1: Nghịch
         this.rotSpeedBase = 0.015; // rad per frame at 1.0x

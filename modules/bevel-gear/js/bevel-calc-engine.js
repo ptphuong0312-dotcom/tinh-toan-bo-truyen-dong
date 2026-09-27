@@ -113,7 +113,7 @@ const BevelCalcEngine = {
         const delta1f_deg = delta1_deg - deltaf1_deg;
         const delta2f_deg = delta2_deg - deltaf2_deg;
 
-        // 10. Outer, middle, inner addendum & dedendum
+        // 10. Outer, middle, inner addendum, dedendum, total tooth depth & radial tip-root clearances
         const hae1 = ha1 + (b / 2.0) * Math.tan(deltaa1);
         const hae2 = ha2 + (b / 2.0) * Math.tan(deltaa2);
         const hfe1 = hf1 + (b / 2.0) * Math.tan(deltaf1);
@@ -123,6 +123,22 @@ const BevelCalcEngine = {
         const hai2 = ha2 - (b / 2.0) * Math.tan(deltaa2);
         const hfi1 = hf1 - (b / 2.0) * Math.tan(deltaf1);
         const hfi2 = hf2 - (b / 2.0) * Math.tan(deltaf2);
+
+        // Total tooth depth at outer, middle, inner cones (h = ha + hf)
+        const he1 = hae1 + hfe1;
+        const he2 = hae2 + hfe2;
+        const hm1 = ha1 + hf1;
+        const hm2 = ha2 + hf2;
+        const hi1 = hai1 + hfi1;
+        const hi2 = hai2 + hfi2;
+
+        // Radial tip-root clearances at outer, middle, inner cones (c1 = hf2 - ha1, c2 = hf1 - ha2)
+        const ce1 = hfe2 - hae1;
+        const ce2 = hfe1 - hae2;
+        const cm1 = hf2 - ha1;
+        const cm2 = hf1 - ha2;
+        const ci1 = hfi2 - hai1;
+        const ci2 = hfi1 - hai2;
 
         // 11. Tip & Root diameters
         const cos_delta1 = Math.cos(delta1);
@@ -260,6 +276,8 @@ const BevelCalcEngine = {
             de1, de2, dm1, dm2, di1, di2,
             ha1, ha2, hf1, hf2, hae1, hae2, hfe1, hfe2,
             hai1, hai2, hfi1, hfi2,
+            he1, he2, hm1, hm2, hi1, hi2,
+            ce1, ce2, cm1, cm2, ci1, ci2,
             deltaa1_deg, deltaa2_deg, deltaf1_deg, deltaf2_deg,
             delta1a_deg, delta2a_deg, delta1f_deg, delta2f_deg,
             dae1, dae2, dfe1, dfe2,

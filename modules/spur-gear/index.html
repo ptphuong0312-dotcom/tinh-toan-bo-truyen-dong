@@ -342,6 +342,14 @@
                                         <td><input type="text" class="input-eng user-input" id="in_ca_star_2" value="0.2500"></td>
                                         <td>[modul]</td>
                                     </tr>
+                                    <tr>
+                                        <td>3.12</td>
+                                        <td>Khe hở hướng tâm đỉnh - đáy răng thực tế (Radial tip-root clearance)</td>
+                                        <td>c</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_c1_sec3">1.5000</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_c2_sec3">1.5000</span></td>
+                                        <td>mm</td>
+                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -493,7 +501,7 @@
                                     </tr>
                                     <tr class="table-subgroup-header">
                                         <td>4.14</td>
-                                        <td><strong>Khe hở cạnh răng pháp tuyến &amp; Cấp chính xác (Normal backlash &amp; Accuracy grade - ISO 1328)</strong></td>
+                                        <td><strong>3. Khe hở pháp tuyến theo cấp chính xác Q (Normal backlash &amp; Accuracy grade - ISO 1328)</strong></td>
                                         <td>Q</td>
                                         <td colspan="2">
                                             <div style="display:flex; gap:6px; align-items:center;">
@@ -501,16 +509,16 @@
                                                     <option value="3">3....(Ra max.= 0.1 / v max.= 80)</option>
                                                     <option value="4">4....(Ra max.= 0.2 / v max.= 60)</option>
                                                     <option value="5">5....(Ra max.= 0.4 / v max.= 35)</option>
-                                                    <option value="6">6....(Ra max.= 0.8 / v max.= 15)</option>
-                                                    <option value="7" selected>7....(Ra max.= 1.6 / v max.= 8)</option>
+                                                    <option value="6" selected>6....(Ra max.= 0.8 / v max.= 15)</option>
+                                                    <option value="7">7....(Ra max.= 1.6 / v max.= 8)</option>
                                                     <option value="8">8....(Ra max.= 1.6 / v max.= 5)</option>
                                                     <option value="9">9....(Ra max.= 3.2 / v max.= 3)</option>
                                                     <option value="10">10..(Ra max.= 6.3 / v max.= 3)</option>
                                                     <option value="11">11..(Ra max.= 12.5 / v max.= 3)</option>
                                                     <option value="12">12..(Ra max.= 25 / v max.= 3)</option>
                                                 </select>
-                                                <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer; font-size:0.78rem; white-space:nowrap; color:#e2e8f0;" title="Tự động chọn cấp chính xác Q theo vận tốc vòng v (m/s)">
-                                                    <input type="checkbox" id="chkSec4AutoAccuracy" checked> Tự động
+                                                <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer; font-size:0.78rem; white-space:nowrap; color:#e2e8f0;" title="Tự động chọn cấp chính xác Q theo vận tốc vòng v (m/s) - Bảng T_MaxV MITCalc">
+                                                    <input type="checkbox" id="chkSec4AutoAccuracy"> Tự động
                                                 </label>
                                             </div>
                                         </td>
@@ -518,30 +526,45 @@
                                     </tr>
                                     <tr>
                                         <td>4.15</td>
-                                        <td>- Giá trị nhỏ nhất / lớn nhất khuyến nghị theo cấp chính xác (Recommended min. | max.)</td>
+                                        <td>- Giá trị nhỏ nhất / lớn nhất khuyến nghị (Recommended min. | max. — Chuẩn MITCalc &amp; theo cấp Q)</td>
                                         <td>jn min / max</td>
-                                        <td><span class="output-eng" id="out_jn_min">0.085</span></td>
-                                        <td><span class="output-eng" id="out_jn_max">0.340</span></td>
+                                        <td><span class="output-eng" id="out_jn_min" title="Khe hở nhỏ nhất theo cấp Q (Chuẩn MITCalc Q5..Q9: 0.085 mm)">0.085 (Q6: 0.085)</span></td>
+                                        <td><span class="output-eng" id="out_jn_max" title="Khe hở lớn nhất theo cấp Q (Chuẩn MITCalc Q5..Q9: 0.340 mm)">0.340 (Q6: 0.170)</span></td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
                                         <td>4.16</td>
-                                        <td>- Khe hở cạnh răng pháp tuyến được chọn (Selected normal backlash - sửa theo chế độ gia công)</td>
-                                        <td>jn / jtw</td>
+                                        <td>- Khe hở cạnh răng pháp tuyến được chọn / Khe hở vòng cơ sở &amp; vòng lăn (Selected normal &amp; tangential backlash)</td>
+                                        <td>jn / jtb / jtw</td>
                                         <td>
                                             <div style="display:flex; gap:4px; align-items:center;">
-                                                <input type="text" class="input-eng user-input" id="in_jn" value="0.2127" style="flex:1; min-width:75px;">
+                                                <input type="text" class="input-eng user-input" id="in_jn" value="0.1203" style="flex:1; min-width:75px;">
                                                 <button type="button" class="btn btn-secondary btn-compact" id="btnResetSpurJnAuto" title="Tính tự động khe hở jn theo cấp chính xác Q đã chọn" style="padding:2px 6px; font-size:0.74rem; white-space:nowrap;">↺ Theo cấp Q</button>
                                             </div>
                                         </td>
-                                        <td><span class="output-eng" id="out_jtw">0.2263</span> (jtw)</td>
+                                        <td>
+                                            <div style="display:flex; align-items:center; gap:6px;">
+                                                <span class="output-eng" id="out_jtb" style="flex:1;" title="Khe hở vòng trên trụ cơ sở jtb = jn / cos(βb) (Ô V193)">0.1203</span>
+                                                <small style="color:#94a3b8; white-space:nowrap;">(jtb)</small>
+                                                <span class="output-eng" id="out_jtw" style="flex:1;" title="Khe hở vòng trên mặt lăn làm việc jtw = jn / (cos(βb)*cos(αwt)) (Ô V194)">0.1280</span>
+                                                <small style="color:#94a3b8; white-space:nowrap;">(jtw)</small>
+                                            </div>
+                                        </td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
                                         <td>4.17</td>
-                                        <td>- Hiệu chỉnh khoảng cách trục do khe hở (Centre distance mod.)</td>
-                                        <td>Δaj</td>
-                                        <td colspan="2"><span class="output-eng" id="out_delta_a_jn">0.3109</span></td>
+                                        <td>- Độ dịch tâm / Khe hở hướng tâm tương đương do khe hở cạnh răng (Centre distance mod. / Radial play jr = jn / (2·sin αwn))</td>
+                                        <td>Δaj (jr)</td>
+                                        <td colspan="2"><span class="output-eng" id="out_delta_a_jn" title="Ô V195 MITCalc: q = jn / (2*sin(αwn))">0.1759</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.18</td>
+                                        <td>- Khe hở hướng tâm đỉnh - đáy răng tiêu chuẩn (Radial tip-root clearance c1, c2 = aw - (da + df)/2 = ca* · mn)</td>
+                                        <td>c1 / c2</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_c1_sec4">1.5000</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_c2_sec4">1.5000</span></td>
                                         <td>mm</td>
                                     </tr>
                                 </tbody>
@@ -861,6 +884,22 @@
                                         <td>hf</td>
                                         <td><span class="output-eng" id="res_hf1">7.5000</span></td>
                                         <td><span class="output-eng" id="res_hf2">7.5000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.23b</td>
+                                        <td>Chiều cao toàn bộ răng (Total tooth depth h = ha + hf)</td>
+                                        <td>h</td>
+                                        <td><span class="output-eng" id="res_h1">13.5000</span></td>
+                                        <td><span class="output-eng" id="res_h2">13.5000</span></td>
+                                        <td>mm</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.23c</td>
+                                        <td>Khe hở hướng tâm đỉnh - đáy răng (Radial tip-root clearance c = aw - (da + df)/2)</td>
+                                        <td>c</td>
+                                        <td><span class="output-eng highlight-key-param" id="res_c1">1.5000</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="res_c2">1.5000</span></td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
@@ -1277,8 +1316,8 @@
                                                 <option value="3">3....(Ra max.= 0.1 / v max.= 80)</option>
                                                 <option value="4">4....(Ra max.= 0.2 / v max.= 60)</option>
                                                 <option value="5">5....(Ra max.= 0.4 / v max.= 35)</option>
-                                                <option value="6">6....(Ra max.= 0.8 / v max.= 15)</option>
-                                                <option value="7" selected>7....(Ra max.= 1.6 / v max.= 8)</option>
+                                                <option value="6" selected>6....(Ra max.= 0.8 / v max.= 15)</option>
+                                                <option value="7">7....(Ra max.= 1.6 / v max.= 8)</option>
                                                 <option value="8">8....(Ra max.= 1.6 / v max.= 5)</option>
                                                 <option value="9">9....(Ra max.= 3.2 / v max.= 3)</option>
                                                 <option value="10">10..(Ra max.= 6.3 / v max.= 3)</option>
@@ -1288,7 +1327,7 @@
                                         </td>
                                         <td>
                                             <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer; font-size:0.8rem;">
-                                                <input type="checkbox" id="chkAutoAccuracy" checked> Tự động
+                                                <input type="checkbox" id="chkAutoAccuracy"> Tự động
                                             </label>
                                         </td>
                                     </tr>
@@ -1883,7 +1922,7 @@
                         <button type="button" class="btn btn-secondary" id="btnZoomIn">🔍 Phóng To (+)</button>
                         <button type="button" class="btn btn-secondary" id="btnZoomOut">🔎 Thu Nhỏ (-)</button>
                         <button type="button" class="btn btn-secondary" id="btnResetView">🎯 Đặt Lại</button>
-                        <button type="button" class="btn btn-primary" id="btnToggleAnim">⏸️ Tạm Dừng</button>
+                        <button type="button" class="btn btn-primary" id="btnToggleAnim">▶️ Chạy Mô Phỏng</button>
                         <button type="button" class="btn btn-secondary" id="btn2DAnimDirection" title="Đổi chiều quay mô phỏng (Thuận ↻ / Nghịch ↺)">🔄 Chiều: ↻ Thuận</button>
                         <div class="dropdown" style="position: relative; display: inline-block;">
                             <button type="button" class="btn" id="btnExportDXFCanvasMenu" style="background:#0284c7; color:#ffffff; font-weight:700; cursor:pointer;">📥 Xuất DXF 2D ▾</button>
@@ -1919,7 +1958,7 @@
                             <input type="range" id="slider3DAnimSpeed" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 80px; cursor: pointer;">
                             <span id="anim3DSpeedVal" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); width: 35px;">1.0x</span>
                         </div>
-                        <button type="button" class="btn btn-secondary" id="btnToggle3DAnim">⏸️ Dừng</button>
+                        <button type="button" class="btn btn-primary" id="btnToggle3DAnim">▶️ Chạy Mô Phỏng</button>
                         <button type="button" class="btn btn-secondary" id="btn3DAnimDirection" title="Đổi chiều quay mô phỏng (Thuận ↻ / Nghịch ↺)">🔄 Chiều: ↻ Thuận</button>
                         <button type="button" class="btn btn-secondary" id="btn3DStepBack" title="Nhích lùi 1 bước vi phân (quan sát điểm ăn khớp)">⏮️ Nhích Lùi</button>
                         <button type="button" class="btn btn-secondary" id="btn3DStepFwd" title="Nhích tiến 1 bước vi phân (quan sát điểm ăn khớp)">⏭️ Nhích Tiến</button>

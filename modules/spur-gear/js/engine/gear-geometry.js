@@ -109,11 +109,21 @@ export const GearGeometry = {
         const da1 = 2.0 * (aw - df2 / 2.0 - ca_star * mn);
         const da2 = 2.0 * (aw - df1 / 2.0 - ca_star * mn);
 
-        // 14. Addendum & Whole depth
+        // 14. Addendum, Whole depth & Radial tip-root clearance (Khe hở hướng tâm c1, c2)
         const ha1 = (da1 - d1) / 2.0;
         const ha2 = (da2 - d2) / 2.0;
         const h1 = ha1 + hf1;
         const h2 = ha2 + hf2;
+
+        // Radial tip-root clearance (Khe hở hướng tâm đỉnh - đáy răng thực tế: c1 = aw - (da1 + df2)/2, c2 = aw - (da2 + df1)/2)
+        const c1 = aw - (da1 + df2) / 2.0;
+        const c2 = aw - (da2 + df1) / 2.0;
+
+        // Exact MITCalc Row 146 (O146, P146): Minimum unit head clearance ca_min* = MAX(0.1, ROUND((aw - damax/2 - df_mate/2)/mn, 4))
+        const damax1 = df1 + 2.0 * (ha0 + hf0) * mn;
+        const damax2 = df2 + 2.0 * (ha0 + hf0) * mn;
+        const ca_min1 = Math.max(0.1, Math.round(((aw - damax1 / 2.0 - df2 / 2.0) / mn) * 10000.0) / 10000.0);
+        const ca_min2 = Math.max(0.1, Math.round(((aw - damax2 / 2.0 - df1 / 2.0) / mn) * 10000.0) / 10000.0);
 
         // 15. Tooth thickness on pitch circle
         const st1 = pt / 2.0 + 2.0 * x1 * mn * Math.tan(alfatRad);
@@ -326,6 +336,7 @@ export const GearGeometry = {
             p_n, pt, ptb,
             d1, d2, db1, db2, df1, df2, da1, da2, dw1, dw2,
             ha1, ha2, hf1, hf2, h1, h2,
+            c1, c2, ca_min1, ca_min2,
             a, av, aw,
             alfawn, alfawt,
             sn1, sn2, st1, st2, sb1, sb2,

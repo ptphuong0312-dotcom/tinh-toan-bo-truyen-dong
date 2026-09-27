@@ -101,11 +101,11 @@ class SpurGearUI {
             hf0: 1.00,
             ra0: 0.38,
             ca_star: 0.25,
-            jn: 0.2127,
+            jn: 0.1203,
             auto_jn: true,
-            Q: 7,
-            auto_accuracy: true,
-            sec11_Q: 7,
+            Q: 6,
+            auto_accuracy: false,
+            sec11_Q: 6,
             KAS: 2.0,
             Lh: 20000,
             SH_req: 1.30,
@@ -211,8 +211,8 @@ class SpurGearUI {
                     z1: 19, z2: 48, alfa_n: 20.0, beta: 0.0,
                     mn: 6.0, b1: 120.0, b2: 117.0, x1: 0.0, x2: 0.0,
                     ha0: 1.25, hf0: 1.00, ra0: 0.38, ca_star: 0.25,
-                    jn: 0.2127, auto_jn: true,
-                    Q: 7, auto_accuracy: true, sec11_Q: 7, KAS: 2.0, Lh: 20000, SH_req: 1.30, SF_req: 1.60,
+                    jn: 0.1203, auto_jn: true,
+                    Q: 6, auto_accuracy: false, sec11_Q: 6, KAS: 2.0, Lh: 20000, SH_req: 1.30, SF_req: 1.60,
                     auto_zw: true, auto_dt: true,
                     zw1: null, zw2: null, dt1: null, dt2: null,
                     W1_req: 77.0, W2_req: 260.0, M1_req: 240.0, M2_req: 700.0,
@@ -281,13 +281,14 @@ class SpurGearUI {
             btnToggleAnim.addEventListener('click', () => {
                 if (this.canvasController.isAnimating) {
                     this.canvasController.stopAnimation();
-                    btnToggleAnim.textContent = '▶️ Bắt Đầu Quay';
+                    btnToggleAnim.textContent = '▶️ Chạy Mô Phỏng';
                 } else {
                     this.canvasController.startAnimation();
                     btnToggleAnim.textContent = '⏸️ Tạm Dừng';
                 }
             });
-            this.canvasController.startAnimation();
+            // Mặc định ban đầu đứng im (không gọi startAnimation cho đến khi người dùng bấm nút Chạy Mô Phỏng)
+            btnToggleAnim.textContent = '▶️ Chạy Mô Phỏng';
         }
 
         const btn2DDir = document.getElementById('btn2DAnimDirection');
@@ -472,8 +473,9 @@ class SpurGearUI {
         if (btnToggle3DAnim && this.visualizer3D) {
             btnToggle3DAnim.addEventListener('click', () => {
                 const isRunning = this.visualizer3D.toggleAnimation();
-                btnToggle3DAnim.textContent = isRunning ? '⏸️ Dừng' : '▶️ Tiếp Tục';
+                btnToggle3DAnim.textContent = isRunning ? '⏸️ Tạm Dừng' : '▶️ Chạy Mô Phỏng';
             });
+            btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
         }
 
         const btn3DDir = document.getElementById('btn3DAnimDirection');
@@ -535,14 +537,14 @@ class SpurGearUI {
             btn3DStepBack.addEventListener('click', () => {
                 this.visualizer3D.stepAngle(-1);
                 const btnToggle3DAnim = document.getElementById('btnToggle3DAnim');
-                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Tiếp Tục';
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
             });
         }
         if (btn3DStepFwd && this.visualizer3D) {
             btn3DStepFwd.addEventListener('click', () => {
                 this.visualizer3D.stepAngle(1);
                 const btnToggle3DAnim = document.getElementById('btnToggle3DAnim');
-                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Tiếp Tục';
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
             });
         }
 
@@ -1196,22 +1198,22 @@ class SpurGearUI {
             dt2: inp.dt2
         });
 
-        // Auto Accuracy Grade Recommendation (MITCalc Table T_AG / T_MaxV)
+        // Auto Accuracy Grade Recommendation (MITCalc Table T_AG / T_MaxV in Tables!G215:H224)
         const isHelical = Math.abs(g.beta || 0.0) > 1e-4;
-        let qForTolerance = inp.sec11_Q || inp.Q || 7;
+        let qForTolerance = inp.sec11_Q || inp.Q || 6;
         if (this.inputs.auto_accuracy) {
             const v = g.v || (Math.PI * g.d1 * inp.n1 / 60000.0);
             if (isHelical) {
-                if (v <= 3.0) qForTolerance = 9;
-                else if (v <= 5.0) qForTolerance = 8;
-                else if (v <= 8.0) qForTolerance = 7;
+                if (v <= 3.0) qForTolerance = 10;
+                else if (v <= 5.0) qForTolerance = 9;
+                else if (v <= 8.0) qForTolerance = 8;
                 else if (v <= 12.0) qForTolerance = 7;
                 else if (v <= 30.0) qForTolerance = 6;
                 else if (v <= 50.0) qForTolerance = 5;
                 else if (v <= 80.0) qForTolerance = 4;
                 else qForTolerance = 3;
             } else {
-                if (v <= 3.0) qForTolerance = 8;
+                if (v <= 3.0) qForTolerance = 9;
                 else if (v <= 5.0) qForTolerance = 8;
                 else if (v <= 8.0) qForTolerance = 7;
                 else if (v <= 15.0) qForTolerance = 6;
@@ -1228,20 +1230,24 @@ class SpurGearUI {
 
         this.updateAccuracyDropdown(g.beta, qForTolerance);
 
-        // Backlash calculations scaled by selected Accuracy Grade Q (MITCalc 1.74 rows 193-195 + DIN 3967 step factor 2^(0.5*(Q-7)))
-        const fQ = Math.pow(2.0, 0.5 * (qForTolerance - 7));
-        const jn_min = 6.0 * Math.sqrt(g.aw) * 0.001 * fQ;
-        const jn_max = 24.0 * Math.sqrt(g.aw) * 0.001 * fQ;
+        // Exact MITCalc 1.74 Rows 193-195 (O194, P194, O195, V193, V194, V195) + ISO 1328 / DIN 3967 Grade-Q progression:
+        // O194 = 6*SQRT(_aw)*0.001 (Grade 5 baseline), P194 = 24*SQRT(_aw)*0.001 (Grade 9 baseline)
+        const jn_min_mit = 6.0 * Math.sqrt(g.aw) * 0.001;
+        const jn_max_mit = 24.0 * Math.sqrt(g.aw) * 0.001;
+
+        // Grade-Q specific recommended value and bracket (step factor sqrt(2) = 2^(0.5*(Q-5)) per ISO 1328 / DIN 3967):
+        const jn_rec_Q = 6.0 * Math.sqrt(g.aw) * 0.001 * Math.pow(2.0, 0.5 * (qForTolerance - 5));
+        const jn_min_Q = 6.0 * Math.sqrt(g.aw) * 0.001 * Math.pow(2.0, 0.5 * (qForTolerance - 6));
+        const jn_max_Q = 6.0 * Math.sqrt(g.aw) * 0.001 * Math.pow(2.0, 0.5 * (qForTolerance - 4));
 
         if (this.inputs.auto_jn !== false) {
-            const jn_auto = 0.5 * (jn_min + jn_max);
-            this.inputs.jn = parseFloat(jn_auto.toFixed(4));
+            this.inputs.jn = parseFloat(jn_rec_Q.toFixed(4));
             const inJnEl = document.getElementById('in_jn');
             if (inJnEl && document.activeElement !== inJnEl) {
                 inJnEl.value = this.inputs.jn.toFixed(4);
             }
         }
-        const jn = (inp.jn !== undefined && inp.jn !== null && !isNaN(inp.jn)) ? inp.jn : 0.5 * (jn_min + jn_max);
+        const jn = (inp.jn !== undefined && inp.jn !== null && !isNaN(inp.jn)) ? inp.jn : jn_rec_Q;
 
         const betabRad = (g.betab || 0.0) * Math.PI / 180.0;
         const alfawtRad = (g.alfawt || g.alfa_n || 20.0) * Math.PI / 180.0;
@@ -1251,12 +1257,20 @@ class SpurGearUI {
         const cosAlfawt = Math.cos(alfawtRad);
         const sinAlfawn = Math.sin(alfawnRad);
 
+        // V193 (_jtb): =_jn/COS(_betab*_pi/180)
+        const jtb = (Math.abs(cosBetab) > 1e-6) ? (jn / cosBetab) : 0.0;
+        // V194 (_jtw): =_jn/(COS(_betab*_pi/180)*COS(_alfawt*_pi/180))
         const jtw = (Math.abs(cosBetab * cosAlfawt) > 1e-6) ? (jn / (cosBetab * cosAlfawt)) : 0.0;
+        // V195 (_q / Δaj / jr): =_jn/(2*SIN(_alfawn*_pi/180))
         const delta_a_jn = (Math.abs(sinAlfawn) > 1e-6) ? (jn / (2.0 * sinAlfawn)) : 0.0;
 
-        g.jn_min = jn_min;
-        g.jn_max = jn_max;
+        g.jn_min = jn_min_mit;
+        g.jn_max = jn_max_mit;
+        g.jn_min_Q = jn_min_Q;
+        g.jn_max_Q = jn_max_Q;
+        g.jn_rec_Q = jn_rec_Q;
         g.jn = jn;
+        g.jtb = jtb;
         g.jtw = jtw;
         g.delta_a_jn = delta_a_jn;
 
@@ -1319,8 +1333,10 @@ class SpurGearUI {
         set('out_act_i', g.actual_i.toFixed(3));
         set('out_dev_i', g.ratio_deviation.toFixed(2) + '%');
 
-        set('out_ca_min1', g.ca_star.toFixed(4));
-        set('out_ca_min2', g.ca_star.toFixed(4));
+        set('out_ca_min1', (g.ca_min1 !== undefined ? g.ca_min1 : g.ca_star).toFixed(4));
+        set('out_ca_min2', (g.ca_min2 !== undefined ? g.ca_min2 : g.ca_star).toFixed(4));
+        set('out_c1_sec3', (g.c1 !== undefined ? g.c1 : g.ca_star * g.mn).toFixed(4));
+        set('out_c2_sec3', (g.c2 !== undefined ? g.c2 : g.ca_star * g.mn).toFixed(4));
 
         set('out_d1', g.d1.toFixed(2));
         set('out_d2', g.d2.toFixed(2));
@@ -1329,10 +1345,13 @@ class SpurGearUI {
         set('out_weight_sec4', g.m_total.toFixed(3));
         set('out_sec4_mt', (g.mt !== undefined ? g.mt : (g.mn / Math.cos(g.beta * Math.PI / 180))).toFixed(4));
 
-        set('out_jn_min', g.jn_min.toFixed(3));
-        set('out_jn_max', g.jn_max.toFixed(3));
+        set('out_jn_min', `${g.jn_min.toFixed(3)} (Q${g.Q}: ${g.jn_min_Q.toFixed(3)})`);
+        set('out_jn_max', `${g.jn_max.toFixed(3)} (Q${g.Q}: ${g.jn_max_Q.toFixed(3)})`);
+        set('out_jtb', g.jtb.toFixed(4));
         set('out_jtw', g.jtw.toFixed(4));
         set('out_delta_a_jn', g.delta_a_jn.toFixed(4));
+        set('out_c1_sec4', (g.c1 !== undefined ? g.c1 : g.ca_star * g.mn).toFixed(4));
+        set('out_c2_sec4', (g.c2 !== undefined ? g.c2 : g.ca_star * g.mn).toFixed(4));
 
         set('out_xmin_undercut1', g.xmin_cut1.toFixed(3));
         set('out_xmin_undercut2', g.xmin_cut2.toFixed(3));
@@ -1383,6 +1402,10 @@ class SpurGearUI {
         set('res_ha2', g.ha2.toFixed(4));
         set('res_hf1', g.hf1.toFixed(4));
         set('res_hf2', g.hf2.toFixed(4));
+        set('res_h1', (g.h1 !== undefined ? g.h1 : g.ha1 + g.hf1).toFixed(4));
+        set('res_h2', (g.h2 !== undefined ? g.h2 : g.ha2 + g.hf2).toFixed(4));
+        set('res_c1', (g.c1 !== undefined ? g.c1 : g.ca_star * g.mn).toFixed(4));
+        set('res_c2', (g.c2 !== undefined ? g.c2 : g.ca_star * g.mn).toFixed(4));
         set('res_sna1', g.sna1.toFixed(4));
         set('res_sna2', g.sna2.toFixed(4));
         set('res_sta1', g.sta1.toFixed(4));

@@ -25,7 +25,7 @@ export class Bevel3DVisualizer {
         this.gearMesh = null;
         this.gridHelper = null;
 
-        this.isAnimating = true;
+        this.isAnimating = false;
         this.animSpeed = 1.0;
         this.animDirection = 1; // 1: Thuận (forward), -1: Nghịch (reverse)
         this.rotSpeedBase = 0.015; // rad per frame at 1.0x
@@ -48,6 +48,7 @@ export class Bevel3DVisualizer {
         this.surf2Data = null;
         this.meshDensityLevel = 6; // 8 Cấp Độ Mịn Lưới Thân Khai (Mặc định Cấp 6: Siêu Mịn CAM/CNC)
         this.contactMode = 'theory'; // 'theory' (Mặc định: Chuẩn lý thuyết đường thẳng dọc nón) | 'gleason' (Vết elip có độ vồng)
+        this.hubOverrides = null;
 
         this.init();
     }
@@ -157,9 +158,14 @@ export class Bevel3DVisualizer {
         this.renderer.setSize(width, height);
     }
 
-    setGeometry(geom) {
+    setGeometry(geom, hubOverrides = null) {
         if (!geom) return;
         this.geom = geom;
+        if (hubOverrides !== null) {
+            this.hubOverrides = hubOverrides;
+        } else if (geom.hubOverrides) {
+            this.hubOverrides = geom.hubOverrides;
+        }
 
         const z1 = parseInt(geom.z1) || 18;
         const z2 = parseInt(geom.z2) || 45;
@@ -208,13 +214,23 @@ export class Bevel3DVisualizer {
         const sa_e2 = parseFloat(geom.sae2) || (mmn * 1.35);
         const sn_e2 = parseFloat(geom.sne2) || (mmn * 1.30);
 
-        const Hin1 = parseFloat(geom.H1in) || 4.836;
-        const Hout1 = parseFloat(geom.H1out) || 13.300;
-        const Hin2 = parseFloat(geom.H2in) || 5.911;
-        const Hout2 = parseFloat(geom.H2out) || 19.950;
+        // 1-to-1 Synchronized Blank & Extended Cylindrical Hub parameters with 2D Canvas
+        const hp = (typeof BevelGearCanvas !== 'undefined' && BevelGearCanvas.computeBlankAndHubParams)
+            ? BevelGearCanvas.computeBlankAndHubParams(geom, this.hubOverrides)
+            : null;
 
-        const dBore1 = parseFloat(geom.dBore1) || 50.0;
-        const dBore2 = parseFloat(geom.dBore2) || 100.0;
+        const Hin1 = hp ? hp.Hin1 : (parseFloat(geom.H1in) || 4.836);
+        const Hout1 = hp ? hp.Hout1 : (parseFloat(geom.H1out) || 13.300);
+        const Hin2 = hp ? hp.Hin2 : (parseFloat(geom.H2in) || 5.911);
+        const Hout2 = hp ? hp.Hout2 : (parseFloat(geom.H2out) || 19.950);
+
+        const dBore1 = hp ? hp.dBore1 : (parseFloat(geom.dBore1) || 50.0);
+        const dBore2 = hp ? hp.dBore2 : (parseFloat(geom.dBore2) || 100.0);
+
+        const rHub1 = hp ? hp.rHub1 : undefined;
+        const z_hub_end1 = hp ? hp.z_hub_end1 : undefined;
+        const rHub2 = hp ? hp.rHub2 : undefined;
+        const z_hub_end2 = hp ? hp.z_hub_end2 : undefined;
 
         // Authentic tooth hand: Pinion Left-Hand (-1) by standard default, Gear Right-Hand (+1)
         const hand1 = geom.hand1 !== undefined ? (geom.hand1 === 1 || geom.hand1 === 'left' ? -1 : 1) : -1;
@@ -226,6 +242,7 @@ export class Bevel3DVisualizer {
             Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
             ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
             Hin: Hin1, Hout: Hout1, dBore: dBore1,
+            rHub: rHub1, z_hub_end: z_hub_end1,
             hand: hand1, gearingType,
             meshDensityLevel: this.meshDensityLevel,
             contactMode: this.contactMode || 'theory'
@@ -239,6 +256,7 @@ export class Bevel3DVisualizer {
             Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
             ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
             Hin: Hin2, Hout: Hout2, dBore: dBore2,
+            rHub: rHub2, z_hub_end: z_hub_end2,
             hand: hand2, gearingType,
             meshDensityLevel: this.meshDensityLevel,
             contactMode: this.contactMode || 'theory'
@@ -673,6 +691,14 @@ export class Bevel3DVisualizer {
         const dBore1 = parseFloat(this.geom.dBore1) || 50.0;
         const dBore2 = parseFloat(this.geom.dBore2) || 100.0;
 
+        const hp = (typeof BevelGearCanvas !== 'undefined' && BevelGearCanvas.computeBlankAndHubParams)
+            ? BevelGearCanvas.computeBlankAndHubParams(g, this.hubOverrides)
+            : null;
+        const rHub1 = hp ? hp.rHub1 : undefined;
+        const z_hub_end1 = hp ? hp.z_hub_end1 : undefined;
+        const rHub2 = hp ? hp.rHub2 : undefined;
+        const z_hub_end2 = hp ? hp.z_hub_end2 : undefined;
+
         const resOpts = forStep ? {
             numSlices: isSpiral ? 6 : 1,
             ptsPerFlank: 6,
@@ -686,7 +712,8 @@ export class Bevel3DVisualizer {
                 z: z1, mmn, delta: delta1, delta_a: delta_a1, delta_f: delta_f1,
                 Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
                 ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
-                Hin: Hin1, Hout: Hout1, dBore: dBore1,
+                Hin: hp ? hp.Hin1 : Hin1, Hout: hp ? hp.Hout1 : Hout1, dBore: hp ? hp.dBore1 : dBore1,
+                rHub: rHub1, z_hub_end: z_hub_end1,
                 hand: 1, gearingType, surfaceOnly
             }, resOpts));
             return m1.rawTriangles;
@@ -697,7 +724,8 @@ export class Bevel3DVisualizer {
                 z: z2, mmn, delta: delta2, delta_a: delta_a2, delta_f: delta_f2,
                 Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
                 ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
-                Hin: Hin2, Hout: Hout2, dBore: dBore2,
+                Hin: hp ? hp.Hin2 : Hin2, Hout: hp ? hp.Hout2 : Hout2, dBore: hp ? hp.dBore2 : dBore2,
+                rHub: rHub2, z_hub_end: z_hub_end2,
                 hand: -1, gearingType, surfaceOnly
             }, resOpts));
             return m2.rawTriangles;
@@ -708,14 +736,16 @@ export class Bevel3DVisualizer {
             z: z1, mmn, delta: delta1, delta_a: delta_a1, delta_f: delta_f1,
             Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
             ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
-            Hin: Hin1, Hout: Hout1, dBore: dBore1,
+            Hin: hp ? hp.Hin1 : Hin1, Hout: hp ? hp.Hout1 : Hout1, dBore: hp ? hp.dBore1 : dBore1,
+            rHub: rHub1, z_hub_end: z_hub_end1,
             hand: 1, gearingType, surfaceOnly
         }, resOpts));
         const m2 = Bevel3DGenerator.generateGearMesh(Object.assign({
             z: z2, mmn, delta: delta2, delta_a: delta_a2, delta_f: delta_f2,
             Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
             ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
-            Hin: Hin2, Hout: Hout2, dBore: dBore2,
+            Hin: hp ? hp.Hin2 : Hin2, Hout: hp ? hp.Hout2 : Hout2, dBore: hp ? hp.dBore2 : dBore2,
+            rHub: rHub2, z_hub_end: z_hub_end2,
             hand: -1, gearingType, surfaceOnly
         }, resOpts));
 

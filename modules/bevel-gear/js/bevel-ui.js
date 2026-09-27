@@ -420,7 +420,7 @@ class BevelGearUI {
                 if (container3D) container3D.style.display = 'none';
                 if (toolbar2D) toolbar2D.style.display = 'flex';
                 if (toolbar3D) toolbar3D.style.display = 'none';
-                if (hubPanel2D) hubPanel2D.style.display = 'block';
+                if (hubPanel2D) hubPanel2D.style.display = 'flex';
                 if (visualizerTitle) visualizerTitle.textContent = '📐 Mô Hình 2D Nón Bánh Răng Ăn Khớp & Biên Dạng Răng Có R Chân (ISO 23509)';
                 if (visualizerDesc) visualizerDesc.textContent = 'Mặt cắt trục 2D khớp 1-to-1 phôi 3D, kết hợp Biên dạng răng ăn khớp 2D Tredgold có bán kính lượn chân răng R chân = 0.38·mmn.';
                 if (this.canvasController) this.canvasController.resetView();
@@ -437,19 +437,36 @@ class BevelGearUI {
                 if (container3D) container3D.style.display = 'block';
                 if (toolbar2D) toolbar2D.style.display = 'none';
                 if (toolbar3D) toolbar3D.style.display = 'flex';
-                if (hubPanel2D) hubPanel2D.style.display = 'none';
+                if (hubPanel2D) hubPanel2D.style.display = 'flex';
                 if (visualizerTitle) visualizerTitle.textContent = '🧊 Mô Phỏng Ăn Khớp 3D WebGL (Bevel Gears)';
-                if (visualizerDesc) visualizerDesc.textContent = 'Mô hình 3D thực thể có R chân = 0.38·mmn xoay chuyển động ăn khớp liên hợp không gian tại góc trục Σ. Xuất file CAD STEP/STL cho SolidWorks & Mastercam.';
+                if (visualizerDesc) visualizerDesc.textContent = 'Mô hình 3D thực thể có R chân = 0.38·mmn và May-ơ kéo dài đồng bộ 1-to-1 với 2D. Xuất file CAD STEP/STL cho SolidWorks & Mastercam.';
                 if (this.visualizer3D) {
                     this.visualizer3D.onResize();
-                    if (this.lastGeom && this.visualizer3D.geom !== this.lastGeom) {
-                        this.visualizer3D.setGeometry(this.lastGeom);
+                    if (this.lastGeom) {
+                        const curP = this.visualizer3D.pinionAngle;
+                        const curG = this.visualizer3D.gearAngle;
+                        this.visualizer3D.setGeometry(this.lastGeom, this.canvasController ? this.canvasController.hubOverrides : null);
+                        this.visualizer3D.pinionAngle = curP;
+                        this.visualizer3D.gearAngle = curG;
+                        this.visualizer3D.updateGearRotations();
                     }
                 }
+                if (this.lastGeom) this.syncHubPanelUI(this.lastGeom);
             });
         }
 
-        // 2D Extended Hub Interactive Dimension Bindings (Direct 2D Simulation Controls)
+        // 2D & 3D Synchronized Extended Hub Interactive Dimension Bindings
+        const sync3DHubGeometry = () => {
+            if (this.visualizer3D && this.lastGeom) {
+                const curP = this.visualizer3D.pinionAngle;
+                const curG = this.visualizer3D.gearAngle;
+                this.visualizer3D.setGeometry(this.lastGeom, this.canvasController ? this.canvasController.hubOverrides : null);
+                this.visualizer3D.pinionAngle = curP;
+                this.visualizer3D.gearAngle = curG;
+                this.visualizer3D.updateGearRotations();
+            }
+        };
+
         const bindHubInput = (inputId, wheel, field) => {
             const el = document.getElementById(inputId);
             if (!el) return;
@@ -461,12 +478,14 @@ class BevelGearUI {
                     if (this.lastGeom) {
                         this.syncHubPanelUI(this.lastGeom, inputId);
                     }
+                    sync3DHubGeometry();
                 }
             });
             el.addEventListener('change', () => {
                 if (this.lastGeom) {
                     this.syncHubPanelUI(this.lastGeom);
                 }
+                sync3DHubGeometry();
             });
         };
 
@@ -486,6 +505,7 @@ class BevelGearUI {
                 if (this.lastGeom) {
                     this.syncHubPanelUI(this.lastGeom);
                 }
+                sync3DHubGeometry();
             });
         }
 
@@ -517,8 +537,9 @@ class BevelGearUI {
         if (btnToggle3DAnim && this.visualizer3D) {
             btnToggle3DAnim.addEventListener('click', () => {
                 const isRunning = this.visualizer3D.toggleAnimation();
-                btnToggle3DAnim.textContent = isRunning ? '⏸️ Dừng' : '▶️ Tiếp Tục';
+                btnToggle3DAnim.textContent = isRunning ? '⏸️ Tạm Dừng' : '▶️ Chạy Mô Phỏng';
             });
+            btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
         }
 
         const btn3DDir = document.getElementById('btn3DAnimDirection');
@@ -552,13 +573,13 @@ class BevelGearUI {
         if (btn3DStepBack && this.visualizer3D) {
             btn3DStepBack.addEventListener('click', () => {
                 this.visualizer3D.stepAnimation(-1);
-                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Tiếp Tục';
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
             });
         }
         if (btn3DStepFwd && this.visualizer3D) {
             btn3DStepFwd.addEventListener('click', () => {
                 this.visualizer3D.stepAnimation(1);
-                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Tiếp Tục';
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
             });
         }
 
@@ -1144,27 +1165,70 @@ class BevelGearUI {
         setVal('inpHubTip2', hp.LTip2);
     }
 
+    updateBevelAccuracyDropdown(beta_deg, currentQ) {
+        const selAcc4 = document.getElementById('selAccuracySec4');
+        const selAcc14 = document.getElementById('selAccuracySec14');
+        const isSpiral = Math.abs(beta_deg || 0.0) > 1e-4;
+        // Exact MITCalc 1.74 Gear2_01.xlsb Tables!B277:K286 (T_AG / T_MaxV):
+        // Column H (Straight, beta = 0): [5, 5, 5, 5, 5, 5, 3, 3, 3, 2]
+        // Column I (Spiral, beta != 0):  [50, 40, 30, 20, 12, 8, 5, 3, 3, 2]
+        const grades = [
+            { q: 3,  din: '2 / 3 ....', ra: '0.2',  v: isSpiral ? 50 : 5 },
+            { q: 4,  din: '3 / 4 ....', ra: '0.4',  v: isSpiral ? 40 : 5 },
+            { q: 5,  din: '4 / 5 ....', ra: '0.8',  v: isSpiral ? 30 : 5 },
+            { q: 6,  din: '5 / 6 ....', ra: '1.6',  v: isSpiral ? 20 : 5 },
+            { q: 7,  din: '6 / 7 ....', ra: '1.6',  v: isSpiral ? 12 : 5 },
+            { q: 8,  din: '7 / 8 ....', ra: '3.2',  v: isSpiral ? 8 : 5 },
+            { q: 9,  din: '8 / 9 ....', ra: '6.3',  v: isSpiral ? 5 : 3 },
+            { q: 10, din: '9 / 10 ..',  ra: '12.5', v: 3 },
+            { q: 11, din: '10 / 11 ..', ra: '25',   v: 3 },
+            { q: 12, din: '11 / 12 ..', ra: '50',   v: 2 }
+        ];
+        const valToSelect = parseInt(currentQ) || 6;
+        const optionsHtml = grades.map(item => {
+            const selected = (item.q === valToSelect) ? ' selected' : '';
+            return `<option value="${item.q}"${selected}>${item.din}(Ra max.= ${item.ra} / v max.= ${item.v})</option>`;
+        }).join('');
+        if (selAcc4) {
+            selAcc4.innerHTML = optionsHtml;
+            selAcc4.value = String(valToSelect);
+        }
+        if (selAcc14) {
+            selAcc14.innerHTML = optionsHtml;
+            selAcc14.value = String(valToSelect);
+        }
+    }
+
     renderBacklashOutputs(g, isManualJnEdit = false) {
         if (!g) return;
-        // Auto-select Q from circumferential velocity if auto_Q is enabled
+        const isSpiral = Math.abs(g.beta_deg || 0.0) > 1e-4;
+        // Auto-select Q from circumferential velocity v (m/s) per MITCalc T_MaxV (Tables!H277:I286)
         if (this.inputs.auto_Q) {
             const v_ms = (Math.PI * (g.dm1 || 200) * (g.n1 || 1000)) / 60000.0;
-            let autoQ = 8;
-            if (v_ms > 25) autoQ = 5;
-            else if (v_ms > 12) autoQ = 6;
-            else if (v_ms > 6) autoQ = 7;
-            else if (v_ms > 2) autoQ = 8;
-            else autoQ = 9;
+            let autoQ = 6;
+            if (isSpiral) {
+                if (v_ms <= 2.0) autoQ = 10;
+                else if (v_ms <= 3.0) autoQ = 9;
+                else if (v_ms <= 5.0) autoQ = 8;
+                else if (v_ms <= 8.0) autoQ = 7;
+                else if (v_ms <= 12.0) autoQ = 6;
+                else if (v_ms <= 20.0) autoQ = 6;
+                else if (v_ms <= 30.0) autoQ = 5;
+                else if (v_ms <= 40.0) autoQ = 4;
+                else autoQ = 3;
+            } else {
+                if (v_ms <= 2.0) autoQ = 9;
+                else if (v_ms <= 3.0) autoQ = 8;
+                else if (v_ms <= 5.0) autoQ = 7;
+                else autoQ = 6;
+            }
             this.inputs.Q = autoQ;
             g.Q = autoQ;
         }
         const Q = parseInt(this.inputs.Q) || 6;
-        const selAcc4 = document.getElementById('selAccuracySec4');
-        const selAcc14 = document.getElementById('selAccuracySec14');
-        if (selAcc4 && selAcc4.value !== String(Q)) selAcc4.value = String(Q);
-        if (selAcc14 && selAcc14.value !== String(Q)) selAcc14.value = String(Q);
+        this.updateBevelAccuracyDropdown(g.beta_deg || 0.0, Q);
 
-        // DIN 3967 / ISO 23509 Normal backlash jn_min / jn_max scaled by Accuracy Grade Q (Step factor 2^(0.5*(Q-6)))
+        // DIN 3965 / ISO 23509 Normal backlash jn_min / jn_max scaled by Accuracy Grade Q (Step factor 2^(0.5*(Q-6)))
         const Rm = Math.max(10.0, g.Rm || 279.82);
         const mmn = Math.max(0.5, g.mmn || 10.0);
         const fQ = Math.pow(2.0, 0.5 * (Q - 6));
@@ -1183,13 +1247,16 @@ class BevelGearUI {
         const jn = (typeof this.inputs.jn === 'number' && !isNaN(this.inputs.jn)) ? this.inputs.jn : 0.5 * (jn_min + jn_max);
         const beta_rad = ((g.beta_deg || 0.0) * Math.PI) / 180.0;
         const alfan_rad = ((g.alfa_n_deg || 20.0) * Math.PI) / 180.0;
+        const alfat_rad = ((g.alfa_deg || 20.0) * Math.PI) / 180.0;
         const d1_rad = ((g.delta1_deg || 21.8) * Math.PI) / 180.0;
         const d2_rad = ((g.delta2_deg || 68.2) * Math.PI) / 180.0;
         const Re = g.Re || 338.32;
 
-        // Outer circumferential backlash jte and axial mounting distance allowances ΔA1, ΔA2
-        const denom_jte = Math.max(1e-4, Math.cos(beta_rad) * Math.cos(alfan_rad));
-        const jte = (jn / denom_jte) * (Re / Rm);
+        // Mean & Outer circumferential backlash (jtm, jte), Radial backlash play (jr), and Axial mounting distance allowances (ΔA1, ΔA2)
+        const denom_jtm = Math.max(1e-4, Math.cos(beta_rad) * Math.cos(alfat_rad));
+        const jtm = jn / denom_jtm;
+        const jte = jtm * (Re / Rm);
+        const jr = jn / Math.max(1e-4, 2.0 * Math.sin(alfan_rad));
         const dA1 = jn / Math.max(1e-4, 2.0 * Math.sin(alfan_rad) * Math.sin(d1_rad));
         const dA2 = jn / Math.max(1e-4, 2.0 * Math.sin(alfan_rad) * Math.sin(d2_rad));
 
@@ -1199,7 +1266,9 @@ class BevelGearUI {
         };
         setEl('out_bevel_jn_min', jn_min.toFixed(3));
         setEl('out_bevel_jn_max', jn_max.toFixed(3));
+        setEl('out_bevel_jtm', jtm.toFixed(3));
         setEl('out_bevel_jte', jte.toFixed(3));
+        setEl('out_bevel_jr', jr.toFixed(3));
         setEl('out_bevel_dA1', '+' + dA1.toFixed(3));
         setEl('out_bevel_dA2', '+' + dA2.toFixed(3));
     }
@@ -1208,12 +1277,23 @@ class BevelGearUI {
         if (typeof BevelCalcEngine === 'undefined') return;
         if (this.inputs.auto_Q) {
             const gPre = BevelCalcEngine.calculate(this.inputs);
+            const isSpiralPre = Math.abs(gPre.beta_deg || 0.0) > 1e-4;
             const v_ms = (Math.PI * (gPre.dm1 || 200) * (gPre.n1 || 1000)) / 60000.0;
-            if (v_ms > 25) this.inputs.Q = 5;
-            else if (v_ms > 12) this.inputs.Q = 6;
-            else if (v_ms > 6) this.inputs.Q = 7;
-            else if (v_ms > 2) this.inputs.Q = 8;
-            else this.inputs.Q = 9;
+            if (isSpiralPre) {
+                if (v_ms <= 2.0) this.inputs.Q = 10;
+                else if (v_ms <= 3.0) this.inputs.Q = 9;
+                else if (v_ms <= 5.0) this.inputs.Q = 8;
+                else if (v_ms <= 8.0) this.inputs.Q = 7;
+                else if (v_ms <= 20.0) this.inputs.Q = 6;
+                else if (v_ms <= 30.0) this.inputs.Q = 5;
+                else if (v_ms <= 40.0) this.inputs.Q = 4;
+                else this.inputs.Q = 3;
+            } else {
+                if (v_ms <= 2.0) this.inputs.Q = 9;
+                else if (v_ms <= 3.0) this.inputs.Q = 8;
+                else if (v_ms <= 5.0) this.inputs.Q = 7;
+                else this.inputs.Q = 6;
+            }
         }
         const g = BevelCalcEngine.calculate(this.inputs);
         this.lastGeom = g;
@@ -1225,7 +1305,7 @@ class BevelGearUI {
             this.canvasController.setGeometry(g);
         }
         if (this.visualizer3D) {
-            this.visualizer3D.setGeometry(g);
+            this.visualizer3D.setGeometry(g, this.canvasController ? this.canvasController.hubOverrides : null);
         }
         const badgeType = document.getElementById('badge3DType');
         const badgeSigma = document.getElementById('badge3DSigma');
@@ -1291,6 +1371,11 @@ class BevelGearUI {
         set('out_sec4_beta2', '0.0°');
         set4('out_sec4_module_comp', this.inputs.isOuterModule ? g.mmn : g.met);
 
+        // Section 4.15 Radial tip-root clearances at Outer / Middle / Inner cones
+        set('out_bevel_ce', (g.ce1 !== undefined ? g.ce1 : (g.hfe2 - g.hae1)).toFixed(3));
+        set('out_bevel_cm', (g.cm1 !== undefined ? g.cm1 : (g.hf2 - g.ha1)).toFixed(3));
+        set('out_bevel_ci', (g.ci1 !== undefined ? g.ci1 : (g.hfi2 - g.hai1)).toFixed(3));
+
         // Section 5.0: Correction of toothing
         set4('out_sec5_x2', g.x2);
         set4('out_sec5_xt2', g.xt2);
@@ -1298,7 +1383,7 @@ class BevelGearUI {
         set('out_sec5_sae1', g.sae1_star);
         set('out_sec5_sae2', g.sae2_star);
 
-        // Section 6.0: Basic dimensions of gearing (Full 39 Rows)
+        // Section 6.0: Basic dimensions of gearing (Full 39+ Rows)
         set('out_z1', g.z1);
         set('out_z2', g.z2);
         set4('out_met', g.met);
@@ -1350,6 +1435,18 @@ class BevelGearUI {
         set('out_hf2', g.hf2);
         set('out_hfi1', g.hfi1);
         set('out_hfi2', g.hfi2);
+        set('out_he1', g.he1 !== undefined ? g.he1 : (g.hae1 + g.hfe1));
+        set('out_he2', g.he2 !== undefined ? g.he2 : (g.hae2 + g.hfe2));
+        set('out_hm1', g.hm1 !== undefined ? g.hm1 : (g.ha1 + g.hf1));
+        set('out_hm2', g.hm2 !== undefined ? g.hm2 : (g.ha2 + g.hf2));
+        set('out_hi1', g.hi1 !== undefined ? g.hi1 : (g.hai1 + g.hfi1));
+        set('out_hi2', g.hi2 !== undefined ? g.hi2 : (g.hai2 + g.hfi2));
+        set('out_ce1', g.ce1 !== undefined ? g.ce1 : (g.hfe2 - g.hae1));
+        set('out_ce2', g.ce2 !== undefined ? g.ce2 : (g.hfe1 - g.hae2));
+        set('out_cm1', g.cm1 !== undefined ? g.cm1 : (g.hf2 - g.ha1));
+        set('out_cm2', g.cm2 !== undefined ? g.cm2 : (g.hf1 - g.ha2));
+        set('out_ci1', g.ci1 !== undefined ? g.ci1 : (g.hfi2 - g.hai1));
+        set('out_ci2', g.ci2 !== undefined ? g.ci2 : (g.hfi1 - g.hai2));
         set4('out_alfa_n', g.alfa_n_deg);
         set4('out_alfa_t', g.alfa_deg);
         set4('out_beta', g.beta_deg);
