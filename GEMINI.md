@@ -938,4 +938,24 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * Đặt mật độ lưới vỏ mặt bên `noPtEv = 120, cuttStep = 0.25, numSlices = 20` để bề rộng mỗi dải tam giác ($\sim 0.11\text{ mm} \approx 1.0\text{ pixel}$) tương thích hoàn hảo với bộ lấy mẫu 4x MSAA của GPU (tránh chia `noPtEv = 320` tạo tam giác siêu hẹp $0.33\text{ pixel}$ gây vọt đạo hàm chiều sâu $\frac{\partial z}{\partial x}$ trên cụm 2x2 pixel).
      * Tự động cập nhật động `camera.near = Math.max(2.0, Math.min(80.0, camDist * 0.18))` và `camera.far = Math.max(600.0, camDist * 6.0)` trong `animate()` theo khoảng cách zoom thực tế của người dùng trên cả 2 module.
 
+---
+
+### Quy Tắc 42: Quy Chuẩn Bán Kính Lượn Chân Răng Bánh Răng Côn ($R_{\text{chân}} = 0.38 \cdot m_{mn}$) & Đồng Bộ 1-to-1 Biên Dạng 2D Khớp Mô Hình 3D
+1. **Lệnh trực tiếp từ SirPhuong**:
+   - *"với phần mô phỏng của module bánh răng côn thì tôi cần : bạn hãy chỉnh biên dạng 2D khớp với hình 3D hiện tại; hiện tại bánh răng côn bạn vẫn chưa có R chân"*.
+2. **Giải thuật bán kính lượn chân răng giải tích $C^1$ (`Bevel3DGenerator.generateSliceToothContour`)**:
+   - Trước đây, `Bevel3DGenerator` chỉ nối 1 đoạn thẳng từ điểm góc đáy rãnh $(-h_f, -\theta_{\text{root}})$ trực tiếp vào chân đường thân khai $(t = 0)$, tạo thành góc gãy nhọn hoắt ở chân răng trên mô hình 3D.
+   - **Giải pháp chuẩn hóa ISO 23509 / DIN 3960**:
+     * Tại mỗi lát cắt hình nón $R_s \in [R_i, R_e]$, mô-đun pháp cục bộ là $m_s = m_{mn} \cdot (R_s / R_m)$ và bán kính lượn chân răng danh nghĩa là $R_f = 0.38 \cdot m_s$ ($R_f = 3.80\text{ mm}$ tại $R_m$ khi $m_{mn} = 10\text{ mm}$).
+     * Trên bánh răng trụ ảo Tredgold ($r_v = R_s \tan\delta, r_{vb} = r_v \cos\alpha_t, r_{vf} = r_v - h_{f,s}$), giải hệ phương trình tiếp tuyến giải tích $C^1$:
+       - Khi $(r_{vf} + R_f)^2 - r_{vb}^2 \ge R_f^2$: Cung tròn bán kính $R_f$ tiếp xúc tiếp tuyến $C^1$ trực tiếp với đường thân khai tại bán kính $r_t = \sqrt{r_{vb}^2 + L_t^2}$ (với $L_t = \sqrt{(r_{vf} + R_f)^2 - r_{vb}^2} - R_f$) và tiếp xúc tiếp tuyến $C^1$ với vòng tròn đáy $r_{vf}$ tại góc $\psi_{\text{root}} = \text{atan2}(C_{fx}, C_{fy})$.
+       - Khi $r_{vf}$ nằm sâu dưới $r_{vb}$: Đường thân khai nối tiếp tuyến với đoạn hướng tâm tới $r_t = \sqrt{r_{vf}^2 + 2 r_{vf} R_f}$ rồi lượn cung tròn $R_f$ tiếp tuyến với vòng đáy $r_{vf}$.
+     * Bảo tồn trọn vẹn **cung đáy rãnh tròn (`root_land`)** từ $\psi_{\text{root}}$ đến nửa bước răng $\psi_{\text{half\_pitch}}$ và **cung đỉnh răng 5 điểm (`tip_land`)** trên mặt nón đỉnh, kết hợp pháp tuyến mặt nón phụ gót/mũi (`nHeelCone`, `nToeCone`) để vát sáng kim loại góc lượn chân răng trên 3D WebGL.
+3. **Đồng bộ 1-to-1 Biên Dạng 2D Canvas (`bevel-canvas.js`) & DXF (`bevel-dxf-exporter.js`) Khớp Hình 3D**:
+   - **Khung nhìn Trái (Mặt Cắt Trục Khớp 3D - ISO 23509)**:
+     * Loại bỏ hoàn toàn phần moay-ơ hình trụ giả kéo dài (`L_hub1, L_hub2`) của bản vẽ 2D cũ vốn không tồn tại trên mô hình 3D.
+     * Sử dụng hàm `_get3DMatchedBlankParams(g)` lấy đúng 8 đỉnh đa giác phôi vành nón (`z_toe_hub, r_toe_rim, z_heel_hub, r_heel_rim, rBore` từ `Hin, Hout, dBore` giống hệt `Bevel3DGenerator.generateGearMesh`), xoay theo đúng góc trục $\Sigma$ và tô đúng bảng màu 3D (Bánh dẫn 1: Xanh Lam Cobalt `#0284c7` / `#38bdf8`; Bánh bị dẫn 2: Cam Đỏ Đồng `#ea580c` / `#fb923c`).
+   - **Khung nhìn Phải (`🦷 BIÊN DẠNG RĂNG ĂN KHỚP 2D (TREDGOLD - CÓ R CHÂN)`)**:
+     * Gọi trực tiếp `Bevel3DGenerator.generateSliceToothContour` để vẽ biên dạng răng ăn khớp liên hợp thời gian thực, hiển thị rõ đường thân khai, vòng đỉnh ($r_{va}$), vòng chia ($r_v$), vòng đáy ($r_{vf}$), đường ăn khớp và tô nổi bật cung lượn chân răng $R_{\text{chân}} = 0.38 \cdot m_{mn}$ trên cả hai bánh răng (kèm đường tròn tâm lượn $R_{f1}$ nét đứt).
+   - **Bản vẽ xuất 2D CAD DXF (`bevel-dxf-exporter.js`)**: Đồng bộ mặt cắt trục 8 đỉnh khớp 3D và bổ sung hình chiếu biên dạng răng ăn khớp 2D Tredgold có $R_{\text{chân}}$ ngay bên phải bản vẽ lắp.
 

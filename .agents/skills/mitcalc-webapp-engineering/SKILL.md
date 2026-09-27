@@ -1037,13 +1037,25 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
    - **Bánh bị dẫn 2 (Gear 2)**: Cam Đỏ Đồng (`0xea580c` khối đặc / `0xff5722` mặt bên, `emissive: 0x9a3412`).
 2. **Công thức bề rộng giao tuyến tiếp xúc & Tối ưu lưới MSAA**:
    - Bề rộng vết giao tuyến giữa hai mặt cong tiếp tuyến có bán kính cong tương đương $\rho_{\text{eq}} = \frac{\rho_1 \rho_2}{\rho_1 + \rho_2}$ với lượng nhô pháp tuyến $\delta_n$ là $W = 2\sqrt{2\rho_{\text{eq}}\delta_n}$.
-   - Sử dụng `allowance = 0.0014 * mn` ($\delta_n \approx 7.9\text{ \mu m}$) cùng `noPtEv = 120, cuttStep = 0.25, numSlices = 20` cho `isSurfaceOnly` của Bánh Răng Trụ (và `0.028 mm` cho `isSurfaceOnly` của Bánh Răng Côn), kết hợp cập nhật động `camera.near / camera.far` trong `animate()` để tạo đường kẻ tiếp xúc mảnh ($\approx 6\text{--}8\text{ px}$), sắc nét và liền mạch 100%.
+    - Sử dụng `allowance = 0.0014 * mn` ($\delta_n \approx 7.9\text{ \mu m}$) cùng `noPtEv = 120, cuttStep = 0.25, numSlices = 20` cho `isSurfaceOnly` của Bánh Răng Trụ (và `0.028 mm` cho `isSurfaceOnly` của Bánh Răng Côn), kết hợp cập nhật động `camera.near / camera.far` trong `animate()` để tạo đường kẻ tiếp xúc mảnh ($\approx 6\text{--}8\text{ px}$), sắc nét và liền mạch 100%.
+
+---
+
+### Quy Chuẩn 51: Giải Thuật Tiếp Tuyến $C^1$ Bán Kính Lượn Chân Răng Bánh Răng Côn ($R_{\text{chân}} = 0.38 \cdot m_s$) & Đồng Bộ 1-to-1 Biên Dạng 2D Canvas / DXF Khớp Phôi 3D
+1. **Giải thuật tiếp tuyến giải tích $C^1$ cho cung lượn chân răng trên bánh răng côn (`Bevel3DGenerator.generateSliceToothContour`)**:
+   - Với mỗi lát cắt nón $R_s \in [R_i, R_e]$, mô-đun pháp cục bộ là $m_s = m_{mn} \cdot (R_s / R_m)$ và bán kính lượn chân răng danh nghĩa $R_f = 0.38 \cdot m_s$.
+   - Trên mặt phẳng bánh răng trụ ảo Tredgold ($r_v = R_s \tan\delta, r_{vb} = r_v \cos\alpha_t, r_{vf} = r_v - h_{f,s}$), giải phương trình tâm cung lượn $(C_{fx}, C_{fy})$ cách tâm bánh răng một khoảng $r_{vf} + R_f$ và cách đường thân khai một khoảng pháp tuyến $R_f$:
+     * Khi $(r_{vf} + R_f)^2 - r_{vb}^2 \ge R_f^2$: $L_t = \sqrt{(r_{vf} + R_f)^2 - r_{vb}^2} - R_f$, bán kính tiếp điểm thân khai $r_t = \sqrt{r_{vb}^2 + L_t^2}$, góc áp lực $\alpha_f = \arccos(r_{vb} / r_t)$, góc cực $\psi_t = \psi_b - (\tan\alpha_f - \alpha_f)$.
+     * Khi $r_{vf}$ nằm sâu dưới vòng cơ sở: $r_t = \sqrt{r_{vf}^2 + 2 r_{vf} R_f}$, $\alpha_f = 0, \psi_t = \psi_b$.
+   - Mỗi răng trong `toothContour` bao gồm đầy đủ 7 phân vùng: `root_land` trái $\to$ `fillet` trái (`ptsFillet` điểm) $\to$ `flank` trái (`ptsPerFlank` điểm) $\to$ `tip_land` (5 điểm cung tròn đỉnh) $\to$ `flank` phải $\to$ `fillet` phải $\to$ `root_land` phải.
+2. **Đồng bộ 1-to-1 giữa 2D Canvas (`bevel-canvas.js`), 2D DXF (`bevel-dxf-exporter.js`) và 3D WebGL (`bevel-3d-visualizer.js`)**:
+   - Hàm `_get3DMatchedBlankParams(g)` tái tạo chính xác 8 điểm biên dạng mặt cắt vành nón (`Hin1, Hout1, rBore1, Hin2, Hout2, rBore2`) từ `Bevel3DGenerator`, loại bỏ phần moay-ơ hình trụ giả của bản vẽ 2D cũ.
+   - Bổ sung khung nhìn `draw2DToothProfileInset` bên phải `#bevelCanvas` gọi trực tiếp `Bevel3DGenerator.generateSliceToothContour` để hiển thị biên dạng răng ăn khớp 2D Tredgold có $R_{\text{chân}} = 0.38 \cdot m_{mn}$ quay liên hợp thời gian thực.
+   - Tối ưu hiệu năng `Bevel3DVisualizer.animate()`: Bỏ qua `renderer.render()` khi `container.clientWidth === 0` (khi người dùng đang ở Tab 1 hoặc chế độ 2D) và thêm `this.camera.lookAt(this.controls.target)` trong `setViewPreset`.
 
 ---
 
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
-
-Khi được yêu cầu phát triển mô-đun mới (ví dụ: Bánh vít - Trục vít Worm Gear, Bánh răng hành tinh Planetary Gear, Bộ truyền Đai Belt Drive, Bộ truyền Xích Chain Drive, Trục và Ổ lăn):
 1. **Tạo thư mục con độc lập**: `MITCalc-WebApp/modules/[ten-module]/`.
 2. **Trích xuất công thức gốc từ file Excel tương ứng trong `C:\MITCalc\`**: Mở qua PowerShell COM, đọc toàn bộ Named Ranges, công thức tại sheet `Calculation`.
 3. **Xây dựng động cơ tính toán thuần JS (`js/[ten]-calc-engine.js`)**: Viết giải thuật số học và giải tích chính xác.

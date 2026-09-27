@@ -103,7 +103,9 @@ class BevelGearUI {
                             this.canvasController.resetView();
                         } else if (this.activeMode === '3D' && this.visualizer3D) {
                             this.visualizer3D.onResize();
-                            if (this.lastGeom) this.visualizer3D.setGeometry(this.lastGeom);
+                            if (this.lastGeom && this.visualizer3D.geom !== this.lastGeom) {
+                                this.visualizer3D.setGeometry(this.lastGeom);
+                            }
                         }
                     }
                 }
@@ -238,6 +240,9 @@ class BevelGearUI {
             if (lblResSec16) lblResSec16.textContent = nameText;
             if (sliderResCanvas) sliderResCanvas.value = this.profileResolution;
             if (lblResCanvas) lblResCanvas.textContent = canvasText;
+            if (this.canvasController && typeof this.canvasController.setProfileResolution === 'function') {
+                this.canvasController.setProfileResolution(this.profileResolution);
+            }
         };
 
         if (sliderResSec16) {
@@ -351,8 +356,8 @@ class BevelGearUI {
                 if (container3D) container3D.style.display = 'none';
                 if (toolbar2D) toolbar2D.style.display = 'flex';
                 if (toolbar3D) toolbar3D.style.display = 'none';
-                if (visualizerTitle) visualizerTitle.textContent = '📐 Mô Hình 2D Nón Bánh Răng Ăn Khớp (ISO 23509)';
-                if (visualizerDesc) visualizerDesc.textContent = 'Mặt cắt trục bổ dọc ISO 23509 khép kín, gạch mặt cắt kim loại 45°, đường sinh nón chia và đỉnh Apex V(0,0).';
+                if (visualizerTitle) visualizerTitle.textContent = '📐 Mô Hình 2D Nón Bánh Răng Ăn Khớp & Biên Dạng Răng Có R Chân (ISO 23509)';
+                if (visualizerDesc) visualizerDesc.textContent = 'Mặt cắt trục 2D khớp 1-to-1 phôi 3D, kết hợp Biên dạng răng ăn khớp 2D Tredgold có bán kính lượn chân răng R chân = 0.38·mmn.';
                 if (this.canvasController) this.canvasController.resetView();
             });
 
@@ -367,10 +372,12 @@ class BevelGearUI {
                 if (toolbar2D) toolbar2D.style.display = 'none';
                 if (toolbar3D) toolbar3D.style.display = 'flex';
                 if (visualizerTitle) visualizerTitle.textContent = '🧊 Mô Phỏng Ăn Khớp 3D WebGL (Bevel Gears)';
-                if (visualizerDesc) visualizerDesc.textContent = 'Mô hình 3D thực thể xoay chuyển động ăn khớp liên hợp không gian tại góc trục Σ. Xuất file CAD STEP/STL cho SolidWorks & Mastercam.';
+                if (visualizerDesc) visualizerDesc.textContent = 'Mô hình 3D thực thể có R chân = 0.38·mmn xoay chuyển động ăn khớp liên hợp không gian tại góc trục Σ. Xuất file CAD STEP/STL cho SolidWorks & Mastercam.';
                 if (this.visualizer3D) {
                     this.visualizer3D.onResize();
-                    if (this.lastGeom) this.visualizer3D.setGeometry(this.lastGeom);
+                    if (this.lastGeom && this.visualizer3D.geom !== this.lastGeom) {
+                        this.visualizer3D.setGeometry(this.lastGeom);
+                    }
                 }
             });
         }

@@ -1,6 +1,6 @@
 /**
  * MITCalc Web App - 2D Interactive Bevel Gear Canvas Visualizer
- * Industrial-Grade Axial Engineering Cross-Section & Kinematic Meshing Simulator
+ * 1-to-1 Synchronized with 3D WebGL Model (Blank Geometry, Colors & C1 Root Fillet R_chan = 0.38*mmn)
  * Standards: ISO 23509, DIN 3971, DIN 3965, ISO 128 (Technical Drawings - Hatching)
  */
 
@@ -20,6 +20,7 @@ class BevelGearCanvas {
         this.animSpeed = 1.0;
         this.animDirection = 1; // 1: Thuận, -1: Nghịch
         this.isRunning = true;
+        this.profileResolution = 6;
 
         // Layer visibility toggles
         this.showDimensions = true;
@@ -30,6 +31,11 @@ class BevelGearCanvas {
 
         this.initEvents();
         this.animate();
+    }
+
+    setProfileResolution(level) {
+        this.profileResolution = Math.max(1, Math.min(11, parseInt(level) || 6));
+        this.render();
     }
 
     setAnimSpeed(speed) {
@@ -155,11 +161,70 @@ class BevelGearCanvas {
     }
 
     animate() {
+        requestAnimationFrame(() => this.animate());
+        if (!this.canvas || this.canvas.clientWidth === 0 || this.canvas.clientHeight === 0) {
+            return;
+        }
         if (this.isRunning && this.geom) {
-            this.angle1 += 0.02 * (this.animSpeed || 1.0) * (this.animDirection || 1);
+            this.angle1 += 0.015 * (this.animSpeed || 1.0) * (this.animDirection || 1);
             this.render();
         }
-        requestAnimationFrame(() => this.animate());
+    }
+
+    /**
+     * Computes the exact 3D-matched blank parameters for Pinion 1 and Gear 2
+     * (Matches Bevel3DGenerator & Bevel3DVisualizer 1-to-1)
+     */
+    _get3DMatchedBlankParams(g) {
+        const z1 = parseInt(g.z1) || 18;
+        const z2 = parseInt(g.z2) || 45;
+        const mmn = parseFloat(g.mmn) || 10.0;
+        const b = parseFloat(g.b) || 117.0;
+        const Re = parseFloat(g.Re) || 338.0;
+        const Rm = parseFloat(g.Rm) || (Re - b / 2.0);
+        const Ri = parseFloat(g.Ri) || (Re - b);
+
+        const Sigma_deg = parseFloat(g.Sigma_deg !== undefined ? g.Sigma_deg : g.Sigma) || 90.0;
+        const sigmaRad = (Sigma_deg * Math.PI) / 180.0;
+        const d1 = parseFloat(g.delta1) || Math.atan(Math.sin(sigmaRad) / ((z2 / z1) + Math.cos(sigmaRad)));
+        const d2 = sigmaRad - d1;
+
+        const s1 = Math.sin(d1), c1 = Math.cos(d1);
+        const s2 = Math.sin(d2), c2 = Math.cos(d2);
+
+        const hae1 = parseFloat(g.hae1) || (mmn * 1.32 * (Re / Rm));
+        const hfe1 = parseFloat(g.hfe1) || (mmn * 0.88 * (Re / Rm));
+        const hai1 = hae1 * (Ri / Re);
+        const hfi1 = hfe1 * (Ri / Re);
+
+        const hae2 = parseFloat(g.hae2) || (mmn * 0.68 * (Re / Rm));
+        const hfe2 = parseFloat(g.hfe2) || (mmn * 1.52 * (Re / Rm));
+        const hai2 = hae2 * (Ri / Re);
+        const hfi2 = hfe2 * (Ri / Re);
+
+        const Hin1 = parseFloat(g.H1in || g.a_offset1) || 4.836;
+        const Hout1 = parseFloat(g.H1out || g.b_offset1) || 13.300;
+        const Hin2 = parseFloat(g.H2in || g.a_offset2) || 5.911;
+        const Hout2 = parseFloat(g.H2out || g.b_offset2) || 19.950;
+
+        const r_root_toe1 = Ri * s1 - hfi1 * c1;
+        const defaultBore1 = Math.max(10.0, r_root_toe1 * 0.9);
+        const dBore1 = Math.min(r_root_toe1 * 0.85 * 2.0, Math.max(6.0, parseFloat(g.dBore1) || 50.0 || defaultBore1));
+        const rBore1 = dBore1 / 2.0;
+
+        const r_root_toe2 = Ri * s2 - hfi2 * c2;
+        const defaultBore2 = Math.max(10.0, r_root_toe2 * 0.9);
+        const dBore2 = Math.min(r_root_toe2 * 0.85 * 2.0, Math.max(6.0, parseFloat(g.dBore2) || 100.0 || defaultBore2));
+        const rBore2 = dBore2 / 2.0;
+
+        return {
+            z1, z2, mmn, b, Re, Rm, Ri, Sigma_deg, sigmaRad,
+            d1, d2, s1, c1, s2, c2,
+            hae1, hfe1, hai1, hfi1,
+            hae2, hfe2, hai2, hfi2,
+            Hin1, Hout1, Hin2, Hout2,
+            dBore1, rBore1, dBore2, rBore2
+        };
     }
 
     render() {
@@ -172,44 +237,65 @@ class BevelGearCanvas {
         this.drawGrid(ctx, w, h);
 
         const g = this.geom;
-        const b = g.b || 50;
-        const d1 = g.delta1 || 0.38;
-        const d2 = g.delta2 || 1.19;
-        const s1 = Math.sin(d1), c1 = Math.cos(d1);
-        const s2 = Math.sin(d2), c2 = Math.cos(d2);
+        const bp = this._get3DMatchedBlankParams(g);
 
-        const hae1 = g.hae1 || 10, hfe1 = g.hfe1 || 12;
-        const hae2 = g.hae2 || 10, hfe2 = g.hfe2 || 12;
-        const Re = g.Re || 200;
+        // Split viewport layout:
+        // Left Viewport (0 .. 730): 2D Axial Cross-Section (1-to-1 with 3D Blank & Colors)
+        // Right Viewport (736 .. w-14): 2D Conjugate Tooth Profile (Tredgold Virtual Gear with R chân)
+        const leftW = Math.round(w * 0.61);
 
-        const dae1 = g.dae1 || 200;
-        const dae2 = g.dae2 || 400;
-        const x_hub_end1 = (Re * c1 + hfe1 * s1 + 15) + Math.max(35, b * 0.7);
-        const y_hub_end2 = -(Re * c2 + hfe2 * s2 + 20) - Math.max(40, b * 0.8);
+        // Compute bounding box of 3D-matched axial section for auto-centering in Left Viewport
+        const z_heel_hub1 = bp.Re * bp.c1 + (bp.hfe1 + bp.Hout1) * bp.s1;
+        const z_heel_hub2 = bp.Re * bp.c2 + (bp.hfe2 + bp.Hout2) * bp.s2;
+        const dae1 = g.dae1 || (2.0 * (bp.Re * bp.s1 + bp.hae1 * bp.c1));
+        const dae2 = g.dae2 || (2.0 * (bp.Re * bp.s2 + bp.hae2 * bp.c2));
 
-        const xMin = Math.min(-dae2 / 2.0 - 50, -60);
-        const xMax = Math.max(dae2 / 2.0 + 50, x_hub_end1 + 60);
-        const yMin = Math.min(y_hub_end2 - 50, -dae1 / 2.0 - 50);
-        const yMax = Math.max(dae1 / 2.0 + 50, 60);
+        // Transform Gear 2 extreme corners by shaft angle sigmaRad
+        const uAx2 = { x: Math.cos(bp.sigmaRad), y: -Math.sin(bp.sigmaRad) };
+        const uRad2 = { x: Math.sin(bp.sigmaRad), y: Math.cos(bp.sigmaRad) };
+        const g2LeftTip = {
+            x: bp.Re * bp.c2 * uAx2.x - (dae2 / 2.0) * uRad2.x,
+            y: bp.Re * bp.c2 * uAx2.y - (dae2 / 2.0) * uRad2.y
+        };
+        const g2RightTip = {
+            x: bp.Re * bp.c2 * uAx2.x + (dae2 / 2.0) * uRad2.x,
+            y: bp.Re * bp.c2 * uAx2.y + (dae2 / 2.0) * uRad2.y
+        };
+        const g2Back = {
+            x: z_heel_hub2 * uAx2.x,
+            y: z_heel_hub2 * uAx2.y
+        };
+
+        const xMin = Math.min(g2LeftTip.x, g2RightTip.x, g2Back.x, -40) - 55;
+        const xMax = Math.max(z_heel_hub1, g2RightTip.x, dae2 / 2.0) + 70;
+        const yMin = Math.min(g2LeftTip.y, g2RightTip.y, g2Back.y, -dae1 / 2.0) - 55;
+        const yMax = Math.max(dae1 / 2.0, 40) + 45;
 
         const wGeom = Math.max(120, xMax - xMin);
         const hGeom = Math.max(120, yMax - yMin);
         const cxGeom = (xMin + xMax) / 2.0;
         const cyGeom = (yMin + yMax) / 2.0;
 
-        const scale = Math.min((w * 0.78) / wGeom, (h * 0.78) / hGeom);
+        const scale = Math.min(((leftW - 20) * 0.84) / wGeom, (h * 0.80) / hGeom);
 
         ctx.save();
-        ctx.translate(w / 2.0 + this.panX, h / 2.0 + this.panY);
+        ctx.beginPath();
+        ctx.rect(0, 0, leftW, h);
+        ctx.clip();
+
+        ctx.translate(leftW / 2.0 + 15 + this.panX, h / 2.0 + 25 + this.panY);
         ctx.scale(this.zoom * scale, this.zoom * scale);
         ctx.translate(-cxGeom, -cyGeom);
 
-        this.drawAxialSection(ctx);
+        this.drawAxialSection(ctx, bp);
 
         ctx.restore();
 
+        // Draw Right Panel: Live 2D Tredgold Conjugate Tooth Profile with Root Fillet R chân
+        this.draw2DToothProfileInset(ctx, bp, leftW + 8, 14, w - leftW - 22, h - 28);
+
         if (this.showDataCard) {
-            this.drawDataCard(ctx, g);
+            this.drawDataCard(ctx, g, bp);
         }
     }
 
@@ -302,151 +388,135 @@ class BevelGearCanvas {
         ctx.restore();
     }
 
-    drawAxialSection(ctx) {
+    /**
+     * Draws the 2D Axial Cross-Section matching the 3D Bevel Gear Blank 1-to-1
+     * (Exact 8-point conical ring blank from Bevel3DGenerator, Cobalt-Cyan Blue & Coral-Orange)
+     */
+    drawAxialSection(ctx, bp) {
         const g = this.geom;
-        const d1 = g.delta1;
-        const d2 = g.delta2;
-        const Re = g.Re;
-        const Ri = g.Ri;
-        const b = g.b;
+        const {
+            Re, Ri, b, sigmaRad,
+            d1, d2, s1, c1, s2, c2,
+            hae1, hfe1, hai1, hfi1,
+            hae2, hfe2, hai2, hfi2,
+            Hin1, Hout1, Hin2, Hout2,
+            rBore1, rBore2
+        } = bp;
 
-        const s1 = Math.sin(d1), c1 = Math.cos(d1);
-        const s2 = Math.sin(d2), c2 = Math.cos(d2);
+        const dae1 = g.dae1 || (2.0 * (Re * s1 + hae1 * c1));
+        const dae2 = g.dae2 || (2.0 * (Re * s2 + hae2 * c2));
 
-        const hae1 = g.hae1, hfe1 = g.hfe1;
-        const hae2 = g.hae2, hfe2 = g.hfe2;
-        const hai1 = g.hai1, hfi1 = g.hfi1;
-        const hai2 = g.hai2, hfi2 = g.hfi2;
+        // -------------------------------------------------------------------------
+        // 1. PINION 1 KEY COORDINATES (Apex at (0,0), Axis along +X)
+        // Exact 1-to-1 match with Bevel3DGenerator (z_toe_hub, r_toe_rim, z_heel_hub, r_heel_rim, rBore)
+        // -------------------------------------------------------------------------
+        const z_toe_hub1 = Ri * c1 + (hfi1 + Hin1) * s1;
+        const r_toe_rim1 = Math.max(rBore1 + 2.0, Ri * s1 - (hfi1 + Hin1) * c1);
+        const z_heel_hub1 = Re * c1 + (hfe1 + Hout1) * s1;
+        const r_heel_rim1 = Math.max(rBore1 + 5.0, Re * s1 - (hfe1 + Hout1) * c1);
 
-        const dae1 = g.dae1, dae2 = g.dae2;
-
-        // 1. PINION KEY COORDINATES (Apex at (0, 0), Axis along X)
-        const p1_toe_tip = { x: Ri * c1 - hai1 * s1, y: -(Ri * s1 + hai1 * c1) };
-        const p1_toe_root = { x: Ri * c1 + hfi1 * s1, y: -(Ri * s1 - hfi1 * c1) };
-        const p1_heel_tip = { x: Re * c1 - hae1 * s1, y: -(Re * s1 + hae1 * c1) };
+        const p1_toe_root  = { x: Ri * c1 + hfi1 * s1, y: -(Ri * s1 - hfi1 * c1) };
+        const p1_toe_tip   = { x: Ri * c1 - hai1 * s1, y: -(Ri * s1 + hai1 * c1) };
+        const p1_heel_tip  = { x: Re * c1 - hae1 * s1, y: -(Re * s1 + hae1 * c1) };
         const p1_heel_root = { x: Re * c1 + hfe1 * s1, y: -(Re * s1 - hfe1 * c1) };
+        const p1_heel_rim  = { x: z_heel_hub1, y: -r_heel_rim1 };
+        const p1_heel_bore = { x: z_heel_hub1, y: -rBore1 };
+        const p1_toe_bore  = { x: z_toe_hub1, y: -rBore1 };
+        const p1_toe_rim   = { x: z_toe_hub1, y: -r_toe_rim1 };
 
-        const p1_toe_tip_b = { x: p1_toe_tip.x, y: -p1_toe_tip.y };
-        const p1_toe_root_b = { x: p1_toe_root.x, y: -p1_toe_root.y };
-        const p1_heel_tip_b = { x: p1_heel_tip.x, y: -p1_heel_tip.y };
+        // Pinion Upper Half Cross-Section (8-point 3D conical ring blank)
+        const pinion_upper = [
+            p1_toe_root, p1_toe_tip, p1_heel_tip, p1_heel_root,
+            p1_heel_rim, p1_heel_bore, p1_toe_bore, p1_toe_rim
+        ];
+
+        // Pinion Lower Half Cross-Section (Symmetric across X-axis)
+        const pinion_lower = pinion_upper.map(pt => ({ x: pt.x, y: -pt.y }));
+        const p1_toe_root_b  = { x: p1_toe_root.x,  y: -p1_toe_root.y };
+        const p1_toe_tip_b   = { x: p1_toe_tip.x,   y: -p1_toe_tip.y };
+        const p1_heel_tip_b  = { x: p1_heel_tip.x,  y: -p1_heel_tip.y };
         const p1_heel_root_b = { x: p1_heel_root.x, y: -p1_heel_root.y };
 
-        const d_bore1 = Math.max(20, (g.de1 || 100) * 0.22);
-        const d_hub1 = Math.max(35, (g.de1 || 100) * 0.45);
-        const H1out = Math.max(12, g.mmn * 1.3);
+        // -------------------------------------------------------------------------
+        // 2. GEAR 2 KEY COORDINATES (Apex at (0,0), Axis at Shaft Angle Sigma)
+        // Exact 1-to-1 match with Bevel3DGenerator & Bevel3DVisualizer
+        // -------------------------------------------------------------------------
+        const z_toe_hub2 = Ri * c2 + (hfi2 + Hin2) * s2;
+        const r_toe_rim2 = Math.max(rBore2 + 2.0, Ri * s2 - (hfi2 + Hin2) * c2);
+        const z_heel_hub2 = Re * c2 + (hfe2 + Hout2) * s2;
+        const r_heel_rim2 = Math.max(rBore2 + 5.0, Re * s2 - (hfe2 + Hout2) * c2);
 
-        // Pinion Front Face: Flat vertical face perpendicular to shaft axis at p1_toe_root.x
-        const x_front1 = p1_toe_root.x;
-        const x_back1 = p1_heel_root.x + H1out * s1;
-        const y_back_rim1 = -(Re * s1 - (hfe1 + H1out) * c1);
-        const x_hub_end1 = x_back1 + Math.max(35, b * 0.7);
+        const uAx2 = { x: Math.cos(sigmaRad), y: -Math.sin(sigmaRad) };
+        const uRad2 = { x: Math.sin(sigmaRad), y: Math.cos(sigmaRad) };
+        const toGearWorld = (zL, rL) => ({
+            x: zL * uAx2.x + rL * uRad2.x,
+            y: zL * uAx2.y + rL * uRad2.y
+        });
 
-        // Pinion Upper Half Cross-Section Polygon
-        const pinion_upper = [
-            p1_toe_root,
-            p1_toe_tip,
-            p1_heel_tip,
-            p1_heel_root,
-            { x: x_back1, y: y_back_rim1 },
-            { x: x_back1, y: -d_hub1 / 2.0 },
-            { x: x_hub_end1, y: -d_hub1 / 2.0 },
-            { x: x_hub_end1, y: -d_bore1 / 2.0 },
-            { x: x_front1, y: -d_bore1 / 2.0 },
-            p1_toe_root
+        const g2_local = [
+            { z: Ri * c2 + hfi2 * s2, r: Ri * s2 - hfi2 * c2 }, // 0: toe_root
+            { z: Ri * c2 - hai2 * s2, r: Ri * s2 + hai2 * c2 }, // 1: toe_tip
+            { z: Re * c2 - hae2 * s2, r: Re * s2 + hae2 * c2 }, // 2: heel_tip
+            { z: Re * c2 + hfe2 * s2, r: Re * s2 - hfe2 * c2 }, // 3: heel_root
+            { z: z_heel_hub2,         r: r_heel_rim2 },         // 4: heel_rim
+            { z: z_heel_hub2,         r: rBore2 },              // 5: heel_bore
+            { z: z_toe_hub2,          r: rBore2 },              // 6: toe_bore
+            { z: z_toe_hub2,          r: r_toe_rim2 }           // 7: toe_rim
         ];
 
-        // Pinion Lower Half Cross-Section Polygon (Symmetric)
-        const pinion_lower = [
-            { x: x_front1, y: d_bore1 / 2.0 },
-            { x: x_hub_end1, y: d_bore1 / 2.0 },
-            { x: x_hub_end1, y: d_hub1 / 2.0 },
-            { x: x_back1, y: d_hub1 / 2.0 },
-            { x: x_back1, y: -y_back_rim1 },
-            p1_heel_root_b,
-            p1_heel_tip_b,
-            p1_toe_tip_b,
-            p1_toe_root_b,
-            { x: x_front1, y: d_bore1 / 2.0 }
-        ];
+        const gear_right = g2_local.map(pt => toGearWorld(pt.z, +pt.r));
+        const gear_left  = g2_local.map(pt => toGearWorld(pt.z, -pt.r));
 
-        // 2. GEAR KEY COORDINATES (Apex at (0, 0), Axis along Y pointing up = -Y in canvas)
-        const p2_heel_tip = { x: Re * s2 + hae2 * c2, y: -(Re * c2 - hae2 * s2) };
-        const p2_heel_root = { x: Re * s2 - hfe2 * c2, y: -(Re * c2 + hfe2 * s2) };
-        const p2_toe_tip = { x: Ri * s2 + hai2 * c2, y: -(Ri * c2 - hai2 * s2) };
-        const p2_toe_root = { x: Ri * s2 - hfi2 * c2, y: -(Ri * c2 + hfi2 * s2) };
+        const p2_toe_root    = gear_right[0];
+        const p2_toe_tip     = gear_right[1];
+        const p2_heel_tip    = gear_right[2];
+        const p2_heel_root   = gear_right[3];
+        const p2_toe_root_l  = gear_left[0];
+        const p2_toe_tip_l   = gear_left[1];
+        const p2_heel_tip_l  = gear_left[2];
+        const p2_heel_root_l = gear_left[3];
 
-        const p2_heel_tip_l = { x: -p2_heel_tip.x, y: p2_heel_tip.y };
-        const p2_heel_root_l = { x: -p2_heel_root.x, y: p2_heel_root.y };
-        const p2_toe_tip_l = { x: -p2_toe_tip.x, y: p2_toe_tip.y };
-        const p2_toe_root_l = { x: -p2_toe_root.x, y: p2_toe_root.y };
-
-        const d_bore2 = Math.max(30, (g.de2 || 200) * 0.16);
-        const d_hub2 = Math.max(55, (g.de2 || 200) * 0.32);
-        const H2out = Math.max(16, g.mmn * 1.8);
-
-        const y_back2 = -(Re * c2 + hfe2 * s2 + H2out * s2);
-        const x_back_rim2 = Re * s2 - (hfe2 + H2out) * c2;
-        const y_front2 = p2_toe_root.y;
-        const x_front_rim2 = p2_toe_root.x;
-        const y_hub_end2 = y_back2 - Math.max(40, b * 0.8);
-
-        // Gear Right Half Cross-Section (Meshing side)
-        const gear_right = [
-            p2_toe_root,
-            p2_toe_tip,
-            p2_heel_tip,
-            p2_heel_root,
-            { x: x_back_rim2, y: y_back2 },
-            { x: d_hub2 / 2.0, y: y_back2 },
-            { x: d_hub2 / 2.0, y: y_hub_end2 },
-            { x: d_bore2 / 2.0, y: y_hub_end2 },
-            { x: d_bore2 / 2.0, y: y_front2 + 15 },
-            { x: x_front_rim2, y: y_front2 },
-            p2_toe_root
-        ];
-
-        // Gear Left Half Cross-Section (Symmetric)
-        const gear_left = [
-            { x: -x_front_rim2, y: y_front2 },
-            { x: -d_bore2 / 2.0, y: y_front2 + 15 },
-            { x: -d_bore2 / 2.0, y: y_hub_end2 },
-            { x: -d_hub2 / 2.0, y: y_hub_end2 },
-            { x: -d_hub2 / 2.0, y: y_back2 },
-            { x: -x_back_rim2, y: y_back2 },
-            p2_heel_root_l,
-            p2_heel_tip_l,
-            p2_toe_tip_l,
-            p2_toe_root_l,
-            { x: -x_front_rim2, y: y_front2 }
-        ];
-
-        // 3. DRAW PINION SECTIONS (Upper & Lower)
-        for (const poly of [pinion_upper, pinion_lower]) {
-            this.drawPolygonSection(ctx, poly, '#062e24', '#10b981', Math.PI / 4, 'rgba(16, 185, 129, 0.45)');
-        }
-
-        // Pinion Bore Shading
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-        ctx.fillRect(x_front1, -d_bore1 / 2.0, x_hub_end1 - x_front1, d_bore1);
-        ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
-        ctx.lineWidth = 1.0;
-        ctx.strokeRect(x_front1, -d_bore1 / 2.0, x_hub_end1 - x_front1, d_bore1);
-
-        // 4. DRAW GEAR SECTIONS (Right & Left)
-        for (const poly of [gear_right, gear_left]) {
-            this.drawPolygonSection(ctx, poly, '#0d2247', '#3b82f6', -Math.PI / 4, 'rgba(59, 130, 246, 0.45)');
-        }
-
-        // Gear Bore Shading
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-        ctx.fillRect(-d_bore2 / 2.0, y_hub_end2, d_bore2, (y_front2 + 15) - y_hub_end2);
-        ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
-        ctx.lineWidth = 1.0;
-        ctx.strokeRect(-d_bore2 / 2.0, y_hub_end2, d_bore2, (y_front2 + 15) - y_hub_end2);
-
-        // 5. TOOTH ROOT CONE LINES
-        ctx.strokeStyle = '#10b981';
+        // -------------------------------------------------------------------------
+        // 3. DRAW 3D-MATCHED BORE & RIM CONNECTING LINES (Back/Front faces across bore)
+        // -------------------------------------------------------------------------
+        // Pinion 1 Bore Shading (Cobalt-Cyan Blue theme matching 3D Pinion)
+        ctx.fillStyle = 'rgba(7, 89, 133, 0.22)';
+        ctx.fillRect(z_toe_hub1, -rBore1, z_heel_hub1 - z_toe_hub1, 2.0 * rBore1);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
         ctx.lineWidth = 1.2;
+        ctx.strokeRect(z_toe_hub1, -rBore1, z_heel_hub1 - z_toe_hub1, 2.0 * rBore1);
+
+        // Gear 2 Bore Shading (Coral-Orange theme matching 3D Gear)
+        const g2BorePoly = [gear_right[5], gear_right[6], gear_left[6], gear_left[5]];
+        ctx.beginPath();
+        ctx.moveTo(g2BorePoly[0].x, g2BorePoly[0].y);
+        for (let i = 1; i < g2BorePoly.length; i++) ctx.lineTo(g2BorePoly[i].x, g2BorePoly[i].y);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(154, 52, 18, 0.22)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(251, 146, 60, 0.45)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // -------------------------------------------------------------------------
+        // 4. DRAW PINION 1 SECTIONS (Vivid Cobalt-Cyan Blue #0284c7 / #38bdf8 matching 3D)
+        // -------------------------------------------------------------------------
+        for (const poly of [pinion_upper, pinion_lower]) {
+            this.drawPolygonSection(ctx, poly, '#083344', '#38bdf8', Math.PI / 4, 'rgba(56, 189, 248, 0.48)');
+        }
+
+        // -------------------------------------------------------------------------
+        // 5. DRAW GEAR 2 SECTIONS (Vivid Coral-Orange #ea580c / #fb923c matching 3D)
+        // -------------------------------------------------------------------------
+        for (const poly of [gear_right, gear_left]) {
+            this.drawPolygonSection(ctx, poly, '#431407', '#fb923c', -Math.PI / 4, 'rgba(251, 146, 60, 0.48)');
+        }
+
+        // -------------------------------------------------------------------------
+        // 6. TOOTH ROOT & PITCH CONE LINES ON THE TEETH
+        // -------------------------------------------------------------------------
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.moveTo(p1_toe_root.x, p1_toe_root.y);
         ctx.lineTo(p1_heel_root.x, p1_heel_root.y);
@@ -454,7 +524,8 @@ class BevelGearCanvas {
         ctx.lineTo(p1_heel_root_b.x, p1_heel_root_b.y);
         ctx.stroke();
 
-        ctx.strokeStyle = '#3b82f6';
+        ctx.strokeStyle = '#fb923c';
+        ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.moveTo(p2_toe_root.x, p2_toe_root.y);
         ctx.lineTo(p2_heel_root.x, p2_heel_root.y);
@@ -462,55 +533,62 @@ class BevelGearCanvas {
         ctx.lineTo(p2_heel_root_l.x, p2_heel_root_l.y);
         ctx.stroke();
 
-        // 6. ANIMATED CONJUGATE MESHING STRIPES
+        // -------------------------------------------------------------------------
+        // 7. ANIMATED CONJUGATE MESHING STRIPES
+        // -------------------------------------------------------------------------
         if (this.showStripes) {
-            this.drawToothStripes(ctx, p1_toe_root, p1_heel_root, p1_toe_tip, p1_heel_tip, '#10b981', this.angle1);
-            this.drawToothStripes(ctx, p2_toe_root, p2_heel_root, p2_toe_tip, p2_heel_tip, '#3b82f6', -this.angle1 / (g.i || 2.5));
+            this.drawToothStripes(ctx, p1_toe_root, p1_heel_root, p1_toe_tip, p1_heel_tip, '#38bdf8', this.angle1);
+            this.drawToothStripes(ctx, p1_toe_root_b, p1_heel_root_b, p1_toe_tip_b, p1_heel_tip_b, '#38bdf8', -this.angle1);
+            this.drawToothStripes(ctx, p2_toe_root, p2_heel_root, p2_toe_tip, p2_heel_tip, '#fb923c', -this.angle1 / (g.i || 2.5));
+            this.drawToothStripes(ctx, p2_toe_root_l, p2_heel_root_l, p2_toe_tip_l, p2_heel_tip_l, '#fb923c', this.angle1 / (g.i || 2.5));
         }
 
-        // 7. CENTERLINES & PITCH CONE GENERATORS
+        // -------------------------------------------------------------------------
+        // 8. CENTERLINES & PITCH CONE GENERATORS (Apex V(0,0))
+        // -------------------------------------------------------------------------
         if (this.showAxes) {
             ctx.save();
-            ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.55)';
             ctx.lineWidth = 1.2;
             ctx.setLineDash([14, 4, 3, 4]);
 
-            // Pinion Axis (Horizontal X)
+            // Pinion 1 Axis (Horizontal +X)
             ctx.beginPath();
-            ctx.moveTo(-50, 0);
-            ctx.lineTo(x_hub_end1 + 60, 0);
+            ctx.moveTo(-35, 0);
+            ctx.lineTo(z_heel_hub1 + 45, 0);
             ctx.stroke();
 
-            // Gear Axis (Vertical Y)
+            // Gear 2 Axis (Along shaft angle Sigma)
             ctx.beginPath();
-            ctx.moveTo(0, 50);
-            ctx.lineTo(0, y_hub_end2 - 60);
+            ctx.moveTo(-35 * uAx2.x, -35 * uAx2.y);
+            ctx.lineTo((z_heel_hub2 + 45) * uAx2.x, (z_heel_hub2 + 45) * uAx2.y);
             ctx.stroke();
 
-            // Pitch Cone Generator Line (Contact Line)
-            ctx.strokeStyle = '#f59e0b';
+            // Shared Pitch Cone Contact Generator (Meshing Line)
+            ctx.strokeStyle = '#facc15';
             ctx.lineWidth = 1.8;
             ctx.setLineDash([10, 4, 3, 4]);
             ctx.beginPath();
             ctx.moveTo(0, 0);
-            ctx.lineTo(Re * c1 * 1.15, -Re * s1 * 1.15);
+            ctx.lineTo(Re * c1 * 1.12, -Re * s1 * 1.12);
             ctx.stroke();
 
-            // Symmetric Pitch Cone Generator for Gear Left
-            ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+            // Outer non-meshing pitch cone generators
+            ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
             ctx.lineWidth = 1.0;
             ctx.setLineDash([6, 4]);
+            const g2PitchLeft = toGearWorld(Re * c2 * 1.08, -Re * s2 * 1.08);
             ctx.beginPath();
             ctx.moveTo(0, 0);
-            ctx.lineTo(-Re * s2 * 1.12, -Re * c2 * 1.12);
+            ctx.lineTo(g2PitchLeft.x, g2PitchLeft.y);
             ctx.moveTo(0, 0);
-            ctx.lineTo(Re * c1 * 1.12, Re * s1 * 1.12);
+            ctx.lineTo(Re * c1 * 1.08, Re * s1 * 1.08);
             ctx.stroke();
 
             ctx.restore();
         }
 
-        // 8. APEX V INDICATOR
+        // 9. APEX V(0,0) INDICATOR
         ctx.fillStyle = '#ef4444';
         ctx.beginPath();
         ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
@@ -521,24 +599,343 @@ class BevelGearCanvas {
 
         ctx.fillStyle = '#f87171';
         ctx.font = 'bold 11px Consolas, monospace';
-        ctx.fillText('Apex V(0,0)', -28, 18);
+        ctx.fillText('Apex V(0,0)', -30, 18);
 
-        // 9. CAD ENGINEERING DIMENSIONS
+        // 10. CAD ENGINEERING DIMENSIONS
         if (this.showDimensions) {
             this.drawCadDimensions(ctx, {
-                g, Re, Ri, b, d1, d2, s1, c1, s2, c2,
-                dae1, dae2, x_hub_end1,
+                g, Re, Ri, b, d1, d2, s1, c1, s2, c2, sigmaRad,
+                dae1, dae2, x_hub_end1: z_heel_hub1,
+                y_back2: Math.min(gear_left[4].y, gear_right[4].y),
                 p1_heel_tip, p1_heel_tip_b,
                 p2_heel_tip, p2_heel_tip_l
             });
         }
     }
 
+    /**
+     * Renders the Live 2D Tredgold Conjugate Tooth Profile Viewport on the right side of the canvas
+     * Uses the exact same Bevel3DGenerator.generateSliceToothContour function as the 3D WebGL model,
+     * displaying the C1-tangent circular root fillet R_chan = 0.38 * mmn and preserved root land arc!
+     */
+    draw2DToothProfileInset(ctx, bp, panelX, panelY, panelW, panelH) {
+        if (typeof Bevel3DGenerator === 'undefined' || !Bevel3DGenerator.generateSliceToothContour) return;
+        const g = this.geom;
+        const { z1, z2, mmn, Rm, d1, d2 } = bp;
+
+        const alfa = ((parseFloat(g.alfa_deg !== undefined ? g.alfa_deg : 20.0)) * Math.PI) / 180.0;
+        const beta_deg = (g.beta_deg !== undefined ? parseFloat(g.beta_deg) : (g.beta !== undefined ? parseFloat(g.beta) : 0.0));
+        const beta = (beta_deg * Math.PI) / 180.0;
+        const isSpiral = Math.abs(beta) > 1e-4;
+        const x1 = parseFloat(g.x1 !== undefined ? g.x1 : 0.32);
+        const x2 = parseFloat(g.x2 !== undefined ? g.x2 : -x1);
+        const xt1 = parseFloat(g.xt1 !== undefined ? g.xt1 : 0.04);
+        const xt2 = parseFloat(g.xt2 !== undefined ? g.xt2 : -xt1);
+
+        const ha1 = parseFloat(g.ha1) || (mmn * (1.0 + x1));
+        const hf1 = parseFloat(g.hf1) || (mmn * (1.2 - x1));
+        const sn1 = parseFloat(g.sn1) || (mmn * (Math.PI / 2.0 + 2.0 * x1 * Math.tan(alfa) + xt1));
+
+        const ha2 = parseFloat(g.ha2) || (mmn * (1.0 + x2));
+        const hf2 = parseFloat(g.hf2) || (mmn * (1.2 - x2));
+        const sn2 = parseFloat(g.sn2) || (mmn * (Math.PI / 2.0 + 2.0 * x2 * Math.tan(alfa) + xt2));
+
+        const resMap = (typeof BEVEL_PROFILE_RESOLUTIONS !== 'undefined') ? BEVEL_PROFILE_RESOLUTIONS[this.profileResolution] : null;
+        const ptsPerFlank = resMap ? resMap.ptsPerFlank : 20;
+
+        // Generate exact 2D slice tooth contours at mean cone distance Rm (with C1 circular root fillet Rf = 0.38 * mmn)
+        const slice1 = Bevel3DGenerator.generateSliceToothContour({
+            z: z1, mmn, Rm, R_s: Rm, delta: d1, alfa, beta, isSpiral,
+            ha_s: ha1, hf_s: hf1, sn_s: sn1, ptsPerFlank, ptsFillet: 10
+        });
+        const slice2 = Bevel3DGenerator.generateSliceToothContour({
+            z: z2, mmn, Rm, R_s: Rm, delta: d2, alfa, beta, isSpiral,
+            ha_s: ha2, hf_s: hf2, sn_s: sn2, ptsPerFlank, ptsFillet: 10
+        });
+
+        ctx.save();
+
+        // 1. Panel Background & Frame
+        ctx.fillStyle = 'rgba(11, 17, 30, 0.94)';
+        ctx.strokeStyle = '#1e3a8a';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(panelX, panelY, panelW, panelH, 8);
+        else ctx.rect(panelX, panelY, panelW, panelH);
+        ctx.fill();
+        ctx.stroke();
+
+        // Panel Header
+        const hdrH = 32;
+        ctx.fillStyle = '#172554';
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(panelX, panelY, panelW, hdrH, [8, 8, 0, 0]);
+        else ctx.rect(panelX, panelY, panelW, hdrH);
+        ctx.fill();
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 11.5px system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🦷 BIÊN DẠNG RĂNG ĂN KHỚP 2D (TREDGOLD - CÓ R CHÂN)', panelX + 12, panelY + hdrH / 2);
+
+        // Clip inside viewport body
+        const viewX = panelX + 2;
+        const viewY = panelY + hdrH + 2;
+        const viewW = panelW - 4;
+        const viewH = panelH - hdrH - 64;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(viewX, viewY, viewW, viewH);
+        ctx.clip();
+
+        // Subtle CAD grid inside tooth profile viewport
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.06)';
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        for (let gx = viewX; gx < viewX + viewW; gx += 24) {
+            ctx.moveTo(gx, viewY);
+            ctx.lineTo(gx, viewY + viewH);
+        }
+        for (let gy = viewY; gy < viewY + viewH; gy += 24) {
+            ctx.moveTo(viewX, gy);
+            ctx.lineTo(viewX + viewW, gy);
+        }
+        ctx.stroke();
+
+        // Coordinate system centered at Pitch Contact Point P(0, 0):
+        // Pinion 1 (Blue) virtual center Ov1 is at (0, +rv1) below P (teeth point UP, matching 3D view!)
+        // Gear 2 (Orange) virtual center Ov2 is at (0, -rv2) above P (teeth point DOWN, matching 3D view!)
+        const pitchScreenX = viewX + viewW * 0.50;
+        const pitchScreenY = viewY + viewH * 0.50;
+        // Scale so ~3.2 tooth pitches fit across viewW
+        const pitchLinear = Math.PI * (g.mmt || (mmn / Math.max(0.2, Math.cos(beta))));
+        const toothScale = Math.min(viewW / (3.15 * pitchLinear), viewH / (4.4 * mmn));
+
+        ctx.translate(pitchScreenX, pitchScreenY);
+        ctx.scale(toothScale, toothScale);
+
+        const rv1 = slice1.rv, rvb1 = slice1.rvb, rva1 = slice1.rva, rvf1 = slice1.rvf;
+        const rv2 = slice2.rv, rvb2 = slice2.rvb, rva2 = slice2.rva, rvf2 = slice2.rvf;
+        const pPsi1 = (2.0 * Math.PI / z1) * slice1.cosD;
+        const pPsi2 = (2.0 * Math.PI / z2) * slice2.cosD;
+
+        // Periodic tooth pitch phase in [-0.5, +0.5]
+        const rawPhase = ((this.angle1 * z1) / (2.0 * Math.PI)) % 1.0;
+        const phase = rawPhase > 0.5 ? rawPhase - 1.0 : (rawPhase < -0.5 ? rawPhase + 1.0 : rawPhase);
+
+        // Helper to build & draw multi-tooth segment around pitch point P(0,0)
+        const drawVirtualGearBand = (slice, isPinion, fillColor, strokeColor, filletColor) => {
+            const rv = slice.rv;
+            const rvf = slice.rvf;
+            const cosD = slice.cosD;
+            const pPsi = isPinion ? pPsi1 : pPsi2;
+            const rimDepth = Math.max(mmn * 2.2, (slice.rva - slice.rvf) * 1.15);
+            const rInnerRim = Math.max(2.0, rvf - rimDepth);
+            const kMin = -3, kMax = 3;
+
+            const toPt = (r, psi) => {
+                if (isPinion) {
+                    // Center at (0, +rv), psi = 0 points UP to (0, 0)
+                    return { x: r * Math.sin(psi), y: rv - r * Math.cos(psi) };
+                } else {
+                    // Center at (0, -rv), psi = 0 points DOWN to (0, 0)
+                    return { x: r * Math.sin(psi), y: -rv + r * Math.cos(psi) };
+                }
+            };
+
+            const contourPts = [];
+            const filletArcs = [];
+
+            for (let k = kMin; k <= kMax; k++) {
+                const centerPsi = isPinion ? (k + phase) * pPsi : (k + 0.5 + phase) * pPsi;
+                let curFillet = [];
+                for (let idx = 0; idx < slice.toothContour.length; idx++) {
+                    if (k > kMin && idx === 0) continue;
+                    const tc = slice.toothContour[idx];
+                    const r = rv + tc.h;
+                    const psi = centerPsi + tc.theta * cosD;
+                    const pt = toPt(r, psi);
+                    contourPts.push(pt);
+
+                    if (tc.zone === 'fillet') {
+                        curFillet.push(pt);
+                    } else if (curFillet.length > 0) {
+                        filletArcs.push(curFillet);
+                        curFillet = [];
+                    }
+                }
+                if (curFillet.length > 0) filletArcs.push(curFillet);
+            }
+
+            // Close polygon along inner rim arc from maxPsi back to minPsi
+            const maxPsi = (isPinion ? (kMax + phase) : (kMax + 0.5 + phase)) * pPsi + slice.half_pitch * cosD;
+            const minPsi = (isPinion ? (kMin + phase) : (kMin + 0.5 + phase)) * pPsi - slice.half_pitch * cosD;
+            const fullPoly = [...contourPts];
+            const rimSteps = 28;
+            for (let s = 0; s <= rimSteps; s++) {
+                const psi = maxPsi - (s / rimSteps) * (maxPsi - minPsi);
+                fullPoly.push(toPt(rInnerRim, psi));
+            }
+
+            // Fill gear body
+            ctx.beginPath();
+            ctx.moveTo(fullPoly[0].x, fullPoly[0].y);
+            for (let i = 1; i < fullPoly.length; i++) ctx.lineTo(fullPoly[i].x, fullPoly[i].y);
+            ctx.closePath();
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+
+            // Stroke active tooth contour (involute flanks + root lands + tip lands)
+            ctx.beginPath();
+            ctx.moveTo(contourPts[0].x, contourPts[0].y);
+            for (let i = 1; i < contourPts.length; i++) ctx.lineTo(contourPts[i].x, contourPts[i].y);
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 2.0 / toothScale;
+            ctx.stroke();
+
+            // Highlight C1 Circular Root Fillet Arcs (R chân = 0.38 * mmn)
+            ctx.strokeStyle = filletColor;
+            ctx.lineWidth = 3.0 / toothScale;
+            for (const arc of filletArcs) {
+                if (arc.length < 2) continue;
+                ctx.beginPath();
+                ctx.moveTo(arc[0].x, arc[0].y);
+                for (let i = 1; i < arc.length; i++) ctx.lineTo(arc[i].x, arc[i].y);
+                ctx.stroke();
+            }
+        };
+
+        // Draw Gear 2 (Top - Vivid Coral-Orange matching 3D Gear 2)
+        drawVirtualGearBand(slice2, false, 'rgba(234, 88, 12, 0.36)', '#fb923c', '#facc15');
+
+        // Draw Pinion 1 (Bottom - Vivid Cobalt-Cyan Blue matching 3D Pinion 1)
+        drawVirtualGearBand(slice1, true, 'rgba(2, 132, 199, 0.40)', '#38bdf8', '#10b981');
+
+        // Draw Reference Circles (Tip Circles rva1, rva2, Pitch Circles rv1, rv2, Root Circles rvf1, rvf2)
+        ctx.save();
+        // Tip circles (subtle dashed)
+        ctx.setLineDash([5 / toothScale, 4 / toothScale]);
+        ctx.lineWidth = 1.0 / toothScale;
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.38)';
+        ctx.beginPath();
+        ctx.arc(0, rv1, rva1, -Math.PI * 0.78, -Math.PI * 0.22);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(251, 146, 60, 0.38)';
+        ctx.beginPath();
+        ctx.arc(0, -rv2, rva2, Math.PI * 0.22, Math.PI * 0.78);
+        ctx.stroke();
+
+        // Root circles (dotted)
+        ctx.setLineDash([3 / toothScale, 3 / toothScale]);
+        ctx.lineWidth = 1.0 / toothScale;
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.beginPath();
+        ctx.arc(0, rv1, rvf1, -Math.PI * 0.78, -Math.PI * 0.22);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(251, 146, 60, 0.45)';
+        ctx.beginPath();
+        ctx.arc(0, -rv2, rvf2, Math.PI * 0.22, Math.PI * 0.78);
+        ctx.stroke();
+
+        // Pitch circles (amber dash-dot)
+        ctx.setLineDash([10 / toothScale, 4 / toothScale, 2 / toothScale, 4 / toothScale]);
+        ctx.lineWidth = 1.4 / toothScale;
+        ctx.strokeStyle = '#facc15';
+        ctx.beginPath();
+        ctx.arc(0, rv1, rv1, -Math.PI * 0.78, -Math.PI * 0.22);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, -rv2, rv2, Math.PI * 0.22, Math.PI * 0.78);
+        ctx.stroke();
+
+        // Line of Action through Pitch Point P(0,0)
+        const alfa_t = slice1.alfa_t;
+        const loaLen = mmn * 2.2;
+        ctx.setLineDash([5 / toothScale, 3 / toothScale]);
+        ctx.strokeStyle = 'rgba(244, 63, 94, 0.75)';
+        ctx.lineWidth = 1.3 / toothScale;
+        ctx.beginPath();
+        ctx.moveTo(-loaLen * Math.cos(alfa_t), -loaLen * Math.sin(alfa_t));
+        ctx.lineTo(loaLen * Math.cos(alfa_t), loaLen * Math.sin(alfa_t));
+        ctx.stroke();
+        ctx.restore();
+
+        // Pitch Point P(0,0) Marker
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.arc(0, 0, 3.8 / toothScale, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1.2 / toothScale;
+        ctx.stroke();
+
+        // Callout annotation for Root Fillet Center & Radius Rf on Pinion 1 Tooth 0
+        const centerPsi0 = phase * pPsi1;
+        const fSol1 = slice1.fillet;
+        if (fSol1) {
+            const rCf = Math.hypot(fSol1.Cfx, fSol1.Cfy);
+            const psiCf = centerPsi0 + Math.atan2(fSol1.Cfx, fSol1.Cfy);
+            const cfx = rCf * Math.sin(psiCf);
+            const cfy = rv1 - rCf * Math.cos(psiCf);
+
+            // Dashed fillet circle preview at tooth 0 right root fillet
+            ctx.save();
+            ctx.setLineDash([2.5 / toothScale, 2.5 / toothScale]);
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 1.2 / toothScale;
+            ctx.beginPath();
+            ctx.arc(cfx, cfy, fSol1.Rf, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Center dot of Rf circle
+            ctx.fillStyle = '#10b981';
+            ctx.beginPath();
+            ctx.arc(cfx, cfy, 2.2 / toothScale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        ctx.restore(); // End viewport clip
+
+        // Footer Legend & R chân Readout inside Panel
+        const footY = panelY + panelH - 58;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+        ctx.fillRect(panelX + 2, footY, panelW - 4, 56);
+        ctx.strokeStyle = 'rgba(51, 65, 85, 0.8)';
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.moveTo(panelX + 2, footY);
+        ctx.lineTo(panelX + panelW - 2, footY);
+        ctx.stroke();
+
+        const rf1Val = slice1.fillet ? slice1.fillet.Rf : (0.38 * mmn);
+        const rf2Val = slice2.fillet ? slice2.fillet.Rf : (0.38 * mmn);
+
+        ctx.font = 'bold 10.5px Consolas, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#10b981';
+        ctx.fillText(`● R chân Bánh 1 (Rf1) = ${rf1Val.toFixed(2)} mm (0.38·mmn)`, panelX + 12, footY + 18);
+        ctx.fillStyle = '#facc15';
+        ctx.fillText(`● R chân Bánh 2 (Rf2) = ${rf2Val.toFixed(2)} mm | Cung đáy rãnh dfv`, panelX + 12, footY + 36);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText('■ Bánh dẫn 1', panelX + panelW - 12, footY + 18);
+        ctx.fillStyle = '#fb923c';
+        ctx.fillText('■ Bánh bị dẫn 2', panelX + panelW - 12, footY + 36);
+
+        ctx.restore();
+    }
+
     drawCadDimensions(ctx, d) {
-        const { g, Re, Ri, b, d1, d2, s1, c1, s2, c2, dae1, dae2, x_hub_end1, p1_heel_tip, p1_heel_tip_b, p2_heel_tip, p2_heel_tip_l } = d;
+        const { g, Re, Ri, b, d1, d2, s1, c1, s2, c2, dae1, dae2, x_hub_end1, y_back2, p1_heel_tip, p1_heel_tip_b, p2_heel_tip, p2_heel_tip_l } = d;
 
         // A. Pinion Tip Diameter dae1 (Vertical dimension on right side)
-        const x_dim_dae1 = x_hub_end1 + 25;
+        const x_dim_dae1 = x_hub_end1 + 28;
         const y_top_dae1 = -dae1 / 2.0;
         const y_bot_dae1 = dae1 / 2.0;
 
@@ -555,15 +952,16 @@ class BevelGearCanvas {
             { x: x_dim_dae1, y: y_top_dae1 },
             { x: x_dim_dae1, y: y_bot_dae1 },
             '\u2300dae1 = ' + dae1.toFixed(1),
-            '#34d399',
-            { x: 10, y: 0 },
+            '#38bdf8',
+            { x: 8, y: 0 },
             'left'
         );
 
-        // B. Gear Tip Diameter dae2 (Horizontal dimension at top)
-        const y_dim_dae2 = -dae2 / 2.0 - 28;
-        const x_left_dae2 = -dae2 / 2.0;
-        const x_right_dae2 = dae2 / 2.0;
+        // B. Gear Tip Diameter dae2 (Cleanly above Gear 2 back face)
+        const topEdgeY = y_back2 !== undefined ? Math.min(p2_heel_tip_l.y, p2_heel_tip.y, y_back2) : Math.min(p2_heel_tip_l.y, p2_heel_tip.y);
+        const y_dim_dae2 = topEdgeY - 26;
+        const x_left_dae2 = p2_heel_tip_l.x;
+        const x_right_dae2 = p2_heel_tip.x;
 
         ctx.beginPath();
         ctx.moveTo(p2_heel_tip_l.x, p2_heel_tip_l.y);
@@ -576,69 +974,69 @@ class BevelGearCanvas {
             { x: x_left_dae2, y: y_dim_dae2 },
             { x: x_right_dae2, y: y_dim_dae2 },
             '\u2300dae2 = ' + dae2.toFixed(1),
-            '#60a5fa',
+            '#fb923c',
             { x: 0, y: -10 },
             'center'
         );
 
-        // C. Face Width b (Parallel to pitch cone generator line)
-        const nx_p = -s1, ny_p = -c1;
-        const b_off = 32;
-        const p_b1 = { x: Ri * c1 + b_off * nx_p, y: -(Ri * s1 - b_off * ny_p) };
-        const p_b2 = { x: Re * c1 + b_off * nx_p, y: -(Re * s1 - b_off * ny_p) };
+        // C. Face Width b & Outer Cone Distance Re (Placed cleanly along lower pitch cone generator in open space)
+        const nx_low = -s1, ny_low = c1;
+        const b_off = 30;
+        const p_b1 = { x: Ri * c1 + b_off * nx_low, y: Ri * s1 + b_off * ny_low };
+        const p_b2 = { x: Re * c1 + b_off * nx_low, y: Re * s1 + b_off * ny_low };
 
         ctx.beginPath();
-        ctx.moveTo(Ri * c1, -Ri * s1);
-        ctx.lineTo(p_b1.x + 8 * nx_p, p_b1.y - 8 * ny_p);
-        ctx.moveTo(Re * c1, -Re * s1);
-        ctx.lineTo(p_b2.x + 8 * nx_p, p_b2.y - 8 * ny_p);
+        ctx.moveTo(Ri * c1, Ri * s1);
+        ctx.lineTo(p_b1.x + 8 * nx_low, p_b1.y + 8 * ny_low);
+        ctx.moveTo(Re * c1, Re * s1);
+        ctx.lineTo(p_b2.x + 8 * nx_low, p_b2.y + 8 * ny_low);
         ctx.stroke();
 
         this.drawDimensionLine(ctx,
             p_b1, p_b2,
             'b = ' + b.toFixed(1),
             '#f59e0b',
-            { x: 10 * nx_p, y: -10 * ny_p },
+            { x: 12 * nx_low, y: 12 * ny_low },
             'center'
         );
 
         // D. Outer Cone Distance Re
-        const re_off = 58;
-        const p_re1 = { x: re_off * nx_p, y: re_off * ny_p };
-        const p_re2 = { x: Re * c1 + re_off * nx_p, y: -(Re * s1 - re_off * ny_p) };
+        const re_off = 56;
+        const p_re1 = { x: re_off * nx_low, y: re_off * ny_low };
+        const p_re2 = { x: Re * c1 + re_off * nx_low, y: Re * s1 + re_off * ny_low };
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(p_re1.x + 8 * nx_p, p_re1.y - 8 * ny_p);
-        ctx.moveTo(Re * c1, -Re * s1);
-        ctx.lineTo(p_re2.x + 8 * nx_p, p_re2.y - 8 * ny_p);
+        ctx.lineTo(p_re1.x + 8 * nx_low, p_re1.y + 8 * ny_low);
+        ctx.moveTo(Re * c1, Re * s1);
+        ctx.lineTo(p_re2.x + 8 * nx_low, p_re2.y + 8 * ny_low);
         ctx.stroke();
 
         this.drawDimensionLine(ctx,
             p_re1, p_re2,
             'Re = ' + Re.toFixed(1),
             '#fbbf24',
-            { x: 10 * nx_p, y: -10 * ny_p },
+            { x: 12 * nx_low, y: 12 * ny_low },
             'center'
         );
 
         // E. Pitch Cone Angles (δ1, δ2)
         ctx.save();
-        ctx.strokeStyle = '#10b981';
+        ctx.strokeStyle = '#38bdf8';
         ctx.lineWidth = 1.0;
         ctx.beginPath();
         ctx.arc(0, 0, 85, -d1, 0);
         ctx.stroke();
-        ctx.fillStyle = '#10b981';
-        ctx.font = '11px sans-serif';
-        ctx.fillText('\u03B41 = ' + g.delta1_deg.toFixed(1) + '°', 95, -12);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText('\u03B41 = ' + (g.delta1_deg || (d1 * 180 / Math.PI)).toFixed(1) + '°', 92, -12);
 
-        ctx.strokeStyle = '#60a5fa';
+        ctx.strokeStyle = '#fb923c';
         ctx.beginPath();
-        ctx.arc(0, 0, 115, -Math.PI / 2, -d1);
+        ctx.arc(0, 0, 115, -d.sigmaRad, -d1);
         ctx.stroke();
-        ctx.fillStyle = '#60a5fa';
-        ctx.fillText('\u03B42 = ' + g.delta2_deg.toFixed(1) + '°', 20, -125);
+        ctx.fillStyle = '#fb923c';
+        ctx.fillText('\u03B42 = ' + (g.delta2_deg || (d2 * 180 / Math.PI)).toFixed(1) + '°', 18, -122);
         ctx.restore();
     }
 
@@ -698,12 +1096,12 @@ class BevelGearCanvas {
         ctx.restore();
     }
 
-    drawDataCard(ctx, g) {
+    drawDataCard(ctx, g, bp) {
         ctx.save();
-        const cx = 16, cy = 16;
-        const cardW = 260, cardH = 175;
+        const cx = 14, cy = 14;
+        const cardW = 248, cardH = 188;
 
-        ctx.fillStyle = 'rgba(11, 19, 41, 0.9)';
+        ctx.fillStyle = 'rgba(11, 19, 41, 0.90)';
         ctx.strokeStyle = '#1e293b';
         ctx.lineWidth = 1.0;
         ctx.beginPath();
@@ -713,21 +1111,23 @@ class BevelGearCanvas {
 
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
-        ctx.roundRect ? ctx.roundRect(cx, cy, cardW, 26, [6, 6, 0, 0]) : ctx.rect(cx, cy, cardW, 26);
+        ctx.roundRect ? ctx.roundRect(cx, cy, cardW, 25, [6, 6, 0, 0]) : ctx.rect(cx, cy, cardW, 25);
         ctx.fill();
 
         ctx.fillStyle = '#38bdf8';
-        ctx.font = 'bold 11px system-ui, sans-serif';
+        ctx.font = 'bold 10.5px system-ui, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText('📐 BẢNG THÔNG SỐ CHUẨN ISO 23509', cx + 10, cy + 13);
+        ctx.fillText('📐 MẶT CẮT TRỤC KHỚP 3D (ISO 23509)', cx + 10, cy + 12.5);
 
         const x1_str = (g.x1 >= 0 ? '+' : '') + (g.x1 || 0).toFixed(2);
         const x2_str = (g.x2 >= 0 ? '+' : '') + (g.x2 || 0).toFixed(2);
+        const rf_val = (0.38 * (bp.mmn || 10)).toFixed(2);
         const items = [
             ['Tỉ số truyền i', (g.i || (g.z2 / g.z1)).toFixed(3)],
             ['Số răng z1 / z2', g.z1 + ' / ' + g.z2],
             ['Mô-đun pháp mmn', (g.mmn || 10).toFixed(1) + ' mm'],
+            ['Bán kính lượn R chân', rf_val + ' mm (0.38·m)'],
             ['Góc nón chia δ1 / δ2', (g.delta1_deg || 0).toFixed(1) + '° / ' + (g.delta2_deg || 0).toFixed(1) + '°'],
             ['Bề rộng vành răng b', (g.b || 0).toFixed(1) + ' mm'],
             ['Góc xoắn răng β', (g.beta_deg || 0).toFixed(1) + '°'],
@@ -736,10 +1136,10 @@ class BevelGearCanvas {
 
         ctx.font = '10px system-ui, sans-serif';
         items.forEach((item, idx) => {
-            const rowY = cy + 40 + idx * 18;
-            ctx.fillStyle = '#94a3b8';
+            const rowY = cy + 38 + idx * 18;
+            ctx.fillStyle = idx === 3 ? '#10b981' : '#94a3b8';
             ctx.fillText(item[0], cx + 10, rowY);
-            ctx.fillStyle = '#f1f5f9';
+            ctx.fillStyle = idx === 3 ? '#10b981' : '#f1f5f9';
             ctx.font = 'bold 10px Consolas, monospace';
             ctx.textAlign = 'right';
             ctx.fillText(item[1], cx + cardW - 10, rowY);

@@ -1935,8 +1935,613 @@ const BevelCalcEngine = {
 
 
 /**
+ * MITCalc Web App - 3D Bevel Gear Solid & Surface Mesh Generator (Module 2)
+ * Generates 100% watertight closed manifold 3D Solid Meshes and Open Flank Surface Meshes
+ * for both Straight Bevel Gears (beta = 0) and Spiral Bevel Gears (beta != 0)
+ * 1-to-1 Authentic Port from MITCalc 1.74 (Calculation!U197:AQ202, Data1!C70:D87, Data1!H35:I52)
+ * Standards: ISO 23509, DIN 3971, DIN 3965, AGMA 2005.
+ * Features:
+ * - Authentic Conical Gear Blank Body from MITCalc Data1 (Hub, Rim, Bore & Conical Faces)
+ * - Tredgold Equivalent Virtual Involute Flanks with Pressure Angle alpha
+ * - Analytical C1-Tangent Circular Root Fillet (R_chan = 0.38 * m_n) & Preserved Root Land Arc
+ * - Linear Cone Convergence toward Apex V(0, 0, 0)
+ * - Tapered Tooth Thickness & Addendum/Dedendum along face width b (Re -> Ri)
+ * - Authentic Gleason Spiral Circular Arc Tooth Trace (beta > 0, R_tool = 1.5 * b)
+ * - Vertex Splitting (Zero-Ripple Planar Hub Faces & Conical Back/Front Faces)
+ * - Open Flank Surface Mesh (Mastercam 5-axis Surface Toolpaths & SolidWorks)
+ * - 100% Compatible with Three.js, Binary STL, and STEP AP214 (ISO 10303-21)
+ */
+
+const Bevel3DGenerator = {
+    /**
+     * Generates the exact 2D single-tooth contour (with C1 circular root fillet R = 0.38 * m_s
+     * and preserved root land arc) on the Tredgold virtual spur gear at cone distance R_s.
+     * Shared 1-to-1 between 3D Mesh Generation, 2D Interactive Canvas, and 2D DXF Export.
+     */
+    generateSliceToothContour(sliceOpt) {
+        const z = parseInt(sliceOpt.z) || 20;
+        const mmn = parseFloat(sliceOpt.mmn) || 10.0;
+        const Rm = parseFloat(sliceOpt.Rm) || 279.82;
+        const R_s = parseFloat(sliceOpt.R_s) || Rm;
+        const delta = parseFloat(sliceOpt.delta) || (Math.PI / 4.0);
+        const cosD = Math.cos(delta);
+        const sinD = Math.sin(delta);
+        const alfa = parseFloat(sliceOpt.alfa) || (20.0 * Math.PI / 180.0);
+        const beta = parseFloat(sliceOpt.beta) || 0.0;
+        const isSpiral = Math.abs(beta) > 1e-4;
+        const ha_s = parseFloat(sliceOpt.ha_s) || mmn;
+        const hf_s = parseFloat(sliceOpt.hf_s) || (1.2 * mmn);
+        const sn_s = parseFloat(sliceOpt.sn_s) || (mmn * Math.PI / 2.0);
+        const ptsPerFlank = Math.max(6, parseInt(sliceOpt.ptsPerFlank) || 20);
+        const dThetaKiss = parseFloat(sliceOpt.dThetaKiss) || 0.0;
+
+        // Transverse tooth parameters for virtual gear (Tredgold ISO 23509)
+        const cos_beta = isSpiral ? Math.max(0.2, Math.cos(beta)) : 1.0;
+        const tan_alfa_t = Math.tan(alfa) / cos_beta;
+        const alfa_t = Math.atan(tan_alfa_t);
+        const inv_alfa_t = tan_alfa_t - alfa_t;
+        const sn_t = sn_s / cos_beta;
+
+        // Tredgold virtual spur gear at cone distance R_s
+        const rv = (R_s * sinD) / cosD;
+        const rvb = rv * Math.cos(alfa_t);
+        const rva = rv + ha_s;
+        const rvf = Math.max(0.1, rv - hf_s);
+        const psi_v = sn_t / (2.0 * rv);
+        const psi_b = psi_v + inv_alfa_t;
+
+        const half_pitch = Math.PI / z;
+        const psi_half_pitch = half_pitch * cosD;
+
+        // Local normal module at slice R_s and standard root fillet radius R = 0.38 * m_s (Rule 4)
+        const m_s = mmn * (R_s / Math.max(1.0, Rm));
+        const Rf_nom = Math.min(0.38 * m_s, 0.75 * hf_s);
+
+        // Analytical C1-tangent circular root fillet solver in 2D virtual plane (xv = r*sin(psi), yv = r*cos(psi))
+        function solveFillet(r_f) {
+            let rt, alfa_f, psi_t, hasStem;
+            const sqDiff = (rvf + r_f) * (rvf + r_f) - rvb * rvb;
+            if (sqDiff >= r_f * r_f) {
+                // Fillet circle is directly C1-tangent to the involute flank at rt >= rvb
+                const Lt = Math.sqrt(sqDiff) - r_f;
+                rt = Math.sqrt(rvb * rvb + Lt * Lt);
+                alfa_f = Math.acos(Math.min(1.0, rvb / rt));
+                psi_t = psi_b - (Math.tan(alfa_f) - alfa_f);
+                hasStem = false;
+            } else {
+                // Deep root below base circle: involute reaches rvb, radial stem to rt < rvb
+                rt = Math.sqrt(rvf * rvf + 2.0 * rvf * r_f);
+                alfa_f = 0.0;
+                psi_t = psi_b;
+                hasStem = true;
+            }
+            const Ptx = rt * Math.sin(psi_t);
+            const Pty = rt * Math.cos(psi_t);
+            const Cfx = Ptx + r_f * Math.cos(psi_t - alfa_f);
+            const Cfy = Pty - r_f * Math.sin(psi_t - alfa_f);
+            const psi_root = Math.atan2(Cfx, Cfy);
+            const Prx = rvf * Math.sin(psi_root);
+            const Pry = rvf * Math.cos(psi_root);
+            const gamma0 = Math.atan2(Pty - Cfy, Ptx - Cfx); // at flank tangency point Pt
+            const gamma1 = Math.atan2(Pry - Cfy, Prx - Cfx); // at root circle tangency point Pr
+            let dGamma = gamma1 - gamma0;
+            while (dGamma > Math.PI) dGamma -= 2.0 * Math.PI;
+            while (dGamma < -Math.PI) dGamma += 2.0 * Math.PI;
+            return {
+                Rf: r_f, rt, alfa_f, psi_t, hasStem,
+                Ptx, Pty, Cfx, Cfy, psi_root, Prx, Pry, gamma0, dGamma
+            };
+        }
+
+        let fSol = solveFillet(Rf_nom);
+        const maxPsiRoot = psi_half_pitch * 0.98;
+        if (fSol.psi_root > maxPsiRoot && fSol.psi_root > fSol.psi_t) {
+            const scaleRf = Math.max(0.15, (maxPsiRoot - fSol.psi_t) / (fSol.psi_root - fSol.psi_t));
+            fSol = solveFillet(Rf_nom * scaleRf);
+        }
+
+        const theta_root = Math.min(half_pitch * 0.99, fSol.psi_root / cosD);
+        const ptsFillet = sliceOpt.ptsFillet || Math.max(5, Math.min(8, Math.round(ptsPerFlank * 0.25)));
+        const r_inv_start = Math.max(fSol.rt, rvb);
+        const hSpan = Math.max(0.1, rva - rvf);
+
+        // Evaluate right-side involute flank from r_inv_start to rva
+        function evalInvolute(t) {
+            const r_c = r_inv_start + t * (rva - r_inv_start);
+            const alpha_c = Math.acos(Math.min(1.0, rvb / r_c));
+            const inv_c = Math.tan(alpha_c) - alpha_c;
+            const psi_c = Math.max(0.0001, psi_b - inv_c);
+            const h = r_c - rv;
+            const theta = psi_c / cosD;
+            const flankT = (r_c - rvf) / hSpan;
+            return { h, theta, r_c, psi_c, flankT };
+        }
+
+        const tipPt = evalInvolute(1.0);
+        const toothContour = [];
+
+        // 1. Left Root Land Start (-half_pitch)
+        toothContour.push({ h: -hf_s, theta: -half_pitch, flankT: 0.0, isEngageFlank: false, flankId: 0.0, zone: 'root_land' });
+
+        // 2. Left Circular Root Fillet Arc (Cung lượn chân răng R chân trái: tau = 1 -> 1/ptsFillet)
+        for (let m = ptsFillet; m >= 1; m--) {
+            const tau = m / ptsFillet;
+            const gamma = fSol.gamma0 + tau * fSol.dGamma;
+            const xv = fSol.Cfx + fSol.Rf * Math.cos(gamma);
+            const yv = fSol.Cfy + fSol.Rf * Math.sin(gamma);
+            const rc = Math.hypot(xv, yv);
+            const psic = Math.atan2(xv, yv);
+            const h = rc - rv;
+            const theta = (psic / cosD) + dThetaKiss * (1.0 - tau);
+            const flankT = Math.max(0.0, (rc - rvf) / hSpan);
+            toothContour.push({ h, theta: -theta, flankT, isEngageFlank: false, flankId: 0.0, zone: 'fillet' });
+        }
+
+        // Optional radial stem if root circle is far below base circle (fSol.hasStem)
+        if (fSol.hasStem && fSol.rt < rvb - 1e-4) {
+            for (let m = 0; m < 2; m++) {
+                const frac = m / 2.0;
+                const rc = fSol.rt + frac * (rvb - fSol.rt);
+                const h = rc - rv;
+                const theta = (psi_b / cosD) + dThetaKiss;
+                const flankT = Math.max(0.0, (rc - rvf) / hSpan);
+                toothContour.push({ h, theta: -theta, flankT, isEngageFlank: false, flankId: 1.0, zone: 'stem' });
+            }
+        }
+
+        // 3. Left Involute Flank (Flank 1: t = 0 -> 1)
+        for (let k = 0; k < ptsPerFlank; k++) {
+            const t = k / (ptsPerFlank - 1);
+            const pt = evalInvolute(t);
+            toothContour.push({
+                h: pt.h,
+                theta: -(pt.theta + dThetaKiss),
+                flankT: pt.flankT,
+                isEngageFlank: true,
+                flankId: 1.0,
+                zone: k === ptsPerFlank - 1 ? 'tip_corner' : 'flank'
+            });
+        }
+
+        // 4. Tooth Tip Land Arc (Cung đỉnh răng tròn đều trên mặt nón đỉnh: -tipTheta -> +tipTheta)
+        const tipTheta = tipPt.theta + dThetaKiss;
+        const ptsTip = 5;
+        for (let m = 1; m <= ptsTip; m++) {
+            const frac = m / (ptsTip + 1);
+            const th = -tipTheta + frac * (2.0 * tipTheta);
+            toothContour.push({ h: tipPt.h, theta: th, flankT: 1.0, isEngageFlank: false, flankId: 0.0, zone: 'tip_land' });
+        }
+
+        // 5. Right Involute Flank (Flank 2: t = 1 -> 0)
+        for (let k = ptsPerFlank - 1; k >= 0; k--) {
+            const t = k / (ptsPerFlank - 1);
+            const pt = evalInvolute(t);
+            toothContour.push({
+                h: pt.h,
+                theta: +(pt.theta + dThetaKiss),
+                flankT: pt.flankT,
+                isEngageFlank: true,
+                flankId: 2.0,
+                zone: k === ptsPerFlank - 1 ? 'tip_corner' : 'flank'
+            });
+        }
+
+        // Optional radial stem on right side
+        if (fSol.hasStem && fSol.rt < rvb - 1e-4) {
+            for (let m = 1; m >= 0; m--) {
+                const frac = m / 2.0;
+                const rc = fSol.rt + frac * (rvb - fSol.rt);
+                const h = rc - rv;
+                const theta = (psi_b / cosD) + dThetaKiss;
+                const flankT = Math.max(0.0, (rc - rvf) / hSpan);
+                toothContour.push({ h, theta: +theta, flankT, isEngageFlank: false, flankId: 2.0, zone: 'stem' });
+            }
+        }
+
+        // 6. Right Circular Root Fillet Arc (Cung lượn chân răng R chân phải: tau = 1/ptsFillet -> 1)
+        for (let m = 1; m <= ptsFillet; m++) {
+            const tau = m / ptsFillet;
+            const gamma = fSol.gamma0 + tau * fSol.dGamma;
+            const xv = fSol.Cfx + fSol.Rf * Math.cos(gamma);
+            const yv = fSol.Cfy + fSol.Rf * Math.sin(gamma);
+            const rc = Math.hypot(xv, yv);
+            const psic = Math.atan2(xv, yv);
+            const h = rc - rv;
+            const theta = (psic / cosD) + dThetaKiss * (1.0 - tau);
+            const flankT = Math.max(0.0, (rc - rvf) / hSpan);
+            toothContour.push({ h, theta: +theta, flankT, isEngageFlank: false, flankId: 0.0, zone: 'fillet' });
+        }
+
+        // 7. Right Root Land End (+half_pitch)
+        toothContour.push({ h: -hf_s, theta: +half_pitch, flankT: 0.0, isEngageFlank: false, flankId: 0.0, zone: 'root_land' });
+
+        return {
+            toothContour,
+            rv, rvb, rva, rvf, alfa_t, psi_v, psi_b, half_pitch, cosD, sinD,
+            fillet: fSol
+        };
+    },
+
+    /**
+     * Generates 2D Tredgold Virtual Gear Polygon Points (in 2D XY plane around virtual center)
+     * with exact C1 circular root fillet R_chan = 0.38 * mmn, used by 2D Canvas & DXF Exporter.
+     */
+    generate2DVirtualGearProfile(opt) {
+        const sliceRes = this.generateSliceToothContour(opt);
+        const { toothContour, rv, rvb, rva, rvf, alfa_t, cosD, fillet } = sliceRes;
+        const z = parseInt(opt.z) || 20;
+        const z_virtual = z / cosD;
+        const numTeethToDraw = opt.numTeeth || Math.max(5, Math.min(z, Math.round(z_virtual)));
+        const pitchAngleVirtual = (2.0 * Math.PI) / z_virtual;
+
+        // Build multi-tooth 2D points around the virtual gear center (0, 0)
+        // Tooth 0 is centered at angle 0 (pointing along +X or +Y as needed)
+        const halfCount = Math.floor(numTeethToDraw / 2);
+        const points = [];
+        for (let tIdx = -halfCount; tIdx <= halfCount; tIdx++) {
+            const basePsi = tIdx * pitchAngleVirtual;
+            for (let p = 0; p < toothContour.length; p++) {
+                // Skip duplicate boundary point between consecutive teeth
+                if (tIdx > -halfCount && p === 0) continue;
+                const pt = toothContour[p];
+                const rc = rv + pt.h;
+                const psi = basePsi + pt.theta * cosD;
+                points.push({
+                    x: rc * Math.cos(psi),
+                    y: rc * Math.sin(psi),
+                    r: rc,
+                    psi,
+                    zone: pt.zone
+                });
+            }
+        }
+
+        return {
+            points,
+            toothContour,
+            rv, rvb, rva, rvf, alfa_t, cosD, z_virtual, pitchAngleVirtual,
+            fillet
+        };
+    },
+
+    /**
+     * Generates a complete 3D solid mesh or open surface mesh for a bevel gear
+     * @param {Object} opt - Gear geometry parameters
+     * @returns {Object} Mesh data: { vertices, normals, indices, rawTriangles, bbox, isSurfaceOnly }
+     */
+    generateGearMesh(opt) {
+        const z = parseInt(opt.z) || 20;
+        const mmn = parseFloat(opt.mmn) || 10.0;
+        const delta = parseFloat(opt.delta) || (Math.PI / 4.0);
+        const cosD = Math.cos(delta);
+        const sinD = Math.sin(delta);
+
+        const Re = Math.max(10.0, parseFloat(opt.Re) || 100.0);
+        const b = Math.max(2.0, parseFloat(opt.b) || 30.0);
+        const Ri = Math.max(2.0, opt.Ri !== undefined ? parseFloat(opt.Ri) : (Re - b));
+        const Rm = opt.Rm !== undefined ? parseFloat(opt.Rm) : (Re - b / 2.0);
+
+        const alfa = parseFloat(opt.alfa) || (20.0 * Math.PI / 180.0);
+        const beta = (opt.beta !== undefined && opt.beta !== null) ? parseFloat(opt.beta) : 0.0;
+        const x = parseFloat(opt.x) || 0.0;
+        const xt = parseFloat(opt.xt) || 0.0;
+        const hand = opt.hand !== undefined ? parseInt(opt.hand) : 1;
+        const gearingType = opt.gearingType || 'gleason';
+
+        const isSpiral = Math.abs(beta) > 1e-4;
+        const isSurfaceOnly = !!opt.surfaceOnly;
+
+        // Addendum and dedendum at outer cone Re (Heel)
+        let ha_e = opt.ha_e !== undefined ? parseFloat(opt.ha_e) : (opt.ha !== undefined ? parseFloat(opt.ha) * (Re / Rm) : mmn * (1.0 + x) * (Re / Rm));
+        let hf_e = opt.hf_e !== undefined ? parseFloat(opt.hf_e) : (opt.hf !== undefined ? parseFloat(opt.hf) * (Re / Rm) : mmn * (1.2 - x) * (Re / Rm));
+
+        // Tooth thickness at outer cone Re (Heel)
+        const sn_e = opt.sn_e !== undefined ? parseFloat(opt.sn_e) : (opt.sn !== undefined ? parseFloat(opt.sn) * (Re / Rm) : mmn * (Math.PI / 2.0 + 2.0 * x * Math.tan(alfa) + xt) * (Re / Rm));
+        const sa_e = opt.sa_e !== undefined ? parseFloat(opt.sa_e) : (opt.sa !== undefined ? parseFloat(opt.sa) * (Re / Rm) : sn_e * 0.45);
+
+        // MITCalc Section 16 blank offset parameters (Data1!C75, C84, H40, H49)
+        const Hin = parseFloat(opt.Hin) || (mmn * (z < 30 ? 0.48 : 0.59));
+        const Hout = parseFloat(opt.Hout) || (mmn * (z < 30 ? 1.33 : 1.995));
+
+        const scale_i = Ri / Re;
+        const ha_i = ha_e * scale_i;
+        const hf_i = hf_e * scale_i;
+
+        // Shaft bore diameter (standard ISO 23509 shaft bore)
+        const r_root_toe = Ri * sinD - hf_i * cosD;
+        const defaultBore = Math.max(10.0, r_root_toe * 0.9);
+        const dBore = Math.min(r_root_toe * 0.85 * 2.0, Math.max(6.0, parseFloat(opt.dBore) || defaultBore));
+        const rBore = dBore / 2.0;
+
+        // Authentic MITCalc Data1 Blank Coordinates (Z along axis from apex, R radial):
+        const z_toe_hub = Ri * cosD + (hf_i + Hin) * sinD;
+        const r_toe_rim = Math.max(rBore + 2.0, Ri * sinD - (hf_i + Hin) * cosD);
+        const z_toe_root = Ri * cosD + hf_i * sinD;
+        const r_toe_root = Ri * sinD - hf_i * cosD;
+
+        const z_heel_root = Re * cosD + hf_e * sinD;
+        const r_heel_root = Re * sinD - hf_e * cosD;
+        const z_heel_hub = Re * cosD + (hf_e + Hout) * sinD;
+        const r_heel_rim = Math.max(rBore + 5.0, Re * sinD - (hf_e + Hout) * cosD);
+
+        // 8 Cấp Độ Mịn Lưới Thân Khai (Tối ưu hóa độ mịn cao & hiệu năng 60 FPS mượt mà)
+        const densityPresets = {
+            1: { pts: 10, slicesSpiral: 14, slicesStraight: 12 }, // Cấp 1: Tiêu Chuẩn Nhanh
+            2: { pts: 12, slicesSpiral: 18, slicesStraight: 16 }, // Cấp 2: Mịn Mức 2
+            3: { pts: 16, slicesSpiral: 22, slicesStraight: 20 }, // Cấp 3: Mịn Mức 3
+            4: { pts: 20, slicesSpiral: 26, slicesStraight: 24 }, // Cấp 4: Mịn Mức 4 (Cân Bằng)
+            5: { pts: 24, slicesSpiral: 30, slicesStraight: 28 }, // Cấp 5: Rất Mịn Mức 5
+            6: { pts: 28, slicesSpiral: 36, slicesStraight: 32 }, // Cấp 6: Siêu Mịn Mức 6 (CAM/CNC) [Mặc Định Cao]
+            7: { pts: 34, slicesSpiral: 42, slicesStraight: 38 }, // Cấp 7: Cực Mịn Mức 7 (Độ Nét Cao)
+            8: { pts: 40, slicesSpiral: 48, slicesStraight: 44 }  // Cấp 8: Tuyệt Đối Mức 8 (Ultra Precision CAD)
+        };
+
+        const dLevel = Math.max(1, Math.min(8, parseInt(opt.meshDensityLevel) || 6));
+        const preset = densityPresets[dLevel] || densityPresets[6];
+
+        const defaultSlices = isSpiral ? preset.slicesSpiral : preset.slicesStraight;
+        const numSlices = opt.numSlices !== undefined ? Math.max(4, Math.min(64, parseInt(opt.numSlices))) : defaultSlices;
+        const ptsPerFlank = opt.ptsPerFlank !== undefined ? Math.max(6, Math.min(50, parseInt(opt.ptsPerFlank))) : preset.pts;
+        const R_tool = 1.5 * b; // MITCalc Section 16.4 cutter radius
+
+        // 1. Generate tooth rings for all slices along face width b (Re -> Ri)
+        const layers = [];
+
+        for (let s = 0; s <= numSlices; s++) {
+            const frac = s / numSlices;
+            const R_s = Re - frac * (Re - Ri);
+            const scale_s = R_s / Re;
+            const u = (R_s - Rm) / b;
+
+            let spiralAngle = 0.0;
+            if (isSpiral) {
+                if (gearingType === 'straight_type1') {
+                    const V = hand * u * b * Math.tan(beta);
+                    spiralAngle = V / Math.max(1.0, R_s * sinD);
+                } else {
+                    const term = u * b + R_tool * Math.sin(beta);
+                    const W = hand * (R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term)));
+                    // Conical circumferential development: arc angle theta = W / r_pitch (exact conjugate ratio z2/z1 across all slices)
+                    spiralAngle = W / Math.max(1.0, R_s * sinD);
+                }
+            } else {
+                spiralAngle = 0.0;
+            }
+
+            const r_pitch = R_s * sinD;
+            const z_pitch = R_s * cosD;
+            const ha_s = ha_e * scale_s;
+            const hf_s = hf_e * scale_s;
+            const sn_s = sn_e * scale_s;
+
+            // Conjugate Mesh Contact Mode in Flank-Only Mode:
+            const contactMode = opt.contactMode || 'theory';
+            const isPinion = (opt.hand === -1) || (opt.isPinion === true);
+            let dThetaKiss = 0.0;
+            if (isPinion && isSurfaceOnly) {
+                if (contactMode === 'gleason') {
+                    const K_kiss = Math.max(0.0, 1.0 - 4.0 * u * u);
+                    dThetaKiss = (0.065 * K_kiss) / Math.max(1.0, r_pitch);
+                } else {
+                    const linearScale = R_s / Rm;
+                    dThetaKiss = (0.028 * linearScale) / Math.max(1.0, r_pitch);
+                }
+            }
+
+            // Build exact single-tooth contour with C1 circular root fillet R_chan = 0.38 * m_s
+            const { toothContour } = this.generateSliceToothContour({
+                z, mmn, Rm, R_s, delta, alfa, beta, isSpiral,
+                ha_s, hf_s, sn_s, ptsPerFlank, dThetaKiss
+            });
+
+            const ring = [];
+            for (let tooth = 0; tooth < z; tooth++) {
+                const centerAngle = (tooth * 2.0 * Math.PI) / z + spiralAngle;
+                // Exclude the last point of toothContour (which equals the first point of the next tooth at +half_pitch)
+                // to prevent zero-area degenerate triangles at tooth space boundaries!
+                for (let p = 0; p < toothContour.length - 1; p++) {
+                    const pt = toothContour[p];
+                    const ang = centerAngle + pt.theta;
+                    const r_pt = r_pitch + pt.h * cosD;
+                    const z_pt = z_pitch - pt.h * sinD;
+                    ring.push({
+                        x: r_pt * Math.cos(ang),
+                        y: r_pt * Math.sin(ang),
+                        z: z_pt,
+                        r: r_pt,
+                        h: pt.h,
+                        uFace: u,
+                        flankT: pt.flankT,
+                        isEngageFlank: pt.isEngageFlank ? 1.0 : 0.0,
+                        flankId: pt.flankId || 0.0,
+                        zone: pt.zone
+                    });
+                }
+            }
+            layers.push(ring);
+        }
+
+        const N = layers[0].length;
+        const vertices = [];
+        const normals = [];
+        const indices = [];
+        const rawTriangles = [];
+        const tcaParams = [];
+
+        function addTri(p1, p2, p3, nExplicit = null) {
+            const ax = p2.x - p1.x, ay = p2.y - p1.y, az = p2.z - p1.z;
+            const bx = p3.x - p1.x, by = p3.y - p1.y, bz = p3.z - p1.z;
+            let nx = ay * bz - az * by;
+            let ny = az * bx - ax * bz;
+            let nz = ax * by - ay * bx;
+            const len = Math.hypot(nx, ny, nz);
+            if (len > 1e-9) { nx /= len; ny /= len; nz /= len; }
+            else { nx = 0; ny = 0; nz = 1; }
+
+            const n = nExplicit || { x: nx, y: ny, z: nz };
+            const idx = vertices.length / 3;
+
+            vertices.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
+            normals.push(n.x, n.y, n.z, n.x, n.y, n.z, n.x, n.y, n.z);
+            indices.push(idx, idx + 1, idx + 2);
+
+            tcaParams.push(
+                p1.uFace !== undefined ? p1.uFace : 0.0,
+                p1.flankT !== undefined ? p1.flankT : -1.0,
+                p1.flankId !== undefined ? p1.flankId : (p1.isEngageFlank ? 1.0 : 0.0),
+                p2.uFace !== undefined ? p2.uFace : 0.0,
+                p2.flankT !== undefined ? p2.flankT : -1.0,
+                p2.flankId !== undefined ? p2.flankId : (p2.isEngageFlank ? 1.0 : 0.0),
+                p3.uFace !== undefined ? p3.uFace : 0.0,
+                p3.flankT !== undefined ? p3.flankT : -1.0,
+                p3.flankId !== undefined ? p3.flankId : (p3.isEngageFlank ? 1.0 : 0.0)
+            );
+
+            rawTriangles.push([
+                [p1.x, p1.y, p1.z],
+                [p2.x, p2.y, p2.z],
+                [p3.x, p3.y, p3.z],
+                [n.x, n.y, n.z]
+            ]);
+        }
+
+        function addQuad(p1, p2, p3, p4, nExplicit = null) {
+            addTri(p1, p2, p3, nExplicit);
+            addTri(p1, p3, p4, nExplicit);
+        }
+
+        // GROUP 1: TOOTH FLANK SURFACES, CIRCULAR ROOT FILLETS (R CHAN) & ROOT/TIP LANDS (ALONG FACE WIDTH b)
+        for (let s = 0; s < numSlices; s++) {
+            const L1 = layers[s];
+            const L2 = layers[s + 1];
+            for (let j = 0; j < N; j++) {
+                const nextJ = (j + 1) % N;
+                addQuad(L1[j], L2[j], L2[nextJ], L1[nextJ]);
+            }
+        }
+
+        // Return open flank shell if surfaceOnly requested (Mastercam 5-axis toolpaths)
+        if (isSurfaceOnly) {
+            const bbox = Bevel3DGenerator._computeBBox(vertices);
+            return {
+                vertices: new Float32Array(vertices),
+                normals: new Float32Array(normals),
+                indices: new Uint32Array(indices),
+                tcaParams: new Float32Array(tcaParams),
+                rawTriangles,
+                bbox,
+                isSurfaceOnly: true,
+                z, mmn, b, Re, Ri, dBore
+            };
+        }
+
+        // GROUP 2: OUTER HEEL BLANK BODY (R = Re, SLICE 0)
+        const L_heel = layers[0];
+        const heelRimPts = [];
+        const heelBorePts = [];
+
+        for (let j = 0; j < N; j++) {
+            const ang = Math.atan2(L_heel[j].y, L_heel[j].x);
+            heelRimPts.push({ x: r_heel_rim * Math.cos(ang), y: r_heel_rim * Math.sin(ang), z: z_heel_hub });
+            heelBorePts.push({ x: rBore * Math.cos(ang), y: rBore * Math.sin(ang), z: z_heel_hub });
+        }
+
+        const nHeelFace = { x: 0, y: 0, z: 1.0 };
+        for (let j = 0; j < N; j++) {
+            const nextJ = (j + 1) % N;
+            const angMid = Math.atan2(
+                0.5 * (L_heel[j].y + L_heel[nextJ].y),
+                0.5 * (L_heel[j].x + L_heel[nextJ].x)
+            );
+            const nHeelCone = { x: sinD * Math.cos(angMid), y: sinD * Math.sin(angMid), z: cosD };
+            addQuad(heelRimPts[j], L_heel[j], L_heel[nextJ], heelRimPts[nextJ], nHeelCone);
+            addQuad(heelBorePts[j], heelRimPts[j], heelRimPts[nextJ], heelBorePts[nextJ], nHeelFace);
+        }
+
+        // GROUP 3: INNER TOE BLANK BODY (R = Ri, SLICE numSlices)
+        const L_toe = layers[numSlices];
+        const toeRimPts = [];
+        const toeBorePts = [];
+
+        for (let j = 0; j < N; j++) {
+            const ang = Math.atan2(L_toe[j].y, L_toe[j].x);
+            toeRimPts.push({ x: r_toe_rim * Math.cos(ang), y: r_toe_rim * Math.sin(ang), z: z_toe_hub });
+            toeBorePts.push({ x: rBore * Math.cos(ang), y: rBore * Math.sin(ang), z: z_toe_hub });
+        }
+
+        const nToeFace = { x: 0, y: 0, z: -1.0 };
+        for (let j = 0; j < N; j++) {
+            const nextJ = (j + 1) % N;
+            const angMid = Math.atan2(
+                0.5 * (L_toe[j].y + L_toe[nextJ].y),
+                0.5 * (L_toe[j].x + L_toe[nextJ].x)
+            );
+            const nToeCone = { x: -sinD * Math.cos(angMid), y: -sinD * Math.sin(angMid), z: -cosD };
+            addQuad(L_toe[j], toeRimPts[j], toeRimPts[nextJ], L_toe[nextJ], nToeCone);
+            addQuad(toeRimPts[j], toeBorePts[j], toeBorePts[nextJ], toeRimPts[nextJ], nToeFace);
+        }
+
+        // GROUP 4: INNER CYLINDRICAL SHAFT BORE (RADIUS rBore, FROM z_toe TO z_heel)
+        for (let j = 0; j < N; j++) {
+            const nextJ = (j + 1) % N;
+            const angMid = Math.atan2(heelBorePts[j].y, heelBorePts[j].x);
+            const nBore = { x: -Math.cos(angMid), y: -Math.sin(angMid), z: 0 };
+            addQuad(heelBorePts[j], heelBorePts[nextJ], toeBorePts[nextJ], toeBorePts[j], nBore);
+        }
+
+        const bbox = Bevel3DGenerator._computeBBox(vertices);
+        return {
+            vertices: new Float32Array(vertices),
+            normals: new Float32Array(normals),
+            indices: new Uint32Array(indices),
+            tcaParams: new Float32Array(tcaParams),
+            rawTriangles,
+            bbox,
+            isSurfaceOnly: false,
+            z, mmn, b, Re, Ri, dBore,
+            z_toe_hub, z_heel_hub, rBore
+        };
+    },
+
+    /**
+     * Generates an Open Flank Surface Mesh directly (CAM Drive Surfaces)
+     */
+    generateGearSurfaceMesh(opt) {
+        return this.generateGearMesh({ ...opt, surfaceOnly: true });
+    },
+
+    /**
+     * Computes 3D Bounding Box
+     * @private
+     */
+    _computeBBox(vertices) {
+        let minX = Infinity, minY = Infinity, minZ = Infinity;
+        let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+        for (let i = 0; i < vertices.length; i += 3) {
+            const x = vertices[i], y = vertices[i + 1], z = vertices[i + 2];
+            if (x < minX) minX = x; if (x > maxX) maxX = x;
+            if (y < minY) minY = y; if (y > maxY) maxY = y;
+            if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+        }
+        return {
+            min: [minX, minY, minZ],
+            max: [maxX, maxY, maxZ],
+            center: [(minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2],
+            size: [maxX - minX, maxY - minY, maxZ - minZ]
+        };
+    }
+};
+
+if (typeof window !== 'undefined') {
+    window.Bevel3DGenerator = Bevel3DGenerator;
+}
+
+if (typeof window !== 'undefined') window.Bevel3DGenerator = Bevel3DGenerator;
+
+
+/**
  * MITCalc Web App - 2D Interactive Bevel Gear Canvas Visualizer
- * Industrial-Grade Axial Engineering Cross-Section & Kinematic Meshing Simulator
+ * 1-to-1 Synchronized with 3D WebGL Model (Blank Geometry, Colors & C1 Root Fillet R_chan = 0.38*mmn)
  * Standards: ISO 23509, DIN 3971, DIN 3965, ISO 128 (Technical Drawings - Hatching)
  */
 
@@ -1956,6 +2561,7 @@ class BevelGearCanvas {
         this.animSpeed = 1.0;
         this.animDirection = 1; // 1: Thuận, -1: Nghịch
         this.isRunning = true;
+        this.profileResolution = 6;
 
         // Layer visibility toggles
         this.showDimensions = true;
@@ -1966,6 +2572,11 @@ class BevelGearCanvas {
 
         this.initEvents();
         this.animate();
+    }
+
+    setProfileResolution(level) {
+        this.profileResolution = Math.max(1, Math.min(11, parseInt(level) || 6));
+        this.render();
     }
 
     setAnimSpeed(speed) {
@@ -2091,11 +2702,70 @@ class BevelGearCanvas {
     }
 
     animate() {
+        requestAnimationFrame(() => this.animate());
+        if (!this.canvas || this.canvas.clientWidth === 0 || this.canvas.clientHeight === 0) {
+            return;
+        }
         if (this.isRunning && this.geom) {
-            this.angle1 += 0.02 * (this.animSpeed || 1.0) * (this.animDirection || 1);
+            this.angle1 += 0.015 * (this.animSpeed || 1.0) * (this.animDirection || 1);
             this.render();
         }
-        requestAnimationFrame(() => this.animate());
+    }
+
+    /**
+     * Computes the exact 3D-matched blank parameters for Pinion 1 and Gear 2
+     * (Matches Bevel3DGenerator & Bevel3DVisualizer 1-to-1)
+     */
+    _get3DMatchedBlankParams(g) {
+        const z1 = parseInt(g.z1) || 18;
+        const z2 = parseInt(g.z2) || 45;
+        const mmn = parseFloat(g.mmn) || 10.0;
+        const b = parseFloat(g.b) || 117.0;
+        const Re = parseFloat(g.Re) || 338.0;
+        const Rm = parseFloat(g.Rm) || (Re - b / 2.0);
+        const Ri = parseFloat(g.Ri) || (Re - b);
+
+        const Sigma_deg = parseFloat(g.Sigma_deg !== undefined ? g.Sigma_deg : g.Sigma) || 90.0;
+        const sigmaRad = (Sigma_deg * Math.PI) / 180.0;
+        const d1 = parseFloat(g.delta1) || Math.atan(Math.sin(sigmaRad) / ((z2 / z1) + Math.cos(sigmaRad)));
+        const d2 = sigmaRad - d1;
+
+        const s1 = Math.sin(d1), c1 = Math.cos(d1);
+        const s2 = Math.sin(d2), c2 = Math.cos(d2);
+
+        const hae1 = parseFloat(g.hae1) || (mmn * 1.32 * (Re / Rm));
+        const hfe1 = parseFloat(g.hfe1) || (mmn * 0.88 * (Re / Rm));
+        const hai1 = hae1 * (Ri / Re);
+        const hfi1 = hfe1 * (Ri / Re);
+
+        const hae2 = parseFloat(g.hae2) || (mmn * 0.68 * (Re / Rm));
+        const hfe2 = parseFloat(g.hfe2) || (mmn * 1.52 * (Re / Rm));
+        const hai2 = hae2 * (Ri / Re);
+        const hfi2 = hfe2 * (Ri / Re);
+
+        const Hin1 = parseFloat(g.H1in || g.a_offset1) || 4.836;
+        const Hout1 = parseFloat(g.H1out || g.b_offset1) || 13.300;
+        const Hin2 = parseFloat(g.H2in || g.a_offset2) || 5.911;
+        const Hout2 = parseFloat(g.H2out || g.b_offset2) || 19.950;
+
+        const r_root_toe1 = Ri * s1 - hfi1 * c1;
+        const defaultBore1 = Math.max(10.0, r_root_toe1 * 0.9);
+        const dBore1 = Math.min(r_root_toe1 * 0.85 * 2.0, Math.max(6.0, parseFloat(g.dBore1) || 50.0 || defaultBore1));
+        const rBore1 = dBore1 / 2.0;
+
+        const r_root_toe2 = Ri * s2 - hfi2 * c2;
+        const defaultBore2 = Math.max(10.0, r_root_toe2 * 0.9);
+        const dBore2 = Math.min(r_root_toe2 * 0.85 * 2.0, Math.max(6.0, parseFloat(g.dBore2) || 100.0 || defaultBore2));
+        const rBore2 = dBore2 / 2.0;
+
+        return {
+            z1, z2, mmn, b, Re, Rm, Ri, Sigma_deg, sigmaRad,
+            d1, d2, s1, c1, s2, c2,
+            hae1, hfe1, hai1, hfi1,
+            hae2, hfe2, hai2, hfi2,
+            Hin1, Hout1, Hin2, Hout2,
+            dBore1, rBore1, dBore2, rBore2
+        };
     }
 
     render() {
@@ -2108,44 +2778,65 @@ class BevelGearCanvas {
         this.drawGrid(ctx, w, h);
 
         const g = this.geom;
-        const b = g.b || 50;
-        const d1 = g.delta1 || 0.38;
-        const d2 = g.delta2 || 1.19;
-        const s1 = Math.sin(d1), c1 = Math.cos(d1);
-        const s2 = Math.sin(d2), c2 = Math.cos(d2);
+        const bp = this._get3DMatchedBlankParams(g);
 
-        const hae1 = g.hae1 || 10, hfe1 = g.hfe1 || 12;
-        const hae2 = g.hae2 || 10, hfe2 = g.hfe2 || 12;
-        const Re = g.Re || 200;
+        // Split viewport layout:
+        // Left Viewport (0 .. 730): 2D Axial Cross-Section (1-to-1 with 3D Blank & Colors)
+        // Right Viewport (736 .. w-14): 2D Conjugate Tooth Profile (Tredgold Virtual Gear with R chân)
+        const leftW = Math.round(w * 0.61);
 
-        const dae1 = g.dae1 || 200;
-        const dae2 = g.dae2 || 400;
-        const x_hub_end1 = (Re * c1 + hfe1 * s1 + 15) + Math.max(35, b * 0.7);
-        const y_hub_end2 = -(Re * c2 + hfe2 * s2 + 20) - Math.max(40, b * 0.8);
+        // Compute bounding box of 3D-matched axial section for auto-centering in Left Viewport
+        const z_heel_hub1 = bp.Re * bp.c1 + (bp.hfe1 + bp.Hout1) * bp.s1;
+        const z_heel_hub2 = bp.Re * bp.c2 + (bp.hfe2 + bp.Hout2) * bp.s2;
+        const dae1 = g.dae1 || (2.0 * (bp.Re * bp.s1 + bp.hae1 * bp.c1));
+        const dae2 = g.dae2 || (2.0 * (bp.Re * bp.s2 + bp.hae2 * bp.c2));
 
-        const xMin = Math.min(-dae2 / 2.0 - 50, -60);
-        const xMax = Math.max(dae2 / 2.0 + 50, x_hub_end1 + 60);
-        const yMin = Math.min(y_hub_end2 - 50, -dae1 / 2.0 - 50);
-        const yMax = Math.max(dae1 / 2.0 + 50, 60);
+        // Transform Gear 2 extreme corners by shaft angle sigmaRad
+        const uAx2 = { x: Math.cos(bp.sigmaRad), y: -Math.sin(bp.sigmaRad) };
+        const uRad2 = { x: Math.sin(bp.sigmaRad), y: Math.cos(bp.sigmaRad) };
+        const g2LeftTip = {
+            x: bp.Re * bp.c2 * uAx2.x - (dae2 / 2.0) * uRad2.x,
+            y: bp.Re * bp.c2 * uAx2.y - (dae2 / 2.0) * uRad2.y
+        };
+        const g2RightTip = {
+            x: bp.Re * bp.c2 * uAx2.x + (dae2 / 2.0) * uRad2.x,
+            y: bp.Re * bp.c2 * uAx2.y + (dae2 / 2.0) * uRad2.y
+        };
+        const g2Back = {
+            x: z_heel_hub2 * uAx2.x,
+            y: z_heel_hub2 * uAx2.y
+        };
+
+        const xMin = Math.min(g2LeftTip.x, g2RightTip.x, g2Back.x, -40) - 55;
+        const xMax = Math.max(z_heel_hub1, g2RightTip.x, dae2 / 2.0) + 70;
+        const yMin = Math.min(g2LeftTip.y, g2RightTip.y, g2Back.y, -dae1 / 2.0) - 55;
+        const yMax = Math.max(dae1 / 2.0, 40) + 45;
 
         const wGeom = Math.max(120, xMax - xMin);
         const hGeom = Math.max(120, yMax - yMin);
         const cxGeom = (xMin + xMax) / 2.0;
         const cyGeom = (yMin + yMax) / 2.0;
 
-        const scale = Math.min((w * 0.78) / wGeom, (h * 0.78) / hGeom);
+        const scale = Math.min(((leftW - 20) * 0.84) / wGeom, (h * 0.80) / hGeom);
 
         ctx.save();
-        ctx.translate(w / 2.0 + this.panX, h / 2.0 + this.panY);
+        ctx.beginPath();
+        ctx.rect(0, 0, leftW, h);
+        ctx.clip();
+
+        ctx.translate(leftW / 2.0 + 15 + this.panX, h / 2.0 + 25 + this.panY);
         ctx.scale(this.zoom * scale, this.zoom * scale);
         ctx.translate(-cxGeom, -cyGeom);
 
-        this.drawAxialSection(ctx);
+        this.drawAxialSection(ctx, bp);
 
         ctx.restore();
 
+        // Draw Right Panel: Live 2D Tredgold Conjugate Tooth Profile with Root Fillet R chân
+        this.draw2DToothProfileInset(ctx, bp, leftW + 8, 14, w - leftW - 22, h - 28);
+
         if (this.showDataCard) {
-            this.drawDataCard(ctx, g);
+            this.drawDataCard(ctx, g, bp);
         }
     }
 
@@ -2238,151 +2929,135 @@ class BevelGearCanvas {
         ctx.restore();
     }
 
-    drawAxialSection(ctx) {
+    /**
+     * Draws the 2D Axial Cross-Section matching the 3D Bevel Gear Blank 1-to-1
+     * (Exact 8-point conical ring blank from Bevel3DGenerator, Cobalt-Cyan Blue & Coral-Orange)
+     */
+    drawAxialSection(ctx, bp) {
         const g = this.geom;
-        const d1 = g.delta1;
-        const d2 = g.delta2;
-        const Re = g.Re;
-        const Ri = g.Ri;
-        const b = g.b;
+        const {
+            Re, Ri, b, sigmaRad,
+            d1, d2, s1, c1, s2, c2,
+            hae1, hfe1, hai1, hfi1,
+            hae2, hfe2, hai2, hfi2,
+            Hin1, Hout1, Hin2, Hout2,
+            rBore1, rBore2
+        } = bp;
 
-        const s1 = Math.sin(d1), c1 = Math.cos(d1);
-        const s2 = Math.sin(d2), c2 = Math.cos(d2);
+        const dae1 = g.dae1 || (2.0 * (Re * s1 + hae1 * c1));
+        const dae2 = g.dae2 || (2.0 * (Re * s2 + hae2 * c2));
 
-        const hae1 = g.hae1, hfe1 = g.hfe1;
-        const hae2 = g.hae2, hfe2 = g.hfe2;
-        const hai1 = g.hai1, hfi1 = g.hfi1;
-        const hai2 = g.hai2, hfi2 = g.hfi2;
+        // -------------------------------------------------------------------------
+        // 1. PINION 1 KEY COORDINATES (Apex at (0,0), Axis along +X)
+        // Exact 1-to-1 match with Bevel3DGenerator (z_toe_hub, r_toe_rim, z_heel_hub, r_heel_rim, rBore)
+        // -------------------------------------------------------------------------
+        const z_toe_hub1 = Ri * c1 + (hfi1 + Hin1) * s1;
+        const r_toe_rim1 = Math.max(rBore1 + 2.0, Ri * s1 - (hfi1 + Hin1) * c1);
+        const z_heel_hub1 = Re * c1 + (hfe1 + Hout1) * s1;
+        const r_heel_rim1 = Math.max(rBore1 + 5.0, Re * s1 - (hfe1 + Hout1) * c1);
 
-        const dae1 = g.dae1, dae2 = g.dae2;
-
-        // 1. PINION KEY COORDINATES (Apex at (0, 0), Axis along X)
-        const p1_toe_tip = { x: Ri * c1 - hai1 * s1, y: -(Ri * s1 + hai1 * c1) };
-        const p1_toe_root = { x: Ri * c1 + hfi1 * s1, y: -(Ri * s1 - hfi1 * c1) };
-        const p1_heel_tip = { x: Re * c1 - hae1 * s1, y: -(Re * s1 + hae1 * c1) };
+        const p1_toe_root  = { x: Ri * c1 + hfi1 * s1, y: -(Ri * s1 - hfi1 * c1) };
+        const p1_toe_tip   = { x: Ri * c1 - hai1 * s1, y: -(Ri * s1 + hai1 * c1) };
+        const p1_heel_tip  = { x: Re * c1 - hae1 * s1, y: -(Re * s1 + hae1 * c1) };
         const p1_heel_root = { x: Re * c1 + hfe1 * s1, y: -(Re * s1 - hfe1 * c1) };
+        const p1_heel_rim  = { x: z_heel_hub1, y: -r_heel_rim1 };
+        const p1_heel_bore = { x: z_heel_hub1, y: -rBore1 };
+        const p1_toe_bore  = { x: z_toe_hub1, y: -rBore1 };
+        const p1_toe_rim   = { x: z_toe_hub1, y: -r_toe_rim1 };
 
-        const p1_toe_tip_b = { x: p1_toe_tip.x, y: -p1_toe_tip.y };
-        const p1_toe_root_b = { x: p1_toe_root.x, y: -p1_toe_root.y };
-        const p1_heel_tip_b = { x: p1_heel_tip.x, y: -p1_heel_tip.y };
+        // Pinion Upper Half Cross-Section (8-point 3D conical ring blank)
+        const pinion_upper = [
+            p1_toe_root, p1_toe_tip, p1_heel_tip, p1_heel_root,
+            p1_heel_rim, p1_heel_bore, p1_toe_bore, p1_toe_rim
+        ];
+
+        // Pinion Lower Half Cross-Section (Symmetric across X-axis)
+        const pinion_lower = pinion_upper.map(pt => ({ x: pt.x, y: -pt.y }));
+        const p1_toe_root_b  = { x: p1_toe_root.x,  y: -p1_toe_root.y };
+        const p1_toe_tip_b   = { x: p1_toe_tip.x,   y: -p1_toe_tip.y };
+        const p1_heel_tip_b  = { x: p1_heel_tip.x,  y: -p1_heel_tip.y };
         const p1_heel_root_b = { x: p1_heel_root.x, y: -p1_heel_root.y };
 
-        const d_bore1 = Math.max(20, (g.de1 || 100) * 0.22);
-        const d_hub1 = Math.max(35, (g.de1 || 100) * 0.45);
-        const H1out = Math.max(12, g.mmn * 1.3);
+        // -------------------------------------------------------------------------
+        // 2. GEAR 2 KEY COORDINATES (Apex at (0,0), Axis at Shaft Angle Sigma)
+        // Exact 1-to-1 match with Bevel3DGenerator & Bevel3DVisualizer
+        // -------------------------------------------------------------------------
+        const z_toe_hub2 = Ri * c2 + (hfi2 + Hin2) * s2;
+        const r_toe_rim2 = Math.max(rBore2 + 2.0, Ri * s2 - (hfi2 + Hin2) * c2);
+        const z_heel_hub2 = Re * c2 + (hfe2 + Hout2) * s2;
+        const r_heel_rim2 = Math.max(rBore2 + 5.0, Re * s2 - (hfe2 + Hout2) * c2);
 
-        // Pinion Front Face: Flat vertical face perpendicular to shaft axis at p1_toe_root.x
-        const x_front1 = p1_toe_root.x;
-        const x_back1 = p1_heel_root.x + H1out * s1;
-        const y_back_rim1 = -(Re * s1 - (hfe1 + H1out) * c1);
-        const x_hub_end1 = x_back1 + Math.max(35, b * 0.7);
+        const uAx2 = { x: Math.cos(sigmaRad), y: -Math.sin(sigmaRad) };
+        const uRad2 = { x: Math.sin(sigmaRad), y: Math.cos(sigmaRad) };
+        const toGearWorld = (zL, rL) => ({
+            x: zL * uAx2.x + rL * uRad2.x,
+            y: zL * uAx2.y + rL * uRad2.y
+        });
 
-        // Pinion Upper Half Cross-Section Polygon
-        const pinion_upper = [
-            p1_toe_root,
-            p1_toe_tip,
-            p1_heel_tip,
-            p1_heel_root,
-            { x: x_back1, y: y_back_rim1 },
-            { x: x_back1, y: -d_hub1 / 2.0 },
-            { x: x_hub_end1, y: -d_hub1 / 2.0 },
-            { x: x_hub_end1, y: -d_bore1 / 2.0 },
-            { x: x_front1, y: -d_bore1 / 2.0 },
-            p1_toe_root
+        const g2_local = [
+            { z: Ri * c2 + hfi2 * s2, r: Ri * s2 - hfi2 * c2 }, // 0: toe_root
+            { z: Ri * c2 - hai2 * s2, r: Ri * s2 + hai2 * c2 }, // 1: toe_tip
+            { z: Re * c2 - hae2 * s2, r: Re * s2 + hae2 * c2 }, // 2: heel_tip
+            { z: Re * c2 + hfe2 * s2, r: Re * s2 - hfe2 * c2 }, // 3: heel_root
+            { z: z_heel_hub2,         r: r_heel_rim2 },         // 4: heel_rim
+            { z: z_heel_hub2,         r: rBore2 },              // 5: heel_bore
+            { z: z_toe_hub2,          r: rBore2 },              // 6: toe_bore
+            { z: z_toe_hub2,          r: r_toe_rim2 }           // 7: toe_rim
         ];
 
-        // Pinion Lower Half Cross-Section Polygon (Symmetric)
-        const pinion_lower = [
-            { x: x_front1, y: d_bore1 / 2.0 },
-            { x: x_hub_end1, y: d_bore1 / 2.0 },
-            { x: x_hub_end1, y: d_hub1 / 2.0 },
-            { x: x_back1, y: d_hub1 / 2.0 },
-            { x: x_back1, y: -y_back_rim1 },
-            p1_heel_root_b,
-            p1_heel_tip_b,
-            p1_toe_tip_b,
-            p1_toe_root_b,
-            { x: x_front1, y: d_bore1 / 2.0 }
-        ];
+        const gear_right = g2_local.map(pt => toGearWorld(pt.z, +pt.r));
+        const gear_left  = g2_local.map(pt => toGearWorld(pt.z, -pt.r));
 
-        // 2. GEAR KEY COORDINATES (Apex at (0, 0), Axis along Y pointing up = -Y in canvas)
-        const p2_heel_tip = { x: Re * s2 + hae2 * c2, y: -(Re * c2 - hae2 * s2) };
-        const p2_heel_root = { x: Re * s2 - hfe2 * c2, y: -(Re * c2 + hfe2 * s2) };
-        const p2_toe_tip = { x: Ri * s2 + hai2 * c2, y: -(Ri * c2 - hai2 * s2) };
-        const p2_toe_root = { x: Ri * s2 - hfi2 * c2, y: -(Ri * c2 + hfi2 * s2) };
+        const p2_toe_root    = gear_right[0];
+        const p2_toe_tip     = gear_right[1];
+        const p2_heel_tip    = gear_right[2];
+        const p2_heel_root   = gear_right[3];
+        const p2_toe_root_l  = gear_left[0];
+        const p2_toe_tip_l   = gear_left[1];
+        const p2_heel_tip_l  = gear_left[2];
+        const p2_heel_root_l = gear_left[3];
 
-        const p2_heel_tip_l = { x: -p2_heel_tip.x, y: p2_heel_tip.y };
-        const p2_heel_root_l = { x: -p2_heel_root.x, y: p2_heel_root.y };
-        const p2_toe_tip_l = { x: -p2_toe_tip.x, y: p2_toe_tip.y };
-        const p2_toe_root_l = { x: -p2_toe_root.x, y: p2_toe_root.y };
-
-        const d_bore2 = Math.max(30, (g.de2 || 200) * 0.16);
-        const d_hub2 = Math.max(55, (g.de2 || 200) * 0.32);
-        const H2out = Math.max(16, g.mmn * 1.8);
-
-        const y_back2 = -(Re * c2 + hfe2 * s2 + H2out * s2);
-        const x_back_rim2 = Re * s2 - (hfe2 + H2out) * c2;
-        const y_front2 = p2_toe_root.y;
-        const x_front_rim2 = p2_toe_root.x;
-        const y_hub_end2 = y_back2 - Math.max(40, b * 0.8);
-
-        // Gear Right Half Cross-Section (Meshing side)
-        const gear_right = [
-            p2_toe_root,
-            p2_toe_tip,
-            p2_heel_tip,
-            p2_heel_root,
-            { x: x_back_rim2, y: y_back2 },
-            { x: d_hub2 / 2.0, y: y_back2 },
-            { x: d_hub2 / 2.0, y: y_hub_end2 },
-            { x: d_bore2 / 2.0, y: y_hub_end2 },
-            { x: d_bore2 / 2.0, y: y_front2 + 15 },
-            { x: x_front_rim2, y: y_front2 },
-            p2_toe_root
-        ];
-
-        // Gear Left Half Cross-Section (Symmetric)
-        const gear_left = [
-            { x: -x_front_rim2, y: y_front2 },
-            { x: -d_bore2 / 2.0, y: y_front2 + 15 },
-            { x: -d_bore2 / 2.0, y: y_hub_end2 },
-            { x: -d_hub2 / 2.0, y: y_hub_end2 },
-            { x: -d_hub2 / 2.0, y: y_back2 },
-            { x: -x_back_rim2, y: y_back2 },
-            p2_heel_root_l,
-            p2_heel_tip_l,
-            p2_toe_tip_l,
-            p2_toe_root_l,
-            { x: -x_front_rim2, y: y_front2 }
-        ];
-
-        // 3. DRAW PINION SECTIONS (Upper & Lower)
-        for (const poly of [pinion_upper, pinion_lower]) {
-            this.drawPolygonSection(ctx, poly, '#062e24', '#10b981', Math.PI / 4, 'rgba(16, 185, 129, 0.45)');
-        }
-
-        // Pinion Bore Shading
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-        ctx.fillRect(x_front1, -d_bore1 / 2.0, x_hub_end1 - x_front1, d_bore1);
-        ctx.strokeStyle = 'rgba(16, 185, 129, 0.4)';
-        ctx.lineWidth = 1.0;
-        ctx.strokeRect(x_front1, -d_bore1 / 2.0, x_hub_end1 - x_front1, d_bore1);
-
-        // 4. DRAW GEAR SECTIONS (Right & Left)
-        for (const poly of [gear_right, gear_left]) {
-            this.drawPolygonSection(ctx, poly, '#0d2247', '#3b82f6', -Math.PI / 4, 'rgba(59, 130, 246, 0.45)');
-        }
-
-        // Gear Bore Shading
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-        ctx.fillRect(-d_bore2 / 2.0, y_hub_end2, d_bore2, (y_front2 + 15) - y_hub_end2);
-        ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
-        ctx.lineWidth = 1.0;
-        ctx.strokeRect(-d_bore2 / 2.0, y_hub_end2, d_bore2, (y_front2 + 15) - y_hub_end2);
-
-        // 5. TOOTH ROOT CONE LINES
-        ctx.strokeStyle = '#10b981';
+        // -------------------------------------------------------------------------
+        // 3. DRAW 3D-MATCHED BORE & RIM CONNECTING LINES (Back/Front faces across bore)
+        // -------------------------------------------------------------------------
+        // Pinion 1 Bore Shading (Cobalt-Cyan Blue theme matching 3D Pinion)
+        ctx.fillStyle = 'rgba(7, 89, 133, 0.22)';
+        ctx.fillRect(z_toe_hub1, -rBore1, z_heel_hub1 - z_toe_hub1, 2.0 * rBore1);
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
         ctx.lineWidth = 1.2;
+        ctx.strokeRect(z_toe_hub1, -rBore1, z_heel_hub1 - z_toe_hub1, 2.0 * rBore1);
+
+        // Gear 2 Bore Shading (Coral-Orange theme matching 3D Gear)
+        const g2BorePoly = [gear_right[5], gear_right[6], gear_left[6], gear_left[5]];
+        ctx.beginPath();
+        ctx.moveTo(g2BorePoly[0].x, g2BorePoly[0].y);
+        for (let i = 1; i < g2BorePoly.length; i++) ctx.lineTo(g2BorePoly[i].x, g2BorePoly[i].y);
+        ctx.closePath();
+        ctx.fillStyle = 'rgba(154, 52, 18, 0.22)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(251, 146, 60, 0.45)';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // -------------------------------------------------------------------------
+        // 4. DRAW PINION 1 SECTIONS (Vivid Cobalt-Cyan Blue #0284c7 / #38bdf8 matching 3D)
+        // -------------------------------------------------------------------------
+        for (const poly of [pinion_upper, pinion_lower]) {
+            this.drawPolygonSection(ctx, poly, '#083344', '#38bdf8', Math.PI / 4, 'rgba(56, 189, 248, 0.48)');
+        }
+
+        // -------------------------------------------------------------------------
+        // 5. DRAW GEAR 2 SECTIONS (Vivid Coral-Orange #ea580c / #fb923c matching 3D)
+        // -------------------------------------------------------------------------
+        for (const poly of [gear_right, gear_left]) {
+            this.drawPolygonSection(ctx, poly, '#431407', '#fb923c', -Math.PI / 4, 'rgba(251, 146, 60, 0.48)');
+        }
+
+        // -------------------------------------------------------------------------
+        // 6. TOOTH ROOT & PITCH CONE LINES ON THE TEETH
+        // -------------------------------------------------------------------------
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.moveTo(p1_toe_root.x, p1_toe_root.y);
         ctx.lineTo(p1_heel_root.x, p1_heel_root.y);
@@ -2390,7 +3065,8 @@ class BevelGearCanvas {
         ctx.lineTo(p1_heel_root_b.x, p1_heel_root_b.y);
         ctx.stroke();
 
-        ctx.strokeStyle = '#3b82f6';
+        ctx.strokeStyle = '#fb923c';
+        ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.moveTo(p2_toe_root.x, p2_toe_root.y);
         ctx.lineTo(p2_heel_root.x, p2_heel_root.y);
@@ -2398,55 +3074,62 @@ class BevelGearCanvas {
         ctx.lineTo(p2_heel_root_l.x, p2_heel_root_l.y);
         ctx.stroke();
 
-        // 6. ANIMATED CONJUGATE MESHING STRIPES
+        // -------------------------------------------------------------------------
+        // 7. ANIMATED CONJUGATE MESHING STRIPES
+        // -------------------------------------------------------------------------
         if (this.showStripes) {
-            this.drawToothStripes(ctx, p1_toe_root, p1_heel_root, p1_toe_tip, p1_heel_tip, '#10b981', this.angle1);
-            this.drawToothStripes(ctx, p2_toe_root, p2_heel_root, p2_toe_tip, p2_heel_tip, '#3b82f6', -this.angle1 / (g.i || 2.5));
+            this.drawToothStripes(ctx, p1_toe_root, p1_heel_root, p1_toe_tip, p1_heel_tip, '#38bdf8', this.angle1);
+            this.drawToothStripes(ctx, p1_toe_root_b, p1_heel_root_b, p1_toe_tip_b, p1_heel_tip_b, '#38bdf8', -this.angle1);
+            this.drawToothStripes(ctx, p2_toe_root, p2_heel_root, p2_toe_tip, p2_heel_tip, '#fb923c', -this.angle1 / (g.i || 2.5));
+            this.drawToothStripes(ctx, p2_toe_root_l, p2_heel_root_l, p2_toe_tip_l, p2_heel_tip_l, '#fb923c', this.angle1 / (g.i || 2.5));
         }
 
-        // 7. CENTERLINES & PITCH CONE GENERATORS
+        // -------------------------------------------------------------------------
+        // 8. CENTERLINES & PITCH CONE GENERATORS (Apex V(0,0))
+        // -------------------------------------------------------------------------
         if (this.showAxes) {
             ctx.save();
-            ctx.strokeStyle = 'rgba(148, 163, 184, 0.5)';
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.55)';
             ctx.lineWidth = 1.2;
             ctx.setLineDash([14, 4, 3, 4]);
 
-            // Pinion Axis (Horizontal X)
+            // Pinion 1 Axis (Horizontal +X)
             ctx.beginPath();
-            ctx.moveTo(-50, 0);
-            ctx.lineTo(x_hub_end1 + 60, 0);
+            ctx.moveTo(-35, 0);
+            ctx.lineTo(z_heel_hub1 + 45, 0);
             ctx.stroke();
 
-            // Gear Axis (Vertical Y)
+            // Gear 2 Axis (Along shaft angle Sigma)
             ctx.beginPath();
-            ctx.moveTo(0, 50);
-            ctx.lineTo(0, y_hub_end2 - 60);
+            ctx.moveTo(-35 * uAx2.x, -35 * uAx2.y);
+            ctx.lineTo((z_heel_hub2 + 45) * uAx2.x, (z_heel_hub2 + 45) * uAx2.y);
             ctx.stroke();
 
-            // Pitch Cone Generator Line (Contact Line)
-            ctx.strokeStyle = '#f59e0b';
+            // Shared Pitch Cone Contact Generator (Meshing Line)
+            ctx.strokeStyle = '#facc15';
             ctx.lineWidth = 1.8;
             ctx.setLineDash([10, 4, 3, 4]);
             ctx.beginPath();
             ctx.moveTo(0, 0);
-            ctx.lineTo(Re * c1 * 1.15, -Re * s1 * 1.15);
+            ctx.lineTo(Re * c1 * 1.12, -Re * s1 * 1.12);
             ctx.stroke();
 
-            // Symmetric Pitch Cone Generator for Gear Left
-            ctx.strokeStyle = 'rgba(245, 158, 11, 0.4)';
+            // Outer non-meshing pitch cone generators
+            ctx.strokeStyle = 'rgba(250, 204, 21, 0.45)';
             ctx.lineWidth = 1.0;
             ctx.setLineDash([6, 4]);
+            const g2PitchLeft = toGearWorld(Re * c2 * 1.08, -Re * s2 * 1.08);
             ctx.beginPath();
             ctx.moveTo(0, 0);
-            ctx.lineTo(-Re * s2 * 1.12, -Re * c2 * 1.12);
+            ctx.lineTo(g2PitchLeft.x, g2PitchLeft.y);
             ctx.moveTo(0, 0);
-            ctx.lineTo(Re * c1 * 1.12, Re * s1 * 1.12);
+            ctx.lineTo(Re * c1 * 1.08, Re * s1 * 1.08);
             ctx.stroke();
 
             ctx.restore();
         }
 
-        // 8. APEX V INDICATOR
+        // 9. APEX V(0,0) INDICATOR
         ctx.fillStyle = '#ef4444';
         ctx.beginPath();
         ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
@@ -2457,24 +3140,343 @@ class BevelGearCanvas {
 
         ctx.fillStyle = '#f87171';
         ctx.font = 'bold 11px Consolas, monospace';
-        ctx.fillText('Apex V(0,0)', -28, 18);
+        ctx.fillText('Apex V(0,0)', -30, 18);
 
-        // 9. CAD ENGINEERING DIMENSIONS
+        // 10. CAD ENGINEERING DIMENSIONS
         if (this.showDimensions) {
             this.drawCadDimensions(ctx, {
-                g, Re, Ri, b, d1, d2, s1, c1, s2, c2,
-                dae1, dae2, x_hub_end1,
+                g, Re, Ri, b, d1, d2, s1, c1, s2, c2, sigmaRad,
+                dae1, dae2, x_hub_end1: z_heel_hub1,
+                y_back2: Math.min(gear_left[4].y, gear_right[4].y),
                 p1_heel_tip, p1_heel_tip_b,
                 p2_heel_tip, p2_heel_tip_l
             });
         }
     }
 
+    /**
+     * Renders the Live 2D Tredgold Conjugate Tooth Profile Viewport on the right side of the canvas
+     * Uses the exact same Bevel3DGenerator.generateSliceToothContour function as the 3D WebGL model,
+     * displaying the C1-tangent circular root fillet R_chan = 0.38 * mmn and preserved root land arc!
+     */
+    draw2DToothProfileInset(ctx, bp, panelX, panelY, panelW, panelH) {
+        if (typeof Bevel3DGenerator === 'undefined' || !Bevel3DGenerator.generateSliceToothContour) return;
+        const g = this.geom;
+        const { z1, z2, mmn, Rm, d1, d2 } = bp;
+
+        const alfa = ((parseFloat(g.alfa_deg !== undefined ? g.alfa_deg : 20.0)) * Math.PI) / 180.0;
+        const beta_deg = (g.beta_deg !== undefined ? parseFloat(g.beta_deg) : (g.beta !== undefined ? parseFloat(g.beta) : 0.0));
+        const beta = (beta_deg * Math.PI) / 180.0;
+        const isSpiral = Math.abs(beta) > 1e-4;
+        const x1 = parseFloat(g.x1 !== undefined ? g.x1 : 0.32);
+        const x2 = parseFloat(g.x2 !== undefined ? g.x2 : -x1);
+        const xt1 = parseFloat(g.xt1 !== undefined ? g.xt1 : 0.04);
+        const xt2 = parseFloat(g.xt2 !== undefined ? g.xt2 : -xt1);
+
+        const ha1 = parseFloat(g.ha1) || (mmn * (1.0 + x1));
+        const hf1 = parseFloat(g.hf1) || (mmn * (1.2 - x1));
+        const sn1 = parseFloat(g.sn1) || (mmn * (Math.PI / 2.0 + 2.0 * x1 * Math.tan(alfa) + xt1));
+
+        const ha2 = parseFloat(g.ha2) || (mmn * (1.0 + x2));
+        const hf2 = parseFloat(g.hf2) || (mmn * (1.2 - x2));
+        const sn2 = parseFloat(g.sn2) || (mmn * (Math.PI / 2.0 + 2.0 * x2 * Math.tan(alfa) + xt2));
+
+        const resMap = (typeof BEVEL_PROFILE_RESOLUTIONS !== 'undefined') ? BEVEL_PROFILE_RESOLUTIONS[this.profileResolution] : null;
+        const ptsPerFlank = resMap ? resMap.ptsPerFlank : 20;
+
+        // Generate exact 2D slice tooth contours at mean cone distance Rm (with C1 circular root fillet Rf = 0.38 * mmn)
+        const slice1 = Bevel3DGenerator.generateSliceToothContour({
+            z: z1, mmn, Rm, R_s: Rm, delta: d1, alfa, beta, isSpiral,
+            ha_s: ha1, hf_s: hf1, sn_s: sn1, ptsPerFlank, ptsFillet: 10
+        });
+        const slice2 = Bevel3DGenerator.generateSliceToothContour({
+            z: z2, mmn, Rm, R_s: Rm, delta: d2, alfa, beta, isSpiral,
+            ha_s: ha2, hf_s: hf2, sn_s: sn2, ptsPerFlank, ptsFillet: 10
+        });
+
+        ctx.save();
+
+        // 1. Panel Background & Frame
+        ctx.fillStyle = 'rgba(11, 17, 30, 0.94)';
+        ctx.strokeStyle = '#1e3a8a';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(panelX, panelY, panelW, panelH, 8);
+        else ctx.rect(panelX, panelY, panelW, panelH);
+        ctx.fill();
+        ctx.stroke();
+
+        // Panel Header
+        const hdrH = 32;
+        ctx.fillStyle = '#172554';
+        ctx.beginPath();
+        if (ctx.roundRect) ctx.roundRect(panelX, panelY, panelW, hdrH, [8, 8, 0, 0]);
+        else ctx.rect(panelX, panelY, panelW, hdrH);
+        ctx.fill();
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 11.5px system-ui, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('🦷 BIÊN DẠNG RĂNG ĂN KHỚP 2D (TREDGOLD - CÓ R CHÂN)', panelX + 12, panelY + hdrH / 2);
+
+        // Clip inside viewport body
+        const viewX = panelX + 2;
+        const viewY = panelY + hdrH + 2;
+        const viewW = panelW - 4;
+        const viewH = panelH - hdrH - 64;
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(viewX, viewY, viewW, viewH);
+        ctx.clip();
+
+        // Subtle CAD grid inside tooth profile viewport
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.06)';
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        for (let gx = viewX; gx < viewX + viewW; gx += 24) {
+            ctx.moveTo(gx, viewY);
+            ctx.lineTo(gx, viewY + viewH);
+        }
+        for (let gy = viewY; gy < viewY + viewH; gy += 24) {
+            ctx.moveTo(viewX, gy);
+            ctx.lineTo(viewX + viewW, gy);
+        }
+        ctx.stroke();
+
+        // Coordinate system centered at Pitch Contact Point P(0, 0):
+        // Pinion 1 (Blue) virtual center Ov1 is at (0, +rv1) below P (teeth point UP, matching 3D view!)
+        // Gear 2 (Orange) virtual center Ov2 is at (0, -rv2) above P (teeth point DOWN, matching 3D view!)
+        const pitchScreenX = viewX + viewW * 0.50;
+        const pitchScreenY = viewY + viewH * 0.50;
+        // Scale so ~3.2 tooth pitches fit across viewW
+        const pitchLinear = Math.PI * (g.mmt || (mmn / Math.max(0.2, Math.cos(beta))));
+        const toothScale = Math.min(viewW / (3.15 * pitchLinear), viewH / (4.4 * mmn));
+
+        ctx.translate(pitchScreenX, pitchScreenY);
+        ctx.scale(toothScale, toothScale);
+
+        const rv1 = slice1.rv, rvb1 = slice1.rvb, rva1 = slice1.rva, rvf1 = slice1.rvf;
+        const rv2 = slice2.rv, rvb2 = slice2.rvb, rva2 = slice2.rva, rvf2 = slice2.rvf;
+        const pPsi1 = (2.0 * Math.PI / z1) * slice1.cosD;
+        const pPsi2 = (2.0 * Math.PI / z2) * slice2.cosD;
+
+        // Periodic tooth pitch phase in [-0.5, +0.5]
+        const rawPhase = ((this.angle1 * z1) / (2.0 * Math.PI)) % 1.0;
+        const phase = rawPhase > 0.5 ? rawPhase - 1.0 : (rawPhase < -0.5 ? rawPhase + 1.0 : rawPhase);
+
+        // Helper to build & draw multi-tooth segment around pitch point P(0,0)
+        const drawVirtualGearBand = (slice, isPinion, fillColor, strokeColor, filletColor) => {
+            const rv = slice.rv;
+            const rvf = slice.rvf;
+            const cosD = slice.cosD;
+            const pPsi = isPinion ? pPsi1 : pPsi2;
+            const rimDepth = Math.max(mmn * 2.2, (slice.rva - slice.rvf) * 1.15);
+            const rInnerRim = Math.max(2.0, rvf - rimDepth);
+            const kMin = -3, kMax = 3;
+
+            const toPt = (r, psi) => {
+                if (isPinion) {
+                    // Center at (0, +rv), psi = 0 points UP to (0, 0)
+                    return { x: r * Math.sin(psi), y: rv - r * Math.cos(psi) };
+                } else {
+                    // Center at (0, -rv), psi = 0 points DOWN to (0, 0)
+                    return { x: r * Math.sin(psi), y: -rv + r * Math.cos(psi) };
+                }
+            };
+
+            const contourPts = [];
+            const filletArcs = [];
+
+            for (let k = kMin; k <= kMax; k++) {
+                const centerPsi = isPinion ? (k + phase) * pPsi : (k + 0.5 + phase) * pPsi;
+                let curFillet = [];
+                for (let idx = 0; idx < slice.toothContour.length; idx++) {
+                    if (k > kMin && idx === 0) continue;
+                    const tc = slice.toothContour[idx];
+                    const r = rv + tc.h;
+                    const psi = centerPsi + tc.theta * cosD;
+                    const pt = toPt(r, psi);
+                    contourPts.push(pt);
+
+                    if (tc.zone === 'fillet') {
+                        curFillet.push(pt);
+                    } else if (curFillet.length > 0) {
+                        filletArcs.push(curFillet);
+                        curFillet = [];
+                    }
+                }
+                if (curFillet.length > 0) filletArcs.push(curFillet);
+            }
+
+            // Close polygon along inner rim arc from maxPsi back to minPsi
+            const maxPsi = (isPinion ? (kMax + phase) : (kMax + 0.5 + phase)) * pPsi + slice.half_pitch * cosD;
+            const minPsi = (isPinion ? (kMin + phase) : (kMin + 0.5 + phase)) * pPsi - slice.half_pitch * cosD;
+            const fullPoly = [...contourPts];
+            const rimSteps = 28;
+            for (let s = 0; s <= rimSteps; s++) {
+                const psi = maxPsi - (s / rimSteps) * (maxPsi - minPsi);
+                fullPoly.push(toPt(rInnerRim, psi));
+            }
+
+            // Fill gear body
+            ctx.beginPath();
+            ctx.moveTo(fullPoly[0].x, fullPoly[0].y);
+            for (let i = 1; i < fullPoly.length; i++) ctx.lineTo(fullPoly[i].x, fullPoly[i].y);
+            ctx.closePath();
+            ctx.fillStyle = fillColor;
+            ctx.fill();
+
+            // Stroke active tooth contour (involute flanks + root lands + tip lands)
+            ctx.beginPath();
+            ctx.moveTo(contourPts[0].x, contourPts[0].y);
+            for (let i = 1; i < contourPts.length; i++) ctx.lineTo(contourPts[i].x, contourPts[i].y);
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = 2.0 / toothScale;
+            ctx.stroke();
+
+            // Highlight C1 Circular Root Fillet Arcs (R chân = 0.38 * mmn)
+            ctx.strokeStyle = filletColor;
+            ctx.lineWidth = 3.0 / toothScale;
+            for (const arc of filletArcs) {
+                if (arc.length < 2) continue;
+                ctx.beginPath();
+                ctx.moveTo(arc[0].x, arc[0].y);
+                for (let i = 1; i < arc.length; i++) ctx.lineTo(arc[i].x, arc[i].y);
+                ctx.stroke();
+            }
+        };
+
+        // Draw Gear 2 (Top - Vivid Coral-Orange matching 3D Gear 2)
+        drawVirtualGearBand(slice2, false, 'rgba(234, 88, 12, 0.36)', '#fb923c', '#facc15');
+
+        // Draw Pinion 1 (Bottom - Vivid Cobalt-Cyan Blue matching 3D Pinion 1)
+        drawVirtualGearBand(slice1, true, 'rgba(2, 132, 199, 0.40)', '#38bdf8', '#10b981');
+
+        // Draw Reference Circles (Tip Circles rva1, rva2, Pitch Circles rv1, rv2, Root Circles rvf1, rvf2)
+        ctx.save();
+        // Tip circles (subtle dashed)
+        ctx.setLineDash([5 / toothScale, 4 / toothScale]);
+        ctx.lineWidth = 1.0 / toothScale;
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.38)';
+        ctx.beginPath();
+        ctx.arc(0, rv1, rva1, -Math.PI * 0.78, -Math.PI * 0.22);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(251, 146, 60, 0.38)';
+        ctx.beginPath();
+        ctx.arc(0, -rv2, rva2, Math.PI * 0.22, Math.PI * 0.78);
+        ctx.stroke();
+
+        // Root circles (dotted)
+        ctx.setLineDash([3 / toothScale, 3 / toothScale]);
+        ctx.lineWidth = 1.0 / toothScale;
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+        ctx.beginPath();
+        ctx.arc(0, rv1, rvf1, -Math.PI * 0.78, -Math.PI * 0.22);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(251, 146, 60, 0.45)';
+        ctx.beginPath();
+        ctx.arc(0, -rv2, rvf2, Math.PI * 0.22, Math.PI * 0.78);
+        ctx.stroke();
+
+        // Pitch circles (amber dash-dot)
+        ctx.setLineDash([10 / toothScale, 4 / toothScale, 2 / toothScale, 4 / toothScale]);
+        ctx.lineWidth = 1.4 / toothScale;
+        ctx.strokeStyle = '#facc15';
+        ctx.beginPath();
+        ctx.arc(0, rv1, rv1, -Math.PI * 0.78, -Math.PI * 0.22);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, -rv2, rv2, Math.PI * 0.22, Math.PI * 0.78);
+        ctx.stroke();
+
+        // Line of Action through Pitch Point P(0,0)
+        const alfa_t = slice1.alfa_t;
+        const loaLen = mmn * 2.2;
+        ctx.setLineDash([5 / toothScale, 3 / toothScale]);
+        ctx.strokeStyle = 'rgba(244, 63, 94, 0.75)';
+        ctx.lineWidth = 1.3 / toothScale;
+        ctx.beginPath();
+        ctx.moveTo(-loaLen * Math.cos(alfa_t), -loaLen * Math.sin(alfa_t));
+        ctx.lineTo(loaLen * Math.cos(alfa_t), loaLen * Math.sin(alfa_t));
+        ctx.stroke();
+        ctx.restore();
+
+        // Pitch Point P(0,0) Marker
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.arc(0, 0, 3.8 / toothScale, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#0f172a';
+        ctx.lineWidth = 1.2 / toothScale;
+        ctx.stroke();
+
+        // Callout annotation for Root Fillet Center & Radius Rf on Pinion 1 Tooth 0
+        const centerPsi0 = phase * pPsi1;
+        const fSol1 = slice1.fillet;
+        if (fSol1) {
+            const rCf = Math.hypot(fSol1.Cfx, fSol1.Cfy);
+            const psiCf = centerPsi0 + Math.atan2(fSol1.Cfx, fSol1.Cfy);
+            const cfx = rCf * Math.sin(psiCf);
+            const cfy = rv1 - rCf * Math.cos(psiCf);
+
+            // Dashed fillet circle preview at tooth 0 right root fillet
+            ctx.save();
+            ctx.setLineDash([2.5 / toothScale, 2.5 / toothScale]);
+            ctx.strokeStyle = '#10b981';
+            ctx.lineWidth = 1.2 / toothScale;
+            ctx.beginPath();
+            ctx.arc(cfx, cfy, fSol1.Rf, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Center dot of Rf circle
+            ctx.fillStyle = '#10b981';
+            ctx.beginPath();
+            ctx.arc(cfx, cfy, 2.2 / toothScale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        ctx.restore(); // End viewport clip
+
+        // Footer Legend & R chân Readout inside Panel
+        const footY = panelY + panelH - 58;
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+        ctx.fillRect(panelX + 2, footY, panelW - 4, 56);
+        ctx.strokeStyle = 'rgba(51, 65, 85, 0.8)';
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.moveTo(panelX + 2, footY);
+        ctx.lineTo(panelX + panelW - 2, footY);
+        ctx.stroke();
+
+        const rf1Val = slice1.fillet ? slice1.fillet.Rf : (0.38 * mmn);
+        const rf2Val = slice2.fillet ? slice2.fillet.Rf : (0.38 * mmn);
+
+        ctx.font = 'bold 10.5px Consolas, monospace';
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#10b981';
+        ctx.fillText(`● R chân Bánh 1 (Rf1) = ${rf1Val.toFixed(2)} mm (0.38·mmn)`, panelX + 12, footY + 18);
+        ctx.fillStyle = '#facc15';
+        ctx.fillText(`● R chân Bánh 2 (Rf2) = ${rf2Val.toFixed(2)} mm | Cung đáy rãnh dfv`, panelX + 12, footY + 36);
+
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText('■ Bánh dẫn 1', panelX + panelW - 12, footY + 18);
+        ctx.fillStyle = '#fb923c';
+        ctx.fillText('■ Bánh bị dẫn 2', panelX + panelW - 12, footY + 36);
+
+        ctx.restore();
+    }
+
     drawCadDimensions(ctx, d) {
-        const { g, Re, Ri, b, d1, d2, s1, c1, s2, c2, dae1, dae2, x_hub_end1, p1_heel_tip, p1_heel_tip_b, p2_heel_tip, p2_heel_tip_l } = d;
+        const { g, Re, Ri, b, d1, d2, s1, c1, s2, c2, dae1, dae2, x_hub_end1, y_back2, p1_heel_tip, p1_heel_tip_b, p2_heel_tip, p2_heel_tip_l } = d;
 
         // A. Pinion Tip Diameter dae1 (Vertical dimension on right side)
-        const x_dim_dae1 = x_hub_end1 + 25;
+        const x_dim_dae1 = x_hub_end1 + 28;
         const y_top_dae1 = -dae1 / 2.0;
         const y_bot_dae1 = dae1 / 2.0;
 
@@ -2491,15 +3493,16 @@ class BevelGearCanvas {
             { x: x_dim_dae1, y: y_top_dae1 },
             { x: x_dim_dae1, y: y_bot_dae1 },
             '\u2300dae1 = ' + dae1.toFixed(1),
-            '#34d399',
-            { x: 10, y: 0 },
+            '#38bdf8',
+            { x: 8, y: 0 },
             'left'
         );
 
-        // B. Gear Tip Diameter dae2 (Horizontal dimension at top)
-        const y_dim_dae2 = -dae2 / 2.0 - 28;
-        const x_left_dae2 = -dae2 / 2.0;
-        const x_right_dae2 = dae2 / 2.0;
+        // B. Gear Tip Diameter dae2 (Cleanly above Gear 2 back face)
+        const topEdgeY = y_back2 !== undefined ? Math.min(p2_heel_tip_l.y, p2_heel_tip.y, y_back2) : Math.min(p2_heel_tip_l.y, p2_heel_tip.y);
+        const y_dim_dae2 = topEdgeY - 26;
+        const x_left_dae2 = p2_heel_tip_l.x;
+        const x_right_dae2 = p2_heel_tip.x;
 
         ctx.beginPath();
         ctx.moveTo(p2_heel_tip_l.x, p2_heel_tip_l.y);
@@ -2512,69 +3515,69 @@ class BevelGearCanvas {
             { x: x_left_dae2, y: y_dim_dae2 },
             { x: x_right_dae2, y: y_dim_dae2 },
             '\u2300dae2 = ' + dae2.toFixed(1),
-            '#60a5fa',
+            '#fb923c',
             { x: 0, y: -10 },
             'center'
         );
 
-        // C. Face Width b (Parallel to pitch cone generator line)
-        const nx_p = -s1, ny_p = -c1;
-        const b_off = 32;
-        const p_b1 = { x: Ri * c1 + b_off * nx_p, y: -(Ri * s1 - b_off * ny_p) };
-        const p_b2 = { x: Re * c1 + b_off * nx_p, y: -(Re * s1 - b_off * ny_p) };
+        // C. Face Width b & Outer Cone Distance Re (Placed cleanly along lower pitch cone generator in open space)
+        const nx_low = -s1, ny_low = c1;
+        const b_off = 30;
+        const p_b1 = { x: Ri * c1 + b_off * nx_low, y: Ri * s1 + b_off * ny_low };
+        const p_b2 = { x: Re * c1 + b_off * nx_low, y: Re * s1 + b_off * ny_low };
 
         ctx.beginPath();
-        ctx.moveTo(Ri * c1, -Ri * s1);
-        ctx.lineTo(p_b1.x + 8 * nx_p, p_b1.y - 8 * ny_p);
-        ctx.moveTo(Re * c1, -Re * s1);
-        ctx.lineTo(p_b2.x + 8 * nx_p, p_b2.y - 8 * ny_p);
+        ctx.moveTo(Ri * c1, Ri * s1);
+        ctx.lineTo(p_b1.x + 8 * nx_low, p_b1.y + 8 * ny_low);
+        ctx.moveTo(Re * c1, Re * s1);
+        ctx.lineTo(p_b2.x + 8 * nx_low, p_b2.y + 8 * ny_low);
         ctx.stroke();
 
         this.drawDimensionLine(ctx,
             p_b1, p_b2,
             'b = ' + b.toFixed(1),
             '#f59e0b',
-            { x: 10 * nx_p, y: -10 * ny_p },
+            { x: 12 * nx_low, y: 12 * ny_low },
             'center'
         );
 
         // D. Outer Cone Distance Re
-        const re_off = 58;
-        const p_re1 = { x: re_off * nx_p, y: re_off * ny_p };
-        const p_re2 = { x: Re * c1 + re_off * nx_p, y: -(Re * s1 - re_off * ny_p) };
+        const re_off = 56;
+        const p_re1 = { x: re_off * nx_low, y: re_off * ny_low };
+        const p_re2 = { x: Re * c1 + re_off * nx_low, y: Re * s1 + re_off * ny_low };
 
         ctx.beginPath();
         ctx.moveTo(0, 0);
-        ctx.lineTo(p_re1.x + 8 * nx_p, p_re1.y - 8 * ny_p);
-        ctx.moveTo(Re * c1, -Re * s1);
-        ctx.lineTo(p_re2.x + 8 * nx_p, p_re2.y - 8 * ny_p);
+        ctx.lineTo(p_re1.x + 8 * nx_low, p_re1.y + 8 * ny_low);
+        ctx.moveTo(Re * c1, Re * s1);
+        ctx.lineTo(p_re2.x + 8 * nx_low, p_re2.y + 8 * ny_low);
         ctx.stroke();
 
         this.drawDimensionLine(ctx,
             p_re1, p_re2,
             'Re = ' + Re.toFixed(1),
             '#fbbf24',
-            { x: 10 * nx_p, y: -10 * ny_p },
+            { x: 12 * nx_low, y: 12 * ny_low },
             'center'
         );
 
         // E. Pitch Cone Angles (δ1, δ2)
         ctx.save();
-        ctx.strokeStyle = '#10b981';
+        ctx.strokeStyle = '#38bdf8';
         ctx.lineWidth = 1.0;
         ctx.beginPath();
         ctx.arc(0, 0, 85, -d1, 0);
         ctx.stroke();
-        ctx.fillStyle = '#10b981';
-        ctx.font = '11px sans-serif';
-        ctx.fillText('\u03B41 = ' + g.delta1_deg.toFixed(1) + '°', 95, -12);
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText('\u03B41 = ' + (g.delta1_deg || (d1 * 180 / Math.PI)).toFixed(1) + '°', 92, -12);
 
-        ctx.strokeStyle = '#60a5fa';
+        ctx.strokeStyle = '#fb923c';
         ctx.beginPath();
-        ctx.arc(0, 0, 115, -Math.PI / 2, -d1);
+        ctx.arc(0, 0, 115, -d.sigmaRad, -d1);
         ctx.stroke();
-        ctx.fillStyle = '#60a5fa';
-        ctx.fillText('\u03B42 = ' + g.delta2_deg.toFixed(1) + '°', 20, -125);
+        ctx.fillStyle = '#fb923c';
+        ctx.fillText('\u03B42 = ' + (g.delta2_deg || (d2 * 180 / Math.PI)).toFixed(1) + '°', 18, -122);
         ctx.restore();
     }
 
@@ -2634,12 +3637,12 @@ class BevelGearCanvas {
         ctx.restore();
     }
 
-    drawDataCard(ctx, g) {
+    drawDataCard(ctx, g, bp) {
         ctx.save();
-        const cx = 16, cy = 16;
-        const cardW = 260, cardH = 175;
+        const cx = 14, cy = 14;
+        const cardW = 248, cardH = 188;
 
-        ctx.fillStyle = 'rgba(11, 19, 41, 0.9)';
+        ctx.fillStyle = 'rgba(11, 19, 41, 0.90)';
         ctx.strokeStyle = '#1e293b';
         ctx.lineWidth = 1.0;
         ctx.beginPath();
@@ -2649,21 +3652,23 @@ class BevelGearCanvas {
 
         ctx.fillStyle = '#1e293b';
         ctx.beginPath();
-        ctx.roundRect ? ctx.roundRect(cx, cy, cardW, 26, [6, 6, 0, 0]) : ctx.rect(cx, cy, cardW, 26);
+        ctx.roundRect ? ctx.roundRect(cx, cy, cardW, 25, [6, 6, 0, 0]) : ctx.rect(cx, cy, cardW, 25);
         ctx.fill();
 
         ctx.fillStyle = '#38bdf8';
-        ctx.font = 'bold 11px system-ui, sans-serif';
+        ctx.font = 'bold 10.5px system-ui, sans-serif';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'middle';
-        ctx.fillText('📐 BẢNG THÔNG SỐ CHUẨN ISO 23509', cx + 10, cy + 13);
+        ctx.fillText('📐 MẶT CẮT TRỤC KHỚP 3D (ISO 23509)', cx + 10, cy + 12.5);
 
         const x1_str = (g.x1 >= 0 ? '+' : '') + (g.x1 || 0).toFixed(2);
         const x2_str = (g.x2 >= 0 ? '+' : '') + (g.x2 || 0).toFixed(2);
+        const rf_val = (0.38 * (bp.mmn || 10)).toFixed(2);
         const items = [
             ['Tỉ số truyền i', (g.i || (g.z2 / g.z1)).toFixed(3)],
             ['Số răng z1 / z2', g.z1 + ' / ' + g.z2],
             ['Mô-đun pháp mmn', (g.mmn || 10).toFixed(1) + ' mm'],
+            ['Bán kính lượn R chân', rf_val + ' mm (0.38·m)'],
             ['Góc nón chia δ1 / δ2', (g.delta1_deg || 0).toFixed(1) + '° / ' + (g.delta2_deg || 0).toFixed(1) + '°'],
             ['Bề rộng vành răng b', (g.b || 0).toFixed(1) + ' mm'],
             ['Góc xoắn răng β', (g.beta_deg || 0).toFixed(1) + '°'],
@@ -2672,10 +3677,10 @@ class BevelGearCanvas {
 
         ctx.font = '10px system-ui, sans-serif';
         items.forEach((item, idx) => {
-            const rowY = cy + 40 + idx * 18;
-            ctx.fillStyle = '#94a3b8';
+            const rowY = cy + 38 + idx * 18;
+            ctx.fillStyle = idx === 3 ? '#10b981' : '#94a3b8';
             ctx.fillText(item[0], cx + 10, rowY);
-            ctx.fillStyle = '#f1f5f9';
+            ctx.fillStyle = idx === 3 ? '#10b981' : '#f1f5f9';
             ctx.font = 'bold 10px Consolas, monospace';
             ctx.textAlign = 'right';
             ctx.fillText(item[1], cx + cardW - 10, rowY);
@@ -2713,410 +3718,6 @@ class BevelGearCanvas {
 }
 
 
-
-
-/**
- * MITCalc Web App - 3D Bevel Gear Solid & Surface Mesh Generator (Module 2)
- * Generates 100% watertight closed manifold 3D Solid Meshes and Open Flank Surface Meshes
- * for both Straight Bevel Gears (beta = 0) and Spiral Bevel Gears (beta != 0)
- * 1-to-1 Authentic Port from MITCalc 1.74 (Calculation!U197:AQ202, Data1!C70:D87, Data1!H35:I52)
- * Standards: ISO 23509, DIN 3971, DIN 3965, AGMA 2005.
- * Features:
- * - Authentic Conical Gear Blank Body from MITCalc Data1 (Hub, Rim, Bore & Conical Faces)
- * - Tredgold Equivalent Virtual Involute Flanks with Pressure Angle alpha
- * - Linear Cone Convergence toward Apex V(0, 0, 0)
- * - Tapered Tooth Thickness & Addendum/Dedendum along face width b (Re -> Ri)
- * - Authentic Gleason Spiral Circular Arc Tooth Trace (beta > 0, R_tool = 1.5 * b)
- * - Vertex Splitting (Zero-Ripple Planar Hub Faces & Conical Back/Front Faces)
- * - Open Flank Surface Mesh (Mastercam 5-axis Surface Toolpaths & SolidWorks)
- * - 100% Compatible with Three.js, Binary STL, and STEP AP214 (ISO 10303-21)
- */
-
-const Bevel3DGenerator = {
-    /**
-     * Generates a complete 3D solid mesh or open surface mesh for a bevel gear
-     * @param {Object} opt - Gear geometry parameters
-     * @returns {Object} Mesh data: { vertices, normals, indices, rawTriangles, bbox, isSurfaceOnly }
-     */
-    generateGearMesh(opt) {
-        const z = parseInt(opt.z) || 20;
-        const mmn = parseFloat(opt.mmn) || 10.0;
-        const delta = parseFloat(opt.delta) || (Math.PI / 4.0);
-        const cosD = Math.cos(delta);
-        const sinD = Math.sin(delta);
-
-        const Re = Math.max(10.0, parseFloat(opt.Re) || 100.0);
-        const b = Math.max(2.0, parseFloat(opt.b) || 30.0);
-        const Ri = Math.max(2.0, opt.Ri !== undefined ? parseFloat(opt.Ri) : (Re - b));
-        const Rm = opt.Rm !== undefined ? parseFloat(opt.Rm) : (Re - b / 2.0);
-
-        const alfa = parseFloat(opt.alfa) || (20.0 * Math.PI / 180.0);
-        const beta = (opt.beta !== undefined && opt.beta !== null) ? parseFloat(opt.beta) : 0.0;
-        const x = parseFloat(opt.x) || 0.0;
-        const xt = parseFloat(opt.xt) || 0.0;
-        const hand = opt.hand !== undefined ? parseInt(opt.hand) : 1;
-        const gearingType = opt.gearingType || 'gleason';
-
-        const isSpiral = Math.abs(beta) > 1e-4;
-        const isSurfaceOnly = !!opt.surfaceOnly;
-
-        // Addendum and dedendum at outer cone Re (Heel)
-        let ha_e = opt.ha_e !== undefined ? parseFloat(opt.ha_e) : (opt.ha !== undefined ? parseFloat(opt.ha) * (Re / Rm) : mmn * (1.0 + x) * (Re / Rm));
-        let hf_e = opt.hf_e !== undefined ? parseFloat(opt.hf_e) : (opt.hf !== undefined ? parseFloat(opt.hf) * (Re / Rm) : mmn * (1.2 - x) * (Re / Rm));
-
-        // Tooth thickness at outer cone Re (Heel)
-        const sn_e = opt.sn_e !== undefined ? parseFloat(opt.sn_e) : (opt.sn !== undefined ? parseFloat(opt.sn) * (Re / Rm) : mmn * (Math.PI / 2.0 + 2.0 * x * Math.tan(alfa) + xt) * (Re / Rm));
-        const sa_e = opt.sa_e !== undefined ? parseFloat(opt.sa_e) : (opt.sa !== undefined ? parseFloat(opt.sa) * (Re / Rm) : sn_e * 0.45);
-
-        // MITCalc Section 16 blank offset parameters (Data1!C75, C84, H40, H49)
-        const Hin = parseFloat(opt.Hin) || (mmn * (z < 30 ? 0.48 : 0.59));
-        const Hout = parseFloat(opt.Hout) || (mmn * (z < 30 ? 1.33 : 1.995));
-
-        const scale_i = Ri / Re;
-        const ha_i = ha_e * scale_i;
-        const hf_i = hf_e * scale_i;
-
-        // Shaft bore diameter (standard ISO 23509 shaft bore)
-        const r_root_toe = Ri * sinD - hf_i * cosD;
-        const defaultBore = Math.max(10.0, r_root_toe * 0.9);
-        const dBore = Math.min(r_root_toe * 0.85 * 2.0, Math.max(6.0, parseFloat(opt.dBore) || defaultBore));
-        const rBore = dBore / 2.0;
-
-        // Authentic MITCalc Data1 Blank Coordinates (Z along axis from apex, R radial):
-        const z_toe_hub = Ri * cosD + (hf_i + Hin) * sinD;
-        const r_toe_rim = Math.max(rBore + 2.0, Ri * sinD - (hf_i + Hin) * cosD);
-        const z_toe_root = Ri * cosD + hf_i * sinD;
-        const r_toe_root = Ri * sinD - hf_i * cosD;
-
-        const z_heel_root = Re * cosD + hf_e * sinD;
-        const r_heel_root = Re * sinD - hf_e * cosD;
-        const z_heel_hub = Re * cosD + (hf_e + Hout) * sinD;
-        const r_heel_rim = Math.max(rBore + 5.0, Re * sinD - (hf_e + Hout) * cosD);
-
-        // 8 Cấp Độ Mịn Lưới Thân Khai (Tối ưu hóa độ mịn cao & hiệu năng 60 FPS mượt mà)
-        const densityPresets = {
-            1: { pts: 10, slicesSpiral: 14, slicesStraight: 12 }, // Cấp 1: Tiêu Chuẩn Nhanh
-            2: { pts: 12, slicesSpiral: 18, slicesStraight: 16 }, // Cấp 2: Mịn Mức 2
-            3: { pts: 16, slicesSpiral: 22, slicesStraight: 20 }, // Cấp 3: Mịn Mức 3
-            4: { pts: 20, slicesSpiral: 26, slicesStraight: 24 }, // Cấp 4: Mịn Mức 4 (Cân Bằng)
-            5: { pts: 24, slicesSpiral: 30, slicesStraight: 28 }, // Cấp 5: Rất Mịn Mức 5
-            6: { pts: 28, slicesSpiral: 36, slicesStraight: 32 }, // Cấp 6: Siêu Mịn Mức 6 (CAM/CNC) [Mặc Định Cao]
-            7: { pts: 34, slicesSpiral: 42, slicesStraight: 38 }, // Cấp 7: Cực Mịn Mức 7 (Độ Nét Cao)
-            8: { pts: 40, slicesSpiral: 48, slicesStraight: 44 }  // Cấp 8: Tuyệt Đối Mức 8 (Ultra Precision CAD)
-        };
-
-        const dLevel = Math.max(1, Math.min(8, parseInt(opt.meshDensityLevel) || 6));
-        const preset = densityPresets[dLevel] || densityPresets[6];
-
-        const defaultSlices = isSpiral ? preset.slicesSpiral : preset.slicesStraight;
-        const numSlices = opt.numSlices !== undefined ? Math.max(4, Math.min(64, parseInt(opt.numSlices))) : defaultSlices;
-        const ptsPerFlank = opt.ptsPerFlank !== undefined ? Math.max(4, Math.min(50, parseInt(opt.ptsPerFlank))) : preset.pts;
-        const R_tool = 1.5 * b; // MITCalc Section 16.4 cutter radius
-
-        // 1. Generate tooth rings for all slices along face width b (Re -> Ri)
-        const layers = [];
-
-        for (let s = 0; s <= numSlices; s++) {
-            const frac = s / numSlices;
-            const R_s = Re - frac * (Re - Ri);
-            const scale_s = R_s / Re;
-            const u = (R_s - Rm) / b;
-
-            let spiralAngle = 0.0;
-            if (isSpiral) {
-                if (gearingType === 'straight_type1') {
-                    const V = hand * u * b * Math.tan(beta);
-                    spiralAngle = V / Math.max(1.0, R_s * sinD);
-                } else {
-                    const term = u * b + R_tool * Math.sin(beta);
-                    const W = hand * (R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term)));
-                    // Conical circumferential development: arc angle theta = W / r_pitch (exact conjugate ratio z2/z1 across all slices)
-                    spiralAngle = W / Math.max(1.0, R_s * sinD);
-                }
-            } else {
-                spiralAngle = 0.0;
-            }
-
-            const r_pitch = R_s * sinD;
-            const z_pitch = R_s * cosD;
-            const ha_s = ha_e * scale_s;
-            const hf_s = hf_e * scale_s;
-            
-            // Pure MITCalc 1.74 conical tooth thickness (linear scaling along face width Re -> Ri)
-            const sn_s = sn_e * scale_s;
-
-            // Transverse tooth parameters for virtual gear (Tredgold ISO 23509)
-            const cos_beta = isSpiral ? Math.max(0.2, Math.cos(beta)) : 1.0;
-            const tan_alfa_t = Math.tan(alfa) / cos_beta;
-            const alfa_t = Math.atan(tan_alfa_t);
-            const inv_alfa_t = tan_alfa_t - alfa_t;
-            const sn_t = sn_s / cos_beta;
-
-            // Tredgold virtual spur gear at cone distance R_s
-            const rv = (R_s * sinD) / cosD;
-            const rvb = rv * Math.cos(alfa_t);
-            const rva = rv + ha_s;
-            const rvf = Math.max(0.1, rv - hf_s);
-            const psi_v = sn_t / (2.0 * rv);
-
-            // Pure Tredgold Involute Flank Function (Conjugate contact, Delta = 0.000000)
-            function eval_flank(t) {
-                const r_c = rvf + t * (rva - rvf);
-                let psi_c;
-                if (r_c >= rvb) {
-                    const alpha_c = Math.acos(Math.min(1.0, rvb / r_c));
-                    const inv_c = Math.tan(alpha_c) - alpha_c;
-                    psi_c = psi_v + inv_alfa_t - inv_c;
-                } else {
-                    // Smooth root fillet transition below base circle
-                    const under_t = (rvb - r_c) / Math.max(1.0, rvb - rvf);
-                    const root_relief = (mmn * 0.040 / rv) * under_t;
-                    psi_c = Math.max(0.0001, (psi_v + inv_alfa_t) - root_relief);
-                }
-
-                const h = r_c - rv;
-                const theta = psi_c / cosD;
-                return { h, theta };
-            }
-
-            const half_pitch = Math.PI / z;
-            const tipPt = eval_flank(1.0);
-            const rootPt = eval_flank(0.0);
-            const th_fillet = Math.min(half_pitch * 0.85, Math.max(rootPt.theta * 1.30, rootPt.theta + (0.35 * mmn / rv) / cosD));
-
-            // Conjugate Mesh Contact Mode in Flank-Only Mode:
-            // 1. 'theory' (MẶC ĐỊNH): Chuẩn Lý Thuyết - Tiếp xúc đường thẳng dọc theo đường sinh nón (Line Contact).
-            //    Không có độ vồng parabol (K_kiss = 0), sườn răng thẳng tắp 100% theo các đường sinh nón từ Toe (Ri) đến Heel (Re).
-            //    Lượng bù góc đồng dạng nón hằng số dTheta = 0.09 / (Rm * sinD) để khắc phục sai số dây cung
-            //    của đa giác Three.js và hiển thị MỘT ĐƯỜNG THẲNG HOÀN TOÀN dọc theo đường sinh nón.
-            // 2. 'gleason': Thực Tế Xưởng Gleason Coniflex - Vết tiếp xúc elip có độ vồng dọc răng (Crowning).
-            //    Áp dụng hàm parabol K_kiss = 1 - 4*u^2 với biên độ 0.16 mm (bằng 0.02 * mmn) tại Rm, thuôn về 0 tại Heel/Toe.
-            const contactMode = opt.contactMode || 'theory';
-            const isPinion = (opt.hand === -1) || (opt.isPinion === true);
-            let dThetaKiss = 0.0;
-            if (isPinion && isSurfaceOnly) {
-                if (contactMode === 'gleason') {
-                    const K_kiss = Math.max(0.0, 1.0 - 4.0 * u * u);
-                    dThetaKiss = (0.065 * K_kiss) / Math.max(1.0, r_pitch);
-                } else {
-                    // Chuẩn lý thuyết: Góc bù đồng dạng nón bảo toàn 100% đường sinh nón thẳng tắp từ Ri đến Re
-                    const linearScale = R_s / Rm;
-                    dThetaKiss = (0.028 * linearScale) / Math.max(1.0, r_pitch);
-                }
-            }
-
-            const toothContour = [];
-            // Left tooth space bottom land
-            toothContour.push({ h: -hf_s, theta: -half_pitch, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
-            toothContour.push({ h: -hf_s, theta: -th_fillet, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
-
-            // Flank 1 (drive flank on Pinion, coast flank on Gear)
-            for (let k = 0; k < ptsPerFlank; k++) {
-                const t = k / (ptsPerFlank - 1);
-                const pt = eval_flank(t);
-                toothContour.push({ h: pt.h, theta: -(pt.theta + dThetaKiss), flankT: t, isEngageFlank: true, flankId: 1.0 });
-            }
-
-            // Tooth tip land (crest)
-            toothContour.push({ h: tipPt.h, theta: 0.0, flankT: 1.0, isEngageFlank: false, flankId: 0.0 });
-
-            // Flank 2 (coast flank on Pinion, drive flank on Gear)
-            for (let k = ptsPerFlank - 1; k >= 0; k--) {
-                const t = k / (ptsPerFlank - 1);
-                const pt = eval_flank(t);
-                toothContour.push({ h: pt.h, theta: +(pt.theta + dThetaKiss), flankT: t, isEngageFlank: true, flankId: 2.0 });
-            }
-
-            // Right root fillet and right space bottom land
-            toothContour.push({ h: -hf_s, theta: +th_fillet, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
-            toothContour.push({ h: -hf_s, theta: +half_pitch, flankT: 0.0, isEngageFlank: false, flankId: 0.0 });
-
-            const ring = [];
-            for (let tooth = 0; tooth < z; tooth++) {
-                const centerAngle = (tooth * 2.0 * Math.PI) / z + spiralAngle;
-                for (let p = 0; p < toothContour.length; p++) {
-                    const pt = toothContour[p];
-                    const ang = centerAngle + pt.theta;
-                    const r_pt = r_pitch + pt.h * cosD;
-                    const z_pt = z_pitch - pt.h * sinD;
-                    ring.push({
-                        x: r_pt * Math.cos(ang),
-                        y: r_pt * Math.sin(ang),
-                        z: z_pt,
-                        r: r_pt,
-                        h: pt.h,
-                        uFace: u,
-                        flankT: pt.flankT,
-                        isEngageFlank: pt.isEngageFlank ? 1.0 : 0.0,
-                        flankId: pt.flankId || 0.0
-                    });
-                }
-            }
-            layers.push(ring);
-        }
-
-        const N = layers[0].length;
-        const vertices = [];
-        const normals = [];
-        const indices = [];
-        const rawTriangles = [];
-        const tcaParams = [];
-
-        function addTri(p1, p2, p3, nExplicit = null) {
-            const ax = p2.x - p1.x, ay = p2.y - p1.y, az = p2.z - p1.z;
-            const bx = p3.x - p1.x, by = p3.y - p1.y, bz = p3.z - p1.z;
-            let nx = ay * bz - az * by;
-            let ny = az * bx - ax * bz;
-            let nz = ax * by - ay * bx;
-            const len = Math.hypot(nx, ny, nz);
-            if (len > 1e-9) { nx /= len; ny /= len; nz /= len; }
-            else { nx = 0; ny = 0; nz = 1; }
-
-            const n = nExplicit || { x: nx, y: ny, z: nz };
-            const idx = vertices.length / 3;
-
-            vertices.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
-            normals.push(n.x, n.y, n.z, n.x, n.y, n.z, n.x, n.y, n.z);
-            indices.push(idx, idx + 1, idx + 2);
-
-            tcaParams.push(
-                p1.uFace !== undefined ? p1.uFace : 0.0,
-                p1.flankT !== undefined ? p1.flankT : -1.0,
-                p1.flankId !== undefined ? p1.flankId : (p1.isEngageFlank ? 1.0 : 0.0),
-                p2.uFace !== undefined ? p2.uFace : 0.0,
-                p2.flankT !== undefined ? p2.flankT : -1.0,
-                p2.flankId !== undefined ? p2.flankId : (p2.isEngageFlank ? 1.0 : 0.0),
-                p3.uFace !== undefined ? p3.uFace : 0.0,
-                p3.flankT !== undefined ? p3.flankT : -1.0,
-                p3.flankId !== undefined ? p3.flankId : (p3.isEngageFlank ? 1.0 : 0.0)
-            );
-
-            rawTriangles.push([
-                [p1.x, p1.y, p1.z],
-                [p2.x, p2.y, p2.z],
-                [p3.x, p3.y, p3.z],
-                [n.x, n.y, n.z]
-            ]);
-        }
-
-        function addQuad(p1, p2, p3, p4, nExplicit = null) {
-            addTri(p1, p2, p3, nExplicit);
-            addTri(p1, p3, p4, nExplicit);
-        }
-
-        // GROUP 1: TOOTH FLANK SURFACES & ROOT/TIP LANDS (ALONG FACE WIDTH b)
-        for (let s = 0; s < numSlices; s++) {
-            const L1 = layers[s];
-            const L2 = layers[s + 1];
-            for (let j = 0; j < N; j++) {
-                const nextJ = (j + 1) % N;
-                addQuad(L1[j], L2[j], L2[nextJ], L1[nextJ]);
-            }
-        }
-
-        // Return open flank shell if surfaceOnly requested (Mastercam 5-axis toolpaths)
-        if (isSurfaceOnly) {
-            const bbox = Bevel3DGenerator._computeBBox(vertices);
-            return {
-                vertices: new Float32Array(vertices),
-                normals: new Float32Array(normals),
-                indices: new Uint32Array(indices),
-                tcaParams: new Float32Array(tcaParams),
-                rawTriangles,
-                bbox,
-                isSurfaceOnly: true,
-                z, mmn, b, Re, Ri, dBore
-            };
-        }
-
-        // GROUP 2: OUTER HEEL BLANK BODY (R = Re, SLICE 0)
-        const L_heel = layers[0];
-        const heelRimPts = [];
-        const heelBorePts = [];
-
-        for (let j = 0; j < N; j++) {
-            const ang = Math.atan2(L_heel[j].y, L_heel[j].x);
-            heelRimPts.push({ x: r_heel_rim * Math.cos(ang), y: r_heel_rim * Math.sin(ang), z: z_heel_hub });
-            heelBorePts.push({ x: rBore * Math.cos(ang), y: rBore * Math.sin(ang), z: z_heel_hub });
-        }
-
-        const nHeelFace = { x: 0, y: 0, z: 1.0 };
-        for (let j = 0; j < N; j++) {
-            const nextJ = (j + 1) % N;
-            addQuad(heelRimPts[j], L_heel[j], L_heel[nextJ], heelRimPts[nextJ]);
-            addQuad(heelBorePts[j], heelRimPts[j], heelRimPts[nextJ], heelBorePts[nextJ], nHeelFace);
-        }
-
-        // GROUP 3: INNER TOE BLANK BODY (R = Ri, SLICE numSlices)
-        const L_toe = layers[numSlices];
-        const toeRimPts = [];
-        const toeBorePts = [];
-
-        for (let j = 0; j < N; j++) {
-            const ang = Math.atan2(L_toe[j].y, L_toe[j].x);
-            toeRimPts.push({ x: r_toe_rim * Math.cos(ang), y: r_toe_rim * Math.sin(ang), z: z_toe_hub });
-            toeBorePts.push({ x: rBore * Math.cos(ang), y: rBore * Math.sin(ang), z: z_toe_hub });
-        }
-
-        const nToeFace = { x: 0, y: 0, z: -1.0 };
-        for (let j = 0; j < N; j++) {
-            const nextJ = (j + 1) % N;
-            addQuad(L_toe[j], toeRimPts[j], toeRimPts[nextJ], L_toe[nextJ]);
-            addQuad(toeRimPts[j], toeBorePts[j], toeBorePts[nextJ], toeRimPts[nextJ], nToeFace);
-        }
-
-        // GROUP 4: INNER CYLINDRICAL SHAFT BORE (RADIUS rBore, FROM z_toe TO z_heel)
-        for (let j = 0; j < N; j++) {
-            const nextJ = (j + 1) % N;
-            const angMid = Math.atan2(heelBorePts[j].y, heelBorePts[j].x);
-            const nBore = { x: -Math.cos(angMid), y: -Math.sin(angMid), z: 0 };
-            addQuad(heelBorePts[j], heelBorePts[nextJ], toeBorePts[nextJ], toeBorePts[j], nBore);
-        }
-
-        const bbox = Bevel3DGenerator._computeBBox(vertices);
-        return {
-            vertices: new Float32Array(vertices),
-            normals: new Float32Array(normals),
-            indices: new Uint32Array(indices),
-            tcaParams: new Float32Array(tcaParams),
-            rawTriangles,
-            bbox,
-            isSurfaceOnly: false,
-            z, mmn, b, Re, Ri, dBore,
-            z_toe_hub, z_heel_hub, rBore
-        };
-    },
-
-    /**
-     * Generates an Open Flank Surface Mesh directly (CAM Drive Surfaces)
-     */
-    generateGearSurfaceMesh(opt) {
-        return this.generateGearMesh({ ...opt, surfaceOnly: true });
-    },
-
-    /**
-     * Computes 3D Bounding Box
-     * @private
-     */
-    _computeBBox(vertices) {
-        let minX = Infinity, minY = Infinity, minZ = Infinity;
-        let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
-        for (let i = 0; i < vertices.length; i += 3) {
-            const x = vertices[i], y = vertices[i + 1], z = vertices[i + 2];
-            if (x < minX) minX = x; if (x > maxX) maxX = x;
-            if (y < minY) minY = y; if (y > maxY) maxY = y;
-            if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
-        }
-        return {
-            min: [minX, minY, minZ],
-            max: [maxX, maxY, maxZ],
-            center: [(minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2],
-            size: [maxX - minX, maxY - minY, maxZ - minZ]
-        };
-    }
-};
-
-if (typeof window !== 'undefined') window.Bevel3DGenerator = Bevel3DGenerator;
 
 
 /**
@@ -3872,6 +4473,10 @@ class Bevel3DVisualizer {
     animate() {
         requestAnimationFrame(() => this.animate());
 
+        if (!this.container || this.container.clientWidth === 0 || this.container.clientHeight === 0) {
+            return;
+        }
+
         if (this.isAnimating && this.pinionGroup && this.gearGroup) {
             const step = this.rotSpeedBase * this.animSpeed * (this.animDirection || 1);
             this.pinionAngle += step;
@@ -4045,6 +4650,7 @@ class Bevel3DVisualizer {
                 break;
         }
 
+        this.camera.lookAt(this.controls.target);
         this.controls.update();
     }
 
@@ -4440,15 +5046,61 @@ const BevelDxfExporter = {
             addLine(0 + offX, 20 + offY, 0 + offX, pt5_2.y - 30 + offY, 'CENTER_LINES');
         };
 
+        // Draw 2D Tredgold Virtual Tooth Profile with C1 Circular Root Fillet (R_chan = 0.38 * mmn)
+        const drawVirtualToothProfile = (isPinion, offX, offY) => {
+            if (typeof Bevel3DGenerator === 'undefined' || !Bevel3DGenerator.generateSliceToothContour) return;
+            const mmn = g.mmn || 10.0;
+            const Rm = g.Rm || (Re - b / 2.0);
+            const alfa = ((g.alfa_deg !== undefined ? g.alfa_deg : 20.0) * Math.PI) / 180.0;
+            const beta = ((g.beta_deg !== undefined ? g.beta_deg : 0.0) * Math.PI) / 180.0;
+            const isSpiral = Math.abs(beta) > 1e-4;
+            const z = isPinion ? (g.z1 || 18) : (g.z2 || 45);
+            const delta = isPinion ? delta1 : delta2;
+            const ha_s = isPinion ? (g.ha1 || mmn * 1.32) : (g.ha2 || mmn * 0.68);
+            const hf_s = isPinion ? (g.hf1 || mmn * 0.88) : (g.hf2 || mmn * 1.52);
+            const sn_s = isPinion ? (g.sn1 || mmn * 1.84) : (g.sn2 || mmn * 1.30);
+            const layer = isPinion ? 'GEAR1_PINION' : 'GEAR2_WHEEL';
+
+            const slice = Bevel3DGenerator.generateSliceToothContour({
+                z, mmn, Rm, R_s: Rm, delta, alfa, beta, isSpiral,
+                ha_s, hf_s, sn_s, ptsPerFlank: res.ptsPerFlank, ptsFillet: 8
+            });
+            const pPsi = (2.0 * Math.PI / z) * slice.cosD;
+            const kRange = 2; // 5 teeth around pitch contact point
+            const pts = [];
+            for (let k = -kRange; k <= kRange; k++) {
+                const centerPsi = (isPinion ? k : (k + 0.5)) * pPsi;
+                for (let idx = 0; idx < slice.toothContour.length; idx++) {
+                    if (k > -kRange && idx === 0) continue;
+                    const tc = slice.toothContour[idx];
+                    const r = slice.rv + tc.h;
+                    const psi = centerPsi + tc.theta * slice.cosD;
+                    const px = offX + r * Math.sin(psi);
+                    const py = offY + (isPinion ? (slice.rv - r * Math.cos(psi)) : (-slice.rv + r * Math.cos(psi)));
+                    pts.push({ x: px, y: py });
+                }
+            }
+            for (let i = 0; i < pts.length - 1; i++) {
+                addLine(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, layer);
+            }
+        };
+
+        const profileOffX = Math.max(de1, de2) * 0.85 + 80;
+        const profileOffY = -Math.max(de1, de2) * 0.25;
+
         // Draw views depending on target
         if (target === 'pinion') {
             drawAxialPinion(0, 0);
+            drawVirtualToothProfile(true, profileOffX, profileOffY);
         } else if (target === 'gear') {
             drawAxialGear(0, 0);
+            drawVirtualToothProfile(false, profileOffX, profileOffY);
         } else {
-            // Assembly Pair: Both wheels sharing common Apex V(0, 0)
+            // Assembly Pair: Both wheels sharing common Apex V(0, 0) + Meshing 2D Tooth Profile with R_chan
             drawAxialPinion(0, 0);
             drawAxialGear(0, 0);
+            drawVirtualToothProfile(true, profileOffX, profileOffY);
+            drawVirtualToothProfile(false, profileOffX, profileOffY);
         }
 
         // Manufacturing Table Definition
@@ -4461,6 +5113,8 @@ const BevelDxfExporter = {
         addText(`- So rang (Pinion z1 / Gear z2): ${g.z1} / ${g.z2}`, tblX, tblY, 3.5, 'MFG_TABLE');
         tblY -= rowH;
         addText(`- Mo-dun phap trung binh (mmn): ${(g.mmn || 10).toFixed(3)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`- Ban kinh luon chan rang (Rf = 0.38*mmn): ${(0.38 * (g.mmn || 10)).toFixed(3)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
         tblY -= rowH;
         addText(`- Mo-dun ngang ngoai (met): ${(g.met || 10).toFixed(3)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
         tblY -= rowH;
@@ -4632,7 +5286,9 @@ class BevelGearUI {
                             this.canvasController.resetView();
                         } else if (this.activeMode === '3D' && this.visualizer3D) {
                             this.visualizer3D.onResize();
-                            if (this.lastGeom) this.visualizer3D.setGeometry(this.lastGeom);
+                            if (this.lastGeom && this.visualizer3D.geom !== this.lastGeom) {
+                                this.visualizer3D.setGeometry(this.lastGeom);
+                            }
                         }
                     }
                 }
@@ -4767,6 +5423,9 @@ class BevelGearUI {
             if (lblResSec16) lblResSec16.textContent = nameText;
             if (sliderResCanvas) sliderResCanvas.value = this.profileResolution;
             if (lblResCanvas) lblResCanvas.textContent = canvasText;
+            if (this.canvasController && typeof this.canvasController.setProfileResolution === 'function') {
+                this.canvasController.setProfileResolution(this.profileResolution);
+            }
         };
 
         if (sliderResSec16) {
@@ -4880,8 +5539,8 @@ class BevelGearUI {
                 if (container3D) container3D.style.display = 'none';
                 if (toolbar2D) toolbar2D.style.display = 'flex';
                 if (toolbar3D) toolbar3D.style.display = 'none';
-                if (visualizerTitle) visualizerTitle.textContent = '📐 Mô Hình 2D Nón Bánh Răng Ăn Khớp (ISO 23509)';
-                if (visualizerDesc) visualizerDesc.textContent = 'Mặt cắt trục bổ dọc ISO 23509 khép kín, gạch mặt cắt kim loại 45°, đường sinh nón chia và đỉnh Apex V(0,0).';
+                if (visualizerTitle) visualizerTitle.textContent = '📐 Mô Hình 2D Nón Bánh Răng Ăn Khớp & Biên Dạng Răng Có R Chân (ISO 23509)';
+                if (visualizerDesc) visualizerDesc.textContent = 'Mặt cắt trục 2D khớp 1-to-1 phôi 3D, kết hợp Biên dạng răng ăn khớp 2D Tredgold có bán kính lượn chân răng R chân = 0.38·mmn.';
                 if (this.canvasController) this.canvasController.resetView();
             });
 
@@ -4896,10 +5555,12 @@ class BevelGearUI {
                 if (toolbar2D) toolbar2D.style.display = 'none';
                 if (toolbar3D) toolbar3D.style.display = 'flex';
                 if (visualizerTitle) visualizerTitle.textContent = '🧊 Mô Phỏng Ăn Khớp 3D WebGL (Bevel Gears)';
-                if (visualizerDesc) visualizerDesc.textContent = 'Mô hình 3D thực thể xoay chuyển động ăn khớp liên hợp không gian tại góc trục Σ. Xuất file CAD STEP/STL cho SolidWorks & Mastercam.';
+                if (visualizerDesc) visualizerDesc.textContent = 'Mô hình 3D thực thể có R chân = 0.38·mmn xoay chuyển động ăn khớp liên hợp không gian tại góc trục Σ. Xuất file CAD STEP/STL cho SolidWorks & Mastercam.';
                 if (this.visualizer3D) {
                     this.visualizer3D.onResize();
-                    if (this.lastGeom) this.visualizer3D.setGeometry(this.lastGeom);
+                    if (this.lastGeom && this.visualizer3D.geom !== this.lastGeom) {
+                        this.visualizer3D.setGeometry(this.lastGeom);
+                    }
                 }
             });
         }

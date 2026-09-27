@@ -1764,3 +1764,26 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
      - Đặt mật độ lưới vỏ mặt bên `noPtEv = 120, cuttStep = 0.25, numSlices = 20` để bề rộng mỗi tam giác trên màn hình đạt $\ge 1.0\text{ pixel}$, triệt tiêu hoàn toàn hiện tượng nhiễu đạo hàm chiều sâu 4x MSAA trên các tam giác con dưới 1 pixel (`0.33 px` khi `noPtEv = 320`), giúp vết ăn khớp hiển thị thành **1 đường kẻ mảnh 6–8 pixel đặc khít 100% (`4/4 MSAA samples`)** trượt êm ái dọc sườn răng.
      - Tự động cập nhật động `camera.near` và `camera.far` theo khoảng cách camera trong `animate()` trên cả 2 module.
 
+---
+
+### [2026-09-27] BỔ SUNG BÁN KÍNH LƯỢN CHÂN RĂNG ($R_{\text{chân}} = 0.38 \cdot m_{mn}$) CHO BÁNH RĂNG CÔN 3D/2D & ĐỒNG BỘ 1-TO-1 BIÊN DẠNG 2D KHỚP HÌNH 3D
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  - Bản sao lưu trước khi thực hiện: `backups/BACKUP_MITCalc_Gear_20260927_085848.zip` (`619 files`, `42,609.95 KB`).
+  - *"với phần mô phỏng của module bánh răng côn thì tôi cần : bạn hãy chỉnh biên dạng 2D khớp với hình 3D hiện tại; hiện tại bánh răng côn bạn vẫn chưa có R chân"*.
+* **Phân tích nguyên nhân & Giải pháp kỹ thuật đã triển khai**:
+  1. **Bổ sung Bán kính lượn chân răng giải tích $C^1$ ($R_{\text{chân}} = 0.38 \cdot m_s$) cho Bánh Răng Côn (`bevel-3d-generator.js`)**:
+     - Trước đó, `Bevel3DGenerator` chỉ nối 1 đoạn thẳng từ điểm góc đáy rãnh $(-h_f, -\theta_{\text{root}})$ vào chân đường thân khai $(t = 0)$, làm chân răng bị gãy góc nhọn và không có cung lượn chân răng $R_{\text{chân}}$.
+     - Đã xây dựng hàm `generateSliceToothContour(sliceOpt)` giải bài toán tiếp tuyến giải tích $C^1$ trên mặt phẳng bánh răng trụ ảo Tredgold ($r_v = R_s \tan\delta, r_{vb} = r_v \cos\alpha_t, r_{vf} = r_v - h_{f,s}$) với bán kính lượn danh nghĩa $R_f = 0.38 \cdot m_s$ ($R_{f1} = R_{f2} = 3.80\text{ mm}$ tại $R_m$ cho $m_{mn} = 10\text{ mm}$):
+       * Tìm tâm cung lượn $(C_{fx}, C_{fy})$ cách tâm bánh răng $r_{vf} + R_f$ và cách đường thân khai $R_f$.
+       * Dựng 10 điểm cung tròn lượn chân răng mỗi bên (`zone: 'fillet'`), bảo tồn cung đáy rãnh tròn (`zone: 'root_land'`) và bổ sung 5 điểm cung đỉnh răng tròn đều (`zone: 'tip_land'`).
+       * Cập nhật pháp tuyến các mặt nón phụ lưng/mũi (`nHeelCone`, `nToeCone`) để cung lượn chân răng $R_{\text{chân}}$ hiển thị sắc nét trên cả mặt đầu răng và dọc toàn bộ chiều rộng vành răng $b$ ($R_e \to R_i$) trên 3D WebGL, STEP và STL.
+  2. **Chỉnh biên dạng 2D (`bevel-canvas.js` & `bevel-dxf-exporter.js`) khớp 1-to-1 với hình 3D hiện tại**:
+     - **Khung nhìn Trái (Mặt Cắt Trục Khớp 3D - ISO 23509)**:
+       * Loại bỏ phần moay-ơ hình trụ giả kéo dài (`L_hub1, L_hub2`) của bản vẽ 2D cũ, sử dụng `_get3DMatchedBlankParams(g)` dựng đúng 8 đỉnh đa giác phôi vành nón (`Hin1, Hout1, rBore1, Hin2, Hout2, rBore2`) giống hệt mô hình 3D trong `Bevel3DGenerator`, xoay theo góc trục $\Sigma$ và đồng bộ bảng màu 3D (Bánh dẫn 1: Xanh Lam Cobalt `#0284c7` / `#38bdf8`; Bánh bị dẫn 2: Cam Đỏ Đồng `#ea580c` / `#fb923c`).
+     - **Khung nhìn Phải (`🦷 BIÊN DẠNG RĂNG ĂN KHỚP 2D (TREDGOLD - CÓ R CHÂN)`)**:
+       * Gọi trực tiếp `Bevel3DGenerator.generateSliceToothContour` để vẽ biên dạng răng ăn khớp 2D Tredgold quay liên hợp thời gian thực, hiển thị rõ đường thân khai, vòng đỉnh ($r_{va1}, r_{va2}$), vòng chia ($r_{v1}, r_{v2}$), vòng đáy ($r_{vf1}, r_{vf2}$), đường ăn khớp và tô nổi bật cung lượn chân răng $R_{\text{chân}} = 3.80\text{ mm}$ (`0.38·mmn`) kèm vòng tròn tâm lượn $R_{f1}$.
+     - **Xuất Bản Vẽ 2D CAD DXF (`bevel-dxf-exporter.js`)**: Đồng bộ mặt cắt trục 8 đỉnh khớp 3D và bổ sung hình chiếu biên dạng răng ăn khớp 2D Tredgold có $R_{\text{chân}}$ vào file DXF.
+* **Kết quả kiểm thử & Nghiệm thu**:
+  - `python modules/bevel-gear/tests/test_bevel_3d.py`: **PASS 100%** (Rf1 = Rf2 = 3.80 mm = `0.38*mmn`, 20 điểm fillet/răng, kiểm thử 3D Straight & Spiral Data1 bounds, STEP Solid/Surface, Binary STL và 2D DXF).
+  - Bộ ảnh chụp kiểm chứng 2D & 3D (`test_2d_bevel_matched_3d.png`, `test_3d_fillet_iso.png`, `test_3d_fillet_front.png`, `test_3d_fillet_pinion.png`, `test_3d_fillet_mesh.png`, `test_3d_fillet_closeup_pinion_root.png`).
+

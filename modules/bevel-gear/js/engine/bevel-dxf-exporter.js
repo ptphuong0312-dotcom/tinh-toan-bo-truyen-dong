@@ -243,15 +243,61 @@ export const BevelDxfExporter = {
             addLine(0 + offX, 20 + offY, 0 + offX, pt5_2.y - 30 + offY, 'CENTER_LINES');
         };
 
+        // Draw 2D Tredgold Virtual Tooth Profile with C1 Circular Root Fillet (R_chan = 0.38 * mmn)
+        const drawVirtualToothProfile = (isPinion, offX, offY) => {
+            if (typeof Bevel3DGenerator === 'undefined' || !Bevel3DGenerator.generateSliceToothContour) return;
+            const mmn = g.mmn || 10.0;
+            const Rm = g.Rm || (Re - b / 2.0);
+            const alfa = ((g.alfa_deg !== undefined ? g.alfa_deg : 20.0) * Math.PI) / 180.0;
+            const beta = ((g.beta_deg !== undefined ? g.beta_deg : 0.0) * Math.PI) / 180.0;
+            const isSpiral = Math.abs(beta) > 1e-4;
+            const z = isPinion ? (g.z1 || 18) : (g.z2 || 45);
+            const delta = isPinion ? delta1 : delta2;
+            const ha_s = isPinion ? (g.ha1 || mmn * 1.32) : (g.ha2 || mmn * 0.68);
+            const hf_s = isPinion ? (g.hf1 || mmn * 0.88) : (g.hf2 || mmn * 1.52);
+            const sn_s = isPinion ? (g.sn1 || mmn * 1.84) : (g.sn2 || mmn * 1.30);
+            const layer = isPinion ? 'GEAR1_PINION' : 'GEAR2_WHEEL';
+
+            const slice = Bevel3DGenerator.generateSliceToothContour({
+                z, mmn, Rm, R_s: Rm, delta, alfa, beta, isSpiral,
+                ha_s, hf_s, sn_s, ptsPerFlank: res.ptsPerFlank, ptsFillet: 8
+            });
+            const pPsi = (2.0 * Math.PI / z) * slice.cosD;
+            const kRange = 2; // 5 teeth around pitch contact point
+            const pts = [];
+            for (let k = -kRange; k <= kRange; k++) {
+                const centerPsi = (isPinion ? k : (k + 0.5)) * pPsi;
+                for (let idx = 0; idx < slice.toothContour.length; idx++) {
+                    if (k > -kRange && idx === 0) continue;
+                    const tc = slice.toothContour[idx];
+                    const r = slice.rv + tc.h;
+                    const psi = centerPsi + tc.theta * slice.cosD;
+                    const px = offX + r * Math.sin(psi);
+                    const py = offY + (isPinion ? (slice.rv - r * Math.cos(psi)) : (-slice.rv + r * Math.cos(psi)));
+                    pts.push({ x: px, y: py });
+                }
+            }
+            for (let i = 0; i < pts.length - 1; i++) {
+                addLine(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, layer);
+            }
+        };
+
+        const profileOffX = Math.max(de1, de2) * 0.85 + 80;
+        const profileOffY = -Math.max(de1, de2) * 0.25;
+
         // Draw views depending on target
         if (target === 'pinion') {
             drawAxialPinion(0, 0);
+            drawVirtualToothProfile(true, profileOffX, profileOffY);
         } else if (target === 'gear') {
             drawAxialGear(0, 0);
+            drawVirtualToothProfile(false, profileOffX, profileOffY);
         } else {
-            // Assembly Pair: Both wheels sharing common Apex V(0, 0)
+            // Assembly Pair: Both wheels sharing common Apex V(0, 0) + Meshing 2D Tooth Profile with R_chan
             drawAxialPinion(0, 0);
             drawAxialGear(0, 0);
+            drawVirtualToothProfile(true, profileOffX, profileOffY);
+            drawVirtualToothProfile(false, profileOffX, profileOffY);
         }
 
         // Manufacturing Table Definition
@@ -264,6 +310,8 @@ export const BevelDxfExporter = {
         addText(`- So rang (Pinion z1 / Gear z2): ${g.z1} / ${g.z2}`, tblX, tblY, 3.5, 'MFG_TABLE');
         tblY -= rowH;
         addText(`- Mo-dun phap trung binh (mmn): ${(g.mmn || 10).toFixed(3)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`- Ban kinh luon chan rang (Rf = 0.38*mmn): ${(0.38 * (g.mmn || 10)).toFixed(3)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
         tblY -= rowH;
         addText(`- Mo-dun ngang ngoai (met): ${(g.met || 10).toFixed(3)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
         tblY -= rowH;

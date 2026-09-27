@@ -438,6 +438,10 @@ export class Bevel3DVisualizer {
     animate() {
         requestAnimationFrame(() => this.animate());
 
+        if (!this.container || this.container.clientWidth === 0 || this.container.clientHeight === 0) {
+            return;
+        }
+
         if (this.isAnimating && this.pinionGroup && this.gearGroup) {
             const step = this.rotSpeedBase * this.animSpeed * (this.animDirection || 1);
             this.pinionAngle += step;
@@ -611,6 +615,7 @@ export class Bevel3DVisualizer {
                 break;
         }
 
+        this.camera.lookAt(this.controls.target);
         this.controls.update();
     }
 
