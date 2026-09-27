@@ -493,12 +493,32 @@
                                     </tr>
                                     <tr class="table-subgroup-header">
                                         <td>4.14</td>
-                                        <td colspan="4"><strong>Khe hở cạnh răng pháp tuyến (Normal backlash)</strong></td>
-                                        <td>-</td>
+                                        <td><strong>Khe hở cạnh răng pháp tuyến &amp; Cấp chính xác (Normal backlash &amp; Accuracy grade - ISO 1328)</strong></td>
+                                        <td>Q</td>
+                                        <td colspan="2">
+                                            <div style="display:flex; gap:6px; align-items:center;">
+                                                <select class="select-eng" id="selSec4Accuracy" style="flex:1;">
+                                                    <option value="3">3....(Ra max.= 0.1 / v max.= 80)</option>
+                                                    <option value="4">4....(Ra max.= 0.2 / v max.= 60)</option>
+                                                    <option value="5">5....(Ra max.= 0.4 / v max.= 35)</option>
+                                                    <option value="6">6....(Ra max.= 0.8 / v max.= 15)</option>
+                                                    <option value="7" selected>7....(Ra max.= 1.6 / v max.= 8)</option>
+                                                    <option value="8">8....(Ra max.= 1.6 / v max.= 5)</option>
+                                                    <option value="9">9....(Ra max.= 3.2 / v max.= 3)</option>
+                                                    <option value="10">10..(Ra max.= 6.3 / v max.= 3)</option>
+                                                    <option value="11">11..(Ra max.= 12.5 / v max.= 3)</option>
+                                                    <option value="12">12..(Ra max.= 25 / v max.= 3)</option>
+                                                </select>
+                                                <label style="display:inline-flex; align-items:center; gap:4px; cursor:pointer; font-size:0.78rem; white-space:nowrap; color:#e2e8f0;" title="Tự động chọn cấp chính xác Q theo vận tốc vòng v (m/s)">
+                                                    <input type="checkbox" id="chkSec4AutoAccuracy" checked> Tự động
+                                                </label>
+                                            </div>
+                                        </td>
+                                        <td>ISO 1328</td>
                                     </tr>
                                     <tr>
                                         <td>4.15</td>
-                                        <td>- Giá trị nhỏ nhất / lớn nhất khuyến nghị (Recommended min. | max.)</td>
+                                        <td>- Giá trị nhỏ nhất / lớn nhất khuyến nghị theo cấp chính xác (Recommended min. | max.)</td>
                                         <td>jn min / max</td>
                                         <td><span class="output-eng" id="out_jn_min">0.085</span></td>
                                         <td><span class="output-eng" id="out_jn_max">0.340</span></td>
@@ -506,17 +526,22 @@
                                     </tr>
                                     <tr>
                                         <td>4.16</td>
-                                        <td>- Khe hở cạnh răng pháp tuyến được chọn (Selected normal backlash)</td>
+                                        <td>- Khe hở cạnh răng pháp tuyến được chọn (Selected normal backlash - sửa theo chế độ gia công)</td>
                                         <td>jn / jtw</td>
-                                        <td><input type="text" class="input-eng user-input" id="in_jn" value="0.0000"></td>
-                                        <td><span class="output-eng" id="out_jtw">0.0000</span> (jtw)</td>
+                                        <td>
+                                            <div style="display:flex; gap:4px; align-items:center;">
+                                                <input type="text" class="input-eng user-input" id="in_jn" value="0.2127" style="flex:1; min-width:75px;">
+                                                <button type="button" class="btn btn-secondary btn-compact" id="btnResetSpurJnAuto" title="Tính tự động khe hở jn theo cấp chính xác Q đã chọn" style="padding:2px 6px; font-size:0.74rem; white-space:nowrap;">↺ Theo cấp Q</button>
+                                            </div>
+                                        </td>
+                                        <td><span class="output-eng" id="out_jtw">0.2263</span> (jtw)</td>
                                         <td>mm</td>
                                     </tr>
                                     <tr>
                                         <td>4.17</td>
                                         <td>- Hiệu chỉnh khoảng cách trục do khe hở (Centre distance mod.)</td>
                                         <td>Δaj</td>
-                                        <td colspan="2"><span class="output-eng" id="out_delta_a_jn">0.0000</span></td>
+                                        <td colspan="2"><span class="output-eng" id="out_delta_a_jn">0.3109</span></td>
                                         <td>mm</td>
                                     </tr>
                                 </tbody>
@@ -1248,12 +1273,12 @@
                                         <td>Cấp chính xác chế tạo (Accuracy grade)</td>
                                         <td>Q</td>
                                         <td colspan="2">
-                                            <select class="select-eng" id="selSec11Accuracy" style="width: 100%;" disabled>
+                                            <select class="select-eng" id="selSec11Accuracy" style="width: 100%;">
                                                 <option value="3">3....(Ra max.= 0.1 / v max.= 80)</option>
                                                 <option value="4">4....(Ra max.= 0.2 / v max.= 60)</option>
                                                 <option value="5">5....(Ra max.= 0.4 / v max.= 35)</option>
-                                                <option value="6" selected>6....(Ra max.= 0.8 / v max.= 15)</option>
-                                                <option value="7">7....(Ra max.= 1.6 / v max.= 8)</option>
+                                                <option value="6">6....(Ra max.= 0.8 / v max.= 15)</option>
+                                                <option value="7" selected>7....(Ra max.= 1.6 / v max.= 8)</option>
                                                 <option value="8">8....(Ra max.= 1.6 / v max.= 5)</option>
                                                 <option value="9">9....(Ra max.= 3.2 / v max.= 3)</option>
                                                 <option value="10">10..(Ra max.= 6.3 / v max.= 3)</option>

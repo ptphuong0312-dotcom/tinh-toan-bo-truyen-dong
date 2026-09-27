@@ -1815,3 +1815,12 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
        * Hỗ trợ xuất riêng biệt **Khối Đặc (Solid B-Rep)**: `CLOSED_SHELL` + `MANIFOLD_SOLID_BREP` + `ADVANCED_BREP_SHAPE_REPRESENTATION` (kín nước 2-manifold 100%, $V - E + F = 0$, 0 cạnh hở) và **Bề Mặt Rỗng (Surface B-Rep)**: `OPEN_SHELL` + `SHELL_BASED_SURFACE_MODEL` + `MANIFOLD_SURFACE_SHAPE_REPRESENTATION`.
        * Hỗ trợ xuất **Lắp Ráp 2 Chi Tiết (Multi-Body Assembly)** tách thành 2 `MANIFOLD_SOLID_BREP` / `OPEN_SHELL` độc lập trong STEP và 2 đối tượng `o Pinion_1`, `o Gear_2` trong OBJ.
        * **Kiểm định thực tế**: Đạt 100% kiểm toán topo 2-manifold ($V - E + F = 0$, $\vec{N} \cdot \vec{R} = 0$) trên toàn bộ 12 tệp STEP và OBJ của cả 2 module, và mở trực tiếp thành công trong **SolidWorks (`SldWorks.Application` `LoadFile4`)** với **`loaded=True, err=0`**.
+
+---
+
+### [2026-09-27] BỔ SUNG CHÂN RĂNG ĐẦY ĐỦ TRONG 2D DXF BÁNH RĂNG CÔN, MAY-Ơ KÉO DÀI TÙY CHỈNH TRỰC TIẾP TRÊN MÔ PHỎNG 2D (ĐỒNG BỘ 2 CHIỀU $L_{\text{Apex}} \leftrightarrow L_{\text{Tip}}$) & KHE HỞ PHÁP TUYẾN LÝ THUYẾT THEO CẤP CHÍNH XÁC $Q$
+* **Bản sao lưu trước khi thực hiện**: `backups/BACKUP_MITCalc_Gear_20260927_170613.zip` (`253 files`, `12,883.83 KB`).
+* **Giải pháp kỹ thuật & Kết quả nghiệm thu**:
+  1. **Đầy đủ chân răng trong 2D DXF Bánh Răng Côn (`bevel-dxf-exporter.js`)**: Xuất 3 biểu đồ kỹ thuật (Biểu đồ 1: Mặt cắt trục có đường sinh nón đáy chân răng `ROOT_CIRCLE` + gạch mặt cắt $45^\circ$ `HATCH` + may-ơ kéo dài; Biểu đồ 2: Biên dạng răng 2D Tredgold khép kín qua cung vành trong có vòng chân răng $r_{vf}$ và $R_{\text{chân}} = 0.38 m_{mn}$; Biểu đồ 3: Bánh răng 360° $z$ răng khép kín kèm vòng đáy, vòng may-ơ và lỗ trục). Vượt qua 100% kiểm định AutoCAD 2020 `accoreconsole.exe` `AUDIT` (`Total errors found 0 fixed 0`).
+  2. **May-ơ kéo dài tùy chỉnh trực tiếp trên Tab Mô phỏng 2D (`bevel-canvas.js`, `#hubControlPanel2D`)**: Tự động tính $d_m, L_{\text{Apex}}, L_{\text{Tip}}$ ban đầu theo mô-đun $m_{mn}$, hỗ trợ chỉnh sửa trực tiếp trên mô phỏng 2D với đồng bộ 2 chiều $L_{\text{Apex}} = Z_{\text{tip,max}} + L_{\text{Tip}}$.
+  3. **Khe hở pháp tuyến lý thuyết bổ sung theo Cấp chính xác $Q$ (`modules/spur-gear/` `4.14–4.17` & `modules/bevel-gear/` `4.11–4.14`)**: Tích hợp chọn Cấp chính xác $Q \in [3..12]$ ngay tại Mục 4.0, tính `jn min / max` và tự động gán `jn` ban đầu theo cấp $Q$, cho phép sửa tay theo chế độ gia công và bảo toàn 100.0% ($\Delta = 0.000000$) mọi tính toán & mô phỏng hiện tại.

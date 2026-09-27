@@ -1086,3 +1086,19 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 8. **Tạo launcher 1-Click tại thư mục gốc**: `CHAY_WEBAPP_[TEN].bat` và `KIEM_TRA_CHEO_QC_[TEN].bat`.
 9. **Cập nhật Cổng Trung Tâm (`MITCalc-WebApp/index.html`)**: Thêm card mô-đun mới vào lưới điều hướng.
 10. **Đồng bộ tri thức (Golden Meta-Rule)**: Ghi lại toàn bộ kỹ thuật mới vào `GEMINI.md`, `OPTIMIZATION_HISTORY.md`, `.agents/skills/`, `.agents/workflows/`.
+
+---
+
+### Quy Chuẩn 53: Đầy Đủ Chân Răng 2D DXF Bánh Răng Côn, May-Ơ Kéo Dài Tùy Chỉnh Trực Tiếp Trên Mô Phỏng 2D & Khe Hở Pháp Tuyến Lý Thuyết Theo Cấp Chính Xác $Q$
+1. **Đầy đủ chân răng trong bản vẽ 2D DXF Bánh Răng Côn (`bevel-dxf-exporter.js`)**:
+   - Xuất đồng thời 3 biểu đồ 2D CAD chuẩn `AC1009`:
+     * **Biểu đồ 1**: Mặt cắt trục kỹ thuật ISO 23509 có đường sinh nón đáy chân răng (`toe_root -> heel_root` trên `ROOT_CIRCLE` & `CONTOUR`), gạch mặt cắt kim loại $45^\circ$ (`HATCH`) và may-ơ hình trụ kéo dài.
+     * **Biểu đồ 2**: Biên dạng răng ăn khớp 2D Tredgold khép kín qua cung vành trong `rInnerRim`, có vòng chân răng $r_{vf}$ (`ROOT_CIRCLE`), vòng chia $r_v$, vòng đỉnh $r_{va}$ và vòng tròn góc lượn chân răng giải tích $C^1$ ($R_{\text{chân}} = 0.38 m_{mn}$).
+     * **Biểu đồ 3**: Bánh răng côn đầy đủ 360° ($z$ răng khép kín) kèm vòng chân răng, vòng chia, vòng đỉnh, vòng may-ơ kéo dài ($d_{m1}, d_{m2}$) và lỗ trục.
+2. **May-ơ kéo dài tùy chỉnh trực tiếp trên Mô phỏng 2D (`bevel-canvas.js` & `#hubControlPanel2D`)**:
+   - Ban đầu tự động tính toán kích thước đường kính $d_m$ và chiều dài $L_{\text{Apex}}, L_{\text{Tip}}$ tỷ lệ theo mô-đun thiết kế $m_{mn}$ qua `BevelGearCanvas.computeBlankAndHubParams(g, hubOverrides)`.
+   - Đồng bộ tự động 2 chiều giữa chiều dài từ tâm Apex $V(0,0)$ ($L_{\text{Apex}}$) và chiều dài từ đỉnh nón lớn nhất ($L_{\text{Tip}}$) với $Z_{\text{tip,max}} = R_e \cos\delta - h_{ae} \sin\delta$:
+     $$L_{\text{Apex}} = Z_{\text{tip,max}} + L_{\text{Tip}}$$
+3. **Khe hở pháp tuyến lý thuyết bổ sung theo Cấp chính xác $Q$ (`modules/spur-gear/` & `modules/bevel-gear/`)**:
+   - Tích hợp chọn Cấp chính xác $Q \in [3..12]$ ngay trong Mục 4.0 (Bánh răng trụ dòng `4.14`, Bánh răng côn dòng `4.11`), đồng bộ 2 chiều với mục dung sai lắp ráp.
+   - Tự động tính `jn min / max` và giá trị `jn` ban đầu theo cấp chính xác $Q$, đồng thời cho phép người dùng chỉnh sửa `jn` theo chế độ gia công mà **tuyệt đối không làm thay đổi bất kỳ thông số hình học hay mô phỏng 2D/3D hiện tại nào**.

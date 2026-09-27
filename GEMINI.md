@@ -985,3 +985,32 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * **Mô hình Khối Đặc (Solid)**: Xuất `CLOSED_SHELL` $\to$ `MANIFOLD_SOLID_BREP` $\to$ `ADVANCED_BREP_SHAPE_REPRESENTATION` (đảm bảo kín nước 2-manifold tuyệt đối: mỗi cạnh thuộc đúng 2 mặt với 1 `.T.` và 1 `.F.`, đặc trưng Euler $V - E + F = 0$, độ dài cạnh nhỏ nhất $\ge 0.17\text{ mm}$).
      * **Mô hình Bề Mặt Rỗng (Surface)**: Xuất `OPEN_SHELL` $\to$ `SHELL_BASED_SURFACE_MODEL` $\to$ `MANIFOLD_SURFACE_SHAPE_REPRESENTATION` để SolidWorks và Mastercam nhận diện trực tiếp là **Surface Body** phục vụ lập trình đường chạy dao gia công bề mặt 3 trục / 5 trục.
      * **Mô hình Lắp Ráp (Assembly)**: Tách riêng mảng tam giác `[pinionTris, gearTris]` thành 2 `MANIFOLD_SOLID_BREP` (hoặc 2 `OPEN_SHELL`) riêng biệt trong cùng tệp `.step` và 2 nhóm đối tượng `o Pinion_1`, `o Gear_2` trong tệp `.obj`.
+
+---
+
+### Quy Tắc 44: Quy Chuẩn Đầy Đủ Chân Răng 2D DXF Bánh Răng Côn, May-Ơ Kéo Dài Tùy Chỉnh Trực Tiếp Trên Mô Phỏng 2D (Đồng Bộ 2 Chiều $L_{\text{Apex}} \leftrightarrow L_{\text{Tip}}$) & Khe Hở Pháp Tuyến Lý Thuyết Theo Cấp Chính Xác $Q$ (Bảo Toàn 100% Tính Toán Hiện Tại)
+1. **Lệnh trực tiếp & Ràng buộc bất biến từ SirPhuong**:
+   - *"file 2D của module bánh răng côn khi xuất dxf không phần chần răng"*
+   - *"tôi muốn bánh răng côn có thêm phần may ơ kéo dài, phần may ơ này có thể chỉnh kích thước (gồm kích thước đường kính và kích thước dài, kích thước dài sẽ lấy chuẩn từ tâm Apex V(0,0) và từ đỉnh nón lớn nhất , chỉ cần thay đổi 1 kích thước thì kích thước kia sẽ tự động thay đổi ) trực tiếp trên mô phỏng 2D luôn. 2 kích thước này ban dầu sẽ được phần mềm tính toán thay đổi tương đối theo modul thiết kế, sau đó mới được thay đổi lại như trên tôi nói để phù hợp với thiết kế"*
+   - *"tiếp đến là phần khe hở pháp tuyến của module tính toán bánh răng trụ (trong ảnh tôi gửi) : khe hở pháp tuyến min/max sẽ theo cấp chính xác được chọn (bạn cần tham khảo app gốc mitcalc để thêm phần chọn cấp chính xác này vào cho đúng). Khe hở cạnh răng pháp tuyến được chọn thì ban đầu tự tính toán ra 1 con số phù hợp theo cấp chính xác sau đó phần này có thể được sửa đổi lại để phù hợp với chế độ gia công"*
+   - *"tiếp theo nữa phần bánh răng côn hiện tại chưa có phần khe hở pháp tuyến này bạn cần thêm vào module tính toán của bánh răng côn và thêm cả phần chọn cấp chính xác như bánh răng trụ"*
+   - **Ràng buộc bất biến**: *"phần khe hở pháp tuyến là tính toán lý thuyết bổ sung thêm nên tuyệt đối không được làm thay đổi tính toán cũng như mô phỏng hiện tại của web app. hiện tại web đã ổn mọi thứ phải được bảo toàn chỉ thay đổi khi có lệnh của tôi"*.
+2. **Đầy đủ chân răng & vành răng trong bản vẽ 2D DXF Bánh Răng Côn (`bevel-dxf-exporter.js`)**:
+   - Bản vẽ 2D DXF của Bánh Răng Côn xuất đầy đủ 3 khung hình chiếu kỹ thuật có trọn vẹn chân răng:
+     * **Biểu đồ 1 (Mặt cắt trục kỹ thuật & May-ơ kéo dài - ISO 23509)**: Tách biệt rõ khối răng (`toe_root -> toe_tip -> heel_tip -> heel_root`) và khối vành + may-ơ kéo dài gạch mặt cắt $45^\circ$ (`HATCH` layer), vẽ tường minh **Đường sinh nón đáy chân răng (`toe_root -> heel_root`)** trên cả `ROOT_CIRCLE` và `CONTOUR`.
+     * **Biểu đồ 2 (Biên dạng răng 2D Tredgold có $R_{\text{chân}} = 0.38 m_{mn}$ & đáy rãnh)**: Đóng kín đa giác phân đoạn răng qua cung vành trong `rInnerRim`, kèm cung vòng chân răng $r_{vf}$ (`ROOT_CIRCLE`), vòng chia $r_v$ (`PITCH_CONES`), vòng đỉnh $r_{va}$ (`DIMENSIONS`) và vòng tròn tâm lượn chân răng giải tích $C^1$ ($R_f = 0.38 m_{mn}$).
+     * **Biểu đồ 3 (Bánh răng côn đầy đủ 360° - $z$ răng khép kín)**: Vành răng 360° khép kín nguyên vẹn $z$ răng kèm vòng chân răng (`ROOT_CIRCLE`), vòng chia, vòng đỉnh, vòng may-ơ kéo dài ($d_{m1}, d_{m2}$) và lỗ trục ($d_{\text{bore}}$).
+3. **May-ơ kéo dài tùy chỉnh trực tiếp trên Tab Mô phỏng 2D Bánh Răng Côn (`bevel-canvas.js` & `#hubControlPanel2D`)**:
+   - **Tính toán tự động ban đầu tỷ lệ theo mô-đun thiết kế $m_{mn}$**:
+     * Đường kính ngoài may-ơ: $d_{m,\text{auto}} = \text{round}_{0.5}\left(\text{clamp}\left(\max(d_{\text{bore}} + 4.5 m_{mn},\; 1.75 d_{\text{bore}} + 2.5 m_{mn}),\; d_{\text{bore}} + 2 m_{mn},\; 2 r_{\text{heel,rim}} - 2.0\right)\right)$.
+     * Đỉnh nón lớn nhất dọc trục từ Apex $V(0,0)$: $Z_{\text{tip,max}} = R_e \cos\delta - h_{ae} \sin\delta$.
+     * Chiều dài từ đỉnh nón lớn nhất đến mặt đầu cuối may-ơ: $L_{\text{Tip,auto}} = (Z_{\text{heel,hub}} - Z_{\text{tip,max}}) + \max(3.5 m_{mn},\; 0.32 b)$.
+     * Chiều dài từ tâm Apex $V(0,0)$ đến mặt đầu cuối may-ơ: $L_{\text{Apex,auto}} = Z_{\text{tip,max}} + L_{\text{Tip,auto}}$.
+   - **Liên kết tự động 2 chiều ($L_{\text{Apex}} \leftrightarrow L_{\text{Tip}}$) trực tiếp trên mô phỏng 2D**:
+     * Thay đổi $L_{\text{Apex}} \implies L_{\text{Tip}} = L_{\text{Apex}} - Z_{\text{tip,max}}$.
+     * Thay đổi $L_{\text{Tip}} \implies L_{\text{Apex}} = Z_{\text{tip,max}} + L_{\text{Tip}}$.
+     * Nút `[↺ Tự động theo mô-đun]` (`#btnResetHubAuto`) khôi phục kích thước may-ơ tự động theo mô-đun thiết kế. Đồng bộ 100% lên cả Canvas 2D và bản vẽ xuất DXF 2D.
+4. **Khe hở pháp tuyến lý thuyết bổ sung theo Cấp chính xác $Q$ (Bánh Răng Trụ `4.14–4.17` & Bánh Răng Côn `4.11–4.14`)**:
+   - **Bánh Răng Trụ (`modules/spur-gear/`)**: Dòng `4.14` chọn cấp chính xác ISO 1328 (`#selSec4Accuracy`, $Q = 3..12$, đồng bộ 2 chiều với `#selSec11Accuracy`); Dòng `4.15` tính $j_{n,\min}(Q) = j_{n,\min}(7) \cdot 2^{0.5(Q - 7)}$, $j_{n,\max}(Q) = 4 j_{n,\min}(Q)$; Dòng `4.16` tự động tính $j_{n,\text{auto}}(Q) = 0.5(j_{n,\min} + j_{n,\max})$ ban đầu và cho phép sửa tay theo chế độ gia công.
+   - **Bánh Răng Côn (`modules/bevel-gear/`)**: Dòng `4.11` chọn cấp chính xác DIN 3965 / ISO 1328 (`#selAccuracySec4`, $Q = 3..12$, đồng bộ 2 chiều với `#selAccuracySec14`); Dòng `4.12` tính $j_{n,\min}(Q) = (R_e/6000 + 0.020 + 0.009 m_{mn}) \cdot 2^{0.5(Q-6)}$, $j_{n,\max}(Q) = 3.7 j_{n,\min}(Q)$; Dòng `4.13–4.14` tự động tính $j_n$ ban đầu theo cấp $Q$ và cho phép sửa tay để tính $j_{te}, \Delta A_1, \Delta A_2$.
+   - **Cách ly tuyệt đối (Zero Side-Effect Isolation)**: Toàn bộ tính toán khe hở pháp tuyến chỉ phục vụ tra cứu lý thuyết và chế độ gia công, bảo toàn 100.0% ($\Delta = 0.000000$) mọi thông số hình học và mô phỏng 2D/3D hiện có.

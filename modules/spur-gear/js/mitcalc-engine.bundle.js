@@ -5665,10 +5665,11 @@ class SpurGearUI {
             hf0: 1.00,
             ra0: 0.38,
             ca_star: 0.25,
-            jn: 0.0000,
-            Q: 6,
+            jn: 0.2127,
+            auto_jn: true,
+            Q: 7,
             auto_accuracy: true,
-            sec11_Q: 6,
+            sec11_Q: 7,
             KAS: 2.0,
             Lh: 20000,
             SH_req: 1.30,
@@ -5774,8 +5775,8 @@ class SpurGearUI {
                     z1: 19, z2: 48, alfa_n: 20.0, beta: 0.0,
                     mn: 6.0, b1: 120.0, b2: 117.0, x1: 0.0, x2: 0.0,
                     ha0: 1.25, hf0: 1.00, ra0: 0.38, ca_star: 0.25,
-                    jn: 0.0000,
-                    Q: 6, auto_accuracy: true, sec11_Q: 6, KAS: 2.0, Lh: 20000, SH_req: 1.30, SF_req: 1.60,
+                    jn: 0.2127, auto_jn: true,
+                    Q: 7, auto_accuracy: true, sec11_Q: 7, KAS: 2.0, Lh: 20000, SH_req: 1.30, SF_req: 1.60,
                     auto_zw: true, auto_dt: true,
                     zw1: null, zw2: null, dt1: null, dt2: null,
                     W1_req: 77.0, W2_req: 260.0, M1_req: 240.0, M2_req: 700.0,
@@ -6223,15 +6224,12 @@ class SpurGearUI {
         if (sliderX1) sliderX1.value = this.inputs.x1;
         const sliderX1Val = document.getElementById('slider_x1_val');
         if (sliderX1Val) sliderX1Val.textContent = this.inputs.x1.toFixed(4);
-        setVal('in_jn', (this.inputs.jn !== undefined ? this.inputs.jn : 0.0).toFixed(4));
+        setVal('in_jn', (this.inputs.jn !== undefined ? this.inputs.jn : 0.2127).toFixed(4));
         const chkAcc = document.getElementById('chkAutoAccuracy');
         if (chkAcc) chkAcc.checked = this.inputs.auto_accuracy;
-        const selSec11Acc = document.getElementById('selSec11Accuracy');
-        if (selSec11Acc) {
-            this.updateAccuracyDropdown(this.inputs.beta, this.inputs.sec11_Q || this.inputs.Q);
-            selSec11Acc.value = this.inputs.auto_accuracy ? this.inputs.Q : (this.inputs.sec11_Q || this.inputs.Q);
-            selSec11Acc.disabled = this.inputs.auto_accuracy;
-        }
+        const chkSec4Acc = document.getElementById('chkSec4AutoAccuracy');
+        if (chkSec4Acc) chkSec4Acc.checked = this.inputs.auto_accuracy;
+        this.updateAccuracyDropdown(this.inputs.beta, this.inputs.sec11_Q || this.inputs.Q);
 
         setVal('in_sec20_drawn_teeth', this.inputs.sec20_drawn_teeth || 4);
         setVal('in_sec20_no_pt_head', this.inputs.sec20_no_pt_head || 20);
@@ -6243,7 +6241,7 @@ class SpurGearUI {
 
     updateAccuracyDropdown(beta, currentQ) {
         const selSec11Acc = document.getElementById('selSec11Accuracy');
-        if (!selSec11Acc) return;
+        const selSec4Acc = document.getElementById('selSec4Accuracy');
         const isHelical = Math.abs(beta || 0.0) > 1e-4;
         const grades = [
             { q: 3,  ra: '0.1',  v: isHelical ? 100 : 80 },
@@ -6257,13 +6255,23 @@ class SpurGearUI {
             { q: 11, ra: '12.5', v: 3 },
             { q: 12, ra: '25',   v: 3 }
         ];
-        const valToSelect = currentQ !== undefined ? currentQ : (parseInt(selSec11Acc.value) || 6);
-        selSec11Acc.innerHTML = grades.map(g => {
+        const fallbackQ = selSec4Acc ? (parseInt(selSec4Acc.value) || 7) : (selSec11Acc ? (parseInt(selSec11Acc.value) || 7) : 7);
+        const valToSelect = currentQ !== undefined ? currentQ : fallbackQ;
+        const optionsHtml = grades.map(g => {
             const prefix = g.q < 10 ? `${g.q}....` : `${g.q}..`;
             const selected = (g.q === valToSelect) ? ' selected' : '';
             return `<option value="${g.q}"${selected}>${prefix}(Ra max.= ${g.ra} / v max.= ${g.v})</option>`;
         }).join('');
-        selSec11Acc.value = valToSelect;
+        if (selSec11Acc) {
+            selSec11Acc.innerHTML = optionsHtml;
+            selSec11Acc.value = String(valToSelect);
+            selSec11Acc.disabled = false;
+        }
+        if (selSec4Acc) {
+            selSec4Acc.innerHTML = optionsHtml;
+            selSec4Acc.value = String(valToSelect);
+            selSec4Acc.disabled = false;
+        }
     }
 
     initAccordion() {
@@ -6358,9 +6366,19 @@ class SpurGearUI {
                 const val = isFloat ? parseFloat(raw) : parseInt(raw);
                 if (!isNaN(val)) {
                     this.inputs[key] = val;
+                    if (key === 'jn') {
+                        this.inputs.auto_jn = false;
+                    }
                     this.calculate();
                 }
             });
+            if (key === 'jn') {
+                el.addEventListener('change', () => {
+                    if (typeof this.inputs.jn === 'number' && !isNaN(this.inputs.jn)) {
+                        el.value = this.inputs.jn.toFixed(4);
+                    }
+                });
+            }
         };
 
         bindInput('in_Pw', 'Pw');
@@ -6518,23 +6536,65 @@ class SpurGearUI {
             });
         }
 
+        const selSec4Acc = document.getElementById('selSec4Accuracy');
         const selSec11Acc = document.getElementById('selSec11Accuracy');
-        if (selSec11Acc) {
-            selSec11Acc.addEventListener('change', () => {
-                this.inputs.sec11_Q = parseInt(selSec11Acc.value) || 6;
-                this.inputs.Q = this.inputs.sec11_Q;
+        const chkSec4AutoAcc = document.getElementById('chkSec4AutoAccuracy');
+        const chkAutoAcc = document.getElementById('chkAutoAccuracy');
+        const btnResetSpurJnAuto = document.getElementById('btnResetSpurJnAuto');
+
+        if (selSec4Acc) {
+            selSec4Acc.addEventListener('change', () => {
+                const qVal = parseInt(selSec4Acc.value) || 7;
+                this.inputs.sec11_Q = qVal;
+                this.inputs.Q = qVal;
+                this.inputs.auto_accuracy = false;
+                this.inputs.auto_jn = true;
+                if (chkSec4AutoAcc) chkSec4AutoAcc.checked = false;
+                if (chkAutoAcc) chkAutoAcc.checked = false;
+                if (selSec11Acc) selSec11Acc.value = String(qVal);
                 this.calculate();
             });
         }
 
-        const chkAutoAcc = document.getElementById('chkAutoAccuracy');
+        if (selSec11Acc) {
+            selSec11Acc.addEventListener('change', () => {
+                const qVal = parseInt(selSec11Acc.value) || 7;
+                this.inputs.sec11_Q = qVal;
+                this.inputs.Q = qVal;
+                this.inputs.auto_accuracy = false;
+                this.inputs.auto_jn = true;
+                if (chkSec4AutoAcc) chkSec4AutoAcc.checked = false;
+                if (chkAutoAcc) chkAutoAcc.checked = false;
+                if (selSec4Acc) selSec4Acc.value = String(qVal);
+                this.calculate();
+            });
+        }
+
+        if (chkSec4AutoAcc) {
+            chkSec4AutoAcc.addEventListener('change', () => {
+                this.inputs.auto_accuracy = chkSec4AutoAcc.checked;
+                if (chkAutoAcc) chkAutoAcc.checked = chkSec4AutoAcc.checked;
+                if (chkSec4AutoAcc.checked) {
+                    this.inputs.auto_jn = true;
+                }
+                this.calculate();
+            });
+        }
+
         if (chkAutoAcc) {
             chkAutoAcc.addEventListener('change', () => {
                 this.inputs.auto_accuracy = chkAutoAcc.checked;
-                const sel11 = document.getElementById('selSec11Accuracy');
-                if (sel11) {
-                    sel11.disabled = chkAutoAcc.checked;
+                if (chkSec4AutoAcc) chkSec4AutoAcc.checked = chkAutoAcc.checked;
+                if (chkAutoAcc.checked) {
+                    this.inputs.auto_jn = true;
                 }
+                this.calculate();
+            });
+        }
+
+        if (btnResetSpurJnAuto) {
+            btnResetSpurJnAuto.addEventListener('click', () => {
+                this.inputs.auto_jn = true;
                 this.calculate();
             });
         }
@@ -6700,31 +6760,9 @@ class SpurGearUI {
             dt2: inp.dt2
         });
 
-        // Backlash calculations (MITCalc 1.74 rows 193-195)
-        const jn_min = 6.0 * Math.sqrt(g.aw) * 0.001;
-        const jn_max = 24.0 * Math.sqrt(g.aw) * 0.001;
-        const jn = (inp.jn !== undefined && inp.jn !== null && !isNaN(inp.jn)) ? inp.jn : 0.0;
-
-        const betabRad = (g.betab || 0.0) * Math.PI / 180.0;
-        const alfawtRad = (g.alfawt || g.alfa_n || 20.0) * Math.PI / 180.0;
-        const alfawnRad = (g.alfawn || g.alfa_n || 20.0) * Math.PI / 180.0;
-
-        const cosBetab = Math.cos(betabRad);
-        const cosAlfawt = Math.cos(alfawtRad);
-        const sinAlfawn = Math.sin(alfawnRad);
-
-        const jtw = (Math.abs(cosBetab * cosAlfawt) > 1e-6) ? (jn / (cosBetab * cosAlfawt)) : 0.0;
-        const delta_a_jn = (Math.abs(sinAlfawn) > 1e-6) ? (jn / (2.0 * sinAlfawn)) : 0.0;
-
-        g.jn_min = jn_min;
-        g.jn_max = jn_max;
-        g.jn = jn;
-        g.jtw = jtw;
-        g.delta_a_jn = delta_a_jn;
-
         // Auto Accuracy Grade Recommendation (MITCalc Table T_AG / T_MaxV)
         const isHelical = Math.abs(g.beta || 0.0) > 1e-4;
-        let qForTolerance = inp.sec11_Q || inp.Q || 6;
+        let qForTolerance = inp.sec11_Q || inp.Q || 7;
         if (this.inputs.auto_accuracy) {
             const v = g.v || (Math.PI * g.d1 * inp.n1 / 60000.0);
             if (isHelical) {
@@ -6753,6 +6791,38 @@ class SpurGearUI {
         g.sec11_Q = qForTolerance;
 
         this.updateAccuracyDropdown(g.beta, qForTolerance);
+
+        // Backlash calculations scaled by selected Accuracy Grade Q (MITCalc 1.74 rows 193-195 + DIN 3967 step factor 2^(0.5*(Q-7)))
+        const fQ = Math.pow(2.0, 0.5 * (qForTolerance - 7));
+        const jn_min = 6.0 * Math.sqrt(g.aw) * 0.001 * fQ;
+        const jn_max = 24.0 * Math.sqrt(g.aw) * 0.001 * fQ;
+
+        if (this.inputs.auto_jn !== false) {
+            const jn_auto = 0.5 * (jn_min + jn_max);
+            this.inputs.jn = parseFloat(jn_auto.toFixed(4));
+            const inJnEl = document.getElementById('in_jn');
+            if (inJnEl && document.activeElement !== inJnEl) {
+                inJnEl.value = this.inputs.jn.toFixed(4);
+            }
+        }
+        const jn = (inp.jn !== undefined && inp.jn !== null && !isNaN(inp.jn)) ? inp.jn : 0.5 * (jn_min + jn_max);
+
+        const betabRad = (g.betab || 0.0) * Math.PI / 180.0;
+        const alfawtRad = (g.alfawt || g.alfa_n || 20.0) * Math.PI / 180.0;
+        const alfawnRad = (g.alfawn || g.alfa_n || 20.0) * Math.PI / 180.0;
+
+        const cosBetab = Math.cos(betabRad);
+        const cosAlfawt = Math.cos(alfawtRad);
+        const sinAlfawn = Math.sin(alfawnRad);
+
+        const jtw = (Math.abs(cosBetab * cosAlfawt) > 1e-6) ? (jn / (cosBetab * cosAlfawt)) : 0.0;
+        const delta_a_jn = (Math.abs(sinAlfawn) > 1e-6) ? (jn / (2.0 * sinAlfawn)) : 0.0;
+
+        g.jn_min = jn_min;
+        g.jn_max = jn_max;
+        g.jn = jn;
+        g.jtw = jtw;
+        g.delta_a_jn = delta_a_jn;
 
         const tols = StandardTables.calcISO1328Tolerances(
             g.mn, g.d1, g.d2, g.b1, g.b2, g.z1, g.z2, g.epsilon_G, qForTolerance
@@ -6997,8 +7067,13 @@ class SpurGearUI {
 
         const selSec11Acc = document.getElementById('selSec11Accuracy');
         if (selSec11Acc) {
-            selSec11Acc.value = g.sec11_Q;
-            selSec11Acc.disabled = this.inputs.auto_accuracy;
+            selSec11Acc.value = String(g.sec11_Q);
+            selSec11Acc.disabled = false;
+        }
+        const selSec4Acc = document.getElementById('selSec4Accuracy');
+        if (selSec4Acc) {
+            selSec4Acc.value = String(g.sec11_Q);
+            selSec4Acc.disabled = false;
         }
 
         set('mfg_mn', g.mn.toFixed(4));

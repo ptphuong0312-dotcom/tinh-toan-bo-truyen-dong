@@ -24,6 +24,9 @@ class BevelGearUI {
             ha0: 1.0,
             c0: 0.2,
             Q: 6,
+            auto_Q: false,
+            auto_jn: true,
+            jn: 0.291,
             mat1: '16MnCr5',
             mat2: '16MnCr5',
             gearingType: 'straight_type1'
@@ -64,11 +67,15 @@ class BevelGearUI {
                     P: 50.0, n1: 1000.0, n2: 400.0, i_req: 2.5000,
                     z1: 18, z2: 45, Sigma: 90.0, alfa: 20.0, beta: 0.0,
                     mmn: 10.0, b: 117.0, x1: 0.32, xt1: 0.04,
-                    ha0: 1.0, c0: 0.2, Q: 6, mat1: '16MnCr5', mat2: '16MnCr5',
+                    ha0: 1.0, c0: 0.2, Q: 6, auto_Q: false, auto_jn: true, jn: 0.291,
+                    mat1: '16MnCr5', mat2: '16MnCr5',
                     gearingType: 'straight_type1'
                 };
+                if (this.canvasController) this.canvasController.resetHubOverrides(false);
                 const selGT = document.getElementById('selGearingType');
                 if (selGT) selGT.value = 'straight_type1';
+                const chkAutoQ = document.getElementById('chkBevelAutoAccuracy');
+                if (chkAutoQ) chkAutoQ.checked = false;
                 document.querySelectorAll('.input-eng').forEach(inp => {
                     const k = inp.getAttribute('data-key');
                     if (this.inputs[k] !== undefined) inp.value = this.inputs[k];
@@ -101,6 +108,7 @@ class BevelGearUI {
                     if (targetId === 'tabCanvas') {
                         if (this.activeMode === '2D' && this.canvasController) {
                             this.canvasController.resetView();
+                            if (this.lastGeom) this.syncHubPanelUI(this.lastGeom);
                         } else if (this.activeMode === '3D' && this.visualizer3D) {
                             this.visualizer3D.onResize();
                             if (this.lastGeom && this.visualizer3D.geom !== this.lastGeom) {
@@ -112,12 +120,67 @@ class BevelGearUI {
             });
         });
 
-        // Accuracy Grade Selection (Section 11.4 / DIN 3965)
+        // Accuracy Grade Selection (Synchronized between Section 4.11 and Section 11.4 / DIN 3965)
+        const selAccSec4 = document.getElementById('selAccuracySec4');
         const selAccSec14 = document.getElementById('selAccuracySec14');
+        const chkBevelAutoAcc = document.getElementById('chkBevelAutoAccuracy');
+        const inpBevelJn = document.getElementById('inp_bevel_jn');
+        const btnResetBevelJnAuto = document.getElementById('btnResetBevelJnAuto');
+
+        if (selAccSec4) {
+            selAccSec4.addEventListener('change', () => {
+                this.inputs.Q = parseInt(selAccSec4.value) || 6;
+                this.inputs.auto_Q = false;
+                this.inputs.auto_jn = true;
+                if (chkBevelAutoAcc) chkBevelAutoAcc.checked = false;
+                if (selAccSec14) selAccSec14.value = String(this.inputs.Q);
+                this.calculate();
+            });
+        }
         if (selAccSec14) {
             selAccSec14.addEventListener('change', () => {
                 this.inputs.Q = parseInt(selAccSec14.value) || 6;
+                this.inputs.auto_Q = false;
+                this.inputs.auto_jn = true;
+                if (chkBevelAutoAcc) chkBevelAutoAcc.checked = false;
+                if (selAccSec4) selAccSec4.value = String(this.inputs.Q);
                 this.calculate();
+            });
+        }
+        if (chkBevelAutoAcc) {
+            chkBevelAutoAcc.addEventListener('change', () => {
+                this.inputs.auto_Q = chkBevelAutoAcc.checked;
+                if (this.inputs.auto_Q) {
+                    this.inputs.auto_jn = true;
+                }
+                if (selAccSec4) selAccSec4.disabled = this.inputs.auto_Q;
+                this.calculate();
+            });
+        }
+        if (inpBevelJn) {
+            inpBevelJn.addEventListener('input', () => {
+                const rawVal = String(inpBevelJn.value).trim().replace(',', '.');
+                const v = parseFloat(rawVal);
+                if (!isNaN(v) && v >= 0) {
+                    this.inputs.jn = v;
+                    this.inputs.auto_jn = false;
+                    if (this.lastGeom) {
+                        this.renderBacklashOutputs(this.lastGeom, true);
+                    }
+                }
+            });
+            inpBevelJn.addEventListener('change', () => {
+                if (typeof this.inputs.jn === 'number' && !isNaN(this.inputs.jn)) {
+                    inpBevelJn.value = this.inputs.jn.toFixed(3);
+                }
+            });
+        }
+        if (btnResetBevelJnAuto) {
+            btnResetBevelJnAuto.addEventListener('click', () => {
+                this.inputs.auto_jn = true;
+                if (this.lastGeom) {
+                    this.renderBacklashOutputs(this.lastGeom, false);
+                }
             });
         }
 
@@ -342,6 +405,7 @@ class BevelGearUI {
         const container3D = document.getElementById('container3D');
         const toolbar2D = document.getElementById('toolbar2D');
         const toolbar3D = document.getElementById('toolbar3D');
+        const hubPanel2D = document.getElementById('hubControlPanel2D');
         const visualizerTitle = document.getElementById('visualizerTitle');
         const visualizerDesc = document.getElementById('visualizerDesc');
 
@@ -356,9 +420,11 @@ class BevelGearUI {
                 if (container3D) container3D.style.display = 'none';
                 if (toolbar2D) toolbar2D.style.display = 'flex';
                 if (toolbar3D) toolbar3D.style.display = 'none';
+                if (hubPanel2D) hubPanel2D.style.display = 'block';
                 if (visualizerTitle) visualizerTitle.textContent = '📐 Mô Hình 2D Nón Bánh Răng Ăn Khớp & Biên Dạng Răng Có R Chân (ISO 23509)';
                 if (visualizerDesc) visualizerDesc.textContent = 'Mặt cắt trục 2D khớp 1-to-1 phôi 3D, kết hợp Biên dạng răng ăn khớp 2D Tredgold có bán kính lượn chân răng R chân = 0.38·mmn.';
                 if (this.canvasController) this.canvasController.resetView();
+                if (this.lastGeom) this.syncHubPanelUI(this.lastGeom);
             });
 
             btnMode3D.addEventListener('click', () => {
@@ -371,6 +437,7 @@ class BevelGearUI {
                 if (container3D) container3D.style.display = 'block';
                 if (toolbar2D) toolbar2D.style.display = 'none';
                 if (toolbar3D) toolbar3D.style.display = 'flex';
+                if (hubPanel2D) hubPanel2D.style.display = 'none';
                 if (visualizerTitle) visualizerTitle.textContent = '🧊 Mô Phỏng Ăn Khớp 3D WebGL (Bevel Gears)';
                 if (visualizerDesc) visualizerDesc.textContent = 'Mô hình 3D thực thể có R chân = 0.38·mmn xoay chuyển động ăn khớp liên hợp không gian tại góc trục Σ. Xuất file CAD STEP/STL cho SolidWorks & Mastercam.';
                 if (this.visualizer3D) {
@@ -378,6 +445,46 @@ class BevelGearUI {
                     if (this.lastGeom && this.visualizer3D.geom !== this.lastGeom) {
                         this.visualizer3D.setGeometry(this.lastGeom);
                     }
+                }
+            });
+        }
+
+        // 2D Extended Hub Interactive Dimension Bindings (Direct 2D Simulation Controls)
+        const bindHubInput = (inputId, wheel, field) => {
+            const el = document.getElementById(inputId);
+            if (!el) return;
+            el.addEventListener('input', () => {
+                const rawVal = String(el.value).trim().replace(',', '.');
+                const val = parseFloat(rawVal);
+                if (!isNaN(val) && val > 0 && this.canvasController) {
+                    this.canvasController.updateHubParam(wheel, field, val);
+                    if (this.lastGeom) {
+                        this.syncHubPanelUI(this.lastGeom, inputId);
+                    }
+                }
+            });
+            el.addEventListener('change', () => {
+                if (this.lastGeom) {
+                    this.syncHubPanelUI(this.lastGeom);
+                }
+            });
+        };
+
+        bindHubInput('inpHubD1', 1, 'dHub');
+        bindHubInput('inpHubApex1', 1, 'LApex');
+        bindHubInput('inpHubTip1', 1, 'LTip');
+        bindHubInput('inpHubD2', 2, 'dHub');
+        bindHubInput('inpHubApex2', 2, 'LApex');
+        bindHubInput('inpHubTip2', 2, 'LTip');
+
+        const btnResetHubAuto = document.getElementById('btnResetHubAuto');
+        if (btnResetHubAuto) {
+            btnResetHubAuto.addEventListener('click', () => {
+                if (this.canvasController) {
+                    this.canvasController.resetHubOverrides(true);
+                }
+                if (this.lastGeom) {
+                    this.syncHubPanelUI(this.lastGeom);
                 }
             });
         }
@@ -677,6 +784,11 @@ class BevelGearUI {
                         if (inp_z2) inp_z2.value = z2_calc;
                     }
 
+                    // Reset 2D hub overrides when design module mmn changes so hub scales with module first
+                    if (key === 'mmn' && this.canvasController) {
+                        this.canvasController.resetHubOverrides(false);
+                    }
+
                     this.calculate();
                 }
             });
@@ -847,6 +959,7 @@ class BevelGearUI {
                     this.inputs.mmn = mmn;
                     const inp = document.getElementById('inp_mmn');
                     if (inp) inp.value = mmn.toFixed(3);
+                    if (this.canvasController) this.canvasController.resetHubOverrides(false);
                     this.calculate();
                 }
             });
@@ -955,6 +1068,7 @@ class BevelGearUI {
             if (inp_xt1) inp_xt1.value = '0.04';
             if (sliderBRe) sliderBRe.value = '0.3458';
             if (sliderX1) sliderX1.value = '0.32';
+            if (this.canvasController) this.canvasController.resetHubOverrides(false);
             this.calculate();
         };
         if (btnDesign) btnDesign.addEventListener('click', runAutoDesign);
@@ -1011,11 +1125,101 @@ class BevelGearUI {
         }
     }
 
+    syncHubPanelUI(g, activeInputId = null) {
+        if (!g || typeof BevelGearCanvas === 'undefined' || typeof BevelGearCanvas.computeBlankAndHubParams !== 'function') return;
+        const hubOverrides = this.canvasController ? this.canvasController.hubOverrides : null;
+        const hp = BevelGearCanvas.computeBlankAndHubParams(g, hubOverrides);
+        const setVal = (id, num) => {
+            if (id === activeInputId) return;
+            const el = document.getElementById(id);
+            if (el && typeof num === 'number' && !isNaN(num)) {
+                el.value = num.toFixed(2);
+            }
+        };
+        setVal('inpHubD1', hp.dHub1);
+        setVal('inpHubApex1', hp.LApex1);
+        setVal('inpHubTip1', hp.LTip1);
+        setVal('inpHubD2', hp.dHub2);
+        setVal('inpHubApex2', hp.LApex2);
+        setVal('inpHubTip2', hp.LTip2);
+    }
+
+    renderBacklashOutputs(g, isManualJnEdit = false) {
+        if (!g) return;
+        // Auto-select Q from circumferential velocity if auto_Q is enabled
+        if (this.inputs.auto_Q) {
+            const v_ms = (Math.PI * (g.dm1 || 200) * (g.n1 || 1000)) / 60000.0;
+            let autoQ = 8;
+            if (v_ms > 25) autoQ = 5;
+            else if (v_ms > 12) autoQ = 6;
+            else if (v_ms > 6) autoQ = 7;
+            else if (v_ms > 2) autoQ = 8;
+            else autoQ = 9;
+            this.inputs.Q = autoQ;
+            g.Q = autoQ;
+        }
+        const Q = parseInt(this.inputs.Q) || 6;
+        const selAcc4 = document.getElementById('selAccuracySec4');
+        const selAcc14 = document.getElementById('selAccuracySec14');
+        if (selAcc4 && selAcc4.value !== String(Q)) selAcc4.value = String(Q);
+        if (selAcc14 && selAcc14.value !== String(Q)) selAcc14.value = String(Q);
+
+        // DIN 3967 / ISO 23509 Normal backlash jn_min / jn_max scaled by Accuracy Grade Q (Step factor 2^(0.5*(Q-6)))
+        const Rm = Math.max(10.0, g.Rm || 279.82);
+        const mmn = Math.max(0.5, g.mmn || 10.0);
+        const fQ = Math.pow(2.0, 0.5 * (Q - 6));
+        const jn_min = (0.006 * Math.sqrt(Rm) + 0.004 * mmn) * fQ;
+        const jn_max = (0.024 * Math.sqrt(Rm) + 0.012 * mmn) * fQ;
+
+        if (this.inputs.auto_jn && !isManualJnEdit) {
+            const jn_auto = 0.5 * (jn_min + jn_max);
+            this.inputs.jn = parseFloat(jn_auto.toFixed(3));
+            const inpJn = document.getElementById('inp_bevel_jn');
+            if (inpJn && document.activeElement !== inpJn) {
+                inpJn.value = this.inputs.jn.toFixed(3);
+            }
+        }
+
+        const jn = (typeof this.inputs.jn === 'number' && !isNaN(this.inputs.jn)) ? this.inputs.jn : 0.5 * (jn_min + jn_max);
+        const beta_rad = ((g.beta_deg || 0.0) * Math.PI) / 180.0;
+        const alfan_rad = ((g.alfa_n_deg || 20.0) * Math.PI) / 180.0;
+        const d1_rad = ((g.delta1_deg || 21.8) * Math.PI) / 180.0;
+        const d2_rad = ((g.delta2_deg || 68.2) * Math.PI) / 180.0;
+        const Re = g.Re || 338.32;
+
+        // Outer circumferential backlash jte and axial mounting distance allowances ΔA1, ΔA2
+        const denom_jte = Math.max(1e-4, Math.cos(beta_rad) * Math.cos(alfan_rad));
+        const jte = (jn / denom_jte) * (Re / Rm);
+        const dA1 = jn / Math.max(1e-4, 2.0 * Math.sin(alfan_rad) * Math.sin(d1_rad));
+        const dA2 = jn / Math.max(1e-4, 2.0 * Math.sin(alfan_rad) * Math.sin(d2_rad));
+
+        const setEl = (id, txt) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = txt;
+        };
+        setEl('out_bevel_jn_min', jn_min.toFixed(3));
+        setEl('out_bevel_jn_max', jn_max.toFixed(3));
+        setEl('out_bevel_jte', jte.toFixed(3));
+        setEl('out_bevel_dA1', '+' + dA1.toFixed(3));
+        setEl('out_bevel_dA2', '+' + dA2.toFixed(3));
+    }
+
     calculate() {
         if (typeof BevelCalcEngine === 'undefined') return;
+        if (this.inputs.auto_Q) {
+            const gPre = BevelCalcEngine.calculate(this.inputs);
+            const v_ms = (Math.PI * (gPre.dm1 || 200) * (gPre.n1 || 1000)) / 60000.0;
+            if (v_ms > 25) this.inputs.Q = 5;
+            else if (v_ms > 12) this.inputs.Q = 6;
+            else if (v_ms > 6) this.inputs.Q = 7;
+            else if (v_ms > 2) this.inputs.Q = 8;
+            else this.inputs.Q = 9;
+        }
         const g = BevelCalcEngine.calculate(this.inputs);
         this.lastGeom = g;
         this.renderOutputs(g);
+        this.renderBacklashOutputs(g, false);
+        this.syncHubPanelUI(g);
         this.renderAuditTable(g);
         if (this.canvasController) {
             this.canvasController.setGeometry(g);
@@ -1742,6 +1946,7 @@ class BevelGearUI {
     exportDXF(target = 'assembly') {
         const g = this.lastGeom || (typeof BevelCalcEngine !== 'undefined' ? BevelCalcEngine.calculate(this.inputs) : null);
         if (!g) return;
+        g._hubOverrides = this.canvasController ? this.canvasController.hubOverrides : null;
         if (typeof BevelDxfExporter !== 'undefined') {
             BevelDxfExporter.downloadDXF(g, target, this.profileResolution || 6);
         }

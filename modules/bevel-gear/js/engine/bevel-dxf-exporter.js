@@ -69,13 +69,13 @@ export const BevelDxfExporter = {
             '70', '0',
             '10', '0.0', '20', '0.0',
             '11', '1.0', '21', '1.0',
-            '12', '0.0', '22', '0.0',
+            '12', '250.0', '22', '120.0',
             '13', '0.0', '23', '0.0',
             '14', '10.0', '24', '10.0',
             '15', '10.0', '25', '10.0',
             '16', '0.0', '26', '0.0', '36', '1.0',
             '17', '0.0', '27', '0.0', '37', '0.0',
-            '40', '450.0',
+            '40', '950.0',
             '41', '1.8',
             '42', '50.0',
             '43', '0.0',
@@ -101,17 +101,20 @@ export const BevelDxfExporter = {
             '0', 'LTYPE', '2', 'DASHED', '70', '0', '3', 'Dashed __ __ __ __', '72', '65', '73', '2', '40', '19.05',
             '49', '12.7', '49', '-6.35',
             '0', 'ENDTAB',
-            // LAYER table (including mandatory default layer 0)
+            // LAYER table (including mandatory default layer 0 + ROOT_CIRCLE + HATCH + DIMENSIONS)
             '0', 'TABLE',
             '2', 'LAYER',
-            '70', '7',
+            '70', '10',
             '0', 'LAYER', '2', '0', '70', '0', '62', '7', '6', 'CONTINUOUS',
-            '0', 'LAYER', '2', 'GEAR1_PINION', '70', '0', '62', '1', '6', 'CONTINUOUS', // Red
-            '0', 'LAYER', '2', 'GEAR2_WHEEL', '70', '0', '62', '5', '6', 'CONTINUOUS',  // Blue
-            '0', 'LAYER', '2', 'PITCH_CONES', '70', '0', '62', '3', '6', 'CENTER',      // Green dashdot
-            '0', 'LAYER', '2', 'CENTER_LINES', '70', '0', '62', '2', '6', 'CENTER',     // Yellow dashdot
-            '0', 'LAYER', '2', 'SHAFTS_BORE', '70', '0', '62', '7', '6', 'CONTINUOUS',  // White
-            '0', 'LAYER', '2', 'MFG_TABLE', '70', '0', '62', '7', '6', 'CONTINUOUS',    // White
+            '0', 'LAYER', '2', 'GEAR1_PINION', '70', '0', '62', '4', '6', 'CONTINUOUS', // Cyan
+            '0', 'LAYER', '2', 'GEAR2_WHEEL', '70', '0', '62', '30', '6', 'CONTINUOUS',  // Orange
+            '0', 'LAYER', '2', 'ROOT_CIRCLE', '70', '0', '62', '3', '6', 'DASHED',       // Green dashed (Tooth root / fillet)
+            '0', 'LAYER', '2', 'PITCH_CONES', '70', '0', '62', '2', '6', 'CENTER',       // Yellow dashdot
+            '0', 'LAYER', '2', 'CENTER_LINES', '70', '0', '62', '1', '6', 'CENTER',      // Red dashdot
+            '0', 'LAYER', '2', 'SHAFTS_BORE', '70', '0', '62', '7', '6', 'CONTINUOUS',   // White
+            '0', 'LAYER', '2', 'HATCH', '70', '0', '62', '8', '6', 'CONTINUOUS',         // Gray 45-deg section hatching
+            '0', 'LAYER', '2', 'DIMENSIONS', '70', '0', '62', '6', '6', 'CONTINUOUS',    // Magenta dimensions
+            '0', 'LAYER', '2', 'MFG_TABLE', '70', '0', '62', '7', '6', 'CONTINUOUS',     // White
             '0', 'ENDTAB',
             // STYLE table
             '0', 'TABLE',
@@ -150,12 +153,42 @@ export const BevelDxfExporter = {
             );
         };
 
+        const addPolyline = (pts, layer, closed = true) => {
+            if (!pts || pts.length < 2) return;
+            lines.push(
+                '0', 'POLYLINE',
+                '8', layer,
+                '66', '1',
+                '10', '0.0', '20', '0.0', '30', '0.0',
+                '70', closed ? '1' : '0'
+            );
+            for (const p of pts) {
+                lines.push(
+                    '0', 'VERTEX',
+                    '8', layer,
+                    '10', p.x.toFixed(4), '20', p.y.toFixed(4), '30', '0.0'
+                );
+            }
+            lines.push('0', 'SEQEND', '8', layer);
+        };
+
         const addCircle = (cx, cy, r, layer) => {
             lines.push(
                 '0', 'CIRCLE',
                 '8', layer,
                 '10', cx.toFixed(4), '20', cy.toFixed(4), '30', '0.0',
                 '40', r.toFixed(4)
+            );
+        };
+
+        const addArc = (cx, cy, r, startDeg, endDeg, layer) => {
+            lines.push(
+                '0', 'ARC',
+                '8', layer,
+                '10', cx.toFixed(4), '20', cy.toFixed(4), '30', '0.0',
+                '40', r.toFixed(4),
+                '50', startDeg.toFixed(4),
+                '51', endDeg.toFixed(4)
             );
         };
 
@@ -169,128 +202,226 @@ export const BevelDxfExporter = {
             );
         };
 
-        // Geometric dimensions for axial sections
-        const delta1 = g.delta1 || ((g.delta1_deg || 21.8) * Math.PI / 180.0);
-        const delta2 = g.delta2 || ((g.delta2_deg || 68.2) * Math.PI / 180.0);
-        const sinD1 = Math.sin(delta1), cosD1 = Math.cos(delta1);
-        const sinD2 = Math.sin(delta2), cosD2 = Math.cos(delta2);
-
-        const Re = g.Re || 338.0;
-        const b = g.b || 117.0;
-        const Ri = g.Ri || (Re - b);
-
-        const de1 = g.de1 || (2 * Re * sinD1);
-        const di1 = g.di1 || (2 * Ri * sinD1);
-        const de2 = g.de2 || (2 * Re * sinD2);
-        const di2 = g.di2 || (2 * Ri * sinD2);
-
-        const hae1 = g.hae1 || (g.mmn * 1.6);
-        const hfe1 = g.hfe1 || (g.mmn * 1.2);
-        const hai1 = g.hai1 || (hae1 * Ri / Re);
-        const hfi1 = g.hfi1 || (hfe1 * Ri / Re);
-
-        const hae2 = g.hae2 || (g.mmn * 0.8);
-        const hfe2 = g.hfe2 || (g.mmn * 1.6);
-        const hai2 = g.hai2 || (hae2 * Ri / Re);
-        const hfi2 = g.hfi2 || (hfe2 * Ri / Re);
-
-        const rBore1 = Math.max(10.0, Math.round((di1 / 2.0 - hfi1) * 0.45));
-        const rBore2 = Math.max(15.0, Math.round((di2 / 2.0 - hfi2) * 0.45));
-
-        // Offset parameters from Section 16.5 & 16.6
-        const H1in = g.a_offset1 || 4.8;
-        const H1out = g.b_offset1 || 13.3;
-        const H2in = g.a_offset2 || 5.9;
-        const H2out = g.b_offset2 || 19.95;
-
-        // Base coordinate points along Pinion 1 Axis (X-axis, Apex at origin (0, 0))
-        const p_pitch_i1 = { x: -(di1 / 2.0) / Math.tan(delta1), y: di1 / 2.0 };
-        const p_pitch_e1 = { x: -(de1 / 2.0) / Math.tan(delta1), y: de1 / 2.0 };
-
-        // Pinion 1 Axial Section Points (Upper Half)
-        const pt8_1 = { x: p_pitch_i1.x - hfi1 * sinD1, y: p_pitch_i1.y - hfi1 * cosD1 };
-        const pt1_1 = { x: p_pitch_i1.x + hai1 * sinD1, y: p_pitch_i1.y + hai1 * cosD1 };
-        const pt2_1 = { x: p_pitch_e1.x + hae1 * sinD1, y: p_pitch_e1.y + hae1 * cosD1 };
-        const pt4_1 = { x: p_pitch_e1.x - hfe1 * sinD1, y: p_pitch_e1.y - hfe1 * cosD1 };
-        const pt5_1 = { x: p_pitch_e1.x - (hfe1 + H1out) * sinD1, y: p_pitch_e1.y - (hfe1 + H1out) * cosD1 };
-        const pt7_1 = { x: pt5_1.x, y: rBore1 };
-        const pt9_1 = { x: p_pitch_i1.x - (hfi1 + H1in) * sinD1, y: p_pitch_i1.y - (hfi1 + H1in) * cosD1 };
-        const pt11_1 = { x: pt9_1.x, y: rBore1 };
-
-        const drawAxialPinion = (offX = 0, offY = 0) => {
-            const layer = 'GEAR1_PINION';
-            // Upper half outline
-            addLine(pt8_1.x + offX, pt8_1.y + offY, pt1_1.x + offX, pt1_1.y + offY, layer);
-            addLine(pt1_1.x + offX, pt1_1.y + offY, pt2_1.x + offX, pt2_1.y + offY, layer);
-            addLine(pt2_1.x + offX, pt2_1.y + offY, pt4_1.x + offX, pt4_1.y + offY, layer);
-            addLine(pt4_1.x + offX, pt4_1.y + offY, pt5_1.x + offX, pt5_1.y + offY, layer);
-            addLine(pt5_1.x + offX, pt5_1.y + offY, pt7_1.x + offX, pt7_1.y + offY, layer);
-            addLine(pt7_1.x + offX, pt7_1.y + offY, pt11_1.x + offX, pt11_1.y + offY, 'SHAFTS_BORE');
-            addLine(pt11_1.x + offX, pt11_1.y + offY, pt9_1.x + offX, pt9_1.y + offY, layer);
-            addLine(pt9_1.x + offX, pt9_1.y + offY, pt8_1.x + offX, pt8_1.y + offY, layer);
-
-            // Lower half outline (symmetric across X-axis)
-            addLine(pt8_1.x + offX, -pt8_1.y + offY, pt1_1.x + offX, -pt1_1.y + offY, layer);
-            addLine(pt1_1.x + offX, -pt1_1.y + offY, pt2_1.x + offX, -pt2_1.y + offY, layer);
-            addLine(pt2_1.x + offX, -pt2_1.y + offY, pt4_1.x + offX, -pt4_1.y + offY, layer);
-            addLine(pt4_1.x + offX, -pt4_1.y + offY, pt5_1.x + offX, -pt5_1.y + offY, layer);
-            addLine(pt5_1.x + offX, -pt5_1.y + offY, pt7_1.x + offX, -pt7_1.y + offY, layer);
-            addLine(pt7_1.x + offX, -pt7_1.y + offY, pt11_1.x + offX, -pt11_1.y + offY, 'SHAFTS_BORE');
-            addLine(pt11_1.x + offX, -pt11_1.y + offY, pt9_1.x + offX, -pt9_1.y + offY, layer);
-            addLine(pt9_1.x + offX, -pt9_1.y + offY, pt8_1.x + offX, -pt8_1.y + offY, layer);
-
-            // Pitch cone line & Centerlines
-            addLine(0 + offX, 0 + offY, p_pitch_e1.x + offX, p_pitch_e1.y + offY, 'PITCH_CONES');
-            addLine(0 + offX, 0 + offY, p_pitch_e1.x + offX, -p_pitch_e1.y + offY, 'PITCH_CONES');
-            addLine(20 + offX, 0 + offY, pt5_1.x - 30 + offX, 0 + offY, 'CENTER_LINES');
+        // Exact 2D scanline polygon hatch generator (ISO 128 45-degree section hatching)
+        const addPolygonHatch = (poly, angleRad, step, layer = 'HATCH') => {
+            if (!poly || poly.length < 3) return;
+            const cosA = Math.cos(angleRad), sinA = Math.sin(angleRad);
+            const rot = poly.map(p => ({
+                u: p.x * cosA + p.y * sinA,
+                v: -p.x * sinA + p.y * cosA
+            }));
+            let vMin = Infinity, vMax = -Infinity;
+            for (const p of rot) {
+                if (p.v < vMin) vMin = p.v;
+                if (p.v > vMax) vMax = p.v;
+            }
+            for (let v = vMin + step * 0.5; v < vMax; v += step) {
+                const uInts = [];
+                for (let i = 0; i < rot.length; i++) {
+                    const a = rot[i], b = rot[(i + 1) % rot.length];
+                    if ((a.v <= v && b.v > v) || (b.v <= v && a.v > v)) {
+                        const t = (v - a.v) / (b.v - a.v);
+                        uInts.push(a.u + t * (b.u - a.u));
+                    }
+                }
+                uInts.sort((a, b) => a - b);
+                for (let k = 0; k + 1 < uInts.length; k += 2) {
+                    const u1 = uInts[k], u2 = uInts[k + 1];
+                    if (Math.abs(u2 - u1) > 1e-3) {
+                        const x1 = u1 * cosA - v * sinA, y1 = u1 * sinA + v * cosA;
+                        const x2 = u2 * cosA - v * sinA, y2 = u2 * sinA + v * cosA;
+                        addLine(x1, y1, x2, y2, layer);
+                    }
+                }
+            }
         };
 
-        // Gear 2 Points (oriented along Y axis when Sigma = 90 deg)
-        const p_pitch_i2 = { x: di2 / 2.0, y: -(di2 / 2.0) / Math.tan(delta2) };
-        const p_pitch_e2 = { x: de2 / 2.0, y: -(de2 / 2.0) / Math.tan(delta2) };
+        // Helper for linear dimension callout in DXF
+        const addLinearDim = (x1, y1, x2, y2, label, textH = 3.5, layer = 'DIMENSIONS') => {
+            addLine(x1, y1, x2, y2, layer);
+            const mx = 0.5 * (x1 + x2), my = 0.5 * (y1 + y2);
+            addText(label, mx - label.length * textH * 0.25, my + textH * 0.4, textH, layer);
+        };
 
-        const pt8_2 = { x: p_pitch_i2.x - hfi2 * cosD2, y: p_pitch_i2.y - hfi2 * sinD2 };
-        const pt1_2 = { x: p_pitch_i2.x + hai2 * cosD2, y: p_pitch_i2.y + hai2 * sinD2 };
-        const pt2_2 = { x: p_pitch_e2.x + hae2 * cosD2, y: p_pitch_e2.y + hae2 * sinD2 };
-        const pt4_2 = { x: p_pitch_e2.x - hfe2 * cosD2, y: p_pitch_e2.y - hfe2 * sinD2 };
-        const pt5_2 = { x: p_pitch_e2.x - (hfe2 + H2out) * cosD2, y: p_pitch_e2.y - (hfe2 + H2out) * sinD2 };
-        const pt7_2 = { x: rBore2, y: pt5_2.y };
-        const pt9_2 = { x: p_pitch_i2.x - (hfi2 + H2in) * cosD2, y: p_pitch_i2.y - (hfi2 + H2in) * sinD2 };
-        const pt11_2 = { x: rBore2, y: pt9_2.y };
+        // Obtain unified 3D-matched Blank + Extended Cylindrical Hub parameters
+        const bp = (typeof BevelGearCanvas !== 'undefined' && BevelGearCanvas.computeBlankAndHubParams)
+            ? BevelGearCanvas.computeBlankAndHubParams(g, g.hubOverrides)
+            : null;
+
+        const mmn = g.mmn || 10.0;
+        const Re = bp ? bp.Re : (g.Re || 338.0);
+        const Rm = bp ? bp.Rm : (g.Rm || (Re - (g.b || 117.0) / 2.0));
+        const Ri = bp ? bp.Ri : (g.Ri || (Re - (g.b || 117.0)));
+        const b = bp ? bp.b : (g.b || 117.0);
+
+        const delta1 = bp ? bp.d1 : (g.delta1 || ((g.delta1_deg || 21.8) * Math.PI / 180.0));
+        const delta2 = bp ? bp.d2 : (g.delta2 || ((g.delta2_deg || 68.2) * Math.PI / 180.0));
+        const sigmaRad = bp ? bp.sigmaRad : (((g.Sigma_deg || 90.0) * Math.PI) / 180.0);
+        const s1 = Math.sin(delta1), c1 = Math.cos(delta1);
+        const s2 = Math.sin(delta2), c2 = Math.cos(delta2);
+
+        const hae1 = bp ? bp.hae1 : (g.hae1 || (mmn * 1.32 * Re / Rm));
+        const hfe1 = bp ? bp.hfe1 : (g.hfe1 || (mmn * 0.88 * Re / Rm));
+        const hai1 = bp ? bp.hai1 : (hae1 * Ri / Re);
+        const hfi1 = bp ? bp.hfi1 : (hfe1 * Ri / Re);
+
+        const hae2 = bp ? bp.hae2 : (g.hae2 || (mmn * 0.68 * Re / Rm));
+        const hfe2 = bp ? bp.hfe2 : (g.hfe2 || (mmn * 1.52 * Re / Rm));
+        const hai2 = bp ? bp.hai2 : (hae2 * Ri / Re);
+        const hfi2 = bp ? bp.hfi2 : (hfe2 * Ri / Re);
+
+        const rBore1 = bp ? bp.rBore1 : (2.5 * mmn);
+        const rBore2 = bp ? bp.rBore2 : (5.0 * mmn);
+        const z_toe_hub1 = bp ? bp.z_toe_hub1 : (Ri * c1 + (hfi1 + 0.48 * mmn) * s1);
+        const r_toe_rim1 = bp ? bp.r_toe_rim1 : Math.max(rBore1 + 2.0, Ri * s1 - (hfi1 + 0.48 * mmn) * c1);
+        const z_heel_rim1 = bp ? bp.z_heel_rim1 : (Re * c1 + (hfe1 + 1.33 * mmn) * s1);
+        const r_heel_rim1 = bp ? bp.r_heel_rim1 : Math.max(rBore1 + 5.0, Re * s1 - (hfe1 + 1.33 * mmn) * c1);
+        const z_tip_max1 = bp ? bp.z_tip_max1 : (Re * c1 - hae1 * s1);
+        const rHub1 = bp ? bp.rHub1 : (5.75 * mmn);
+        const z_hub_end1 = bp ? bp.z_hub_end1 : (z_heel_rim1 + 4.5 * mmn);
+        const LApex1 = bp ? bp.LApex1 : z_hub_end1;
+        const LTip1 = bp ? bp.LTip1 : (z_hub_end1 - z_tip_max1);
+
+        const z_toe_hub2 = bp ? bp.z_toe_hub2 : (Ri * c2 + (hfi2 + 0.59 * mmn) * s2);
+        const r_toe_rim2 = bp ? bp.r_toe_rim2 : Math.max(rBore2 + 2.0, Ri * s2 - (hfi2 + 0.59 * mmn) * c2);
+        const z_heel_rim2 = bp ? bp.z_heel_rim2 : (Re * c2 + (hfe2 + 2.0 * mmn) * s2);
+        const r_heel_rim2 = bp ? bp.r_heel_rim2 : Math.max(rBore2 + 5.0, Re * s2 - (hfe2 + 2.0 * mmn) * c2);
+        const z_tip_max2 = bp ? bp.z_tip_max2 : (Re * c2 - hae2 * s2);
+        const rHub2 = bp ? bp.rHub2 : (9.0 * mmn);
+        const z_hub_end2 = bp ? bp.z_hub_end2 : (z_heel_rim2 + 4.0 * mmn);
+        const LApex2 = bp ? bp.LApex2 : z_hub_end2;
+        const LTip2 = bp ? bp.LTip2 : (z_hub_end2 - z_tip_max2);
+
+        const dae1 = g.dae1 || (2.0 * (Re * s1 + hae1 * c1));
+        const dae2 = g.dae2 || (2.0 * (Re * s2 + hae2 * c2));
+        const hatchStep = Math.max(2.5, 0.75 * mmn);
+
+        // =========================================================================
+        // VIEW 1: 2D AXIAL CROSS-SECTION WITH FULL TOOTH ROOT & EXTENDED HUB
+        // In AutoCAD (+Y is UP): Pinion 1 along +X, Gear 2 along +Sigma (+Y when Sigma=90°)
+        // Shared Pitch Cone Generator is along (+c1, +s1)
+        // =========================================================================
+        const drawAxialPinion = (offX = 0, offY = 0) => {
+            const layer = 'GEAR1_PINION';
+            const buildHalf = (signY) => {
+                const toe_root     = { x: offX + Ri * c1 + hfi1 * s1, y: offY + signY * (Ri * s1 - hfi1 * c1) };
+                const toe_tip      = { x: offX + Ri * c1 - hai1 * s1, y: offY + signY * (Ri * s1 + hai1 * c1) };
+                const heel_tip     = { x: offX + Re * c1 - hae1 * s1, y: offY + signY * (Re * s1 + hae1 * c1) };
+                const heel_root    = { x: offX + Re * c1 + hfe1 * s1, y: offY + signY * (Re * s1 - hfe1 * c1) };
+                const heel_rim     = { x: offX + z_heel_rim1,         y: offY + signY * r_heel_rim1 };
+                const hub_step     = { x: offX + z_heel_rim1,         y: offY + signY * rHub1 };
+                const hub_end_out  = { x: offX + z_hub_end1,          y: offY + signY * rHub1 };
+                const hub_end_bore = { x: offX + z_hub_end1,          y: offY + signY * rBore1 };
+                const toe_bore     = { x: offX + z_toe_hub1,          y: offY + signY * rBore1 };
+                const toe_rim      = { x: offX + z_toe_hub1,          y: offY + signY * r_toe_rim1 };
+
+                // 1. Tooth Polygon (Addendum + Dedendum closed with Root Cone Line toe_root -> heel_root)
+                const toothPoly = [toe_root, toe_tip, heel_tip, heel_root];
+                addPolyline(toothPoly, layer, true);
+                // Explicit Root Cone Line (Đường chân răng) on ROOT_CIRCLE & GEAR1_PINION
+                addLine(toe_root.x, toe_root.y, heel_root.x, heel_root.y, 'ROOT_CIRCLE');
+
+                // 2. Rim + Extended Cylindrical Hub Polygon (45-deg Cross-Hatched)
+                const bodyPoly = [
+                    toe_root, heel_root, heel_rim, hub_step,
+                    hub_end_out, hub_end_bore, toe_bore, toe_rim
+                ];
+                addPolyline(bodyPoly, layer, true);
+                addPolygonHatch(bodyPoly, Math.PI / 4, hatchStep, 'HATCH');
+
+                return { toe_bore, hub_end_bore, hub_end_out, heel_tip };
+            };
+
+            const topH = buildHalf(+1);
+            const botH = buildHalf(-1);
+
+            // Bore & Hub End connecting lines across Pinion 1 shaft axis
+            addLine(topH.toe_bore.x, topH.toe_bore.y, botH.toe_bore.x, botH.toe_bore.y, 'SHAFTS_BORE');
+            addLine(topH.hub_end_bore.x, topH.hub_end_bore.y, botH.hub_end_bore.x, botH.hub_end_bore.y, 'SHAFTS_BORE');
+
+            // Pitch Cone Generators & Shaft Axis
+            addLine(offX, offY, offX + Re * c1 * 1.08, offY + Re * s1 * 1.08, 'PITCH_CONES');
+            addLine(offX, offY, offX + Re * c1 * 1.08, offY - Re * s1 * 1.08, 'PITCH_CONES');
+            addLine(offX - 25, offY, offX + z_hub_end1 + 35, offY, 'CENTER_LINES');
+
+            // Key Dimensions for Pinion 1 (dae1, dm1, L_Tip1, L_Apex1)
+            addLinearDim(offX + z_hub_end1 + 18, offY - rHub1, offX + z_hub_end1 + 18, offY + rHub1, `dm1=${(2 * rHub1).toFixed(1)}`, 3.2);
+            addLinearDim(offX + z_hub_end1 + 45, offY - dae1 / 2, offX + z_hub_end1 + 45, offY + dae1 / 2, `dae1=${dae1.toFixed(1)}`, 3.2);
+            addLinearDim(offX + z_tip_max1, offY - dae1 / 2 - 18, offX + z_hub_end1, offY - dae1 / 2 - 18, `L_Tip1=${LTip1.toFixed(1)}`, 3.2);
+            addLinearDim(offX, offY - dae1 / 2 - 34, offX + z_hub_end1, offY - dae1 / 2 - 34, `L_Apex1=${LApex1.toFixed(1)}`, 3.2);
+        };
 
         const drawAxialGear = (offX = 0, offY = 0) => {
             const layer = 'GEAR2_WHEEL';
-            // Right half outline
-            addLine(pt8_2.x + offX, pt8_2.y + offY, pt1_2.x + offX, pt1_2.y + offY, layer);
-            addLine(pt1_2.x + offX, pt1_2.y + offY, pt2_2.x + offX, pt2_2.y + offY, layer);
-            addLine(pt2_2.x + offX, pt2_2.y + offY, pt4_2.x + offX, pt4_2.y + offY, layer);
-            addLine(pt4_2.x + offX, pt4_2.y + offY, pt5_2.x + offX, pt5_2.y + offY, layer);
-            addLine(pt5_2.x + offX, pt5_2.y + offY, pt7_2.x + offX, pt7_2.y + offY, layer);
-            addLine(pt7_2.x + offX, pt7_2.y + offY, pt11_2.x + offX, pt11_2.y + offY, 'SHAFTS_BORE');
-            addLine(pt11_2.x + offX, pt11_2.y + offY, pt9_2.x + offX, pt9_2.y + offY, layer);
-            addLine(pt9_2.x + offX, pt9_2.y + offY, pt8_2.x + offX, pt8_2.y + offY, layer);
+            // In AutoCAD (+Y is UP): Gear 2 axis is at +sigmaRad from +X
+            const uAx2 = { x: Math.cos(sigmaRad), y: Math.sin(sigmaRad) };
+            const uRad2 = { x: Math.sin(sigmaRad), y: -Math.cos(sigmaRad) };
+            const toGW = (zL, rL) => ({
+                x: offX + zL * uAx2.x + rL * uRad2.x,
+                y: offY + zL * uAx2.y + rL * uRad2.y
+            });
 
-            // Left half outline (symmetric across Y-axis)
-            addLine(-pt8_2.x + offX, pt8_2.y + offY, -pt1_2.x + offX, pt1_2.y + offY, layer);
-            addLine(-pt1_2.x + offX, pt1_2.y + offY, -pt2_2.x + offX, pt2_2.y + offY, layer);
-            addLine(-pt2_2.x + offX, pt2_2.y + offY, -pt4_2.x + offX, pt4_2.y + offY, layer);
-            addLine(-pt4_2.x + offX, pt4_2.y + offY, -pt5_2.x + offX, pt5_2.y + offY, layer);
-            addLine(-pt5_2.x + offX, pt5_2.y + offY, -pt7_2.x + offX, pt7_2.y + offY, layer);
-            addLine(-pt7_2.x + offX, pt7_2.y + offY, -pt11_2.x + offX, pt11_2.y + offY, 'SHAFTS_BORE');
-            addLine(-pt11_2.x + offX, pt11_2.y + offY, -pt9_2.x + offX, pt9_2.y + offY, layer);
-            addLine(-pt9_2.x + offX, pt9_2.y + offY, -pt8_2.x + offX, pt8_2.y + offY, layer);
+            const buildHalf = (signR) => {
+                const toe_root     = toGW(Ri * c2 + hfi2 * s2, signR * (Ri * s2 - hfi2 * c2));
+                const toe_tip      = toGW(Ri * c2 - hai2 * s2, signR * (Ri * s2 + hai2 * c2));
+                const heel_tip     = toGW(Re * c2 - hae2 * s2, signR * (Re * s2 + hae2 * c2));
+                const heel_root    = toGW(Re * c2 + hfe2 * s2, signR * (Re * s2 - hfe2 * c2));
+                const heel_rim     = toGW(z_heel_rim2,         signR * r_heel_rim2);
+                const hub_step     = toGW(z_heel_rim2,         signR * rHub2);
+                const hub_end_out  = toGW(z_hub_end2,          signR * rHub2);
+                const hub_end_bore = toGW(z_hub_end2,          signR * rBore2);
+                const toe_bore     = toGW(z_toe_hub2,          signR * rBore2);
+                const toe_rim      = toGW(z_toe_hub2,          signR * r_toe_rim2);
 
-            // Pitch cone line & Centerlines
-            addLine(0 + offX, 0 + offY, p_pitch_e2.x + offX, p_pitch_e2.y + offY, 'PITCH_CONES');
-            addLine(0 + offX, 0 + offY, -p_pitch_e2.x + offX, p_pitch_e2.y + offY, 'PITCH_CONES');
-            addLine(0 + offX, 20 + offY, 0 + offX, pt5_2.y - 30 + offY, 'CENTER_LINES');
+                // 1. Tooth Polygon (Addendum + Dedendum closed with Root Cone Line toe_root -> heel_root)
+                const toothPoly = [toe_root, toe_tip, heel_tip, heel_root];
+                addPolyline(toothPoly, layer, true);
+                addLine(toe_root.x, toe_root.y, heel_root.x, heel_root.y, 'ROOT_CIRCLE');
+
+                // 2. Rim + Extended Cylindrical Hub Polygon (-45-deg Cross-Hatched)
+                const bodyPoly = [
+                    toe_root, heel_root, heel_rim, hub_step,
+                    hub_end_out, hub_end_bore, toe_bore, toe_rim
+                ];
+                addPolyline(bodyPoly, layer, true);
+                addPolygonHatch(bodyPoly, -Math.PI / 4, hatchStep, 'HATCH');
+
+                return { toe_bore, hub_end_bore, hub_end_out, heel_tip };
+            };
+
+            const rightH = buildHalf(+1);
+            const leftH  = buildHalf(-1);
+
+            // Bore & Hub End connecting lines across Gear 2 shaft axis
+            addLine(rightH.toe_bore.x, rightH.toe_bore.y, leftH.toe_bore.x, leftH.toe_bore.y, 'SHAFTS_BORE');
+            addLine(rightH.hub_end_bore.x, rightH.hub_end_bore.y, leftH.hub_end_bore.x, leftH.hub_end_bore.y, 'SHAFTS_BORE');
+
+            // Pitch Cone Generators & Shaft Axis
+            const pPitchR = toGW(Re * c2 * 1.08, +Re * s2 * 1.08);
+            const pPitchL = toGW(Re * c2 * 1.08, -Re * s2 * 1.08);
+            addLine(offX, offY, pPitchR.x, pPitchR.y, 'PITCH_CONES');
+            addLine(offX, offY, pPitchL.x, pPitchL.y, 'PITCH_CONES');
+            const pAxisStart = toGW(-25, 0);
+            const pAxisEnd   = toGW(z_hub_end2 + 35, 0);
+            addLine(pAxisStart.x, pAxisStart.y, pAxisEnd.x, pAxisEnd.y, 'CENTER_LINES');
+
+            // Key Dimensions for Gear 2 (dae2, dm2, L_Tip2, L_Apex2)
+            const pDmL = toGW(z_hub_end2 + 16, -rHub2), pDmR = toGW(z_hub_end2 + 16, +rHub2);
+            addLinearDim(pDmL.x, pDmL.y, pDmR.x, pDmR.y, `dm2=${(2 * rHub2).toFixed(1)}`, 3.2);
+            const pDaeL = toGW(z_hub_end2 + 40, -dae2 / 2), pDaeR = toGW(z_hub_end2 + 40, +dae2 / 2);
+            addLinearDim(pDaeL.x, pDaeL.y, pDaeR.x, pDaeR.y, `dae2=${dae2.toFixed(1)}`, 3.2);
+            const pLTip1 = toGW(z_tip_max2, -dae2 / 2 - 18), pLTip2 = toGW(z_hub_end2, -dae2 / 2 - 18);
+            addLinearDim(pLTip1.x, pLTip1.y, pLTip2.x, pLTip2.y, `L_Tip2=${LTip2.toFixed(1)}`, 3.2);
+            const pLAp1 = toGW(0, -dae2 / 2 - 34), pLAp2 = toGW(z_hub_end2, -dae2 / 2 - 34);
+            addLinearDim(pLAp1.x, pLAp1.y, pLAp2.x, pLAp2.y, `L_Apex2=${LApex2.toFixed(1)}`, 3.2);
         };
 
-        // Draw 2D Tredgold Virtual Tooth Profile with C1 Circular Root Fillet (R_chan = 0.38 * mmn)
+        // =========================================================================
+        // VIEW 2: 2D TREDGOLD VIRTUAL TOOTH PROFILE (WITH FULL ROOT & Rf = 0.38*mmn)
+        // Closed multi-tooth gear segment + Root Circle rvf + Pitch Circle rv + Tip Circle rva
+        // =========================================================================
         const drawVirtualToothProfile = (isPinion, offX, offY) => {
             if (typeof Bevel3DGenerator === 'undefined' || !Bevel3DGenerator.generateSliceToothContour) return;
-            const mmn = g.mmn || 10.0;
-            const Rm = g.Rm || (Re - b / 2.0);
             const alfa = ((g.alfa_deg !== undefined ? g.alfa_deg : 20.0) * Math.PI) / 180.0;
             const beta = ((g.beta_deg !== undefined ? g.beta_deg : 0.0) * Math.PI) / 180.0;
             const isSpiral = Math.abs(beta) > 1e-4;
@@ -303,58 +434,170 @@ export const BevelDxfExporter = {
 
             const slice = Bevel3DGenerator.generateSliceToothContour({
                 z, mmn, Rm, R_s: Rm, delta, alfa, beta, isSpiral,
-                ha_s, hf_s, sn_s, ptsPerFlank: res.ptsPerFlank, ptsFillet: 8
+                ha_s, hf_s, sn_s, ptsPerFlank: res.ptsPerFlank, ptsFillet: 10
             });
-            const pPsi = (2.0 * Math.PI / z) * slice.cosD;
-            const kRange = 2; // 5 teeth around pitch contact point
-            const pts = [];
-            for (let k = -kRange; k <= kRange; k++) {
+            const rv = slice.rv, rvf = slice.rvf, rva = slice.rva, cosD = slice.cosD;
+            const pPsi = (2.0 * Math.PI / z) * cosD;
+            const rimDepth = Math.max(mmn * 2.2, (rva - rvf) * 1.15);
+            const rInnerRim = Math.max(2.0, rvf - rimDepth);
+            const kMin = -3, kMax = 3;
+
+            // In AutoCAD (+Y is UP):
+            // Pinion 1 virtual center is at (offX, offY - rv), teeth at psi=0 point UP (+Y) to (offX, offY)
+            // Gear 2 virtual center is at (offX, offY + rv), teeth at psi=0 point DOWN (-Y) to (offX, offY)
+            const cx = offX;
+            const cy = isPinion ? (offY - rv) : (offY + rv);
+            const toPt = (r, psi) => ({
+                x: cx + r * Math.sin(psi),
+                y: isPinion ? (cy + r * Math.cos(psi)) : (cy - r * Math.cos(psi))
+            });
+
+            const contourPts = [];
+            for (let k = kMin; k <= kMax; k++) {
                 const centerPsi = (isPinion ? k : (k + 0.5)) * pPsi;
                 for (let idx = 0; idx < slice.toothContour.length; idx++) {
-                    if (k > -kRange && idx === 0) continue;
+                    if (k > kMin && idx === 0) continue;
                     const tc = slice.toothContour[idx];
-                    const r = slice.rv + tc.h;
-                    const psi = centerPsi + tc.theta * slice.cosD;
-                    const px = offX + r * Math.sin(psi);
-                    const py = offY + (isPinion ? (slice.rv - r * Math.cos(psi)) : (-slice.rv + r * Math.cos(psi)));
-                    pts.push({ x: px, y: py });
+                    const r = rv + tc.h;
+                    const psi = centerPsi + tc.theta * cosD;
+                    contourPts.push(toPt(r, psi));
                 }
             }
-            for (let i = 0; i < pts.length - 1; i++) {
-                addLine(pts[i].x, pts[i].y, pts[i + 1].x, pts[i + 1].y, layer);
+
+            // Close the multi-tooth segment along the inner rim arc so the tooth root & rim form a closed body
+            const maxPsi = (isPinion ? kMax : (kMax + 0.5)) * pPsi + slice.half_pitch * cosD;
+            const minPsi = (isPinion ? kMin : (kMin + 0.5)) * pPsi - slice.half_pitch * cosD;
+            const fullPoly = [...contourPts];
+            const rimSteps = 28;
+            for (let s = 0; s <= rimSteps; s++) {
+                const psi = maxPsi - (s / rimSteps) * (maxPsi - minPsi);
+                fullPoly.push(toPt(rInnerRim, psi));
+            }
+            addPolyline(fullPoly, layer, true);
+
+            // Reference Root Circle Arc (rvf - Vòng chân răng), Pitch Circle Arc (rv), Tip Circle Arc (rva)
+            const refArcPts = (radius) => {
+                const arr = [];
+                for (let s = 0; s <= 32; s++) {
+                    const psi = minPsi + (s / 32) * (maxPsi - minPsi);
+                    arr.push(toPt(radius, psi));
+                }
+                return arr;
+            };
+            addPolyline(refArcPts(rvf), 'ROOT_CIRCLE', false);
+            addPolyline(refArcPts(rv), 'PITCH_CONES', false);
+            addPolyline(refArcPts(rva), 'DIMENSIONS', false);
+
+            // Draw analytical C1 Root Fillet Circle preview (Rf = 0.38 * mmn) at Tooth 0
+            if (slice.fillet && isPinion) {
+                const rCf = Math.hypot(slice.fillet.Cfx, slice.fillet.Cfy);
+                const psiCf = Math.atan2(slice.fillet.Cfx, slice.fillet.Cfy);
+                const cfPt = toPt(rCf, psiCf);
+                addCircle(cfPt.x, cfPt.y, slice.fillet.Rf, 'ROOT_CIRCLE');
+                addText(`R_chan=${slice.fillet.Rf.toFixed(2)}`, cfPt.x + slice.fillet.Rf + 1.5, cfPt.y, 2.8, 'ROOT_CIRCLE');
             }
         };
 
-        const profileOffX = Math.max(de1, de2) * 0.85 + 80;
-        const profileOffY = -Math.max(de1, de2) * 0.25;
+        // =========================================================================
+        // VIEW 3: FULL 360° CLOSED CROWN GEAR TOOTH WHEEL (z TEETH WITH ROOT & HUB)
+        // Complete closed 360° tooth ring with z integer teeth, root circle, hub circle, and bore
+        // =========================================================================
+        const drawFullCrownWheel = (isPinion, centerX, centerY) => {
+            if (typeof Bevel3DGenerator === 'undefined' || !Bevel3DGenerator.generateSliceToothContour) return;
+            const alfa = ((g.alfa_deg !== undefined ? g.alfa_deg : 20.0) * Math.PI) / 180.0;
+            const beta = ((g.beta_deg !== undefined ? g.beta_deg : 0.0) * Math.PI) / 180.0;
+            const isSpiral = Math.abs(beta) > 1e-4;
+            const z = isPinion ? (g.z1 || 18) : (g.z2 || 45);
+            const delta = isPinion ? delta1 : delta2;
+            const ha_s = isPinion ? (g.ha1 || mmn * 1.32) : (g.ha2 || mmn * 0.68);
+            const hf_s = isPinion ? (g.hf1 || mmn * 0.88) : (g.hf2 || mmn * 1.52);
+            const sn_s = isPinion ? (g.sn1 || mmn * 1.84) : (g.sn2 || mmn * 1.30);
+            const layer = isPinion ? 'GEAR1_PINION' : 'GEAR2_WHEEL';
+            const rPitch = isPinion ? (0.5 * (g.dm1 || (2 * Rm * s1))) : (0.5 * (g.dm2 || (2 * Rm * s2)));
+            const rHub = isPinion ? rHub1 : rHub2;
+            const rBore = isPinion ? rBore1 : rBore2;
+
+            const slice = Bevel3DGenerator.generateSliceToothContour({
+                z, mmn, Rm, R_s: Rm, delta, alfa, beta, isSpiral,
+                ha_s, hf_s, sn_s, ptsPerFlank: Math.max(8, Math.round(res.ptsPerFlank * 0.75)), ptsFillet: 8
+            });
+
+            const wheelPts = [];
+            for (let k = 0; k < z; k++) {
+                const baseAngle = (k * 2.0 * Math.PI) / z;
+                for (let idx = 0; idx < slice.toothContour.length; idx++) {
+                    if (k > 0 && idx === 0) continue;
+                    const tc = slice.toothContour[idx];
+                    const r = Math.max(rBore + 2.0, rPitch + tc.h);
+                    const ang = baseAngle + tc.theta;
+                    wheelPts.push({
+                        x: centerX + r * Math.cos(ang),
+                        y: centerY + r * Math.sin(ang)
+                    });
+                }
+            }
+            addPolyline(wheelPts, layer, true);
+
+            // Reference Root Circle, Pitch Circle, Tip Circle, Extended Hub Circle, and Bore Circle
+            addCircle(centerX, centerY, Math.max(rBore + 2.0, rPitch - hf_s), 'ROOT_CIRCLE');
+            addCircle(centerX, centerY, rPitch, 'PITCH_CONES');
+            addCircle(centerX, centerY, rPitch + ha_s, 'DIMENSIONS');
+            addCircle(centerX, centerY, rHub, layer);
+            addCircle(centerX, centerY, rBore, 'SHAFTS_BORE');
+            // Center crosshairs
+            const cLen = rPitch + ha_s + 15;
+            addLine(centerX - cLen, centerY, centerX + cLen, centerY, 'CENTER_LINES');
+            addLine(centerX, centerY - cLen, centerX, centerY + cLen, 'CENTER_LINES');
+            addText(
+                isPinion ? `BANH DAN 1 (z1=${z}, dm1=${(2 * rHub).toFixed(1)}, dBore1=${(2 * rBore).toFixed(1)})`
+                         : `BANH BI DAN 2 (z2=${z}, dm2=${(2 * rHub).toFixed(1)}, dBore2=${(2 * rBore).toFixed(1)})`,
+                centerX - rPitch * 0.85, centerY - cLen - 12, 4.0, 'MFG_TABLE'
+            );
+        };
+
+        const profileOffX = z_hub_end1 + Math.max(dae1, dae2) * 0.65 + 90;
+        const profileOffY = dae2 * 0.25;
+        const wheelOffX = profileOffX + Math.max(dae1, dae2) * 0.95 + 120;
 
         // Draw views depending on target
+        addText('BIEU DO 1: MAT CAT TRUC KY THUAT & MAY-O KEO DAI (ISO 23509)', -40, dae2 * 0.65 + 45, 4.2, 'MFG_TABLE');
+        addText('BIEU DO 2: BIEN DANG RANG 2D CO R CHAN = 0.38*mmn & DAY RANH', profileOffX - 75, dae2 * 0.65 + 45, 4.2, 'MFG_TABLE');
+        addText('BIEU DO 3: BANH RANG CON DAY DU 360 DO (VONG CHAN RANG & MAY-O)', wheelOffX - 95, dae2 * 0.65 + 45, 4.2, 'MFG_TABLE');
+
         if (target === 'pinion') {
             drawAxialPinion(0, 0);
-            drawVirtualToothProfile(true, profileOffX, profileOffY);
+            drawVirtualToothProfile(true, profileOffX, 0);
+            drawFullCrownWheel(true, wheelOffX, 0);
         } else if (target === 'gear') {
             drawAxialGear(0, 0);
-            drawVirtualToothProfile(false, profileOffX, profileOffY);
+            drawVirtualToothProfile(false, profileOffX, 0);
+            drawFullCrownWheel(false, wheelOffX, 0);
         } else {
-            // Assembly Pair: Both wheels sharing common Apex V(0, 0) + Meshing 2D Tooth Profile with R_chan
+            // Assembly Pair: Both wheels sharing common Apex V(0, 0) + Meshing 2D Tooth Profile + Full Crown Wheels
             drawAxialPinion(0, 0);
             drawAxialGear(0, 0);
             drawVirtualToothProfile(true, profileOffX, profileOffY);
             drawVirtualToothProfile(false, profileOffX, profileOffY);
+            drawFullCrownWheel(true, wheelOffX, dae2 * 0.55);
+            drawFullCrownWheel(false, wheelOffX, -dae2 * 0.35);
         }
 
         // Manufacturing Table Definition
-        const tblX = -Math.max(de1, de2) * 1.1;
-        let tblY = -Math.max(de1, de2) * 0.7 - 40;
-        const rowH = 7.0;
+        const tblX = -Math.max(dae1, dae2) * 0.75 - 40;
+        let tblY = -dae1 * 0.65 - 60;
+        const rowH = 7.5;
 
-        addText('THONG SO CHE TAO BO TRUYEN BANH RANG CON (ISO 23509 / DIN 3971)', tblX, tblY, 4.5, 'MFG_TABLE');
+        addText('THONG SO CHE TAO BO TRUYEN BANH RANG CON & MAY-O (ISO 23509 / DIN 3971)', tblX, tblY, 4.5, 'MFG_TABLE');
         tblY -= rowH * 1.3;
         addText(`- So rang (Pinion z1 / Gear z2): ${g.z1} / ${g.z2}`, tblX, tblY, 3.5, 'MFG_TABLE');
         tblY -= rowH;
         addText(`- Mo-dun phap trung binh (mmn): ${(g.mmn || 10).toFixed(3)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
         tblY -= rowH;
         addText(`- Ban kinh luon chan rang (Rf = 0.38*mmn): ${(0.38 * (g.mmn || 10)).toFixed(3)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`- May-o keo dai Banh 1: Duong kinh dm1 = ${(2 * rHub1).toFixed(2)} mm | L_Apex1 = ${LApex1.toFixed(2)} mm | L_Tip1 = ${LTip1.toFixed(2)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`- May-o keo dai Banh 2: Duong kinh dm2 = ${(2 * rHub2).toFixed(2)} mm | L_Apex2 = ${LApex2.toFixed(2)} mm | L_Tip2 = ${LTip2.toFixed(2)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
         tblY -= rowH;
         addText(`- Mo-dun ngang ngoai (met): ${(g.met || 10).toFixed(3)} mm`, tblX, tblY, 3.5, 'MFG_TABLE');
         tblY -= rowH;

@@ -496,6 +496,67 @@
                                         <td>kg</td>
                                         <td>-</td>
                                     </tr>
+                                    <tr style="background: rgba(30, 58, 138, 0.28); font-weight: 700;">
+                                        <td>4.11</td>
+                                        <td>
+                                            <div><strong>Khe hở cạnh răng pháp tuyến (Normal backlash)</strong></div>
+                                            <div style="font-size: 0.78rem; color: var(--text-secondary); font-weight: normal; margin-top: 2px;">
+                                                Chọn cấp chính xác (Accuracy grade - DIN 3965 / ISO 1328 | Ra max | v max)
+                                            </div>
+                                        </td>
+                                        <td>Q</td>
+                                        <td colspan="2">
+                                            <select id="selAccuracySec4" class="select-eng" style="width: 100%; max-width: 380px;">
+                                                <option value="3">2 / 3 .... (Ra max.= 0.2 / v max.= 50)</option>
+                                                <option value="4">3 / 4 .... (Ra max.= 0.4 / v max.= 40)</option>
+                                                <option value="5">4 / 5 .... (Ra max.= 0.8 / v max.= 30)</option>
+                                                <option value="6" selected>5 / 6 .... (Ra max.= 1.6 / v max.= 20)</option>
+                                                <option value="7">6 / 7 .... (Ra max.= 1.6 / v max.= 12)</option>
+                                                <option value="8">7 / 8 .... (Ra max.= 3.2 / v max.= 8)</option>
+                                                <option value="9">8 / 9 .... (Ra max.= 6.3 / v max.= 5)</option>
+                                                <option value="10">9 / 10 .. (Ra max.= 12.5 / v max.= 3)</option>
+                                                <option value="11">10 / 11 .. (Ra max.= 25 / v max.= 3)</option>
+                                                <option value="12">11 / 12 .. (Ra max.= 50 / v max.= 2)</option>
+                                            </select>
+                                        </td>
+                                        <td>cấp</td>
+                                        <td>
+                                            <label style="display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-size: 0.78rem; white-space: nowrap;" title="Tự động chọn cấp chính xác theo vận tốc vòng v">
+                                                <input type="checkbox" id="chkBevelAutoAccuracy"> Tự động (v)
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.12</td>
+                                        <td>- Giá trị nhỏ nhất / lớn nhất khuyến nghị theo cấp chính xác (Recommended min. | max.)</td>
+                                        <td>jn min / max</td>
+                                        <td><span class="output-eng" id="out_bevel_jn_min">0.140</span></td>
+                                        <td><span class="output-eng" id="out_bevel_jn_max">0.521</span></td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.13</td>
+                                        <td>- Khe hở cạnh răng pháp tuyến được chọn (Selected normal / outer rotational backlash)</td>
+                                        <td>jn / jte</td>
+                                        <td>
+                                            <input type="text" inputmode="decimal" class="input-eng user-input" id="inp_bevel_jn" value="0.3305" title="Tự động theo cấp chính xác Q, có thể nhập lại theo chế độ gia công">
+                                        </td>
+                                        <td><span class="output-eng" id="out_bevel_jte">0.4258</span> <span style="font-size:0.75rem; color:var(--text-muted);">(jte)</span></td>
+                                        <td>mm</td>
+                                        <td>
+                                            <button type="button" class="btn-smart" id="btnResetBevelJnAuto" title="Đặt lại khe hở jn tự động theo cấp chính xác đã chọn">↺ Theo cấp Q</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.14</td>
+                                        <td>- Hiệu chỉnh khoảng cách lắp ghép đỉnh nón lý thuyết do khe hở (Mounting distance mod.)</td>
+                                        <td>ΔA1 / ΔA2</td>
+                                        <td><span class="output-eng" id="out_bevel_dA1">0.1301</span></td>
+                                        <td><span class="output-eng" id="out_bevel_dA2">0.5204</span></td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
                                     <!-- Embedded Visual Showcase: Sơ đồ hình học & Tọa độ mặt cắt 2D (Chuẩn MITCalc 1.74 Image 1) -->
                                     <tr>
                                         <td colspan="7" style="padding: 1rem 0.5rem; background: #f8fafc; border-top: 2px solid var(--border-color);">
@@ -1829,6 +1890,50 @@
                                 <a href="javascript:void(0)" id="expObjAssembly" style="display: block; padding: 6px 14px; color: #cbd5e1; font-size: 0.85rem; text-decoration: none;">📦 Xuất File OBJ (.obj)</a>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Interactive 2D Extended Cylindrical Hub Control Panel (May-ơ kéo dài chỉnh trực tiếp trên mô phỏng 2D) -->
+                <div id="hubControlPanel2D" style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; background: rgba(15, 23, 42, 0.88); border: 1px solid #1e3a8a; border-radius: var(--radius-md); padding: 0.65rem 1rem; margin-bottom: 0.75rem;">
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+                        <span style="font-size: 0.82rem; font-weight: 700; color: #38bdf8; white-space: nowrap;">
+                            🟦 May-ơ Kéo Dài Bánh Dẫn 1:
+                        </span>
+                        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: #cbd5e1;" title="Đường kính ngoài may-ơ bánh dẫn 1 (mm)">
+                            ⌀d<sub>m1</sub>:
+                            <input type="text" inputmode="decimal" id="inpHubD1" class="user-input" value="115.0" style="width: 66px; height: 28px; padding: 2px 6px; font-size: 0.82rem; font-weight: 700; text-align: right;">
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: #cbd5e1;" title="Chiều dài từ tâm Apex V(0,0) đến mặt đầu sau may-ơ bánh 1 (tự động đồng bộ với L_Tip1)">
+                            Dài từ Apex V(0,0) L<sub>Apex1</sub>:
+                            <input type="text" inputmode="decimal" id="inpHubApex1" class="user-input" value="368.0" style="width: 70px; height: 28px; padding: 2px 6px; font-size: 0.82rem; font-weight: 700; text-align: right;">
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: #10b981;" title="Chiều dài từ đỉnh nón lớn nhất (dae1) đến mặt đầu sau may-ơ bánh 1 (tự động đồng bộ với L_Apex1)">
+                            Dài từ đỉnh nón lớn nhất L<sub>Tip1</sub>:
+                            <input type="text" inputmode="decimal" id="inpHubTip1" class="user-input" value="59.8" style="width: 66px; height: 28px; padding: 2px 6px; font-size: 0.82rem; font-weight: 700; text-align: right;">
+                            <span style="color: #64748b;">mm</span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem;">
+                        <span style="font-size: 0.82rem; font-weight: 700; color: #fb923c; white-space: nowrap;">
+                            🟧 May-ơ Kéo Dài Bánh Bị Dẫn 2:
+                        </span>
+                        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: #cbd5e1;" title="Đường kính ngoài may-ơ bánh bị dẫn 2 (mm)">
+                            ⌀d<sub>m2</sub>:
+                            <input type="text" inputmode="decimal" id="inpHubD2" class="user-input" value="180.0" style="width: 66px; height: 28px; padding: 2px 6px; font-size: 0.82rem; font-weight: 700; text-align: right;">
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: #cbd5e1;" title="Chiều dài từ tâm Apex V(0,0) đến mặt đầu sau may-ơ bánh 2 (tự động đồng bộ với L_Tip2)">
+                            Dài từ Apex V(0,0) L<sub>Apex2</sub>:
+                            <input type="text" inputmode="decimal" id="inpHubApex2" class="user-input" value="201.7" style="width: 70px; height: 28px; padding: 2px 6px; font-size: 0.82rem; font-weight: 700; text-align: right;">
+                        </label>
+                        <label style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.78rem; color: #10b981;" title="Chiều dài từ đỉnh nón lớn nhất (dae2) đến mặt đầu sau may-ơ bánh 2 (tự động đồng bộ với L_Apex2)">
+                            Dài từ đỉnh nón lớn nhất L<sub>Tip2</sub>:
+                            <input type="text" inputmode="decimal" id="inpHubTip2" class="user-input" value="83.7" style="width: 66px; height: 28px; padding: 2px 6px; font-size: 0.82rem; font-weight: 700; text-align: right;">
+                            <span style="color: #64748b;">mm</span>
+                        </label>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btnResetHubAuto" style="padding: 4px 10px; font-size: 0.78rem; font-weight: 700; border-color: #0284c7; color: #38bdf8;" title="Tính lại đường kính và chiều dài may-ơ tự động tương đối theo mô-đun thiết kế mmn">
+                            ↺ Tự động theo mô-đun
+                        </button>
                     </div>
                 </div>
 
