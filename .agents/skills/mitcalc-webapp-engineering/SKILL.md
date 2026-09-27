@@ -1055,6 +1055,26 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
 
 ---
 
+### Quy Chuẩn 52: Quy Chuẩn Xuất Bản Vẽ 2D DXF (AC1009 AutoCAD 2007/2020) & Mô Hình 3D STEP AP214 B-Rep Topology (SolidWorks & Mastercam)
+1. **Cấu trúc bắt buộc của tệp 2D DXF `AC1009` (`bevel-dxf-exporter.js` & `bundle_spur.py`)**:
+   - `HEADER`: `$ACADVER = AC1009`, `$INSBASE`, `$EXTMIN`, `$EXTMAX`, `$LUNITS = 2`, `$LUPREC = 4`, `$DWGCODEPAGE = ANSI_1252`.
+   - `TABLES`:
+     * `VPORT` (`*ACTIVE`): Phải khai báo đầy đủ các group codes `10,20`, `11,21`, `12,22`, `13,23`, `14,24`, `15,25`, `16,26,36` (`0,0,1`), `17,27,37`, `40..51`, `71..78`.
+     * `LTYPE`: Chỉ khai báo `CONTINUOUS`, `CENTER`, `DASHED` (tuyệt đối không khai báo `BYBLOCK`/`BYLAYER`).
+     * `LAYER`: Bắt buộc có Layer `'0'` đầu tiên.
+     * `STYLE` (`STANDARD`), `VIEW`, `UCS`, `APPID` (`ACAD`), `DIMSTYLE`.
+   - `BLOCKS`: Bắt buộc có `*MODEL_SPACE` và `*PAPER_SPACE`.
+   - Kiểm định tự động qua `"C:\Program Files\Autodesk\AutoCAD 2020\accoreconsole.exe" /i <file.dxf> /s audit_check.scr` (với `_AUDIT _Y`): bắt buộc đạt `Total errors found 0 fixed 0`.
+2. **Cấu trúc bắt buộc của tệp 3D STEP `ISO 10303-214` (`gear-3d-exporter.js` & `bevel-3d-exporter.js`)**:
+   - Tuyệt đối không dùng `POLY_LOOP` bên trong `ADVANCED_FACE`. Bắt buộc xây dựng đồ thị B-Rep đầy đủ:
+     `CARTESIAN_POINT` $\to$ `VERTEX_POINT` $\to$ `DIRECTION` + `VECTOR` $\to$ `LINE` $\to$ `EDGE_CURVE` (dùng chung giữa 2 mặt kề nhau) $\to$ `ORIENTED_EDGE` (`.T.` / `.F.`) $\to$ `EDGE_LOOP` $\to$ `FACE_OUTER_BOUND` $\to$ `PLANE` (với `AXIS2_PLACEMENT_3D` trực chuẩn Gram-Schmidt $\vec{N} \perp \vec{R}$) $\to$ `ADVANCED_FACE`.
+   - Gộp các cặp tam giác đồng phẳng lồi (3 mẫu chia sẻ cạnh) thành tứ giác lồi 4 cạnh (`4-sided convex quad`) để giảm một nửa số mặt B-Rep.
+   - Khử điểm trùng tại rãnh răng (`MitcalcToothSolver.generateCompleteWheelContour` đặt `toothPolar[0].th = -pi/z` và lấy `2*M - 2` điểm/răng) và phân bố đều góc lỗ trục `boreAngles[j] = ang0 - (j * 2 * Math.PI) / N` để không bao giờ xuất hiện cạnh siêu ngắn ($< 0.01\text{ mm}$).
+   - Khối đặc (Solid): `CLOSED_SHELL` $\to$ `MANIFOLD_SOLID_BREP` $\to$ `ADVANCED_BREP_SHAPE_REPRESENTATION`.
+   - Bề mặt rỗng (Surface): `OPEN_SHELL` $\to$ `SHELL_BASED_SURFACE_MODEL` $\to$ `MANIFOLD_SURFACE_SHAPE_REPRESENTATION`.
+
+---
+
 ## 5. Quy Trình Cuốn Chiếu Khi Phát Triển Mô-Đun Tiếp Theo
 1. **Tạo thư mục con độc lập**: `MITCalc-WebApp/modules/[ten-module]/`.
 2. **Trích xuất công thức gốc từ file Excel tương ứng trong `C:\MITCalc\`**: Mở qua PowerShell COM, đọc toàn bộ Named Ranges, công thức tại sheet `Calculation`.

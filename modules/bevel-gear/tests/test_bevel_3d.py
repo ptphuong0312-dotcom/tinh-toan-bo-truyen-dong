@@ -248,9 +248,9 @@ def test_bevel_3d():
             const v = ui.visualizer3D;
             
             // 1. STEP Solid Pinion
-            const stepSolid = Bevel3DExporter.exportSTEP(v.getExportTriangles('pinion', false), 'test.step', 'PINION', false, false);
+            const stepSolid = Bevel3DExporter.exportSTEP(v.getExportTriangles('pinion', false, true), 'test.step', 'PINION', false, false);
             // 2. STEP Surface Pinion (Open Shell)
-            const stepSurface = Bevel3DExporter.exportSTEP(v.getExportTriangles('pinion', true), 'test_surf.step', 'PINION_SURF', false, true);
+            const stepSurface = Bevel3DExporter.exportSTEP(v.getExportTriangles('pinion', true, true), 'test_surf.step', 'PINION_SURF', false, true);
             // 3. STL Solid Assembly
             const stlSolid = Bevel3DExporter.exportBinarySTL(v.getExportTriangles('assembly', false), 'test.stl', false);
             // 4. STL Surface Pinion

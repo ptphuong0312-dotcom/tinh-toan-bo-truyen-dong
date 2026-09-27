@@ -52,7 +52,7 @@ export const Gear3DGenerator = {
         // 1. Generate base 2D transverse profile using exact MITCalc rack cutter envelope
         // Note: For isSurfaceOnly, noPtEv=120 & cuttStep=0.25 ensures triangle width (~0.11mm) >= 1 screen pixel,
         // preventing sub-pixel 2x2 quad depth derivative overshoot in 4x MSAA rasterization.
-        const optContour = isSurfaceOnly ? Object.assign({}, opt, {
+        const optContour = (isSurfaceOnly && !opt.noPtEv) ? Object.assign({}, opt, {
             noPtHead: 20,
             noPtEv: 120,
             cuttStep: 0.25
@@ -63,21 +63,28 @@ export const Gear3DGenerator = {
         });
         const rawContour = ToothProfileGenerator.generateProfile(z, mn, alfa_n, x, d, db, da, df, opt.ra0 || 0.38, optContour);
 
-        // Downsample contour if step > 1 for high-performance watertight 3D CAD mesh
+        // Downsample contour symmetrically per tooth if step > 1 for high-performance watertight 3D CAD mesh
         let contour = [];
-        if (profileStep > 1) {
-            for (let i = 0; i < rawContour.length; i += profileStep) {
-                contour.push(rawContour[i]);
+        const ptsPerToothRaw = Math.round(rawContour.length / z);
+        if (profileStep > 1 && ptsPerToothRaw > 4) {
+            for (let t = 0; t < z; t++) {
+                const baseIdx = t * ptsPerToothRaw;
+                for (let k = 0; k < ptsPerToothRaw; k += profileStep) {
+                    contour.push(rawContour[baseIdx + k]);
+                }
             }
         } else {
             contour = rawContour;
         }
         const N = contour.length;
 
-        // 2. Precompute polar angles of contour points for aligned inner bore circle
+        // 2. Precompute strictly uniform monotonic polar angles on the inner bore circle
+        // Phase-locked to contour[0] and progressing clockwise (-2*pi/N per vertex) to prevent
+        // bore vertex bunching under steep flanks or foldovers on undercut teeth.
         const boreAngles = new Float64Array(N);
+        const ang0 = N > 0 ? Math.atan2(contour[0].y, contour[0].x) : 0.0;
         for (let j = 0; j < N; j++) {
-            boreAngles[j] = Math.atan2(contour[j].y, contour[j].x);
+            boreAngles[j] = ang0 - (j * 2.0 * Math.PI) / N;
         }
 
         // 3. Determine slice count along face width b (Z axis), scaling with profile resolution

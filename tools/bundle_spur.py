@@ -1861,16 +1861,24 @@ class SpurGearUI {
             }
         }
 
-        // Fully compliant AutoCAD 2004+ Release 12 DXF (AC1009)
+        // Fully compliant AutoCAD 2000/2007/2020/2026 Release 12 DXF (AC1009)
         const lines = [
             '0', 'SECTION',
             '2', 'HEADER',
             '9', '$ACADVER',
             '1', 'AC1009',
+            '9', '$INSBASE',
+            '10', '0.0', '20', '0.0', '30', '0.0',
+            '9', '$EXTMIN',
+            '10', '-500.0', '20', '-500.0', '30', '0.0',
+            '9', '$EXTMAX',
+            '10', '500.0', '20', '500.0', '30', '0.0',
+            '9', '$DWGCODEPAGE',
+            '3', 'ANSI_1252',
             '0', 'ENDSEC',
             '0', 'SECTION',
             '2', 'TABLES',
-            // VPORT table
+            // VPORT table (All mandatory group codes 10..78 required by AutoCAD 2007 & 2020)
             '0', 'TABLE',
             '2', 'VPORT',
             '70', '1',
@@ -1880,9 +1888,28 @@ class SpurGearUI {
             '10', '0.0', '20', '0.0',
             '11', '1.0', '21', '1.0',
             '12', '0.0', '22', '0.0',
-            '40', '250.0', '41', '1.5',
+            '13', '0.0', '23', '0.0',
+            '14', '10.0', '24', '10.0',
+            '15', '10.0', '25', '10.0',
+            '16', '0.0', '26', '0.0', '36', '1.0',
+            '17', '0.0', '27', '0.0', '37', '0.0',
+            '40', '350.0',
+            '41', '1.8',
+            '42', '50.0',
+            '43', '0.0',
+            '44', '0.0',
+            '50', '0.0',
+            '51', '0.0',
+            '71', '0',
+            '72', '100',
+            '73', '1',
+            '74', '3',
+            '75', '0',
+            '76', '0',
+            '77', '0',
+            '78', '0',
             '0', 'ENDTAB',
-            // LTYPE table (mandatory for AutoCAD 2004+ so referenced linetypes exist)
+            // LTYPE table (mandatory for AutoCAD so referenced linetypes exist)
             '0', 'TABLE',
             '2', 'LTYPE',
             '70', '3',
@@ -1904,10 +1931,11 @@ class SpurGearUI {
             '72', '65', '73', '2', '40', '19.05',
             '49', '12.7', '49', '-6.35',
             '0', 'ENDTAB',
-            // LAYER table
+            // LAYER table (including mandatory default layer 0)
             '0', 'TABLE',
             '2', 'LAYER',
-            '70', '6',
+            '70', '7',
+            '0', 'LAYER', '2', '0', '70', '0', '62', '7', '6', 'CONTINUOUS',
             '0', 'LAYER', '2', 'GEAR1_PINION', '70', '0', '62', '1', '6', 'CONTINUOUS',
             '0', 'LAYER', '2', 'GEAR2_WHEEL', '70', '0', '62', '5', '6', 'CONTINUOUS',
             '0', 'LAYER', '2', 'PITCH_CIRCLES', '70', '0', '62', '3', '6', 'CENTER',
@@ -1923,13 +1951,28 @@ class SpurGearUI {
             '2', 'STANDARD',
             '70', '0', '40', '0.0', '41', '1.0', '50', '0.0', '71', '0', '42', '2.5', '3', 'txt', '4', '',
             '0', 'ENDTAB',
+            // VIEW, UCS, APPID, DIMSTYLE tables
+            '0', 'TABLE', '2', 'VIEW', '70', '0', '0', 'ENDTAB',
+            '0', 'TABLE', '2', 'UCS', '70', '0', '0', 'ENDTAB',
+            '0', 'TABLE', '2', 'APPID', '70', '1',
+            '0', 'APPID', '2', 'ACAD', '70', '0',
+            '0', 'ENDTAB',
+            '0', 'TABLE', '2', 'DIMSTYLE', '70', '0', '0', 'ENDTAB',
+            '0', 'ENDSEC',
+            // BLOCKS section ($MODEL_SPACE and $PAPER_SPACE)
+            '0', 'SECTION',
+            '2', 'BLOCKS',
+            '0', 'BLOCK', '8', '0', '2', '$MODEL_SPACE', '70', '0', '10', '0.0', '20', '0.0', '30', '0.0', '3', '$MODEL_SPACE', '1', '',
+            '0', 'ENDBLK', '8', '0',
+            '0', 'BLOCK', '8', '0', '2', '$PAPER_SPACE', '70', '0', '10', '0.0', '20', '0.0', '30', '0.0', '3', '$PAPER_SPACE', '1', '',
+            '0', 'ENDBLK', '8', '0',
             '0', 'ENDSEC',
             '0', 'SECTION',
             '2', 'ENTITIES'
         ];
 
         const addPolyline = (points, layer, offX = 0, offY = 0, rot = 0) => {
-            lines.push('0', 'POLYLINE', '8', layer, '66', '1', '70', '1', '10', '0.0', '20', '0.0', '30', '0.0');
+            lines.push('0', 'POLYLINE', '8', layer, '66', '1', '10', '0.0', '20', '0.0', '30', '0.0', '70', '1');
             const cosR = Math.cos(rot);
             const sinR = Math.sin(rot);
             for (let i = 0; i < points.length; i++) {
@@ -1948,8 +1991,10 @@ class SpurGearUI {
             lines.push('0', 'LINE', '8', layer, '10', x1.toFixed(4), '20', y1.toFixed(4), '30', '0.0', '11', x2.toFixed(4), '21', y2.toFixed(4), '31', '0.0');
         };
 
+        const toAscii = (str) => String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, m => m === 'đ' ? 'd' : 'D');
+
         const addText = (text, x, y, h, layer) => {
-            lines.push('0', 'TEXT', '8', layer, '10', x.toFixed(4), '20', y.toFixed(4), '30', '0.0', '40', h.toFixed(4), '1', text);
+            lines.push('0', 'TEXT', '8', layer, '10', x.toFixed(4), '20', y.toFixed(4), '30', '0.0', '40', h.toFixed(4), '1', toAscii(text));
         };
 
         let filename = '';
@@ -2104,7 +2149,8 @@ class SpurGearUI {
         const typeStr = isHelical ? 'Helical' : 'Spur';
 
         const isSurface = (format === 'step_surface' || format === 'stl_surface');
-        const tris = this.visualizer3D.getExportTriangles(target, isSurface);
+        const forStep = (format === 'step' || format === 'step_surface');
+        const tris = this.visualizer3D.getExportTriangles(target, isSurface, forStep);
 
         let filenameBase = '';
         let partName = '';

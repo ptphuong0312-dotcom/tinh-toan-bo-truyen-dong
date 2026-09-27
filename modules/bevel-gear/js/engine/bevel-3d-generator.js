@@ -344,8 +344,9 @@ export const Bevel3DGenerator = {
         const preset = densityPresets[dLevel] || densityPresets[6];
 
         const defaultSlices = isSpiral ? preset.slicesSpiral : preset.slicesStraight;
-        const numSlices = opt.numSlices !== undefined ? Math.max(4, Math.min(64, parseInt(opt.numSlices))) : defaultSlices;
-        const ptsPerFlank = opt.ptsPerFlank !== undefined ? Math.max(6, Math.min(50, parseInt(opt.ptsPerFlank))) : preset.pts;
+        const numSlices = opt.numSlices !== undefined ? Math.max(1, Math.min(64, parseInt(opt.numSlices))) : defaultSlices;
+        const ptsPerFlank = opt.ptsPerFlank !== undefined ? Math.max(4, Math.min(50, parseInt(opt.ptsPerFlank))) : preset.pts;
+        const ptsFillet = opt.ptsFillet !== undefined ? Math.max(2, Math.min(20, parseInt(opt.ptsFillet))) : undefined;
         const R_tool = 1.5 * b; // MITCalc Section 16.4 cutter radius
 
         // 1. Generate tooth rings for all slices along face width b (Re -> Ri)
@@ -395,7 +396,7 @@ export const Bevel3DGenerator = {
             // Build exact single-tooth contour with C1 circular root fillet R_chan = 0.38 * m_s
             const { toothContour } = this.generateSliceToothContour({
                 z, mmn, Rm, R_s, delta, alfa, beta, isSpiral,
-                ha_s, hf_s, sn_s, ptsPerFlank, dThetaKiss
+                ha_s, hf_s, sn_s, ptsPerFlank, ptsFillet, dThetaKiss
             });
 
             const ring = [];

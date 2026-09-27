@@ -2543,19 +2543,23 @@ const MitcalcToothSolver = {
             toothPolar[M - 1 - i] = { r, th: -th, side: -1.0 };
         }
 
-        toothPolar[numPtsPerTooth - 1] = {
-            r: toothPolar[0].r,
-            th: toothPolar[0].th + (2.0 * pi) / z,
+        // Exact tooth-space center at -pi/z (shared boundary between toothIdx-1 and toothIdx)
+        toothPolar[0] = {
+            r: halfProfile[M - 1].r,
+            th: -pi / z,
             side: 0.0
         };
 
         const pitchAngle = (2.0 * pi) / z;
         const baseOffset = 0.0;
 
+        // Loop k = 0 .. (2*M - 3) so the right root-space boundary (+pi/z) is not duplicated
+        // alongside the next tooth's left root-space boundary (-pi/z + 2*pi/z = +pi/z)
+        const ptsPerTooth = numPtsPerTooth - 2;
         const contour = [];
         for (let toothIdx = 0; toothIdx < z; toothIdx++) {
             const toothOffset = baseOffset + toothIdx * pitchAngle;
-            for (let k = 0; k < numPtsPerTooth - 1; k++) {
+            for (let k = 0; k < ptsPerTooth; k++) {
                 const r = toothPolar[k].r;
                 const angle = toothPolar[k].th + toothOffset;
                 contour.push({
@@ -3569,7 +3573,7 @@ const Gear3DGenerator = {
         // 1. Generate base 2D transverse profile using exact MITCalc rack cutter envelope
         // Note: For isSurfaceOnly, noPtEv=120 & cuttStep=0.25 ensures triangle width (~0.11mm) >= 1 screen pixel,
         // preventing sub-pixel 2x2 quad depth derivative overshoot in 4x MSAA rasterization.
-        const optContour = isSurfaceOnly ? Object.assign({}, opt, {
+        const optContour = (isSurfaceOnly && !opt.noPtEv) ? Object.assign({}, opt, {
             noPtHead: 20,
             noPtEv: 120,
             cuttStep: 0.25
@@ -3580,21 +3584,28 @@ const Gear3DGenerator = {
         });
         const rawContour = ToothProfileGenerator.generateProfile(z, mn, alfa_n, x, d, db, da, df, opt.ra0 || 0.38, optContour);
 
-        // Downsample contour if step > 1 for high-performance watertight 3D CAD mesh
+        // Downsample contour symmetrically per tooth if step > 1 for high-performance watertight 3D CAD mesh
         let contour = [];
-        if (profileStep > 1) {
-            for (let i = 0; i < rawContour.length; i += profileStep) {
-                contour.push(rawContour[i]);
+        const ptsPerToothRaw = Math.round(rawContour.length / z);
+        if (profileStep > 1 && ptsPerToothRaw > 4) {
+            for (let t = 0; t < z; t++) {
+                const baseIdx = t * ptsPerToothRaw;
+                for (let k = 0; k < ptsPerToothRaw; k += profileStep) {
+                    contour.push(rawContour[baseIdx + k]);
+                }
             }
         } else {
             contour = rawContour;
         }
         const N = contour.length;
 
-        // 2. Precompute polar angles of contour points for aligned inner bore circle
+        // 2. Precompute strictly uniform monotonic polar angles on the inner bore circle
+        // Phase-locked to contour[0] and progressing clockwise (-2*pi/N per vertex) to prevent
+        // bore vertex bunching under steep flanks or foldovers on undercut teeth.
         const boreAngles = new Float64Array(N);
+        const ang0 = N > 0 ? Math.atan2(contour[0].y, contour[0].x) : 0.0;
         for (let j = 0; j < N; j++) {
-            boreAngles[j] = Math.atan2(contour[j].y, contour[j].x);
+            boreAngles[j] = ang0 - (j * 2.0 * Math.PI) / N;
         }
 
         // 3. Determine slice count along face width b (Z axis), scaling with profile resolution
@@ -4158,17 +4169,45 @@ const Gear3DExporter = {
     },
 
     /**
+     * Normalizes input into an array of part triangle arrays: [part1Tris, part2Tris, ...]
+     * Ensures multi-body assemblies (Pinion + Gear) are exported as separate B-Rep solids/shells
+     */
+    normalizePartTriangleArrays(input) {
+        if (!input) return [];
+        if (Array.isArray(input)) {
+            if (input.length === 0) return [];
+            if (Array.isArray(input[0]) && input[0].length === 4 && Array.isArray(input[0][0]) && typeof input[0][0][0] === 'number') {
+                return [input];
+            }
+            const parts = [];
+            for (const part of input) {
+                if (Array.isArray(part) && part.length > 0) {
+                    parts.push(part);
+                } else if (part && Array.isArray(part.rawTriangles) && part.rawTriangles.length > 0) {
+                    parts.push(part.rawTriangles);
+                }
+            }
+            return parts;
+        } else if (input.rawTriangles && input.rawTriangles.length > 0) {
+            return [input.rawTriangles];
+        }
+        return [];
+    },
+
+    /**
      * Exports standard ISO 10303-21 STEP AP214 file (.step)
-     * Solid: Recognized by SolidWorks as a native Solid Body and Mastercam as a Machinable Solid.
-     * Surface: Recognized by SolidWorks as a Surface Body and Mastercam as Machinable Drive Surfaces (Open Shell).
-     * @param {Array|Object} input - Triangle data
+     * Uses full B-Rep topology (VERTEX_POINT, EDGE_CURVE, ORIENTED_EDGE, EDGE_LOOP, PLANE with
+     * orthogonal AXIS2_PLACEMENT_3D, and ADVANCED_FACE) required by SolidWorks & Mastercam.
+     * Solid: MANIFOLD_SOLID_BREP + ADVANCED_BREP_SHAPE_REPRESENTATION.
+     * Surface: OPEN_SHELL + SHELL_BASED_SURFACE_MODEL + MANIFOLD_SURFACE_SHAPE_REPRESENTATION.
+     * @param {Array|Object} input - Triangle data or [pinionTris, gearTris]
      * @param {string} filename - e.g. "SpurGear.step"
      * @param {string} partName - Part name
      * @param {boolean} [autoDownload=true] - Trigger browser download
      * @param {boolean} [isSurface=false] - If true, exports OPEN_SHELL with SHELL_BASED_SURFACE_MODEL
      */
     exportSTEP(input, filename = 'gear_model.step', partName = 'GEAR_SOLID_PART', autoDownload = true, isSurface = false) {
-        const triangles = this.normalizeTriangles(input);
+        const partArrays = this.normalizePartTriangleArrays(input);
         const now = new Date().toISOString().replace(/\.\d+Z$/, '');
 
         const lines = [];
@@ -4185,109 +4224,248 @@ const Gear3DExporter = {
 
         let id = 1;
 
-        // Context & Units
-        lines.push(`#${id++} = APPLICATION_CONTEXT('core data for automotive mechanical design processes');`); // #1
-        lines.push(`#${id++} = APPLICATION_PROTOCOL_DEFINITION('draft international standard','automotive_design',1999,#1);`); // #2
-        lines.push(`#${id++} = PRODUCT_CONTEXT('',#1,'mechanical');`); // #3
-        lines.push(`#${id++} = PRODUCT('${partName}','${partName}','',(#3));`); // #4
-        lines.push(`#${id++} = PRODUCT_DEFINITION_FORMATION('','',#4);`); // #5
-        lines.push(`#${id++} = PRODUCT_DEFINITION('design','',#5,#3);`); // #6
-        lines.push(`#${id++} = PRODUCT_DEFINITION_SHAPE('','',#6);`); // #7
+        // Context & Units (ISO 10303-214)
+        lines.push(`#${id++}=APPLICATION_CONTEXT('automotive design');`); // #1
+        lines.push(`#${id++}=APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000,#1);`); // #2
+        lines.push(`#${id++}=PRODUCT_CONTEXT('',#1,'mechanical');`); // #3
+        lines.push(`#${id++}=PRODUCT('${partName}','${partName}','',(#3));`); // #4
+        lines.push(`#${id++}=PRODUCT_DEFINITION_FORMATION('','',#4);`); // #5
+        lines.push(`#${id++}=PRODUCT_DEFINITION_CONTEXT('part definition',#1,'design');`); // #6
+        lines.push(`#${id++}=PRODUCT_DEFINITION('design','',#5,#6);`); // #7
+        lines.push(`#${id++}=PRODUCT_DEFINITION_SHAPE('','',#7);`); // #8
 
         // SI Units: Millimetre (0.001 m)
-        lines.push(`#${id++} = ( LENGTH_UNIT() NAMED_UNIT(*) SI_UNIT(.MILLI.,.METRE.) );`); // #8
-        lines.push(`#${id++} = ( NAMED_UNIT(*) PLANE_ANGLE_UNIT() SI_UNIT($,.RADIAN.) );`); // #9
-        lines.push(`#${id++} = ( NAMED_UNIT(*) SI_UNIT($,.STERADIAN.) SOLID_ANGLE_UNIT() );`); // #10
-        lines.push(`#${id++} = UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(0.001),#8,'distance_accuracy_value','confusion accuracy');`); // #11
-        lines.push(`#${id++} = ( GEOMETRIC_REPRESENTATION_CONTEXT(3) GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#11)) GLOBAL_UNIT_ASSIGNED_CONTEXT((#8,#9,#10)) REPRESENTATION_CONTEXT('3D','TOPOLOGY') );`); // #12
+        lines.push(`#${id++}=(LENGTH_UNIT()NAMED_UNIT(*)SI_UNIT(.MILLI.,.METRE.));`); // #9
+        lines.push(`#${id++}=(NAMED_UNIT(*)PLANE_ANGLE_UNIT()SI_UNIT($,.RADIAN.));`); // #10
+        lines.push(`#${id++}=(NAMED_UNIT(*)SOLID_ANGLE_UNIT()SI_UNIT($,.STERADIAN.));`); // #11
+        lines.push(`#${id++}=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.0E-04),#9,'distance_accuracy_value','confusion accuracy');`); // #12
+        lines.push(`#${id++}=(GEOMETRIC_REPRESENTATION_CONTEXT(3)GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#12))GLOBAL_UNIT_ASSIGNED_CONTEXT((#9,#10,#11))REPRESENTATION_CONTEXT('Context3D','3D Context'));`); // #13
 
-        const repContextId = 12;
+        const prodDefShapeId = 8;
+        const repContextId = 13;
 
-        // Write vertices & faces for shell
-        const vMap = new Map();
-        let nextVId = id;
+        // Global origin placement
+        const origPtId = id++;
+        const origDirZId = id++;
+        const origDirXId = id++;
+        const origAxisId = id++;
+        lines.push(`#${origPtId}=CARTESIAN_POINT('',(0.0,0.0,0.0));`);
+        lines.push(`#${origDirZId}=DIRECTION('',(0.0,0.0,1.0));`);
+        lines.push(`#${origDirXId}=DIRECTION('',(1.0,0.0,0.0));`);
+        lines.push(`#${origAxisId}=AXIS2_PLACEMENT_3D('',#${origPtId},#${origDirZId},#${origDirXId});`);
 
         const fStr = (v) => {
-            const s = v.toFixed(5);
-            return s.indexOf('.') === -1 ? s + '.' : s;
+            const val = Math.abs(v) < 1e-12 ? 0.0 : v;
+            const s = val.toFixed(6);
+            return s.indexOf('.') === -1 ? s + '.0' : s;
         };
 
-        const getVertexId = (p) => {
-            const key = `${Math.round(p[0] * 1000)},${Math.round(p[1] * 1000)},${Math.round(p[2] * 1000)}`;
-            let existId = vMap.get(key);
-            if (!existId) {
-                existId = nextVId++;
-                vMap.set(key, existId);
-                lines.push(`#${existId} = CARTESIAN_POINT('',(${fStr(p[0])},${fStr(p[1])},${fStr(p[2])}));`);
+        let totalTriangles = 0;
+        let totalFaces = 0;
+        const bodyItemIds = [];
+
+        for (let pIdx = 0; pIdx < partArrays.length; pIdx++) {
+            const triangles = partArrays[pIdx];
+            totalTriangles += triangles.length;
+
+            const vertices = [];
+            const vMap = new Map();
+
+            const getVertexIdx = (p) => {
+                const key = `${Math.round(p[0] * 10000)},${Math.round(p[1] * 10000)},${Math.round(p[2] * 10000)}`;
+                let vIdx = vMap.get(key);
+                if (vIdx === undefined) {
+                    vIdx = vertices.length;
+                    vMap.set(key, vIdx);
+                    const ptId = id++;
+                    const vtxId = id++;
+                    lines.push(`#${ptId}=CARTESIAN_POINT('',(${fStr(p[0])},${fStr(p[1])},${fStr(p[2])}));`);
+                    lines.push(`#${vtxId}=VERTEX_POINT('',#${ptId});`);
+                    vertices.push({ x: p[0], y: p[1], z: p[2], ptId, vtxId });
+                }
+                return vIdx;
+            };
+
+            const rawTris = [];
+            for (let i = 0; i < triangles.length; i++) {
+                const [p1, p2, p3, nHint] = triangles[i];
+                const i1 = getVertexIdx(p1);
+                const i2 = getVertexIdx(p2);
+                const i3 = getVertexIdx(p3);
+                if (i1 === i2 || i2 === i3 || i3 === i1) continue;
+
+                const vA = vertices[i1], vB = vertices[i2], vC = vertices[i3];
+                const abx = vB.x - vA.x, aby = vB.y - vA.y, abz = vB.z - vA.z;
+                const acx = vC.x - vA.x, acy = vC.y - vA.y, acz = vC.z - vA.z;
+                let nx = aby * acz - abz * acy;
+                let ny = abz * acx - abx * acz;
+                let nz = abx * acy - aby * acx;
+                const nLen = Math.hypot(nx, ny, nz);
+                if (nLen < 1e-11) continue;
+                nx /= nLen; ny /= nLen; nz /= nLen;
+
+                if (nHint && (nx * nHint[0] + ny * nHint[1] + nz * nHint[2] < -1e-6)) {
+                    rawTris.push({ verts: [i1, i3, i2], n: [-nx, -ny, -nz] });
+                } else {
+                    rawTris.push({ verts: [i1, i2, i3], n: [nx, ny, nz] });
+                }
             }
-            return existId;
-        };
 
-        const faceDefinitions = [];
-        for (let i = 0; i < triangles.length; i++) {
-            const [p1, p2, p3, n] = triangles[i];
-            const id1 = getVertexId(p1);
-            const id2 = getVertexId(p2);
-            const id3 = getVertexId(p3);
+            // Merge consecutive coplanar convex triangle pairs sharing an edge into 4-sided quads
+            const polygons = [];
+            const isConvexQuad = (ia, ib, ic, id4, n) => {
+                const pts = [vertices[ia], vertices[ib], vertices[ic], vertices[id4]];
+                const distD = Math.abs((pts[3].x - pts[0].x) * n[0] + (pts[3].y - pts[0].y) * n[1] + (pts[3].z - pts[0].z) * n[2]);
+                if (distD > 1e-5) return false;
+                for (let k = 0; k < 4; k++) {
+                    const pPrev = pts[(k + 3) % 4];
+                    const pCurr = pts[k];
+                    const pNext = pts[(k + 1) % 4];
+                    const e1x = pCurr.x - pPrev.x, e1y = pCurr.y - pPrev.y, e1z = pCurr.z - pPrev.z;
+                    const e2x = pNext.x - pCurr.x, e2y = pNext.y - pCurr.y, e2z = pNext.z - pCurr.z;
+                    const cx = e1y * e2z - e1z * e2y;
+                    const cy = e1z * e2x - e1x * e2z;
+                    const cz = e1x * e2y - e1y * e2x;
+                    if (cx * n[0] + cy * n[1] + cz * n[2] <= 1e-8) return false;
+                }
+                return true;
+            };
 
-            if (id1 === id2 || id2 === id3 || id3 === id1) continue;
+            let idx = 0;
+            while (idx < rawTris.length) {
+                const t1 = rawTris[idx];
+                if (idx + 1 < rawTris.length) {
+                    const t2 = rawTris[idx + 1];
+                    const dotN = t1.n[0] * t2.n[0] + t1.n[1] * t2.n[1] + t1.n[2] * t2.n[2];
+                    if (dotN > 0.999999) {
+                        const [a, b, c] = t1.verts;
+                        const [d, e, f] = t2.verts;
+                        // Pattern 1: t1 = (a, b, c), t2 = (a, c, f) -> quad (a, b, c, f)
+                        if (a === d && c === e && b !== f && isConvexQuad(a, b, c, f, t1.n)) {
+                            polygons.push({ verts: [a, b, c, f], n: t1.n });
+                            idx += 2;
+                            continue;
+                        }
+                        // Pattern 2: t1 = (a, b, c), t2 = (b, e, c) -> quad (a, b, e, c)
+                        if (b === d && c === f && a !== e && isConvexQuad(a, b, e, c, t1.n)) {
+                            polygons.push({ verts: [a, b, e, c], n: t1.n });
+                            idx += 2;
+                            continue;
+                        }
+                        // Pattern 3: t1 = (a, b, c), t2 = (a, e, b) -> quad (a, e, b, c)
+                        if (a === d && b === f && c !== e && isConvexQuad(a, e, b, c, t1.n)) {
+                            polygons.push({ verts: [a, e, b, c], n: t1.n });
+                            idx += 2;
+                            continue;
+                        }
+                    }
+                }
+                polygons.push(t1);
+                idx++;
+            }
 
-            faceDefinitions.push({ id1, id2, id3, n, p1 });
+            // Build deduplicated undirected EDGE_CURVEs and ADVANCED_FACEs
+            const edgeMap = new Map();
+            const getEdgeCurve = (u, v) => {
+                const uMin = u < v ? u : v;
+                const uMax = u < v ? v : u;
+                const key = `${uMin}_${uMax}`;
+                let ecId = edgeMap.get(key);
+                if (ecId === undefined) {
+                    const pA = vertices[uMin];
+                    const pB = vertices[uMax];
+                    let dx = pB.x - pA.x, dy = pB.y - pA.y, dz = pB.z - pA.z;
+                    const len = Math.hypot(dx, dy, dz) || 1.0;
+                    dx /= len; dy /= len; dz /= len;
+                    const dirId = id++;
+                    const vecId = id++;
+                    const lineId = id++;
+                    ecId = id++;
+                    lines.push(`#${dirId}=DIRECTION('',(${fStr(dx)},${fStr(dy)},${fStr(dz)}));`);
+                    lines.push(`#${vecId}=VECTOR('',#${dirId},1.0);`);
+                    lines.push(`#${lineId}=LINE('',#${pA.ptId},#${vecId});`);
+                    lines.push(`#${ecId}=EDGE_CURVE('',#${pA.vtxId},#${pB.vtxId},#${lineId},.T.);`);
+                    edgeMap.set(key, ecId);
+                }
+                return { ecId, sense: u < v ? '.T.' : '.F.' };
+            };
+
+            const faceIds = [];
+            for (let i = 0; i < polygons.length; i++) {
+                const poly = polygons[i];
+                const m = poly.verts.length;
+                const oeIds = [];
+                for (let k = 0; k < m; k++) {
+                    const u = poly.verts[k];
+                    const v = poly.verts[(k + 1) % m];
+                    const { ecId, sense } = getEdgeCurve(u, v);
+                    const oeId = id++;
+                    lines.push(`#${oeId}=ORIENTED_EDGE('',*,*,#${ecId},${sense});`);
+                    oeIds.push(`#${oeId}`);
+                }
+
+                const loopId = id++;
+                const boundId = id++;
+                const p0 = vertices[poly.verts[0]];
+                const p1 = vertices[poly.verts[1]];
+                let rx = p1.x - p0.x, ry = p1.y - p0.y, rz = p1.z - p0.z;
+                const dotNR = rx * poly.n[0] + ry * poly.n[1] + rz * poly.n[2];
+                rx -= dotNR * poly.n[0];
+                ry -= dotNR * poly.n[1];
+                rz -= dotNR * poly.n[2];
+                const rLen = Math.hypot(rx, ry, rz) || 1.0;
+                rx /= rLen; ry /= rLen; rz /= rLen;
+
+                const nDirId = id++;
+                const rDirId = id++;
+                const axisId = id++;
+                const planeId = id++;
+                const faceId = id++;
+
+                lines.push(`#${loopId}=EDGE_LOOP('',(${oeIds.join(',')}));`);
+                lines.push(`#${boundId}=FACE_OUTER_BOUND('',#${loopId},.T.);`);
+                lines.push(`#${nDirId}=DIRECTION('',(${fStr(poly.n[0])},${fStr(poly.n[1])},${fStr(poly.n[2])}));`);
+                lines.push(`#${rDirId}=DIRECTION('',(${fStr(rx)},${fStr(ry)},${fStr(rz)}));`);
+                lines.push(`#${axisId}=AXIS2_PLACEMENT_3D('',#${p0.ptId},#${nDirId},#${rDirId});`);
+                lines.push(`#${planeId}=PLANE('',#${axisId});`);
+                lines.push(`#${faceId}=ADVANCED_FACE('',(#${boundId}),#${planeId},.T.);`);
+                faceIds.push(`#${faceId}`);
+            }
+
+            totalFaces += faceIds.length;
+            if (faceIds.length === 0) continue;
+
+            const bodyLabel = partArrays.length > 1 ? `${partName}_BODY_${pIdx + 1}` : partName;
+            const shellId = id++;
+            if (isSurface) {
+                lines.push(`#${shellId}=OPEN_SHELL('${bodyLabel}',(${faceIds.join(',')}));`);
+                const sbsmId = id++;
+                lines.push(`#${sbsmId}=SHELL_BASED_SURFACE_MODEL('${bodyLabel}',(#${shellId}));`);
+                bodyItemIds.push(`#${sbsmId}`);
+            } else {
+                lines.push(`#${shellId}=CLOSED_SHELL('${bodyLabel}',(${faceIds.join(',')}));`);
+                const brepId = id++;
+                lines.push(`#${brepId}=MANIFOLD_SOLID_BREP('${bodyLabel}',#${shellId});`);
+                bodyItemIds.push(`#${brepId}`);
+            }
         }
 
-        id = nextVId;
-
-        const faceIds = [];
-        for (let i = 0; i < faceDefinitions.length; i++) {
-            const f = faceDefinitions[i];
-            const pId1 = f.id1;
-            const pId2 = f.id2;
-            const pId3 = f.id3;
-
-            const loopId = id++;
-            lines.push(`#${loopId} = POLY_LOOP('',(#${pId1},#${pId2},#${pId3}));`);
-
-            const boundId = id++;
-            lines.push(`#${boundId} = FACE_OUTER_BOUND('',#${loopId},.T.);`);
-
-            const dirId = id++;
-            lines.push(`#${dirId} = DIRECTION('',(${fStr(f.n[0])},${fStr(f.n[1])},${fStr(f.n[2])}));`);
-
-            const axisId = id++;
-            lines.push(`#${axisId} = AXIS2_PLACEMENT_3D('',#${pId1},#${dirId},$);`);
-
-            const planeId = id++;
-            lines.push(`#${planeId} = PLANE('',#${axisId});`);
-
-            const faceId = id++;
-            lines.push(`#${faceId} = FACE_SURFACE('',(#${boundId}),#${planeId},.T.);`);
-            faceIds.push(`#${faceId}`);
-        }
-
-        const shellId = id++;
+        bodyItemIds.push(`#${origAxisId}`);
+        const shapeRepId = id++;
         if (isSurface) {
-            lines.push(`#${shellId} = OPEN_SHELL('',(${faceIds.join(',')}));`);
-            const surfaceModelId = id++;
-            lines.push(`#${surfaceModelId} = SHELL_BASED_SURFACE_MODEL('${partName}',(#${shellId}));`);
-            const shapeRepId = id++;
-            lines.push(`#${shapeRepId} = SHAPE_REPRESENTATION('${partName}',(#${surfaceModelId}),#${repContextId});`);
-            lines.push(`#${id++} = SHAPE_DEFINITION_REPRESENTATION(#7,#${shapeRepId});`);
+            lines.push(`#${shapeRepId}=MANIFOLD_SURFACE_SHAPE_REPRESENTATION('${partName}',(${bodyItemIds.join(',')}),#${repContextId});`);
         } else {
-            lines.push(`#${shellId} = CLOSED_SHELL('',(${faceIds.join(',')}));`);
-            const solidId = id++;
-            lines.push(`#${solidId} = MANIFOLD_SOLID_BREP('${partName}',#${shellId});`);
-            const shapeRepId = id++;
-            lines.push(`#${shapeRepId} = SHAPE_REPRESENTATION('${partName}',(#${solidId}),#${repContextId});`);
-            lines.push(`#${id++} = SHAPE_DEFINITION_REPRESENTATION(#7,#${shapeRepId});`);
+            lines.push(`#${shapeRepId}=ADVANCED_BREP_SHAPE_REPRESENTATION('${partName}',(${bodyItemIds.join(',')}),#${repContextId});`);
         }
+        lines.push(`#${id++}=SHAPE_DEFINITION_REPRESENTATION(#${prodDefShapeId},#${shapeRepId});`);
 
         lines.push('ENDSEC;');
         lines.push('END-ISO-10303-21;');
 
-        const textContent = lines.join('\r\n');
+        const textContent = lines.join('\r\n') + '\r\n';
         const blob = new Blob([textContent], { type: 'application/step;charset=utf-8' });
         if (autoDownload) this.downloadBlob(blob, filename);
-        return { text: textContent, blob, triangleCount: triangles.length, faceCount: faceIds.length, isSurface };
+        return { text: textContent, blob, triangleCount: totalTriangles, faceCount: totalFaces, isSurface };
     },
 
     /**
@@ -4298,39 +4476,63 @@ const Gear3DExporter = {
     },
 
     /**
-     * Exports Wavefront OBJ file (.obj)
-     * @param {Array|Object} input - Triangle data
+     * Exports Wavefront OBJ file (.obj) with welded manifold vertices and multi-body object groups
+     * @param {Array|Object} input - Triangle data or [pinionTris, gearTris]
      * @param {string} filename - e.g. "gear_model.obj"
      * @param {boolean} [autoDownload=true] - Trigger browser download
      */
     exportOBJ(input, filename = 'gear_model.obj', autoDownload = true) {
-        const triangles = this.normalizeTriangles(input);
+        const partArrays = this.normalizePartTriangleArrays(input);
         const lines = [
             '# MITCalc 3D Gear Model',
-            '# SolidWorks & Mastercam Compatible Mesh',
-            'o GearSolid'
+            '# SolidWorks & Mastercam Compatible Welded Manifold Mesh'
         ];
 
-        let vCounter = 1;
-        for (let i = 0; i < triangles.length; i++) {
-            const [p1, p2, p3, n] = triangles[i];
-            lines.push(`vn ${n[0].toFixed(5)} ${n[1].toFixed(5)} ${n[2].toFixed(5)}`);
-            lines.push(`v ${p1[0].toFixed(4)} ${p1[1].toFixed(4)} ${p1[2].toFixed(4)}`);
-            lines.push(`v ${p2[0].toFixed(4)} ${p2[1].toFixed(4)} ${p2[2].toFixed(4)}`);
-            lines.push(`v ${p3[0].toFixed(4)} ${p3[1].toFixed(4)} ${p3[2].toFixed(4)}`);
+        let globalVtxOffset = 0;
+        let globalNormOffset = 0;
+        let totalTriangles = 0;
 
-            const v1 = vCounter;
-            const v2 = vCounter + 1;
-            const v3 = vCounter + 2;
-            const vn = i + 1;
-            lines.push(`f ${v1}//${vn} ${v2}//${vn} ${v3}//${vn}`);
-            vCounter += 3;
+        for (let pIdx = 0; pIdx < partArrays.length; pIdx++) {
+            const triangles = partArrays[pIdx];
+            totalTriangles += triangles.length;
+            lines.push(`o GearBody_${pIdx + 1}`);
+
+            const vMap = new Map();
+            let localVtxCount = 0;
+            const getVtxIndex = (p) => {
+                const key = `${Math.round(p[0] * 10000)},${Math.round(p[1] * 10000)},${Math.round(p[2] * 10000)}`;
+                let vId = vMap.get(key);
+                if (vId === undefined) {
+                    localVtxCount++;
+                    vId = globalVtxOffset + localVtxCount;
+                    vMap.set(key, vId);
+                    lines.push(`v ${p[0].toFixed(5)} ${p[1].toFixed(5)} ${p[2].toFixed(5)}`);
+                }
+                return vId;
+            };
+
+            const faceLines = [];
+            for (let i = 0; i < triangles.length; i++) {
+                const [p1, p2, p3, n] = triangles[i];
+                const v1 = getVtxIndex(p1);
+                const v2 = getVtxIndex(p2);
+                const v3 = getVtxIndex(p3);
+                if (v1 === v2 || v2 === v3 || v3 === v1) continue;
+                globalNormOffset++;
+                lines.push(`vn ${n[0].toFixed(5)} ${n[1].toFixed(5)} ${n[2].toFixed(5)}`);
+                faceLines.push(`f ${v1}//${globalNormOffset} ${v2}//${globalNormOffset} ${v3}//${globalNormOffset}`);
+            }
+
+            for (let i = 0; i < faceLines.length; i++) {
+                lines.push(faceLines[i]);
+            }
+            globalVtxOffset += localVtxCount;
         }
 
-        const textContent = lines.join('\r\n');
+        const textContent = lines.join('\r\n') + '\r\n';
         const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
         if (autoDownload) this.downloadBlob(blob, filename);
-        return { text: textContent, blob, triangleCount: triangles.length };
+        return { text: textContent, blob, triangleCount: totalTriangles };
     },
 
     /**
@@ -4910,65 +5112,87 @@ class Gear3DVisualizer {
      * Gets raw triangle data for export (Solid or Hollow Open Surface Shell)
      * @param {'pinion'|'gear'|'assembly'} type
      * @param {boolean} [surfaceOnly=false]
-     * @returns {Array} rawTriangles
+     * @param {boolean} [forStep=false] - If true, uses CAD-optimized B-Rep resolution & separate body arrays for assembly
+     * @returns {Array} rawTriangles or [pinionTris, gearTris]
      */
-    getExportTriangles(type = 'pinion', surfaceOnly = false) {
+    getExportTriangles(type = 'pinion', surfaceOnly = false, forStep = false) {
         if (!this.geom) return [];
 
         let m1 = this.mesh1Data;
         let m2 = this.mesh2Data;
 
-        const resOpts = this.resolution || {};
+        const isHelical = Math.abs(this.geom.beta || 0.0) > 1e-4;
+        const stepOpts = forStep ? {
+            noPtHead: 3,
+            noPtEv: 8,
+            cuttStep: 0.5,
+            numSlices: isHelical ? 6 : 1,
+            buildRawTriangles: true
+        } : (this.resolution || {});
+
+        const base1 = Object.assign({
+            z: this.geom.z1,
+            mn: this.geom.mn,
+            alfa_n: this.geom.alfa_n,
+            beta: this.geom.beta,
+            b: this.geom.b1,
+            x: this.geom.x1,
+            d: this.geom.d1,
+            db: this.geom.db1,
+            da: this.geom.da1,
+            df: this.geom.df1,
+            ha0: this.geom.ha0,
+            hf0: this.geom.hf0,
+            ra0: this.geom.ra0,
+            hand: +1,
+            isPinion: true,
+            dBore: this.geom.df1 * 0.45
+        }, stepOpts);
+
+        const base2 = Object.assign({
+            z: this.geom.z2,
+            mn: this.geom.mn,
+            alfa_n: this.geom.alfa_n,
+            beta: this.geom.beta,
+            b: this.geom.b2,
+            x: this.geom.x2,
+            d: this.geom.d2,
+            db: this.geom.db2,
+            da: this.geom.da2,
+            df: this.geom.df2,
+            ha0: this.geom.ha0,
+            hf0: this.geom.hf0,
+            ra0: this.geom.ra0,
+            hand: -1,
+            isPinion: false,
+            dBore: this.geom.df2 * 0.45
+        }, stepOpts);
 
         if (surfaceOnly) {
-            m1 = Gear3DGenerator.generateGearSurfaceMesh(Object.assign({
-                z: this.geom.z1,
-                mn: this.geom.mn,
-                alfa_n: this.geom.alfa_n,
-                beta: this.geom.beta,
-                b: this.geom.b1,
-                x: this.geom.x1,
-                d: this.geom.d1,
-                db: this.geom.db1,
-                da: this.geom.da1,
-                df: this.geom.df1,
-                ha0: this.geom.ha0,
-                hf0: this.geom.hf0,
-                ra0: this.geom.ra0,
-                hand: +1,
-                isPinion: true,
-                dBore: this.geom.df1 * 0.45
-            }, resOpts));
-            m2 = Gear3DGenerator.generateGearSurfaceMesh(Object.assign({
-                z: this.geom.z2,
-                mn: this.geom.mn,
-                alfa_n: this.geom.alfa_n,
-                beta: this.geom.beta,
-                b: this.geom.b2,
-                x: this.geom.x2,
-                d: this.geom.d2,
-                db: this.geom.db2,
-                da: this.geom.da2,
-                df: this.geom.df2,
-                ha0: this.geom.ha0,
-                hf0: this.geom.hf0,
-                ra0: this.geom.ra0,
-                hand: -1,
-                isPinion: false,
-                dBore: this.geom.df2 * 0.45
-            }, resOpts));
+            if (type === 'pinion' || type === 'assembly') {
+                m1 = Gear3DGenerator.generateGearSurfaceMesh(base1);
+            }
+            if (type === 'gear' || type === 'assembly') {
+                m2 = Gear3DGenerator.generateGearSurfaceMesh(base2);
+            }
+        } else if (forStep) {
+            if (type === 'pinion' || type === 'assembly') {
+                m1 = Gear3DGenerator.generateGearMesh(base1);
+            }
+            if (type === 'gear' || type === 'assembly') {
+                m2 = Gear3DGenerator.generateGearMesh(base2);
+            }
         }
 
-        if (!m1 || !m2) return [];
-
-        const raw1 = Gear3DGenerator.extractRawTriangles(m1);
-        const raw2 = Gear3DGenerator.extractRawTriangles(m2);
-
         if (type === 'pinion') {
-            return raw1;
+            return m1 ? Gear3DGenerator.extractRawTriangles(m1) : [];
         } else if (type === 'gear') {
-            return raw2;
+            return m2 ? Gear3DGenerator.extractRawTriangles(m2) : [];
         } else if (type === 'assembly') {
+            if (!m1 || !m2) return [];
+            const raw1 = Gear3DGenerator.extractRawTriangles(m1);
+            const raw2 = Gear3DGenerator.extractRawTriangles(m2);
+
             // Transform Pinion 1 and Gear 2 triangles to exact center distance aw and conjugate mesh angles
             const aw = (this.geom && this.geom.aw) ? this.geom.aw : 100.0;
             const rotZ1 = (this.initialPinionAngle !== undefined) ? this.initialPinionAngle : -Math.PI / 2.0;
@@ -5007,6 +5231,9 @@ class Gear3DVisualizer {
                 return [trPt2(p1), trPt2(p2), trPt2(p3), trVec2(n)];
             });
 
+            if (forStep) {
+                return [transformedPinion1, transformedGear2];
+            }
             return transformedPinion1.concat(transformedGear2);
         }
         return [];
@@ -7198,16 +7425,24 @@ class SpurGearUI {
             }
         }
 
-        // Fully compliant AutoCAD 2004+ Release 12 DXF (AC1009)
+        // Fully compliant AutoCAD 2000/2007/2020/2026 Release 12 DXF (AC1009)
         const lines = [
             '0', 'SECTION',
             '2', 'HEADER',
             '9', '$ACADVER',
             '1', 'AC1009',
+            '9', '$INSBASE',
+            '10', '0.0', '20', '0.0', '30', '0.0',
+            '9', '$EXTMIN',
+            '10', '-500.0', '20', '-500.0', '30', '0.0',
+            '9', '$EXTMAX',
+            '10', '500.0', '20', '500.0', '30', '0.0',
+            '9', '$DWGCODEPAGE',
+            '3', 'ANSI_1252',
             '0', 'ENDSEC',
             '0', 'SECTION',
             '2', 'TABLES',
-            // VPORT table
+            // VPORT table (All mandatory group codes 10..78 required by AutoCAD 2007 & 2020)
             '0', 'TABLE',
             '2', 'VPORT',
             '70', '1',
@@ -7217,9 +7452,28 @@ class SpurGearUI {
             '10', '0.0', '20', '0.0',
             '11', '1.0', '21', '1.0',
             '12', '0.0', '22', '0.0',
-            '40', '250.0', '41', '1.5',
+            '13', '0.0', '23', '0.0',
+            '14', '10.0', '24', '10.0',
+            '15', '10.0', '25', '10.0',
+            '16', '0.0', '26', '0.0', '36', '1.0',
+            '17', '0.0', '27', '0.0', '37', '0.0',
+            '40', '350.0',
+            '41', '1.8',
+            '42', '50.0',
+            '43', '0.0',
+            '44', '0.0',
+            '50', '0.0',
+            '51', '0.0',
+            '71', '0',
+            '72', '100',
+            '73', '1',
+            '74', '3',
+            '75', '0',
+            '76', '0',
+            '77', '0',
+            '78', '0',
             '0', 'ENDTAB',
-            // LTYPE table (mandatory for AutoCAD 2004+ so referenced linetypes exist)
+            // LTYPE table (mandatory for AutoCAD so referenced linetypes exist)
             '0', 'TABLE',
             '2', 'LTYPE',
             '70', '3',
@@ -7241,10 +7495,11 @@ class SpurGearUI {
             '72', '65', '73', '2', '40', '19.05',
             '49', '12.7', '49', '-6.35',
             '0', 'ENDTAB',
-            // LAYER table
+            // LAYER table (including mandatory default layer 0)
             '0', 'TABLE',
             '2', 'LAYER',
-            '70', '6',
+            '70', '7',
+            '0', 'LAYER', '2', '0', '70', '0', '62', '7', '6', 'CONTINUOUS',
             '0', 'LAYER', '2', 'GEAR1_PINION', '70', '0', '62', '1', '6', 'CONTINUOUS',
             '0', 'LAYER', '2', 'GEAR2_WHEEL', '70', '0', '62', '5', '6', 'CONTINUOUS',
             '0', 'LAYER', '2', 'PITCH_CIRCLES', '70', '0', '62', '3', '6', 'CENTER',
@@ -7260,13 +7515,28 @@ class SpurGearUI {
             '2', 'STANDARD',
             '70', '0', '40', '0.0', '41', '1.0', '50', '0.0', '71', '0', '42', '2.5', '3', 'txt', '4', '',
             '0', 'ENDTAB',
+            // VIEW, UCS, APPID, DIMSTYLE tables
+            '0', 'TABLE', '2', 'VIEW', '70', '0', '0', 'ENDTAB',
+            '0', 'TABLE', '2', 'UCS', '70', '0', '0', 'ENDTAB',
+            '0', 'TABLE', '2', 'APPID', '70', '1',
+            '0', 'APPID', '2', 'ACAD', '70', '0',
+            '0', 'ENDTAB',
+            '0', 'TABLE', '2', 'DIMSTYLE', '70', '0', '0', 'ENDTAB',
+            '0', 'ENDSEC',
+            // BLOCKS section ($MODEL_SPACE and $PAPER_SPACE)
+            '0', 'SECTION',
+            '2', 'BLOCKS',
+            '0', 'BLOCK', '8', '0', '2', '$MODEL_SPACE', '70', '0', '10', '0.0', '20', '0.0', '30', '0.0', '3', '$MODEL_SPACE', '1', '',
+            '0', 'ENDBLK', '8', '0',
+            '0', 'BLOCK', '8', '0', '2', '$PAPER_SPACE', '70', '0', '10', '0.0', '20', '0.0', '30', '0.0', '3', '$PAPER_SPACE', '1', '',
+            '0', 'ENDBLK', '8', '0',
             '0', 'ENDSEC',
             '0', 'SECTION',
             '2', 'ENTITIES'
         ];
 
         const addPolyline = (points, layer, offX = 0, offY = 0, rot = 0) => {
-            lines.push('0', 'POLYLINE', '8', layer, '66', '1', '70', '1', '10', '0.0', '20', '0.0', '30', '0.0');
+            lines.push('0', 'POLYLINE', '8', layer, '66', '1', '10', '0.0', '20', '0.0', '30', '0.0', '70', '1');
             const cosR = Math.cos(rot);
             const sinR = Math.sin(rot);
             for (let i = 0; i < points.length; i++) {
@@ -7285,8 +7555,10 @@ class SpurGearUI {
             lines.push('0', 'LINE', '8', layer, '10', x1.toFixed(4), '20', y1.toFixed(4), '30', '0.0', '11', x2.toFixed(4), '21', y2.toFixed(4), '31', '0.0');
         };
 
+        const toAscii = (str) => String(str).normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[đĐ]/g, m => m === 'đ' ? 'd' : 'D');
+
         const addText = (text, x, y, h, layer) => {
-            lines.push('0', 'TEXT', '8', layer, '10', x.toFixed(4), '20', y.toFixed(4), '30', '0.0', '40', h.toFixed(4), '1', text);
+            lines.push('0', 'TEXT', '8', layer, '10', x.toFixed(4), '20', y.toFixed(4), '30', '0.0', '40', h.toFixed(4), '1', toAscii(text));
         };
 
         let filename = '';
@@ -7441,7 +7713,8 @@ class SpurGearUI {
         const typeStr = isHelical ? 'Helical' : 'Spur';
 
         const isSurface = (format === 'step_surface' || format === 'stl_surface');
-        const tris = this.visualizer3D.getExportTriangles(target, isSurface);
+        const forStep = (format === 'step' || format === 'step_surface');
+        const tris = this.visualizer3D.getExportTriangles(target, isSurface, forStep);
 
         let filenameBase = '';
         let partName = '';

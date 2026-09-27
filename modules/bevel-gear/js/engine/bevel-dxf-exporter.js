@@ -39,20 +39,28 @@ export const BevelDxfExporter = {
         const res = BEVEL_PROFILE_RESOLUTIONS[resLevel] || BEVEL_PROFILE_RESOLUTIONS[6];
         const lines = [];
 
-        // 1. Header Section (AC1009 = Release 12, universal standard for AutoCAD 2004 - 2026)
+        // 1. Header Section (AC1009 = Release 12, universal standard for AutoCAD 2000/2007/2020/2026 & Mastercam)
         lines.push(
             '0', 'SECTION',
             '2', 'HEADER',
             '9', '$ACADVER',
             '1', 'AC1009',
+            '9', '$INSBASE',
+            '10', '0.0', '20', '0.0', '30', '0.0',
+            '9', '$EXTMIN',
+            '10', '-600.0', '20', '-600.0', '30', '0.0',
+            '9', '$EXTMAX',
+            '10', '600.0', '20', '600.0', '30', '0.0',
+            '9', '$DWGCODEPAGE',
+            '3', 'ANSI_1252',
             '0', 'ENDSEC'
         );
 
-        // 2. Tables Section (VPORT, LTYPE, LAYER, STYLE)
+        // 2. Tables Section (Complete VPORT, LTYPE, LAYER, STYLE, VIEW, UCS, APPID, DIMSTYLE)
         lines.push(
             '0', 'SECTION',
             '2', 'TABLES',
-            // VPORT table
+            // VPORT table (All mandatory group codes 10..78 required by AutoCAD 2007 & 2020)
             '0', 'TABLE',
             '2', 'VPORT',
             '70', '1',
@@ -62,7 +70,26 @@ export const BevelDxfExporter = {
             '10', '0.0', '20', '0.0',
             '11', '1.0', '21', '1.0',
             '12', '0.0', '22', '0.0',
-            '40', '350.0', '41', '1.5',
+            '13', '0.0', '23', '0.0',
+            '14', '10.0', '24', '10.0',
+            '15', '10.0', '25', '10.0',
+            '16', '0.0', '26', '0.0', '36', '1.0',
+            '17', '0.0', '27', '0.0', '37', '0.0',
+            '40', '450.0',
+            '41', '1.8',
+            '42', '50.0',
+            '43', '0.0',
+            '44', '0.0',
+            '50', '0.0',
+            '51', '0.0',
+            '71', '0',
+            '72', '100',
+            '73', '1',
+            '74', '3',
+            '75', '0',
+            '76', '0',
+            '77', '0',
+            '78', '0',
             '0', 'ENDTAB',
             // LTYPE table (CONTINUOUS, CENTER, DASHED)
             '0', 'TABLE',
@@ -74,10 +101,11 @@ export const BevelDxfExporter = {
             '0', 'LTYPE', '2', 'DASHED', '70', '0', '3', 'Dashed __ __ __ __', '72', '65', '73', '2', '40', '19.05',
             '49', '12.7', '49', '-6.35',
             '0', 'ENDTAB',
-            // LAYER table
+            // LAYER table (including mandatory default layer 0)
             '0', 'TABLE',
             '2', 'LAYER',
-            '70', '6',
+            '70', '7',
+            '0', 'LAYER', '2', '0', '70', '0', '62', '7', '6', 'CONTINUOUS',
             '0', 'LAYER', '2', 'GEAR1_PINION', '70', '0', '62', '1', '6', 'CONTINUOUS', // Red
             '0', 'LAYER', '2', 'GEAR2_WHEEL', '70', '0', '62', '5', '6', 'CONTINUOUS',  // Blue
             '0', 'LAYER', '2', 'PITCH_CONES', '70', '0', '62', '3', '6', 'CENTER',      // Green dashdot
@@ -91,10 +119,25 @@ export const BevelDxfExporter = {
             '70', '1',
             '0', 'STYLE', '2', 'STANDARD', '70', '0', '40', '0.0', '41', '1.0', '50', '0.0', '71', '0', '42', '2.5', '3', 'txt', '4', '',
             '0', 'ENDTAB',
+            // VIEW, UCS, APPID, DIMSTYLE tables
+            '0', 'TABLE', '2', 'VIEW', '70', '0', '0', 'ENDTAB',
+            '0', 'TABLE', '2', 'UCS', '70', '0', '0', 'ENDTAB',
+            '0', 'TABLE', '2', 'APPID', '70', '1',
+            '0', 'APPID', '2', 'ACAD', '70', '0',
+            '0', 'ENDTAB',
+            '0', 'TABLE', '2', 'DIMSTYLE', '70', '0', '0', 'ENDTAB',
+            '0', 'ENDSEC',
+            // 3. Blocks Section ($MODEL_SPACE and $PAPER_SPACE)
+            '0', 'SECTION',
+            '2', 'BLOCKS',
+            '0', 'BLOCK', '8', '0', '2', '$MODEL_SPACE', '70', '0', '10', '0.0', '20', '0.0', '30', '0.0', '3', '$MODEL_SPACE', '1', '',
+            '0', 'ENDBLK', '8', '0',
+            '0', 'BLOCK', '8', '0', '2', '$PAPER_SPACE', '70', '0', '10', '0.0', '20', '0.0', '30', '0.0', '3', '$PAPER_SPACE', '1', '',
+            '0', 'ENDBLK', '8', '0',
             '0', 'ENDSEC'
         );
 
-        // 3. Entities Section
+        // 4. Entities Section
         lines.push('0', 'SECTION', '2', 'ENTITIES');
 
         // Helper functions

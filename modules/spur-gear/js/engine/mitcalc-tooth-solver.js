@@ -303,19 +303,23 @@ export const MitcalcToothSolver = {
             toothPolar[M - 1 - i] = { r, th: -th, side: -1.0 };
         }
 
-        toothPolar[numPtsPerTooth - 1] = {
-            r: toothPolar[0].r,
-            th: toothPolar[0].th + (2.0 * pi) / z,
+        // Exact tooth-space center at -pi/z (shared boundary between toothIdx-1 and toothIdx)
+        toothPolar[0] = {
+            r: halfProfile[M - 1].r,
+            th: -pi / z,
             side: 0.0
         };
 
         const pitchAngle = (2.0 * pi) / z;
         const baseOffset = 0.0;
 
+        // Loop k = 0 .. (2*M - 3) so the right root-space boundary (+pi/z) is not duplicated
+        // alongside the next tooth's left root-space boundary (-pi/z + 2*pi/z = +pi/z)
+        const ptsPerTooth = numPtsPerTooth - 2;
         const contour = [];
         for (let toothIdx = 0; toothIdx < z; toothIdx++) {
             const toothOffset = baseOffset + toothIdx * pitchAngle;
-            for (let k = 0; k < numPtsPerTooth - 1; k++) {
+            for (let k = 0; k < ptsPerTooth; k++) {
                 const r = toothPolar[k].r;
                 const angle = toothPolar[k].th + toothOffset;
                 contour.push({

@@ -542,65 +542,87 @@ export class Gear3DVisualizer {
      * Gets raw triangle data for export (Solid or Hollow Open Surface Shell)
      * @param {'pinion'|'gear'|'assembly'} type
      * @param {boolean} [surfaceOnly=false]
-     * @returns {Array} rawTriangles
+     * @param {boolean} [forStep=false] - If true, uses CAD-optimized B-Rep resolution & separate body arrays for assembly
+     * @returns {Array} rawTriangles or [pinionTris, gearTris]
      */
-    getExportTriangles(type = 'pinion', surfaceOnly = false) {
+    getExportTriangles(type = 'pinion', surfaceOnly = false, forStep = false) {
         if (!this.geom) return [];
 
         let m1 = this.mesh1Data;
         let m2 = this.mesh2Data;
 
-        const resOpts = this.resolution || {};
+        const isHelical = Math.abs(this.geom.beta || 0.0) > 1e-4;
+        const stepOpts = forStep ? {
+            noPtHead: 3,
+            noPtEv: 8,
+            cuttStep: 0.5,
+            numSlices: isHelical ? 6 : 1,
+            buildRawTriangles: true
+        } : (this.resolution || {});
+
+        const base1 = Object.assign({
+            z: this.geom.z1,
+            mn: this.geom.mn,
+            alfa_n: this.geom.alfa_n,
+            beta: this.geom.beta,
+            b: this.geom.b1,
+            x: this.geom.x1,
+            d: this.geom.d1,
+            db: this.geom.db1,
+            da: this.geom.da1,
+            df: this.geom.df1,
+            ha0: this.geom.ha0,
+            hf0: this.geom.hf0,
+            ra0: this.geom.ra0,
+            hand: +1,
+            isPinion: true,
+            dBore: this.geom.df1 * 0.45
+        }, stepOpts);
+
+        const base2 = Object.assign({
+            z: this.geom.z2,
+            mn: this.geom.mn,
+            alfa_n: this.geom.alfa_n,
+            beta: this.geom.beta,
+            b: this.geom.b2,
+            x: this.geom.x2,
+            d: this.geom.d2,
+            db: this.geom.db2,
+            da: this.geom.da2,
+            df: this.geom.df2,
+            ha0: this.geom.ha0,
+            hf0: this.geom.hf0,
+            ra0: this.geom.ra0,
+            hand: -1,
+            isPinion: false,
+            dBore: this.geom.df2 * 0.45
+        }, stepOpts);
 
         if (surfaceOnly) {
-            m1 = Gear3DGenerator.generateGearSurfaceMesh(Object.assign({
-                z: this.geom.z1,
-                mn: this.geom.mn,
-                alfa_n: this.geom.alfa_n,
-                beta: this.geom.beta,
-                b: this.geom.b1,
-                x: this.geom.x1,
-                d: this.geom.d1,
-                db: this.geom.db1,
-                da: this.geom.da1,
-                df: this.geom.df1,
-                ha0: this.geom.ha0,
-                hf0: this.geom.hf0,
-                ra0: this.geom.ra0,
-                hand: +1,
-                isPinion: true,
-                dBore: this.geom.df1 * 0.45
-            }, resOpts));
-            m2 = Gear3DGenerator.generateGearSurfaceMesh(Object.assign({
-                z: this.geom.z2,
-                mn: this.geom.mn,
-                alfa_n: this.geom.alfa_n,
-                beta: this.geom.beta,
-                b: this.geom.b2,
-                x: this.geom.x2,
-                d: this.geom.d2,
-                db: this.geom.db2,
-                da: this.geom.da2,
-                df: this.geom.df2,
-                ha0: this.geom.ha0,
-                hf0: this.geom.hf0,
-                ra0: this.geom.ra0,
-                hand: -1,
-                isPinion: false,
-                dBore: this.geom.df2 * 0.45
-            }, resOpts));
+            if (type === 'pinion' || type === 'assembly') {
+                m1 = Gear3DGenerator.generateGearSurfaceMesh(base1);
+            }
+            if (type === 'gear' || type === 'assembly') {
+                m2 = Gear3DGenerator.generateGearSurfaceMesh(base2);
+            }
+        } else if (forStep) {
+            if (type === 'pinion' || type === 'assembly') {
+                m1 = Gear3DGenerator.generateGearMesh(base1);
+            }
+            if (type === 'gear' || type === 'assembly') {
+                m2 = Gear3DGenerator.generateGearMesh(base2);
+            }
         }
 
-        if (!m1 || !m2) return [];
-
-        const raw1 = Gear3DGenerator.extractRawTriangles(m1);
-        const raw2 = Gear3DGenerator.extractRawTriangles(m2);
-
         if (type === 'pinion') {
-            return raw1;
+            return m1 ? Gear3DGenerator.extractRawTriangles(m1) : [];
         } else if (type === 'gear') {
-            return raw2;
+            return m2 ? Gear3DGenerator.extractRawTriangles(m2) : [];
         } else if (type === 'assembly') {
+            if (!m1 || !m2) return [];
+            const raw1 = Gear3DGenerator.extractRawTriangles(m1);
+            const raw2 = Gear3DGenerator.extractRawTriangles(m2);
+
             // Transform Pinion 1 and Gear 2 triangles to exact center distance aw and conjugate mesh angles
             const aw = (this.geom && this.geom.aw) ? this.geom.aw : 100.0;
             const rotZ1 = (this.initialPinionAngle !== undefined) ? this.initialPinionAngle : -Math.PI / 2.0;
@@ -639,6 +661,9 @@ export class Gear3DVisualizer {
                 return [trPt2(p1), trPt2(p2), trPt2(p3), trVec2(n)];
             });
 
+            if (forStep) {
+                return [transformedPinion1, transformedGear2];
+            }
             return transformedPinion1.concat(transformedGear2);
         }
         return [];

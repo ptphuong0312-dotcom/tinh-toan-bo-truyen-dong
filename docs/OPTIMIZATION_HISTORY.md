@@ -1787,3 +1787,31 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
   - `python modules/bevel-gear/tests/test_bevel_3d.py`: **PASS 100%** (Rf1 = Rf2 = 3.80 mm = `0.38*mmn`, 20 điểm fillet/răng, kiểm thử 3D Straight & Spiral Data1 bounds, STEP Solid/Surface, Binary STL và 2D DXF).
   - Bộ ảnh chụp kiểm chứng 2D & 3D (`test_2d_bevel_matched_3d.png`, `test_3d_fillet_iso.png`, `test_3d_fillet_front.png`, `test_3d_fillet_pinion.png`, `test_3d_fillet_mesh.png`, `test_3d_fillet_closeup_pinion_root.png`).
 
+---
+
+### [2026-09-27] CHUẨN HÓA XUẤT BẢN VẼ 2D DXF (AUTOCAD 2007 & 2020) VÀ MÔ HÌNH 3D SOLID / SURFACE STEP AP214, STL, OBJ (SOLIDWORKS & MASTERCAM)
+* **Bối cảnh & Yêu cầu từ SirPhuong**:
+  - Bản sao lưu trước khi thực hiện: `backups/BACKUP_MITCalc_Gear_20260927_134939.zip` (`619 files`, `42,628.66 KB`).
+  - *"tạo cho tôi bản backup trước khi làm các việc sau : file dxf xuất ra hiện tại cad 2007 và cad 2020 đều không đọc được, ngoài ra bạn cũng cần kiểm tra các file xuất 3d, bề mặt xem đã chuẩn chưa để mastercam và solidwork đều đọc được"*.
+* **Chẩn đoán nguyên nhân gốc rễ & Giải pháp kỹ thuật đã triển khai**:
+  1. **Sửa triệt để lỗi tệp 2D DXF không mở được trên AutoCAD 2007 & AutoCAD 2020 (`bevel-dxf-exporter.js` & `tools/bundle_spur.py`)**:
+     - **Nguyên nhân gốc rễ (kiểm chứng trực tiếp bằng `AutoCAD 2020\accoreconsole.exe`)**:
+       * Bản vẽ DXF cũ thiếu các mã nhóm bắt buộc `13..78` trong bảng `VPORT` (`*ACTIVE`), khiến AutoCAD 2007 và 2020 dừng đọc ngay lập tức với lỗi: `Omitted group 13 on line 44. Invalid or incomplete DXF input -- drawing discarded. ErrorStatus=53 (eInvalidInput)`.
+       * Đối với Bánh Răng Trụ (`bundle_spur.py`), tệp DXF cũ chỉ có `HEADER` tối giản và `ENTITIES`, hoàn toàn thiếu phân vùng `TABLES` (`VPORT`, `LTYPE`, `LAYER`, `STYLE`, `VIEW`, `UCS`, `APPID`, `DIMSTYLE`) và thiếu phân vùng `BLOCKS` (`*MODEL_SPACE`, `*PAPER_SPACE`).
+       * Ngoài ra, việc khai báo `BYBLOCK` và `BYLAYER` tường minh trong bảng `LTYPE` của `AC1009` gây lỗi `Invalid symbol table record name: "BYBLOCK"`, và thiếu Layer `'0'` mặc định.
+     - **Giải pháp**:
+       * Xây dựng lại bộ khung `AC1009` (AutoCAD Release 12) đầy đủ 100% cho cả 2 module (`bevel-dxf-exporter.js` và `bundle_spur.py`): `HEADER` đầy đủ (`$ACADVER = AC1009`, `$INSBASE`, `$EXTMIN`, `$EXTMAX`, `$LUNITS`, `$LUPREC`, `$DWGCODEPAGE = ANSI_1252`), `TABLES` đầy đủ (`VPORT` đủ group `10..78`, `LTYPE` chuẩn, `LAYER` bắt đầu bằng lớp `'0'`, `STYLE`, `VIEW`, `UCS`, `APPID` `ACAD`, `DIMSTYLE`), `BLOCKS` (`*MODEL_SPACE`, `*PAPER_SPACE`), chuẩn hóa chuỗi ASCII (`toAscii`) và thứ tự mã nhóm `POLYLINE` (`66=1, 10,20,30=0.0, 70=1`).
+       * **Kiểm định thực tế bằng AutoCAD 2020 (`accoreconsole.exe` `_AUDIT _Y`)**: Toàn bộ 6 tệp DXF (`spur_pinion.dxf`, `spur_gear.dxf`, `spur_assembly.dxf`, `bevel_pinion.dxf`, `bevel_gear.dxf`, `bevel_assembly.dxf`) đều mở thành công với **`Exit Code: 0`** và **`Total errors found 0 fixed 0`** (từ 400 đến 16,100 đối tượng/bản vẽ).
+  2. **Nâng cấp toàn diện bộ xuất 3D STEP AP214 (Solid & Surface), Binary STL và Wavefront OBJ cho SolidWorks & Mastercam (`gear-3d-exporter.js`, `bevel-3d-exporter.js`, `mitcalc-tooth-solver.js`, `gear-3d-generator.js`)**:
+     - **Nguyên nhân gốc rễ (kiểm chứng trực tiếp bằng SolidWorks COM `SldWorks.Application` `LoadFile4`)**:
+       * `gear-3d-exporter.js` cũ dùng `FACE_SURFACE` + `POLY_LOOP` và đặt `$` cho hướng tham chiếu của `AXIS2_PLACEMENT_3D`.
+       * `bevel-3d-exporter.js` cũ dùng `ADVANCED_FACE` + `POLY_LOOP` (vi phạm chuẩn ISO 10303-214 vì `ADVANCED_FACE` bắt buộc phải dùng `EDGE_LOOP`) và truyền `#dirId, #dirId` (2 vector trùng nhau!) làm trục $Z$ và trục $X$ tham chiếu của `AXIS2_PLACEMENT_3D`, khiến pháp tuyến và trục tham chiếu suy biến ($Z \times X = \vec{0}$), làm SolidWorks báo lỗi `err=1`.
+       * Trong `MitcalcToothSolver.generateCompleteWheelContour`, điểm ranh giới rãnh răng (`-0.999 * pi/z` và `+0.999 * pi/z`) bị nhân đôi giữa 2 răng kề nhau với khoảng cách chỉ `0.0072 mm` (`7.2 um`), tạo ra 76 cạnh siêu ngắn ($< 0.01\text{ mm}$).
+       * Khi xuất `assembly`, Bánh dẫn 1 và Bánh bị dẫn 2 bị trộn chung vào 1 `CLOSED_SHELL` duy nhất thay vì tách thành 2 body độc lập.
+     - **Giải pháp**:
+       * Xây dựng kiến trúc B-Rep Topology đầy đủ (`VERTEX_POINT` $\to$ `LINE` $\to$ `EDGE_CURVE` khử trùng lặp $\to$ `ORIENTED_EDGE` $\to$ `EDGE_LOOP` $\to$ `FACE_OUTER_BOUND` $\to$ `PLANE` với hệ trục `AXIS2_PLACEMENT_3D` trực chuẩn Gram-Schmidt $\vec{N} \perp \vec{R}$ $\to$ `ADVANCED_FACE`).
+       * Gộp các cặp tam giác đồng phẳng lồi kề nhau (3 mẫu chia sẻ cạnh) thành mặt tứ giác 4 cạnh (`4-sided convex quad`), giúp 100% các mặt của bánh răng trụ (`F = 1,520` cho Pinion, `F = 3,840` cho Gear) là mặt tứ giác lồi sạch đẹp.
+       * Loại bỏ điểm trùng `7.2 um` tại tâm rãnh răng trong `mitcalc-tooth-solver.js` và phân bố đều góc lỗ trục `boreAngles[j]` trong `gear-3d-generator.js`, nâng chiều dài cạnh ngắn nhất từ `0.0072 mm` lên `0.368 mm`.
+       * Hỗ trợ xuất riêng biệt **Khối Đặc (Solid B-Rep)**: `CLOSED_SHELL` + `MANIFOLD_SOLID_BREP` + `ADVANCED_BREP_SHAPE_REPRESENTATION` (kín nước 2-manifold 100%, $V - E + F = 0$, 0 cạnh hở) và **Bề Mặt Rỗng (Surface B-Rep)**: `OPEN_SHELL` + `SHELL_BASED_SURFACE_MODEL` + `MANIFOLD_SURFACE_SHAPE_REPRESENTATION`.
+       * Hỗ trợ xuất **Lắp Ráp 2 Chi Tiết (Multi-Body Assembly)** tách thành 2 `MANIFOLD_SOLID_BREP` / `OPEN_SHELL` độc lập trong STEP và 2 đối tượng `o Pinion_1`, `o Gear_2` trong OBJ.
+       * **Kiểm định thực tế**: Đạt 100% kiểm toán topo 2-manifold ($V - E + F = 0$, $\vec{N} \cdot \vec{R} = 0$) trên toàn bộ 12 tệp STEP và OBJ của cả 2 module, và mở trực tiếp thành công trong **SolidWorks (`SldWorks.Application` `LoadFile4`)** với **`loaded=True, err=0`**.

@@ -625,7 +625,7 @@ export class Bevel3DVisualizer {
      * @param {boolean} surfaceOnly - If true, generates surface-only mesh on demand
      * @returns {Array} Triangle array
      */
-    getExportTriangles(type = 'pinion', surfaceOnly = false) {
+    getExportTriangles(type = 'pinion', surfaceOnly = false, forStep = false) {
         if (!this.geom) return [];
 
         const z1 = parseInt(this.geom.z1) || 18;
@@ -640,6 +640,7 @@ export class Bevel3DVisualizer {
         const alfa = (parseFloat(this.geom.alfa_deg !== undefined ? this.geom.alfa_deg : 20.0) * Math.PI) / 180.0;
         const beta_deg = (this.geom.beta_deg !== undefined ? parseFloat(this.geom.beta_deg) : (this.geom.beta !== undefined ? parseFloat(this.geom.beta) : 0.0));
         const beta = (beta_deg * Math.PI) / 180.0;
+        const isSpiral = Math.abs(beta) > 1e-4;
         const gearingType = this.geom.gearingType || 'gleason';
         const x1 = parseFloat(this.geom.x1 !== undefined ? this.geom.x1 : 0.0);
         const x2 = parseFloat(this.geom.x2 !== undefined ? this.geom.x2 : -x1);
@@ -672,43 +673,51 @@ export class Bevel3DVisualizer {
         const dBore1 = parseFloat(this.geom.dBore1) || 50.0;
         const dBore2 = parseFloat(this.geom.dBore2) || 100.0;
 
+        const resOpts = forStep ? {
+            numSlices: isSpiral ? 6 : 1,
+            ptsPerFlank: 6,
+            ptsFillet: 3
+        } : {
+            meshDensityLevel: this.meshDensityLevel || 6
+        };
+
         if (type === 'pinion') {
-            const m1 = Bevel3DGenerator.generateGearMesh({
+            const m1 = Bevel3DGenerator.generateGearMesh(Object.assign({
                 z: z1, mmn, delta: delta1, delta_a: delta_a1, delta_f: delta_f1,
                 Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
                 ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
                 Hin: Hin1, Hout: Hout1, dBore: dBore1,
                 hand: 1, gearingType, surfaceOnly
-            });
+            }, resOpts));
             return m1.rawTriangles;
         }
 
         if (type === 'gear') {
-            const m2 = Bevel3DGenerator.generateGearMesh({
+            const m2 = Bevel3DGenerator.generateGearMesh(Object.assign({
                 z: z2, mmn, delta: delta2, delta_a: delta_a2, delta_f: delta_f2,
                 Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
                 ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
                 Hin: Hin2, Hout: Hout2, dBore: dBore2,
                 hand: -1, gearingType, surfaceOnly
-            });
+            }, resOpts));
             return m2.rawTriangles;
         }
 
         // Assembly Pair: transform both to common apex V(0,0,0) and conjugate engagement line
-        const m1 = Bevel3DGenerator.generateGearMesh({
+        const m1 = Bevel3DGenerator.generateGearMesh(Object.assign({
             z: z1, mmn, delta: delta1, delta_a: delta_a1, delta_f: delta_f1,
             Re, Ri, Rm, b, alfa, beta, x: x1, xt: xt1,
             ha_e: ha_e1, hf_e: hf_e1, sa_e: sa_e1, sn_e: sn_e1,
             Hin: Hin1, Hout: Hout1, dBore: dBore1,
             hand: 1, gearingType, surfaceOnly
-        });
-        const m2 = Bevel3DGenerator.generateGearMesh({
+        }, resOpts));
+        const m2 = Bevel3DGenerator.generateGearMesh(Object.assign({
             z: z2, mmn, delta: delta2, delta_a: delta_a2, delta_f: delta_f2,
             Re, Ri, Rm, b, alfa, beta, x: x2, xt: xt2,
             ha_e: ha_e2, hf_e: hf_e2, sa_e: sa_e2, sn_e: sn_e2,
             Hin: Hin2, Hout: Hout2, dBore: dBore2,
             hand: -1, gearingType, surfaceOnly
-        });
+        }, resOpts));
 
         // Pinion: Local (x, y, z) -> World (z, x, y)
         const tPinion = m1.rawTriangles.map(([p1, p2, p3, n]) => [
@@ -745,6 +754,9 @@ export class Bevel3DVisualizer {
             xformGear(n)
         ]);
 
+        if (forStep) {
+            return [tPinion, tGear];
+        }
         return tPinion.concat(tGear);
     }
 

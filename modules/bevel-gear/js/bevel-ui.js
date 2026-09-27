@@ -1754,7 +1754,8 @@ class BevelGearUI {
         const typeStr = isSpiral ? 'Spiral_Bevel' : 'Straight_Bevel';
 
         const isSurface = (format === 'step_surface' || format === 'stl_surface');
-        const tris = this.visualizer3D.getExportTriangles(target, isSurface);
+        const forStep = (format === 'step' || format === 'step_surface');
+        const tris = this.visualizer3D.getExportTriangles(target, isSurface, forStep);
 
         let filenameBase = '';
         let partName = '';

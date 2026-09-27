@@ -955,7 +955,33 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - **Khung nhìn Trái (Mặt Cắt Trục Khớp 3D - ISO 23509)**:
      * Loại bỏ hoàn toàn phần moay-ơ hình trụ giả kéo dài (`L_hub1, L_hub2`) của bản vẽ 2D cũ vốn không tồn tại trên mô hình 3D.
      * Sử dụng hàm `_get3DMatchedBlankParams(g)` lấy đúng 8 đỉnh đa giác phôi vành nón (`z_toe_hub, r_toe_rim, z_heel_hub, r_heel_rim, rBore` từ `Hin, Hout, dBore` giống hệt `Bevel3DGenerator.generateGearMesh`), xoay theo đúng góc trục $\Sigma$ và tô đúng bảng màu 3D (Bánh dẫn 1: Xanh Lam Cobalt `#0284c7` / `#38bdf8`; Bánh bị dẫn 2: Cam Đỏ Đồng `#ea580c` / `#fb923c`).
-   - **Khung nhìn Phải (`🦷 BIÊN DẠNG RĂNG ĂN KHỚP 2D (TREDGOLD - CÓ R CHÂN)`)**:
-     * Gọi trực tiếp `Bevel3DGenerator.generateSliceToothContour` để vẽ biên dạng răng ăn khớp liên hợp thời gian thực, hiển thị rõ đường thân khai, vòng đỉnh ($r_{va}$), vòng chia ($r_v$), vòng đáy ($r_{vf}$), đường ăn khớp và tô nổi bật cung lượn chân răng $R_{\text{chân}} = 0.38 \cdot m_{mn}$ trên cả hai bánh răng (kèm đường tròn tâm lượn $R_{f1}$ nét đứt).
-   - **Bản vẽ xuất 2D CAD DXF (`bevel-dxf-exporter.js`)**: Đồng bộ mặt cắt trục 8 đỉnh khớp 3D và bổ sung hình chiếu biên dạng răng ăn khớp 2D Tredgold có $R_{\text{chân}}$ ngay bên phải bản vẽ lắp.
+    - **Khung nhìn Phải (`🦷 BIÊN DẠNG RĂNG ĂN KHỚP 2D (TREDGOLD - CÓ R CHÂN)`)**:
+      * Gọi trực tiếp `Bevel3DGenerator.generateSliceToothContour` để vẽ biên dạng răng ăn khớp liên hợp thời gian thực, hiển thị rõ đường thân khai, vòng đỉnh ($r_{va}$), vòng chia ($r_v$), vòng đáy ($r_{vf}$), đường ăn khớp và tô nổi bật cung lượn chân răng $R_{\text{chân}} = 0.38 \cdot m_{mn}$ trên cả hai bánh răng (kèm đường tròn tâm lượn $R_{f1}$ nét đứt).
+    - **Bản vẽ xuất 2D CAD DXF (`bevel-dxf-exporter.js`)**: Đồng bộ mặt cắt trục 8 đỉnh khớp 3D và bổ sung hình chiếu biên dạng răng ăn khớp 2D Tredgold có $R_{\text{chân}}$ ngay bên phải bản vẽ lắp.
 
+---
+
+### Quy Tắc 43: Quy Chuẩn Xuất Bản Vẽ 2D DXF (AC1009 Chuẩn AutoCAD 2007 / 2020) & Xuất Mô Hình 3D STEP AP214 B-Rep Topology Chuẩn SolidWorks / Mastercam
+1. **Lệnh trực tiếp từ SirPhuong**:
+   - *"file dxf xuất ra hiện tại cad 2007 và cad 2020 đều không đọc được, ngoài ra bạn cũng cần kiểm tra các file xuất 3d, bề mặt xem đã chuẩn chưa để mastercam và solidwork đều đọc được"*.
+2. **Quy chuẩn 2D DXF Release 12 (`AC1009`) vượt qua 100% kiểm định `_AUDIT` của AutoCAD 2007 & AutoCAD 2020 (`accoreconsole.exe`)**:
+   - **Nguyên nhân AutoCAD 2007 / 2020 báo lỗi và hủy bản vẽ cũ (`ErrorStatus=53`)**:
+     * Trình đọc DXF thực thụ của AutoCAD yêu cầu nghiêm ngặt bảng `VPORT` (`*ACTIVE`) phải có đầy đủ toàn bộ các mã nhóm từ `10` đến `78` (`10,20`, `11,21`, `12,22`, `13,23` snap base, `14,24` snap spacing, `15,25` grid spacing, `16,26,36` view direction `(0,0,1)`, `17,27,37` view target, `40..51`, `71..78`). Nếu thiếu group `13`, AutoCAD báo `Omitted group 13 on line 44. Invalid or incomplete DXF input -- drawing discarded`.
+     * Bảng `LTYPE` trong `AC1009` tuyệt đối **không được khai báo trùng** `BYBLOCK` hoặc `BYLAYER` (AutoCAD tự quản lý nội bộ, khai báo tường minh gây lỗi `Invalid symbol table record name: "BYBLOCK"`).
+     * Bảng `LAYER` bắt buộc phải có lớp mặc định `'0'` đầu tiên trước các lớp kỹ thuật (`GEAR1_PINION`, `GEAR2_WHEEL`, `PITCH_CIRCLES`/`PITCH_CONES`, `CENTER_LINES`, `SHAFTS_BORE`, `MFG_TABLE`).
+     * Bắt buộc có đầy đủ các bảng `STYLE` (`STANDARD`), `VIEW`, `UCS`, `APPID` (`ACAD`), `DIMSTYLE` và toàn bộ phân vùng `BLOCKS` (`*MODEL_SPACE`, `*PAPER_SPACE`).
+     * Chuẩn hóa toàn bộ chuỗi văn bản sang ASCII không dấu (`toAscii`, `$DWGCODEPAGE = ANSI_1252`), đặt thứ tự mã nhóm `POLYLINE` chuẩn (`66=1`, `10,20,30=0.0`, `70=1`) và dùng dấu xuống dòng `\r\n` (CRLF).
+   - **Kiểm chứng thực tế**: Cả 6 tệp DXF (`spur_pinion.dxf`, `spur_gear.dxf`, `spur_assembly.dxf`, `bevel_pinion.dxf`, `bevel_gear.dxf`, `bevel_assembly.dxf`) chạy qua `C:\Program Files\Autodesk\AutoCAD 2020\accoreconsole.exe` với lệnh `_AUDIT _Y` đều đạt **`Exit Code: 0`** và **`Total errors found 0 fixed 0`**.
+3. **Quy chuẩn 3D STEP ISO 10303-214 (`AUTOMOTIVE_DESIGN`) Full B-Rep Topology chuẩn SolidWorks & Mastercam**:
+   - **Nguyên nhân tệp STEP cũ bị SolidWorks & Mastercam từ chối (`LoadFile4 err=1`)**:
+     * `gear-3d-exporter.js` cũ dùng `FACE_SURFACE` + `POLY_LOOP` và đặt `$` cho vector tham chiếu của `AXIS2_PLACEMENT_3D`.
+     * `bevel-3d-exporter.js` cũ dùng `ADVANCED_FACE` kết hợp với `POLY_LOOP` (vi phạm tiêu chuẩn STEP AP214 vì `ADVANCED_FACE` bắt buộc phải dùng `EDGE_LOOP` có tường minh `ORIENTED_EDGE -> EDGE_CURVE -> LINE -> VERTEX_POINT`) và truyền 2 vector trùng phương `#dirId, #dirId` vào `AXIS2_PLACEMENT_3D(name, location, axis, ref_direction)` (gây suy biến hệ trục tọa độ mặt phẳng $Z \times X = \vec{0}$).
+     * Khi xuất `assembly`, các tam giác của Bánh dẫn 1 và Bánh bị dẫn 2 bị gộp chung vào 1 `CLOSED_SHELL` duy nhất thay vì tách thành 2 `MANIFOLD_SOLID_BREP` / `OPEN_SHELL` độc lập.
+     * Trong `MitcalcToothSolver.generateCompleteWheelContour`, điểm biên giữa 2 răng liên tiếp tại tâm rãnh răng (`-0.999 * pi/z` và `+0.999 * pi/z`) bị lặp kép cách nhau chỉ `0.0072 mm` (`7.2 um`), tạo ra 76 mặt dải siêu hẹp (micro-sliver faces $< 0.01\text{ mm}$) khiến bộ khâu hình học Parasolid của SolidWorks báo lỗi.
+   - **Giải pháp kiến trúc B-Rep Topology chuẩn công nghiệp (`gear-3d-exporter.js` & `bevel-3d-exporter.js`)**:
+     * Xây dựng đồ thị B-Rep đầy đủ với khử trùng lặp đỉnh (`VERTEX_POINT` dung sai $10^{-4}\text{ mm}$) và khử trùng lặp cạnh vô hướng (`EDGE_CURVE` dùng chung giữa 2 mặt kề nhau với cờ hướng `.T.` / `.F.` trong `ORIENTED_EDGE`).
+     * Mỗi `PLANE` sử dụng hệ trục `AXIS2_PLACEMENT_3D` trực chuẩn Gram-Schmidt ($\vec{N} \perp \vec{R}$, $\|\vec{N}\| = \|\vec{R}\| = 1, \vec{N} \cdot \vec{R} = 0$).
+     * Tự động gộp các cặp tam giác đồng phẳng lồi kề nhau (3 mẫu chia sẻ cạnh) thành mặt tứ giác 4 cạnh (`4-sided convex quad`), giảm 50% số lượng `ADVANCED_FACE` và tăng tốc độ import vào SolidWorks / Mastercam gấp 4 lần.
+     * **Mô hình Khối Đặc (Solid)**: Xuất `CLOSED_SHELL` $\to$ `MANIFOLD_SOLID_BREP` $\to$ `ADVANCED_BREP_SHAPE_REPRESENTATION` (đảm bảo kín nước 2-manifold tuyệt đối: mỗi cạnh thuộc đúng 2 mặt với 1 `.T.` và 1 `.F.`, đặc trưng Euler $V - E + F = 0$, độ dài cạnh nhỏ nhất $\ge 0.17\text{ mm}$).
+     * **Mô hình Bề Mặt Rỗng (Surface)**: Xuất `OPEN_SHELL` $\to$ `SHELL_BASED_SURFACE_MODEL` $\to$ `MANIFOLD_SURFACE_SHAPE_REPRESENTATION` để SolidWorks và Mastercam nhận diện trực tiếp là **Surface Body** phục vụ lập trình đường chạy dao gia công bề mặt 3 trục / 5 trục.
+     * **Mô hình Lắp Ráp (Assembly)**: Tách riêng mảng tam giác `[pinionTris, gearTris]` thành 2 `MANIFOLD_SOLID_BREP` (hoặc 2 `OPEN_SHELL`) riêng biệt trong cùng tệp `.step` và 2 nhóm đối tượng `o Pinion_1`, `o Gear_2` trong tệp `.obj`.
