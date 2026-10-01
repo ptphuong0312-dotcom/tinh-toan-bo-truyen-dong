@@ -51,5 +51,21 @@ with sync_playwright() as p:
     page.screenshot(path='C:/Users/AD/.gemini/antigravity/brain/fe6c5191-60b1-4a67-8b96-16595ac3bbf0/worm_flank_contact_crowning_iso.png')
     print("Captured worm_flank_contact_crowning_iso.png")
     
+    # 7. Test User Exact View: Level 8 + Theory Mode in Mesh Zone (to verify no cracking/spiderweb)
+    page.locator('#selMeshDensity').select_option('8')
+    page.wait_for_timeout(600)
+    page.locator('#selContactTheoryMode').select_option('theory')
+    page.wait_for_timeout(600)
+    page.locator('#sel3DViewPreset').select_option('mesh')
+    page.wait_for_timeout(500)
+    page.screenshot(path='C:/Users/AD/.gemini/antigravity/brain/fe6c5191-60b1-4a67-8b96-16595ac3bbf0/worm_flank_lvl8_theory_mesh_smooth.png')
+    print("Captured worm_flank_lvl8_theory_mesh_smooth.png")
+    
+    # 8. Test Level 8 + Crowning Mode in Mesh Zone
+    page.locator('#selContactTheoryMode').select_option('crowning')
+    page.wait_for_timeout(600)
+    page.screenshot(path='C:/Users/AD/.gemini/antigravity/brain/fe6c5191-60b1-4a67-8b96-16595ac3bbf0/worm_flank_lvl8_crowning_mesh_smooth.png')
+    print("Captured worm_flank_lvl8_crowning_mesh_smooth.png")
+
     browser.close()
     print("All test screenshots captured successfully!")

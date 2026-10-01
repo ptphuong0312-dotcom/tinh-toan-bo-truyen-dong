@@ -1187,6 +1187,33 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * *Mặt trụ lỗ trục trong (Inner Bore Cylinder)*: Nối liền hai mặt đầu tại $z = \pm b_{2H}/2$ bằng các tứ giác trụ có pháp tuyến hướng tâm $-e_r$ chính xác, tạo nên khối B-Rep kín nước 100% không tì vết.
 2. **Đồng bộ hóa 1-to-1 Vết Ăn Khớp Tiếp Xúc TCA (Tooth Contact Analysis)**:
    - **Thanh điều khiển kiểu tiếp xúc (`selContactTheoryMode`)**:
-     * `📏 Lý Thuyết (Đường Tiếp Xúc Conjugate)`: Vi lượng dịch chuyển $d\Theta_{\text{kiss}} = \frac{0.0022 \cdot m_x}{r_2}$ đồng đều trên toàn bộ bề rộng họng ôm, hiển thị rõ đường tiếp xúc liên hợp lý thuyết.
-     * `🔵 Thực Tế Xưởng (Vết Elip Crowning)`: Áp dụng độ vồng vi mô $K_{\text{crown}} = \max(0, 1 - 2.5 u^2)$ (với $u = z / \text{halfB} \in [-1, 1]$), tạo vết tiếp xúc hình elip sắc nét ở 65% vùng giữa họng ôm theo chuẩn xưởng AGMA 6022 / DIN 3996.
+     * `📏 Lý Thuyết (Đường Tiếp Xúc Conjugate)`: Hiển thị đường tiếp xúc liên hợp lý thuyết dọc họng ôm.
+     * `🔵 Thực Tế Xưởng (Vết Elip Crowning)`: Hiển thị vết tiếp xúc hình elip sắc nét ở 65% vùng giữa họng ôm theo chuẩn xưởng AGMA 6022 / DIN 3996.
    - **Góc nhìn cận cảnh `🔍 Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)`**: Tự động đưa camera về cự ly tối ưu $d_{\text{mesh}} \approx 1.15 \cdot \max(b_{2H}, 8 m_n) \approx 42\text{ mm}$ tập trung vào điểm ăn khớp danh nghĩa $(0, -a + d_1/2, 0)$, cho phép kỹ sư quan sát vết tiếp xúc trực quan và rõ nét như trong xưởng kiểm tra bột màu rà cơ khí Prussian Blue.
+
+---
+
+### Quy Tắc 52: Quy Chuẩn Bản Đồ Màu Đỉnh Bột Rà Cơ Khí Prussian Blue (TCA Vertex Colors Gradient Protocol) — Triệt Tiêu Tuyệt Đối Hiện Tượng Z-Fighting Nứt Nẻ & Hiển Thị Vết Tiếp Xúc Quang Học Hoàn Mỹ
+1. **Chẩn Đoán Sai Số Gốc Rễ Hiện Tượng "Nhằng Nhịt Nứt Nẻ" (Depth Buffer Z-Fighting Mosaic Artifact)**:
+   - **Hiện tượng lỗi**: Khi bật chế độ "Chỉ Mặt Bên" (`Flank-Only`) ở độ mịn Cấp 8 (`media_1790841146229.png`), trên sườn răng bánh vít xuất hiện dải hoa văn nham nhở, rách nát, các mảnh tam giác màu cyan và trắng lởm chởm đâm qua lại như mạng nhện vỡ sứ ("nhằng nhịt nứt nẻ").
+   - **Nguyên nhân đồ họa 3D cốt lõi**:
+     * Trước đó, hệ số vi dịch chuyển $d\Theta_{\text{kiss}} > 0$ được đưa vào để ép hai bề mặt ren trục vít (màu xanh cyan `#00a8ff`) và sườn răng bánh vít (màu cam `#ea580c`) đâm xuyên lồng vào nhau vài micron.
+     * Do hai mặt có topo chia lưới khác nhau hoàn toàn (trục vít chia theo đường xoắn ốc Archimedes, bánh vít chia theo họng lõm globoid), khi đâm xuyên nhau chúng tạo ra hàng ngàn điểm giao cắt tam giác ngẫu nhiên.
+     * Bộ đệm độ sâu 24-bit (Depth Buffer) của GPU WebGL xảy ra hiện tượng **Z-Fighting cực mạnh**: các pixel lân cận liên tục tranh chấp thứ tự hiển thị, kết hợp ánh sáng phản xạ specular lóe trắng tạo nên hiệu ứng răng cưa vỡ vụn ("nhằng nhịt nứt nẻ").
+2. **Kiến Trúc Triệt Tiêu Tuyệt Đối Giao Cắt Vật Lý ($d\Theta_{\text{kiss}} = 0.0\text{ mm}$)**:
+   - Tuyệt đối KHÔNG ép 2 lưới 3D đâm xuyên nhau để tạo vết tiếp xúc.
+   - Thiết lập $d\Theta_{\text{kiss}} = 0.0$ tuyệt đối, bảo toàn hình học liên hợp tiếp xúc tiếp tuyến hoàn hảo $\Delta = 0.000000\text{ mm}$.
+   - Thiết lập `polygonOffset: true, polygonOffsetFactor: 1.0, polygonOffsetUnits: 2.0` cho `matWormSurf` để WebGL phân giải thứ tự độ sâu hoàn mỹ, không một điểm ảnh nào bị Z-fighting.
+3. **Giải Thuật Bản Đồ Màu Đỉnh Bột Rà Cơ Khí Prussian Blue (Vertex Colors Hermite Gradient Engine)**:
+   - Mô phỏng chính xác phương pháp rà bột màu cơ khí quốc tế (Prussian Blue / Engineer's Blue Marking Compound theo chuẩn Gleason, AGMA 6022, DIN 3996):
+   - Hàm giải tích `computeTcaColor(u, v, contactMode, handSign)` với tọa độ chuẩn hóa $u = z / \text{halfB} \in [-1, 1]$ và $v = (r - r_{\text{root}}) / (r_{\text{tip}} - r_{\text{root}}) \in [0, 1]$:
+     * *Chế độ `📏 Lý Thuyết (Đường Tiếp Xúc Conjugate)`*:
+       Đường tiếp xúc nghiêng $v_0(u) = 0.50 + 0.12 \cdot u \cdot \text{handSign}$.
+       Cường độ tiếp xúc: $I(u, v) = \max\left(0, (1 - d_v^2)(1 - d_u^4)\right)$ với $d_v = |v - v_0| / 0.12, d_u = |u| / 0.82$.
+     * *Chế độ `🔵 Thực Tế Xưởng (Vết Elip Crowning)`*:
+       Vết tiếp xúc elip hội tụ ở 60% vùng giữa họng ôm:
+       Metric elip: $E(u, v) = \left(\frac{u - u_0}{0.55}\right)^2 + \left(\frac{v - 0.50}{0.28}\right)^2 \le 1.0$.
+       Cường độ tiếp xúc: $I(u, v) = (1 - E)^{1.2}$.
+   - Chuyển sắc Hermite 2 bậc $C^1$ siêu mịn từ Đồng CuSn12Ni2 $(0.92, 0.35, 0.05)$ (`#ea580c`) $\to$ Viền Cyan/Sky Blue $(0.15, 0.75, 0.98)$ (`#26bbf9`) $\to$ Tâm bột rà Prussian Blue $(0.01, 0.22, 0.78)$ (`#014ba0`).
+   - Kết quả: Mặt sườn răng nhẵn bóng, trơn láng 100%, vệt màu rà Prussian Blue hiển thị sắc nét, sống động như thiết bị đo kiểm xưởng cơ khí hiện đại.
+

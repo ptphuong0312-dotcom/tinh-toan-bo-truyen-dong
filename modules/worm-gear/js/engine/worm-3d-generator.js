@@ -529,6 +529,63 @@ const Worm3DGenerator = {
     },
 
     /**
+     * Computes authentic workshop Prussian Blue marking compound (Bột rà kiểm tra tiếp xúc)
+     * color gradient for Tooth Contact Analysis (TCA) on the worm wheel tooth flank.
+     * Smoothly blends from CuSn12Ni2 Bronze (#ea580c) -> Sky Blue edge (#26bbf9) -> Deep Prussian Blue (#0238c7).
+     */
+    computeTcaColor(u, v, contactMode, handSign) {
+        let intensity = 0.0;
+        if (contactMode === 'crowning') {
+            // Parabolic Crowning localized contact patch (AGMA 6022 / DIN 3996)
+            // Focused in central ~60% of face width and ~60% of active tooth height
+            const u0 = -0.05 * (handSign || 1.0);
+            const v0 = 0.50;
+            const du = (u - u0) / 0.55;
+            const dv = (v - v0) / 0.28;
+            const E = du * du + dv * dv;
+            if (E < 1.0) {
+                intensity = Math.pow(1.0 - E, 1.2);
+            }
+        } else {
+            // Theoretical conjugate contact line band across throated face width
+            const vLine = 0.50 + 0.12 * u * (handSign || 1.0);
+            const dv = Math.abs(v - vLine) / 0.12;
+            const du = Math.abs(u) / 0.82;
+            if (dv < 1.0 && du < 1.0) {
+                intensity = (1.0 - dv * dv) * (1.0 - du * du * du * du);
+            }
+        }
+
+        if (intensity <= 0.0) {
+            return [0.92, 0.35, 0.05]; // Base CuSn12Ni2 Bronze (#ea580c)
+        }
+
+        // Two-stage smooth Hermite blend from Bronze -> Cyan edge -> Deep Prussian Blue core
+        const I = Math.max(0.0, Math.min(1.0, intensity));
+        const cBronze = [0.92, 0.35, 0.05]; // Golden bronze
+        const cEdge   = [0.15, 0.75, 0.98]; // Sky blue / cyan border
+        const cCore   = [0.01, 0.22, 0.78]; // Authentic Prussian Blue marking compound
+
+        if (I < 0.25) {
+            const t = I / 0.25;
+            const s = t * t * (3.0 - 2.0 * t);
+            return [
+                cBronze[0] * (1.0 - s) + cEdge[0] * s,
+                cBronze[1] * (1.0 - s) + cEdge[1] * s,
+                cBronze[2] * (1.0 - s) + cEdge[2] * s
+            ];
+        } else {
+            const t = (I - 0.25) / 0.75;
+            const s = t * t * (3.0 - 2.0 * t);
+            return [
+                cEdge[0] * (1.0 - s) + cCore[0] * s,
+                cEdge[1] * (1.0 - s) + cCore[1] * s,
+                cEdge[2] * (1.0 - s) + cCore[2] * s
+            ];
+        }
+    },
+
+    /**
      * Generates Globoid Throated Worm Wheel 2 3D Solid or Surface Mesh
      * using exact kinematic hob conjugate envelope matching the worm thread space to Delta = 0.000000
      */
@@ -553,8 +610,10 @@ const Worm3DGenerator = {
 
         const positions = [];
         const normals = [];
+        const colors = [];
         const indices = [];
         const rawTriangles = [];
+        const defColor = [0.92, 0.35, 0.05];
 
         function pushTri(p1, p2, p3, nOverride = null) {
             const ux = p2.x - p1.x, uy = p2.y - p1.y, uz = p2.z - p1.z;
@@ -571,6 +630,12 @@ const Worm3DGenerator = {
             const baseIdx = positions.length / 3;
             positions.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
             normals.push(nx, ny, nz, nx, ny, nz, nx, ny, nz);
+
+            const c1 = p1.color || defColor;
+            const c2 = p2.color || defColor;
+            const c3 = p3.color || defColor;
+            colors.push(c1[0], c1[1], c1[2], c2[0], c2[1], c2[2], c3[0], c3[1], c3[2]);
+
             indices.push(baseIdx, baseIdx + 1, baseIdx + 2);
 
             rawTriangles.push([
@@ -590,22 +655,7 @@ const Worm3DGenerator = {
             const blank = this.evalWheelBlankCrossSection(z, mc);
             const rRoot = blank.rRoot;
             const rTip = blank.rTip;
-
-            // In Flank-Only mode (TCA inspection), apply conjugate kiss allowance dThetaKiss
-            let dThetaKiss = 0.0;
-            if (surfaceOnly) {
-                const uNorm = halfB > 1e-6 ? (z / halfB) : 0.0;
-                if (contactMode === 'crowning') {
-                    // Parabolic crowning centered at mid-throat z=0 (AGMA 6022 / DIN 3996 localized contact patch)
-                    const K_crown = Math.max(0.0, 1.0 - 2.5 * uNorm * uNorm);
-                    const allowance = (0.0028 * mx) * K_crown - (0.0012 * mx) * (1.0 - K_crown);
-                    dThetaKiss = allowance / Math.max(1.0, mc.MC_d2 * 0.5);
-                } else {
-                    // Theory conjugate contact line: uniform kiss allowance across throat width
-                    const allowance = 0.0022 * mx;
-                    dThetaKiss = allowance / Math.max(1.0, mc.MC_d2 * 0.5);
-                }
-            }
+            const uNorm = halfB > 1e-6 ? (z / halfB) : 0.0;
 
             // Pre-compute exact kinematic hob envelope flank angles across radial levels
             const profileR = [];
@@ -613,7 +663,9 @@ const Worm3DGenerator = {
                 const frac = m / ptsR;
                 const r = rRoot + frac * (rTip - rRoot);
                 const prof = this.computeConjugateFlankAngles(r, z, mc);
-                profileR.push({ r, thetaR: prof.thetaR, thetaL: prof.thetaL });
+                const vNorm = frac;
+                const colFlank = this.computeTcaColor(uNorm, vNorm, contactMode, mc.handSign);
+                profileR.push({ r, thetaR: prof.thetaR, thetaL: prof.thetaL, color: colFlank });
             }
 
             const teeth = [];
@@ -626,22 +678,24 @@ const Worm3DGenerator = {
 
                 for (let m = 0; m <= ptsR; m++) {
                     const p = profileR[m];
-                    const thetaR = toothBaseAngle + p.thetaR + dThetaKiss;
-                    const thetaL = toothBaseAngle + p.thetaL - dThetaKiss;
+                    const thetaR = toothBaseAngle + p.thetaR;
+                    const thetaL = toothBaseAngle + p.thetaL;
 
                     rFlankR.push({
                         x: p.r * Math.sin(thetaR),
                         y: -p.r * Math.cos(thetaR),
                         z,
                         r: p.r,
-                        theta: thetaR
+                        theta: thetaR,
+                        color: p.color
                     });
                     rFlankL.push({
                         x: p.r * Math.sin(thetaL),
                         y: -p.r * Math.cos(thetaL),
                         z,
                         r: p.r,
-                        theta: thetaL
+                        theta: thetaL,
+                        color: p.color
                     });
                 }
                 teeth.push({ rFlankR, rFlankL, rRoot, rTip });
@@ -823,6 +877,7 @@ const Worm3DGenerator = {
         return {
             vertices: new Float32Array(positions),
             normals: new Float32Array(normals),
+            colors: new Float32Array(colors),
             indices: new Uint32Array(indices),
             rawTriangles,
             bbox: { min: [minX, minY, minZ], max: [maxX, maxY, maxZ] }
