@@ -1453,6 +1453,23 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
       * Bánh Vít (Wheel): 39 - 45 slices, 14 - 16 points/flank ($\sim 100,000$ tam giác), dung lượng STEP $\sim 15 - 20\text{ MB}$, tải nhanh trong 1 giây.
       * Tự động kế thừa cấp độ mịn `#selMeshDensity` do người dùng thiết lập trên giao diện 3D.
 
+---
 
-
-
+16. **TRIỆT TIÊU GẬP GHỀNH ĐỈNH REN (WORM TIP CREST SMOOTHING) & TÍNH TOÁN VECTOR PHÁP TUYẾN ĐỈNH CHUẨN GIẢI TÍCH C1/C2 CHO BỀ MẶT MƯỢT MÀ TUYỆT ĐỐI**:
+    - **Bản chất hiện tượng gập ghềnh đỉnh ren**:
+      * Quad đỉnh ren `tipArc` bị chia cắt bởi đường chéo cố định `pA0 - pB1` mà không kiểm tra độ dài. Góc xoắn $\gamma$ làm quad bị trượt xiên, đường chéo cố định cắt qua đường chéo dài tạo thành nếp gấp xiên (diagonal kink) trên từng bước lát cắt.
+      * Hàm `pushTri` trước đây gán cùng 1 vector pháp tuyến phẳng (flat face normal) cho cả 3 đỉnh. Dưới ánh sáng phản xạ, 2 tam giác của cùng 1 quad phản chiếu ánh sáng lệch góc nhau, tạo vệt sáng tối so-le hình răng cưa/zíc-zắc (checkerboard glint), khiến mắt người nhìn thấy đỉnh ren bị gập ghềnh.
+    - **Giải pháp đỉnh ren mượt tuyệt đối**:
+      * Triển khai chia tam giác theo đường chéo ngắn nhất Delaunay thích ứng cho dải đỉnh ren `stA.tipArc` $\to$ `stB.tipArc`:
+        $$d_1^2 = \|p_{A0} - p_{B1}\|^2, \quad d_2^2 = \|p_{A1} - p_{B0}\|^2$$
+        $$d_1^2 \le d_2^2 \implies (p_{A0}, p_{A1}, p_{B1}) + (p_{A0}, p_{B1}, p_{B0}), \quad d_2^2 < d_1^2 \implies (p_{A0}, p_{A1}, p_{B0}) + (p_{A1}, p_{B1}, p_{B0})$$
+      * Gán vector pháp tuyến giải tích hướng tâm hình trụ:
+        $$\vec{n}_{\text{cyl}} = \left(0, \frac{y}{\sqrt{y^2 + z^2}}, \frac{z}{\sqrt{y^2 + z^2}}\right) = (0, \cos\phi, \sin\phi)$$
+      * Áp dụng đồng bộ cho đỉnh răng bánh vít `wheel.tipArc` với vector pháp tuyến hướng tâm $(\cos\theta, \sin\theta, 0)$.
+    - **Vector pháp tuyến nội suy liền mạch $C^1/C^2$ cho sườn răng**:
+      * Tính toán vector pháp tuyến tại từng đỉnh $(s, m)$ từ tích có hướng của tiếp tuyến lát cắt $\vec{T}_s$ và tiếp tuyến bán kính $\vec{T}_m$.
+      * Hàm `pushTri` hỗ trợ vector pháp tuyến riêng biệt từng đỉnh (`p1.nx, p2.nx, p3.nx`), kích hoạt toàn diện cơ chế làm mịn Gouraud/Phong/PBR trong WebGL và CAD/CAM.
+    - **Bảo toàn 100% cạnh sắc kỹ thuật (Crisp Feature Edges)**:
+      * Giao tuyến giữa sườn răng và đỉnh ren giữ nguyên cạnh cơ khí sắc nét (feature edge) vì đỉnh sườn mang pháp tuyến sườn, đỉnh đỉnh ren mang pháp tuyến trụ.
+    - **Bảo toàn tuyệt đối hình học ăn khớp**:
+      * Tọa độ đỉnh $(x, y, z)$ không đổi, bảo toàn $0.000\text{ mm}$ khe hở ăn khớp và cơ chế in màu vết tiếp xúc (Back-face contact imprint).

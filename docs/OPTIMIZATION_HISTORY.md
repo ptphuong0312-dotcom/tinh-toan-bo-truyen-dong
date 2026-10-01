@@ -2514,6 +2514,40 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
   3. *Tương thích hoàn hảo với Mastercam Toolpaths*:
      - Các đường chạy dao phay 4 trục (Rotary 4-Axis Milling) và tiện ren trong Mastercam bám sát theo các vi phân $0.26\text{ mm}$, đường dao mịn màng, triệt tiêu 100% hiện tượng gập ghềnh gãy khúc.
 
+---
 
+## 35. ĐỢT TỐI ƯU HÓA 35: TRIỆT TIÊU HIỆN TƯỢNG GẬP GHỀNH ĐỈNH TRỤC VÍT (WORM TIP CREST SMOOTHING) & TÍNH TOÁN VECTOR PHÁP TUYẾN ĐỈNH CHUẨN GIẢI TÍCH C1/C2 CHO BỀ MẶT MƯỢT MÀ TUYỆT ĐỐI
 
+* **Bối cảnh & Lệnh trực tiếp từ SirPhuong**:
+  - *"hiện tại phần đỉnh của trục vit nhìn vẫn gập ghênh, bàn sửa cho tôi"*
+  - *"ngoài ra bạn xem có phương án nào làm cho bề mặt chi tiết thật mượt mà, mà vẫn phải chuẩn ăn khớp như hiện tại không"*.
 
+* **Phân tích nguyên nhân gốc rễ (Root Cause Analysis)**:
+  1. **Lỗi chia tam giác cố định đường chéo trên đỉnh ren (`worm.tipArc`)**:
+     - Trong `worm-3d-generator.js`, dải đỉnh trụ ren của trục vít (`tipArc`) được ghép từ các dải quad $(p_{A0}, p_{A1}, p_{B1}, p_{B0})$.
+     - Trước đây, dải quad này được chia tam giác bằng 1 đường chéo cố định `pushTri(pA0, pA1, pB1); pushTri(pA0, pB1, pB0);`.
+     - Do trục vít xoắn một góc vít $\gamma$, dải quad bị trượt xiên. Việc cố định đường chéo cắt ngang qua đường chéo dài tạo ra một nếp gấp xiên (diagonal kink) trên từng bước cắt dọc theo chu vi trụ đỉnh.
+  2. **Lỗi Flat Face Normals trong hàm `pushTri`**:
+     - Trước đây hàm `pushTri(p1, p2, p3)` tính vector pháp tuyến hình học của tam giác từ tích có hướng $(p_2 - p_1) \times (p_3 - p_1)$ và gán cùng 1 vector này cho cả 3 đỉnh của tam giác.
+     - Trên bề mặt cong (như hình trụ đỉnh ren hoặc sườn ren xoắn ốc), mỗi tam giác có một vector pháp tuyến phẳng riêng biệt (Flat Facet Shading).
+     - Khi phản chiếu ánh sáng trong Three.js (WebGL) hoặc trong Mastercam / SolidWorks, 2 tam giác của cùng 1 dải quad phản chiếu ánh sáng theo 2 hướng khác nhau, tạo thành các vệt sáng tối so-le hình răng cưa/zíc-zắc (checkerboard glint), khiến mắt người nhìn thấy đỉnh ren bị gợn sóng gập ghềnh.
+
+* **Giải pháp kỹ thuật toàn diện**:
+  1. *Triển khai Adaptive Shortest-Diagonal Delaunay Triangulation cho toàn bộ Đỉnh Ren & Đáy Rãnh*:
+     - Tự động so sánh bình phương độ dài 2 đường chéo trong thời gian thực:
+       $$d_1^2 = \|p_{A0} - p_{B1}\|^2, \quad d_2^2 = \|p_{A1} - p_{B0}\|^2$$
+     - Luôn chọn đường chéo ngắn nhất để chia tam giác, triệt tiêu 100% nếp gấp xiên trên mặt trụ đỉnh ren.
+     - Áp dụng đồng bộ cho cả đỉnh trụ trục vít (`worm.tipArc`) và đỉnh răng bánh vít (`wheel.tipArc`).
+  2. *Gán Vector Pháp Tuyến Chuẩn Giải Tích Hướng Tâm Hình Trụ (Analytical Radial Cylinder Normals)*:
+     - Trên đỉnh ren trục vít (quay quanh trục X):
+       $$\vec{n}_{\text{cyl}} = (0, \cos\phi, \sin\phi)$$
+     - Trên đỉnh răng bánh vít (quay quanh trục Z):
+       $$\vec{n}_{\text{wheel}} = (\cos\theta, \sin\theta, 0)$$
+     - Trên các đoạn trục dẫn hướng, vai trục và lỗ trục: gán vector pháp tuyến hình trụ chuẩn xác.
+  3. *Vector Pháp Tuyến Nội Suy Liền Mạch $C^1/C^2$ Cho Toàn Bộ Sườn Răng (Flank Continuous Normals)*:
+     - Tính toán vector pháp tuyến tại từng đỉnh $(s, m)$ từ tích có hướng của 2 vector tiếp tuyến: tiếp tuyến lát cắt $\vec{T}_s$ và tiếp tuyến bán kính $\vec{T}_m$.
+     - Hàm `pushTri` hỗ trợ vector pháp tuyến riêng biệt từng đỉnh (`p1.nx, p2.nx, p3.nx`), kích hoạt toàn diện cơ chế làm mịn Gouraud/Phong/PBR trong WebGL và CAD/CAM.
+  4. *Bảo Toàn 100% Cạnh Sắc Kỹ Thuật (Crisp Feature Edges)*:
+     - Tại giao tuyến giữa sườn ren và đỉnh ren, các đỉnh thuộc sườn mang pháp tuyến sườn, các đỉnh thuộc đỉnh ren mang pháp tuyến trụ. Cạnh đỉnh ren giữ nguyên độ sắc nét cơ khí chuẩn xác, không bị tròn vo như nhựa mềm dẻo.
+  5. *Bảo Toàn Tuyệt Đối Hình Học Ăn Khớp ($0.000\text{ mm}$ Penetration)*:
+     - Tọa độ đỉnh $(x, y, z)$ không đổi, bảo toàn 100% ăn khớp liên hợp và cơ chế in màu vết tiếp xúc (Back-face contact imprint).

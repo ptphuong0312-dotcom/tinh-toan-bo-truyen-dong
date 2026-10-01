@@ -4285,12 +4285,24 @@ const Worm3DGenerator = {
             const len = Math.hypot(nx, ny, nz);
             if (len < 1e-10) return;
             nx /= len; ny /= len; nz /= len;
+
+            let n1x = nx, n1y = ny, n1z = nz;
+            let n2x = nx, n2y = ny, n2z = nz;
+            let n3x = nx, n3y = ny, n3z = nz;
+
             if (nOverride) {
-                nx = nOverride[0]; ny = nOverride[1]; nz = nOverride[2];
+                n1x = nOverride[0]; n1y = nOverride[1]; n1z = nOverride[2];
+                n2x = nOverride[0]; n2y = nOverride[1]; n2z = nOverride[2];
+                n3x = nOverride[0]; n3y = nOverride[1]; n3z = nOverride[2];
+            } else {
+                if (p1.nx !== undefined && !isNaN(p1.nx)) { n1x = p1.nx; n1y = p1.ny; n1z = p1.nz; }
+                if (p2.nx !== undefined && !isNaN(p2.nx)) { n2x = p2.nx; n2y = p2.ny; n2z = p2.nz; }
+                if (p3.nx !== undefined && !isNaN(p3.nx)) { n3x = p3.nx; n3y = p3.ny; n3z = p3.nz; }
             }
+
             const baseIdx = positions.length / 3;
             positions.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
-            normals.push(nx, ny, nz, nx, ny, nz, nx, ny, nz);
+            normals.push(n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
             indices.push(baseIdx, baseIdx + 1, baseIdx + 2);
         }
 
@@ -4323,25 +4335,91 @@ const Worm3DGenerator = {
                     rFlankL.push({ x, y: R * Math.cos(phiL), z: R * Math.sin(phiL), R, phi: phiL });
                 }
 
-                // Cylindrical Tip Crest Arc (eliminates chord sag / groove in the middle of crest)
+                // Cylindrical Tip Crest Arc (Analytical radial normals eliminate all kinks and bumps)
                 const tipArc = [];
                 const pTipR = rFlankR[ptsR];
                 const pTipL = rFlankL[ptsR];
                 for (let t = 0; t <= wormTipPts; t++) {
                     const fracTip = t / wormTipPts;
                     const phi = pTipR.phi + fracTip * (pTipL.phi - pTipR.phi);
+                    const cosPhi = Math.cos(phi);
+                    const sinPhi = Math.sin(phi);
                     tipArc.push({
                         x,
-                        y: rBlank * Math.cos(phi),
-                        z: rBlank * Math.sin(phi),
+                        y: rBlank * cosPhi,
+                        z: rBlank * sinPhi,
                         R: rBlank,
-                        phi
+                        phi,
+                        nx: 0,
+                        ny: cosPhi,
+                        nz: sinPhi
                     });
                 }
 
                 starts.push({ rFlankR, rFlankL, tipArc, rBlank });
             }
             threadSlices.push({ x, starts, rBlank });
+        }
+
+        // Compute Smooth / Continuous Analytical Normals for Worm Flanks
+        for (let k = 0; k < z1; k++) {
+            for (let s = 0; s < numSlices; s++) {
+                const sPrev = Math.max(0, s - 1);
+                const sNext = Math.min(numSlices - 1, s + 1);
+
+                const flankR = threadSlices[s].starts[k].rFlankR;
+                const flankL = threadSlices[s].starts[k].rFlankL;
+
+                const flankR_prev = threadSlices[sPrev].starts[k].rFlankR;
+                const flankR_next = threadSlices[sNext].starts[k].rFlankR;
+                const flankL_prev = threadSlices[sPrev].starts[k].rFlankL;
+                const flankL_next = threadSlices[sNext].starts[k].rFlankL;
+
+                for (let m = 0; m <= ptsR; m++) {
+                    const mPrev = Math.max(0, m - 1);
+                    const mNext = Math.min(ptsR, m + 1);
+
+                    // Right Flank Normal (dm x ds)
+                    const dsR_x = flankR_next[m].x - flankR_prev[m].x;
+                    const dsR_y = flankR_next[m].y - flankR_prev[m].y;
+                    const dsR_z = flankR_next[m].z - flankR_prev[m].z;
+
+                    const dmR_x = flankR[mNext].x - flankR[mPrev].x;
+                    const dmR_y = flankR[mNext].y - flankR[mPrev].y;
+                    const dmR_z = flankR[mNext].z - flankR[mPrev].z;
+
+                    let nRx = dmR_y * dsR_z - dmR_z * dsR_y;
+                    let nRy = dmR_z * dsR_x - dmR_x * dsR_z;
+                    let nRz = dmR_x * dsR_y - dmR_y * dsR_x;
+                    let lenR = Math.hypot(nRx, nRy, nRz);
+                    if (lenR > 1e-10) {
+                        nRx /= lenR; nRy /= lenR; nRz /= lenR;
+                    }
+                    flankR[m].nx = nRx;
+                    flankR[m].ny = nRy;
+                    flankR[m].nz = nRz;
+
+                    // Left Flank Normal (ds x dm)
+                    const dsL_x = flankL_next[m].x - flankL_prev[m].x;
+                    const dsL_y = flankL_next[m].y - flankL_prev[m].y;
+                    const dsL_z = flankL_next[m].z - flankL_prev[m].z;
+
+                    const dmL_x = flankL[mNext].x - flankL[mPrev].x;
+                    const dmL_y = flankL[mNext].y - flankL[mPrev].y;
+                    const dmL_z = flankL[mNext].z - flankL[mPrev].z;
+
+                    let nLx = dsL_y * dmL_z - dsL_z * dmL_y;
+                    let nLy = dsL_z * dmL_x - dsL_x * dmL_z;
+                    let nLz = dsL_x * dmL_y - dsL_y * dmL_x;
+                    let lenL = Math.hypot(nLx, nLy, nLz);
+                    if (lenL > 1e-10) {
+                        nLx /= lenL; nLy /= lenL; nLz /= lenL;
+                    }
+                    flankL[m].nx = nLx;
+                    flankL[m].ny = nLy;
+                    flankL[m].nz = nLz;
+                }
+            }
         }
 
         // Build Quads for Flanks, Tip Crest, and Root Valley
@@ -4392,15 +4470,23 @@ const Worm3DGenerator = {
                 }
 
                 if (!surfaceOnly) {
-                    // Tip Crest (subdivided cylindrical arc - eliminates groove/slit)
+                    // Tip Crest (subdivided cylindrical arc - Adaptive Shortest-Diagonal Delaunay Triangulation)
                     for (let t = 0; t < wormTipPts; t++) {
                         const pA0 = stA.tipArc[t];
                         const pA1 = stA.tipArc[t + 1];
                         const pB0 = stB.tipArc[t];
                         const pB1 = stB.tipArc[t + 1];
 
-                        pushTri(pA0, pA1, pB1);
-                        pushTri(pA0, pB1, pB0);
+                        const d00_11_sq = (pA0.x - pB1.x) ** 2 + (pA0.y - pB1.y) ** 2 + (pA0.z - pB1.z) ** 2;
+                        const d01_10_sq = (pA1.x - pB0.x) ** 2 + (pA1.y - pB0.y) ** 2 + (pA1.z - pB0.z) ** 2;
+
+                        if (d00_11_sq <= d01_10_sq) {
+                            pushTri(pA0, pA1, pB1);
+                            pushTri(pA0, pB1, pB0);
+                        } else {
+                            pushTri(pA0, pA1, pB0);
+                            pushTri(pA1, pB1, pB0);
+                        }
                     }
                 }
             }
@@ -4417,16 +4503,19 @@ const Worm3DGenerator = {
             const nCirc = Math.max(32, Math.round(density.boreSegs * 0.8));
 
             function pushCylinder(x0, x1, radius, inward = false) {
+                const sgn = inward ? -1 : 1;
                 for (let i = 0; i < nCirc; i++) {
                     const a1 = (i * 2.0 * Math.PI) / nCirc;
                     const a2 = ((i + 1) * 2.0 * Math.PI) / nCirc;
-                    const y1 = radius * Math.cos(a1), z1_c = radius * Math.sin(a1);
-                    const y2 = radius * Math.cos(a2), z2_c = radius * Math.sin(a2);
+                    const cos1 = Math.cos(a1), sin1 = Math.sin(a1);
+                    const cos2 = Math.cos(a2), sin2 = Math.sin(a2);
+                    const y1 = radius * cos1, z1_c = radius * sin1;
+                    const y2 = radius * cos2, z2_c = radius * sin2;
 
-                    const p00 = { x: x0, y: y1, z: z1_c };
-                    const p01 = { x: x0, y: y2, z: z2_c };
-                    const p10 = { x: x1, y: y1, z: z1_c };
-                    const p11 = { x: x1, y: y2, z: z2_c };
+                    const p00 = { x: x0, y: y1, z: z1_c, nx: 0, ny: sgn * cos1, nz: sgn * sin1 };
+                    const p01 = { x: x0, y: y2, z: z2_c, nx: 0, ny: sgn * cos2, nz: sgn * sin2 };
+                    const p10 = { x: x1, y: y1, z: z1_c, nx: 0, ny: sgn * cos1, nz: sgn * sin1 };
+                    const p11 = { x: x1, y: y2, z: z2_c, nx: 0, ny: sgn * cos2, nz: sgn * sin2 };
 
                     if (!inward) {
                         pushTri(p00, p01, p11);
@@ -4556,12 +4645,24 @@ const Worm3DGenerator = {
             const len = Math.hypot(nx, ny, nz);
             if (len < 1e-10) return;
             nx /= len; ny /= len; nz /= len;
+
+            let n1x = nx, n1y = ny, n1z = nz;
+            let n2x = nx, n2y = ny, n2z = nz;
+            let n3x = nx, n3y = ny, n3z = nz;
+
             if (nOverride) {
-                nx = nOverride[0]; ny = nOverride[1]; nz = nOverride[2];
+                n1x = nOverride[0]; n1y = nOverride[1]; n1z = nOverride[2];
+                n2x = nOverride[0]; n2y = nOverride[1]; n2z = nOverride[2];
+                n3x = nOverride[0]; n3y = nOverride[1]; n3z = nOverride[2];
+            } else {
+                if (p1.nx !== undefined && !isNaN(p1.nx)) { n1x = p1.nx; n1y = p1.ny; n1z = p1.nz; }
+                if (p2.nx !== undefined && !isNaN(p2.nx)) { n2x = p2.nx; n2y = p2.ny; n2z = p2.nz; }
+                if (p3.nx !== undefined && !isNaN(p3.nx)) { n3x = p3.nx; n3y = p3.ny; n3z = p3.nz; }
             }
+
             const baseIdx = positions.length / 3;
             positions.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
-            normals.push(nx, ny, nz, nx, ny, nz, nx, ny, nz);
+            normals.push(n1x, n1y, n1z, n2x, n2y, n2z, n3x, n3y, n3z);
             indices.push(baseIdx, baseIdx + 1, baseIdx + 2);
         }
 
@@ -4597,25 +4698,91 @@ const Worm3DGenerator = {
                     rFlankR.push({ x: r * Math.cos(thetaToothR), y: r * Math.sin(thetaToothR), z, r, theta: thetaToothR });
                 }
 
-                // Subdivided Tip Land Arc
+                // Subdivided Tip Land Arc (Analytical radial normals)
                 const tipArc = [];
                 const pTipL = rFlankL[ptsR];
                 const pTipR = rFlankR[ptsR];
                 for (let t = 0; t <= wheelTipPts; t++) {
                     const fracTip = t / wheelTipPts;
                     const th = pTipL.theta + fracTip * (pTipR.theta - pTipL.theta);
+                    const cosTh = Math.cos(th);
+                    const sinTh = Math.sin(th);
                     tipArc.push({
-                        x: rTip * Math.cos(th),
-                        y: rTip * Math.sin(th),
+                        x: rTip * cosTh,
+                        y: rTip * sinTh,
                         z,
                         r: rTip,
-                        theta: th
+                        theta: th,
+                        nx: cosTh,
+                        ny: sinTh,
+                        nz: 0
                     });
                 }
 
                 teeth.push({ rFlankL, rFlankR, tipArc });
             }
             slices.push({ z, rRoot, rTip, teeth });
+        }
+
+        // Compute Smooth / Continuous Analytical Normals for Wheel Flanks
+        for (let j = 0; j < z2; j++) {
+            for (let s = 0; s < numSlices; s++) {
+                const sPrev = Math.max(0, s - 1);
+                const sNext = Math.min(numSlices - 1, s + 1);
+
+                const flankL = slices[s].teeth[j].rFlankL;
+                const flankR = slices[s].teeth[j].rFlankR;
+
+                const flankL_prev = slices[sPrev].teeth[j].rFlankL;
+                const flankL_next = slices[sNext].teeth[j].rFlankL;
+                const flankR_prev = slices[sPrev].teeth[j].rFlankR;
+                const flankR_next = slices[sNext].teeth[j].rFlankR;
+
+                for (let m = 0; m <= ptsR; m++) {
+                    const mPrev = Math.max(0, m - 1);
+                    const mNext = Math.min(ptsR, m + 1);
+
+                    // Left Flank Normal (dz x dr)
+                    const dzL_x = flankL_next[m].x - flankL_prev[m].x;
+                    const dzL_y = flankL_next[m].y - flankL_prev[m].y;
+                    const dzL_z = flankL_next[m].z - flankL_prev[m].z;
+
+                    const drL_x = flankL[mNext].x - flankL[mPrev].x;
+                    const drL_y = flankL[mNext].y - flankL[mPrev].y;
+                    const drL_z = flankL[mNext].z - flankL[mPrev].z;
+
+                    let nLx = dzL_y * drL_z - dzL_z * drL_y;
+                    let nLy = dzL_z * drL_x - dzL_x * drL_z;
+                    let nLz = dzL_x * drL_y - dzL_y * drL_x;
+                    let lenL = Math.hypot(nLx, nLy, nLz);
+                    if (lenL > 1e-10) {
+                        nLx /= lenL; nLy /= lenL; nLz /= lenL;
+                    }
+                    flankL[m].nx = nLx;
+                    flankL[m].ny = nLy;
+                    flankL[m].nz = nLz;
+
+                    // Right Flank Normal (dr x dz)
+                    const dzR_x = flankR_next[m].x - flankR_prev[m].x;
+                    const dzR_y = flankR_next[m].y - flankR_prev[m].y;
+                    const dzR_z = flankR_next[m].z - flankR_prev[m].z;
+
+                    const drR_x = flankR[mNext].x - flankR[mPrev].x;
+                    const drR_y = flankR[mNext].y - flankR[mPrev].y;
+                    const drR_z = flankR[mNext].z - flankR[mPrev].z;
+
+                    let nRx = drR_y * dzR_z - drR_z * dzR_y;
+                    let nRy = drR_z * dzR_x - drR_x * dzR_z;
+                    let nRz = drR_x * dzR_y - drR_y * dzR_x;
+                    let lenR = Math.hypot(nRx, nRy, nRz);
+                    if (lenR > 1e-10) {
+                        nRx /= lenR; nRy /= lenR; nRz /= lenR;
+                    }
+                    flankR[m].nx = nRx;
+                    flankR[m].ny = nRy;
+                    flankR[m].nz = nRz;
+                }
+            }
         }
 
         // Quads between slice s and s + 1
@@ -4666,15 +4833,23 @@ const Worm3DGenerator = {
                 }
 
                 if (!surfaceOnly) {
-                    // Tip Crest (subdivided circular arc)
+                    // Tip Crest (subdivided circular arc - Adaptive Shortest-Diagonal Delaunay Triangulation)
                     for (let t = 0; t < wheelTipPts; t++) {
                         const pA0 = tA.tipArc[t];
                         const pA1 = tA.tipArc[t + 1];
                         const pB0 = tB.tipArc[t];
                         const pB1 = tB.tipArc[t + 1];
 
-                        pushTri(pA0, pB0, pB1);
-                        pushTri(pA0, pB1, pA1);
+                        const d00_11_sq = (pA0.x - pB1.x) ** 2 + (pA0.y - pB1.y) ** 2 + (pA0.z - pB1.z) ** 2;
+                        const d01_10_sq = (pA1.x - pB0.x) ** 2 + (pA1.y - pB0.y) ** 2 + (pA1.z - pB0.z) ** 2;
+
+                        if (d00_11_sq <= d01_10_sq) {
+                            pushTri(pA0, pB0, pB1);
+                            pushTri(pA0, pB1, pA1);
+                        } else {
+                            pushTri(pA0, pB0, pA1);
+                            pushTri(pB0, pB1, pA1);
+                        }
                     }
 
                     // Root Valley
@@ -4741,11 +4916,13 @@ const Worm3DGenerator = {
             for (let k = 0; k < boreSegs; k++) {
                 const psi1 = (k * 2.0 * Math.PI) / boreSegs;
                 const psi2 = ((k + 1) * 2.0 * Math.PI) / boreSegs;
+                const cos1 = Math.cos(psi1), sin1 = Math.sin(psi1);
+                const cos2 = Math.cos(psi2), sin2 = Math.sin(psi2);
 
-                const p00 = { x: rBore2 * Math.cos(psi1), y: rBore2 * Math.sin(psi1), z: z0 };
-                const p01 = { x: rBore2 * Math.cos(psi2), y: rBore2 * Math.sin(psi2), z: z0 };
-                const p10 = { x: rBore2 * Math.cos(psi1), y: rBore2 * Math.sin(psi1), z: z1_bore };
-                const p11 = { x: rBore2 * Math.cos(psi2), y: rBore2 * Math.sin(psi2), z: z1_bore };
+                const p00 = { x: rBore2 * cos1, y: rBore2 * sin1, z: z0, nx: -cos1, ny: -sin1, nz: 0 };
+                const p01 = { x: rBore2 * cos2, y: rBore2 * sin2, z: z0, nx: -cos2, ny: -sin2, nz: 0 };
+                const p10 = { x: rBore2 * cos1, y: rBore2 * sin1, z: z1_bore, nx: -cos1, ny: -sin1, nz: 0 };
+                const p11 = { x: rBore2 * cos2, y: rBore2 * sin2, z: z1_bore, nx: -cos2, ny: -sin2, nz: 0 };
 
                 pushTri(p00, p11, p01);
                 pushTri(p00, p10, p11);
