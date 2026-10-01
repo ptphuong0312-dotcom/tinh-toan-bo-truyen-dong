@@ -678,31 +678,7 @@ class WormUIController {
             });
         }
 
-        const btnToggleFlankOnly = document.getElementById('btnToggleFlankOnly');
-        if (btnToggleFlankOnly && this.visualizer3D) {
-            btnToggleFlankOnly.addEventListener('click', () => {
-                const isFlankOnly = this.visualizer3D.toggleFlankOnly();
-                if (isFlankOnly) {
-                    btnToggleFlankOnly.style.background = '#0284c7';
-                    btnToggleFlankOnly.style.color = '#ffffff';
-                    btnToggleFlankOnly.style.borderColor = '#38bdf8';
-                    btnToggleFlankOnly.innerHTML = '👁️ Đang Xem Mặt Bên';
-                } else {
-                    btnToggleFlankOnly.style.background = '';
-                    btnToggleFlankOnly.style.color = '';
-                    btnToggleFlankOnly.style.borderColor = '';
-                    btnToggleFlankOnly.innerHTML = '👁️ Chỉ Mặt Bên';
-                }
-            });
-        }
 
-        // Kiểu Tiếp Xúc 3D: 'theory' (Lý thuyết đường tiếp xúc liên hợp) hoặc 'crowning' (Vết elip có độ vồng)
-        const selContactTheoryMode = document.getElementById('selContactTheoryMode');
-        if (selContactTheoryMode && this.visualizer3D) {
-            selContactTheoryMode.addEventListener('change', (e) => {
-                this.visualizer3D.setContactMode(e.target.value);
-            });
-        }
 
         // 4. 3D Export Dropdown & Items
         const btnExport3DMenu = document.getElementById('btnExport3DMenu');

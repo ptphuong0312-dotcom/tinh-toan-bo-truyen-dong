@@ -121,27 +121,27 @@ class Worm3DVisualizer {
     }
 
     setupLighting() {
-        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x334155, 0.60);
-        hemiLight.position.set(0, 350, 350);
+        const hemiLight = new THREE.HemisphereLight(0xffffff, 0x1e293b, 0.55);
+        hemiLight.position.set(0, 300, 300);
         this.scene.add(hemiLight);
 
-        const ambientLight = new THREE.AmbientLight(0xffffff, 0.40);
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.50);
         this.scene.add(ambientLight);
 
-        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.95);
-        dirLight1.position.set(300, 350, 420);
+        const dirLight1 = new THREE.DirectionalLight(0xffffff, 0.70);
+        dirLight1.position.set(250, 300, 350);
         this.scene.add(dirLight1);
 
-        const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.58);
-        dirLight2.position.set(-350, -250, -300);
+        const dirLight2 = new THREE.DirectionalLight(0xffffff, 0.45);
+        dirLight2.position.set(-300, -200, -250);
         this.scene.add(dirLight2);
 
-        const dirLight3 = new THREE.DirectionalLight(0xffffff, 0.50);
-        dirLight3.position.set(0, -400, 320);
+        const dirLight3 = new THREE.DirectionalLight(0xffffff, 0.40);
+        dirLight3.position.set(0, -350, 250);
         this.scene.add(dirLight3);
 
-        const dirLight4 = new THREE.DirectionalLight(0xffffff, 0.35);
-        dirLight4.position.set(-250, 280, -380);
+        const dirLight4 = new THREE.DirectionalLight(0xffffff, 0.30);
+        dirLight4.position.set(-200, 250, -300);
         this.scene.add(dirLight4);
     }
 
@@ -173,17 +173,14 @@ class Worm3DVisualizer {
         }
 
         const genOpts = Object.assign({}, geom, {
-            meshDensityLevel: this.meshDensityLevel,
-            contactMode: this.contactMode || 'theory'
+            meshDensityLevel: this.meshDensityLevel
         });
 
-        // 1. Generate Worm 1 Solid & Surface Meshes
+        // 1. Generate Worm 1 Solid Mesh (High Grade Hardened Steel)
         this.mesh1Data = Worm3DGenerator.generateWormMesh(genOpts);
-        this.surf1Data = Worm3DGenerator.generateWormSurfaceMesh(genOpts);
 
-        // 2. Generate Globoid Worm Wheel 2 Solid & Surface Meshes
+        // 2. Generate Globoid Worm Wheel 2 Solid Mesh (Centrifugal Tin-Nickel Bronze CuSn12Ni2)
         this.mesh2Data = Worm3DGenerator.generateWheelMesh(genOpts);
-        this.surf2Data = Worm3DGenerator.generateWheelSurfaceMesh(genOpts);
 
         this.updateMeshes();
 
@@ -219,59 +216,26 @@ class Worm3DVisualizer {
             this.wheelMesh.geometry.dispose();
             this.wheelMesh = null;
         }
-        if (this.wormSurfMesh) {
-            this.wormGroup.remove(this.wormSurfMesh);
-            this.wormSurfMesh.geometry.dispose();
-            this.wormSurfMesh = null;
-        }
-        if (this.wheelSurfMesh) {
-            this.wheelGroup.remove(this.wheelSurfMesh);
-            this.wheelSurfMesh.geometry.dispose();
-            this.wheelSurfMesh = null;
-        }
 
-        // PBR Materials:
-        // Worm 1 Solid: Case-Hardened Ground Alloy Steel (Vivid Cobalt-Cyan #0284c7)
+        // PBR Materials (Authentic Mechanical CAD Engineering Standards):
+        // Worm 1 Solid: Case-Hardened Ground Alloy Steel (Cobalt-Cyan Metallic)
         const matWorm = new THREE.MeshStandardMaterial({
             color: 0x0284c7,
-            emissive: 0x0369a1,
-            emissiveIntensity: 0.12,
-            metalness: 0.22,
-            roughness: 0.36,
+            emissive: 0x013a63,
+            emissiveIntensity: 0.08,
+            metalness: 0.35,
+            roughness: 0.42,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
-        // Worm Wheel 2 Solid: Centrifugal Tin-Nickel Bronze CuSn12Ni2 (#ea580c)
+        // Worm Wheel 2 Solid: Centrifugal Tin-Nickel Bronze CuSn12Ni2 (Coral-Orange Bronze)
         const matWheel = new THREE.MeshStandardMaterial({
-            color: 0xea580c, // Coral-Orange Bronze
-            emissive: 0x9a3412,
-            emissiveIntensity: 0.12,
-            metalness: 0.20,
-            roughness: 0.38,
-            side: THREE.DoubleSide,
-            wireframe: this.wireframeMode
-        });
-
-        const matWormSurf = new THREE.MeshStandardMaterial({
-            color: 0x00a8ff, // Vivid electric cyan-blue for worm flank
-            emissive: 0x0284c7,
-            emissiveIntensity: 0.15,
-            metalness: 0.18,
-            roughness: 0.35,
-            side: THREE.DoubleSide,
-            wireframe: this.wireframeMode,
-            polygonOffset: true,
-            polygonOffsetFactor: 1.0,
-            polygonOffsetUnits: 2.0
-        });
-
-        const matWheelSurf = new THREE.MeshStandardMaterial({
-            color: 0xff5722, // Vivid flame coral-orange for wheel flank
-            emissive: 0xc2410c,
-            emissiveIntensity: 0.14,
-            metalness: 0.18,
-            roughness: 0.35,
+            color: 0xea580c,
+            emissive: 0x7c2d12,
+            emissiveIntensity: 0.08,
+            metalness: 0.30,
+            roughness: 0.44,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
@@ -282,39 +246,15 @@ class Worm3DVisualizer {
         geo1.setAttribute('normal', new THREE.BufferAttribute(this.mesh1Data.normals, 3));
         geo1.setIndex(new THREE.BufferAttribute(this.mesh1Data.indices, 1));
         this.wormMesh = new THREE.Mesh(geo1, matWorm);
-        this.wormMesh.visible = !this.flankOnlyMode;
         this.wormGroup.add(this.wormMesh);
 
-        // 2. Worm 1 Surface Mesh
-        if (this.surf1Data) {
-            const geoSurf1 = new THREE.BufferGeometry();
-            geoSurf1.setAttribute('position', new THREE.BufferAttribute(this.surf1Data.vertices, 3));
-            geoSurf1.setAttribute('normal', new THREE.BufferAttribute(this.surf1Data.normals, 3));
-            geoSurf1.setIndex(new THREE.BufferAttribute(this.surf1Data.indices, 1));
-            this.wormSurfMesh = new THREE.Mesh(geoSurf1, matWormSurf);
-            this.wormSurfMesh.visible = this.flankOnlyMode;
-            this.wormGroup.add(this.wormSurfMesh);
-        }
-
-        // 3. Worm Wheel 2 Solid Mesh
+        // 2. Worm Wheel 2 Solid Mesh
         const geo2 = new THREE.BufferGeometry();
         geo2.setAttribute('position', new THREE.BufferAttribute(this.mesh2Data.vertices, 3));
         geo2.setAttribute('normal', new THREE.BufferAttribute(this.mesh2Data.normals, 3));
         geo2.setIndex(new THREE.BufferAttribute(this.mesh2Data.indices, 1));
         this.wheelMesh = new THREE.Mesh(geo2, matWheel);
-        this.wheelMesh.visible = !this.flankOnlyMode;
         this.wheelGroup.add(this.wheelMesh);
-
-        // 4. Worm Wheel 2 Surface Mesh
-        if (this.surf2Data) {
-            const geoSurf2 = new THREE.BufferGeometry();
-            geoSurf2.setAttribute('position', new THREE.BufferAttribute(this.surf2Data.vertices, 3));
-            geoSurf2.setAttribute('normal', new THREE.BufferAttribute(this.surf2Data.normals, 3));
-            geoSurf2.setIndex(new THREE.BufferAttribute(this.surf2Data.indices, 1));
-            this.wheelSurfMesh = new THREE.Mesh(geoSurf2, matWheelSurf);
-            this.wheelSurfMesh.visible = this.flankOnlyMode;
-            this.wheelGroup.add(this.wheelSurfMesh);
-        }
     }
 
     updateGearRotations() {
@@ -384,18 +324,11 @@ class Worm3DVisualizer {
         this.wireframeMode = !this.wireframeMode;
         if (this.wormMesh) this.wormMesh.material.wireframe = this.wireframeMode;
         if (this.wheelMesh) this.wheelMesh.material.wireframe = this.wireframeMode;
-        if (this.wormSurfMesh) this.wormSurfMesh.material.wireframe = this.wireframeMode;
-        if (this.wheelSurfMesh) this.wheelSurfMesh.material.wireframe = this.wireframeMode;
         return this.wireframeMode;
     }
 
     toggleFlankOnly() {
-        this.flankOnlyMode = !this.flankOnlyMode;
-        if (this.wormMesh) this.wormMesh.visible = !this.flankOnlyMode;
-        if (this.wheelMesh) this.wheelMesh.visible = !this.flankOnlyMode;
-        if (this.wormSurfMesh) this.wormSurfMesh.visible = this.flankOnlyMode;
-        if (this.wheelSurfMesh) this.wheelSurfMesh.visible = this.flankOnlyMode;
-        return this.flankOnlyMode;
+        return false;
     }
 
     setMeshDensityLevel(level) {
@@ -443,33 +376,32 @@ class Worm3DVisualizer {
 
         switch (preset) {
             case 'front': // Front View (XY plane from +Z: shows horizontal Worm 1 under Wheel 2)
-                this.camera.position.set(cenX, cenY, cenZ + viewDist * 1.15);
+                this.camera.position.set(cenX, cenY, cenZ + viewDist * 1.05);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'worm': // Side Throat View along +X axis (YZ plane: shows concave wheel throat wrapping worm!)
                 const throatY = -a + (this.geom ? (parseFloat(this.geom.d1) || 36.23) : 36.23) * 0.5;
-                this.camera.position.set(cenX + viewDist * 0.95, throatY, cenZ);
+                this.camera.position.set(cenX + viewDist * 0.85, throatY, cenZ);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(cenX, throatY, cenZ);
                 break;
             case 'wheel': // Direct Wheel View from +Z centered on Wheel 2
-                this.camera.position.set(0, 0, viewDist * 1.1);
+                this.camera.position.set(0, 0, viewDist * 0.95);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(0, 0, 0);
                 break;
             case 'top': // Top View looking down -Y
-                this.camera.position.set(0, viewDist * 1.25, 0);
+                this.camera.position.set(0, viewDist * 1.15, 0);
                 this.camera.up.set(0, 0, -1);
                 this.controls.target.set(0, -a * 0.5, 0);
                 break;
-            case 'mesh': // Close-up on Conjugate Meshing Throat Zone at (0, -a + d1/2, 0)
+            case 'mesh': // Close-up on Conjugate Meshing Throat Zone at (0, -a + r1, 0)
                 const d1 = this.geom ? (parseFloat(this.geom.d1) || 36.23) : 36.23;
                 const b2H = this.geom ? (parseFloat(this.geom.b2H) || 33.57) : 33.57;
-                const mn = this.geom ? (parseFloat(this.geom.mn ?? this.geom.m) || 4.233) : 4.233;
                 const meshY = -a + d1 * 0.5;
-                const meshDist = Math.max(b2H, 8.0 * mn) * 1.15;
-                this.camera.position.set(meshDist * 0.32, meshY + meshDist * 0.28, meshDist * 0.88);
+                const meshDist = Math.max(55.0, 1.8 * b2H);
+                this.camera.position.set(meshDist * 0.45, meshY - meshDist * 0.15, meshDist * 0.80);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(0, meshY, 0);
                 break;

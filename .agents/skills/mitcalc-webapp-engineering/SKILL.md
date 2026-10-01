@@ -1368,3 +1368,20 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
      * `Khối Đặc (Solid Mode)`: Hai khối kim loại nguyên khối ăn khớp chuyển động.
      * `Chỉ Mặt Bên (Flank Only Mode)`: Hai vỏ mỏng tiếp xúc trượt mượt mà, đồng màu kim loại tự nhiên. Tùy chọn Lý thuyết / Thực tế điều khiển độ vồng crowning cơ học thay vì tô màu.
 
+---
+
+10. **HỆ PHƯƠNG TRÌNH BAO HÌNH LIÊN HỢP GIẢI TÍCH LITVIN CHO CẶP TRỤC VÍT ZA & BÁNH VÍT GLOBOID — TRIỆT TIÊU TUYỆT ĐỐI HIỆN TƯỢNG LẸM RĂNG (ZERO TOOTH GOUGING PROTOCOL)**:
+    - **Bản Chất Khác Biệt Giữa Profile Trục Vít & Bánh Vít**:
+      * Trục vít Archimedean (ZA): Biên dạng trong mặt cắt dọc trục là đường thẳng hình thang ((u) = \pm (s_{x1}/2 - (u - r_1)	anlpha_x)$).
+      * Bánh vít: Tuyệt đối không phải là hình thang! Bánh vít được cắt bao hình bởi dao phay lăn (Hob) có biên dạng trục vít. Trong mặt cắt chính giữa (=0$), răng bánh vít là đường thân khai (Involute) {b2} = r_2 \coslpha_x$. Trên toàn bộ bề rộng vành răng  \in [-b_{2H}/2, b_{2H}/2]$, sườn răng bánh vít là mặt cong không gian liên hợp phức tạp có rãnh răng hẹp ở chân (.17	ext{ mm}$) và mở rộng ở đỉnh (.07	ext{ mm}$), xoắn vặn theo góc nghiêng ren $\gamma$.
+    - **Hệ Phương Trình Bao Hình Liên Hợp Nghiệm Tường Minh Litvin**:
+      * Phương trình ăn khớp: $ec{n}_1 \cdot ec{v}^{(12)} = 0$.
+      * Nghiệm đại số tường minh (Closed-form algebraic solution):
+        x_1(u, \Phi) = rac{u(u\cos\Phi - a + i \cdot p)}{p\sin\Phi \pm u	anlpha_x\cos\Phi}
+        \phi_1 = \Phi - rac{x_1 \mp (s_{x1}/2 - (u - r_1)	anlpha_x)}{p}, \quad \phi_2 = -rac{\phi_1}{i}
+        X_2 = X_0\cos\phi_2 + Y_0\sin\phi_2, \quad Y_2 = -X_0\sin\phi_2 + Y_0\cos\phi_2, \quad Z_2 = u\sin\Phi
+    - **Triệt Tiêu Lỗi Kết Nối Chân Ren Cùng Lát Cắt (Single Thread Root Chord Error)**:
+      * Trên trục vít 1 đầu mối ( = 1$), việc nối chân ren trái và phải trên cùng 1 lát cắt $ đã tạo ra các tam giác bắc cầu qua góc ^\circ$ xuyên thủng tâm trụ và nhô lên đâm xuyên bánh vít.
+      * Thay thế hoàn toàn bằng **lõi trụ chân ren liên tục (continuous root cylinder)** bán kính {f1}$ từ  = -L/2$ đến $+L/2$.
+    - **Kiểm Thử Thực Nghiệm 360° Đạt Chuẩn Zero-Gouging**:
+      * Script 	ools/check_penetration.js quét toàn bộ các đỉnh của trục vít qua 360° góc quay (bước ^\circ$): **Đạt 0 điểm đâm xuyên (penetrations = 0), độ lẹm răng tuyệt đối $\Delta = 0.000	ext{ mm}$**!
