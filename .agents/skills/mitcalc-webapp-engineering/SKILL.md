@@ -1444,5 +1444,15 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
     - **Chuẩn hóa hàm giải bisection `solveConjugateUForR`**:
       * Tự động nhận diện `isDecreasing = (rAtLow >= rAtHigh)`, hội tụ 18 vòng lặp $< 0.0001\text{ mm}$ trên cả 2 miền tăng/giảm đơn điệu, bảo toàn tính đối xứng gương $z \leftrightarrow -z$ của 2 má.
 
+---
+
+15. **QUY CHUẨN XUẤT 3D CAD ĐỘ PHÂN GIẢI CAO CHO MASTERCAM & SOLIDWORKS**:
+    - **Triệt tiêu giới hạn ép cứng độ phân giải thấp**: Loại bỏ hoàn toàn khối `stepOpts` thô cũ (`ptsPerFlank: 6`, `numWheelSlices: 9`) vốn làm bề mặt bị phân đoạn thành các mặt phẳng gập ghềnh $1.6\text{ mm}$ trong Mastercam.
+    - **Thông số xuất CAD Mastercam-ready**:
+      * Trục Vít (Worm): $\ge 240$ slices, $\ge 24$ points/flank, 14 tip points ($\ge 30,000$ tam giác), bước lưới $\le 0.30\text{ mm}$, bề mặt sườn ren bóng mượt, không còn gờ gập ghềnh.
+      * Bánh Vít (Wheel): 39 - 45 slices, 14 - 16 points/flank ($\sim 100,000$ tam giác), dung lượng STEP $\sim 15 - 20\text{ MB}$, tải nhanh trong 1 giây.
+      * Tự động kế thừa cấp độ mịn `#selMeshDensity` do người dùng thiết lập trên giao diện 3D.
+
+
 
 

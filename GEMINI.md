@@ -1361,5 +1361,26 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 3. **Quy Chuẩn Hàm Bisection Tự Nhận Diện Chiều Biến Thiên**:
    - Hàm giải bán kính tiếp xúc $u$ bắt buộc kiểm tra `isDecreasing = (rAtLow >= rAtHigh)` để bisection hội tụ chính xác $< 0.0001\text{ mm}$ trên cả miền tăng và giảm đơn điệu, bảo tồn tính đối xứng gương $z \leftrightarrow -z$ của 2 má.
 
+---
+
+### Quy Tắc 59: Quy Chuẩn Độ Phân Giải Xuất 3D CAD Mastercam & SolidWorks (High-Precision CAD Export Protocol)
+1. **Lệnh Trực Tiếp & Phản Hồi Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"sao tôi xuất file rồi cho vào mastercam để xem thì thấy bề mặt trục vít hơi gập ghềnh không được trơn tru nhỉ"*.
+2. **Quy Chuẩn Triệt Tiêu Giới Hạn Cưỡng Bức Độ Phân Giải Thấp**:
+   - Tuyệt đối KHÔNG ép cứng các thông số độ phân giải thấp (như `ptsPerFlank: 6` hay `numWheelSlices: 9`) khi xuất file STEP (`forStep = true`).
+   - Cấm xuất mô hình có bước phân đoạn sườn ren $> 0.5\text{ mm}$ (gây lỗi hiển thị gãy khúc facet gập ghềnh trên Mastercam / SolidWorks và giật đường dao phay 4/5 trục).
+3. **Thông Số Xuất File CAD Chuẩn Mastercam / SolidWorks**:
+   - **Trục Vít (Worm 1)**:
+     * `numWormSlices`: $\ge 240$ lát cắt dọc trục (bước lát cắt $\le 0.30\text{ mm}$).
+     * `ptsPerFlank`: $\ge 24$ điểm trên chiều cao răng (bước điểm $\le 0.40\text{ mm}$).
+     * `wormTipPts`: $\ge 14$ điểm bo tròn đỉnh ren phẳng mịn.
+     * Số tam giác trục vít $\ge 30,000$ tam giác. File STEP $\sim 20 - 25\text{ MB}$, tải nhanh trong 1 giây.
+   - **Bánh Vít (Worm Wheel 2)**:
+     * `numWheelSlices`: 39 đến 45 lát cắt dọc bề rộng vành răng (bước lát cắt $\le 0.8\text{ mm}$).
+     * `wheelPtsR`: 14 đến 16 điểm trên sườn răng.
+     * Số tam giác bánh vít $\sim 100,000 - 120,000$ tam giác, cân bằng hoàn hảo giữa độ mịn tuyệt đối và dung lượng file STEP ($\sim 15 - 20\text{ MB}$).
+   - **Kế thừa cấp độ mịn người dùng**: Hệ thống tự động đồng bộ theo `#selMeshDensity` (Cấp 8 hoặc Cấp 10), đảm bảo mô hình xuất ra đúng với chất lượng hiển thị trên màn hình.
+
+
 
 

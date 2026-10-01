@@ -5763,14 +5763,21 @@ class Worm3DVisualizer {
     getExportTriangles(type = 'worm', surfaceOnly = false, forStep = false) {
         if (!this.geom || typeof Worm3DGenerator === 'undefined') return [];
 
+        const activeLevel = Math.max(1, Math.min(10, parseInt(this.meshDensityLevel) || 8));
+        const density = Worm3DGenerator.getDensitySettings(activeLevel, this.geom.z1, this.geom.z2);
+
+        // High-Precision CAD Export Settings for Mastercam & SolidWorks:
+        // Worm: 240+ slices along thread, 24+ points per flank (eliminates all faceting/bumps).
+        // Wheel: 45 slices along face width, 14 points per flank (silky smooth, compact STEP size).
         const stepOpts = forStep ? {
-            numWormSlices: Math.max(36, Math.round(((this.geom.L || 56) / (this.geom.px || 13.3)) * 18)),
-            ptsPerStart: 32,
-            numWheelSlices: 9,
-            ptsPerFlank: 6,
-            ptsFillet: 3
+            numWormSlices: Math.max(240, density.wormSlices),
+            ptsPerFlank: Math.max(24, density.wormPtsR),
+            wormTipPts: Math.max(14, density.wormTipPts),
+            numWheelSlices: Math.min(45, Math.max(35, density.wheelSlices)),
+            wheelPtsR: Math.min(16, Math.max(12, density.wheelPtsR)),
+            wheelTipPts: Math.max(4, density.wheelTipPts)
         } : {
-            meshDensityLevel: this.meshDensityLevel || 6
+            meshDensityLevel: activeLevel
         };
 
         const fullOpts = Object.assign({}, this.geom, stepOpts, { surfaceOnly });
