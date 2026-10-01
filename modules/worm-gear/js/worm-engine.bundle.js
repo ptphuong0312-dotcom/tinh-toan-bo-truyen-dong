@@ -4153,9 +4153,28 @@ const Worm3DGenerator = {
         const N0y = p * sinPhi + flankSide * tanA * u * cosPhi;
         if (Math.abs(N0y) < 1e-7) return null;
 
+        const isSurface = Boolean(mc.surfaceOnly);
+        const contactMode = mc.contactMode || 'theory';
+        let kissAllowance = 0.0;
+        if (isSurface) {
+            if (contactMode === 'crowning') {
+                // Crowning mode: parabolic easing from center of throat to edges
+                const halfB = mc.MC_b2H * 0.5;
+                const uNorm = Math.min(1.0, Math.abs(z) / halfB);
+                const K_crown = Math.max(0.0, 1.0 - 1.8 * uNorm * uNorm);
+                kissAllowance = 0.024 * K_crown;
+            } else {
+                // Theory mode (default): uniform conjugate line contact
+                kissAllowance = 0.020; // 20 microns kiss for sharp visible back-face imprint
+            }
+        } else {
+            // Solid body mode: 0.04 mm engineering backlash to prevent solid body jamming
+            kissAllowance = -0.04;
+        }
+
         const x1 = u * (u * cosPhi - a + ip) / N0y;
-        // Tool half-thickness with standard 0.04 mm engineering backlash
-        const x1_prof = flankSide * (halfSx1 + 0.04 - (u - r1) * tanA);
+        // Tool half-thickness with conjugate kiss / backlash
+        const x1_prof = flankSide * (halfSx1 - kissAllowance - (u - r1) * tanA);
         const phi1 = Phi - (x1 - x1_prof) / p;
         const phi2 = -phi1 / i;
 
@@ -4411,6 +4430,8 @@ const Worm3DGenerator = {
         const halfB = 0.5 * b2H;
         const df2 = mc.MC_df2;
         const surfaceOnly = Boolean(opt.surfaceOnly);
+        mc.surfaceOnly = surfaceOnly;
+        mc.contactMode = opt.contactMode || 'theory';
 
         const dBore2 = Math.min(df2 * 0.65, Math.max(16.0, mc.ShaftDB2 || (df2 * 0.32)));
         const rBore2 = dBore2 * 0.5;
@@ -5252,7 +5273,8 @@ class Worm3DVisualizer {
         }
 
         const genOpts = Object.assign({}, geom, {
-            meshDensityLevel: this.meshDensityLevel
+            meshDensityLevel: this.meshDensityLevel,
+            contactMode: this.contactMode
         });
 
         // 1. Generate Worm 1 Solid Mesh (High Grade Hardened Steel)
@@ -5335,23 +5357,25 @@ class Worm3DVisualizer {
             wireframe: this.wireframeMode
         });
 
-        // Flank Only Surface Materials (PBR Metallic CAD):
+        // Flank Only Surface Materials (PBR Metallic CAD - High Contrast for Back-face Imprint):
+        // Worm 1 Flank: Vivid Electric Cyan-Blue (#00a8ff)
         const matWormSurf = new THREE.MeshStandardMaterial({
-            color: 0x0284c7,
-            emissive: 0x013a63,
-            emissiveIntensity: 0.12,
-            metalness: 0.40,
-            roughness: 0.38,
+            color: 0x00a8ff,
+            emissive: 0x0284c7,
+            emissiveIntensity: 0.16,
+            metalness: 0.20,
+            roughness: 0.35,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
 
+        // Worm Wheel 2 Flank: Vivid Flame Coral-Orange (#ff5722)
         const matWheelSurf = new THREE.MeshStandardMaterial({
-            color: 0xea580c,
-            emissive: 0x7c2d12,
-            emissiveIntensity: 0.12,
-            metalness: 0.35,
-            roughness: 0.40,
+            color: 0xff5722,
+            emissive: 0xc2410c,
+            emissiveIntensity: 0.16,
+            metalness: 0.20,
+            roughness: 0.35,
             side: THREE.DoubleSide,
             wireframe: this.wireframeMode
         });
@@ -5551,6 +5575,15 @@ class Worm3DVisualizer {
                 this.camera.position.set(meshDist * 0.45, meshY - meshDist * 0.15, meshDist * 0.80);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(0, meshY, 0);
+                break;
+            case 'rear': // Close-up on Rear Tooth Flank Contact Imprint (Soi Vết In Màu Mặt Sau Sườn Răng)
+                const d1_r = this.geom ? (parseFloat(this.geom.d1) || 36.23) : 36.23;
+                const b2H_r = this.geom ? (parseFloat(this.geom.b2H) || 33.57) : 33.57;
+                const meshY_r = -a + d1_r * 0.5;
+                const rearDist = Math.max(50.0, 1.5 * b2H_r);
+                this.camera.position.set(-rearDist * 0.35, meshY_r + rearDist * 0.45, rearDist * 0.90);
+                this.camera.up.set(0, 1, 0);
+                this.controls.target.set(0, meshY_r, 0);
                 break;
             case 'iso':
             default:

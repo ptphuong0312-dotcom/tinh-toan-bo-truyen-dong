@@ -1291,3 +1291,28 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * Trong chế độ Chỉ Mặt Bên, toàn bộ chức năng quay 360°, phóng to vùng ăn khớp (Mesh Zone), nhích từng bước (Nhích Tiến / Nhích Lùi) và chạy mô phỏng liên tục đều hoạt động trơn tru.
    - **Hỗ trợ xuất 3D CAD (STEP / STL / OBJ)**:
      * Cung cấp tùy chọn xuất Open Shell (Flank Surface Model) cho Mastercam lập trình phay 5 trục (5-axis Surface Toolpaths) và SolidWorks Surface Modeling.
+
+---
+
+### Quy Tắc 56: Quy Chuẩn Soi Vết In Màu Tiếp Xúc Lên Mặt Sau Sườn Răng Bánh Vít - Trục Vít (Back-Face Contact Imprint Protocol)
+1. **Lệnh Dứt Khoát Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"bạn còn nhớ cách phát hiện vết ở 2 modul tính toán bánh răng trụ và bánh răng côn không, để tôi nhắc lại cho bạn để bạn nhớ mà làm cho tôi ở module này : khi 2 mặt bên tiếp xúc vào nhau (khe hở giữa 2 bề mặt lúc đó bằng 0) thì bề mặt của bánh vít xe in mầu nên mặt sau của bề mặt trục vít và ngược lại bề mặt của trục vít xe in lên mặt sau của bề mặt bánh vít (dựa vào việc này để kiểm tra bằng mắt thường vết tiếp xúc của truyền động). hiện tại tôi chưa thấy được vết như vậy ở phần mô phỏng nên chưa thể biết được bạn làm đã chuẩn chưa"*.
+2. **Cơ Chế Vật Lý & Quang Học Tiếp Xúc Khít Khao ($j_t = 0.000\text{ mm}$)**:
+   - Trong chế độ Khối Đặc (`Solid Mode`), mô hình giữ khe hở kỹ thuật $-0.04\text{ mm}$ để hai khối kim loại quay ăn khớp liên tục không va chạm.
+   - Khi chuyển sang chế độ **"👁️ Chỉ Mặt Bên" (`flankOnlyMode = true`)**:
+     * Khe hở danh nghĩa giữa hai sườn tiếp xúc được đưa về **$0.000\text{ mm}$**.
+     * Áp dụng lượng bù tiếp xúc vi mô $\delta_{\text{kiss}}$ (tương tự Quy Tắc 29, 36, 37 của Bánh Răng Trụ & Bánh Răng Côn):
+       - `Lý Thuyết`: $\delta_{\text{kiss}} = 0.020\text{ mm}$.
+       - `Thực Tế Xưởng`: $\delta_{\text{kiss}} = 0.024 \times (1.0 - 1.8 u^2)\text{ mm}$ với $u = z / (b_{2H}/2)$.
+     * Hai bề mặt sườn mỏng (`THREE.DoubleSide`) lồng khít nhau ở mức micron theo đúng quỹ đạo ăn khớp liên hợp Litvin.
+3. **Phối Màu Tương Phản Đối Lập 180° & Hiệu Ứng In Màu Lên Mặt Sau**:
+   - Trục vít 1 (Worm Flank): Electric Cyan-Blue rực rỡ (`color: 0x00a8ff`, `emissive: 0x0284c7`, `roughness: 0.35`, `metalness: 0.20`, `DoubleSide: true`).
+   - Bánh vít 2 (Wheel Flank): Flame Coral-Orange rực rỡ (`color: 0xff5722`, `emissive: 0xc2410c`, `roughness: 0.35`, `metalness: 0.20`, `DoubleSide: true`).
+   - **Hiện tượng in màu quang học**:
+     * **Soi từ mặt sau của sườn răng bánh vít**: Mặt sườn ren màu **Xanh Cyan (`#00a8ff`)** của trục vít in hằn rõ nét lên nền cam của mặt sau bánh vít theo đúng dải tiếp xúc liên hợp.
+     * **Soi từ mặt sau của sườn ren trục vít**: Mặt sườn răng màu **Cam Đỏ (`#ff5722`)** của bánh vít in hằn rõ nét lên nền xanh của mặt sau trục vít.
+     * Khi quay hoặc nhích từng bước vi phân, vết in màu di chuyển mượt mà liên tục dọc theo chiều cao răng và họng ôm.
+4. **Preset Góc Nhìn Chuyên Dụng Trên Thanh Công Cụ 3D**:
+   - Menu `#sel3DViewPreset` bổ sung tùy chọn: `🔍 Soi Mặt Sau Sườn Răng (Vết In Tiếp Xúc)` (`value="rear"`).
+   - Tự động đặt camera nhìn nghiêng từ phía sau sườn răng bánh vít vào vùng ăn khớp $(0, -a + d_1/2, 0)$ để quan sát tức thì mà không cần phải xoay chuột thủ công.
+

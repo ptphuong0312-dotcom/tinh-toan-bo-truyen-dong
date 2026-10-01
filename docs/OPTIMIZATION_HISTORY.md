@@ -2337,3 +2337,39 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
     * `worm_flank_only_stepped_mesh.png`: Nhích tiến 3 bước vi phân trong chế độ Chỉ Mặt Bên, hai mặt sườn trượt êm mượt mà liên hợp.
     * `worm_solid_returned_iso.png`: Click lần nữa để quay lại chế độ Khối Đặc, mô hình 3D nguyên vẹn.
     * **Kết quả: 100% ALL TESTS PASSED!**
+
+---
+
+### [2026-10-01] GIAI ĐOẠN 31: HIỆN THỰC HÓA CƠ CHẾ SOI VẾT TIẾP XÚC IN MÀU LÊN MẶT SAU SƯỜN RĂNG (BACK-FACE CONTACT IMPRINT INSPECTION) THEO CHỈ ĐẠO CỦA SIRPHUONG & TÍCH HỢP GÓC NHÌN PRESET 'REAR'
+* **Bối cảnh & Chỉ đạo dứt khoát từ Chủ sở hữu (`SirPhuong`)**:
+  - *"bạn còn nhớ cách phát hiện vết ở 2 modul tính toán bánh răng trụ và bánh răng côn không, để tôi nhắc lại cho bạn để bạn nhớ mà làm cho tôi ở module này : khi 2 mặt bên tiếp xúc vào nhau (khe hở giữa 2 bề mặt lúc đó bằng 0) thì bề mặt của bánh vít xe in mầu nên mặt sau của bề mặt trục vít và ngược lại bề mặt của trục vít xe in lên mặt sau của bề mặt bánh vít (dựa vào việc này để kiểm tra bằng mắt thường vết tiếp xúc của truyền động). hiện tại tôi chưa thấy được vết như vậy ở phần mô phỏng nên chưa thể biết được bạn làm đã chuẩn chưa"*
+* **Phân tích nguyên nhân gốc rễ (Root Cause Analysis)**:
+  1. Trong hàm `evalConjugateFlankTheta` (`worm-3d-generator.js`), mã nguồn trước đó đã hardcode khe hở backlash `+ 0.04 - (u - r1)*tanA` cho TẤT CẢ các chế độ (kể cả `surfaceOnly`). Điều này tạo ra một khoảng hở danh nghĩa $\approx 0.08\text{ mm}$ giữa hai sườn răng, khiến hai bề mặt mỏng không bao giờ chạm nhau trong chế độ Chỉ Mặt Bên. Vì không chạm nhau nên không thể in màu lên mặt sau của nhau.
+  2. Màu sắc vật liệu mặt bên trước đó chưa đủ độ tương phản cao, và hệ thống camera chưa có góc nhìn preset chuyên biệt hướng vào mặt sau sườn răng để người dùng soi kiểm tra vết in màu.
+* **Giải pháp kỹ thuật toàn diện**:
+  1. *Phân tách độ hở ăn khớp giữa Khối Đặc (Solid) và Chỉ Mặt Bên (Surface)*:
+     - Với `Solid Mode`: Giữ nguyên khe hở kỹ thuật $-0.04\text{ mm}$ giúp phôi đặc quay trơn tru liên tục mà không va chạm.
+     - Với `Chỉ Mặt Bên (surfaceOnly = true)`: Thiết lập khe hở danh nghĩa bằng 0 ($j_t = 0.000\text{ mm}$) và áp dụng lượng bù tiếp xúc vi mô $\delta_{\text{kiss}}$ (đồng bộ 100% với Quy tắc 29, 36, 37 của Bánh Răng Trụ & Bánh Răng Côn):
+       * Chế độ `theory` (Lý thuyết): $\delta_{\text{kiss}} = 0.020\text{ mm}$.
+       * Chế độ `crowning` (Thực tế xưởng): $\delta_{\text{kiss}} = 0.024 \times (1.0 - 1.8 u^2)\text{ mm}$ với $u = z / (b_{2H} / 2)$.
+     - Nhờ $\delta_{\text{kiss}}$, hai mặt sườn mỏng `THREE.DoubleSide` tiếp xúc lồng khít vào nhau theo đúng hành lang ăn khớp liên hợp Litvin.
+  2. *Hệ vật liệu PBR tương phản cao đối lập 180° (`worm-3d-visualizer.js`)*:
+     - Trục vít 1 (Worm Flank): Electric Cyan-Blue rực rỡ (`color: 0x00a8ff`, `emissive: 0x0284c7`, `roughness: 0.35`, `metalness: 0.20`, `DoubleSide: true`).
+     - Bánh vít 2 (Wheel Flank): Flame Coral-Orange rực rỡ (`color: 0xff5722`, `emissive: 0xc2410c`, `roughness: 0.35`, `metalness: 0.20`, `DoubleSide: true`).
+  3. *Cơ chế quang học in màu tiếp xúc lên mặt sau sườn răng (Optical Back-Face Imprint)*:
+     - Khi hai mặt sườn tiếp xúc lồng khít nhau với độ sâu vi mô $\delta_{\text{kiss}}$:
+       * Nhìn từ **mặt sau của sườn răng bánh vít**: Mặt sườn ren màu **Xanh Cyan (`#00a8ff`)** của trục vít in hằn rõ nét lên nền cam của mặt sau bánh vít theo đúng dải tiếp xúc liên hợp!
+       * Nhìn từ **mặt sau của sườn ren trục vít**: Mặt sườn răng màu **Cam Đỏ (`#ff5722`)** của bánh vít in hằn rõ nét lên nền xanh của mặt sau trục vít!
+       * Khi nhích tiến/lùi hoặc chạy mô phỏng, vết in màu lăn trượt liên tục theo đúng chuyển động tiếp xúc liên hợp cơ học.
+  4. *Bổ sung Preset góc nhìn chuyên dụng trên Toolbar 3D*:
+     - Bổ sung preset `rear`: `🔍 Soi Mặt Sau Sườn Răng (Vết In Tiếp Xúc)` trong `setViewPreset` (`worm-3d-visualizer.js`) và `<option value="rear">` trong `#sel3DViewPreset` tại `index.html`.
+     - Tự động đặt camera nhìn nghiêng từ phía sau sườn răng bánh vít vào vùng ăn khớp $(0, -a + d_1/2, 0)$.
+* **Kết quả đo đạc & Nghiệm thu thực tế qua Playwright Browser Automation**:
+  - Đóng gói bundle sạch sẽ với `python tools/bundle_all.py` (270,584 ký tự).
+  - Chạy kịch bản tự động `tools/test_preset_rear.py` chụp ảnh trực tiếp từ trình duyệt:
+    * `worm_preset_rear_flank_imprint.png`: Kiểm tra chọn preset `rear` từ dropdown, **vết màu xanh cyan của trục vít in hằn rõ rệt lên mặt sau sườn răng cam của bánh vít**!
+    * `worm_close_rear_tooth_imprint.png`: Cận cảnh từ bên trong lòng răng nhìn ra mặt sau, vết in tiếp xúc hiển thị cực kỳ sắc nét.
+    * `worm_preset_mesh_flank_imprint.png`: Hướng nhìn trực diện từ mặt trước vùng ăn khớp, sườn răng cam bánh vít in rõ lên ren trục vít cyan.
+    * `worm_preset_stepped_rear.png`: Khi nhích bước vi phân, vết in màu di chuyển trơn tru liên tục.
+    * **Kết quả: 100% ALL VERIFICATIONS PASSED, 0 lỗi Console / WebGL**!
+

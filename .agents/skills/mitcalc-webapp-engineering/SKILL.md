@@ -1404,3 +1404,16 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
         - Giao diện: Nút `#btnToggleFlankOnly` đổi nhãn `👁️ Chỉ Mặt Bên` $\leftrightarrow$ `👁️ Đang Xem Mặt Bên` kèm class `.btn-secondary.active` phát sáng xanh cyan.
       * **Kiểm thử tự động Playwright**:
         - Kịch bản `tools/test_flank_only_playwright.py` tự động mở trình duyệt, chuyển 3D, click nút, kiểm tra trạng thái hiển thị `flankOnlyMode`, đổi góc nhìn (mesh zone, worm, wheel), nhích tiến và quay lại chế độ solid, chụp ảnh nghiệm thu (100% PASS).
+
+---
+
+12. **CƠ CHẾ SOI VẾT IN MÀU TIẾP XÚC LÊN MẶT SAU SƯỜN RĂNG (BACK-FACE CONTACT IMPRINT PROTOCOL)**:
+    - **Bản chất kỹ thuật**:
+      * Trong chế độ `Chỉ Mặt Bên` (`flankOnlyMode`), khe hở danh nghĩa giữa hai sườn tiếp xúc được đưa về $0.000\text{ mm}$ kèm lượng bù tiếp xúc vi mô $\delta_{\text{kiss}} = 0.020\text{ mm}$ (Lý thuyết) hoặc $\delta_{\text{kiss}} = 0.024 \times (1 - 1.8 u^2)\text{ mm}$ (Thực tế xưởng).
+      * Hai mặt sườn mỏng sử dụng vật liệu `THREE.DoubleSide` với màu sắc đối lập 180°: Trục vít màu Electric Cyan-Blue (`0x00a8ff`, `emissive: 0x0284c7`), Bánh vít màu Flame Coral-Orange (`0xff5722`, `emissive: 0xc2410c`).
+    - **Hiệu ứng quang học in màu**:
+      * Khi tiếp xúc lồng khít nhau ở mức micron, mặt sau của sườn răng bánh vít sẽ in rõ màu xanh cyan của sườn ren trục vít, và mặt sau của sườn ren trục vít sẽ in rõ màu cam đỏ của sườn răng bánh vít.
+      * Dựa vào hiện tượng này, kỹ sư cơ khí có thể quan sát bằng mắt thường hình thái vết tiếp xúc liên hợp (dải tiếp xúc nghiêng liên hợp hoặc elip vồng ở giữa).
+    - **Preset góc nhìn `rear`**:
+      * Tích hợp preset `🔍 Soi Mặt Sau Sườn Răng (Vết In Tiếp Xúc)` (`case 'rear'`) trên thanh công cụ 3D, tự động điều chỉnh camera zoom thẳng vào mặt sau sườn răng ăn khớp.
+
