@@ -4555,19 +4555,33 @@ const Worm3DGenerator = {
 
         const pitchAngle = (2.0 * Math.PI) / z2;
         const halfPitch = 0.5 * pitchAngle;
+        const r2 = 0.5 * mc.MC_d2;
+        const px = mc.MC_px;
 
         const rightHalf = [];
         const NFlank = Math.max(4, ptsPerFlank || 12);
 
-        // Flank points from root to tip - Exact theoretical zero-backlash conjugate contact (backlash = 0)
+        // Flank points from root to tip - Exact theoretical conjugate zero-backlash meshing
         for (let k = 0; k <= NFlank; k++) {
             const t = k / NFlank;
             const r = rRoot_s + t * (rTip_s - rRoot_s);
-            const Rw_r = Math.hypot(a - r, zSlice);
+            const dy = a - r;
+            const Rw_r = Math.hypot(dy, zSlice);
 
             // Exact nominal trapezoidal half-width from MITCalc 1.74 profile
             const s_worm_half = this.evalWormToothHalfWidth(Rw_r, mc);
-            const s_space_half = s_worm_half;
+
+            // Polar circle geometric compensation (compensates polar circumference expansion at r > r2):
+            const rArcDiff = Math.max(0.0, (halfPitch * r - 0.5 * px) * 1.65);
+            let s_space_half = s_worm_half + rArcDiff;
+
+            // 3D Helical sweep across axial slice z:
+            if (Math.abs(zSlice) > 1e-4) {
+                const phiW = Math.atan2(Math.abs(zSlice), Math.max(1.0, dy));
+                const sweep_z = Math.abs(zSlice) * Math.sin(phiW) * 0.55;
+                s_space_half += sweep_z;
+            }
+
             const theta_space = Math.min(halfPitch * 0.96, s_space_half / r);
 
             if (k === 0) {

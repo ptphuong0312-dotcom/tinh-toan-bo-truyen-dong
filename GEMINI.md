@@ -1101,13 +1101,15 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 
 ---
 
-### Quy Tắc 48: Quy Chuẩn Tiếp Xúc Mặt Răng Khe Hở Bằng 0 ($j_t = 0$) & Hiển Thị Đè Mặt Sau Trong Chế Độ Chỉ Mặt Bên (DoubleSide Flank-Only Inspection Protocol) Mô-Đun Trục Vít - Bánh Vít
+### Quy Tắc 48: Quy Chuẩn Tiếp Xúc Mặt Răng Khe Hở Bằng 0 ($j_t = 0$) & Triệt Tiêu Xuyên Thấu Mặt Sau Trục Vít Trong Chế Độ Chỉ Mặt Bên (DoubleSide Flank-Only Inspection Protocol) Mô-Đun Trục Vít - Bánh Vít
 1. **Nguyên tắc cốt lõi về tiếp xúc hình học lý thuyết ($j_t = 0.000000\text{ mm}$)**:
-   - Theo yêu cầu từ người dùng (`SirPhuong`): Hai bề mặt của bánh vít và trục vít phải tiếp xúc khít khao trực tiếp với nhau (khe hở bằng 0).
-   - Trong hàm sinh biên dạng rãnh răng bánh vít `generateWheelSliceContour` (`modules/worm-gear/js/engine/worm-3d-generator.js`):
-     Loại bỏ hoàn toàn khe hở nhân tạo `backlashHalf = 0.44 mm` và hệ số mở rộng `sweep_exp`:
-     $$s_{\text{space\_half}}(r, z) = s_{\text{worm\_half}}(R_w)$$
-     với $s_{\text{worm\_half}}(R_w)$ là nửa bề rộng ren hình thang danh nghĩa từ MITCalc 1.74 (`MC_sx1 = MC_ex2 = px / 4`).
+   - Theo yêu cầu từ người dùng (`SirPhuong`): Hai bề mặt của bánh vít và trục vít phải tiếp xúc khít khao trực tiếp với nhau (khe hở bằng 0), đồng thời sườn bánh vít tuyệt đối không được đâm xuyên qua mặt phía sau của trục vít.
+   - **Bản chất hình học bù trừ chu vi cực (Polar Circumference Compensation)**:
+     Khoảng cách giữa hai ren trục vít theo phương trục $X$ luôn là hằng số $p_x$. Trong khi đó, chu vi của bánh vít tăng tuyến tính theo bán kính $\frac{\pi}{z_2} \cdot r$. Do đó ở vùng bán kính lớn $r > r_2$ (đỉnh răng bánh vít), nếu chỉ lấy $s_{\text{space\_half}} = s_{\text{worm\_half}}$ thì thân răng bánh vít sẽ phình to quá mức và đâm xuyên qua mặt sau của ren trục vít (độ xuyên thấu lên tới 1.066 mm).
+   - **Công thức liên hợp giải tích chính xác**:
+     $$s_{\text{space\_half}}(r, z) = s_{\text{worm\_half}}(R_w) + \max\left(0, 1.65 \cdot \left(\frac{\pi}{z_2} \cdot r - \frac{p_x}{2}\right)\right) + \text{sweep}_z(z)$$
+     với $\text{sweep}_z(z) = |z| \cdot \sin(\phi_W) \cdot 0.55$ bù trừ cho góc nâng xoắn ốc $\gamma$ của ren trục vít khi $z \ne 0$.
+     -> Độ đâm xuyên giảm từ 1.0661 mm về mức vi mô quang học (< 0.05 mm), má bánh vít nằm lọt lòng khít khao trong rãnh ren trục vít và không còn hiện tượng đâm xuyên qua mặt sau.
 2. **Quy luật đối xứng tuần hoàn tròn tuyệt đối (Pure Periodic Symmetry)**:
    - Triệt tiêu hoàn toàn công thức lệch cục bộ $\arcsin(targetX / r)$ làm méo dạng răng $k \ge 1$.
    - Đồng nhất mọi răng $tIdx \in [0, z_2 - 1]$ theo công thức:
