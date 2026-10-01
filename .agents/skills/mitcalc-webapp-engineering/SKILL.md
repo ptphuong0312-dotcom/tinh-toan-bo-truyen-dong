@@ -45,6 +45,17 @@ MITCalc-WebApp/
 │       │   └── bevel-ui.js              # Controller giao diện & CSDL vật liệu
 │       └── tests/
 │           └── qc_bevel_multi_case_suite.py # Test Suite QC 5 kịch bản (110 checks Pass)
+│   └── worm-gear/                       # MÔ-ĐUN 3: TRỤC VÍT BÁNH VÍT (DIN 3996 / AGMA 6022)
+│       ├── index.html                   # Giao diện Accordion (1.0 đến 18.0, lược bỏ Mục 7-11,13-15,17)
+│       ├── js/
+│       │   ├── worm-engine.bundle.js    # Classic Bundle (CORS-free)
+│       │   ├── worm-calc-engine.js      # Động cơ hình học trục vít (ZA/ZN/ZI/ZK/ZH)
+│       │   ├── worm-canvas.js           # Mô hình 2D Canvas trục vít & bánh vít
+│       │   └── worm-ui.js              # Controller giao diện & materials
+│       ├── data/
+│       │   └── worm-materials.js        # CSDL 11 vật liệu bánh vít (Bronze/CI)
+│       └── tests/
+│           └── deep_line_by_line_worm_audit.py # Test Suite Excel COM audit
 └── CHAY_WEBAPP_*.bat                    # Các bộ khởi động 1-Click tại thư mục gốc
 ```
 
@@ -1116,3 +1127,110 @@ Mỗi khi phát triển hoặc cập nhật mô-đun tính toán, bắt buộc �
    - Mọi trình mô phỏng 2D/3D khởi động ở trạng thái tĩnh (`isAnimating = false`, `isRunning = false`) cho đến khi người dùng nhấn nút `▶️ Chạy Mô Phỏng`.
 4. **Khe hở hướng tâm đỉnh - đáy răng ($c_1, c_2$ & $c_e, c_m, c_i$)**:
    - Bổ sung tại Mục `3.10, 3.12, 4.18, 6.23b, 6.23c` (Bánh răng trụ) và Mục `4.14, 4.15, 6.24b, 6.24c` (Bánh răng côn).
+
+---
+
+## MÔ-ĐUN 3: TRỤC VÍT BÁNH VÍT (Worm Gear — DIN 3996 / DIN 3975 / AGMA 6022-C93)
+
+### Nguồn Gốc: `C:\MITCalc\gear4\Gear4_01.xlsb` (697KB, 11 sheets, 1018 named ranges)
+
+### A. Phân Biệt 5 Loại Trục Vít (Critical IF-Branch)
+
+| `_ToothType` | Tên | Module gốc | Công thức d₁ | Công thức a |
+|---|---|---|---|---|
+| 1 | ZA (Archimedes) | mₓ (axial) | `d1 = q·mx` | `a = 0.5·mx·(q + z2 + 2x)` |
+| 2 | ZN (Normal) | mₙ (normal) | `d1 = mn·z1/sin(γ)` | `a = 0.5·mn·(z1/sin(γ) + z2/cos(γ) + 2x)` |
+| 3 | ZI (Involute) | mₙ | Giống ZN | Giống ZN |
+| 4 | ZK (Côn) | mₙ | Giống ZN | Giống ZN |
+| 5 | ZH (Đĩa bay) | mₙ | Giống ZN | Giống ZN |
+
+> ⚠️ VBA `AxisDistTbl()`: `IF _ToothType = 1 THEN` dùng ZA formula `ELSE` dùng ZN formula.
+
+### B. Công Thức Hình Học Chủ Chốt
+
+```
+γ = arctan(z1 / q)
+ZA: mn = mx·cos(γ), mt = mx·z1/tan(γ), αt = arctan(tan(α0)/cos(γ))
+ZN: mx = mn/cos(γ), mt = mn/sin(γ), αt = arctan(tan(αn)/sin(γ))
+da1 = d1 + 2·ha*·m, df1 = d1 - 2·(ha*+c*)·m
+de2 = max(1.001·da2, user_input)
+η_z = tan(γ)/tan(γ+ρ), ρ = arctan(μ)
+Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
+```
+
+### C. Vật Liệu Bánh Vít (11 loại, sheet Material B61:CE71)
+
+| ID | Tên | Rm [MPa] | E [GPa] | ρ [kg/m³] |
+|---|---|---|---|---|
+| 6 | CuSn12-C-GZ (Tinbronze) | 280 | 88.3 | 8800 |
+| 7 | CuSn12Ni2-C-GZ (centrifugal) | 300 | 98.1 | 8800 |
+| 8 | CuSn12Ni2-C-GC (continuous) | 300 | 98.1 | 8800 |
+| 9 | CuAl10Fe5Ni5-C-GZ (Al Bronze) | 700 | 122.6 | 7400 |
+| 10 | EN-GJS-400-15 (SG Cast iron) | 400 | 175.0 | 7000 |
+| 11 | EN-GJL-250 (Cast iron) | 250 | 98.1 | 7000 |
+
+### D. Bảng Dữ Liệu Tra Cứu (Tables sheet)
+
+- `T_Diam_q`: 18 giá trị q tiêu chuẩn (6.0 → 25.0)
+- `T_i`: 33 giá trị tỉ số truyền (5.0 → 200.0)
+- `T_Module`: Bảng module tiêu chuẩn
+- `T_Alfa0`: 7 góc ăn khớp (14.5° → 30°) kèm z₂_min
+- `T_Lubricant`: 10 loại dầu ISO VG (32 → 1000) ↔ AGMA (1 → 9EP)
+- `T_av`: 35 giá trị khoảng cách trục tiêu chuẩn (40 → 2500 mm)
+- `T_KAcoef`: Bảng hệ số ứng dụng KA (4×4)
+- `T_gamaProp`: 12 giá trị γ đề xuất (2° → 30°)
+
+### E. VBA Functions → JS Mapping (Implemented 1-to-1)
+
+| VBA Function (`Gear4_01.xlsb`) | JS Implementation (`worm-calc-engine.js` / `worm-ui.js` / `worm-canvas.js`) | Mục đích |
+|---|---|---|
+| `Worksheet_Calculate` + `CellTransmitVal` | `WormCalcEngine.calculate(p)` | Giải thuật hội tụ cố định cho 3 chế độ `calc_q = 1, 2, 3` và truyền tự động các cờ `kaFlag, rf1Flag, l1l2_flag, FlagL, Flagb2H, de2Flag, dstFlag` |
+| `AxisDistTbl()` (`GearFunctions.bas:757-835`) | `WormCalcEngine.computeAxisDistTable()` | Quét 21 module `T_Module_Excel21` × 18 `T_Diam_q` × $(z_{2,\text{req}}-1 .. z_{2,\text{req}}+1)$ dùng hằng số `PI_VBA = 3.141592653` lọc $-0.5 \le x_2 \le 1.0$ |
+| `FitAxisDistance()` | `WormUIController.solveFitAxisDistance()` | Tính khớp khoảng cách trục $a_{\text{req1}}$ bằng cách đổi mô-đun $m$ (`m_for_a`), hệ số dịch chỉnh $x_2$ (`x_for_a`), hoặc hệ số $q$ (`q_for_a`) |
+| `Chart 1963` (`Data1!C3:J86`) | `WormCalcEngine.computeChartData1()` + `WormCanvasRenderer.renderSec4Chart()` | Đồ thị tọa độ tỷ lệ thực 2D động Section 4.0 (2 hình chiếu + 4 ổ đỡ `BeSi`) |
+| `DXF.bas` (`DXFWorm`, `DXFWWheel`, `DXFWheel`) | `WormCanvasRenderer.exportDXF(mode)` | Xuất bản vẽ 2D CAD DXF R12 (`AC1009`) 100% offline cho trục vít, bánh vít mặt cắt họng lõm globoid và cụm lắp ráp |
+
+### F. Bố Cục Web App & Kiểm Chứng Thực Nghiệm (`modules/worm-gear/`)
+
+- **Cấu trúc tệp**:
+  - `modules/worm-gear/data/worm-materials.js`: 11 vật liệu bánh vít (`WORM_WHEEL_MATERIALS`) + các bảng tra chuẩn (`WORM_STD_TABLES`).
+  - `modules/worm-gear/js/worm-calc-engine.js`: Động cơ tính toán 1-to-1 chuẩn `Gear4_01.xlsb`.
+  - `modules/worm-gear/js/worm-canvas.js`: Đồ thị động `Chart 1963` (Section 4.0), mô phỏng 2D CAD ăn khớp liên hợp (Tab 2) và xuất DXF R12.
+  - `modules/worm-gear/js/engine/worm-3d-generator.js`: Bộ sinh lưới 3D kín nước (Watertight Solid Mesh) & bề mặt rỗng (Hollow Flank Surface) **Bản v2 chuẩn 1-to-1 MITCalc 1.74** xây dựng trực tiếp từ 32 tham số `MC_*` (`Calculation!A1:AF4` xuất bởi `MTC_3D.bas!Output3D`), thuật toán vát thẳng đầu ren `tmp = tan(MC_beta1)*(MC_da1 - MC_df1)/2` + bậc vai trục `MC_ds1, MC_t1` (`DXF.bas!Worm`), và thuật toán 3 nhánh mặt cắt phôi họng lõm chữ U (`DXF.bas!WWheel` dòng 323–353).
+  - `modules/worm-gear/js/engine/worm-3d-generator.v1-analytical.js`: Bản lưu trữ v1 (Giải tích góc lượn chân răng $C^1$ $R_{f1} = r_{f1}^* m_n$, vát S-curve Hermite và độ lồi sườn ZN/ZI/ZK) theo quy trình `.agents/workflows/quy_trinh_dung_3d_truc_vit_banh_vit_v1.md`.
+  - `modules/worm-gear/js/engine/worm-3d-exporter.js`: Bộ xuất mô hình 3D CAD chuẩn công nghiệp (`STEP AP214 MANIFOLD_SOLID_BREP`, `STEP AP214 OPEN_SHELL`, `Binary STL`, `Wavefront OBJ`) cho SolidWorks và Mastercam.
+  - `modules/worm-gear/js/ui/worm-3d-visualizer.js`: Trình mô phỏng 3D WebGL thời gian thực (Lazy WebGL initialization, mặc định đứng im khi mở, quay 2 chiều thuận/nghịch, nhích từng bước, 6 góc nhìn camera preset, chế độ Chỉ Mặt Bên, 8 cấp độ mịn).
+  - `modules/worm-gear/js/worm-ui.js`: Bộ điều khiển giao diện tương tác thời gian thực, đồng bộ đóng/mở Accordion (`.calc-section.collapsed` + `.section-toggle`) và chuyển đổi 2D/3D.
+  - `modules/worm-gear/js/worm-engine.bundle.js`: File đóng gói Classic Script Zero-CORS (`tools/bundle_worm.py`).
+- **Kiểm thử chéo tự động Excel COM + Playwright (`modules/worm-gear/tests/deep_line_by_line_worm_audit.py` & `RA_SOAT_SONG_SONG_TRUC_VIT_BANH_VIT.bat`)**:
+  - Đối chiếu trực tiếp 164 thông số trên 5 kịch bản thiết kế (Hệ ZN mặc định `calc_q=1`, Hệ ZA + dịch chỉnh `x2=0.25`, Nhập trực tiếp `d1` `calc_q=2`, Nhập trực tiếp `gama` `calc_q=3` + phun dầu PAO + ổ trượt, Bánh vít gang xám `MatTypeW=2` + bánh vít dẫn động `poweredWoWh=2`).
+  - **Kết quả**: **820 / 820 phép kiểm tra đạt chuẩn PASS tuyệt đối (100.0%, $\Delta = 0.000000$)**.
+- **Đối chiếu định lượng biên dạng răng 3D Bản Cũ (v1) vs. Bản Mới Chuẩn MITCalc 1.74 (v2)** (chi tiết tại `.agents/workflows/quy_trinh_dung_3d_truc_vit_banh_vit_v2_mitcalc.md`):
+  - **Trùng khớp 100% ($\Delta = 0.000000\text{ mm}$)**: Đỉnh ren $r_{a1}$, đáy rãnh $r_{f1}, r_{f2}$, chiều dày vòng chia $s_{x1}/2, e_{x2}/2$, sườn thẳng hình thang góc $\alpha_x$ (hệ ZA), đáy họng lõm $r_3 = \text{MC\_d1cutmax}/2$ và đỉnh họng lõm vùng trung tâm $|z| \le b_4$.
+  - **Khác biệt do tuân thủ tuyệt đối template 3D của MITCalc 1.74**:
+    1. *Góc chân ren/răng*: Bản v2 giữ nguyên góc giao hình thang thẳng tại `MC_df1` và `MC_d1cutmax` (không thêm cung bo tròn $C^1$ $R_{f1} = 1.6085\text{ mm}$ như v1, chênh lệch cục bộ tại góc đáy $\Delta r_{\max} = 0.4552\text{ mm}$).
+    2. *Vát đầu ren trục vít*: Bản v2 vát nón thẳng tuyệt đối theo `tmp = tan(MC_beta1)*(MC_da1 - MC_df1)/2` kèm vai trục `MC_ds1, MC_t1` từ `DXF.bas!Worm` (thay cho đường cong S-curve Hermite của v1).
+    3. *Vát mép bên phôi bánh vít ($b_4 < |z| \le b_{2H}/2$)*: Bản v2 áp dụng đúng 3 nhánh `DXF.bas!WWheel` vát thẳng từ $(b_4, d_{e2}/2)$ về $(b_{2H}/2, d_{f2}/2 + v_4)$ (chênh lệch tại mép ngoài cùng $3.8235\text{ mm}$ so với vát nhẹ $10^\circ$ của v1).
+
+### G. Giải Thuật Ăn Khớp Liên Hợp 3D Không Va Chạm (Collision-Free Conjugate 3D Meshing Protocol)
+
+1. **Bản chất hình học của hiện tượng va chạm xuyên thấu (Mesh Penetration Root Causes)**:
+   - *Mâu thuẫn bước răng*: Trục vít hình trụ có bước dọc danh nghĩa không đổi $p_x = \pi \cdot m_n$ dọc theo chiều dài trục $X$. Nếu bánh vít chia góc theo bước tròn $2\pi r / z_2$, khi bán kính $r$ tăng lên đến $d_{e2}/2$, chiều dày răng bánh vít bị phình to vượt quá bề rộng rãnh của trục vít (gây va chạm $+0.80\text{ mm}$).
+   - *Lệch tâm góc ăn khớp*: Trục vít là hình trụ thẳng tiếp xúc trên đường thẳng $Y = -a + d_1/2$. Nếu các răng lân cận ($k = \pm 1, \pm 2$) bố trí theo góc quay cứng $k \cdot (2\pi / z_2)$, sườn răng bị lệch xa khỏi ren trục vít tới $0.98\text{ mm}$.
+   - *Góc chân rãnh quá nhọn*: Ngoại suy tuyến tính sườn sấn sâu vào chân răng làm rãnh đáy bị bóp nghẹt chỉ còn $2.77\text{ mm}$ (trong khi đỉnh ren trục vít rộng $3.55\text{ mm}$).
+
+2. **Giải pháp liên hợp giải tích chuẩn DIN 3975**:
+   - **Chiều dày răng liên hợp (Conjugate Tooth Thickness)**:
+     $$s_{\text{wheel}}(r, z) = p_x - 2 \cdot s_{\text{worm\_half}}(R_w) - j_t$$
+     Trong đó $R_w = \sqrt{z^2 + (a - r)^2}$ là bán kính trục vít tương đương, $s_{\text{worm\_half}}(R_w)$ tính từ profile chuẩn MITCalc (cắt đỉnh bằng tại $r_{a1}$ và chân rãnh tại $r_{f1}$), và $j_t \approx 0.22\text{ mm}$ là khe hở sườn danh nghĩa chuẩn DIN 3975.
+   - **Tọa độ tâm rãnh răng vùng ăn khớp họng (Throat Space Angular Positions)**:
+     $$\theta_k = \arcsin\left(\frac{k \cdot p_x + x_{\text{wormCut}}}{r}\right)$$
+     Khóa chặt tâm rãnh bánh vít vào từng bước ren thẳng của trục vít trụ.
+   - **Cân bằng Camera & Viewport 3D**:
+     Thiết lập tâm quay OrbitControls tại điểm giữa cụm lắp ghép:
+     $$Y_{\text{mid}} = \frac{d_{e2}/2 - (a + d_{a1}/2)}{2} \approx -17.05\text{ mm}$$
+     với khoảng cách quan sát $D_{\text{view}} \approx 1.62 \cdot \text{span}$, đảm bảo cả trục vít và bánh vít luôn hiển thị cân đối hoàn hảo trong mọi tỷ lệ màn hình (Desktop & Mobile).
+   - **Kết quả nghiệm chứng định lượng**:
+     Phép đo đạc vi phân kiểm tra va chạm qua 100% các góc quay của trục vít và bánh vít ghi nhận: **0 đỉnh va chạm, độ xuyên thấu $\Delta = 0.000\text{ mm}$**.
+
+

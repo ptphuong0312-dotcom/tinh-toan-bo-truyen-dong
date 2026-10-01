@@ -1,0 +1,443 @@
+/**
+ * ============================================================================
+ * MITCALC WEB APP - 3D WORM GEAR CAD EXPORTER FOR SOLIDWORKS & MASTERCAM (MODULE 3)
+ * ============================================================================
+ * Generates industry-standard 3D CAD files:
+ * 1. Binary STL (.stl) - High-precision, compact binary mesh ready for Mastercam Toolpaths
+ *    (4-Axis Rotary Worm Milling, 5-Axis Swarf/Multiaxis Wheel Hobbing) & SolidWorks Mesh Body.
+ * 2. ISO 10303-21 STEP AP214 (.step / .stp) - Standard CAD Solid B-Rep format recognized by
+ *    SolidWorks as a native Solid Body and Mastercam as a Machinable Solid.
+ * 3. STEP AP214 Hollow Flank Surface (.step) - OPEN_SHELL with SHELL_BASED_SURFACE_MODEL for
+ *    Mastercam 5-axis Surface Toolpaths & SolidWorks surface modeling.
+ * 4. Wavefront OBJ (.obj) - Universal 3D geometry interchange format.
+ * ============================================================================
+ */
+
+const Worm3DExporter = {
+    downloadBlob(blob, filename) {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 300);
+    },
+
+    normalizeTriangles(input) {
+        if (!input) return [];
+        if (Array.isArray(input)) {
+            if (input.length > 0 && Array.isArray(input[0]) && input[0].length === 4) {
+                return input;
+            }
+            let combined = [];
+            for (const part of input) {
+                if (Array.isArray(part)) {
+                    combined = combined.concat(part);
+                } else if (part && part.rawTriangles) {
+                    combined = combined.concat(part.rawTriangles);
+                }
+            }
+            return combined;
+        } else if (input.rawTriangles) {
+            return input.rawTriangles;
+        }
+        return [];
+    },
+
+    exportBinarySTL(input, filename = 'worm_gear.stl', autoDownload = true) {
+        const triangles = this.normalizeTriangles(input);
+        const numTriangles = triangles.length;
+
+        const totalBytes = 84 + numTriangles * 50;
+        const buffer = new ArrayBuffer(totalBytes);
+        const view = new DataView(buffer);
+
+        const headerStr = 'MITCalc 3D Worm Gear Model - DIN 3975 / DIN 3996 SolidWorks & Mastercam';
+        for (let i = 0; i < 80; i++) {
+            view.setUint8(i, i < headerStr.length ? headerStr.charCodeAt(i) : 32);
+        }
+
+        view.setUint32(80, numTriangles, true);
+
+        let offset = 84;
+        for (let i = 0; i < numTriangles; i++) {
+            const tri = triangles[i];
+            const p1 = tri[0];
+            const p2 = tri[1];
+            const p3 = tri[2];
+            const n = tri[3];
+
+            view.setFloat32(offset, n[0], true);
+            view.setFloat32(offset + 4, n[1], true);
+            view.setFloat32(offset + 8, n[2], true);
+
+            view.setFloat32(offset + 12, p1[0], true);
+            view.setFloat32(offset + 16, p1[1], true);
+            view.setFloat32(offset + 20, p1[2], true);
+
+            view.setFloat32(offset + 24, p2[0], true);
+            view.setFloat32(offset + 28, p2[1], true);
+            view.setFloat32(offset + 32, p2[2], true);
+
+            view.setFloat32(offset + 36, p3[0], true);
+            view.setFloat32(offset + 40, p3[1], true);
+            view.setFloat32(offset + 44, p3[2], true);
+
+            view.setUint16(offset + 48, 0, true);
+            offset += 50;
+        }
+
+        const blob = new Blob([buffer], { type: 'application/octet-stream' });
+        if (autoDownload) this.downloadBlob(blob, filename);
+        return { buffer, blob, numTriangles, totalBytes };
+    },
+
+    exportSTLSurface(input, filename = 'worm_gear_surface.stl', autoDownload = true) {
+        return this.exportBinarySTL(input, filename, autoDownload);
+    },
+
+    normalizePartTriangleArrays(input) {
+        if (!input) return [];
+        if (Array.isArray(input)) {
+            if (input.length === 0) return [];
+            if (Array.isArray(input[0]) && input[0].length === 4 && Array.isArray(input[0][0]) && typeof input[0][0][0] === 'number') {
+                return [input];
+            }
+            const parts = [];
+            for (const part of input) {
+                if (Array.isArray(part) && part.length > 0) {
+                    parts.push(part);
+                } else if (part && Array.isArray(part.rawTriangles) && part.rawTriangles.length > 0) {
+                    parts.push(part.rawTriangles);
+                }
+            }
+            return parts;
+        } else if (input.rawTriangles && input.rawTriangles.length > 0) {
+            return [input.rawTriangles];
+        }
+        return [];
+    },
+
+    exportSTEP(input, filename = 'worm_gear.step', partName = 'WORM_GEAR_PART', autoDownload = true, isSurface = false) {
+        const partArrays = this.normalizePartTriangleArrays(input);
+        const now = new Date().toISOString().replace(/\.\d+Z$/, '');
+
+        const lines = [];
+        lines.push('ISO-10303-21;');
+        lines.push('HEADER;');
+        const fileDesc = isSurface
+            ? 'MITCalc 3D Worm Gear Hollow Flank Surface Model for SolidWorks and Mastercam Surface Toolpaths'
+            : 'MITCalc 3D Worm Gear Solid Model for SolidWorks and Mastercam (DIN 3975 / DIN 3996)';
+        lines.push(`FILE_DESCRIPTION(('${fileDesc}'),'2;1');`);
+        lines.push(`FILE_NAME('${filename}','${now}',('SirPhuong'),('MITCalc-Gear-Engineering'),'Antigravity CAD/CAM Engine','SolidWorks / Mastercam Compatible','');`);
+        lines.push(`FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));`);
+        lines.push('ENDSEC;');
+        lines.push('DATA;');
+
+        let id = 1;
+
+        lines.push(`#${id++}=APPLICATION_CONTEXT('automotive design');`); // #1
+        lines.push(`#${id++}=APPLICATION_PROTOCOL_DEFINITION('international standard','automotive_design',2000,#1);`); // #2
+        lines.push(`#${id++}=PRODUCT_CONTEXT('',#1,'mechanical');`); // #3
+        lines.push(`#${id++}=PRODUCT('${partName}','${partName}','',(#3));`); // #4
+        lines.push(`#${id++}=PRODUCT_DEFINITION_FORMATION('','',#4);`); // #5
+        lines.push(`#${id++}=PRODUCT_DEFINITION_CONTEXT('part definition',#1,'design');`); // #6
+        lines.push(`#${id++}=PRODUCT_DEFINITION('design','',#5,#6);`); // #7
+        lines.push(`#${id++}=PRODUCT_DEFINITION_SHAPE('','',#7);`); // #8
+
+        lines.push(`#${id++}=(LENGTH_UNIT()NAMED_UNIT(*)SI_UNIT(.MILLI.,.METRE.));`); // #9
+        lines.push(`#${id++}=(NAMED_UNIT(*)PLANE_ANGLE_UNIT()SI_UNIT($,.RADIAN.));`); // #10
+        lines.push(`#${id++}=(NAMED_UNIT(*)SOLID_ANGLE_UNIT()SI_UNIT($,.STERADIAN.));`); // #11
+        lines.push(`#${id++}=UNCERTAINTY_MEASURE_WITH_UNIT(LENGTH_MEASURE(1.0E-04),#9,'distance_accuracy_value','confusion accuracy');`); // #12
+        lines.push(`#${id++}=(GEOMETRIC_REPRESENTATION_CONTEXT(3)GLOBAL_UNCERTAINTY_ASSIGNED_CONTEXT((#12))GLOBAL_UNIT_ASSIGNED_CONTEXT((#9,#10,#11))REPRESENTATION_CONTEXT('Context3D','3D Context'));`); // #13
+
+        const prodDefShapeId = 8;
+        const repContextId = 13;
+
+        const origPtId = id++;
+        const origDirZId = id++;
+        const origDirXId = id++;
+        const origAxisId = id++;
+        lines.push(`#${origPtId}=CARTESIAN_POINT('',(0.0,0.0,0.0));`);
+        lines.push(`#${origDirZId}=DIRECTION('',(0.0,0.0,1.0));`);
+        lines.push(`#${origDirXId}=DIRECTION('',(1.0,0.0,0.0));`);
+        lines.push(`#${origAxisId}=AXIS2_PLACEMENT_3D('',#${origPtId},#${origDirZId},#${origDirXId});`);
+
+        const fStr = (v) => {
+            const val = Math.abs(v) < 1e-12 ? 0.0 : v;
+            const s = val.toFixed(6);
+            return s.indexOf('.') === -1 ? s + '.0' : s;
+        };
+
+        let totalTriangles = 0;
+        let totalFaces = 0;
+        const bodyItemIds = [];
+
+        for (let pIdx = 0; pIdx < partArrays.length; pIdx++) {
+            const triangles = partArrays[pIdx];
+            totalTriangles += triangles.length;
+
+            const vertices = [];
+            const vMap = new Map();
+
+            const getVertexIdx = (p) => {
+                const key = `${Math.round(p[0] * 10000)},${Math.round(p[1] * 10000)},${Math.round(p[2] * 10000)}`;
+                let vIdx = vMap.get(key);
+                if (vIdx === undefined) {
+                    vIdx = vertices.length;
+                    vMap.set(key, vIdx);
+                    const ptId = id++;
+                    const vtxId = id++;
+                    lines.push(`#${ptId}=CARTESIAN_POINT('',(${fStr(p[0])},${fStr(p[1])},${fStr(p[2])}));`);
+                    lines.push(`#${vtxId}=VERTEX_POINT('',#${ptId});`);
+                    vertices.push({ x: p[0], y: p[1], z: p[2], ptId, vtxId });
+                }
+                return vIdx;
+            };
+
+            const rawTris = [];
+            for (let i = 0; i < triangles.length; i++) {
+                const [p1, p2, p3, nHint] = triangles[i];
+                const i1 = getVertexIdx(p1);
+                const i2 = getVertexIdx(p2);
+                const i3 = getVertexIdx(p3);
+                if (i1 === i2 || i2 === i3 || i3 === i1) continue;
+
+                const vA = vertices[i1], vB = vertices[i2], vC = vertices[i3];
+                const abx = vB.x - vA.x, aby = vB.y - vA.y, abz = vB.z - vA.z;
+                const acx = vC.x - vA.x, acy = vC.y - vA.y, acz = vC.z - vA.z;
+                let nx = aby * acz - abz * acy;
+                let ny = abz * acx - abx * acz;
+                let nz = abx * acy - aby * acx;
+                const nLen = Math.hypot(nx, ny, nz);
+                if (nLen < 1e-11) continue;
+                nx /= nLen; ny /= nLen; nz /= nLen;
+
+                if (nHint && (nx * nHint[0] + ny * nHint[1] + nz * nHint[2] < -1e-6)) {
+                    rawTris.push({ verts: [i1, i3, i2], n: [-nx, -ny, -nz] });
+                } else {
+                    rawTris.push({ verts: [i1, i2, i3], n: [nx, ny, nz] });
+                }
+            }
+
+            const polygons = [];
+            const isConvexQuad = (ia, ib, ic, id4, n) => {
+                const pts = [vertices[ia], vertices[ib], vertices[ic], vertices[id4]];
+                const distD = Math.abs((pts[3].x - pts[0].x) * n[0] + (pts[3].y - pts[0].y) * n[1] + (pts[3].z - pts[0].z) * n[2]);
+                if (distD > 1e-5) return false;
+                for (let k = 0; k < 4; k++) {
+                    const pPrev = pts[(k + 3) % 4];
+                    const pCurr = pts[k];
+                    const pNext = pts[(k + 1) % 4];
+                    const e1x = pCurr.x - pPrev.x, e1y = pCurr.y - pPrev.y, e1z = pCurr.z - pPrev.z;
+                    const e2x = pNext.x - pCurr.x, e2y = pNext.y - pCurr.y, e2z = pNext.z - pCurr.z;
+                    const cx = e1y * e2z - e1z * e2y;
+                    const cy = e1z * e2x - e1x * e2z;
+                    const cz = e1x * e2y - e1y * e2x;
+                    if (cx * n[0] + cy * n[1] + cz * n[2] <= 1e-8) return false;
+                }
+                return true;
+            };
+
+            let idx = 0;
+            while (idx < rawTris.length) {
+                const t1 = rawTris[idx];
+                if (idx + 1 < rawTris.length) {
+                    const t2 = rawTris[idx + 1];
+                    const dotN = t1.n[0] * t2.n[0] + t1.n[1] * t2.n[1] + t1.n[2] * t2.n[2];
+                    if (dotN > 0.999999) {
+                        const [a, b, c] = t1.verts;
+                        const [d, e, f] = t2.verts;
+                        if (a === d && c === e && b !== f && isConvexQuad(a, b, c, f, t1.n)) {
+                            polygons.push({ verts: [a, b, c, f], n: t1.n });
+                            idx += 2;
+                            continue;
+                        }
+                        if (b === d && c === f && a !== e && isConvexQuad(a, b, e, c, t1.n)) {
+                            polygons.push({ verts: [a, b, e, c], n: t1.n });
+                            idx += 2;
+                            continue;
+                        }
+                        if (a === d && b === f && c !== e && isConvexQuad(a, e, b, c, t1.n)) {
+                            polygons.push({ verts: [a, e, b, c], n: t1.n });
+                            idx += 2;
+                            continue;
+                        }
+                    }
+                }
+                polygons.push(t1);
+                idx++;
+            }
+
+            const edgeMap = new Map();
+            const getEdgeCurve = (u, v) => {
+                const uMin = u < v ? u : v;
+                const uMax = u < v ? v : u;
+                const key = `${uMin}_${uMax}`;
+                let ecId = edgeMap.get(key);
+                if (ecId === undefined) {
+                    const pA = vertices[uMin];
+                    const pB = vertices[uMax];
+                    let dx = pB.x - pA.x, dy = pB.y - pA.y, dz = pB.z - pA.z;
+                    const len = Math.hypot(dx, dy, dz) || 1.0;
+                    dx /= len; dy /= len; dz /= len;
+                    const dirId = id++;
+                    const vecId = id++;
+                    const lineId = id++;
+                    ecId = id++;
+                    lines.push(`#${dirId}=DIRECTION('',(${fStr(dx)},${fStr(dy)},${fStr(dz)}));`);
+                    lines.push(`#${vecId}=VECTOR('',#${dirId},1.0);`);
+                    lines.push(`#${lineId}=LINE('',#${pA.ptId},#${vecId});`);
+                    lines.push(`#${ecId}=EDGE_CURVE('',#${pA.vtxId},#${pB.vtxId},#${lineId},.T.);`);
+                    edgeMap.set(key, ecId);
+                }
+                return { ecId, sense: u < v ? '.T.' : '.F.' };
+            };
+
+            const faceIds = [];
+            for (let i = 0; i < polygons.length; i++) {
+                const poly = polygons[i];
+                const m = poly.verts.length;
+                const oeIds = [];
+                for (let k = 0; k < m; k++) {
+                    const u = poly.verts[k];
+                    const v = poly.verts[(k + 1) % m];
+                    const { ecId, sense } = getEdgeCurve(u, v);
+                    const oeId = id++;
+                    lines.push(`#${oeId}=ORIENTED_EDGE('',*,*,#${ecId},${sense});`);
+                    oeIds.push(`#${oeId}`);
+                }
+
+                const loopId = id++;
+                const boundId = id++;
+                const p0 = vertices[poly.verts[0]];
+                const p1 = vertices[poly.verts[1]];
+                let rx = p1.x - p0.x, ry = p1.y - p0.y, rz = p1.z - p0.z;
+                const dotNR = rx * poly.n[0] + ry * poly.n[1] + rz * poly.n[2];
+                rx -= dotNR * poly.n[0];
+                ry -= dotNR * poly.n[1];
+                rz -= dotNR * poly.n[2];
+                const rLen = Math.hypot(rx, ry, rz) || 1.0;
+                rx /= rLen; ry /= rLen; rz /= rLen;
+
+                const nDirId = id++;
+                const rDirId = id++;
+                const axisId = id++;
+                const planeId = id++;
+                const faceId = id++;
+
+                lines.push(`#${loopId}=EDGE_LOOP('',(${oeIds.join(',')}));`);
+                lines.push(`#${boundId}=FACE_OUTER_BOUND('',#${loopId},.T.);`);
+                lines.push(`#${nDirId}=DIRECTION('',(${fStr(poly.n[0])},${fStr(poly.n[1])},${fStr(poly.n[2])}));`);
+                lines.push(`#${rDirId}=DIRECTION('',(${fStr(rx)},${fStr(ry)},${fStr(rz)}));`);
+                lines.push(`#${axisId}=AXIS2_PLACEMENT_3D('',#${p0.ptId},#${nDirId},#${rDirId});`);
+                lines.push(`#${planeId}=PLANE('',#${axisId});`);
+                lines.push(`#${faceId}=ADVANCED_FACE('',(#${boundId}),#${planeId},.T.);`);
+                faceIds.push(`#${faceId}`);
+            }
+
+            totalFaces += faceIds.length;
+            if (faceIds.length === 0) continue;
+
+            const bodyLabel = partArrays.length > 1 ? `${partName}_BODY_${pIdx + 1}` : partName;
+            const shellId = id++;
+            if (isSurface) {
+                lines.push(`#${shellId}=OPEN_SHELL('${bodyLabel}',(${faceIds.join(',')}));`);
+                const sbsmId = id++;
+                lines.push(`#${sbsmId}=SHELL_BASED_SURFACE_MODEL('${bodyLabel}',(#${shellId}));`);
+                bodyItemIds.push(`#${sbsmId}`);
+            } else {
+                lines.push(`#${shellId}=CLOSED_SHELL('${bodyLabel}',(${faceIds.join(',')}));`);
+                const brepId = id++;
+                lines.push(`#${brepId}=MANIFOLD_SOLID_BREP('${bodyLabel}',#${shellId});`);
+                bodyItemIds.push(`#${brepId}`);
+            }
+        }
+
+        bodyItemIds.push(`#${origAxisId}`);
+        const shapeRepId = id++;
+        if (isSurface) {
+            lines.push(`#${shapeRepId}=MANIFOLD_SURFACE_SHAPE_REPRESENTATION('${partName}',(${bodyItemIds.join(',')}),#${repContextId});`);
+        } else {
+            lines.push(`#${shapeRepId}=ADVANCED_BREP_SHAPE_REPRESENTATION('${partName}',(${bodyItemIds.join(',')}),#${repContextId});`);
+        }
+        lines.push(`#${id++}=SHAPE_DEFINITION_REPRESENTATION(#${prodDefShapeId},#${shapeRepId});`);
+
+        lines.push('ENDSEC;');
+        lines.push('END-ISO-10303-21;');
+
+        const stepContent = lines.join('\r\n') + '\r\n';
+        const blob = new Blob([stepContent], { type: 'application/step;charset=utf-8' });
+        if (autoDownload) this.downloadBlob(blob, filename);
+        return { content: stepContent, blob, numFaces: totalFaces, triangleCount: totalTriangles, isSurface };
+    },
+
+    exportSTEPSurface(input, filename = 'worm_gear_surface.step', partName = 'WORM_GEAR_SURFACE', autoDownload = true) {
+        return this.exportSTEP(input, filename, partName, autoDownload, true);
+    },
+
+    exportOBJ(input, filename = 'worm_gear.obj', autoDownload = true) {
+        const partArrays = this.normalizePartTriangleArrays(input);
+        const lines = [
+            '# MITCalc 3D Worm Gear Wavefront OBJ File',
+            '# Standards: DIN 3975 / DIN 3996 / AGMA 6022 - Welded Manifold Mesh'
+        ];
+
+        let globalVtxOffset = 0;
+        let globalNormOffset = 0;
+        let totalTriangles = 0;
+
+        for (let pIdx = 0; pIdx < partArrays.length; pIdx++) {
+            const triangles = partArrays[pIdx];
+            totalTriangles += triangles.length;
+            lines.push(`o WormGearBody_${pIdx + 1}`);
+
+            const vMap = new Map();
+            let localVtxCount = 0;
+            const getVtxIndex = (p) => {
+                const key = `${Math.round(p[0] * 10000)},${Math.round(p[1] * 10000)},${Math.round(p[2] * 10000)}`;
+                let vId = vMap.get(key);
+                if (vId === undefined) {
+                    localVtxCount++;
+                    vId = globalVtxOffset + localVtxCount;
+                    vMap.set(key, vId);
+                    lines.push(`v ${p[0].toFixed(5)} ${p[1].toFixed(5)} ${p[2].toFixed(5)}`);
+                }
+                return vId;
+            };
+
+            const faceLines = [];
+            for (let i = 0; i < triangles.length; i++) {
+                const [p1, p2, p3, n] = triangles[i];
+                const v1 = getVtxIndex(p1);
+                const v2 = getVtxIndex(p2);
+                const v3 = getVtxIndex(p3);
+                if (v1 === v2 || v2 === v3 || v3 === v1) continue;
+                globalNormOffset++;
+                lines.push(`vn ${n[0].toFixed(5)} ${n[1].toFixed(5)} ${n[2].toFixed(5)}`);
+                faceLines.push(`f ${v1}//${globalNormOffset} ${v2}//${globalNormOffset} ${v3}//${globalNormOffset}`);
+            }
+
+            for (let i = 0; i < faceLines.length; i++) {
+                lines.push(faceLines[i]);
+            }
+            globalVtxOffset += localVtxCount;
+        }
+
+        const textContent = lines.join('\r\n') + '\r\n';
+        const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+        if (autoDownload) this.downloadBlob(blob, filename);
+        return { blob, text: textContent, triangleCount: totalTriangles };
+    }
+};
+
+if (typeof window !== 'undefined') {
+    window.Worm3DExporter = Worm3DExporter;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Worm3DExporter;
+}
