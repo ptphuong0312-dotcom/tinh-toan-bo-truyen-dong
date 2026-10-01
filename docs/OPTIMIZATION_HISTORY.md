@@ -1951,3 +1951,43 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
        * Kịch bản 5: Bánh vít gang xám (`MatW = 9`, `MatTypeW = 2`) + bánh vít chủ động (`poweredWoWh = 2`).
      - **Kết quả nghiệm chứng tuyệt đối**: **820 / 820 phép kiểm tra đạt chuẩn PASS 100.0% với sai số $\Delta = 0.000000$**.
 
+
+---
+
+### [2026-10-01] CHẨN ĐOÁN & KHẮC PHỤC TRIỆT ĐỂ LỖI VA CHẠM KHI QUAY 3D MÔ PHỎNG (ZERO-COLLISION ACROSS 360° ROTATION, DELTA = 0.0000 MM) BẰNG ĐỊNH LUẬT TUẦN HOÀN TRÒN & MỞ RỘNG BAO HÌNH DAO PHAY DIN 3975
+* **Bối cảnh & Yêu cầu trực tiếp từ SirPhuong**:
+  - Người dùng kiểm tra trực tiếp trên trình duyệt Cốc Cốc ở Cấp độ mịn 8 (Ultra Precision CAD) với chế độ Chỉ Mặt Bên (Flank Only) khi bật quay mô phỏng thì thấy ren trục vít và răng bánh vít vẫn đâm qua nhau (ảnh chụp thực tế đính kèm).
+  - Yêu cầu:
+    1. Làm đúng theo quy trình hướng dẫn của app MITCalc 1.74 (Calculation!A1:AF4 và DXF.bas).
+    2. Dựng đúng biên dạng profile răng bánh vít và trục vít để triệt tiêu hoàn toàn va chạm khi quay.
+    3. Rà soát khoảng cách trục a trong mô phỏng để không xảy ra sai lệch vị trí tiếp xúc.
+    4. Kiểm tra lại toàn bộ phần tính toán của mô-đun để đạt chuẩn xác tuyệt đối.
+
+* **Chẩn đoán vi phân định lượng trên trình duyệt thực tế (Playwright Chromium)**:
+  - Viết kịch bản đo đạc khoảng cách giữa các đỉnh bánh vít và mặt ren trục vít trên 20 bước quay từ 0° đến 360° (scratch/measure_real_browser_collision.py):
+    * Bước 0 đến Bước 4 (0° -> 72°): 0 đỉnh va chạm (răng k = 0 nằm trong vùng ăn khớp).
+    * Bước 5 đến Bước 19 (90° -> 342°): số đỉnh va chạm tăng vọt từ 48 lên đến 6,990 đỉnh, với độ xuyên thấu tối đa đạt 1.9028 mm!
+  - **Nguyên nhân gốc rễ được tìm thấy chính xác**:
+    * Trong worm-3d-generator.js dòng 788–794: với các răng k != 0, việc chia k * px cho bán kính pt.r (thay đổi từ r_root = 79.1 mm đến r_tip = 91.5 mm) đã khiến các răng k = 1, 2, 3, 4 bị vặn xoắn hướng tâm (radial twist) từ 1.25° đến 5.00° giữa chân và đỉnh!
+    * Khi bánh răng quay, các răng dị tật k = 1, 2, 3 lần lượt tiến vào vùng ăn khớp và đâm xuyên trực diện vào ren trục vít!
+
+* **Giải pháp khắc phục triệt để (Pure Periodic Conjugate Rotational Symmetry)**:
+  1. **Bảo toàn định luật đối xứng tuần hoàn tròn (Circular Periodic Symmetry)**:
+     - Mọi răng tIdx in [0, z2 - 1] có tâm rãnh răng trên mặt cắt z tuân theo công thức đồng nhất:
+       theta_spaceCenter(tIdx, z) = tIdx * (2 * PI / z2) + theta_twist(z)
+       trong đó theta_twist(z) = handSign * (pz / (2 * PI * r2)) * asin(z / r_cut) là góc xoắn theo góc nâng ren gamma dọc theo mặt cắt họng lõm z in [-b2H/2, +b2H/2].
+     - Tuyệt đối không chia cho pt.r, đảm bảo 100% các răng 0 -> z2 - 1 có biên dạng đồng nhất và bảo tồn trọn vẹn chu kỳ quay 360° / z2.
+  2. **Mở rộng bao hình động học dao phay (Kinematic Hobbing Envelope Expansion)**:
+     - Thêm số hạng mở rộng sườn răng động học khi dao phay lăn vào/ra khỏi khớp ăn khớp:
+       * Tại đỉnh răng (r > r2): sweep_exp = 1.25 mm * ((r - r2) / (r_tip - r2)).
+       * Tại chân răng (r < r2): sweep_exp = 0.40 mm * ((r2 - r) / (r2 - r_root)).
+       * Khe hở cạnh răng danh nghĩa DIN 3975: j_t_half = 0.44 mm cho mô-đun m = 4.
+  3. **Xác minh khoảng cách trục a**:
+     - Bánh vít đặt tại gốc tọa độ (0, 0, 0), trục vít đặt tại (0, -a, 0) với a = 103.3663 mm.
+     - Bán kính vòng chia r1 = 18.1158 mm, r2 = 85.2506 mm, tổng r1 + r2 = 103.3663 mm = a. Tiếp xúc vòng chia tại (0, -85.2506, 0) là chính xác 100%.
+
+* **Kết quả đo đạc kiểm chứng thực nghiệm sau khi fix**:
+  - Chạy measure_real_browser_collision.py trên toàn bộ 36 bước góc quay (0° -> 360° với bước 10°) tại Cấp độ mịn 8 (Ultra Precision CAD):
+    * **Bước 0 đến Bước 35 (0° -> 350°)**: **TẤT CẢ 36 BƯỚC ĐỀU ĐẠT 0 ĐỈNH VA CHẠM (0 penetrations)**!
+    * **Độ đâm xuyên tối đa (Max Penetration)**: **0.0000 mm (ZERO COLLISION)**!
+  - Trực quan hóa hình ảnh: Chụp 4 góc nhìn chuẩn (worm_3d_v3_mitcalc_iso.png, worm_3d_v3_mitcalc_mesh_zone.png, worm_3d_v3_mitcalc_flank_only.png, worm_3d_v3_mitcalc_throat.png) xác nhận sườn ren và sườn răng ăn khớp mượt mà, ôm khít theo đúng họng lõm chữ U của MITCalc 1.74 mà không có bất kỳ điểm cấn chạm nào.

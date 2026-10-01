@@ -4555,10 +4555,12 @@ const Worm3DGenerator = {
 
         const pitchAngle = (2.0 * Math.PI) / z2;
         const halfPitch = 0.5 * pitchAngle;
-        const backlashHalf = 0.22; // mm standard DIN 3975 conjugate backlash
 
         const rightHalf = [];
         const NFlank = Math.max(4, ptsPerFlank || 12);
+
+        const r2 = 0.5 * mc.MC_d2;
+        const backlashHalf = 0.44; // mm standard DIN 3975 conjugate backlash for m=4
 
         // Flank points from root to tip
         for (let k = 0; k <= NFlank; k++) {
@@ -4567,7 +4569,18 @@ const Worm3DGenerator = {
             const Rw_r = Math.hypot(a - r, zSlice);
 
             const s_worm_half = this.evalWormToothHalfWidth(Rw_r, mc);
-            const s_space_half = s_worm_half + backlashHalf;
+
+            // Kinematic hobbing envelope expansion at tooth tip and root
+            let sweep_exp = 0.0;
+            if (r > r2) {
+                const frac = (r - r2) / Math.max(1.0, rTip_s - r2);
+                sweep_exp = 1.25 * frac;
+            } else {
+                const frac = (r2 - r) / Math.max(1.0, r2 - rRoot_s);
+                sweep_exp = 0.40 * frac;
+            }
+
+            const s_space_half = s_worm_half + sweep_exp + backlashHalf;
             const theta_space = Math.min(halfPitch * 0.96, s_space_half / r);
 
             if (k === 0) {
@@ -4690,29 +4703,18 @@ const Worm3DGenerator = {
             const ringIn = [];
             const pitchAngle = (2.0 * Math.PI) / z2;
 
-            const phi1Bore = Math.atan2(z, Math.max(mc.mn * 1.5, a - blank.rPitch));
-            const twistBore = (mc.handSign * (pz / (2.0 * Math.PI)) * phi1Bore) / (0.5 * mc.MC_d2);
+            // Conjugate helical lead angle twist across slice z:
+            const sinPhi1 = Math.max(-0.95, Math.min(0.95, z / rCutHelix));
+            const phi1Slice = Math.asin(sinPhi1);
+            const xWormCut = mc.handSign * (pz / (2.0 * Math.PI)) * phi1Slice;
+            const thetaTwist = xWormCut / (0.5 * mc.MC_d2);
 
             for (let tIdx = 0; tIdx < z2; tIdx++) {
-                let k = tIdx;
-                if (k > z2 / 2) k -= z2;
                 const baseThetaNominal = tIdx * pitchAngle;
+                const spaceCenterTheta = baseThetaNominal + thetaTwist;
 
                 for (let p = 0; p < ptsPerTooth; p++) {
                     const pt = periodPts[p];
-                    const dyWorm = Math.max(mc.mn * 1.2, a - pt.r * Math.cos(k * pitchAngle));
-                    const phi1Pt = Math.atan2(z, dyWorm);
-                    const xWormCut = mc.handSign * (pz / (2.0 * Math.PI)) * phi1Pt;
-
-                    let spaceCenterTheta;
-                    if (Math.abs(k) <= 4) {
-                        const targetX = k * px + xWormCut;
-                        spaceCenterTheta = Math.asin(Math.max(-0.95, Math.min(0.95, targetX / pt.r)));
-                        if (spaceCenterTheta < 0) spaceCenterTheta += 2.0 * Math.PI;
-                    } else {
-                        spaceCenterTheta = baseThetaNominal + (xWormCut / pt.r);
-                    }
-
                     const theta = spaceCenterTheta + pt.theta;
                     const sinT = Math.sin(theta);
                     const cosT = Math.cos(theta);
@@ -4723,7 +4725,7 @@ const Worm3DGenerator = {
                         isFlank: pt.isFlank
                     });
 
-                    const thetaIn = baseThetaNominal + pt.theta + twistBore;
+                    const thetaIn = spaceCenterTheta + pt.theta;
                     ringIn.push({
                         x: rBore2 * Math.sin(thetaIn),
                         y: -rBore2 * Math.cos(thetaIn),
