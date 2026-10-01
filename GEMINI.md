@@ -1345,4 +1345,21 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Hỗ trợ đầy đủ 10 cấp độ trong `#selMeshDensity` từ Cấp 1 (Nhanh) đến Cấp 10 (Tối Thượng Micro-Mesh với 131 lát cắt bánh vít, 380 lát cắt trục vít, hơn 830,000 tam giác).
    - Hiển thị cung họng lõm siêu mịn, mượt mà không còn nấc đa giác.
 
+---
+
+### Quy Tắc 58: Quy Chuẩn Phân Chia Tam Giác Đường Chéo Ngắn Thích Nghi (Adaptive Shortest-Diagonal Triangulation) & Triệt Tiêu Hiện Tượng Răng Cưa Tiếp Xúc Góc Dẹp (Grazing Sawtooth Elimination)
+1. **Bản Chất Động Học Ăn Khớp Không Đối Xứng Giữa 2 Má Ren Trục Vít**:
+   - Trục vít ren phải ($\gamma = 6.710^\circ$) có tính bất đối xứng không gian rõ rệt giữa hai má của rãnh răng bánh vít:
+     * **Má Vào Khớp (Driving/Entering Flank)**: Góc dốc giao cắt giữa hai mặt tiếp xúc lớn ($\sim 15^\circ - 25^\circ$), giao tuyến cắt dứt khoát qua lưới tam giác tạo thành đường viền phẳng nét, gọn gàng, ít răng cưa.
+     * **Má Thoát Khớp (Coast/Leaving Flank)**: Hai mặt cong tiếp xúc ôm khít ở **góc cực kỳ dẹp (Grazing / Osculating Contact $< 0.1^\circ$)**. Ở góc dẹp này, độ võng dây cung nửa micron ($\Delta h \approx 0.0005\text{ mm}$) bị khuếch đại lên thành độ lệch biên $\Delta x = \frac{\Delta h}{\sin(0.08^\circ)} \approx 0.4\text{ mm} - 0.8\text{ mm}$, tạo thành viền răng cưa nhấp nhô tuần hoàn theo từng lát cắt lưới.
+2. **Quy Chuẩn Phân Chia Tam Giác Đường Chéo Ngắn Thích Nghi (Adaptive Shortest-Diagonal Delaunay Triangulation)**:
+   - Trong quá trình dựng lưới quad $(p_{00}, p_{01}, p_{11}, p_{10})$ cho cả sườn trục vít và bánh vít, cấm tuyệt đối việc cố định hướng đường chéo $(p_{00}, p_{11})$ (gây hiện tượng đường chéo cắt ngang qua sườn ren dài $3.38\text{ mm}$, gấp nếp nan quạt và khuếch đại răng cưa).
+   - Bắt buộc tính toán độ dài bình phương 2 đường chéo trong thời gian thực:
+     $$d_1^2 = \|p_{00} - p_{11}\|^2, \quad d_2^2 = \|p_{01} - p_{10}\|^2$$
+   - Luôn luôn chọn đường chéo ngắn nhất ($d_1^2 \le d_2^2 \implies (p_{00}, p_{11})$, ngược lại $\implies (p_{01}, p_{10})$) để chia tam giác.
+   - Nhờ đó, đường chéo trên cả 2 má ren trục vít luôn bám sát theo đường xoắn ốc tự nhiên ($0.57\text{ mm}$), triệt tiêu các nếp gấp chéo trục, giúp vết in tiếp xúc trên cả hai má đều phẳng mịn, đồng đều và sắc nét!
+3. **Quy Chuẩn Hàm Bisection Tự Nhận Diện Chiều Biến Thiên**:
+   - Hàm giải bán kính tiếp xúc $u$ bắt buộc kiểm tra `isDecreasing = (rAtLow >= rAtHigh)` để bisection hội tụ chính xác $< 0.0001\text{ mm}$ trên cả miền tăng và giảm đơn điệu, bảo tồn tính đối xứng gương $z \leftrightarrow -z$ của 2 má.
+
+
 

@@ -1432,4 +1432,17 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
     - **Hệ thống 10 cấp độ mịn Micro-Mesh**:
       * Mở rộng từ Cấp 1 đến Cấp 10 (Cấp 8: 95 slices; Cấp 9: 111 slices; Cấp 10: 131 slices bánh vít và 380 slices trục vít, hơn 830,000 tam giác).
 
+---
+
+14. **PHÂN CHIA TAM GIÁC ĐƯỜNG CHÉO NGẮN THÍCH NGHI (ADAPTIVE DELAUNAY) & TRIỆT TIÊU RĂNG CƯA TIẾP XÚC GÓC DẸP**:
+    - **Bản chất động học không đối xứng giữa 2 má ren**:
+      * Má Vào Khớp (Driving/Entering Flank): Góc dốc lớn $\sim 20^\circ$, đường cắt dứt khoát, viền tiếp xúc gọn gàng phẳng mịn.
+      * Má Thoát Khớp (Coast/Leaving Flank): Tiếp xúc ôm khít ở góc cực kỳ dẹp ($< 0.1^\circ$), độ võng dây cung nửa micron ($\Delta h \approx 0.0005\text{ mm}$) bị khuếch đại thành sai số biên $\Delta x = \Delta h / \sin(0.08^\circ) \approx 0.4 - 0.8\text{ mm}$, tạo thành viền gai răng cưa tua tủa.
+    - **Thuật toán phân chia tam giác đường chéo ngắn thích nghi**:
+      * Cho mọi ô quad sườn trục vít và bánh vít, tính bình phương 2 đường chéo: $d_1^2 = \|p_{00} - p_{11}\|^2, d_2^2 = \|p_{01} - p_{10}\|^2$.
+      * Luôn chọn đường chéo ngắn nhất để chia tam giác. Triệt tiêu hoàn toàn đường chéo cắt ngang qua sườn ren dài $3.38\text{ mm}$ ở Má Phải, đưa toàn bộ về đường chéo ngắn $0.57\text{ mm}$ xuôi theo chiều xoắn ốc.
+    - **Chuẩn hóa hàm giải bisection `solveConjugateUForR`**:
+      * Tự động nhận diện `isDecreasing = (rAtLow >= rAtHigh)`, hội tụ 18 vòng lặp $< 0.0001\text{ mm}$ trên cả 2 miền tăng/giảm đơn điệu, bảo toàn tính đối xứng gương $z \leftrightarrow -z$ của 2 má.
+
+
 

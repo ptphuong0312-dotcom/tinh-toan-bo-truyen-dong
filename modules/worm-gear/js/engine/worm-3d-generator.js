@@ -241,16 +241,31 @@ const Worm3DGenerator = {
         const rAtLow = evalR(uLow);
         const rAtHigh = evalR(uHigh);
 
-        if (rTarget >= rAtLow) return uLow;
-        if (rTarget <= rAtHigh) return uHigh;
+        const isDecreasing = (rAtLow >= rAtHigh);
+        if (isDecreasing) {
+            if (rTarget >= rAtLow) return uLow;
+            if (rTarget <= rAtHigh) return uHigh;
+        } else {
+            if (rTarget <= rAtLow) return uLow;
+            if (rTarget >= rAtHigh) return uHigh;
+        }
 
         // Monotonic bisection convergence (< 0.0001 mm precision)
-        for (let iter = 0; iter < 14; iter++) {
+        for (let iter = 0; iter < 18; iter++) {
             const mid = (low + high) * 0.5;
-            if (evalR(mid) > rTarget) {
-                low = mid;
+            const rMid = evalR(mid);
+            if (isDecreasing) {
+                if (rMid > rTarget) {
+                    low = mid;
+                } else {
+                    high = mid;
+                }
             } else {
-                high = mid;
+                if (rMid < rTarget) {
+                    low = mid;
+                } else {
+                    high = mid;
+                }
             }
         }
         return (low + high) * 0.5;
@@ -418,26 +433,42 @@ const Worm3DGenerator = {
                 const stA = sA.starts[k];
                 const stB = sB.starts[k];
 
-                // Right Flank
+                // Right Flank (Adaptive Shortest-Diagonal Delaunay Triangulation)
                 for (let m = 0; m < ptsR; m++) {
                     const p00 = stA.rFlankR[m];
                     const p01 = stA.rFlankR[m + 1];
                     const p10 = stB.rFlankR[m];
                     const p11 = stB.rFlankR[m + 1];
 
-                    pushTri(p00, p01, p11);
-                    pushTri(p00, p11, p10);
+                    const d00_11_sq = (p00.x - p11.x) ** 2 + (p00.y - p11.y) ** 2 + (p00.z - p11.z) ** 2;
+                    const d01_10_sq = (p01.x - p10.x) ** 2 + (p01.y - p10.y) ** 2 + (p01.z - p10.z) ** 2;
+
+                    if (d00_11_sq <= d01_10_sq) {
+                        pushTri(p00, p01, p11);
+                        pushTri(p00, p11, p10);
+                    } else {
+                        pushTri(p00, p01, p10);
+                        pushTri(p01, p11, p10);
+                    }
                 }
 
-                // Left Flank
+                // Left Flank (Adaptive Shortest-Diagonal Delaunay Triangulation)
                 for (let m = 0; m < ptsR; m++) {
                     const p00 = stA.rFlankL[m];
                     const p01 = stA.rFlankL[m + 1];
                     const p10 = stB.rFlankL[m];
                     const p11 = stB.rFlankL[m + 1];
 
-                    pushTri(p00, p10, p11);
-                    pushTri(p00, p11, p01);
+                    const d00_11_sq = (p00.x - p11.x) ** 2 + (p00.y - p11.y) ** 2 + (p00.z - p11.z) ** 2;
+                    const d01_10_sq = (p01.x - p10.x) ** 2 + (p01.y - p10.y) ** 2 + (p01.z - p10.z) ** 2;
+
+                    if (d00_11_sq <= d01_10_sq) {
+                        pushTri(p00, p10, p11);
+                        pushTri(p00, p11, p01);
+                    } else {
+                        pushTri(p00, p10, p01);
+                        pushTri(p10, p11, p01);
+                    }
                 }
 
                 if (!surfaceOnly) {
@@ -676,26 +707,42 @@ const Worm3DGenerator = {
                 const tA = sA.teeth[j];
                 const tB = sB.teeth[j];
 
-                // Left Flank
+                // Left Flank (Adaptive Shortest-Diagonal Delaunay Triangulation)
                 for (let m = 0; m < ptsR; m++) {
                     const p00 = tA.rFlankL[m];
                     const p01 = tA.rFlankL[m + 1];
                     const p10 = tB.rFlankL[m];
                     const p11 = tB.rFlankL[m + 1];
 
-                    pushTri(p00, p10, p11);
-                    pushTri(p00, p11, p01);
+                    const d00_11_sq = (p00.x - p11.x) ** 2 + (p00.y - p11.y) ** 2 + (p00.z - p11.z) ** 2;
+                    const d01_10_sq = (p01.x - p10.x) ** 2 + (p01.y - p10.y) ** 2 + (p01.z - p10.z) ** 2;
+
+                    if (d00_11_sq <= d01_10_sq) {
+                        pushTri(p00, p10, p11);
+                        pushTri(p00, p11, p01);
+                    } else {
+                        pushTri(p00, p10, p01);
+                        pushTri(p10, p11, p01);
+                    }
                 }
 
-                // Right Flank
+                // Right Flank (Adaptive Shortest-Diagonal Delaunay Triangulation)
                 for (let m = 0; m < ptsR; m++) {
                     const p00 = tA.rFlankR[m];
                     const p01 = tA.rFlankR[m + 1];
                     const p10 = tB.rFlankR[m];
                     const p11 = tB.rFlankR[m + 1];
 
-                    pushTri(p00, p01, p11);
-                    pushTri(p00, p11, p10);
+                    const d00_11_sq = (p00.x - p11.x) ** 2 + (p00.y - p11.y) ** 2 + (p00.z - p11.z) ** 2;
+                    const d01_10_sq = (p01.x - p10.x) ** 2 + (p01.y - p10.y) ** 2 + (p01.z - p10.z) ** 2;
+
+                    if (d00_11_sq <= d01_10_sq) {
+                        pushTri(p00, p01, p11);
+                        pushTri(p00, p11, p10);
+                    } else {
+                        pushTri(p00, p01, p10);
+                        pushTri(p01, p11, p10);
+                    }
                 }
 
                 if (!surfaceOnly) {
