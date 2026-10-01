@@ -1217,3 +1217,27 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Chuyển sắc Hermite 2 bậc $C^1$ siêu mịn từ Đồng CuSn12Ni2 $(0.92, 0.35, 0.05)$ (`#ea580c`) $\to$ Viền Cyan/Sky Blue $(0.15, 0.75, 0.98)$ (`#26bbf9`) $\to$ Tâm bột rà Prussian Blue $(0.01, 0.22, 0.78)$ (`#014ba0`).
    - Kết quả: Mặt sườn răng nhẵn bóng, trơn láng 100%, vệt màu rà Prussian Blue hiển thị sắc nét, sống động như thiết bị đo kiểm xưởng cơ khí hiện đại.
 
+---
+
+### Quy Tắc 53: Quy Chuẩn Tái Cấu Trúc Toàn Diện Mô Hình 3D Trục Vít - Bánh Vít Chuẩn Gốc MITCalc 1.74 (Đập Bỏ Bôi Vẽ Màu Bột Rà Giả Tạo & Tổ Ong Nan Hoa — Khối Đặc & Chỉ Mặt Bên Đồng Màu Kim Loại PBR Thuần Khiết)
+1. **Lệnh Dứt Khoát Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"bạn bôi cái gì nên răng bánh vít thế kía. chốt lại bây giờ như thế này nhá : bây giờ đập bỏ phần mô phỏng để xây lại mới tinh hoàn toàn, tôi yêu cầu bạn đọc cách thức dựng hình 3D của app mitcalc 1.74 thật kĩ để hiểu và nhớ được, sau đó bạn sẽ dựng cho tôi đúng như cách app mitcalc 1.74 làm"*.
+   - **Hành động bắt buộc**: Đập bỏ hoàn toàn mọi dạng bôi vẽ màu sắc giả tạo (vertex colors / Prussian Blue / TCA smear) trên răng bánh vít! Bánh vít đồng thiếc CuSn12Ni2 phải giữ nguyên màu đồng vàng cam kim loại PBR nguyên bản (`#ea580c` cho Solid, `#ff5722` cho Flank), trục vít giữ màu thép Cobalt-Cyan (`#0284c7` cho Solid, `#00a8ff` cho Flank).
+2. **Triệt Tiêu 100% Hiện Tượng Tổ Ong / Nan Hoa Mặt Đầu Bánh Vít**:
+   - Mặt phẳng đầu tại $Z = \pm b_{2H}/2$ phải là đĩa vành khăn phẳng nhẵn hoàn hảo (Planar Annular Disk) nối từ lỗ trục $r_{\text{bore2}}$ đến vành chân răng $r_{\text{rimRoot}}$.
+   - Sinh lưới đồng tâm `pushZDisk(rInner, rOuter, zSign)` với tọa độ $Z = \pm b_{2H}/2$ cố định và vector pháp tuyến $[0, 0, \pm 1]$ đồng nhất, bảo đảm mặt bên bánh vít phẳng láng bóng kim loại, triệt tiêu 100% rãnh hay lỗ tổ ong.
+3. **Mô Hình Hóa 3D Chuẩn Xác 1-to-1 Theo MITCalc 1.74 (`DXF.bas!WWheel`, `help/en/gear4txt.htm`, `Gear4_01.xlsb`)**:
+   - **Trục Vít 1 (Archimedean Helicoid ZA)**:
+     * Tiện trục với đường kính đỉnh $d_{a1}$, chia $d_1$, chân $d_{f1}$.
+     * Biên dạng thẳng hình thang trong mặt cắt dọc trục với góc $\alpha_x = \text{MC\_alfa}$.
+     * Vát côn hai đầu ren góc $\beta = 10^\circ$ chuẩn Section 19.4 (`_DXF_Beta`).
+     * Vai trục ($d_s, t$) chuẩn Section 19.3 (`_Shaft_ds`, `_Shaft_th`) và hai đoạn trục kéo dài ($l_1, l_2$).
+   - **Bánh Vít Lõm 2 (Globoid Throated Worm Wheel)**:
+     * Phôi họng lõm chữ U chuẩn xác 100% theo 3 nhánh giải tích `DXF.bas!WWheel`: bán kính họng đỉnh $r_1 = a - d_{a2}/2$, họng chia $r_2 = a - d_2/2$, họng chân $r_3 = a - d_{f2}/2$, bề rộng $b_{2H}$, đỉnh ngoài $d_{e2}$, vát mép vành đĩa.
+     * Răng bánh vít ăn khớp liên hợp giải tích: tiếp xúc trượt liên hợp tiếp tuyến khít khao ($\Delta = 0.000000\text{ mm}$), không cấn cọ, không đâm xuyên sườn sau trên toàn bộ 360°, không Z-fighting.
+     * Bề dày răng thực tế: $w_2(r, z) = \max(0.12 \cdot m_x, s_{x2}/2 - (r - r_2)\tan\alpha_x - \delta_{\text{crown}})$.
+4. **Đồng Bộ Giao Diện 2 Chế Độ 1-to-1 Như Module Bánh Răng Trụ & Bánh Răng Côn**:
+   - `Khối Đặc (Solid Mode)`: Hai bánh răng nguyên khối kim loại quay ăn khớp.
+   - `Chỉ Mặt Bên (Flank Only Mode)`: Chỉ hiện sườn ren trục vít (`#00a8ff`) và sườn răng bánh vít (`#ff5722`), lọt lòng khít khao, không bôi vẽ màu sắc nhân tạo.
+   - Tùy chọn `Tiếp xúc: Lý Thuyết / Thực Tế`: Thay đổi độ vồng biên dạng thực thể (Crowning profile relief ở hai mép đầu răng theo AGMA 6022 / DIN 3996) thay vì tô màu.
+

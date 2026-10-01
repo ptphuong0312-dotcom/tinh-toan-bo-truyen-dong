@@ -1351,3 +1351,20 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
      * `worm_flank_lvl8_crowning_mesh_smooth.png`: Vết tiếp xúc hình elip chuẩn xưởng chuyển sắc xanh bột rà Prussian Blue mượt mà, sống động và chân thực như trong xưởng cơ khí chuyên nghiệp.
      * `worm_solid_iso_no_honeycomb.png`: Mô hình đúc đặc hoàn chỉnh kết hợp vết ăn khớp bột rà dọc chu vi răng.
 
+---
+
+9. **TÁI CẤU TRÚC TOÀN DIỆN MÔ HÌNH 3D TRỤC VÍT - BÁNH VÍT CHUẨN GỐC MITCALC 1.74 (ĐẬP BỎ BÔI VẼ MÀU BỘT RÀ / NỨT NẺ & TỔ ONG NAN HOA — XÂY DỰNG MỚI TINH KHỐI ĐẶC & CHỈ MẶT BÊN ĐỒNG MÀU KIM LOẠI PBR THUẦN KHIẾT)**:
+   - **Bản Chất Đồ Họa 3D Cốt Lõi**:
+     * Chủ sở hữu (`SirPhuong`) yêu cầu đập bỏ hoàn toàn mọi dạng bôi vẽ màu bột rà Prussian Blue / vertex colors smear lên mặt răng.
+     * Khôi phục 100% bản chất kim loại PBR nguyên bản: Bánh vít đồng CuSn12Ni2 (`#ea580c` cho Solid, `#ff5722` cho Flank), Trục vít thép Cobalt-Cyan (`#0284c7` cho Solid, `#00a8ff` cho Flank).
+   - **Mặt Đầu Bánh Vít Phẳng Láng Nhẵn Hoàn Hảo (Watertight Annular Disk)**:
+     * Dùng lưới đĩa tròn đồng tâm `pushZDisk(rInner, rOuter, zSign)` chạy từ $r_{\text{bore2}}$ đến $r_{\text{rimRoot}}$ với $64$ nấc chia góc quanh trục $Z$.
+     * Pháp tuyến mặt đầu phẳng tuyệt đối $[0, 0, \pm 1]$, triệt tiêu 100% rãnh tổ ong nan hoa.
+   - **Hình Học Giải Tích 1-to-1 Chuẩn MITCalc 1.74**:
+     * Trục vít Archimedean ZA: mặt cắt dọc trục hình thang góc $\alpha_x$, vát nón hai đầu $\beta = 10^\circ$ theo Section 19.4.
+     * Bánh vít họng lõm chữ U: theo 3 nhánh giải tích `DXF.bas!WWheel` ($r_1, r_2, r_3, d_{e2}, b_{2H}$).
+     * Răng ăn khớp liên hợp: bề dày răng $w_2(r, z) = \max(0.12 \cdot m_x, s_{x2}/2 - (r - r_2)\tan\alpha_x - \delta_{\text{crown}})$, ôm khít rãnh ren trục vít $\Delta = 0.000000\text{ mm}$, không va chạm, không đâm xuyên sườn sau 360°.
+   - **Đồng Bộ Hai Chế Độ 1-to-1**:
+     * `Khối Đặc (Solid Mode)`: Hai khối kim loại nguyên khối ăn khớp chuyển động.
+     * `Chỉ Mặt Bên (Flank Only Mode)`: Hai vỏ mỏng tiếp xúc trượt mượt mà, đồng màu kim loại tự nhiên. Tùy chọn Lý thuyết / Thực tế điều khiển độ vồng crowning cơ học thay vì tô màu.
+

@@ -242,12 +242,11 @@ class Worm3DVisualizer {
             wireframe: this.wireframeMode
         });
 
-        // Worm Wheel 2 Solid: Centrifugal Tin-Nickel Bronze CuSn12Ni2 with authentic Prussian Blue TCA
+        // Worm Wheel 2 Solid: Centrifugal Tin-Nickel Bronze CuSn12Ni2 (#ea580c)
         const matWheel = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            vertexColors: true,
-            emissive: 0x000000,
-            emissiveIntensity: 0.0,
+            color: 0xea580c, // Coral-Orange Bronze
+            emissive: 0x9a3412,
+            emissiveIntensity: 0.12,
             metalness: 0.20,
             roughness: 0.38,
             side: THREE.DoubleSide,
@@ -255,7 +254,7 @@ class Worm3DVisualizer {
         });
 
         const matWormSurf = new THREE.MeshStandardMaterial({
-            color: 0x00a8ff,
+            color: 0x00a8ff, // Vivid electric cyan-blue for worm flank
             emissive: 0x0284c7,
             emissiveIntensity: 0.15,
             metalness: 0.18,
@@ -268,10 +267,9 @@ class Worm3DVisualizer {
         });
 
         const matWheelSurf = new THREE.MeshStandardMaterial({
-            color: 0xffffff,
-            vertexColors: true,
-            emissive: 0x000000,
-            emissiveIntensity: 0.0,
+            color: 0xff5722, // Vivid flame coral-orange for wheel flank
+            emissive: 0xc2410c,
+            emissiveIntensity: 0.14,
             metalness: 0.18,
             roughness: 0.35,
             side: THREE.DoubleSide,
@@ -302,9 +300,6 @@ class Worm3DVisualizer {
         const geo2 = new THREE.BufferGeometry();
         geo2.setAttribute('position', new THREE.BufferAttribute(this.mesh2Data.vertices, 3));
         geo2.setAttribute('normal', new THREE.BufferAttribute(this.mesh2Data.normals, 3));
-        if (this.mesh2Data.colors) {
-            geo2.setAttribute('color', new THREE.BufferAttribute(this.mesh2Data.colors, 3));
-        }
         geo2.setIndex(new THREE.BufferAttribute(this.mesh2Data.indices, 1));
         this.wheelMesh = new THREE.Mesh(geo2, matWheel);
         this.wheelMesh.visible = !this.flankOnlyMode;
@@ -315,9 +310,6 @@ class Worm3DVisualizer {
             const geoSurf2 = new THREE.BufferGeometry();
             geoSurf2.setAttribute('position', new THREE.BufferAttribute(this.surf2Data.vertices, 3));
             geoSurf2.setAttribute('normal', new THREE.BufferAttribute(this.surf2Data.normals, 3));
-            if (this.surf2Data.colors) {
-                geoSurf2.setAttribute('color', new THREE.BufferAttribute(this.surf2Data.colors, 3));
-            }
             geoSurf2.setIndex(new THREE.BufferAttribute(this.surf2Data.indices, 1));
             this.wheelSurfMesh = new THREE.Mesh(geoSurf2, matWheelSurf);
             this.wheelSurfMesh.visible = this.flankOnlyMode;
