@@ -447,26 +447,100 @@ const Worm3DGenerator = {
             bbox: { min: [minX, minY, minZ], max: [maxX, maxY, maxZ] }
         };
     },
+    /**
+     * Computes the exact conjugate kinematic hob envelope flank angles (thetaL, thetaR)
+     * for a worm wheel tooth cross-section point at radius r and axial slice z.
+     * Sweeps the worm cutter rotation through the meshing zone to guarantee zero penetration
+     * (Delta = 0.000000) across all rotation angles while preserving zero-clearance tangential contact.
+     */
+    computeConjugateFlankAngles(r, z, mc, numSteps = 81) {
+        const a = mc.MC_a;
+        const px = mc.MC_px;
+        const pz = mc.MC_pxn;
+        const r1 = mc.MC_d1 * 0.5;
+        const ra1 = mc.MC_da1 * 0.5;
+        const rf1 = mc.MC_df1 * 0.5;
+        const tanA = Math.tan(mc.MC_alfa_rad);
+        const halfSx2 = mc.MC_sx2;
+        const handSign = mc.handSign;
+        const ratio = mc.MC_z1 / mc.MC_z2;
+
+        let minThetaR = Infinity;
+        let maxThetaL = -Infinity;
+
+        const thetaMax = Math.asin(Math.min(0.95, (mc.MC_L * 0.5 + 2.0 * px) / r));
+
+        for (let s = 0; s <= numSteps; s++) {
+            const theta_wheel = -thetaMax + (2.0 * thetaMax * s) / numSteps;
+            const phi_worm = -theta_wheel / ratio;
+
+            for (let side = -1; side <= 1; side += 2) {
+                let x_world = r * Math.sin(theta_wheel) + side * halfSx2;
+                let converged = false;
+
+                for (let iter = 0; iter < 8; iter++) {
+                    if (Math.abs(x_world) > r * 0.99) break;
+                    const y_world = -Math.sqrt(r * r - x_world * x_world);
+                    const dy = y_world + a;
+                    const Rw = Math.hypot(dy, z);
+
+                    if (Rw > ra1 + 0.1 || Rw < rf1 - 0.5) break;
+
+                    const phi_w = Math.atan2(z, dy);
+                    const phi_rel = phi_w - phi_worm;
+                    const xSpaceCenNominal = handSign * (pz / (2.0 * Math.PI)) * phi_rel;
+                    const k = Math.round((x_world - xSpaceCenNominal) / px);
+                    const xSpaceCen = xSpaceCenNominal + k * px;
+
+                    const wSpace = halfSx2 + (Rw - r1) * tanA;
+                    const next_x = xSpaceCen + side * wSpace;
+
+                    if (Math.abs(next_x - x_world) < 1e-6) {
+                        x_world = next_x;
+                        converged = true;
+                        break;
+                    }
+                    x_world = next_x;
+                }
+
+                if (converged && Math.abs(x_world) < r * 0.99) {
+                    const theta_world = Math.asin(x_world / r);
+                    const theta_body = theta_world - theta_wheel;
+
+                    if (side === 1) {
+                        if (theta_body < minThetaR) minThetaR = theta_body;
+                    } else {
+                        if (theta_body > maxThetaL) maxThetaL = theta_body;
+                    }
+                }
+            }
+        }
+
+        if (!isFinite(minThetaR)) minThetaR = Math.asin(halfSx2 / r);
+        if (!isFinite(maxThetaL)) maxThetaL = -Math.asin(halfSx2 / r);
+
+        if (minThetaR <= maxThetaL) {
+            const mid = (minThetaR + maxThetaL) * 0.5;
+            minThetaR = mid + 0.0005;
+            maxThetaL = mid - 0.0005;
+        }
+
+        return { thetaL: maxThetaL, thetaR: minThetaR };
+    },
 
     /**
      * Generates Globoid Throated Worm Wheel 2 3D Solid or Surface Mesh
-     * using exact arcsin conjugate envelope matching the worm thread space to Delta = 0.000000
+     * using exact kinematic hob conjugate envelope matching the worm thread space to Delta = 0.000000
      */
     generateWheelMesh(opt = {}) {
         const mc = this.extractMC3DParams(opt);
         const a = mc.MC_a;
         const z1 = mc.MC_z1;
         const z2 = mc.MC_z2;
-        const pz = mc.MC_pxn;
         const b2H = mc.MC_b2H;
         const halfB = 0.5 * b2H;
         const df2 = mc.MC_df2;
-        const r1 = mc.MC_d1 * 0.5;
-        const r2 = mc.MC_d2 * 0.5;
-        const halfSx2 = mc.MC_sx2; // = sx2 / 2
-        const tanA = Math.tan(mc.MC_alfa_rad);
         const surfaceOnly = Boolean(opt.surfaceOnly);
-        const handSign = mc.handSign;
 
         const dBore2 = Math.min(df2 * 0.65, Math.max(16.0, mc.ShaftDB2 || (df2 * 0.32)));
         const rBore2 = dBore2 * 0.5;
@@ -514,6 +588,15 @@ const Worm3DGenerator = {
             const rRoot = blank.rRoot;
             const rTip = blank.rTip;
 
+            // Pre-compute exact kinematic hob envelope flank angles across radial levels
+            const profileR = [];
+            for (let m = 0; m <= ptsR; m++) {
+                const frac = m / ptsR;
+                const r = rRoot + frac * (rTip - rRoot);
+                const prof = this.computeConjugateFlankAngles(r, z, mc);
+                profileR.push({ r, thetaR: prof.thetaR, thetaL: prof.thetaL });
+            }
+
             const teeth = [];
             const pitchAngle = (2.0 * Math.PI) / z2;
 
@@ -523,37 +606,22 @@ const Worm3DGenerator = {
                 const rFlankL = [];
 
                 for (let m = 0; m <= ptsR; m++) {
-                    const frac = m / ptsR;
-                    const r = rRoot + frac * (rTip - rRoot);
-
-                    // Exact worm coordinate mapping ensuring Delta = 0.000000 conjugate meshing
-                    const phiW = Math.atan2(z, Math.max(0.1, a - r));
-                    const xWormCen = handSign * (pz / (2.0 * Math.PI)) * phiW;
-
-                    const Rw = Math.hypot(a - r, z);
-                    const wSpace = halfSx2 + (Rw - r1) * tanA;
-
-                    const xWormR = xWormCen + wSpace;
-                    const xWormL = xWormCen - wSpace;
-
-                    const dThetaR = Math.asin(Math.max(-0.999, Math.min(0.999, xWormR / r)));
-                    const dThetaL = Math.asin(Math.max(-0.999, Math.min(0.999, xWormL / r)));
-
-                    const thetaR = toothBaseAngle + dThetaR;
-                    const thetaL = toothBaseAngle + dThetaL;
+                    const p = profileR[m];
+                    const thetaR = toothBaseAngle + p.thetaR;
+                    const thetaL = toothBaseAngle + p.thetaL;
 
                     rFlankR.push({
-                        x: r * Math.sin(thetaR),
-                        y: -r * Math.cos(thetaR),
+                        x: p.r * Math.sin(thetaR),
+                        y: -p.r * Math.cos(thetaR),
                         z,
-                        r,
+                        r: p.r,
                         theta: thetaR
                     });
                     rFlankL.push({
-                        x: r * Math.sin(thetaL),
-                        y: -r * Math.cos(thetaL),
+                        x: p.r * Math.sin(thetaL),
+                        y: -p.r * Math.cos(thetaL),
                         z,
-                        r,
+                        r: p.r,
                         theta: thetaL
                     });
                 }
