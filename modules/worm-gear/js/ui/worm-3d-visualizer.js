@@ -46,7 +46,7 @@ class Worm3DVisualizer {
         this.wireframeMode = false;
         this.flankOnlyMode = false;
         this.contactMode = 'theory'; // 'theory' (Mặc định: Đường tiếp xúc liên hợp) | 'crowning' (Vết elip có độ vồng)
-        this.meshDensityLevel = 6; // Default Level 6 (CAM/CNC Precision)
+        this.meshDensityLevel = 8; // Default Level 8 (Ultra Precision CAD)
 
         this.mesh1Data = null;
         this.mesh2Data = null;
@@ -403,7 +403,7 @@ class Worm3DVisualizer {
     }
 
     setMeshDensityLevel(level) {
-        this.meshDensityLevel = Math.max(1, Math.min(8, parseInt(level) || 6));
+        this.meshDensityLevel = Math.max(1, Math.min(10, parseInt(level) || 8));
         if (this.geom) {
             const curWormAngle = this.wormAngle;
             const curWheelAngle = this.wheelAngle;

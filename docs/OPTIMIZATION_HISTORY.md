@@ -2373,3 +2373,55 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
     * `worm_preset_stepped_rear.png`: Khi nhích bước vi phân, vết in màu di chuyển trơn tru liên tục.
     * **Kết quả: 100% ALL VERIFICATIONS PASSED, 0 lỗi Console / WebGL**!
 
+---
+
+### [2026-10-01] GIAI ĐOẠN 32: TRIỆT TIÊU 100% RÃNH CHẺ ĐỈNH REN TRỤC VÍT, CHUẨN HÓA GÓC VÁT BÊN BÁNH VÍT 33.75° THEO MITCALC 1.74 (DXF.BAS!WWHEEL), MỞ RỘNG 10 CẤP ĐỘ MỊN & ĐÓNG ĐINH NGUYÊN TẮC BẤT BIẾN "CƠ CHẾ IN MÀU MẶT SAU"
+* **Bối cảnh & Chỉ đạo dứt khoát từ Chủ sở hữu (`SirPhuong`)**:
+  - *"tôi cần nhắc lại 1 lần nữa : "Cơ chế in màu mặt sau (Back-Face Imprint)" bạn cần lưu nguyên tắc xem vết kiểu như này để sau này làm sang bộ truyền khác thì không cần tôi diễn tả thì bạn cũng sẽ tự làm kiểu in vết như này (mặt tiếp xúc của chi tiết này sẽ in màu sang bề mặt sau của chi tiết kia)"*
+  - *"tôi cần bạn tang cấp độ mịn nữa"*
+  - *"tôi cần bạn sửa góc vát bên của bánh vít theo tiêu chuẩn của app mitcalc vì hiện tại góc bên (cạnh bên) bánh vít đang vuông vức, tiếp theo là trục vít có sẻ rãnh ở giửa đỉnh răng như hình tôi chụp"*
+* **Phân tích nguyên nhân gốc rễ (Root Cause Analysis)**:
+  1. **Hiện tượng sẻ rãnh ở giữa đỉnh răng trục vít (`media_1790866149461.png`)**:
+     - Đỉnh ren trục vít Archimedes (ZA) có góc mở cực lớn: $2 \cdot d\Phi \approx 96.01^\circ$ (gần $1/4$ vòng tròn).
+     - Thuật toán cũ nối thẳng 1 đoạn dây cung duy nhất giữa đỉnh sườn phải và đỉnh sườn trái: `pushTri(pR_A, pL_A, pL_B)`.
+     - Trung điểm dây cung bị võng sâu vào tâm trụ:
+       $$R_{\text{mid}} = R \cos\left(\frac{96.01^\circ}{2}\right) = 22.349 \times \cos(48^\circ) = 14.953\text{ mm}$$
+     - Độ võng (sag) lên tới **$7.396\text{ mm}$** (chiếm hơn $77\%$ toàn bộ chiều cao ren $9.525\text{ mm}$)! Hậu quả là tại hình chiếu đứng (`Front XY`), đỉnh mỗi ren bị lõm sâu thành rãnh chữ V, trông như hai chiếc răng nanh nhọn hoắt bị chẻ đôi ở giữa.
+  2. **Góc bên (cạnh bên) bánh vít bị vuông vức (`media_1790866175362.png`)**:
+     - Thuật toán `evalWheelBlank(z, mc)` trước đó chỉ kiểm tra `absZ <= mc.b1`, khi $|z| > b_1$ nó gán thẳng $r_{\text{tip}} = d_{e2}/2$ cho toàn bộ chiều rộng $b_{2H}/2$.
+     - Mặt đầu bánh vít tại $z = \pm b_{2H}/2$ rơi thẳng đứng từ $d_{e2}/2$ xuống lỗ trục, làm cạnh bên vuông chằn chặn, mất đi góc vát mép chéo đặc trưng của MITCalc 1.74.
+  3. **Cấp độ mịn**:
+     - Bảng `getDensitySettings` cũ tối đa chỉ có Cấp 8 với 55 lát cắt bánh vít và 190 lát cắt trục vít, khiến bề mặt họng lõm khi phóng to vẫn thấy rõ các nấc đa giác thô.
+* **Giải pháp kỹ thuật toàn diện**:
+  1. *Triệt tiêu 100% rãnh chẻ đỉnh ren trục vít bằng cung trụ tròn phân đoạn*:
+     - Bổ sung tham số `wormTipPts` (từ 6 đến 18 điểm).
+     - Thay vì dùng 1 dây cung phẳng, tạo cung tròn $N_{\text{tip}}$ điểm chạy từ $\phi_R$ đến $\phi_L$ với bán kính cố định $R = r_{\text{blank}}(x)$:
+       $$\phi(t) = \phi_R + \frac{t}{N_{\text{tip}}}(\phi_L - \phi_R), \quad y = r_{\text{blank}}\cos\phi(t), \quad z = r_{\text{blank}}\sin\phi(t)$$
+     - 100% các điểm nằm chính xác trên mặt trụ bán kính $r_{\text{blank}} = d_{a1}/2$, độ võng giảm từ $7.4\text{ mm}$ về $< 0.05\text{ mm}$. Đỉnh ren trục vít tròn trịa, phẳng mịn, biến mất hoàn toàn rãnh chẻ chữ V.
+  2. *Khôi phục 100% hình học 3 nhánh giải tích MITCalc 1.74 `DXF.bas!WWheel`*:
+     - **Nhánh 1 ($0 \le |z| \le b_1 = 7.391\text{ mm}$)**: Cung tròn họng lõm bán kính $r_1 = a - d_{a2}/2$, $r_{\text{tip}}(z) = a - \sqrt{r_1^2 - z^2}$.
+     - **Nhánh 2 ($b_1 < |z| \le b_4 = 9.955\text{ mm}$)**: Vành ngoài nằm ngang $r_{\text{tip}} = d_{e2}/2 = 91.615\text{ mm}$.
+     - **Nhánh 3 ($b_4 < |z| \le b_{2H}/2 = 16.785\text{ mm}$)**: **Góc vát mép bên chéo $\sim 33.75^\circ$** từ $(b_4, d_{e2}/2)$ xuống $(b_{2H}/2, d_{f2}/2 + v_4 = 87.052\text{ mm})$:
+       $$r_{\text{tip}}(z) = \frac{d_{e2}}{2} - \frac{|z| - b_4}{b_{2H}/2 - b_4}\left(\frac{d_{e2}}{2} - \left(\frac{d_{f2}}{2} + v_4\right)\right)$$
+     - Tại $z = \pm b_{2H}/2$, $r_{\text{tip}}$ và $r_{\text{root}}$ gặp nhau tại $87.052\text{ mm}$. Mặt đầu phẳng vành khăn nối từ $r_{\text{bore2}}$ đến $87.052\text{ mm}$, tạo nên đường vát mép bên hoàn mỹ khớp 1-to-1 bản vẽ chế tạo MITCalc.
+  3. *Mở rộng hệ thống 10 Cấp Độ Mịn (Lưới Micro-Mesh Siêu Tinh Xảo)*:
+     - Nâng cấp bảng `getDensitySettings` lên 10 cấp độ:
+       * Cấp 8: `wheelSlices = 95`, `wormSlices = 280`, `wormTipPts = 14`, `wheelPtsR = 28`.
+       * Cấp 9: `wheelSlices = 111`, `wormSlices = 320`, `wormTipPts = 16`, `wheelPtsR = 32` (Master CAD).
+       * Cấp 10: `wheelSlices = 131`, `wormSlices = 380`, `wormTipPts = 18`, `wheelPtsR = 36` (Ultimate Micro-Mesh, hơn 830,000 tam giác).
+     - Cập nhật `#selMeshDensity` trong `index.html` và `worm-3d-visualizer.js`, mặc định Cấp 8 hoặc Cấp 10, hiển thị đường cong họng lõm siêu mịn, không còn gợn sóng đa giác.
+  4. *Đóng đinh Nguyên tắc bất biến về "Cơ chế in màu mặt sau (Back-Face Imprint)"*:
+     - Khắc sâu vào Golden Meta-Rules: Bất kỳ bộ truyền cơ khí nào (hiện tại và tương lai: Bánh vít, Bánh răng hành tinh, v.v.), khi ở chế độ `Chỉ Mặt Bên`:
+       * Khe hở danh nghĩa giữa hai mặt tiếp xúc luôn luôn bằng **$0.000\text{ mm}$**.
+       * Áp dụng lượng bù tiếp xúc vi mô $\delta_{\text{kiss}} > 0$.
+       * Hai bề mặt mỏng `THREE.DoubleSide` mang màu sắc tương phản đối lập 180°.
+       * **Bề mặt tiếp xúc của chi tiết này bắt buộc phải in màu sang bề mặt sau của chi tiết kia** để kỹ sư có thể kiểm tra bằng mắt thường vết tiếp xúc động học.
+* **Kết quả đo đạc & Kiểm thử Playwright E2E**:
+  - `worm_front_crest_user_view_matched.png`: Chụp góc nhìn Front XY cận cảnh trục vít đúng góc chụp của người dùng, đỉnh ren phẳng tròn nhẵn bóng, triệt tiêu 100% rãnh chẻ chữ V.
+  - `worm_wheel_chamfer_user_view_matched.png`: Chụp góc nhìn +X đúng góc chụp của người dùng, cạnh bên bánh vít vát nghiêng $33.75^\circ$ chuẩn mực, không còn vuông vức.
+  - `worm_throat_mesh_chamfer.png`: Cận cảnh họng ôm và góc vát bên bánh vít ôm khít lấy trục vít.
+  - `worm_flank_backface_imprint_verified.png`: Chế độ Chỉ Mặt Bên ở Cấp 10 hiển thị vết in màu xanh cyan trên mặt sau bánh vít cam và màu cam trên ren cyan cực kỳ sắc nét.
+  - `check_penetration.js`: 100% các góc quay 360° đạt `penetrations = 0, maxPen = 0.000 mm`.
+  - `test_levels_and_nan.js`: Toàn bộ 10 cấp độ đạt `NaNs = 0, degen = 0`.
+
+

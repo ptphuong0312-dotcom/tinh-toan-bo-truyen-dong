@@ -1316,3 +1316,33 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Menu `#sel3DViewPreset` bổ sung tùy chọn: `🔍 Soi Mặt Sau Sườn Răng (Vết In Tiếp Xúc)` (`value="rear"`).
    - Tự động đặt camera nhìn nghiêng từ phía sau sườn răng bánh vít vào vùng ăn khớp $(0, -a + d_1/2, 0)$ để quan sát tức thì mà không cần phải xoay chuột thủ công.
 
+---
+
+### Quy Tắc 57: Quy Chuẩn Triệt Tiêu Rãnh Chẻ Đỉnh Ren Trục Vít, Góc Vát Bên Bánh Vít 33.75° Chuẩn MITCalc (DXF.bas!WWheel) & Hệ Thống 10 Cấp Độ Mịn Micro-Mesh
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"tôi cần nhắc lại 1 lần nữa : "Cơ chế in màu mặt sau (Back-Face Imprint)" bạn cần lưu nguyên tắc xem vết kiểu như này để sau này làm sang bộ truyền khác thì không cần tôi diễn tả thì bạn cũng sẽ tự làm kiểu in vết như này (mặt tiếp xúc của chi tiết này sẽ in màu sang bề mặt sau của chi tiết kia)"*.
+   - *"tôi cần bạn tang cấp độ mịn nữa"*.
+   - *"tôi cần bạn sửa góc vát bên của bánh vít theo tiêu chuẩn của app mitcalc vì hiện tại góc bên (cạnh bên) bánh vít đang vuông vức, tiếp theo là trục vít có sẻ rãnh ở giửa đỉnh răng như hình tôi chụp"*.
+2. **Kim Chỉ Nam Bất Biến (Invariant Master Protocol) — Cơ Chế In Màu Mặt Sau**:
+   - Bất kỳ bộ truyền cơ khí nào trong dự án (hiện tại và tương lai: Bánh Răng Trụ, Bánh Răng Côn, Bánh Vít - Trục Vít, Bánh Răng Hành Tinh, Bộ Truyền Xích, Đai):
+     * Trong chế độ `Chỉ Mặt Bên` (`flankOnlyMode = true`), khe hở danh nghĩa giữa hai bề mặt tiếp xúc ăn khớp luôn luôn bằng **$0.000\text{ mm}$**.
+     * Áp dụng lượng bù tiếp xúc vi mô $\delta_{\text{kiss}} > 0$.
+     * Hai bề mặt mỏng `THREE.DoubleSide` mang màu sắc tương phản đối lập 180°.
+     * **Mặt tiếp xúc của chi tiết này bắt buộc phải in màu sang bề mặt sau của chi tiết kia** để kiểm tra bằng mắt thường vết tiếp xúc của truyền động.
+     * Cung cấp sẵn preset góc nhìn soi mặt sau sườn răng trên thanh công cụ.
+3. **Triệt Tiêu 100% Rãnh Chẻ Đỉnh Ren Trục Vít (Cylindrical Arc Subdivisions)**:
+   - Với góc mở đỉnh ren Archimedes lớn ($2 \cdot d\Phi \approx 96^\circ$), cấm tuyệt đối việc dùng 1 dây cung phẳng nối hai sườn (gây võng sâu $7.4\text{ mm}$ tạo thành rãnh chữ V chẻ đôi răng).
+   - Bắt buộc chia cung đỉnh ren thành `wormTipPts` (6 đến 18 điểm) trên mặt trụ bán kính $r_{\text{blank}}(x) = d_{a1}/2$:
+     $$\phi(t) = \phi_R + \frac{t}{N_{\text{tip}}}(\phi_L - \phi_R), \quad y = r_{\text{blank}}\cos\phi(t), \quad z = r_{\text{blank}}\sin\phi(t)$$
+   - Đảm bảo đỉnh ren trục vít phẳng, tròn trịa, nhẵn bóng kim loại, hoàn toàn không còn rãnh chẻ ở giữa đỉnh răng.
+4. **Chuẩn Hóa Góc Vát Bên Bánh Vít 33.75° Theo MITCalc 1.74 (`DXF.bas!WWheel`)**:
+   - Tuân thủ 100% 3 nhánh giải tích của macro `WWheel`:
+     * Nhánh 1 ($0 \le |z| \le b_1$): Cung tròn họng lõm $r_{\text{tip}}(z) = a - \sqrt{r_1^2 - z^2}$.
+     * Nhánh 2 ($b_1 < |z| \le b_4$): Vành ngoài nằm ngang $r_{\text{tip}} = d_{e2}/2$.
+     * Nhánh 3 ($b_4 < |z| \le b_{2H}/2$): **Góc vát mép bên chéo $\sim 33.75^\circ$** từ $(b_4, d_{e2}/2)$ xuống $(b_{2H}/2, d_{f2}/2 + v_4)$.
+     * Tại $z = \pm b_{2H}/2$: Mặt đầu phẳng vành khăn nối từ $r_{\text{bore2}}$ đến $d_{f2}/2 + v_4$, triệt tiêu 100% cạnh bên vuông vức thô kệch.
+5. **Hệ Thống 10 Cấp Độ Mịn (Micro-Mesh Ultra Precision)**:
+   - Hỗ trợ đầy đủ 10 cấp độ trong `#selMeshDensity` từ Cấp 1 (Nhanh) đến Cấp 10 (Tối Thượng Micro-Mesh với 131 lát cắt bánh vít, 380 lát cắt trục vít, hơn 830,000 tam giác).
+   - Hiển thị cung họng lõm siêu mịn, mượt mà không còn nấc đa giác.
+
+

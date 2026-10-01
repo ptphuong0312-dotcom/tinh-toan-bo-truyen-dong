@@ -1417,3 +1417,19 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
     - **Preset góc nhìn `rear`**:
       * Tích hợp preset `🔍 Soi Mặt Sau Sườn Răng (Vết In Tiếp Xúc)` (`case 'rear'`) trên thanh công cụ 3D, tự động điều chỉnh camera zoom thẳng vào mặt sau sườn răng ăn khớp.
 
+---
+
+13. **TRIỆT TIÊU RÃNH CHẺ ĐỈNH REN TRỤC VÍT, GÓC VÁT BÊN BÁNH VÍT 33.75° (MITCALC WWHEEL) & HỆ THỐNG 10 CẤP ĐỘ MỊN**:
+    - **Triệt tiêu rãnh chẻ đỉnh ren trục vít (Cylindrical Arc Subdivisions)**:
+      * Với góc mở đỉnh ren $2 \cdot d\Phi \approx 96^\circ$, chia cung đỉnh ren thành `wormTipPts` (6 đến 18 điểm) trên mặt trụ bán kính $r_{\text{blank}}(x) = d_{a1}/2$:
+        $$\phi(t) = \phi_R + \frac{t}{N_{\text{tip}}}(\phi_L - \phi_R), \quad y = r_{\text{blank}}\cos\phi(t), \quad z = r_{\text{blank}}\sin\phi(t)$$
+      * Triệt tiêu hoàn toàn độ võng dây cung $7.4\text{ mm}$, đỉnh ren phẳng mịn tròn trịa 100%.
+    - **Chuẩn hóa góc vát bên bánh vít 33.75° theo MITCalc 1.74 (`DXF.bas!WWheel`)**:
+      * Nhánh 1 ($0 \le |z| \le b_1$): Cung tròn họng lõm $r_{\text{tip}}(z) = a - \sqrt{r_1^2 - z^2}$.
+      * Nhánh 2 ($b_1 < |z| \le b_4$): Đỉnh nón vành ngoài $r_{\text{tip}} = d_{e2}/2$.
+      * Nhánh 3 ($b_4 < |z| \le b_{2H}/2$): Vát mép bên chéo $\sim 33.75^\circ$ từ $(b_4, d_{e2}/2)$ xuống $(b_{2H}/2, d_{f2}/2 + v_4)$.
+      * Mặt đầu phẳng vành khăn nối từ $r_{\text{bore2}}$ đến $d_{f2}/2 + v_4$, triệt tiêu hoàn toàn cạnh bên vuông vức.
+    - **Hệ thống 10 cấp độ mịn Micro-Mesh**:
+      * Mở rộng từ Cấp 1 đến Cấp 10 (Cấp 8: 95 slices; Cấp 9: 111 slices; Cấp 10: 131 slices bánh vít và 380 slices trục vít, hơn 830,000 tam giác).
+
+

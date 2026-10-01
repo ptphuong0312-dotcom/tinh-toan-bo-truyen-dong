@@ -3957,19 +3957,21 @@ if (typeof window !== 'undefined') {
  */
 
 const Worm3DGenerator = {
-    getDensitySettings(level = 6, z1 = 1, z2 = 40) {
-        const lvl = Math.max(1, Math.min(8, parseInt(level) || 6));
+    getDensitySettings(level = 8, z1 = 1, z2 = 40) {
+        const lvl = Math.max(1, Math.min(10, parseInt(level) || 8));
         const table = {
-            1: { wormSlices: 50,  wormPtsR: 6,  wheelSlices: 17, wheelPtsR: 6,  boreSegs: 48 },
-            2: { wormSlices: 66,  wormPtsR: 8,  wheelSlices: 21, wheelPtsR: 8,  boreSegs: 60 },
-            3: { wormSlices: 82,  wormPtsR: 10, wheelSlices: 25, wheelPtsR: 10, boreSegs: 72 },
-            4: { wormSlices: 100, wormPtsR: 12, wheelSlices: 29, wheelPtsR: 12, boreSegs: 80 },
-            5: { wormSlices: 120, wormPtsR: 14, wheelSlices: 35, wheelPtsR: 14, boreSegs: 96 },
-            6: { wormSlices: 140, wormPtsR: 16, wheelSlices: 41, wheelPtsR: 16, boreSegs: 100 },
-            7: { wormSlices: 165, wormPtsR: 18, wheelSlices: 47, wheelPtsR: 18, boreSegs: 120 },
-            8: { wormSlices: 190, wormPtsR: 20, wheelSlices: 55, wheelPtsR: 20, boreSegs: 140 }
+            1: { wormSlices: 60,  wormPtsR: 8,  wormTipPts: 6,  wheelSlices: 25, wheelPtsR: 8,  wheelTipPts: 2, boreSegs: 60 },
+            2: { wormSlices: 80,  wormPtsR: 10, wormTipPts: 6,  wheelSlices: 31, wheelPtsR: 10, wheelTipPts: 2, boreSegs: 72 },
+            3: { wormSlices: 100, wormPtsR: 12, wormTipPts: 8,  wheelSlices: 39, wheelPtsR: 12, wheelTipPts: 3, boreSegs: 84 },
+            4: { wormSlices: 130, wormPtsR: 14, wormTipPts: 8,  wheelSlices: 47, wheelPtsR: 14, wheelTipPts: 3, boreSegs: 96 },
+            5: { wormSlices: 160, wormPtsR: 16, wormTipPts: 10, wheelSlices: 57, wheelPtsR: 16, wheelTipPts: 4, boreSegs: 110 },
+            6: { wormSlices: 200, wormPtsR: 20, wormTipPts: 10, wheelSlices: 69, wheelPtsR: 20, wheelTipPts: 4, boreSegs: 128 },
+            7: { wormSlices: 240, wormPtsR: 24, wormTipPts: 12, wheelSlices: 81, wheelPtsR: 24, wheelTipPts: 5, boreSegs: 144 },
+            8: { wormSlices: 280, wormPtsR: 28, wormTipPts: 14, wheelSlices: 95, wheelPtsR: 28, wheelTipPts: 5, boreSegs: 160 },
+            9: { wormSlices: 320, wormPtsR: 32, wormTipPts: 16, wheelSlices: 111, wheelPtsR: 32, wheelTipPts: 6, boreSegs: 180 },
+            10: { wormSlices: 380, wormPtsR: 36, wormTipPts: 18, wheelSlices: 131, wheelPtsR: 36, wheelTipPts: 6, boreSegs: 200 }
         };
-        return table[lvl] || table[6];
+        return table[lvl] || table[8];
     },
 
     extractMC3DParams(opt = {}) {
@@ -4064,22 +4066,67 @@ const Worm3DGenerator = {
 
     evalWheelBlank(z, mc) {
         const absZ = Math.abs(z);
+        const a = mc.MC_a;
+        const da2 = mc.MC_da2;
+        const df2 = mc.MC_df2;
+        const de2 = mc.MC_de2;
+        const b2H = mc.MC_b2H;
+        const halfB = b2H * 0.5;
+
+        const r1 = a - da2 * 0.5;
+        const r3 = a - df2 * 0.5;
+
+        const v1 = r1 - (a - de2 * 0.5);
+        const v3 = r3 - (a - de2 * 0.5);
+        const b1 = Math.sqrt(Math.max(0.0, v1 * (2.0 * r1 - v1)));
+        const b3 = Math.sqrt(Math.max(0.0, v3 * (2.0 * r3 - v3)));
+        const b4 = (halfB * r1) / r3;
+
+        const v4 = r3 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3 * r3 - b2H * b2H));
+
         let rTip;
-        if (absZ <= mc.b1 && (mc.r_throat_tip * mc.r_throat_tip - z * z) >= 0) {
-            rTip = mc.MC_a - Math.sqrt(mc.r_throat_tip * mc.r_throat_tip - z * z);
+        if (halfB > b3) {
+            // Case 1: Wide face width (DXF.bas lines 173-180)
+            if (absZ <= b1) {
+                rTip = a - Math.sqrt(Math.max(0.0, r1 * r1 - absZ * absZ));
+            } else if (absZ <= b3) {
+                const t = (absZ - b1) / Math.max(1e-6, b3 - b1);
+                rTip = (de2 * 0.5) - t * ((de2 * 0.5) - (df2 * 0.5 + v3));
+            } else {
+                rTip = df2 * 0.5 + v3;
+            }
+        } else if (halfB < (b1 * r3 / r1)) {
+            // Case 2: Narrow face width (DXF.bas lines 182-189)
+            const b5 = (halfB * r1) / r3;
+            const v5 = r1 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r1 * r1 - 4.0 * b5 * b5));
+            if (absZ <= b5) {
+                rTip = a - Math.sqrt(Math.max(0.0, r1 * r1 - absZ * absZ));
+            } else {
+                const t = (absZ - b5) / Math.max(1e-6, halfB - b5);
+                rTip = (da2 * 0.5 + v5) - t * ((da2 * 0.5 + v5) - (df2 * 0.5 + v4));
+            }
         } else {
-            rTip = mc.r_outer;
+            // Case 3: Standard MITCalc WWheel geometry with side chamfer (DXF.bas lines 191-198)
+            if (absZ <= b1) {
+                rTip = a - Math.sqrt(Math.max(0.0, r1 * r1 - absZ * absZ));
+            } else if (absZ <= b4) {
+                rTip = de2 * 0.5;
+            } else {
+                // Chamfer / bevel from de2/2 at b4 down to (df2/2 + v4) at halfB (~33.75 deg slope)
+                const t = (absZ - b4) / Math.max(1e-6, halfB - b4);
+                rTip = (de2 * 0.5) - t * ((de2 * 0.5) - (df2 * 0.5 + v4));
+            }
         }
 
         let rRoot;
-        if ((mc.r_throat_root * mc.r_throat_root - z * z) >= 0) {
-            rRoot = mc.MC_a - Math.sqrt(mc.r_throat_root * mc.r_throat_root - z * z);
+        if ((r3 * r3 - absZ * absZ) >= 0) {
+            rRoot = a - Math.sqrt(r3 * r3 - absZ * absZ);
         } else {
-            rRoot = mc.MC_df2 * 0.5;
+            rRoot = df2 * 0.5;
         }
 
         return {
-            rTip: Math.max(rRoot + 0.5, rTip),
+            rTip: Math.max(rRoot + 0.15, rTip),
             rRoot: rRoot
         };
     },
@@ -4204,9 +4251,10 @@ const Worm3DGenerator = {
         const halfSx1 = mc.MC_sx1;
         const tanA = Math.tan(mc.MC_alfa_rad);
         const surfaceOnly = Boolean(opt.surfaceOnly);
-        const density = this.getDensitySettings(opt.meshDensityLevel || 6, z1, mc.MC_z2);
+        const density = this.getDensitySettings(opt.meshDensityLevel || 8, z1, mc.MC_z2);
         const numSlices = opt.numWormSlices || density.wormSlices;
         const ptsR = opt.ptsPerFlank || density.wormPtsR;
+        const wormTipPts = density.wormTipPts || 14;
         const handSign = mc.handSign;
 
         const positions = [];
@@ -4259,7 +4307,24 @@ const Worm3DGenerator = {
                     rFlankR.push({ x, y: R * Math.cos(phiR), z: R * Math.sin(phiR), R, phi: phiR });
                     rFlankL.push({ x, y: R * Math.cos(phiL), z: R * Math.sin(phiL), R, phi: phiL });
                 }
-                starts.push({ rFlankR, rFlankL, rBlank });
+
+                // Cylindrical Tip Crest Arc (eliminates chord sag / groove in the middle of crest)
+                const tipArc = [];
+                const pTipR = rFlankR[ptsR];
+                const pTipL = rFlankL[ptsR];
+                for (let t = 0; t <= wormTipPts; t++) {
+                    const fracTip = t / wormTipPts;
+                    const phi = pTipR.phi + fracTip * (pTipL.phi - pTipR.phi);
+                    tipArc.push({
+                        x,
+                        y: rBlank * Math.cos(phi),
+                        z: rBlank * Math.sin(phi),
+                        R: rBlank,
+                        phi
+                    });
+                }
+
+                starts.push({ rFlankR, rFlankL, tipArc, rBlank });
             }
             threadSlices.push({ x, starts, rBlank });
         }
@@ -4296,11 +4361,16 @@ const Worm3DGenerator = {
                 }
 
                 if (!surfaceOnly) {
-                    // Tip Crest
-                    const pR_A = stA.rFlankR[ptsR], pL_A = stA.rFlankL[ptsR];
-                    const pR_B = stB.rFlankR[ptsR], pL_B = stB.rFlankL[ptsR];
-                    pushTri(pR_A, pL_A, pL_B);
-                    pushTri(pR_A, pL_B, pR_B);
+                    // Tip Crest (subdivided cylindrical arc - eliminates groove/slit)
+                    for (let t = 0; t < wormTipPts; t++) {
+                        const pA0 = stA.tipArc[t];
+                        const pA1 = stA.tipArc[t + 1];
+                        const pB0 = stB.tipArc[t];
+                        const pB1 = stB.tipArc[t + 1];
+
+                        pushTri(pA0, pA1, pB1);
+                        pushTri(pA0, pB1, pB0);
+                    }
                 }
             }
         }
@@ -4436,9 +4506,10 @@ const Worm3DGenerator = {
         const dBore2 = Math.min(df2 * 0.65, Math.max(16.0, mc.ShaftDB2 || (df2 * 0.32)));
         const rBore2 = dBore2 * 0.5;
 
-        const density = this.getDensitySettings(opt.meshDensityLevel || 6, mc.MC_z1, z2);
+        const density = this.getDensitySettings(opt.meshDensityLevel || 8, mc.MC_z1, z2);
         const numSlices = opt.numWheelSlices || density.wheelSlices;
         const ptsR = opt.ptsPerFlank || density.wheelPtsR;
+        const wheelTipPts = density.wheelTipPts || 5;
         const boreSegs = density.boreSegs;
 
         const positions = [];
@@ -4491,10 +4562,27 @@ const Worm3DGenerator = {
                     const thetaToothL = thSpaceR + j * pitchAngle;
                     const thetaToothR = thSpaceL + (j + 1) * pitchAngle;
 
-                    rFlankL.push({ x: r * Math.cos(thetaToothL), y: r * Math.sin(thetaToothL), z });
-                    rFlankR.push({ x: r * Math.cos(thetaToothR), y: r * Math.sin(thetaToothR), z });
+                    rFlankL.push({ x: r * Math.cos(thetaToothL), y: r * Math.sin(thetaToothL), z, r, theta: thetaToothL });
+                    rFlankR.push({ x: r * Math.cos(thetaToothR), y: r * Math.sin(thetaToothR), z, r, theta: thetaToothR });
                 }
-                teeth.push({ rFlankL, rFlankR });
+
+                // Subdivided Tip Land Arc
+                const tipArc = [];
+                const pTipL = rFlankL[ptsR];
+                const pTipR = rFlankR[ptsR];
+                for (let t = 0; t <= wheelTipPts; t++) {
+                    const fracTip = t / wheelTipPts;
+                    const th = pTipL.theta + fracTip * (pTipR.theta - pTipL.theta);
+                    tipArc.push({
+                        x: rTip * Math.cos(th),
+                        y: rTip * Math.sin(th),
+                        z,
+                        r: rTip,
+                        theta: th
+                    });
+                }
+
+                teeth.push({ rFlankL, rFlankR, tipArc });
             }
             slices.push({ z, rRoot, rTip, teeth });
         }
@@ -4531,11 +4619,16 @@ const Worm3DGenerator = {
                 }
 
                 if (!surfaceOnly) {
-                    // Tip Crest
-                    const pL_A = tA.rFlankL[ptsR], pR_A = tA.rFlankR[ptsR];
-                    const pL_B = tB.rFlankL[ptsR], pR_B = tB.rFlankR[ptsR];
-                    pushTri(pL_A, pL_B, pR_B);
-                    pushTri(pL_A, pR_B, pR_A);
+                    // Tip Crest (subdivided circular arc)
+                    for (let t = 0; t < wheelTipPts; t++) {
+                        const pA0 = tA.tipArc[t];
+                        const pA1 = tA.tipArc[t + 1];
+                        const pB0 = tB.tipArc[t];
+                        const pB1 = tB.tipArc[t + 1];
+
+                        pushTri(pA0, pB0, pB1);
+                        pushTri(pA0, pB1, pA1);
+                    }
 
                     // Root Valley
                     const nextJ = (j + 1) % z2;
@@ -5146,7 +5239,7 @@ class Worm3DVisualizer {
         this.wireframeMode = false;
         this.flankOnlyMode = false;
         this.contactMode = 'theory'; // 'theory' (Mặc định: Đường tiếp xúc liên hợp) | 'crowning' (Vết elip có độ vồng)
-        this.meshDensityLevel = 6; // Default Level 6 (CAM/CNC Precision)
+        this.meshDensityLevel = 8; // Default Level 8 (Ultra Precision CAD)
 
         this.mesh1Data = null;
         this.mesh2Data = null;
@@ -5503,7 +5596,7 @@ class Worm3DVisualizer {
     }
 
     setMeshDensityLevel(level) {
-        this.meshDensityLevel = Math.max(1, Math.min(8, parseInt(level) || 6));
+        this.meshDensityLevel = Math.max(1, Math.min(10, parseInt(level) || 8));
         if (this.geom) {
             const curWormAngle = this.wormAngle;
             const curWheelAngle = this.wheelAngle;
