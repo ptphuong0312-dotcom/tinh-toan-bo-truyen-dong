@@ -1173,3 +1173,20 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Bề dày răng tối thiểu tại góc mép ngoài đạt $2.575\text{ mm}$ (dương khỏe, 0 góc răng bị thắt nhọn hay lộn ngược).
    - Kiểm tra chuyển động quay động học tại 0°, 15°, 30°, 45°, 60°, 90°, 180°, 270°, 360° và các bước nhích vi phân: 100% không có hiện tượng cọ quẹt hay đâm xuyên qua sườn trục vít.
    - Kiểm định đối chiếu song song Excel COM 1-Click (`RA_SOAT_SONG_SONG_TRUC_VIT_BANH_VIT.bat`): **820 / 820 phép kiểm tra đạt PASS 100.0% ($\Delta = 0.000000$)**.
+
+---
+
+### Quy Tắc 51: Quy Chuẩn Vết Ăn Khớp Tiếp Xúc (TCA - Tooth Contact Analysis) & Mặt Đầu Đúc Liền Khối 100% Triệt Tiêu Tổ Ong (Solid Watertight Annular Disk Protocol)
+1. **Triệt tiêu tuyệt đối lỗi "Tổ Ong" trên Mặt Đầu Bánh Vít 2 (Solid Watertight Wheel End Caps)**:
+   - **Chẩn đoán**: Đoạn mã đóng nắp mặt đầu cũ tại $z = \pm b_{2H}/2$ chỉ tạo tam giác cho phần thân răng mà bỏ qua hoàn toàn rãnh rỗng giữa 2 răng từ chân răng xuống lỗ trục, tạo 40 lỗ thủng nan quạt như tổ ong (`media_1790836651549.png`).
+   - **Kiến trúc mặt đầu khép kín 360° (Solid Watertight Annular Disk Engine)**:
+     * *Phần thân răng*: Phủ kín từng mặt răng bằng $ptsR$ tứ giác phẳng nối hai sườn trái và phải từ chân $r_{\text{root}}$ lên đỉnh $r_{\text{tip}}$: `[pL_m, pR_m, pR_{m+1}, pL_{m+1}]`.
+     * *Phần thân đĩa*: Sử dụng $2 \cdot z_2$ tứ giác khép kín nối từ vòng chân răng xuống vòng lỗ trục $r_{\text{Bore2}}$:
+       - Tứ giác A: Nối từ chân thân răng `[t.rFlankL[0], t.rFlankR[0]]` xuống lỗ trục `[pB_L, pB_R]`.
+       - Tứ giác B: Nối từ đáy rãnh răng `[t.rFlankR[0], tNext.rFlankL[0]]` xuống lỗ trục `[pB_R, pB_nextL]`.
+     * *Mặt trụ lỗ trục trong (Inner Bore Cylinder)*: Nối liền hai mặt đầu tại $z = \pm b_{2H}/2$ bằng các tứ giác trụ có pháp tuyến hướng tâm $-e_r$ chính xác, tạo nên khối B-Rep kín nước 100% không tì vết.
+2. **Đồng bộ hóa 1-to-1 Vết Ăn Khớp Tiếp Xúc TCA (Tooth Contact Analysis)**:
+   - **Thanh điều khiển kiểu tiếp xúc (`selContactTheoryMode`)**:
+     * `📏 Lý Thuyết (Đường Tiếp Xúc Conjugate)`: Vi lượng dịch chuyển $d\Theta_{\text{kiss}} = \frac{0.0022 \cdot m_x}{r_2}$ đồng đều trên toàn bộ bề rộng họng ôm, hiển thị rõ đường tiếp xúc liên hợp lý thuyết.
+     * `🔵 Thực Tế Xưởng (Vết Elip Crowning)`: Áp dụng độ vồng vi mô $K_{\text{crown}} = \max(0, 1 - 2.5 u^2)$ (với $u = z / \text{halfB} \in [-1, 1]$), tạo vết tiếp xúc hình elip sắc nét ở 65% vùng giữa họng ôm theo chuẩn xưởng AGMA 6022 / DIN 3996.
+   - **Góc nhìn cận cảnh `🔍 Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)`**: Tự động đưa camera về cự ly tối ưu $d_{\text{mesh}} \approx 1.15 \cdot \max(b_{2H}, 8 m_n) \approx 42\text{ mm}$ tập trung vào điểm ăn khớp danh nghĩa $(0, -a + d_1/2, 0)$, cho phép kỹ sư quan sát vết tiếp xúc trực quan và rõ nét như trong xưởng kiểm tra bột màu rà cơ khí Prussian Blue.

@@ -541,6 +541,8 @@ const Worm3DGenerator = {
         const halfB = 0.5 * b2H;
         const df2 = mc.MC_df2;
         const surfaceOnly = Boolean(opt.surfaceOnly);
+        const contactMode = opt.contactMode || 'theory';
+        const mx = mc.MC_px / Math.PI;
 
         const dBore2 = Math.min(df2 * 0.65, Math.max(16.0, mc.ShaftDB2 || (df2 * 0.32)));
         const rBore2 = dBore2 * 0.5;
@@ -570,6 +572,7 @@ const Worm3DGenerator = {
             positions.push(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, p3.x, p3.y, p3.z);
             normals.push(nx, ny, nz, nx, ny, nz, nx, ny, nz);
             indices.push(baseIdx, baseIdx + 1, baseIdx + 2);
+
             rawTriangles.push([
                 [p1.x, p1.y, p1.z],
                 [p2.x, p2.y, p2.z],
@@ -587,6 +590,22 @@ const Worm3DGenerator = {
             const blank = this.evalWheelBlankCrossSection(z, mc);
             const rRoot = blank.rRoot;
             const rTip = blank.rTip;
+
+            // In Flank-Only mode (TCA inspection), apply conjugate kiss allowance dThetaKiss
+            let dThetaKiss = 0.0;
+            if (surfaceOnly) {
+                const uNorm = halfB > 1e-6 ? (z / halfB) : 0.0;
+                if (contactMode === 'crowning') {
+                    // Parabolic crowning centered at mid-throat z=0 (AGMA 6022 / DIN 3996 localized contact patch)
+                    const K_crown = Math.max(0.0, 1.0 - 2.5 * uNorm * uNorm);
+                    const allowance = (0.0028 * mx) * K_crown - (0.0012 * mx) * (1.0 - K_crown);
+                    dThetaKiss = allowance / Math.max(1.0, mc.MC_d2 * 0.5);
+                } else {
+                    // Theory conjugate contact line: uniform kiss allowance across throat width
+                    const allowance = 0.0022 * mx;
+                    dThetaKiss = allowance / Math.max(1.0, mc.MC_d2 * 0.5);
+                }
+            }
 
             // Pre-compute exact kinematic hob envelope flank angles across radial levels
             const profileR = [];
@@ -607,8 +626,8 @@ const Worm3DGenerator = {
 
                 for (let m = 0; m <= ptsR; m++) {
                     const p = profileR[m];
-                    const thetaR = toothBaseAngle + p.thetaR;
-                    const thetaL = toothBaseAngle + p.thetaL;
+                    const thetaR = toothBaseAngle + p.thetaR + dThetaKiss;
+                    const thetaL = toothBaseAngle + p.thetaL - dThetaKiss;
 
                     rFlankR.push({
                         x: p.r * Math.sin(thetaR),
@@ -688,54 +707,107 @@ const Worm3DGenerator = {
         }
 
         if (!surfaceOnly) {
-            // Side End Caps at z = -halfB and z = +halfB
+            // Side End Caps at z = -halfB and z = +halfB (100% Water-tight, zero honeycomb spoke gaps)
             for (let side = 0; side < 2; side++) {
                 const sIdx = (side === 0) ? 0 : (numSlices - 1);
                 const sData = slices[sIdx];
                 const zVal = sData.z;
                 const normalZ = (side === 0) ? -1 : 1;
 
+                // 1. Tooth face quads (between left flank and right flank from root to tip)
                 for (let j = 0; j < z2; j++) {
                     const t = sData.teeth[j];
-                    const pBore1 = {
-                        x: rBore2 * Math.sin(t.rFlankL[0].theta),
-                        y: -rBore2 * Math.cos(t.rFlankL[0].theta),
+                    for (let m = 0; m < ptsR; m++) {
+                        const pL0 = t.rFlankL[m];
+                        const pL1 = t.rFlankL[m + 1];
+                        const pR0 = t.rFlankR[m];
+                        const pR1 = t.rFlankR[m + 1];
+                        if (side === 0) {
+                            pushTri(pL0, pR1, pR0, [0, 0, normalZ]);
+                            pushTri(pL0, pL1, pR1, [0, 0, normalZ]);
+                        } else {
+                            pushTri(pL0, pR0, pR1, [0, 0, normalZ]);
+                            pushTri(pL0, pR1, pL1, [0, 0, normalZ]);
+                        }
+                    }
+                }
+
+                // 2. Annular Wheel Body (from root perimeter down to inner bore circle rBore2)
+                for (let j = 0; j < z2; j++) {
+                    const nextJ = (j + 1) % z2;
+                    const t = sData.teeth[j];
+                    const tNext = sData.teeth[nextJ];
+
+                    // Quad A: Under tooth j (from t.rFlankL[0] to t.rFlankR[0])
+                    const pR_L = t.rFlankL[0];
+                    const pR_R = t.rFlankR[0];
+                    const pB_L = {
+                        x: rBore2 * Math.sin(pR_L.theta),
+                        y: -rBore2 * Math.cos(pR_L.theta),
                         z: zVal
                     };
-                    const pBore2 = {
-                        x: rBore2 * Math.sin(t.rFlankR[0].theta),
-                        y: -rBore2 * Math.cos(t.rFlankR[0].theta),
+                    const pB_R = {
+                        x: rBore2 * Math.sin(pR_R.theta),
+                        y: -rBore2 * Math.cos(pR_R.theta),
                         z: zVal
                     };
 
-                    // Tooth face
                     if (side === 0) {
-                        pushTri(t.rFlankL[ptsR], t.rFlankL[0], pBore1, [0, 0, normalZ]);
-                        pushTri(t.rFlankL[ptsR], pBore1, pBore2, [0, 0, normalZ]);
-                        pushTri(t.rFlankL[ptsR], pBore2, t.rFlankR[ptsR], [0, 0, normalZ]);
-                        pushTri(t.rFlankR[ptsR], pBore2, t.rFlankR[0], [0, 0, normalZ]);
+                        pushTri(pB_L, pR_R, pB_R, [0, 0, normalZ]);
+                        pushTri(pB_L, pR_L, pR_R, [0, 0, normalZ]);
                     } else {
-                        pushTri(t.rFlankL[ptsR], pBore1, t.rFlankL[0], [0, 0, normalZ]);
-                        pushTri(t.rFlankL[ptsR], pBore2, pBore1, [0, 0, normalZ]);
-                        pushTri(t.rFlankL[ptsR], t.rFlankR[ptsR], pBore2, [0, 0, normalZ]);
-                        pushTri(t.rFlankR[ptsR], t.rFlankR[0], pBore2, [0, 0, normalZ]);
+                        pushTri(pB_L, pB_R, pR_R, [0, 0, normalZ]);
+                        pushTri(pB_L, pR_R, pR_L, [0, 0, normalZ]);
+                    }
+
+                    // Quad B: Under tooth space (from t.rFlankR[0] to tNext.rFlankL[0])
+                    const pR_nextL = tNext.rFlankL[0];
+                    const pB_nextL = {
+                        x: rBore2 * Math.sin(pR_nextL.theta),
+                        y: -rBore2 * Math.cos(pR_nextL.theta),
+                        z: zVal
+                    };
+
+                    if (side === 0) {
+                        pushTri(pB_R, pR_nextL, pB_nextL, [0, 0, normalZ]);
+                        pushTri(pB_R, pR_R, pR_nextL, [0, 0, normalZ]);
+                    } else {
+                        pushTri(pB_R, pB_nextL, pR_nextL, [0, 0, normalZ]);
+                        pushTri(pB_R, pR_nextL, pR_R, [0, 0, normalZ]);
                     }
                 }
             }
 
-            // Inner bore cylinder
-            const Ncirc = z2 * 2;
-            for (let i = 0; i < Ncirc; i++) {
-                const a1 = (i * 2.0 * Math.PI) / Ncirc;
-                const a2 = ((i + 1) * 2.0 * Math.PI) / Ncirc;
+            // 3. Inner Bore Cylinder (connecting z = -halfB to z = +halfB)
+            const sData0 = slices[0];
+            const sData1 = slices[numSlices - 1];
+            const z0 = sData0.z;
+            const z1_bore = sData1.z;
 
-                const p1 = { x: rBore2 * Math.sin(a1), y: -rBore2 * Math.cos(a1), z: -halfB };
-                const p2 = { x: rBore2 * Math.sin(a1), y: -rBore2 * Math.cos(a1), z: +halfB };
-                const p3 = { x: rBore2 * Math.sin(a2), y: -rBore2 * Math.cos(a2), z: +halfB };
-                const p4 = { x: rBore2 * Math.sin(a2), y: -rBore2 * Math.cos(a2), z: -halfB };
+            for (let j = 0; j < z2; j++) {
+                const nextJ = (j + 1) % z2;
+                const t0 = sData0.teeth[j];
+                const t0Next = sData0.teeth[nextJ];
 
-                pushTri(p1, p3, p2);
-                pushTri(p1, p4, p3);
+                const thetaA = t0.rFlankL[0].theta;
+                const thetaB = t0.rFlankR[0].theta;
+                const thetaC = t0Next.rFlankL[0].theta;
+
+                // Segment 1: under tooth
+                const p0_A = { x: rBore2 * Math.sin(thetaA), y: -rBore2 * Math.cos(thetaA), z: z0 };
+                const p0_B = { x: rBore2 * Math.sin(thetaB), y: -rBore2 * Math.cos(thetaB), z: z0 };
+                const p1_A = { x: rBore2 * Math.sin(thetaA), y: -rBore2 * Math.cos(thetaA), z: z1_bore };
+                const p1_B = { x: rBore2 * Math.sin(thetaB), y: -rBore2 * Math.cos(thetaB), z: z1_bore };
+
+                pushTri(p0_A, p1_B, p0_B);
+                pushTri(p0_A, p1_A, p1_B);
+
+                // Segment 2: under space
+                const p0_C = { x: rBore2 * Math.sin(thetaC), y: -rBore2 * Math.cos(thetaC), z: z0 };
+                const p1_C = { x: rBore2 * Math.sin(thetaC), y: -rBore2 * Math.cos(thetaC), z: z1_bore };
+
+                pushTri(p0_B, p1_C, p0_C);
+                pushTri(p0_B, p1_B, p1_C);
             }
         }
 

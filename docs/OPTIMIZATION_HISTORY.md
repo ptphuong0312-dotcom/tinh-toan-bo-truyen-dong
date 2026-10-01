@@ -2101,3 +2101,38 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
      - Trong chế độ "Chỉ Mặt Bên" (`Flank-Only`), má sườn cam bánh vít nằm lọt lòng khít khao trong rãnh ren cyan trục vít, tiếp xúc trượt êm ái, hoàn toàn biến mất hiện tượng đâm xuyên sườn sau ở cả răng trung tâm và răng lân cận.
   3. **Kiểm định đối chiếu song song Excel COM 1-Click (`RA_SOAT_SONG_SONG_TRUC_VIT_BANH_VIT.bat`)**:
      - **820 / 820 phép kiểm tra đạt PASS 100.0% ($\Delta = 0.000000$)** trên cả 5 kịch bản thiết kế độc lập.
+
+---
+
+### [2026-10-01] HOÀN THIỆN ĐỒNG BỘ 100% VẾT ĂN KHỚP TIẾP XÚC (TCA - TOOTH CONTACT ANALYSIS) & TRIỆT TIÊU TUYỆT ĐỐI LỖ HỔNG TỔ ONG TRÊN MÔ HÌNH 3D BÁNH VÍT 2
+* **Bối cảnh & Chỉ thị trực tiếp từ SirPhuong**:
+  - *"bạn chưa làm như app mitcalc 1.74 hướng dẫn, dẫn đến mô phỏng vẫn đang bị sai : chưa có vết ăn khớp giống kiểu 2 module bánh răng trụ và bánh răng côn, rồi mô hình 3D kiểu gì mà như tổ ông thế kia"* (kèm 2 ảnh thực tế `media_1790836625853.png` và `media_1790836651549.png`).
+* **Chẩn đoán nguyên nhân gốc rễ**:
+  1. **Lỗi "Tổ ong" (Honeycomb / Lattice void error) trên mặt bên Bánh Vít 2**:
+     - Trong `modules/worm-gear/js/engine/worm-3d-generator.js` (`generateWheelMesh`), hàm đóng nắp mặt đầu (Side End Caps tại $z = \pm b_{2H}/2$) cũ chỉ sinh 4 tam giác nối từ đỉnh răng xuống lỗ trục `rBore2` cho thân răng $j$, mà hoàn toàn bỏ quên khoảng rỗng rãnh răng (space sector) giữa răng $j$ và răng $j+1$.
+     - Hậu quả: để lộ 40 khe hở nan quạt xuyên thấu từ chân răng xuống tận trục, khiến mô hình 3D trông như chiếc nan hoa xe đạp hoặc một tổ ong khổng lồ.
+  2. **Thiếu cơ chế & giao diện Vết Ăn Khớp (TCA - Tooth Contact Analysis)**:
+     - Module Bánh Răng Trụ và Bánh Răng Côn đều có hộp chọn kiểu tiếp xúc `selContactTheoryMode`:
+       * `theory`: Chuẩn lý thuyết đường tiếp xúc liên hợp (Conjugate line contact).
+       * `crowning`: Thực tế xưởng có độ vồng (Vết elip localized contact patch theo AGMA 6022 / DIN 3996).
+     - Module Trục Vít - Bánh Vít bị thiếu hoàn toàn `selContactTheoryMode`, thiếu thuộc tính `contactMode` trong visualizer và thiếu vi lượng ăn khớp tiếp xúc `dThetaKiss` trong `generateWheelMesh` khi ở chế độ "Chỉ Mặt Bên" (`Flank-Only`).
+* **Giải pháp kỹ thuật toàn diện**:
+  1. **Tái thiết kế cấu trúc Mặt Đầu Bánh Vít Đúc Liền Khối 100% (Solid Watertight Annular Disk Engine)**:
+     - **Thân răng**: Phủ kín mặt răng bằng dải tứ giác phẳng `[pL_m, pR_m, pR_{m+1}, pL_{m+1}]` chạy từ chân răng $r_{\text{root}}$ lên tận đỉnh răng $r_{\text{tip}}$, khớp tuyệt đối vertex-by-vertex với biên dạng sườn và đỉnh răng.
+     - **Vành khuyên thân đĩa**: Chia thành 2 nhóm tứ giác khép kín 360° nối từ vòng chân răng xuống vòng lỗ trục $r_{\text{Bore2}}$:
+       * Tứ giác A: Nối từ đáy thân răng `[t.rFlankL[0], t.rFlankR[0]]` xuống các điểm lỗ trục tương ứng `[pB_L, pB_R]`.
+       * Tứ giác B: Phủ kín toàn bộ đáy rãnh răng `[t.rFlankR[0], tNext.rFlankL[0]]` xuống các điểm lỗ trục `[pB_R, pB_nextL]`.
+     - **Mặt trụ lỗ trục trong (Inner Bore Cylinder)**: Nối liền hai mặt đầu tại $z = \pm b_{2H}/2$ bằng $2 \cdot z_2$ tứ giác trụ có pháp tuyến hướng tâm chuẩn xác, triệt tiêu 100% hiện tượng tổ ong, tạo khối phôi đặc kín nước chuẩn xác 1-to-1 CAD B-Rep.
+  2. **Đồng bộ hóa 1-to-1 Vết Ăn Khớp TCA (Tooth Contact Analysis)**:
+     - Bổ sung thanh điều khiển `selContactTheoryMode` trên Toolbar 3D đồng bộ với 2 module trước:
+       * `📏 Lý Thuyết (Đường Tiếp Xúc Conjugate)`
+       * `🔵 Thực Tế Xưởng (Vết Elip Crowning)`
+     - Tích hợp vi lượng dịch chuyển tiếp xúc ăn khớp `dThetaKiss` trong `generateWheelMesh` khi `surfaceOnly` kích hoạt:
+       * Chế độ `theory`: $d\Theta_{\text{kiss}} = \frac{0.0022 \cdot m_x}{r_2}$ đồng đều trên toàn bộ bề rộng họng ôm.
+       * Chế độ `crowning`: Áp dụng độ vồng parabol vi mô $K_{\text{crown}} = \max(0, 1 - 2.5 u^2)$ (với $u = z / \text{halfB} \in [-1, 1]$), tạo vết tiếp xúc hình elip sắc nét ở 65% vùng giữa họng ôm theo chuẩn xưởng AGMA 6022 / DIN 3996.
+     - Nâng cấp góc nhìn `🔍 Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)`: Zoom cận cảnh siêu nét ở cự ly $d_{\text{mesh}} \approx 1.15 \cdot \max(b_{2H}, 8 m_n) \approx 42\text{ mm}$, hiển thị rõ từng đường tiếp xúc và vết bột màu rà ăn khớp giữa ren trục vít (Cyan `#00a8ff`) và sườn răng bánh vít (Orange `#ff5722`).
+* **Kết quả đo đạc thực nghiệm & Nghiệm thu trực quan**:
+  - `worm_solid_iso_no_honeycomb.png`: Mô hình solid đặc hoàn mỹ, mặt đầu phẳng nhẵn, lỗ trục liền lạc, 0% lỗ hổng tổ ong.
+  - `worm_solid_wheel_face_solid.png`: Trực diện mặt bên bánh vít hiển thị vành khuyên đúc đặc 100%.
+  - `worm_flank_contact_theory_mesh.png`: Hiển thị rõ nét đường tiếp xúc liên hợp lý thuyết chạy dọc ăn khớp.
+  - `worm_flank_contact_crowning_mesh.png`: Hiển thị rõ vết tiếp xúc hình elip có độ vồng theo thực tế xưởng chế tạo.

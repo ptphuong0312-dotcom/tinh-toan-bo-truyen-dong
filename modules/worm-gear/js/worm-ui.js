@@ -686,13 +686,21 @@ class WormUIController {
                     btnToggleFlankOnly.style.background = '#0284c7';
                     btnToggleFlankOnly.style.color = '#ffffff';
                     btnToggleFlankOnly.style.borderColor = '#38bdf8';
-                    btnToggleFlankOnly.innerHTML = '👁️ Đang Hiện Mặt Bên';
+                    btnToggleFlankOnly.innerHTML = '👁️ Đang Xem Mặt Bên';
                 } else {
                     btnToggleFlankOnly.style.background = '';
                     btnToggleFlankOnly.style.color = '';
                     btnToggleFlankOnly.style.borderColor = '';
                     btnToggleFlankOnly.innerHTML = '👁️ Chỉ Mặt Bên';
                 }
+            });
+        }
+
+        // Kiểu Tiếp Xúc 3D: 'theory' (Lý thuyết đường tiếp xúc liên hợp) hoặc 'crowning' (Vết elip có độ vồng)
+        const selContactTheoryMode = document.getElementById('selContactTheoryMode');
+        if (selContactTheoryMode && this.visualizer3D) {
+            selContactTheoryMode.addEventListener('change', (e) => {
+                this.visualizer3D.setContactMode(e.target.value);
             });
         }
 

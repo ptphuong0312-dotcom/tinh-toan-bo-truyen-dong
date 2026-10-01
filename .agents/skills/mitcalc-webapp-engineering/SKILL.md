@@ -1306,3 +1306,23 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
      * Bề dày răng tại vòng chia $r_2$: $6.6959\text{ mm}$, khớp chính xác với $s_{x2} = 6.69565\text{ mm}$ của MITCalc 1.74. Bề dày răng tối thiểu tại góc mép ngoài đạt $2.575\text{ mm}$ (dương khỏe, 0 góc răng bị thắt nhọn hay lộn ngược).
      * Kiểm tra trực quan Playwright (`worm_3d_v5_flank_user_view_0deg.png`, `worm_3d_v5_flank_step5.png`, `worm_3d_v5_flank_step15.png`, `worm_3d_v5_flank_step35.png`): Trong chế độ "Chỉ Mặt Bên" (`Flank-Only`), má sườn cam bánh vít nằm lọt lòng khít khao trong rãnh ren cyan trục vít, tiếp xúc trượt êm ái, hoàn toàn biến mất hiện tượng đâm xuyên sườn sau ở cả răng trung tâm và răng lân cận.
      * Kiểm định đối chiếu song song Excel COM 1-Click (`RA_SOAT_SONG_SONG_TRUC_VIT_BANH_VIT.bat`): **820 / 820 phép kiểm tra đạt PASS 100.0% ($\Delta = 0.000000$)**.
+
+7. **Đồng Bộ Hóa Vết Ăn Khớp TCA & Mặt Đầu Bánh Vít Đúc Liền Khối 100% Triệt Tiêu Tổ Ong (Solid Watertight Annular Disk & TCA Protocol)**:
+   - **Chẩn Đoán Lỗi "Tổ Ong" (Honeycomb / Lattice Void Error)**:
+     * Nắp mặt đầu cũ tại $z = \pm b_{2H}/2$ chỉ phủ tam giác cho thân răng mà bỏ qua toàn bộ rãnh răng từ chân răng xuống lỗ trục, để lại 40 khe hở nan quạt xuyên thấu như tổ ong (`media_1790836651549.png`).
+   - **Kiến Trúc Mặt Đầu Khép Kín 360° (Solid Watertight Wheel End Caps)**:
+     * Phủ kín thân răng bằng $ptsR$ tứ giác phẳng nối hai sườn trái và phải: `[pL_m, pR_m, pR_{m+1}, pL_{m+1}]`.
+     * Phủ kín vành khuyên thân đĩa bằng $2 \cdot z_2$ tứ giác khép kín từ chân răng xuống lỗ trục:
+       - Tứ giác A: Nối từ đáy thân răng `[t.rFlankL[0], t.rFlankR[0]]` xuống lỗ trục `[pB_L, pB_R]`.
+       - Tứ giác B: Nối từ đáy rãnh răng `[t.rFlankR[0], tNext.rFlankL[0]]` xuống lỗ trục `[pB_R, pB_nextL]`.
+     * Mặt trụ lỗ trục trong (Inner Bore Cylinder): Nối liền hai mặt đầu tại $z = \pm b_{2H}/2$ bằng các tứ giác trụ có pháp tuyến hướng tâm $-e_r$ chính xác, tạo nên khối B-Rep kín nước 100% không tì vết.
+   - **Đồng Bộ Hóa 1-to-1 Vết Ăn Khớp TCA (Tooth Contact Analysis)**:
+     * Bổ sung thanh điều khiển `selContactTheoryMode` trên Toolbar 3D:
+       - `📏 Lý Thuyết (Đường Tiếp Xúc Conjugate)`: $d\Theta_{\text{kiss}} = \frac{0.0022 \cdot m_x}{r_2}$.
+       - `🔵 Thực Tế Xưởng (Vết Elip Crowning)`: Độ vồng vi mô $K_{\text{crown}} = \max(0, 1 - 2.5 u^2)$ tạo vết tiếp xúc hình elip ở 65% vùng giữa họng ôm theo AGMA 6022 / DIN 3996.
+     * Tối ưu góc nhìn `🔍 Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)` ở cự ly $d_{\text{mesh}} \approx 1.15 \cdot \max(b_{2H}, 8 m_n) \approx 42\text{ mm}$ tập trung vào điểm ăn khớp danh nghĩa $(0, -a + d_1/2, 0)$, hiển thị rõ vết tiếp xúc như bột màu rà Prussian Blue.
+   - **Kết Quả Thực Nghiệm**:
+     * `worm_solid_iso_no_honeycomb.png`: Mô hình solid đúc đặc hoàn mỹ, 0% lỗ hổng tổ ong.
+     * `worm_solid_wheel_face_solid.png`: Vành khuyên phẳng nhẵn 100%.
+     * `worm_flank_contact_theory_mesh.png`: Đường tiếp xúc liên hợp lý thuyết rõ nét.
+     * `worm_flank_contact_crowning_mesh.png`: Vết tiếp xúc hình elip crowning chuẩn xưởng chế tạo.

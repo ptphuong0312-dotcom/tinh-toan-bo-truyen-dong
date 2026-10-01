@@ -45,6 +45,7 @@ class Worm3DVisualizer {
 
         this.wireframeMode = false;
         this.flankOnlyMode = false;
+        this.contactMode = 'theory'; // 'theory' (Mặc định: Đường tiếp xúc liên hợp) | 'crowning' (Vết elip có độ vồng)
         this.meshDensityLevel = 6; // Default Level 6 (CAM/CNC Precision)
 
         this.mesh1Data = null;
@@ -172,7 +173,8 @@ class Worm3DVisualizer {
         }
 
         const genOpts = Object.assign({}, geom, {
-            meshDensityLevel: this.meshDensityLevel
+            meshDensityLevel: this.meshDensityLevel,
+            contactMode: this.contactMode || 'theory'
         });
 
         // 1. Generate Worm 1 Solid & Surface Meshes
@@ -406,6 +408,19 @@ class Worm3DVisualizer {
         return this.meshDensityLevel;
     }
 
+    setContactMode(mode) {
+        this.contactMode = (mode === 'crowning') ? 'crowning' : 'theory';
+        if (this.geom) {
+            const curWormAngle = this.wormAngle;
+            const curWheelAngle = this.wheelAngle;
+            this.setGeometry(this.geom);
+            this.wormAngle = curWormAngle;
+            this.wheelAngle = curWheelAngle;
+            this.updateGearRotations();
+        }
+        return this.contactMode;
+    }
+
     resetView() {
         this.setViewPreset('iso');
     }
@@ -447,9 +462,11 @@ class Worm3DVisualizer {
                 break;
             case 'mesh': // Close-up on Conjugate Meshing Throat Zone at (0, -a + d1/2, 0)
                 const d1 = this.geom ? (parseFloat(this.geom.d1) || 36.23) : 36.23;
+                const b2H = this.geom ? (parseFloat(this.geom.b2H) || 33.57) : 33.57;
+                const mn = this.geom ? (parseFloat(this.geom.mn ?? this.geom.m) || 4.233) : 4.233;
                 const meshY = -a + d1 * 0.5;
-                const closeDist = Math.max(60.0, d1 * 2.4);
-                this.camera.position.set(closeDist * 0.35, meshY + closeDist * 0.22, closeDist * 0.95);
+                const meshDist = Math.max(b2H, 8.0 * mn) * 1.15;
+                this.camera.position.set(meshDist * 0.32, meshY + meshDist * 0.28, meshDist * 0.88);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(0, meshY, 0);
                 break;
