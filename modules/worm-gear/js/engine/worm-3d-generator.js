@@ -639,28 +639,15 @@ const Worm3DGenerator = {
         const rightHalf = [];
         const NFlank = Math.max(4, ptsPerFlank || 12);
 
-        const r2 = 0.5 * mc.MC_d2;
-        const backlashHalf = 0.44; // mm standard DIN 3975 conjugate backlash for m=4
-
-        // Flank points from root to tip
+        // Flank points from root to tip - Exact theoretical zero-backlash conjugate contact (backlash = 0)
         for (let k = 0; k <= NFlank; k++) {
             const t = k / NFlank;
             const r = rRoot_s + t * (rTip_s - rRoot_s);
             const Rw_r = Math.hypot(a - r, zSlice);
 
+            // Exact nominal trapezoidal half-width from MITCalc 1.74 profile
             const s_worm_half = this.evalWormToothHalfWidth(Rw_r, mc);
-
-            // Kinematic hobbing envelope expansion at tooth tip and root
-            let sweep_exp = 0.0;
-            if (r > r2) {
-                const frac = (r - r2) / Math.max(1.0, rTip_s - r2);
-                sweep_exp = 1.25 * frac;
-            } else {
-                const frac = (r2 - r) / Math.max(1.0, r2 - rRoot_s);
-                sweep_exp = 0.40 * frac;
-            }
-
-            const s_space_half = s_worm_half + sweep_exp + backlashHalf;
+            const s_space_half = s_worm_half;
             const theta_space = Math.min(halfPitch * 0.96, s_space_half / r);
 
             if (k === 0) {

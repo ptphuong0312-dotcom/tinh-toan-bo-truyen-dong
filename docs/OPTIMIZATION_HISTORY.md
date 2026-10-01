@@ -1991,3 +1991,29 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
     * **Bước 0 đến Bước 35 (0° -> 350°)**: **TẤT CẢ 36 BƯỚC ĐỀU ĐẠT 0 ĐỈNH VA CHẠM (0 penetrations)**!
     * **Độ đâm xuyên tối đa (Max Penetration)**: **0.0000 mm (ZERO COLLISION)**!
   - Trực quan hóa hình ảnh: Chụp 4 góc nhìn chuẩn (worm_3d_v3_mitcalc_iso.png, worm_3d_v3_mitcalc_mesh_zone.png, worm_3d_v3_mitcalc_flank_only.png, worm_3d_v3_mitcalc_throat.png) xác nhận sườn ren và sườn răng ăn khớp mượt mà, ôm khít theo đúng họng lõm chữ U của MITCalc 1.74 mà không có bất kỳ điểm cấn chạm nào.
+---
+
+### [2026-10-01] TIẾP XÚC HÌNH HỌC LÝ THUYẾT KHE HỞ BẰNG 0 ($j_t = 0.000000$ MM) & HIỂN THỊ ĐÈ MẶT SAU TRONG CHẾ ĐỘ CHỈ MẶT BÊN 3D TRỤC VÍT - BÁNH VÍT
+* **Bối cảnh & Chỉ thị trực tiếp từ SirPhuong**:
+  - *"hiện tại thì mô phỏng 3D cho thấy 2 bề mặt bánh vít và trục vít không chạm nhau (không tiếp xúc nhau), nguyên tắc vẫn là 2 mặt của bánh vít và trục vít phải tiếp xúc nhau (tức là khe hở bằng 0). bên 2 modul trước thì khi tiếp xúc khe hở bằng 0 thì bề mặt bánh này sẽ hiển thị nên mặt sau của bề mặt bánh kia trong chế độ chỉ mặt bên, bạn cũng cần phải làm mô phỏng modul này như vậy"*
+* **Nguyên nhân kỹ thuật**:
+  - Để triệt tiêu va chạm trước đó, mã nguồn đã áp dụng khe hở cạnh răng danh nghĩa DIN 3975 `backlashHalf = 0.44 mm` và hệ số mở rộng dao phay `sweep_exp = 0.40 - 1.25 mm`. Điều này tạo ra một khe hở nhân tạo khiến 2 mặt sườn không chạm nhau.
+  - Theo nguyên tắc tiếp xúc lý thuyết (Theoretical Zero Backlash $j_t = 0$) như ở 2 mô-đun Bánh Răng Trụ và Bánh Răng Côn: hai bề mặt sườn danh nghĩa phải chạm khít trực tiếp ($s_{\text{space\_half}} = s_{\text{worm\_half}}$).
+* **Giải pháp kỹ thuật thực thi**:
+  1. **Đưa khe hở về 0 tuyệt đối trong Bộ sinh hình 3D (`worm-3d-generator.js`)**:
+     - Trong hàm `generateWheelSliceContour`: Triệt tiêu hoàn toàn `backlashHalf` và `sweep_exp`, thiết lập $s_{\text{space\_half}} = s_{\text{worm\_half}}$.
+     - Chiều rộng rãnh răng bánh vít khớp 100% với bề rộng ren hình thang trục vít MITCalc 1.74 (`MC_sx1 = MC_ex2 = px / 4`).
+  2. **Đóng gói Bundle JavaScript thuần**:
+     - Chạy `python tools/bundle_all.py` đóng gói lại `modules/worm-gear/js/worm-engine.bundle.js` (273,001 ký tự) đảm bảo 100% offline, zero-CORS.
+  3. **Hiệu ứng đồ họa WebGL DoubleSide Coincident Rendering**:
+     - Khi bật chế độ "Chỉ Mặt Bên" (`btnToggleFlankOnly`), toàn bộ khối phôi đặc ẩn đi, chỉ còn 2 vỏ sườn răng mỏng (`side: THREE.DoubleSide`).
+     - Vật liệu: Trục Vít 1 màu Cyan `#00a8ff`, Bánh Vít 2 màu Cam `#ff5722`.
+     - Do khe hở $j_t = 0$, tại vết tiếp xúc liên hợp, mặt sườn Cyan của trục vít tiếp xúc mặt-đối-mặt và hiển thị đè trực tiếp lên mặt sau/mặt trước của sườn Cam bánh vít, tạo chỉ dấu quang học nhận diện tiếp xúc chuẩn xác.
+* **Kết quả đo đạc vi phân & Nghiệm thu quang học trên trình duyệt**:
+  1. **Đo đạc vi phân Playwright (`scratch/measure_flank_contact.py`)**:
+     - Khoảng cách nhỏ nhất giữa 2 mặt sườn: $\Delta_{\min} = 0.000201\text{ mm} \approx 0.000000\text{ mm}$.
+     - Hơn 5,160 đỉnh tiếp xúc nằm sát bề mặt ren trong dải $\le 0.15\text{ mm}$, 0 đỉnh va chạm đâm xuyên cấn biến dạng.
+  2. **Nghiệm thu quang học góc nhìn cận cảnh & Xoay động (`scratch/capture_flank_zoom_angles.py`)**:
+     - `worm_flank_zero_clearance_zoom1.png`: Vết tiếp xúc sườn răng ở góc phối cảnh cận cảnh.
+     - `worm_flank_zero_clearance_zoom2.png`: Nhìn từ trên rãnh răng xuống, mặt Cyan của trục vít tiếp xúc sát khít và hiển thị đè lên mặt sau của sườn Cam bánh vít.
+     - `worm_flank_zero_clearance_zoom_rot45.png`: Khi quay $45^\circ$, mặt sườn trượt tiếp tuyến liên tục không hề có khe hở hở rỗng hay đâm xuyên.

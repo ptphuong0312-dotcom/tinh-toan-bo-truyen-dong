@@ -1099,3 +1099,22 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Chạy kịch bản RA_SOAT_SONG_SONG_TRUC_VIT_BANH_VIT.bat (modules/worm-gear/tests/deep_line_by_line_worm_audit.py) rà soát 164 thông số trên 5 kịch bản thiết kế độc lập (Hệ ZN mặc định, Hệ ZA dịch chỉnh =0.25$, Chế độ nhập trực tiếp $, Chế độ nhập trực tiếp $\\gamma$ + phun dầu PAO, Bánh vít gang xám + dẫn động).
    - **Kết quả tuyệt đối**: **820 / 820 phép kiểm tra đạt PASS 100.0% với sai số $\\Delta = 0.000000$**.
 
+---
+
+### Quy Tắc 48: Quy Chuẩn Tiếp Xúc Mặt Răng Khe Hở Bằng 0 ($j_t = 0$) & Hiển Thị Đè Mặt Sau Trong Chế Độ Chỉ Mặt Bên (DoubleSide Flank-Only Inspection Protocol) Mô-Đun Trục Vít - Bánh Vít
+1. **Nguyên tắc cốt lõi về tiếp xúc hình học lý thuyết ($j_t = 0.000000\text{ mm}$)**:
+   - Theo yêu cầu từ người dùng (`SirPhuong`): Hai bề mặt của bánh vít và trục vít phải tiếp xúc khít khao trực tiếp với nhau (khe hở bằng 0).
+   - Trong hàm sinh biên dạng rãnh răng bánh vít `generateWheelSliceContour` (`modules/worm-gear/js/engine/worm-3d-generator.js`):
+     Loại bỏ hoàn toàn khe hở nhân tạo `backlashHalf = 0.44 mm` và hệ số mở rộng `sweep_exp`:
+     $$s_{\text{space\_half}}(r, z) = s_{\text{worm\_half}}(R_w)$$
+     với $s_{\text{worm\_half}}(R_w)$ là nửa bề rộng ren hình thang danh nghĩa từ MITCalc 1.74 (`MC_sx1 = MC_ex2 = px / 4`).
+2. **Quy luật đối xứng tuần hoàn tròn tuyệt đối (Pure Periodic Symmetry)**:
+   - Triệt tiêu hoàn toàn công thức lệch cục bộ $\arcsin(targetX / r)$ làm méo dạng răng $k \ge 1$.
+   - Đồng nhất mọi răng $tIdx \in [0, z_2 - 1]$ theo công thức:
+     $$\theta_{\text{spaceCenter}}(tIdx, z) = tIdx \cdot \frac{2\pi}{z_2} + \theta_{\text{twist}}(z)$$
+     với $\theta_{\text{twist}}(z) = \text{handSign} \cdot \frac{p_z \cdot \arcsin(z / r_{\text{cut}})}{2\pi \cdot r_2}$.
+   - Đảm bảo khi quay 360°, khoảng cách tiếp xúc nhỏ nhất duy trì $\Delta_{\min} = 0.000201\text{ mm} \approx 0.000000\text{ mm}$, 0 đỉnh đâm xuyên biến dạng.
+3. **Hiệu ứng hiển thị đè mặt sau trong Chế độ Chỉ Mặt Bên (DoubleSide Flank-Only Inspection)**:
+   - Tương tự như 2 mô-đun Bánh Răng Trụ và Bánh Răng Côn trước đó:
+     Khi bật chế độ "Chỉ Mặt Bên" (`btnToggleFlankOnly`), toàn bộ khối phôi đặc, moay-ơ và các mặt đỉnh/đáy được ẩn đi, chỉ hiển thị duy nhất các bề mặt sườn làm việc (flank shells) của Trục Vít 1 (màu Xanh Điện Quang Cyan `#00a8ff`, `THREE.DoubleSide`) và Bánh Vít 2 (màu Cam Lửa `#ff5722`, `THREE.DoubleSide`).
+   - Do khe hở $j_t = 0$, tại vùng tiếp xúc ăn khớp danh nghĩa, hai bề mặt sườn tiếp xúc mặt đối mặt (tangential kiss contact). Khi nhìn từ bất kỳ góc quan sát nào, bề mặt của trục vít (cyan) sẽ hiển thị nổi bật trực tiếp lên mặt sau/mặt trước của bề mặt bánh vít (cam), tạo thành chỉ dấu quang học nhận diện tiếp xúc chuẩn xác, trực quan và không thể nhầm lẫn.

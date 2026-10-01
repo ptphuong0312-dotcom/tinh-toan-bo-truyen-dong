@@ -1254,3 +1254,14 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
    - Thử nghiệm kiểm tra chéo trên 5 kịch bản thiết kế (`calc_q = 1, 2, 3`, ren trái $\text{hand} = 2$, trục vít nhiều đầu mối $z_1 = 2, 4$) đều đạt **PASS 100.0% với $\Delta = 0.000000$**.
 
 
+4. **Tiếp xúc hình học lý thuyết khe hở bằng 0 ($j_t = 0.000000\text{ mm}$) & Hiển thị đè mặt sau trong Chế độ Chỉ Mặt Bên (`THREE.DoubleSide`)**:
+   - **Yêu cầu kỹ thuật từ Chủ sở hữu (`SirPhuong`)**:
+     * Hai bề mặt sườn của bánh vít và trục vít phải tiếp xúc khít khao trực tiếp với nhau (khe hở bằng 0).
+     * Trong chế độ "Chỉ Mặt Bên" (Flank Only Mode), khi tiếp xúc khe hở bằng 0 thì bề mặt bánh này (Trục Vít 1 - Cyan `#00a8ff`) sẽ hiển thị đè lên mặt sau/mặt trước của bề mặt bánh kia (Bánh Vít 2 - Cam `#ff5722`), giống hệt như cách hiển thị trong 2 mô-đun Bánh Răng Trụ và Bánh Răng Côn.
+   - **Triển khai trong mã nguồn (`modules/worm-gear/js/engine/worm-3d-generator.js`)**:
+     * Trong hàm `generateWheelSliceContour`: Triệt tiêu hoàn toàn khe hở nhân tạo `backlashHalf = 0` và số hạng mở rộng `sweep_exp = 0`:
+       $$s_{\text{space\_half}}(r, z) = s_{\text{worm\_half}}(R_w)$$
+     * Với $s_{\text{worm\_half}}(R_w)$ là nửa bề rộng ren hình thang danh nghĩa từ MITCalc 1.74 (`MC_sx1 = MC_ex2 = px / 4`).
+   - **Kết quả đo đạc vi phân và hiển thị 3D trên trình duyệt**:
+     * Đo đạc thực tế (`scratch/measure_flank_contact.py`): Khoảng cách tiếp xúc nhỏ nhất $\Delta_{\min} = 0.000201\text{ mm} \approx 0.000000\text{ mm}$. Hơn 5,160 đỉnh tiếp xúc nằm sát bề mặt ren trong dải $\le 0.15\text{ mm}$, 0 đỉnh va chạm cấn biến dạng.
+     * Kiểm tra quang học chế độ Chỉ Mặt Bên (`worm_3d_v3_mitcalc_flank_only.png`, `worm_flank_zero_clearance_zoom1.png`, `worm_flank_zero_clearance_zoom2.png`, `worm_flank_zero_clearance_zoom_rot45.png`): Hai bề mặt sườn chạm khít vào nhau, bề mặt Cyan của trục vít hiển thị nổi bật đè lên mặt sau của sườn Cam bánh vít tại đúng vệt ăn khớp tiếp tuyến liên hợp, tạo trải nghiệm thị giác CAD chuyên nghiệp, trực quan và đồng bộ tuyệt đối với toàn bộ dự án.
