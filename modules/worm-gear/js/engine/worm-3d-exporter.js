@@ -27,6 +27,23 @@ const Worm3DExporter = {
         }, 300);
     },
 
+    meshToRawTriangles(meshData) {
+        if (!meshData) return [];
+        if (meshData.rawTriangles) return meshData.rawTriangles;
+        const { vertices, normals, indices } = meshData;
+        if (!vertices || !indices) return [];
+        const tris = [];
+        for (let i = 0; i < indices.length; i += 3) {
+            const i1 = indices[i] * 3, i2 = indices[i + 1] * 3, i3 = indices[i + 2] * 3;
+            const p1 = [vertices[i1], vertices[i1 + 1], vertices[i1 + 2]];
+            const p2 = [vertices[i2], vertices[i2 + 1], vertices[i2 + 2]];
+            const p3 = [vertices[i3], vertices[i3 + 1], vertices[i3 + 2]];
+            const n = normals ? [normals[i1], normals[i1 + 1], normals[i1 + 2]] : [0, 1, 0];
+            tris.push([p1, p2, p3, n]);
+        }
+        return tris;
+    },
+
     normalizeTriangles(input) {
         if (!input) return [];
         if (Array.isArray(input)) {
@@ -36,14 +53,18 @@ const Worm3DExporter = {
             let combined = [];
             for (const part of input) {
                 if (Array.isArray(part)) {
-                    combined = combined.concat(part);
+                    combined = combined.concat(this.normalizeTriangles(part));
                 } else if (part && part.rawTriangles) {
                     combined = combined.concat(part.rawTriangles);
+                } else if (part && part.vertices && part.indices) {
+                    combined = combined.concat(this.meshToRawTriangles(part));
                 }
             }
             return combined;
         } else if (input.rawTriangles) {
             return input.rawTriangles;
+        } else if (input.vertices && input.indices) {
+            return this.meshToRawTriangles(input);
         }
         return [];
     },

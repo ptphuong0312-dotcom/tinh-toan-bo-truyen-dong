@@ -1385,3 +1385,22 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
       * Thay thế hoàn toàn bằng **lõi trụ chân ren liên tục (continuous root cylinder)** bán kính {f1}$ từ  = -L/2$ đến $+L/2$.
     - **Kiểm Thử Thực Nghiệm 360° Đạt Chuẩn Zero-Gouging**:
       * Script 	ools/check_penetration.js quét toàn bộ các đỉnh của trục vít qua 360° góc quay (bước ^\circ$): **Đạt 0 điểm đâm xuyên (penetrations = 0), độ lẹm răng tuyệt đối $\Delta = 0.000	ext{ mm}$**!
+
+---
+
+11. **QUY TRÌNH KIỂM TOÁN CHẤT LƯỢNG LƯỚI 3D TOÀN DIỆN & VẬN HÀNH CHẾ ĐỘ 'CHỈ MẶT BÊN' (FLANK ONLY MODE) TRÊN TOOLBAR 3D**:
+    - **Quy Trình Kiểm Toán Lưới Bắt Buộc (Mesh Audit Checklist)**:
+      * Mọi đối tượng 3D tạo ra từ `Worm3DGenerator` (Solid & Surface Mesh) bắt buộc phải vượt qua bài kiểm tra `test_3d_geom_quality.js`:
+        - `nanCount = 0`: Không có tọa độ NaN hoặc Infinity trong `vertices`, `normals`.
+        - `degenCount = 0`: Không có tam giác suy biến có diện tích = 0 hoặc khoảng cách đỉnh $< 10^{-6}$.
+        - Hướng pháp tuyến `normals`: Định chuẩn hướng ra ngoài phôi đặc với độ dài $|ec{n}| pprox 1.0 \pm 0.05$.
+      * Bài kiểm tra đâm xuyên `check_penetration.js` qua toàn bộ 360° góc quay đạt `penetrations = 0, maxPen = 0.000 mm`.
+    - **Quy Chuẩn Chế Độ "👁️ Chỉ Mặt Bên" (Flank Only Mode)**:
+      * **Mục đích**: Ẩn toàn bộ khối phôi đặc, moay-ơ, lỗ trục, thân trục và đáy rãnh, chỉ giữ lại các bề mặt sườn ren và sườn răng tiếp xúc liên hợp không gian để quan sát trực quan sự tiếp xúc và trượt liên hợp.
+      * **Mã nguồn**:
+        - `worm-3d-visualizer.js`: Sinh cả `mesh1Data/mesh2Data` (Solid) và `surf1Data/surf2Data` (Surface) qua `generateWormSurfaceMesh()` và `generateWheelSurfaceMesh()`.
+        - Vật liệu PBR kim loại thuần khiết (`DoubleSide`, không vertex colors / bột màu giả tạo, triệt tiêu Z-fighting).
+        - `toggleFlankOnly()`: Đảo cờ `flankOnlyMode` và chuyển đổi hiển thị giữa solid mesh và surface mesh.
+        - Giao diện: Nút `#btnToggleFlankOnly` đổi nhãn `👁️ Chỉ Mặt Bên` $\leftrightarrow$ `👁️ Đang Xem Mặt Bên` kèm class `.btn-secondary.active` phát sáng xanh cyan.
+      * **Kiểm thử tự động Playwright**:
+        - Kịch bản `tools/test_flank_only_playwright.py` tự động mở trình duyệt, chuyển 3D, click nút, kiểm tra trạng thái hiển thị `flankOnlyMode`, đổi góc nhìn (mesh zone, worm, wheel), nhích tiến và quay lại chế độ solid, chụp ảnh nghiệm thu (100% PASS).

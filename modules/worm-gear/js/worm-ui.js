@@ -618,6 +618,15 @@ class WormUIController {
             });
         }
 
+        const btnFlankOnly = document.getElementById('btnToggleFlankOnly');
+        if (btnFlankOnly && this.visualizer3D) {
+            btnFlankOnly.addEventListener('click', () => {
+                const isFlankOnly = this.visualizer3D.toggleFlankOnly();
+                btnFlankOnly.classList.toggle('active', isFlankOnly);
+                btnFlankOnly.textContent = isFlankOnly ? '👁️ Đang Xem Mặt Bên' : '👁️ Chỉ Mặt Bên';
+            });
+        }
+
         const btnToggle3DAnim = document.getElementById('btnToggle3DAnim');
         if (btnToggle3DAnim && this.visualizer3D) {
             btnToggle3DAnim.addEventListener('click', () => {

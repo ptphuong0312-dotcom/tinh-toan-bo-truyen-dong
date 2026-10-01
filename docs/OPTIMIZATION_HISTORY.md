@@ -2293,3 +2293,47 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
 
 
 
+
+---
+
+### [2026-10-01] GIAI ĐOẠN 30: KIỂM TOÁN HÌNH HỌC 3D TOÀN DIỆN & KHÔI PHỤC HOÀN HẢO CHỨC NĂNG 'CHỈ MẶT BÊN' (FLANK ONLY MODE) TRÊN TOOLBAR 3D THEO YÊU CẦU CỦA CHỦ SỞ HỮU (SIRPHUONG)
+* **Bối cảnh & Chỉ thị từ Chủ sở hữu (`SirPhuong`)**:
+  - *"ban nói 'Toàn bộ giải thuật dựng hình 3D đã được viết lại từ đầu ' nhưng bạn cần kiểm tra xem đã chuẩn chưa, ngoài ra bạn bỏ đi chức năng chỉ mặt bên trong module rồi"*
+* **1. Kiểm toán chất lượng hình học giải thuật 3D mới (3D Mesh Quality & Kinematics Audit)**:
+  - **Kiểm tra tính toàn vẹn hình học đa trường hợp (`tools/test_3d_geom_quality.js`)**:
+    * Quét toàn bộ các kịch bản thực tế: $z_1 = 1, 2, 4$; Hướng xoắn Xoắn Phải (Right-hand) và Xoắn Trái (Left-hand); Các cấp độ mịn từ Cấp 1 đến Cấp 8 (CAM/CNC).
+    * Kết quả kiểm toán:
+      - Cả 4 bộ dữ liệu mesh (`Worm Solid`, `Worm Surface`, `Wheel Solid`, `Wheel Surface`) đều đạt **`nanCount = 0`, `degenCount = 0`** (không một tam giác suy biến, không một giá trị tọa độ bất thường).
+      - Số lượng tam giác từ 8,832 tris (Worm Surface Lvl 6) đến 185,480 tris (Wheel Solid Lvl 8) phân bố đồng đều, định hướng pháp tuyến hướng ra ngoài chuẩn xác.
+  - **Kiểm tra xuyên thấu động học 360° (`tools/check_penetration.js`)**:
+    * Quét toàn bộ các đỉnh của trục vít xoay qua 360° ăn khớp với bánh vít (bước $30^\circ$):
+    * **Kết quả: 100% các góc quay đạt `penetrations = 0, maxPen = 0.000 mm`** (Triệt tiêu 100% hiện tượng đâm xuyên hoặc lẹm răng).
+* **2. Khôi phục hoàn hảo Chức năng "👁️ Chỉ Mặt Bên" (Flank Only Mode)**:
+  - **Mục đích kỹ thuật**: Cho phép kỹ sư cơ khí ẩn toàn bộ phôi đặc, moay-ơ, lỗ trục, thân trục và đáy rãnh, chỉ giữ lại các bề mặt sườn ren và sườn răng tiếp xúc liên hợp không gian để quan sát trực quan sự tiếp xúc và trượt liên hợp.
+  - **Nâng cấp mã nguồn động cơ & visualizer**:
+    * `modules/worm-gear/js/ui/worm-3d-visualizer.js`:
+      - Trong `setGeometry(geom)`: Tích hợp sinh đồng thời cả dữ liệu khối đặc (`mesh1Data`, `mesh2Data`) và dữ liệu mặt sườn (`surf1Data`, `surf2Data`) qua `Worm3DGenerator.generateWormSurfaceMesh()` và `generateWheelSurfaceMesh()`.
+      - Trong `updateMeshes()`: Khởi tạo các vật liệu PBR kim loại thuần khiết chuẩn CAD:
+        * Trục vít (Worm 1): Cobalt-Cyan Metallic PBR (`0x0284c7`, `emissive: 0x013a63`, `roughness: 0.38`, `metalness: 0.40`, `DoubleSide`).
+        * Bánh vít (Wheel 2): Tin-Bronze PBR (`0xea580c`, `emissive: 0x7c2d12`, `roughness: 0.40`, `metalness: 0.35`, `DoubleSide`).
+        * Tuyệt đối không dùng vertex colors hay bột màu giả tạo, loại bỏ hoàn toàn hiện tượng Z-fighting.
+      - `toggleFlankOnly()`: Đảo cờ `flankOnlyMode` và chuyển đổi hiển thị tức thì giữa solid mesh (`visible = !flankOnlyMode`) và surface mesh (`visible = flankOnlyMode`).
+      - `toggleWireframe()`: Đồng bộ chế độ khung dây cho cả solid mesh và surface mesh.
+      - `getExportTriangles()`: Hỗ trợ chuyển đổi linh hoạt `{ vertices, normals, indices }` sang danh sách tam giác để xuất CAD (STEP / STL / OBJ) cả dạng khối và dạng mặt sườn hở (Open Shell).
+    * `modules/worm-gear/js/engine/worm-3d-exporter.js`:
+      - Cập nhật `normalizeTriangles()` và bổ sung `meshToRawTriangles()` để tiếp nhận trực tiếp cấu trúc buffer geometry.
+    * `modules/worm-gear/js/worm-ui.js`:
+      - Gắn sự kiện `click` cho nút `#btnToggleFlankOnly`, tự động chuyển đổi nhãn giữa `👁️ Chỉ Mặt Bên` và `👁️ Đang Xem Mặt Bên`, kèm toggle class `.active`.
+    * `modules/worm-gear/index.html`:
+      - Thêm CSS rule `.btn-secondary.active` với hiệu ứng phát sáng xanh cyan (`box-shadow: 0 0 10px rgba(56, 189, 248, 0.45)`).
+* **3. Đóng gói & Nghiệm thu thực tế qua Playwright Browser Automation**:
+  - Chạy `python tools/bundle_all.py` cập nhật thành công `worm-engine.bundle.js` (268,781 ký tự).
+  - Chạy kịch bản tự động `tools/test_flank_only_playwright.py` kiểm chứng toàn diện hành vi người dùng trong trình duyệt:
+    * `worm_solid_verified.png`: Khởi động ban đầu ở chế độ Khối Đặc chuẩn xác.
+    * `worm_flank_only_iso.png`: Click 'Chỉ Mặt Bên', nút chuyển thành 'Đang Xem Mặt Bên' sáng xanh, toàn bộ phôi đặc biến mất, hiển thị rõ nét hai dải sườn răng kim loại.
+    * `worm_flank_only_meshing_zone.png`: Phóng to vùng ăn khớp, hai sườn ôm khít tiếp xúc chuẩn xác, không có khe hở bất thường.
+    * `worm_flank_only_side.png`: Hướng nhìn dọc trục vít (+X) thể hiện rõ độ ôm cong của họng lõm sườn răng.
+    * `worm_flank_only_wheel.png`: Hướng nhìn trực diện bánh vít (+Z).
+    * `worm_flank_only_stepped_mesh.png`: Nhích tiến 3 bước vi phân trong chế độ Chỉ Mặt Bên, hai mặt sườn trượt êm mượt mà liên hợp.
+    * `worm_solid_returned_iso.png`: Click lần nữa để quay lại chế độ Khối Đặc, mô hình 3D nguyên vẹn.
+    * **Kết quả: 100% ALL TESTS PASSED!**

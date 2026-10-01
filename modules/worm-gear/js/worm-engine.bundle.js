@@ -4642,6 +4642,23 @@ const Worm3DExporter = {
         }, 300);
     },
 
+    meshToRawTriangles(meshData) {
+        if (!meshData) return [];
+        if (meshData.rawTriangles) return meshData.rawTriangles;
+        const { vertices, normals, indices } = meshData;
+        if (!vertices || !indices) return [];
+        const tris = [];
+        for (let i = 0; i < indices.length; i += 3) {
+            const i1 = indices[i] * 3, i2 = indices[i + 1] * 3, i3 = indices[i + 2] * 3;
+            const p1 = [vertices[i1], vertices[i1 + 1], vertices[i1 + 2]];
+            const p2 = [vertices[i2], vertices[i2 + 1], vertices[i2 + 2]];
+            const p3 = [vertices[i3], vertices[i3 + 1], vertices[i3 + 2]];
+            const n = normals ? [normals[i1], normals[i1 + 1], normals[i1 + 2]] : [0, 1, 0];
+            tris.push([p1, p2, p3, n]);
+        }
+        return tris;
+    },
+
     normalizeTriangles(input) {
         if (!input) return [];
         if (Array.isArray(input)) {
@@ -4651,14 +4668,18 @@ const Worm3DExporter = {
             let combined = [];
             for (const part of input) {
                 if (Array.isArray(part)) {
-                    combined = combined.concat(part);
+                    combined = combined.concat(this.normalizeTriangles(part));
                 } else if (part && part.rawTriangles) {
                     combined = combined.concat(part.rawTriangles);
+                } else if (part && part.vertices && part.indices) {
+                    combined = combined.concat(this.meshToRawTriangles(part));
                 }
             }
             return combined;
         } else if (input.rawTriangles) {
             return input.rawTriangles;
+        } else if (input.vertices && input.indices) {
+            return this.meshToRawTriangles(input);
         }
         return [];
     },
@@ -5240,6 +5261,12 @@ class Worm3DVisualizer {
         // 2. Generate Globoid Worm Wheel 2 Solid Mesh (Centrifugal Tin-Nickel Bronze CuSn12Ni2)
         this.mesh2Data = Worm3DGenerator.generateWheelMesh(genOpts);
 
+        // 3. Generate Worm 1 Flank Surface Mesh (Flank Only)
+        this.surf1Data = Worm3DGenerator.generateWormSurfaceMesh(genOpts);
+
+        // 4. Generate Globoid Worm Wheel 2 Flank Surface Mesh (Flank Only)
+        this.surf2Data = Worm3DGenerator.generateWheelSurfaceMesh(genOpts);
+
         this.updateMeshes();
 
         // Position Worm 1 at (0, -a, 0) and Worm Wheel 2 at (0, 0, 0)
@@ -5274,6 +5301,16 @@ class Worm3DVisualizer {
             this.wheelMesh.geometry.dispose();
             this.wheelMesh = null;
         }
+        if (this.wormSurfMesh) {
+            this.wormGroup.remove(this.wormSurfMesh);
+            this.wormSurfMesh.geometry.dispose();
+            this.wormSurfMesh = null;
+        }
+        if (this.wheelSurfMesh) {
+            this.wheelGroup.remove(this.wheelSurfMesh);
+            this.wheelSurfMesh.geometry.dispose();
+            this.wheelSurfMesh = null;
+        }
 
         // PBR Materials (Authentic Mechanical CAD Engineering Standards):
         // Worm 1 Solid: Case-Hardened Ground Alloy Steel (Cobalt-Cyan Metallic)
@@ -5298,12 +5335,34 @@ class Worm3DVisualizer {
             wireframe: this.wireframeMode
         });
 
+        // Flank Only Surface Materials (PBR Metallic CAD):
+        const matWormSurf = new THREE.MeshStandardMaterial({
+            color: 0x0284c7,
+            emissive: 0x013a63,
+            emissiveIntensity: 0.12,
+            metalness: 0.40,
+            roughness: 0.38,
+            side: THREE.DoubleSide,
+            wireframe: this.wireframeMode
+        });
+
+        const matWheelSurf = new THREE.MeshStandardMaterial({
+            color: 0xea580c,
+            emissive: 0x7c2d12,
+            emissiveIntensity: 0.12,
+            metalness: 0.35,
+            roughness: 0.40,
+            side: THREE.DoubleSide,
+            wireframe: this.wireframeMode
+        });
+
         // 1. Worm 1 Solid Mesh
         const geo1 = new THREE.BufferGeometry();
         geo1.setAttribute('position', new THREE.BufferAttribute(this.mesh1Data.vertices, 3));
         geo1.setAttribute('normal', new THREE.BufferAttribute(this.mesh1Data.normals, 3));
         geo1.setIndex(new THREE.BufferAttribute(this.mesh1Data.indices, 1));
         this.wormMesh = new THREE.Mesh(geo1, matWorm);
+        this.wormMesh.visible = !this.flankOnlyMode;
         this.wormGroup.add(this.wormMesh);
 
         // 2. Worm Wheel 2 Solid Mesh
@@ -5312,7 +5371,30 @@ class Worm3DVisualizer {
         geo2.setAttribute('normal', new THREE.BufferAttribute(this.mesh2Data.normals, 3));
         geo2.setIndex(new THREE.BufferAttribute(this.mesh2Data.indices, 1));
         this.wheelMesh = new THREE.Mesh(geo2, matWheel);
+        this.wheelMesh.visible = !this.flankOnlyMode;
         this.wheelGroup.add(this.wheelMesh);
+
+        // 3. Worm 1 Surface Mesh (Flank Only)
+        if (this.surf1Data) {
+            const geoSurf1 = new THREE.BufferGeometry();
+            geoSurf1.setAttribute('position', new THREE.BufferAttribute(this.surf1Data.vertices, 3));
+            geoSurf1.setAttribute('normal', new THREE.BufferAttribute(this.surf1Data.normals, 3));
+            geoSurf1.setIndex(new THREE.BufferAttribute(this.surf1Data.indices, 1));
+            this.wormSurfMesh = new THREE.Mesh(geoSurf1, matWormSurf);
+            this.wormSurfMesh.visible = this.flankOnlyMode;
+            this.wormGroup.add(this.wormSurfMesh);
+        }
+
+        // 4. Worm Wheel 2 Surface Mesh (Flank Only)
+        if (this.surf2Data) {
+            const geoSurf2 = new THREE.BufferGeometry();
+            geoSurf2.setAttribute('position', new THREE.BufferAttribute(this.surf2Data.vertices, 3));
+            geoSurf2.setAttribute('normal', new THREE.BufferAttribute(this.surf2Data.normals, 3));
+            geoSurf2.setIndex(new THREE.BufferAttribute(this.surf2Data.indices, 1));
+            this.wheelSurfMesh = new THREE.Mesh(geoSurf2, matWheelSurf);
+            this.wheelSurfMesh.visible = this.flankOnlyMode;
+            this.wheelGroup.add(this.wheelSurfMesh);
+        }
     }
 
     updateGearRotations() {
@@ -5382,11 +5464,18 @@ class Worm3DVisualizer {
         this.wireframeMode = !this.wireframeMode;
         if (this.wormMesh) this.wormMesh.material.wireframe = this.wireframeMode;
         if (this.wheelMesh) this.wheelMesh.material.wireframe = this.wireframeMode;
+        if (this.wormSurfMesh) this.wormSurfMesh.material.wireframe = this.wireframeMode;
+        if (this.wheelSurfMesh) this.wheelSurfMesh.material.wireframe = this.wireframeMode;
         return this.wireframeMode;
     }
 
     toggleFlankOnly() {
-        return false;
+        this.flankOnlyMode = !this.flankOnlyMode;
+        if (this.wormMesh) this.wormMesh.visible = !this.flankOnlyMode;
+        if (this.wheelMesh) this.wheelMesh.visible = !this.flankOnlyMode;
+        if (this.wormSurfMesh) this.wormSurfMesh.visible = this.flankOnlyMode;
+        if (this.wheelSurfMesh) this.wheelSurfMesh.visible = this.flankOnlyMode;
+        return this.flankOnlyMode;
     }
 
     setMeshDensityLevel(level) {
@@ -5475,6 +5564,23 @@ class Worm3DVisualizer {
         this.controls.update();
     }
 
+    meshToRawTriangles(meshData) {
+        if (!meshData) return [];
+        if (meshData.rawTriangles) return meshData.rawTriangles;
+        const { vertices, normals, indices } = meshData;
+        if (!vertices || !indices) return [];
+        const tris = [];
+        for (let i = 0; i < indices.length; i += 3) {
+            const i1 = indices[i] * 3, i2 = indices[i + 1] * 3, i3 = indices[i + 2] * 3;
+            const p1 = [vertices[i1], vertices[i1 + 1], vertices[i1 + 2]];
+            const p2 = [vertices[i2], vertices[i2 + 1], vertices[i2 + 2]];
+            const p3 = [vertices[i3], vertices[i3 + 1], vertices[i3 + 2]];
+            const n = normals ? [normals[i1], normals[i1 + 1], normals[i1 + 2]] : [0, 1, 0];
+            tris.push([p1, p2, p3, n]);
+        }
+        return tris;
+    }
+
     /**
      * Extracts raw triangles for 3D CAD export (Worm 1, Worm Wheel 2, or Assembly Pair)
      * @param {string} type - 'worm' ('pinion'), 'wheel' ('gear'), or 'assembly'
@@ -5497,27 +5603,36 @@ class Worm3DVisualizer {
         const fullOpts = Object.assign({}, this.geom, stepOpts, { surfaceOnly });
 
         if (type === 'worm' || type === 'pinion') {
-            const m1 = Worm3DGenerator.generateWormMesh(fullOpts);
-            return m1.rawTriangles;
+            const m1 = surfaceOnly
+                ? Worm3DGenerator.generateWormSurfaceMesh(fullOpts)
+                : Worm3DGenerator.generateWormMesh(fullOpts);
+            return this.meshToRawTriangles(m1);
         }
 
         if (type === 'wheel' || type === 'gear') {
-            const m2 = Worm3DGenerator.generateWheelMesh(fullOpts);
-            return m2.rawTriangles;
+            const m2 = surfaceOnly
+                ? Worm3DGenerator.generateWheelSurfaceMesh(fullOpts)
+                : Worm3DGenerator.generateWheelMesh(fullOpts);
+            return this.meshToRawTriangles(m2);
         }
 
         // Assembly Pair: Worm 1 translated to (0, -a, 0) + Worm Wheel 2 at (0, 0, 0)
-        const m1 = Worm3DGenerator.generateWormMesh(fullOpts);
-        const m2 = Worm3DGenerator.generateWheelMesh(fullOpts);
+        const m1 = surfaceOnly
+            ? Worm3DGenerator.generateWormSurfaceMesh(fullOpts)
+            : Worm3DGenerator.generateWormMesh(fullOpts);
+        const m2 = surfaceOnly
+            ? Worm3DGenerator.generateWheelSurfaceMesh(fullOpts)
+            : Worm3DGenerator.generateWheelMesh(fullOpts);
         const a = this.centerDistA || parseFloat(this.geom.a) || 103.3663;
 
-        const tWorm = m1.rawTriangles.map(([p1, p2, p3, n]) => [
+        const rawM1 = this.meshToRawTriangles(m1);
+        const tWorm = rawM1.map(([p1, p2, p3, n]) => [
             [p1[0], p1[1] - a, p1[2]],
             [p2[0], p2[1] - a, p2[2]],
             [p3[0], p3[1] - a, p3[2]],
             [n[0], n[1], n[2]]
         ]);
-        const tWheel = m2.rawTriangles;
+        const tWheel = this.meshToRawTriangles(m2);
 
         if (forStep) {
             return [tWorm, tWheel];
@@ -6149,6 +6264,15 @@ class WormUIController {
             btnWireframe.addEventListener('click', () => {
                 this.visualizer3D.toggleWireframe();
                 btnWireframe.classList.toggle('active', this.visualizer3D.wireframeMode);
+            });
+        }
+
+        const btnFlankOnly = document.getElementById('btnToggleFlankOnly');
+        if (btnFlankOnly && this.visualizer3D) {
+            btnFlankOnly.addEventListener('click', () => {
+                const isFlankOnly = this.visualizer3D.toggleFlankOnly();
+                btnFlankOnly.classList.toggle('active', isFlankOnly);
+                btnFlankOnly.textContent = isFlankOnly ? '👁️ Đang Xem Mặt Bên' : '👁️ Chỉ Mặt Bên';
             });
         }
 

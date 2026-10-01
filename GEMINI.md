@@ -1267,3 +1267,27 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Script kiểm tra giao cắt hình học 3D (`tools/check_penetration.js`):
      Quét toàn bộ đỉnh lưới qua 360° góc quay động học: **Đạt 0 điểm đâm xuyên (`penetrations = 0`), độ lẹm răng tuyệt đối $\Delta = 0.000\text{ mm}$**!
 
+
+---
+
+### Quy Tắc 55: Quy Chuẩn Kiểm Toán Toàn Diện Giải Thuật Lưới 3D & Khôi Phục Hoàn Hảo Chế Độ 'Chỉ Mặt Bên' (Comprehensive 3D Mesh Audit & Flank-Only Mode Protocol)
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"ban nói 'Toàn bộ giải thuật dựng hình 3D đã được viết lại từ đầu ' nhưng bạn cần kiểm tra xem đã chuẩn chưa, ngoài ra bạn bỏ đi chức năng chỉ mặt bên trong module rồi"*.
+2. **Quy Trình Kiểm Toán Chất Lượng Lưới 3D Bắt Buộc (Mandatory 3D Mesh Audit Checklist)**:
+   - Trước khi khẳng định giải thuật 3D hoàn thiện, trợ lý AI bắt buộc phải chạy các kịch bản kiểm toán kỹ thuật độc lập (`tools/test_3d_geom_quality.js` & `tools/check_penetration.js`):
+     * **Kiểm tra độ dị thường & suy biến**: Toàn bộ mảng tọa độ đỉnh `vertices`, véc-tơ pháp tuyến `normals`, và chỉ mục `indices` phải đạt **`nanCount = 0`**, **`degenCount = 0`** (không tam giác suy biến, không độ dài cạnh $< 10^{-6}$).
+     * **Đa kịch bản thiết kế**: Kiểm tra thành công trên các số đầu mối $z_1 = 1, 2, 4$; Hướng xoắn Xoắn Phải và Xoắn Trái; Các cấp độ mịn từ Cấp 1 đến Cấp 8.
+     * **Kiểm tra xuyên thấu động học 360°**: Quét giao cắt không gian giữa các đỉnh ren trục vít và thể tích rãnh răng bánh vít qua 360° góc quay phải đạt **`penetrations = 0, maxPen = 0.000 mm`** (triệt tiêu 100% lẹm răng).
+3. **Quy Chuẩn Chế Độ "👁️ Chỉ Mặt Bên" (Flank Only Mode)**:
+   - **Mục đích cơ khí**: Cho phép người dùng và kỹ sư ẩn khối phôi đặc, moay-ơ, lỗ trục, thân trục và đáy rãnh, chỉ giữ lại các bề mặt sườn tiếp xúc liên hợp không gian để quan sát trực quan sự tiếp xúc và trượt liên hợp.
+   - **Tích hợp thanh công cụ 3D**: Nút bấm `#btnToggleFlankOnly` đặt ngay cạnh `#btnToggleWireframe`. Khi nhấp chuột:
+     * Chuyển đổi trạng thái nhãn: `👁️ Chỉ Mặt Bên` $\leftrightarrow$ `👁️ Đang Xem Mặt Bên`.
+     * Tự động bật/tắt class `.btn-secondary.active` với viền phát sáng xanh cyan (`box-shadow: 0 0 10px rgba(56, 189, 248, 0.45)`).
+   - **Vật liệu PBR kim loại thuần khiết**:
+     * Trục vít (Worm 1): Cobalt-Cyan Metallic PBR (`0x0284c7`, `roughness: 0.38`, `metalness: 0.40`, `DoubleSide`).
+     * Bánh vít (Wheel 2): Tin-Bronze PBR (`0xea580c`, `roughness: 0.40`, `metalness: 0.35`, `DoubleSide`).
+     * Tuyệt đối không dùng vertex colors hay bột màu giả tạo, loại bỏ hoàn toàn hiện tượng Z-fighting.
+   - **Bảo toàn đầy đủ tính năng tương tác**:
+     * Trong chế độ Chỉ Mặt Bên, toàn bộ chức năng quay 360°, phóng to vùng ăn khớp (Mesh Zone), nhích từng bước (Nhích Tiến / Nhích Lùi) và chạy mô phỏng liên tục đều hoạt động trơn tru.
+   - **Hỗ trợ xuất 3D CAD (STEP / STL / OBJ)**:
+     * Cung cấp tùy chọn xuất Open Shell (Flank Surface Model) cho Mastercam lập trình phay 5 trục (5-axis Surface Toolpaths) và SolidWorks Surface Modeling.
