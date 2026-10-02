@@ -645,6 +645,11 @@ class BevelGearUI {
             }
         };
 
+        bind3DExp('expIgesPinion', 'iges', 'pinion');
+        bind3DExp('expIgesGear', 'iges', 'gear');
+        bind3DExp('expIgesAssembly', 'iges', 'assembly');
+        bind3DExp('expIgesCurves', 'iges', 'curves');
+
         bind3DExp('expStepPinion', 'step', 'pinion');
         bind3DExp('expStepGear', 'step', 'gear');
         bind3DExp('expStepAssembly', 'step', 'assembly');
@@ -2075,6 +2080,17 @@ class BevelGearUI {
         if (isSurface) {
             filenameBase += '_Surface_Rong';
             partName += '_SURFACE';
+        }
+
+        if (format === 'iges') {
+            const igesData = this.visualizer3D.getParametricData(target);
+            let igesFilename = '';
+            if (target === 'curves') {
+                igesFilename = `Khung_Day_Loft_${typeStr}_z${g.z1}x${g.z2}.igs`;
+            } else {
+                igesFilename = `${filenameBase}_Surface.igs`;
+            }
+            return Bevel3DExporter.exportIGES(igesData, igesFilename, true);
         }
 
         if (format === 'step') {

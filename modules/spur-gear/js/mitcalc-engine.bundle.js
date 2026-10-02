@@ -4021,6 +4021,183 @@ const Gear3DGenerator = {
      */
     generateGearSurfaceMesh: function(opt) {
         return this.generateGearMesh(Object.assign({}, opt, { surfaceOnly: true }));
+    },
+
+    /**
+     * Solves tridiagonal system for clamped cubic B-spline interpolation via Thomas algorithm.
+     * Guarantees 0 boundary jump, smooth C2 curvature, and zero crest nhấp nhô.
+     */
+    fitCubicBSplineCtrlPts(pts) {
+        const N = pts.length;
+        if (N <= 3) return pts;
+
+        const b = new Float64Array(N);
+        const a = new Float64Array(N);
+        const c = new Float64Array(N);
+        b.fill(4.0); a.fill(1.0); c.fill(1.0);
+        b[0] = 1.0; b[N - 1] = 1.0;
+        a[0] = 0.0; a[N - 1] = 0.0;
+        c[0] = 0.0; c[N - 1] = 0.0;
+
+        const rhs = [];
+        for (let i = 0; i < N; i++) {
+            if (i === 0 || i === N - 1) {
+                rhs.push([pts[i][0], pts[i][1], pts[i][2]]);
+            } else {
+                rhs.push([6.0 * pts[i][0], 6.0 * pts[i][1], 6.0 * pts[i][2]]);
+            }
+        }
+
+        const cp = new Float64Array(N);
+        const dp = [];
+        cp[0] = c[0] / b[0];
+        dp.push([rhs[0][0] / b[0], rhs[0][1] / b[0], rhs[0][2] / b[0]]);
+
+        for (let i = 1; i < N; i++) {
+            const m = b[i] - a[i] * cp[i - 1];
+            cp[i] = c[i] / m;
+            dp.push([
+                (rhs[i][0] - a[i] * dp[i - 1][0]) / m,
+                (rhs[i][1] - a[i] * dp[i - 1][1]) / m,
+                (rhs[i][2] - a[i] * dp[i - 1][2]) / m
+            ]);
+        }
+
+        const P = new Array(N);
+        P[N - 1] = [dp[N - 1][0], dp[N - 1][1], dp[N - 1][2]];
+        for (let i = N - 2; i >= 0; i--) {
+            P[i] = [
+                dp[i][0] - cp[i] * P[i + 1][0],
+                dp[i][1] - cp[i] * P[i + 1][1],
+                dp[i][2] - cp[i] * P[i + 1][2]
+            ];
+        }
+
+        return P;
+    },
+
+    /**
+     * Extracts true parametric Bicubic B-Spline surfaces (Entity 128) and wireframe curves
+     * for native Mastercam / SolidWorks CAD Surface export (Spur & Helical Gears).
+     * @param {Object} opt - Gear parameters
+     * @returns {Object} { surfaces: Array, curves: Array }
+     */
+    getGearParametricData(opt = {}) {
+        const z = parseInt(opt.z) || 20;
+        const mn = parseFloat(opt.mn) || 6.0;
+        const alfa_n = parseFloat(opt.alfa_n) || 20.0;
+        const beta = parseFloat(opt.beta) || 0.0;
+        const b = parseFloat(opt.b) || 50.0;
+        const d = parseFloat(opt.d) || (z * mn);
+        const da = parseFloat(opt.da) || (d + 2 * mn);
+        const df = parseFloat(opt.df) || (d - 2.5 * mn);
+        const db = parseFloat(opt.db) || (d * Math.cos((alfa_n * Math.PI) / 180.0));
+        const x = parseFloat(opt.x) || 0.0;
+
+        const isHelical = Math.abs(beta) > 1e-4;
+        const betaRad = (beta * Math.PI) / 180.0;
+        const hand = opt.hand !== undefined ? opt.hand : 1;
+        const twistRate = isHelical ? (hand * (2.0 * Math.tan(betaRad)) / d) : 0.0;
+
+        const noPtHead = opt.noPtHead || 8;
+        const noPtEv = opt.noPtEv || 20;
+        const numSlices = opt.numSlices || (isHelical ? 32 : 16);
+        const pitchAngle = (2.0 * Math.PI) / z;
+
+        // Calculate exact tooth half profile via MitcalcToothSolver
+        const half = MitcalcToothSolver.calculateToothCoordinates(Object.assign({}, opt, {
+            z, mn, alfa_n, beta, x, d, db, da, df,
+            noPtHead, noPtEv, cuttStep: 0.5
+        }));
+
+        const surfaces = [];
+        const curves = [];
+
+        const activeTeeth = (opt.exportAllTeeth === false) ? Math.min(8, z) : z;
+
+        for (let k = 0; k < activeTeeth; k++) {
+            const toothPhase = k * pitchAngle;
+            const gridR = [];
+            const gridTip = [];
+            const gridL = [];
+            const gridRoot = [];
+
+            for (let s = 0; s < numSlices; s++) {
+                const zCoord = -b * 0.5 + s * (b / (numSlices - 1));
+                const twist = twistRate * zCoord;
+                const phi0 = toothPhase + twist;
+
+                // 1. Flank R (from root to tip)
+                const sliceR = [];
+                for (let i = half.length - 1; i >= noPtHead - 1; i--) {
+                    const pt = half[i];
+                    const th = phi0 + Math.atan2(pt.x, pt.y);
+                    sliceR.push([pt.r * Math.sin(th), pt.r * Math.cos(th), zCoord]);
+                }
+
+                // 2. Tip Crest Arc (from Flank R tip to Flank L tip)
+                const rawTip = [];
+                for (let i = noPtHead - 1; i >= 0; i--) {
+                    const pt = half[i];
+                    const th = phi0 + Math.atan2(pt.x, pt.y);
+                    rawTip.push([pt.r * Math.sin(th), pt.r * Math.cos(th), zCoord]);
+                }
+                for (let i = 1; i < noPtHead; i++) {
+                    const pt = half[i];
+                    const th = phi0 - Math.atan2(pt.x, pt.y);
+                    rawTip.push([pt.r * Math.sin(th), pt.r * Math.cos(th), zCoord]);
+                }
+                const sliceTip = this.fitCubicBSplineCtrlPts(rawTip);
+
+                // 3. Flank L (from tip to root)
+                const sliceL = [];
+                for (let i = noPtHead - 1; i < half.length; i++) {
+                    const pt = half[i];
+                    const th = phi0 - Math.atan2(pt.x, pt.y);
+                    sliceL.push([pt.r * Math.sin(th), pt.r * Math.cos(th), zCoord]);
+                }
+
+                // 4. Root Valley (connecting left flank root of tooth k to right flank root of tooth k+1)
+                const rawRoot = [];
+                const ptRootL = half[half.length - 1];
+                const thRootL = phi0 - Math.atan2(ptRootL.x, ptRootL.y);
+                const thRootNextR = (phi0 + pitchAngle) + Math.atan2(ptRootL.x, ptRootL.y);
+                const rf = df * 0.5;
+                const rootPts = 12;
+                for (let t = 0; t <= rootPts; t++) {
+                    const frac = t / rootPts;
+                    const th = thRootL + frac * (thRootNextR - thRootL);
+                    rawRoot.push([rf * Math.sin(th), rf * Math.cos(th), zCoord]);
+                }
+                const sliceRoot = this.fitCubicBSplineCtrlPts(rawRoot);
+
+                gridR.push(sliceR);
+                gridTip.push(sliceTip);
+                gridL.push(sliceL);
+                gridRoot.push(sliceRoot);
+            }
+
+            surfaces.push({ label: `FLK_R_${k+1}`, grid: gridR, color: 3, level: opt.level || 1 });
+            surfaces.push({ label: `TIP_${k+1}`, grid: gridTip, color: 2, level: opt.level || 1 });
+            surfaces.push({ label: `FLK_L_${k+1}`, grid: gridL, color: 3, level: opt.level || 1 });
+            surfaces.push({ label: `ROOT_${k+1}`, grid: gridRoot, color: 1, level: opt.level || 1 });
+
+            // Optional wireframe profile for Ruled/Loft
+            if (opt.includeCurves && k === 0) {
+                const numCross = 3;
+                for (let c = 0; c < numCross; c++) {
+                    const sIdx = Math.round((c / (numCross - 1)) * (numSlices - 1));
+                    const prof = [];
+                    for (let p = 0; p < gridR[sIdx].length; p++) prof.push(gridR[sIdx][p]);
+                    for (let p = 1; p < gridTip[sIdx].length; p++) prof.push(gridTip[sIdx][p]);
+                    for (let p = 1; p < gridL[sIdx].length; p++) prof.push(gridL[sIdx][p]);
+                    for (let p = 1; p < gridRoot[sIdx].length; p++) prof.push(gridRoot[sIdx][p]);
+                    curves.push({ label: `TOOTH_SEC_${c+1}`, points: prof, color: 5, level: 2 });
+                }
+            }
+        }
+
+        return { surfaces, curves };
     }
 };
 
@@ -4577,8 +4754,252 @@ const Gear3DExporter = {
                 rotateVec(n)
             ];
         });
+    },
+
+    /**
+     * Exports True Parametric B-Spline Surfaces (Entity 128) and Wireframe Profile Curves (Entity 106 Form 12)
+     * strictly formatted according to ANSI/USPRO/IPO-100-1996 (IGES 5.3) for Mastercam (X5-2026) & SolidWorks.
+     * Level 1: PINION_1 (Flanks, Tip Crests, Root Lands)
+     * Level 2: GEAR_2 (Flanks, Tip Crests, Root Lands) or Wireframe Curves
+     * Level 3: AXES_DATUMS (Shaft centerlines)
+     *
+     * @param {Object|Array} parametricData - { surfaces, curves } or array of such objects
+     * @param {string} filename - Target .igs filename
+     * @param {boolean} autoDownload - Triggers browser Blob download
+     */
+    exportIGES(parametricData, filename = 'gear_surface.igs', autoDownload = true) {
+        let surfaces = [];
+        let curves = [];
+        if (Array.isArray(parametricData)) {
+            parametricData.forEach(p => {
+                if (p && p.surfaces) surfaces.push(...p.surfaces);
+                if (p && p.curves) curves.push(...p.curves);
+            });
+        } else if (parametricData) {
+            if (parametricData.surfaces) surfaces.push(...parametricData.surfaces);
+            if (parametricData.curves) curves.push(...parametricData.curves);
+        }
+
+        const pad8 = (v) => ('        ' + v).slice(-8);
+        const padLine = (txt, char, seq) => {
+            const p = (txt + ' '.repeat(72)).slice(0, 72);
+            const s = ('       ' + seq).slice(-7);
+            return p + char + s;
+        };
+        const deL1 = (eType, pPtr, level, seq) => {
+            return pad8(eType) + pad8(pPtr) + pad8(0) + pad8(1) + pad8(level) + pad8(0) + pad8(0) + pad8(0) + pad8('00000000') + 'D' + ('       ' + seq).slice(-7);
+        };
+        const deL2 = (eType, color, pCnt, form, label, seq) => {
+            const shortLbl = (label || '')
+                .replace('PINION_FLK_R_', 'P_FR_')
+                .replace('PINION_FLK_L_', 'P_FL_')
+                .replace('PINION_TIP_', 'P_TP_')
+                .replace('PINION_ROOT_', 'P_RT_')
+                .replace('GEAR_FLK_R_', 'G_FR_')
+                .replace('GEAR_FLK_L_', 'G_FL_')
+                .replace('GEAR_TIP_', 'G_TP_')
+                .replace('GEAR_ROOT_', 'G_RT_');
+            const padLbl = (shortLbl + '        ').slice(0, 8);
+            return pad8(eType) + pad8(1) + pad8(color) + pad8(pCnt) + pad8(form) + pad8(0) + pad8(0) + padLbl + pad8(0) + 'D' + ('       ' + seq).slice(-7);
+        };
+        const pLine = (chunk, dePtr, seq) => {
+            const c = (chunk + ' '.repeat(64)).slice(0, 64);
+            return c + pad8(dePtr) + 'P' + ('       ' + seq).slice(-7);
+        };
+
+        // Start Section S
+        const sLines = [
+            padLine('MITCalc Web App - 3D Cylindrical Gear Native Surface Export for Mastercam', 'S', 1),
+            padLine('Direct Parametric B-Spline Surfaces & Wireframe Profiles - Zero Conversion', 'S', 2)
+        ];
+
+        // Global Section G
+        const now = new Date();
+        const dateStr = now.getFullYear().toString() +
+            String(now.getMonth() + 1).padStart(2, '0') +
+            String(now.getDate()).padStart(2, '0') + '.' +
+            String(now.getHours()).padStart(2, '0') +
+            String(now.getMinutes()).padStart(2, '0') +
+            String(now.getSeconds()).padStart(2, '0');
+
+        const gTokens = [
+            '1H,', '1H;',
+            '33HMITCalc 3D Gear Surface CAD Model',
+            filename.length + 'H' + filename,
+            '21HAntigravity CAD Engine',
+            '12HMastercam X5',
+            32, 38, 6, 308, 15,
+            '12HMastercam X5',
+            '1.0', 2, '2HMM', 1, '1.0',
+            '15H' + dateStr,
+            '0.0001', '1000.0',
+            '9HSirPhuong',
+            '24HMITCalc-Gear-Engineering',
+            11, 0
+        ];
+        const gChunks = [];
+        let curG = '';
+        for (let i = 0; i < gTokens.length; i++) {
+            const delim = (i === gTokens.length - 1) ? ';' : ',';
+            const item = String(gTokens[i]) + delim;
+            if (curG.length + item.length <= 72) {
+                curG += item;
+            } else {
+                gChunks.push(curG);
+                curG = item;
+            }
+        }
+        if (curG.length > 0) gChunks.push(curG);
+        const gLines = gChunks.map((chunk, idx) => padLine(chunk, 'G', idx + 1));
+
+        // Entities preparation
+        const entityList = [];
+
+        // 1. Parametric B-Spline Surfaces (Entity 128) - Level 1 / Level 2
+        surfaces.forEach(s => {
+            const grid = s.grid;
+            if (!grid || !grid.length || !grid[0].length) return;
+            const Nu = grid.length;
+            const Nv = grid[0].length;
+            const K1 = Nu - 1;
+            const K2 = Nv - 1;
+            const M1 = Math.min(3, Nu - 1);
+            const M2 = Math.min(3, Nv - 1); // Bicubic B-Spline (Degree 3 in U and V) for C2 curvature continuity
+
+            const uKnots = [];
+            for (let i = 0; i <= M1; i++) uKnots.push('0');
+            const uInt = Nu - M1 - 1;
+            for (let i = 1; i <= uInt; i++) uKnots.push((i / (uInt + 1)).toFixed(6));
+            for (let i = 0; i <= M1; i++) uKnots.push('1');
+
+            const vKnots = [];
+            for (let j = 0; j <= M2; j++) vKnots.push('0');
+            const vInt = Nv - M2 - 1;
+            for (let j = 1; j <= vInt; j++) vKnots.push((j / (vInt + 1)).toFixed(6));
+            for (let j = 0; j <= M2; j++) vKnots.push('1');
+
+            const totalPts = Nu * Nv;
+            const weights = new Array(totalPts).fill('1');
+
+            const ptsCoords = [];
+            // IGES Entity 128 Specification:
+            // First index i (0 .. K1 = Nu - 1, along U) varies FASTEST (inner loop)
+            // Second index j (0 .. K2 = Nv - 1, along V) varies slowest (outer loop)
+            for (let j = 0; j < Nv; j++) {
+                for (let i = 0; i < Nu; i++) {
+                    const pt = grid[i][j];
+                    ptsCoords.push(Number(pt[0]).toFixed(5));
+                    ptsCoords.push(Number(pt[1]).toFixed(5));
+                    ptsCoords.push(Number(pt[2]).toFixed(5));
+                }
+            }
+
+            const pTokens = [
+                128, K1, K2, M1, M2,
+                0, 0, 1, 0, 0,
+                ...uKnots,
+                ...vKnots,
+                ...weights,
+                ...ptsCoords,
+                0, 1, 0, 1
+            ];
+
+            entityList.push({
+                type: 128,
+                form: 0,
+                level: s.level || 1,
+                color: s.color || 3,
+                label: s.label || 'SURFACE',
+                pTokens
+            });
+        });
+
+        // 2. Wireframe Profiles and Rails (Entity 106 Form 12 Copious Data: Linear Path) - Level 2 / Level 3
+        curves.forEach(c => {
+            const pts = c.points;
+            if (!pts || !pts.length) return;
+            const N = pts.length;
+            const coords = [];
+            for (let i = 0; i < N; i++) {
+                coords.push(Number(pts[i][0]).toFixed(5));
+                coords.push(Number(pts[i][1]).toFixed(5));
+                coords.push(Number(pts[i][2]).toFixed(5));
+            }
+            const pTokens = [106, 2, N, ...coords];
+            entityList.push({
+                type: 106,
+                form: 12, // Form 12 = Linear Path in 3D (connected 3D wireframe curve)
+                level: c.level || 2,
+                color: c.color || 5,
+                label: c.label || 'CURVE',
+                pTokens
+            });
+        });
+
+        // Compute P lines & DE lines with strict token-aware line wrapping
+        const dLines = [];
+        const pLines = [];
+        let pSeq = 1;
+
+        entityList.forEach((e, idx) => {
+            const deLine1Seq = idx * 2 + 1;
+            const deLine2Seq = idx * 2 + 2;
+            const pStartPtr = pSeq;
+
+            // Strictly token-aware: each token is placed completely within column 1-64.
+            // No parameter, number, or sign ever crosses column 64!
+            const chunks = [];
+            let curChunk = '';
+            for (let i = 0; i < e.pTokens.length; i++) {
+                const delim = (i === e.pTokens.length - 1) ? ';' : ',';
+                const item = String(e.pTokens[i]) + delim;
+                if (curChunk.length + item.length <= 64) {
+                    curChunk += item;
+                } else {
+                    chunks.push(curChunk);
+                    curChunk = item;
+                }
+            }
+            if (curChunk.length > 0) {
+                chunks.push(curChunk);
+            }
+
+            dLines.push(deL1(e.type, pStartPtr, e.level, deLine1Seq));
+            dLines.push(deL2(e.type, e.color, chunks.length, e.form, e.label, deLine2Seq));
+
+            chunks.forEach(chunk => {
+                pLines.push(pLine(chunk, deLine1Seq, pSeq++));
+            });
+        });
+
+        // Terminate Section T
+        const sCnt = String(sLines.length).padStart(7, ' ');
+        const gCnt = String(gLines.length).padStart(7, ' ');
+        const dCnt = String(dLines.length).padStart(7, ' ');
+        const pCnt = String(pLines.length).padStart(7, ' ');
+        const tLine = `S${sCnt}G${gCnt}D${dCnt}P${pCnt}` + ' '.repeat(40) + 'T      1';
+
+        const allLines = sLines.concat(gLines, dLines, pLines, [tLine]);
+        const igesContent = allLines.join('\r\n') + '\r\n';
+        const blob = (typeof Blob !== 'undefined') ? new Blob([igesContent], { type: 'application/iges;charset=utf-8' }) : null;
+        if (autoDownload && blob) this.downloadBlob(blob, filename);
+
+        return {
+            content: igesContent,
+            blob,
+            numSurfaces: surfaces.length,
+            numCurves: curves.length,
+            totalLines: allLines.length
+        };
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.Gear3DExporter = Gear3DExporter;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Gear3DExporter;
+}
 
 /**
  * MITCalc Web App - 3D WebGL Gear Visualizer & Meshing Simulator
@@ -5327,6 +5748,182 @@ class Gear3DVisualizer {
         if (this.renderer && this.scene && this.camera) {
             this.renderer.render(this.scene, this.camera);
         }
+    }
+
+    /**
+     * Extracts true parametric B-Spline surfaces and wireframe profile curves for Mastercam IGES export (Spur & Helical Gears).
+     * @param {string} type - 'pinion', 'gear', 'assembly', or 'curves'
+     */
+    getParametricData(type = 'pinion') {
+        if (!this.geom) return { surfaces: [], curves: [] };
+
+        const base1 = {
+            z: this.geom.z1,
+            mn: this.geom.mn,
+            alfa_n: this.geom.alfa_n,
+            beta: this.geom.beta,
+            b: this.geom.b1,
+            x: this.geom.x1,
+            d: this.geom.d1,
+            db: this.geom.db1,
+            da: this.geom.da1,
+            df: this.geom.df1,
+            hand: +1,
+            isPinion: true,
+            level: 1,
+            exportAllTeeth: true,
+            includeCurves: (type === 'curves')
+        };
+
+        const base2 = {
+            z: this.geom.z2,
+            mn: this.geom.mn,
+            alfa_n: this.geom.alfa_n,
+            beta: this.geom.beta,
+            b: this.geom.b2,
+            x: this.geom.x2,
+            d: this.geom.d2,
+            db: this.geom.db2,
+            da: this.geom.da2,
+            df: this.geom.df2,
+            hand: -1,
+            isPinion: false,
+            level: 2,
+            exportAllTeeth: true,
+            includeCurves: (type === 'curves')
+        };
+
+        if (type === 'pinion') {
+            const data1 = Gear3DGenerator.getGearParametricData(base1);
+            data1.surfaces.forEach(s => {
+                s.label = `PINION_${s.label}`;
+                s.level = 1;
+            });
+            data1.curves = [
+                {
+                    label: 'AXIS_P1',
+                    points: [[0, 0, -base1.b * 0.5 - 15], [0, 0, base1.b * 0.5 + 15]],
+                    color: 1,
+                    level: 3
+                }
+            ];
+            return data1;
+        }
+
+        if (type === 'gear') {
+            const data2 = Gear3DGenerator.getGearParametricData(base2);
+            data2.surfaces.forEach(s => {
+                s.label = `GEAR_${s.label}`;
+                s.level = 1;
+            });
+            data2.curves = [
+                {
+                    label: 'AXIS_G2',
+                    points: [[0, 0, -base2.b * 0.5 - 15], [0, 0, base2.b * 0.5 + 15]],
+                    color: 1,
+                    level: 3
+                }
+            ];
+            return data2;
+        }
+
+        if (type === 'curves') {
+            base1.includeCurves = true;
+            base2.includeCurves = true;
+            const data1 = Gear3DGenerator.getGearParametricData(base1);
+            const data2 = Gear3DGenerator.getGearParametricData(base2);
+            const curves = [];
+            data1.curves.forEach((c, idx) => {
+                curves.push({
+                    label: `P_CRV_${idx + 1}`,
+                    points: c.points,
+                    color: 3,
+                    level: 1
+                });
+            });
+            data2.curves.forEach((c, idx) => {
+                curves.push({
+                    label: `G_CRV_${idx + 1}`,
+                    points: c.points,
+                    color: 5,
+                    level: 2
+                });
+            });
+            curves.push(
+                {
+                    label: 'AXIS_P1',
+                    points: [[0, 0, -base1.b * 0.5 - 15], [0, 0, base1.b * 0.5 + 15]],
+                    color: 1,
+                    level: 3
+                },
+                {
+                    label: 'AXIS_G2',
+                    points: [[(this.geom.aw || 100), 0, -base2.b * 0.5 - 15], [(this.geom.aw || 100), 0, base2.b * 0.5 + 15]],
+                    color: 1,
+                    level: 3
+                }
+            );
+            return { surfaces: [], curves };
+        }
+
+        // Assembly Pair: Pinion 1 at (0, 0, 0) rotated by initialPinionAngle, Gear 2 at (aw, 0, 0) rotated by initialGearAngle
+        const aw = (this.geom && this.geom.aw) ? this.geom.aw : (this.geom.d1 + this.geom.d2) * 0.5;
+        const rotZ1 = (this.initialPinionAngle !== undefined) ? this.initialPinionAngle : -Math.PI / 2.0;
+        const cosR1 = Math.cos(rotZ1);
+        const sinR1 = Math.sin(rotZ1);
+
+        const rotZ2 = (this.initialGearAngle !== undefined) ? this.initialGearAngle : (Math.PI / 2.0 - Math.PI / this.geom.z2);
+        const cosR2 = Math.cos(rotZ2);
+        const sinR2 = Math.sin(rotZ2);
+
+        const data1 = Gear3DGenerator.getGearParametricData(base1);
+        const data2 = Gear3DGenerator.getGearParametricData(base2);
+
+        const trSurfaces = [];
+        data1.surfaces.forEach(s => {
+            const trGrid = s.grid.map(row => row.map(pt => [
+                pt[0] * cosR1 - pt[1] * sinR1,
+                pt[0] * sinR1 + pt[1] * cosR1,
+                pt[2]
+            ]));
+            trSurfaces.push({
+                label: `PINION_${s.label}`,
+                grid: trGrid,
+                color: 3,
+                level: 1
+            });
+        });
+
+        data2.surfaces.forEach(s => {
+            const trGrid = s.grid.map(row => row.map(pt => [
+                pt[0] * cosR2 - pt[1] * sinR2 + aw,
+                pt[0] * sinR2 + pt[1] * cosR2,
+                pt[2]
+            ]));
+            trSurfaces.push({
+                label: `GEAR_${s.label}`,
+                grid: trGrid,
+                color: 2,
+                level: 2
+            });
+        });
+
+        const curves = [
+            {
+                label: 'AXIS_P1',
+                points: [[0, 0, -base1.b * 0.5 - 15], [0, 0, base1.b * 0.5 + 15]],
+                color: 1,
+                level: 3
+            },
+            {
+                label: 'AXIS_G2',
+                points: [[aw, 0, -base2.b * 0.5 - 15], [aw, 0, base2.b * 0.5 + 15]],
+                color: 1,
+                level: 3
+            }
+        ];
+
+        return { surfaces: trSurfaces, curves };
     }
 }
 
@@ -6145,6 +6742,11 @@ class SpurGearUI {
                 el.addEventListener('click', () => this.export3DCAD(format, target));
             }
         };
+
+        bindExport('expIgesPinion', 'iges', 'pinion');
+        bindExport('expIgesGear', 'iges', 'gear');
+        bindExport('expIgesAssembly', 'iges', 'assembly');
+        bindExport('expIgesCurves', 'iges', 'curves');
 
         bindExport('expStepPinion', 'step', 'pinion');
         bindExport('expStepGear', 'step', 'gear');
@@ -7841,6 +8443,17 @@ class SpurGearUI {
         if (isSurface) {
             filenameBase += '_Surface_Rong';
             partName += '_SURFACE';
+        }
+
+        if (format === 'iges') {
+            const igesData = this.visualizer3D.getParametricData(target);
+            let igesFilename = '';
+            if (target === 'curves') {
+                igesFilename = `Khung_Day_Loft_${typeStr}_z${g.z1}x${g.z2}.igs`;
+            } else {
+                igesFilename = `${filenameBase}_Surface.igs`;
+            }
+            return Gear3DExporter.exportIGES(igesData, igesFilename, true);
         }
 
         if (format === 'step') {

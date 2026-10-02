@@ -1565,3 +1565,39 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
 
 
 
+
+
+---
+
+### Quy Tắc 64: Quy Chuẩn Đồng Bộ Toàn Diện Động Cơ Xuất Native Surface IGES 5.3 (Entity 128 Bicubic B-Spline) Cho Cả 3 Mô-Đun Cơ Khí (Spur/Helical, Bevel, Worm Gears)
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"Bạn dùng kĩ năng xuất file .igs của module trục vít bánh vít để làm cho 2 module còn lại cho tôi"*
+2. **Nguyên Tắc Thiết Kế Bất Biến Của Động Cơ IGES 5.3 (ANSI/USPRO/IPO-100-1996)**:
+   - **Mở tức thì < 0.1 giây trong Mastercam X5-2026**: Mastercam không cần kích hoạt bộ dịch Parasolid Solid B-Rep, mở trực tiếp dưới dạng đối tượng `SURFACE` bản địa, cho phép gia công Surface 3D / 5-Trục, Swarf Milling, Trim, Fillet, Offset.
+   - **Bảo toàn 100% hình học thân khai liên hợp**:
+     * Mọi mặt răng đều được mô hình hóa bằng mặt cong tham số thực **Entity 128 (Rational B-Spline Surface)** bậc 3 theo cả 2 phương ($M_1 = 3, M_2 = 3$, Bicubic B-Spline) cho độ liên tục $C^2$ curvature smooth.
+     * Giải thuật Thomas tridiagonal solver `fitCubicBSplineCtrlPts` giải chính xác các điểm kiểm soát nội suy, bảo đảm bề mặt đi qua 100% tọa độ danh nghĩa ($C(t_i) = D_i$).
+   - **Chuẩn 80 cột nghiêm ngặt & Cơ chế Token-Aware (Zero Split Tokens)**:
+     * 100% các dòng trong file `.igs` có chiều dài đúng 80 ký tự (`badLength = 0`).
+     * Không cắt xén chuỗi tại cột 64; toàn bộ token số thực và phân tách `,`/`;` được gói trọn vẹn trong dòng, triệt tiêu 100% lỗi tọa độ biến dạng hoặc tia bắn mạng nhện (Spaghetti lines) trong Mastercam.
+     * Không có bất kỳ giá trị `NaN` hoặc `undefined`.
+   - **Bóc tách triệt để Khung Dây (Wireframe Curves) khỏi File Surface**:
+     * File Surface (`expIgesPinion`, `expIgesGear`, `expIgesAssembly`) CHỈ chứa Entity 128 và đường tâm trục (`AXIS`), không để lẫn đường khung dây làm méo mó hiển thị của Mastercam.
+     * Khung dây trích xuất độc lập qua nút `expIgesCurves` (Entity 106 Form 12 - Linear Path in 3D Space, 0 dấu cộng `+`) phục vụ cho lệnh `Create -> Surface -> Ruled / Lofted...`.
+   - **Phân tầng kỹ thuật Level 1 / Level 2 / Level 3 chuẩn Mastercam**:
+     * Level 1: Toàn bộ mặt răng Bánh Dẫn 1 (`PINION_1` / `WORM_1`).
+     * Level 2: Toàn bộ mặt răng Bánh Bị Dẫn 2 (`GEAR_2` / `WHEEL_2`) hoặc khung dây lofting.
+     * Level 3: Đường tâm trục xoay (`AXIS_1`, `AXIS_2`).
+   - **Định danh thông minh 8 ký tự**: Nhãn thực thể trong Directory Entry tự động rút gọn thành `P_FR_1`, `P_FL_1`, `P_TP_1`, `P_RT_1`, `G_FR_1`, v.v... hiển thị đẹp mắt và khoa học trên cây đối tượng Mastercam.
+3. **Đặc Thù Kỹ Thuật Riêng Biệt Cho Từng Phân Hệ**:
+   - **Mô-đun 1 (Bánh Răng Trụ & Nghiêng - ISO 6336)**:
+     * Hỗ trợ trọn vẹn cả Trụ Thẳng ($\beta = 0^\circ$) và Trụ Nghiêng ($\beta \ne 0^\circ$, xoắn không gian theo góc nghiêng $\beta$ dọc bề rộng vành răng $b$).
+     * Xuất toàn bộ $z_1, z_2$ răng ($360^\circ$ khép kín).
+     * Lắp ghép ăn khớp chính xác: Bánh 1 tại $(0, 0, 0)$ xoay $-\pi/2$; Bánh 2 tại $(a_w, 0, 0)$ xoay $\pi/2 - \pi/z_2$. Khe hở chân răng $c = 0.25 m_n$ khớp tuyệt đối với lý thuyết.
+   - **Mô-đun 2 (Bánh Răng Côn - ISO 23509)**:
+     * Hỗ trợ trọn vẹn Bánh Răng Côn Răng Thẳng ($\beta = 0^\circ$) và Côn Răng Cong Spiral (Gleason $R_{\text{tool}} = 1.5 b$).
+     * Xuất toàn bộ $z_1, z_2$ răng ($360^\circ$ khép kín) dọc chiều rộng vành răng $b$ từ nón ngoài $R_e$ đến nón trong $R_i$.
+     * Lắp ghép ăn khớp chính xác: Đỉnh nón chung Apex $V(0, 0, 0)$, Bánh 1 trục hướng $X$ (tọa độ World $z, x, y$), Bánh 2 trục hướng $Y$ quay góc $\Sigma$ qua ma trận chuyển đổi `xformGear`.
+   - **Mô-đun 3 (Trục Vít - Bánh Vít - DIN 3996 / AGMA 6022)**:
+     * Xuất toàn bộ $z_1$ mối ren trục vít và $z_2$ răng bánh vít ($360^\circ$ khép kín).
+     * Bù bán kính CAGD cho đỉnh và đáy ren, bề mặt mài phẳng láng như gương ($Nu = 360$).

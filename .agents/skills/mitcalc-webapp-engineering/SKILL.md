@@ -1590,3 +1590,12 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
 
 
 
+
+
+---
+
+### 20. Quy Chuẩn Đồng Bộ Động Cơ Xuất Native Surface IGES 5.3 Cho Toàn Bộ Các Mô-Đun Cơ Khí
+- **Chuẩn quốc tế**: ANSI/USPRO/IPO-100-1996 (IGES 5.3).
+- **Mở tức thì < 0.1s**: Không sử dụng Solid B-Rep STEP faceted mesh làm nghẽn Parasolid, xuất trực tiếp Entity 128 Bicubic B-Spline.
+- **Cơ chế Token-Aware 64 cột**: 0 split tokens, 100% dòng đúng 80 ký tự, 0 NaN/undefined.
+- **Bóc tách triệt để Khung Dây**: Tệp Surface chỉ chứa Entity 128 và Axis (Level 1, Level 2, Level 3). Tệp Khung Dây chứa Entity 106 Form 12 (0 dấu cộng `+`) cho lệnh `Create -> Surface -> Ruled / Lofted...`.

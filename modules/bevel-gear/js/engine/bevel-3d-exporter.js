@@ -501,5 +501,248 @@ export const Bevel3DExporter = {
         const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
         if (autoDownload) this.downloadBlob(blob, filename);
         return { blob, text: textContent, triangleCount: totalTriangles };
+    },
+
+    /**
+     * Exports True Parametric B-Spline Surfaces (Entity 128) and Wireframe Profile Curves (Entity 106 Form 12)
+     * strictly formatted according to ANSI/USPRO/IPO-100-1996 (IGES 5.3) for Mastercam (X5-2026) & SolidWorks.
+     * Level 1: PINION_1 (Flanks, Tip Crests, Root Lands)
+     * Level 2: GEAR_2 (Flanks, Tip Crests, Root Lands) or Wireframe Curves
+     * Level 3: AXES_DATUMS (Shaft / Apex centerlines)
+     *
+     * @param {Object|Array} parametricData - { surfaces, curves } or array of such objects
+     * @param {string} filename - Target .igs filename
+     * @param {boolean} autoDownload - Triggers browser Blob download
+     */
+    exportIGES(parametricData, filename = 'bevel_gear_surface.igs', autoDownload = true) {
+        let surfaces = [];
+        let curves = [];
+        if (Array.isArray(parametricData)) {
+            parametricData.forEach(p => {
+                if (p && p.surfaces) surfaces.push(...p.surfaces);
+                if (p && p.curves) curves.push(...p.curves);
+            });
+        } else if (parametricData) {
+            if (parametricData.surfaces) surfaces.push(...parametricData.surfaces);
+            if (parametricData.curves) curves.push(...parametricData.curves);
+        }
+
+        const pad8 = (v) => ('        ' + v).slice(-8);
+        const padLine = (txt, char, seq) => {
+            const p = (txt + ' '.repeat(72)).slice(0, 72);
+            const s = ('       ' + seq).slice(-7);
+            return p + char + s;
+        };
+        const deL1 = (eType, pPtr, level, seq) => {
+            return pad8(eType) + pad8(pPtr) + pad8(0) + pad8(1) + pad8(level) + pad8(0) + pad8(0) + pad8(0) + pad8('00000000') + 'D' + ('       ' + seq).slice(-7);
+        };
+        const deL2 = (eType, color, pCnt, form, label, seq) => {
+            const shortLbl = (label || '')
+                .replace('PINION_FLK_L_', 'P_FL_')
+                .replace('PINION_FLK_R_', 'P_FR_')
+                .replace('PINION_TIP_', 'P_TP_')
+                .replace('PINION_ROOT_', 'P_RT_')
+                .replace('GEAR_FLK_L_', 'G_FL_')
+                .replace('GEAR_FLK_R_', 'G_FR_')
+                .replace('GEAR_TIP_', 'G_TP_')
+                .replace('GEAR_ROOT_', 'G_RT_');
+            const padLbl = (shortLbl + '        ').slice(0, 8);
+            return pad8(eType) + pad8(1) + pad8(color) + pad8(pCnt) + pad8(form) + pad8(0) + pad8(0) + padLbl + pad8(0) + 'D' + ('       ' + seq).slice(-7);
+        };
+        const pLine = (chunk, dePtr, seq) => {
+            const c = (chunk + ' '.repeat(64)).slice(0, 64);
+            return c + pad8(dePtr) + 'P' + ('       ' + seq).slice(-7);
+        };
+
+        // Start Section S
+        const sLines = [
+            padLine('MITCalc Web App - 3D Bevel Gear Native Surface Export for Mastercam', 'S', 1),
+            padLine('Direct Parametric B-Spline Surfaces & Wireframe Profiles - Zero Conversion', 'S', 2)
+        ];
+
+        // Global Section G
+        const now = new Date();
+        const dateStr = now.getFullYear().toString() +
+            String(now.getMonth() + 1).padStart(2, '0') +
+            String(now.getDate()).padStart(2, '0') + '.' +
+            String(now.getHours()).padStart(2, '0') +
+            String(now.getMinutes()).padStart(2, '0') +
+            String(now.getSeconds()).padStart(2, '0');
+
+        const gTokens = [
+            '1H,', '1H;',
+            '35HMITCalc 3D Bevel Gear Surface Model',
+            filename.length + 'H' + filename,
+            '21HAntigravity CAD Engine',
+            '12HMastercam X5',
+            32, 38, 6, 308, 15,
+            '12HMastercam X5',
+            '1.0', 2, '2HMM', 1, '1.0',
+            '15H' + dateStr,
+            '0.0001', '1000.0',
+            '9HSirPhuong',
+            '24HMITCalc-Gear-Engineering',
+            11, 0
+        ];
+        const gChunks = [];
+        let curG = '';
+        for (let i = 0; i < gTokens.length; i++) {
+            const delim = (i === gTokens.length - 1) ? ';' : ',';
+            const item = String(gTokens[i]) + delim;
+            if (curG.length + item.length <= 72) {
+                curG += item;
+            } else {
+                gChunks.push(curG);
+                curG = item;
+            }
+        }
+        if (curG.length > 0) gChunks.push(curG);
+        const gLines = gChunks.map((chunk, idx) => padLine(chunk, 'G', idx + 1));
+
+        // Entities preparation
+        const entityList = [];
+
+        // 1. Parametric B-Spline Surfaces (Entity 128) - Level 1 / Level 2
+        surfaces.forEach(s => {
+            const grid = s.grid;
+            if (!grid || !grid.length || !grid[0].length) return;
+            const Nu = grid.length;
+            const Nv = grid[0].length;
+            const K1 = Nu - 1;
+            const K2 = Nv - 1;
+            const M1 = Math.min(3, Nu - 1);
+            const M2 = Math.min(3, Nv - 1); // Bicubic B-Spline (Degree 3 in U and V) for C2 curvature continuity
+
+            const uKnots = [];
+            for (let i = 0; i <= M1; i++) uKnots.push('0');
+            const uInt = Nu - M1 - 1;
+            for (let i = 1; i <= uInt; i++) uKnots.push((i / (uInt + 1)).toFixed(6));
+            for (let i = 0; i <= M1; i++) uKnots.push('1');
+
+            const vKnots = [];
+            for (let j = 0; j <= M2; j++) vKnots.push('0');
+            const vInt = Nv - M2 - 1;
+            for (let j = 1; j <= vInt; j++) vKnots.push((j / (vInt + 1)).toFixed(6));
+            for (let j = 0; j <= M2; j++) vKnots.push('1');
+
+            const totalPts = Nu * Nv;
+            const weights = new Array(totalPts).fill('1');
+
+            const ptsCoords = [];
+            // IGES Entity 128 Specification:
+            // First index i (0 .. K1 = Nu - 1, along U) varies FASTEST (inner loop)
+            // Second index j (0 .. K2 = Nv - 1, along V) varies slowest (outer loop)
+            for (let j = 0; j < Nv; j++) {
+                for (let i = 0; i < Nu; i++) {
+                    const pt = grid[i][j];
+                    ptsCoords.push(Number(pt[0]).toFixed(5));
+                    ptsCoords.push(Number(pt[1]).toFixed(5));
+                    ptsCoords.push(Number(pt[2]).toFixed(5));
+                }
+            }
+
+            const pTokens = [
+                128, K1, K2, M1, M2,
+                0, 0, 1, 0, 0,
+                ...uKnots,
+                ...vKnots,
+                ...weights,
+                ...ptsCoords,
+                0, 1, 0, 1
+            ];
+
+            entityList.push({
+                type: 128,
+                form: 0,
+                level: s.level || 1,
+                color: s.color || 3,
+                label: s.label || 'SURFACE',
+                pTokens
+            });
+        });
+
+        // 2. Wireframe Profiles and Rails (Entity 106 Form 12 Copious Data: Linear Path) - Level 2 / Level 3
+        curves.forEach(c => {
+            const pts = c.points;
+            if (!pts || !pts.length) return;
+            const N = pts.length;
+            const coords = [];
+            for (let i = 0; i < N; i++) {
+                coords.push(Number(pts[i][0]).toFixed(5));
+                coords.push(Number(pts[i][1]).toFixed(5));
+                coords.push(Number(pts[i][2]).toFixed(5));
+            }
+            const pTokens = [106, 2, N, ...coords];
+            entityList.push({
+                type: 106,
+                form: 12, // Form 12 = Linear Path in 3D (connected 3D wireframe curve)
+                level: c.level || 2,
+                color: c.color || 5,
+                label: c.label || 'CURVE',
+                pTokens
+            });
+        });
+
+        // Compute P lines & DE lines with strict token-aware line wrapping
+        const dLines = [];
+        const pLines = [];
+        let pSeq = 1;
+
+        entityList.forEach((e, idx) => {
+            const deLine1Seq = idx * 2 + 1;
+            const deLine2Seq = idx * 2 + 2;
+            const pStartPtr = pSeq;
+
+            // Strictly token-aware: each token is placed completely within column 1-64.
+            const chunks = [];
+            let curChunk = '';
+            for (let i = 0; i < e.pTokens.length; i++) {
+                const delim = (i === e.pTokens.length - 1) ? ';' : ',';
+                const item = String(e.pTokens[i]) + delim;
+                if (curChunk.length + item.length <= 64) {
+                    curChunk += item;
+                } else {
+                    chunks.push(curChunk);
+                    curChunk = item;
+                }
+            }
+            if (curChunk.length > 0) {
+                chunks.push(curChunk);
+            }
+
+            dLines.push(deL1(e.type, pStartPtr, e.level, deLine1Seq));
+            dLines.push(deL2(e.type, e.color, chunks.length, e.form, e.label, deLine2Seq));
+
+            chunks.forEach(chunk => {
+                pLines.push(pLine(chunk, deLine1Seq, pSeq++));
+            });
+        });
+
+        // Terminate Section T
+        const sCnt = String(sLines.length).padStart(7, ' ');
+        const gCnt = String(gLines.length).padStart(7, ' ');
+        const dCnt = String(dLines.length).padStart(7, ' ');
+        const pCnt = String(pLines.length).padStart(7, ' ');
+        const tLine = `S${sCnt}G${gCnt}D${dCnt}P${pCnt}` + ' '.repeat(40) + 'T      1';
+
+        const allLines = sLines.concat(gLines, dLines, pLines, [tLine]);
+        const igesContent = allLines.join('\r\n') + '\r\n';
+        const blob = (typeof Blob !== 'undefined') ? new Blob([igesContent], { type: 'application/iges;charset=utf-8' }) : null;
+        if (autoDownload && blob) this.downloadBlob(blob, filename);
+
+        return {
+            content: igesContent,
+            blob,
+            numSurfaces: surfaces.length,
+            numCurves: curves.length,
+            totalLines: allLines.length
+        };
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.Bevel3DExporter = Bevel3DExporter;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Bevel3DExporter;
+}

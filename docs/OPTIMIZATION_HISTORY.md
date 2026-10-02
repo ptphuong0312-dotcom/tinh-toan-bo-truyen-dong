@@ -2951,3 +2951,28 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
 
 
 
+
+
+---
+
+## [2026-10-02] ĐỒNG BỘ TOÀN DIỆN ĐỘNG CƠ XUẤT 3D NATIVE SURFACE IGES 5.3 (.IGS) CHO TOÀN BỘ 3 MÔ-ĐUN CƠ KHÍ
+- **Yêu cầu người dùng (`SirPhuong`)**: *"Bạn dùng kĩ năng xuất file .igs của module trục vít bánh vít để làm cho 2 module còn lại cho tôi"*.
+- **Phạm vi triển khai**:
+  1. **Mô-đun 1 (`spur-gear`)**:
+     - `gear-3d-generator.js`: Bổ sung `fitCubicBSplineCtrlPts` và `getGearParametricData(opt)` hỗ trợ cả Trụ Thẳng ($\beta = 0^\circ$) và Trụ Nghiêng ($\beta \ne 0^\circ$, xoắn không gian dọc $Z$).
+     - `gear-3d-exporter.js`: Bổ sung `exportIGES(parametricData, filename, autoDownload)` chuẩn ANSI/USPRO/IPO-100-1996, 80 cột strictly, token-aware wrapping 64 cột, nhãn 8 ký tự `P_FR_`, `P_FL_`, `P_TP_`, `P_RT_`, `G_FR_`, `G_FL_`.
+     - `gear-3d-visualizer.js`: Bổ sung `getParametricData(type)` trích xuất mặt cong toàn bộ $z$ răng, cặp lắp ghép ăn khớp tại khoảng cách trục $a_w$, và khung dây lofting.
+     - `index.html`: Bổ sung 4 nút xuất Mastercam IGES: `expIgesPinion`, `expIgesGear`, `expIgesAssembly`, `expIgesCurves`.
+  2. **Mô-đun 2 (`bevel-gear`)**:
+     - `bevel-3d-generator.js`: Bổ sung `fitCubicBSplineCtrlPts`, `resampleCurve`, và `getBevelParametricData(opt)` cho cả Côn Răng Thẳng và Côn Răng Cong Gleason Spiral ($R_{\text{tool}} = 1.5 b$).
+     - `bevel-3d-exporter.js`: Bổ sung `exportIGES(parametricData, filename, autoDownload)` chuẩn ANSI/USPRO/IPO-100-1996, 80 cột strictly, token-aware wrapping, nhãn `P_FL_`, `P_FR_`, `G_FL_`, `G_FR_`.
+     - `bevel-3d-visualizer.js`: Bổ sung `getParametricData(type)` trích xuất mặt cong toàn bộ $z$ răng, cặp lắp ghép ăn khớp nón tại đỉnh Apex $V(0,0,0)$ với ma trận chuyển đổi `xformGear` xoay góc $\Sigma$.
+     - `index.html`: Bổ sung 4 nút xuất Mastercam IGES: `expIgesPinion`, `expIgesGear`, `expIgesAssembly`, `expIgesCurves`.
+     - `bevel-ui.js`: Liên kết sự kiện xuất file IGES.
+- **Kết quả kiểm thử nghiệm thu**:
+  - Module 1 Spur: 80 mặt B-spline, 0 dòng lệch 80 ký tự, 0 NaN/undefined.
+  - Module 1 Helical: 120 mặt B-spline, 0 dòng lệch 80 ký tự, 0 NaN/undefined.
+  - Module 2 Straight Bevel: 72 mặt B-spline, 0 dòng lệch 80 ký tự, 0 NaN/undefined.
+  - Module 2 Spiral Bevel: 180 mặt B-spline, 0 dòng lệch 80 ký tự, 0 NaN/undefined.
+  - Module 1 Assembly: 268 mặt B-spline, 0 dòng lệch 80 ký tự.
+  - Module 2 Assembly: 252 mặt B-spline, 0 dòng lệch 80 ký tự.

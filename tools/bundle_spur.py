@@ -571,6 +571,11 @@ class SpurGearUI {
             }
         };
 
+        bindExport('expIgesPinion', 'iges', 'pinion');
+        bindExport('expIgesGear', 'iges', 'gear');
+        bindExport('expIgesAssembly', 'iges', 'assembly');
+        bindExport('expIgesCurves', 'iges', 'curves');
+
         bindExport('expStepPinion', 'step', 'pinion');
         bindExport('expStepGear', 'step', 'gear');
         bindExport('expStepAssembly', 'step', 'assembly');
@@ -2266,6 +2271,17 @@ class SpurGearUI {
         if (isSurface) {
             filenameBase += '_Surface_Rong';
             partName += '_SURFACE';
+        }
+
+        if (format === 'iges') {
+            const igesData = this.visualizer3D.getParametricData(target);
+            let igesFilename = '';
+            if (target === 'curves') {
+                igesFilename = `Khung_Day_Loft_${typeStr}_z${g.z1}x${g.z2}.igs`;
+            } else {
+                igesFilename = `${filenameBase}_Surface.igs`;
+            }
+            return Gear3DExporter.exportIGES(igesData, igesFilename, true);
         }
 
         if (format === 'step') {

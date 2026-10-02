@@ -803,4 +803,198 @@ export class Bevel3DVisualizer {
         if (this.gearSurfMesh) this.gearSurfMesh.visible = this.flankOnlyMode;
         return this.flankOnlyMode;
     }
+
+    /**
+     * Extracts true parametric B-Spline surfaces and wireframe profile curves for Mastercam IGES export (Bevel Gears).
+     * @param {string} type - 'pinion', 'gear', 'assembly', or 'curves'
+     */
+    getParametricData(type = 'pinion') {
+        if (!this.geom) return { surfaces: [], curves: [] };
+
+        const z1 = parseInt(this.geom.z1) || 18;
+        const z2 = parseInt(this.geom.z2) || 45;
+        const mmn = parseFloat(this.geom.mmn) || 10.0;
+        const b = parseFloat(this.geom.b) || 117.0;
+        const Re = parseFloat(this.geom.Re) || 338.0;
+        const Rm = parseFloat(this.geom.Rm) || (Re - b / 2.0);
+        const Ri = parseFloat(this.geom.Ri) || (Re - b);
+        const delta1 = parseFloat(this.geom.delta1) || Math.atan(1.0 / this.gearRatio);
+        const delta2 = this.sigmaRad - delta1;
+        const alfa = (parseFloat(this.geom.alfa_deg !== undefined ? this.geom.alfa_deg : 20.0) * Math.PI) / 180.0;
+        const beta_deg = (this.geom.beta_deg !== undefined ? parseFloat(this.geom.beta_deg) : (this.geom.beta !== undefined ? parseFloat(this.geom.beta) : 0.0));
+        const beta = (beta_deg * Math.PI) / 180.0;
+        const gearingType = this.geom.gearingType || 'gleason';
+        const x1 = parseFloat(this.geom.x1 !== undefined ? this.geom.x1 : 0.0);
+        const x2 = parseFloat(this.geom.x2 !== undefined ? this.geom.x2 : -x1);
+
+        const ha1 = parseFloat(this.geom.ha1 !== undefined ? this.geom.ha1 : (mmn * (1.0 + x1)));
+        const ha2 = parseFloat(this.geom.ha2 !== undefined ? this.geom.ha2 : (mmn * (1.0 + x2)));
+        const hf1 = parseFloat(this.geom.hf1 !== undefined ? this.geom.hf1 : (mmn * (1.2 - x1)));
+        const hf2 = parseFloat(this.geom.hf2 !== undefined ? this.geom.hf2 : (mmn * (1.2 - x2)));
+
+        const ha_e1 = parseFloat(this.geom.hae1) || (ha1 * (Re / Rm));
+        const hf_e1 = parseFloat(this.geom.hfe1) || (hf1 * (Re / Rm));
+        const sn_e1 = parseFloat(this.geom.sne1) || (mmn * 1.84);
+
+        const ha_e2 = parseFloat(this.geom.hae2) || (ha2 * (Re / Rm));
+        const hf_e2 = parseFloat(this.geom.hfe2) || (hf2 * (Re / Rm));
+        const sn_e2 = parseFloat(this.geom.sne2) || (mmn * 1.30);
+
+        const base1 = {
+            z: z1, mmn, b, Re, Rm, Ri,
+            delta: delta1, alfa, beta, gearingType,
+            ha_e: ha_e1, hf_e: hf_e1, sn_e: sn_e1,
+            hand: 1, isPinion: true, level: 1,
+            exportAllTeeth: true,
+            includeCurves: (type === 'curves')
+        };
+
+        const base2 = {
+            z: z2, mmn, b, Re, Rm, Ri,
+            delta: delta2, alfa, beta, gearingType,
+            ha_e: ha_e2, hf_e: hf_e2, sn_e: sn_e2,
+            hand: -1, isPinion: false, level: 2,
+            exportAllTeeth: true,
+            includeCurves: (type === 'curves')
+        };
+
+        if (type === 'pinion') {
+            const data1 = Bevel3DGenerator.getBevelParametricData(base1);
+            data1.surfaces.forEach(s => {
+                s.label = `PINION_${s.label}`;
+                s.level = 1;
+            });
+            data1.curves = [
+                {
+                    label: 'AXIS_P1',
+                    points: [[0, 0, -10], [0, 0, Re * Math.cos(delta1) + 20]],
+                    color: 1,
+                    level: 3
+                }
+            ];
+            return data1;
+        }
+
+        if (type === 'gear') {
+            const data2 = Bevel3DGenerator.getBevelParametricData(base2);
+            data2.surfaces.forEach(s => {
+                s.label = `GEAR_${s.label}`;
+                s.level = 1;
+            });
+            data2.curves = [
+                {
+                    label: 'AXIS_G2',
+                    points: [[0, 0, -10], [0, 0, Re * Math.cos(delta2) + 20]],
+                    color: 1,
+                    level: 3
+                }
+            ];
+            return data2;
+        }
+
+        if (type === 'curves') {
+            base1.includeCurves = true;
+            base2.includeCurves = true;
+            const data1 = Bevel3DGenerator.getBevelParametricData(base1);
+            const data2 = Bevel3DGenerator.getBevelParametricData(base2);
+            const curves = [];
+            data1.curves.forEach((c, idx) => {
+                curves.push({
+                    label: `P_CRV_${idx + 1}`,
+                    points: c.points,
+                    color: 3,
+                    level: 1
+                });
+            });
+            data2.curves.forEach((c, idx) => {
+                curves.push({
+                    label: `G_CRV_${idx + 1}`,
+                    points: c.points,
+                    color: 5,
+                    level: 2
+                });
+            });
+            curves.push(
+                {
+                    label: 'AXIS_P1',
+                    points: [[0, 0, -10], [0, 0, Re * Math.cos(delta1) + 20]],
+                    color: 1,
+                    level: 3
+                },
+                {
+                    label: 'AXIS_G2',
+                    points: [[0, 0, -10], [0, 0, Re * Math.cos(delta2) + 20]],
+                    color: 1,
+                    level: 3
+                }
+            );
+            return { surfaces: [], curves };
+        }
+
+        // Assembly Pair: Pinion 1 and Gear 2 oriented at common apex V(0,0,0) and conjugate shaft angle Sigma
+        const data1 = Bevel3DGenerator.getBevelParametricData(base1);
+        const data2 = Bevel3DGenerator.getBevelParametricData(base2);
+
+        // Pinion 1: Local (x, y, z) -> World (z, x, y)
+        const trPinionSurfaces = [];
+        data1.surfaces.forEach(s => {
+            const trGrid = s.grid.map(row => row.map(pt => [
+                pt[2], pt[0], pt[1]
+            ]));
+            trPinionSurfaces.push({
+                label: `PINION_${s.label}`,
+                grid: trGrid,
+                color: 3,
+                level: 1
+            });
+        });
+
+        // Gear 2: Local (x, y, z) -> xformGear(p)
+        const phi = (this.initialGearAngle !== undefined) ? this.initialGearAngle : 0.0;
+        const cosP = Math.cos(phi), sinP = Math.sin(phi);
+        const rotZ = (this.sigmaRad || (Math.PI / 2.0)) - Math.PI / 2.0;
+        const cosZ = Math.cos(rotZ), sinZ = Math.sin(rotZ);
+
+        const xformGear = (p) => {
+            const bx = p[0], by = p[2], bz = -p[1];
+            const rx = bx * cosP + bz * sinP;
+            const ry = by;
+            const rz = -bx * sinP + bz * cosP;
+            const fx = rx * cosZ - ry * sinZ;
+            const fy = rx * sinZ + ry * cosZ;
+            const fz = rz;
+            return [fx, fy, fz];
+        };
+
+        const trGearSurfaces = [];
+        data2.surfaces.forEach(s => {
+            const trGrid = s.grid.map(row => row.map(pt => xformGear(pt)));
+            trGearSurfaces.push({
+                label: `GEAR_${s.label}`,
+                grid: trGrid,
+                color: 2,
+                level: 2
+            });
+        });
+
+        const len1 = Re * Math.cos(delta1) + 20;
+        const len2 = Re * Math.cos(delta2) + 20;
+
+        const curves = [
+            {
+                label: 'AXIS_PINION',
+                points: [[-10, 0, 0], [len1, 0, 0]],
+                color: 1,
+                level: 3
+            },
+            {
+                label: 'AXIS_GEAR',
+                points: [xformGear([0, 0, -10]), xformGear([0, 0, len2])],
+                color: 1,
+                level: 3
+            }
+        ];
+
+        return { surfaces: trPinionSurfaces.concat(trGearSurfaces), curves };
+    }
 }

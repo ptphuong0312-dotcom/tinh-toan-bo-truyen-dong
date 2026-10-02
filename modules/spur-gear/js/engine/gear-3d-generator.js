@@ -489,5 +489,182 @@ export const Gear3DGenerator = {
      */
     generateGearSurfaceMesh: function(opt) {
         return this.generateGearMesh(Object.assign({}, opt, { surfaceOnly: true }));
+    },
+
+    /**
+     * Solves tridiagonal system for clamped cubic B-spline interpolation via Thomas algorithm.
+     * Guarantees 0 boundary jump, smooth C2 curvature, and zero crest nhấp nhô.
+     */
+    fitCubicBSplineCtrlPts(pts) {
+        const N = pts.length;
+        if (N <= 3) return pts;
+
+        const b = new Float64Array(N);
+        const a = new Float64Array(N);
+        const c = new Float64Array(N);
+        b.fill(4.0); a.fill(1.0); c.fill(1.0);
+        b[0] = 1.0; b[N - 1] = 1.0;
+        a[0] = 0.0; a[N - 1] = 0.0;
+        c[0] = 0.0; c[N - 1] = 0.0;
+
+        const rhs = [];
+        for (let i = 0; i < N; i++) {
+            if (i === 0 || i === N - 1) {
+                rhs.push([pts[i][0], pts[i][1], pts[i][2]]);
+            } else {
+                rhs.push([6.0 * pts[i][0], 6.0 * pts[i][1], 6.0 * pts[i][2]]);
+            }
+        }
+
+        const cp = new Float64Array(N);
+        const dp = [];
+        cp[0] = c[0] / b[0];
+        dp.push([rhs[0][0] / b[0], rhs[0][1] / b[0], rhs[0][2] / b[0]]);
+
+        for (let i = 1; i < N; i++) {
+            const m = b[i] - a[i] * cp[i - 1];
+            cp[i] = c[i] / m;
+            dp.push([
+                (rhs[i][0] - a[i] * dp[i - 1][0]) / m,
+                (rhs[i][1] - a[i] * dp[i - 1][1]) / m,
+                (rhs[i][2] - a[i] * dp[i - 1][2]) / m
+            ]);
+        }
+
+        const P = new Array(N);
+        P[N - 1] = [dp[N - 1][0], dp[N - 1][1], dp[N - 1][2]];
+        for (let i = N - 2; i >= 0; i--) {
+            P[i] = [
+                dp[i][0] - cp[i] * P[i + 1][0],
+                dp[i][1] - cp[i] * P[i + 1][1],
+                dp[i][2] - cp[i] * P[i + 1][2]
+            ];
+        }
+
+        return P;
+    },
+
+    /**
+     * Extracts true parametric Bicubic B-Spline surfaces (Entity 128) and wireframe curves
+     * for native Mastercam / SolidWorks CAD Surface export (Spur & Helical Gears).
+     * @param {Object} opt - Gear parameters
+     * @returns {Object} { surfaces: Array, curves: Array }
+     */
+    getGearParametricData(opt = {}) {
+        const z = parseInt(opt.z) || 20;
+        const mn = parseFloat(opt.mn) || 6.0;
+        const alfa_n = parseFloat(opt.alfa_n) || 20.0;
+        const beta = parseFloat(opt.beta) || 0.0;
+        const b = parseFloat(opt.b) || 50.0;
+        const d = parseFloat(opt.d) || (z * mn);
+        const da = parseFloat(opt.da) || (d + 2 * mn);
+        const df = parseFloat(opt.df) || (d - 2.5 * mn);
+        const db = parseFloat(opt.db) || (d * Math.cos((alfa_n * Math.PI) / 180.0));
+        const x = parseFloat(opt.x) || 0.0;
+
+        const isHelical = Math.abs(beta) > 1e-4;
+        const betaRad = (beta * Math.PI) / 180.0;
+        const hand = opt.hand !== undefined ? opt.hand : 1;
+        const twistRate = isHelical ? (hand * (2.0 * Math.tan(betaRad)) / d) : 0.0;
+
+        const noPtHead = opt.noPtHead || 8;
+        const noPtEv = opt.noPtEv || 20;
+        const numSlices = opt.numSlices || (isHelical ? 32 : 16);
+        const pitchAngle = (2.0 * Math.PI) / z;
+
+        // Calculate exact tooth half profile via MitcalcToothSolver
+        const half = MitcalcToothSolver.calculateToothCoordinates(Object.assign({}, opt, {
+            z, mn, alfa_n, beta, x, d, db, da, df,
+            noPtHead, noPtEv, cuttStep: 0.5
+        }));
+
+        const surfaces = [];
+        const curves = [];
+
+        const activeTeeth = (opt.exportAllTeeth === false) ? Math.min(8, z) : z;
+
+        for (let k = 0; k < activeTeeth; k++) {
+            const toothPhase = k * pitchAngle;
+            const gridR = [];
+            const gridTip = [];
+            const gridL = [];
+            const gridRoot = [];
+
+            for (let s = 0; s < numSlices; s++) {
+                const zCoord = -b * 0.5 + s * (b / (numSlices - 1));
+                const twist = twistRate * zCoord;
+                const phi0 = toothPhase + twist;
+
+                // 1. Flank R (from root to tip)
+                const sliceR = [];
+                for (let i = half.length - 1; i >= noPtHead - 1; i--) {
+                    const pt = half[i];
+                    const th = phi0 + Math.atan2(pt.x, pt.y);
+                    sliceR.push([pt.r * Math.sin(th), pt.r * Math.cos(th), zCoord]);
+                }
+
+                // 2. Tip Crest Arc (from Flank R tip to Flank L tip)
+                const rawTip = [];
+                for (let i = noPtHead - 1; i >= 0; i--) {
+                    const pt = half[i];
+                    const th = phi0 + Math.atan2(pt.x, pt.y);
+                    rawTip.push([pt.r * Math.sin(th), pt.r * Math.cos(th), zCoord]);
+                }
+                for (let i = 1; i < noPtHead; i++) {
+                    const pt = half[i];
+                    const th = phi0 - Math.atan2(pt.x, pt.y);
+                    rawTip.push([pt.r * Math.sin(th), pt.r * Math.cos(th), zCoord]);
+                }
+                const sliceTip = this.fitCubicBSplineCtrlPts(rawTip);
+
+                // 3. Flank L (from tip to root)
+                const sliceL = [];
+                for (let i = noPtHead - 1; i < half.length; i++) {
+                    const pt = half[i];
+                    const th = phi0 - Math.atan2(pt.x, pt.y);
+                    sliceL.push([pt.r * Math.sin(th), pt.r * Math.cos(th), zCoord]);
+                }
+
+                // 4. Root Valley (connecting left flank root of tooth k to right flank root of tooth k+1)
+                const rawRoot = [];
+                const ptRootL = half[half.length - 1];
+                const thRootL = phi0 - Math.atan2(ptRootL.x, ptRootL.y);
+                const thRootNextR = (phi0 + pitchAngle) + Math.atan2(ptRootL.x, ptRootL.y);
+                const rf = df * 0.5;
+                const rootPts = 12;
+                for (let t = 0; t <= rootPts; t++) {
+                    const frac = t / rootPts;
+                    const th = thRootL + frac * (thRootNextR - thRootL);
+                    rawRoot.push([rf * Math.sin(th), rf * Math.cos(th), zCoord]);
+                }
+                const sliceRoot = this.fitCubicBSplineCtrlPts(rawRoot);
+
+                gridR.push(sliceR);
+                gridTip.push(sliceTip);
+                gridL.push(sliceL);
+                gridRoot.push(sliceRoot);
+            }
+
+            surfaces.push({ label: `FLK_R_${k+1}`, grid: gridR, color: 3, level: opt.level || 1 });
+            surfaces.push({ label: `TIP_${k+1}`, grid: gridTip, color: 2, level: opt.level || 1 });
+            surfaces.push({ label: `FLK_L_${k+1}`, grid: gridL, color: 3, level: opt.level || 1 });
+            surfaces.push({ label: `ROOT_${k+1}`, grid: gridRoot, color: 1, level: opt.level || 1 });
+
+            // Optional wireframe profile for Ruled/Loft
+            if (opt.includeCurves && k === 0) {
+                const numCross = 3;
+                for (let c = 0; c < numCross; c++) {
+                    const sIdx = Math.round((c / (numCross - 1)) * (numSlices - 1));
+                    const prof = [];
+                    for (let p = 0; p < gridR[sIdx].length; p++) prof.push(gridR[sIdx][p]);
+                    for (let p = 1; p < gridTip[sIdx].length; p++) prof.push(gridTip[sIdx][p]);
+                    for (let p = 1; p < gridL[sIdx].length; p++) prof.push(gridL[sIdx][p]);
+                    for (let p = 1; p < gridRoot[sIdx].length; p++) prof.push(gridRoot[sIdx][p]);
+                    curves.push({ label: `TOOTH_SEC_${c+1}`, points: prof, color: 5, level: 2 });
+                }
+            }
+        }
+
+        return { surfaces, curves };
     }
 };

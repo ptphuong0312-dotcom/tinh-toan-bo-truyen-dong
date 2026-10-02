@@ -747,4 +747,180 @@ export class Gear3DVisualizer {
             this.renderer.render(this.scene, this.camera);
         }
     }
+
+    /**
+     * Extracts true parametric B-Spline surfaces and wireframe profile curves for Mastercam IGES export (Spur & Helical Gears).
+     * @param {string} type - 'pinion', 'gear', 'assembly', or 'curves'
+     */
+    getParametricData(type = 'pinion') {
+        if (!this.geom) return { surfaces: [], curves: [] };
+
+        const base1 = {
+            z: this.geom.z1,
+            mn: this.geom.mn,
+            alfa_n: this.geom.alfa_n,
+            beta: this.geom.beta,
+            b: this.geom.b1,
+            x: this.geom.x1,
+            d: this.geom.d1,
+            db: this.geom.db1,
+            da: this.geom.da1,
+            df: this.geom.df1,
+            hand: +1,
+            isPinion: true,
+            level: 1,
+            exportAllTeeth: true,
+            includeCurves: (type === 'curves')
+        };
+
+        const base2 = {
+            z: this.geom.z2,
+            mn: this.geom.mn,
+            alfa_n: this.geom.alfa_n,
+            beta: this.geom.beta,
+            b: this.geom.b2,
+            x: this.geom.x2,
+            d: this.geom.d2,
+            db: this.geom.db2,
+            da: this.geom.da2,
+            df: this.geom.df2,
+            hand: -1,
+            isPinion: false,
+            level: 2,
+            exportAllTeeth: true,
+            includeCurves: (type === 'curves')
+        };
+
+        if (type === 'pinion') {
+            const data1 = Gear3DGenerator.getGearParametricData(base1);
+            data1.surfaces.forEach(s => {
+                s.label = `PINION_${s.label}`;
+                s.level = 1;
+            });
+            data1.curves = [
+                {
+                    label: 'AXIS_P1',
+                    points: [[0, 0, -base1.b * 0.5 - 15], [0, 0, base1.b * 0.5 + 15]],
+                    color: 1,
+                    level: 3
+                }
+            ];
+            return data1;
+        }
+
+        if (type === 'gear') {
+            const data2 = Gear3DGenerator.getGearParametricData(base2);
+            data2.surfaces.forEach(s => {
+                s.label = `GEAR_${s.label}`;
+                s.level = 1;
+            });
+            data2.curves = [
+                {
+                    label: 'AXIS_G2',
+                    points: [[0, 0, -base2.b * 0.5 - 15], [0, 0, base2.b * 0.5 + 15]],
+                    color: 1,
+                    level: 3
+                }
+            ];
+            return data2;
+        }
+
+        if (type === 'curves') {
+            base1.includeCurves = true;
+            base2.includeCurves = true;
+            const data1 = Gear3DGenerator.getGearParametricData(base1);
+            const data2 = Gear3DGenerator.getGearParametricData(base2);
+            const curves = [];
+            data1.curves.forEach((c, idx) => {
+                curves.push({
+                    label: `P_CRV_${idx + 1}`,
+                    points: c.points,
+                    color: 3,
+                    level: 1
+                });
+            });
+            data2.curves.forEach((c, idx) => {
+                curves.push({
+                    label: `G_CRV_${idx + 1}`,
+                    points: c.points,
+                    color: 5,
+                    level: 2
+                });
+            });
+            curves.push(
+                {
+                    label: 'AXIS_P1',
+                    points: [[0, 0, -base1.b * 0.5 - 15], [0, 0, base1.b * 0.5 + 15]],
+                    color: 1,
+                    level: 3
+                },
+                {
+                    label: 'AXIS_G2',
+                    points: [[(this.geom.aw || 100), 0, -base2.b * 0.5 - 15], [(this.geom.aw || 100), 0, base2.b * 0.5 + 15]],
+                    color: 1,
+                    level: 3
+                }
+            );
+            return { surfaces: [], curves };
+        }
+
+        // Assembly Pair: Pinion 1 at (0, 0, 0) rotated by initialPinionAngle, Gear 2 at (aw, 0, 0) rotated by initialGearAngle
+        const aw = (this.geom && this.geom.aw) ? this.geom.aw : (this.geom.d1 + this.geom.d2) * 0.5;
+        const rotZ1 = (this.initialPinionAngle !== undefined) ? this.initialPinionAngle : -Math.PI / 2.0;
+        const cosR1 = Math.cos(rotZ1);
+        const sinR1 = Math.sin(rotZ1);
+
+        const rotZ2 = (this.initialGearAngle !== undefined) ? this.initialGearAngle : (Math.PI / 2.0 - Math.PI / this.geom.z2);
+        const cosR2 = Math.cos(rotZ2);
+        const sinR2 = Math.sin(rotZ2);
+
+        const data1 = Gear3DGenerator.getGearParametricData(base1);
+        const data2 = Gear3DGenerator.getGearParametricData(base2);
+
+        const trSurfaces = [];
+        data1.surfaces.forEach(s => {
+            const trGrid = s.grid.map(row => row.map(pt => [
+                pt[0] * cosR1 - pt[1] * sinR1,
+                pt[0] * sinR1 + pt[1] * cosR1,
+                pt[2]
+            ]));
+            trSurfaces.push({
+                label: `PINION_${s.label}`,
+                grid: trGrid,
+                color: 3,
+                level: 1
+            });
+        });
+
+        data2.surfaces.forEach(s => {
+            const trGrid = s.grid.map(row => row.map(pt => [
+                pt[0] * cosR2 - pt[1] * sinR2 + aw,
+                pt[0] * sinR2 + pt[1] * cosR2,
+                pt[2]
+            ]));
+            trSurfaces.push({
+                label: `GEAR_${s.label}`,
+                grid: trGrid,
+                color: 2,
+                level: 2
+            });
+        });
+
+        const curves = [
+            {
+                label: 'AXIS_P1',
+                points: [[0, 0, -base1.b * 0.5 - 15], [0, 0, base1.b * 0.5 + 15]],
+                color: 1,
+                level: 3
+            },
+            {
+                label: 'AXIS_G2',
+                points: [[aw, 0, -base2.b * 0.5 - 15], [aw, 0, base2.b * 0.5 + 15]],
+                color: 1,
+                level: 3
+            }
+        ];
+
+        return { surfaces: trSurfaces, curves };
+    }
 }

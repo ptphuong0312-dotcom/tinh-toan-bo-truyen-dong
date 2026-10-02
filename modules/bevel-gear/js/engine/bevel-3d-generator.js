@@ -619,9 +619,278 @@ export const Bevel3DGenerator = {
             center: [(minX + maxX) / 2, (minY + maxY) / 2, (minZ + maxZ) / 2],
             size: [maxX - minX, maxY - minY, maxZ - minZ]
         };
+    },
+
+    /**
+     * Solves uniform cubic B-spline control points for 3D points interpolation (Thomas tridiagonal algorithm).
+     * @param {Array<Array<number>>} pts - Array of [x, y, z] points
+     * @returns {Array<Array<number>>} Control points
+     */
+    fitCubicBSplineCtrlPts(pts) {
+        const N = pts.length;
+        if (N <= 3) return pts;
+
+        const b = new Float64Array(N);
+        const a = new Float64Array(N);
+        const c = new Float64Array(N);
+        b.fill(4.0); a.fill(1.0); c.fill(1.0);
+        b[0] = 1.0; b[N - 1] = 1.0;
+        a[0] = 0.0; a[N - 1] = 0.0;
+        c[0] = 0.0; c[N - 1] = 0.0;
+
+        const rhs = [];
+        for (let i = 0; i < N; i++) {
+            if (i === 0 || i === N - 1) {
+                rhs.push([pts[i][0], pts[i][1], pts[i][2]]);
+            } else {
+                rhs.push([6.0 * pts[i][0], 6.0 * pts[i][1], 6.0 * pts[i][2]]);
+            }
+        }
+
+        const cp = new Float64Array(N);
+        const dp = [];
+        cp[0] = c[0] / b[0];
+        dp.push([rhs[0][0] / b[0], rhs[0][1] / b[0], rhs[0][2] / b[0]]);
+
+        for (let i = 1; i < N; i++) {
+            const m = b[i] - a[i] * cp[i - 1];
+            cp[i] = c[i] / m;
+            dp.push([
+                (rhs[i][0] - a[i] * dp[i - 1][0]) / m,
+                (rhs[i][1] - a[i] * dp[i - 1][1]) / m,
+                (rhs[i][2] - a[i] * dp[i - 1][2]) / m
+            ]);
+        }
+
+        const P = new Array(N);
+        P[N - 1] = [dp[N - 1][0], dp[N - 1][1], dp[N - 1][2]];
+        for (let i = N - 2; i >= 0; i--) {
+            P[i] = [
+                dp[i][0] - cp[i] * P[i + 1][0],
+                dp[i][1] - cp[i] * P[i + 1][1],
+                dp[i][2] - cp[i] * P[i + 1][2]
+            ];
+        }
+
+        return P;
+    },
+
+    /**
+     * Resamples a 3D polyline to a fixed number of uniformly spaced points along its cumulative arc length.
+     */
+    resampleCurve(pts, targetCount) {
+        if (!pts || pts.length === 0) return [];
+        if (pts.length === targetCount) return pts;
+        if (pts.length < 2) return new Array(targetCount).fill(pts[0]);
+        const cumDist = [0];
+        for (let i = 1; i < pts.length; i++) {
+            const d = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1], pts[i][2] - pts[i - 1][2]);
+            cumDist.push(cumDist[i - 1] + d);
+        }
+        const totalDist = cumDist[cumDist.length - 1];
+        if (totalDist <= 1e-9) {
+            return new Array(targetCount).fill(pts[0]);
+        }
+        const res = [];
+        let curIdx = 0;
+        for (let j = 0; j < targetCount; j++) {
+            const targetD = (j / (targetCount - 1)) * totalDist;
+            while (curIdx < pts.length - 2 && cumDist[curIdx + 1] < targetD) {
+                curIdx++;
+            }
+            const segLen = cumDist[curIdx + 1] - cumDist[curIdx];
+            const t = segLen > 1e-9 ? (targetD - cumDist[curIdx]) / segLen : 0;
+            const pA = pts[curIdx];
+            const pB = pts[curIdx + 1];
+            res.push([
+                pA[0] + t * (pB[0] - pA[0]),
+                pA[1] + t * (pB[1] - pA[1]),
+                pA[2] + t * (pB[2] - pA[2])
+            ]);
+        }
+        return res;
+    },
+
+    /**
+     * Extracts true parametric Bicubic B-Spline surfaces (Entity 128) and wireframe curves (Entity 106 Form 12)
+     * for native Mastercam / SolidWorks CAD Surface export (Bevel Gears - Straight & Spiral).
+     * @param {Object} opt - Bevel gear parameters
+     * @returns {Object} { surfaces: Array, curves: Array }
+     */
+    getBevelParametricData(opt = {}) {
+        const z = parseInt(opt.z) || 20;
+        const mmn = parseFloat(opt.mmn) || 10.0;
+        const b = parseFloat(opt.b) || 50.0;
+        const Re = parseFloat(opt.Re) || (z * mmn * 0.7);
+        const Rm = parseFloat(opt.Rm) || (Re - b * 0.5);
+        const Ri = parseFloat(opt.Ri) || (Re - b);
+        const delta = parseFloat(opt.delta) || (Math.PI / 4.0);
+        const cosD = Math.cos(delta);
+        const sinD = Math.sin(delta);
+        const alfa = parseFloat(opt.alfa) || (20.0 * Math.PI / 180.0);
+        const beta = parseFloat(opt.beta) || 0.0;
+        const isSpiral = Math.abs(beta) > 1e-4;
+        const gearingType = opt.gearingType || 'gleason';
+        const hand = (opt.hand !== undefined) ? opt.hand : 1;
+
+        const ha_e = parseFloat(opt.ha_e) || (mmn * (1.0 + (opt.x || 0.0)));
+        const hf_e = parseFloat(opt.hf_e) || (mmn * (1.2 - (opt.x || 0.0)));
+        const sn_e = parseFloat(opt.sn_e) || (mmn * Math.PI * 0.5);
+
+        const numSlices = opt.numSlices || (isSpiral ? 24 : 16);
+        const ptsPerFlank = opt.ptsPerFlank || 12;
+        const ptsFillet = opt.ptsFillet || 4;
+        const R_tool = 1.5 * b;
+
+        const ptsFlankCount = 16;
+        const ptsTipCount = 7;
+        const ptsRootCount = 9;
+
+        const activeTeeth = (opt.exportAllTeeth === false) ? Math.min(8, z) : z;
+        const pitchAngle = (2.0 * Math.PI) / z;
+
+        // Precompute raw contours across all slices
+        const sliceContours = [];
+        for (let s = 0; s < numSlices; s++) {
+            const frac = s / (numSlices - 1);
+            const R_s = Re - frac * (Re - Ri);
+            const scale_s = R_s / Re;
+            const u = (R_s - Rm) / b;
+
+            let spiralAngle = 0.0;
+            if (isSpiral) {
+                if (gearingType === 'straight_type1') {
+                    const V = hand * u * b * Math.tan(beta);
+                    spiralAngle = V / Math.max(1.0, R_s * sinD);
+                } else {
+                    const term = u * b + R_tool * Math.sin(beta);
+                    const W = hand * (R_tool * Math.cos(beta) - Math.sqrt(Math.max(0.0, R_tool * R_tool - term * term)));
+                    spiralAngle = W / Math.max(1.0, R_s * sinD);
+                }
+            }
+
+            const r_pitch = R_s * sinD;
+            const z_pitch = R_s * cosD;
+            const ha_s = ha_e * scale_s;
+            const hf_s = hf_e * scale_s;
+            const sn_s = sn_e * scale_s;
+
+            const { toothContour } = this.generateSliceToothContour({
+                z, mmn, Rm, R_s, delta, alfa, beta, isSpiral,
+                ha_s, hf_s, sn_s, ptsPerFlank, ptsFillet, dThetaKiss: 0.0
+            });
+
+            sliceContours.push({
+                R_s, r_pitch, z_pitch, spiralAngle, toothContour
+            });
+        }
+
+        const surfaces = [];
+        const curves = [];
+
+        // Build full 3D surfaces for each tooth
+        for (let k = 0; k < activeTeeth; k++) {
+            const toothPhase = k * pitchAngle;
+
+            const gridL = [];
+            const gridTip = [];
+            const gridR = [];
+            const gridRoot = [];
+
+            for (let s = 0; s < numSlices; s++) {
+                const sc = sliceContours[s];
+                const phi0 = toothPhase + sc.spiralAngle;
+                const nextPhi0 = (k + 1) * pitchAngle + sc.spiralAngle;
+                const tc = sc.toothContour;
+
+                // Find indices of regions
+                let idxTipStart = 0;
+                let idxTipEnd = tc.length - 1;
+                for (let i = 0; i < tc.length; i++) {
+                    if (tc[i].zone === 'tip_corner' || tc[i].zone === 'tip_land') {
+                        idxTipStart = i;
+                        break;
+                    }
+                }
+                for (let i = tc.length - 1; i >= 0; i--) {
+                    if (tc[i].zone === 'tip_corner' || tc[i].zone === 'tip_land') {
+                        idxTipEnd = i;
+                        break;
+                    }
+                }
+
+                // Convert 2D (h, theta) to 3D [x, y, z] for tooth k
+                const to3D = (pt, basePhi) => {
+                    const ang = basePhi + pt.theta;
+                    const r_pt = sc.r_pitch + pt.h * cosD;
+                    const z_pt = sc.z_pitch - pt.h * sinD;
+                    return [r_pt * Math.cos(ang), r_pt * Math.sin(ang), z_pt];
+                };
+
+                // 1. Raw Flank L (from root fillet tangency to tip corner)
+                const rawL = [];
+                for (let i = 1; i <= idxTipStart; i++) {
+                    rawL.push(to3D(tc[i], phi0));
+                }
+                const sliceL = this.fitCubicBSplineCtrlPts(this.resampleCurve(rawL, ptsFlankCount));
+
+                // 2. Raw Tip Crest (across tip land)
+                const rawTip = [];
+                for (let i = idxTipStart; i <= idxTipEnd; i++) {
+                    rawTip.push(to3D(tc[i], phi0));
+                }
+                const sliceTip = this.fitCubicBSplineCtrlPts(this.resampleCurve(rawTip, ptsTipCount));
+
+                // 3. Raw Flank R (from tip corner to root fillet tangency)
+                const rawR = [];
+                for (let i = idxTipEnd; i < tc.length - 1; i++) {
+                    rawR.push(to3D(tc[i], phi0));
+                }
+                const sliceR = this.fitCubicBSplineCtrlPts(this.resampleCurve(rawR, ptsFlankCount));
+
+                // 4. Raw Root Valley (from Flank R end of tooth k to Flank L start of tooth k+1)
+                const rawRoot = [];
+                for (let i = tc.length - 2; i < tc.length; i++) {
+                    rawRoot.push(to3D(tc[i], phi0));
+                }
+                for (let i = 0; i <= 1; i++) {
+                    rawRoot.push(to3D(tc[i], nextPhi0));
+                }
+                const sliceRoot = this.fitCubicBSplineCtrlPts(this.resampleCurve(rawRoot, ptsRootCount));
+
+                gridL.push(sliceL);
+                gridTip.push(sliceTip);
+                gridR.push(sliceR);
+                gridRoot.push(sliceRoot);
+            }
+
+            surfaces.push({ label: `FLK_L_${k + 1}`, grid: gridL, color: 3, level: opt.level || 1 });
+            surfaces.push({ label: `TIP_${k + 1}`, grid: gridTip, color: 2, level: opt.level || 1 });
+            surfaces.push({ label: `FLK_R_${k + 1}`, grid: gridR, color: 3, level: opt.level || 1 });
+            surfaces.push({ label: `ROOT_${k + 1}`, grid: gridRoot, color: 1, level: opt.level || 1 });
+
+            // Optional wireframe profile for Ruled/Loft
+            if (opt.includeCurves && k === 0) {
+                const numCross = 3;
+                for (let c = 0; c < numCross; c++) {
+                    const sIdx = Math.round((c / (numCross - 1)) * (numSlices - 1));
+                    const prof = [];
+                    for (let p = 0; p < gridL[sIdx].length; p++) prof.push(gridL[sIdx][p]);
+                    for (let p = 1; p < gridTip[sIdx].length; p++) prof.push(gridTip[sIdx][p]);
+                    for (let p = 1; p < gridR[sIdx].length; p++) prof.push(gridR[sIdx][p]);
+                    for (let p = 1; p < gridRoot[sIdx].length; p++) prof.push(gridRoot[sIdx][p]);
+                    curves.push({ label: `TOOTH_SEC_${c + 1}`, points: prof, color: 5, level: 2 });
+                }
+            }
+        }
+
+        return { surfaces, curves };
     }
 };
 
 if (typeof window !== 'undefined') {
     window.Bevel3DGenerator = Bevel3DGenerator;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = Bevel3DGenerator;
 }
