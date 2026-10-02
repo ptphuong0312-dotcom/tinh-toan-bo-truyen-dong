@@ -11,7 +11,9 @@ class WormCanvasRenderer {
         this.sec4Ctx = this.sec4Canvas ? this.sec4Canvas.getContext('2d') : null;
 
         this.geom = null;
-        this.viewMode = 'assembly'; // 'assembly' | 'worm' | 'wheel'
+        this.viewMode = 'assembly'; // 'assembly' | 'worm' | 'wheel' | 'normal_profile' | 'tangential_profile'
+        this.showWorm = true;
+        this.showWheel = true;
         this.zoom = 1.0;
         this.panX = 0;
         this.panY = 0;
@@ -321,8 +323,12 @@ class WormCanvasRenderer {
             this.renderAssemblyView(ctx, W, H, g);
         } else if (this.viewMode === 'worm') {
             this.renderWormDetailView(ctx, W, H, g);
-        } else {
+        } else if (this.viewMode === 'wheel') {
             this.renderWheelDetailView(ctx, W, H, g);
+        } else if (this.viewMode === 'normal_profile') {
+            this.renderNormalProfileView(ctx, W, H, g);
+        } else if (this.viewMode === 'tangential_profile') {
+            this.renderTangentialProfileView(ctx, W, H, g);
         }
 
         this.drawHUD(ctx, W, H, g);
@@ -397,12 +403,12 @@ class WormCanvasRenderer {
         ctx.restore();
 
         // 2. Left View: Worm Wheel (with animated conjugate teeth) + Horizontal Worm Thread Rack
-        this.drawAnimatedWheelFront(ctx, toX(0), toY(0), scale, g);
-        this.drawHorizontalWormFront(ctx, toX, toY, scale, 0, -g.a, g);
+        if (this.showWheel) this.drawAnimatedWheelFront(ctx, toX(0), toY(0), scale, g);
+        if (this.showWorm) this.drawHorizontalWormFront(ctx, toX, toY, scale, 0, -g.a, g);
 
         // 3. Right View: Worm Wheel Throat Section (exact DXF.bas WWheel) + Worm Cross Section at (C9, -a)
-        this.drawWheelThroatSection(ctx, toX, toY, scale, d1Chart.C9, 0, g);
-        this.drawWormCrossSection(ctx, toX(d1Chart.C9), toY(-g.a), scale, g);
+        if (this.showWheel) this.drawWheelThroatSection(ctx, toX, toY, scale, d1Chart.C9, 0, g);
+        if (this.showWorm) this.drawWormCrossSection(ctx, toX(d1Chart.C9), toY(-g.a), scale, g);
 
         // 4. Dimension Callouts
         if (this.showDims) {
@@ -492,6 +498,401 @@ class WormCanvasRenderer {
         if (this.showDims) {
             this.drawDimLine(ctx, toX(-g.de2 / 2), toY(-g.de2 * 0.56), toX(g.de2 / 2), toY(-g.de2 * 0.56), `de2 = ${g.de2.toFixed(2)} mm`, 18);
             this.drawDimLine(ctx, toX(sideOffsetX - g.b2H / 2), toY(g.de2 * 0.55), toX(sideOffsetX + g.b2H / 2), toY(g.de2 * 0.55), `b2H = ${g.b2H.toFixed(2)} mm`, -14);
+        }
+    }
+
+    setWormVisible(visible) {
+        this.showWorm = !!visible;
+        this.render();
+        return this.showWorm;
+    }
+
+    setWheelVisible(visible) {
+        this.showWheel = !!visible;
+        this.render();
+        return this.showWheel;
+    }
+
+    toggleWormVisible() {
+        return this.setWormVisible(!this.showWorm);
+    }
+
+    toggleWheelVisible() {
+        return this.setWheelVisible(!this.showWheel);
+    }
+
+    renderNormalProfileView(ctx, W, H, g) {
+        const mn = g.mn;
+        const alfanRad = (g.toothType === 1
+            ? Math.atan(Math.tan((g.alfax || 20) * Math.PI / 180.0) * Math.cos((g.gama || 0) * Math.PI / 180.0))
+            : (g.alfa0 || 20) * Math.PI / 180.0);
+        const alfanDeg = (alfanRad * 180.0) / Math.PI;
+
+        const pn = Math.PI * mn;
+        const sn = pn / 2.0;
+        const en = pn / 2.0;
+        const ha1 = (g.da1 - g.d1) / 2.0;
+        const hf1 = (g.d1 - g.df1) / 2.0;
+        const rhof0 = 0.38 * mn;
+
+        const tanA = Math.tan(alfanRad);
+        const san = Math.max(0.08 * mn, sn - 2.0 * ha1 * tanA);
+        const yStock = -hf1 - 1.25 * mn;
+
+        const xMinWorld = -2.4 * pn;
+        const xMaxWorld = 2.4 * pn;
+        const yMinWorld = yStock - 0.25 * mn;
+        const yMaxWorld = ha1 + 1.25 * mn;
+
+        const spanX = xMaxWorld - xMinWorld;
+        const spanY = yMaxWorld - yMinWorld;
+        const baseScale = Math.min((W * 0.82) / spanX, (H * 0.68) / spanY);
+        const scale = baseScale * this.zoom;
+
+        const cxWorld = 0.0;
+        const cyWorld = (yMinWorld + yMaxWorld) / 2.0;
+        const cxScr = W / 2.0 + this.panX;
+        const cyScr = H / 2.0 + this.panY;
+
+        const toX = (wx) => cxScr + (wx - cxWorld) * scale;
+        const toY = (wy) => cyScr - (wy - cyWorld) * scale;
+
+        const teeth = [-2, -1, 0, 1, 2];
+
+        // 1. Draw Body Fill & 45-deg Cross Hatching
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(toX(xMinWorld), toY(yStock));
+        ctx.lineTo(toX(xMinWorld), toY(-hf1));
+
+        teeth.forEach(k => {
+            const xk = k * pn;
+            const xRootL = xk - sn / 2.0 - hf1 * tanA;
+            const xRootR = xk + sn / 2.0 + hf1 * tanA;
+            const xTipL = xk - san / 2.0;
+            const xTipR = xk + san / 2.0;
+            const nextRootL = (k + 1) * pn - sn / 2.0 - hf1 * tanA;
+
+            ctx.lineTo(toX(xRootL - rhof0), toY(-hf1));
+            ctx.arcTo(toX(xRootL), toY(-hf1), toX(xTipL), toY(ha1), rhof0 * scale);
+            ctx.lineTo(toX(xTipL), toY(ha1));
+            ctx.lineTo(toX(xTipR), toY(ha1));
+            ctx.arcTo(toX(xRootR), toY(-hf1), toX(nextRootL), toY(-hf1), rhof0 * scale);
+            ctx.lineTo(toX(nextRootL - rhof0), toY(-hf1));
+        });
+
+        ctx.lineTo(toX(xMaxWorld), toY(-hf1));
+        ctx.lineTo(toX(xMaxWorld), toY(yStock));
+        ctx.closePath();
+
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.12)';
+        ctx.fill();
+
+        // 45-deg Hatch lines
+        ctx.save();
+        ctx.clip();
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.22)';
+        ctx.lineWidth = 1.0;
+        const hStep = 12 * Math.max(0.6, this.zoom);
+        for (let d = -W - H; d <= W + H; d += hStep) {
+            ctx.beginPath();
+            ctx.moveTo(d, 0);
+            ctx.lineTo(d + H, H);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        // Rack Outline
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.0;
+        ctx.stroke();
+        ctx.restore();
+
+        // 2. Tooth Centerlines & Reference Lines
+        ctx.save();
+        teeth.forEach(k => {
+            const xk = k * pn;
+            ctx.strokeStyle = '#f43f5e';
+            ctx.lineWidth = 1.0;
+            ctx.setLineDash([8, 3, 2, 3]);
+            ctx.beginPath();
+            ctx.moveTo(toX(xk), toY(yStock - 0.1 * mn));
+            ctx.lineTo(toX(xk), toY(ha1 + 0.5 * mn));
+            ctx.stroke();
+        });
+
+        // Pitch line (y = 0)
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 1.4;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(toX(xMinWorld - 0.2 * pn), toY(0));
+        ctx.lineTo(toX(xMaxWorld + 0.2 * pn), toY(0));
+        ctx.stroke();
+
+        // Tip line (y = ha1)
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(toX(xMinWorld - 0.2 * pn), toY(ha1));
+        ctx.lineTo(toX(xMaxWorld + 0.2 * pn), toY(ha1));
+        ctx.stroke();
+
+        // Root line (y = -hf1)
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1.1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(toX(xMinWorld - 0.2 * pn), toY(-hf1));
+        ctx.lineTo(toX(xMaxWorld + 0.2 * pn), toY(-hf1));
+        ctx.stroke();
+        ctx.restore();
+
+        // Text labels for lines
+        ctx.save();
+        ctx.font = '10px Inter, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#fbbf24';
+        ctx.fillText(`Đường chia danh nghĩa (Pitch Line y = 0)`, toX(xMaxWorld) - 12, toY(0) - 5);
+        ctx.fillStyle = '#38bdf8';
+        ctx.fillText(`Đường đỉnh răng (Tip Line y = +${ha1.toFixed(2)})`, toX(xMaxWorld) - 12, toY(ha1) - 5);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillText(`Đường chân răng (Root Line y = -${hf1.toFixed(2)})`, toX(xMaxWorld) - 12, toY(-hf1) + 12);
+        ctx.restore();
+
+        // 3. Dimensions
+        if (this.showDims) {
+            this.drawDimLine(ctx, toX(0), toY(ha1 + 0.45 * mn), toX(pn), toY(ha1 + 0.45 * mn), `pn = ${pn.toFixed(3)} mm`, -8);
+            this.drawDimLine(ctx, toX(-sn / 2.0), toY(0), toX(sn / 2.0), toY(0), `sn = ${sn.toFixed(3)}`, -8);
+            this.drawDimLine(ctx, toX(sn / 2.0), toY(0), toX(pn - sn / 2.0), toY(0), `en = ${en.toFixed(3)}`, -8);
+            this.drawDimLine(ctx, toX(-1.5 * pn), toY(0), toX(-1.5 * pn), toY(ha1), `ha1 = ${ha1.toFixed(2)}`, -10);
+            this.drawDimLine(ctx, toX(-1.5 * pn), toY(0), toX(-1.5 * pn), toY(-hf1), `hf1 = ${hf1.toFixed(2)}`, 14);
+
+            // Pressure angle callout arc
+            ctx.save();
+            ctx.strokeStyle = '#f59e0b';
+            ctx.fillStyle = '#f59e0b';
+            ctx.lineWidth = 1.2;
+            const xPitchR = sn / 2.0;
+            ctx.beginPath();
+            ctx.arc(toX(xPitchR), toY(0), 22 * this.zoom, -Math.PI / 2.0, -Math.PI / 2.0 + alfanRad, false);
+            ctx.stroke();
+            ctx.font = 'bold 11px Inter, sans-serif';
+            ctx.fillText(`αn = ${alfanDeg.toFixed(2)}°`, toX(xPitchR + 0.15 * mn), toY(0.25 * ha1));
+
+            // Fillet radius callout
+            const xRootR0 = sn / 2.0 + hf1 * tanA;
+            ctx.strokeStyle = '#a855f7';
+            ctx.fillStyle = '#c084fc';
+            ctx.beginPath();
+            ctx.moveTo(toX(xRootR0 + rhof0 * 0.3), toY(-hf1 + rhof0 * 0.3));
+            ctx.lineTo(toX(xRootR0 + 0.6 * mn), toY(-hf1 + 0.75 * mn));
+            ctx.stroke();
+            ctx.fillText(`ρf0 = ${rhof0.toFixed(2)} (0.38 mn)`, toX(xRootR0 + 0.65 * mn), toY(-hf1 + 0.8 * mn));
+            ctx.restore();
+        }
+    }
+
+    renderTangentialProfileView(ctx, W, H, g) {
+        const mx = g.mx;
+        const px = g.px;
+        const alfaxRad = (g.alfax * Math.PI) / 180.0;
+        const alfaxDeg = g.alfax;
+        const gama = g.gama;
+        const sx = g.sx1;
+        const d1 = g.d1;
+        const da1 = g.da1;
+        const df1 = g.df1;
+        const ha1 = (da1 - d1) / 2.0;
+        const hf1 = (d1 - df1) / 2.0;
+        const ds = g.Shaft_ds;
+        const th = g.Shaft_th;
+        const L = g.L;
+        const l1 = g.l1;
+        const l2 = g.l2;
+        const beta = g.DXF_Beta;
+
+        const tanAx = Math.tan(alfaxRad);
+        const sa1 = Math.max(0.08 * mx, sx - 2.0 * ha1 * tanAx);
+
+        const minX = -l1 - 12.0;
+        const maxX = l2 + 12.0;
+        const minY = -da1 * 0.68;
+        const maxY = da1 * 0.68;
+
+        const spanX = maxX - minX;
+        const spanY = maxY - minY;
+        const baseScale = Math.min((W * 0.84) / spanX, (H * 0.72) / spanY);
+        const scale = baseScale * this.zoom;
+
+        const cxWorld = (minX + maxX) / 2.0;
+        const cyWorld = 0.0;
+        const cxScr = W / 2.0 + this.panX;
+        const cyScr = H / 2.0 + this.panY;
+
+        const toX = (wx) => cxScr + (wx - cxWorld) * scale;
+        const toY = (wy) => cyScr - (wy - cyWorld) * scale;
+
+        // 1. Centerline along worm axis y = 0
+        ctx.save();
+        ctx.strokeStyle = '#f43f5e';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([10, 4, 2, 4]);
+        ctx.beginPath();
+        ctx.moveTo(toX(minX), toY(0));
+        ctx.lineTo(toX(maxX), toY(0));
+        ctx.stroke();
+        ctx.restore();
+
+        // 2. Shaft core, extensions & shoulders
+        ctx.save();
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.16)';
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1.5;
+        // Left shaft extension
+        ctx.strokeRect(toX(-l1), toY(ds / 2.0), (l1 - L / 2.0 - th) * scale, ds * scale);
+        ctx.fillRect(toX(-l1), toY(ds / 2.0), (l1 - L / 2.0 - th) * scale, ds * scale);
+        // Right shaft extension
+        ctx.strokeRect(toX(L / 2.0 + th), toY(ds / 2.0), (l2 - L / 2.0 - th) * scale, ds * scale);
+        ctx.fillRect(toX(L / 2.0 + th), toY(ds / 2.0), (l2 - L / 2.0 - th) * scale, ds * scale);
+        // Shoulders
+        ctx.strokeRect(toX(-L / 2.0 - th), toY(df1 / 2.0), th * scale, (df1 - ds) * 0.5 * scale);
+        ctx.strokeRect(toX(-L / 2.0 - th), toY(-ds / 2.0), th * scale, (df1 - ds) * 0.5 * scale);
+        ctx.strokeRect(toX(L / 2.0), toY(df1 / 2.0), th * scale, (df1 - ds) * 0.5 * scale);
+        ctx.strokeRect(toX(L / 2.0), toY(-ds / 2.0), th * scale, (df1 - ds) * 0.5 * scale);
+
+        // Core cylinder (-L/2 to +L/2, -df1/2 to +df1/2)
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.6;
+        ctx.strokeRect(toX(-L / 2.0), toY(df1 / 2.0), L * scale, df1 * scale);
+        ctx.fillRect(toX(-L / 2.0), toY(df1 / 2.0), L * scale, df1 * scale);
+        ctx.restore();
+
+        // 3. Teeth on Upper Flank (+y) and Lower Flank (-y)
+        const ch = Math.tan((beta * Math.PI) / 180.0) * ((da1 - df1) / 2.0);
+        const nP = Math.ceil(L / px) + 2;
+
+        const drawRackHalf = (signY, shiftX) => {
+            ctx.save();
+            ctx.beginPath();
+            if (signY > 0) {
+                ctx.moveTo(toX(-L / 2.0), toY(df1 / 2.0));
+                ctx.lineTo(toX(-L / 2.0 + ch), toY(da1 / 2.0));
+                ctx.lineTo(toX(L / 2.0 - ch), toY(da1 / 2.0));
+                ctx.lineTo(toX(L / 2.0), toY(df1 / 2.0));
+            } else {
+                ctx.moveTo(toX(-L / 2.0), toY(-df1 / 2.0));
+                ctx.lineTo(toX(-L / 2.0 + ch), toY(-da1 / 2.0));
+                ctx.lineTo(toX(L / 2.0 - ch), toY(-da1 / 2.0));
+                ctx.lineTo(toX(L / 2.0), toY(-df1 / 2.0));
+            }
+            ctx.closePath();
+            ctx.clip();
+
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.32)';
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.8;
+
+            for (let k = -nP; k <= nP; k++) {
+                const xc = k * px + shiftX;
+                const xL_flank = xc - sa1 / 2.0;
+                const xR_flank = xc + sa1 / 2.0;
+                const xL_root = xc - sx / 2.0 - hf1 * tanAx;
+                const xR_root = xc + sx / 2.0 + hf1 * tanAx;
+
+                ctx.beginPath();
+                if (signY > 0) {
+                    ctx.moveTo(toX(xL_root), toY(df1 / 2.0));
+                    ctx.lineTo(toX(xL_flank), toY(da1 / 2.0));
+                    ctx.lineTo(toX(xR_flank), toY(da1 / 2.0));
+                    ctx.lineTo(toX(xR_root), toY(df1 / 2.0));
+                } else {
+                    ctx.moveTo(toX(xL_root), toY(-df1 / 2.0));
+                    ctx.lineTo(toX(xL_flank), toY(-da1 / 2.0));
+                    ctx.lineTo(toX(xR_flank), toY(-da1 / 2.0));
+                    ctx.lineTo(toX(xR_root), toY(-df1 / 2.0));
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            // Cross-hatching for teeth
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.25)';
+            ctx.lineWidth = 1.0;
+            const hStep = 10 * Math.max(0.6, this.zoom);
+            for (let d = -W - H; d <= W + H; d += hStep) {
+                ctx.beginPath();
+                ctx.moveTo(d, 0);
+                ctx.lineTo(d + H, H);
+                ctx.stroke();
+            }
+            ctx.restore();
+        };
+
+        // Draw upper teeth (shiftX = 0)
+        drawRackHalf(1, 0);
+        // Draw lower teeth (shiftX = px/2 for odd z1)
+        const botShift = (g.z1 % 2 === 1) ? px / 2.0 : 0.0;
+        drawRackHalf(-1, botShift);
+
+        // 4. Reference lines: Pitch lines (d1/2), Tip lines (da1/2), Root lines (df1/2)
+        ctx.save();
+        ctx.lineWidth = 1.1;
+
+        // Pitch lines
+        ctx.strokeStyle = '#fbbf24';
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(toX(-L / 2.0), toY(d1 / 2.0));
+        ctx.lineTo(toX(L / 2.0), toY(d1 / 2.0));
+        ctx.moveTo(toX(-L / 2.0), toY(-d1 / 2.0));
+        ctx.lineTo(toX(L / 2.0), toY(-d1 / 2.0));
+        ctx.stroke();
+
+        // Tip lines
+        ctx.strokeStyle = '#38bdf8';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(toX(-L / 2.0 + ch), toY(da1 / 2.0));
+        ctx.lineTo(toX(L / 2.0 - ch), toY(da1 / 2.0));
+        ctx.moveTo(toX(-L / 2.0 + ch), toY(-da1 / 2.0));
+        ctx.lineTo(toX(L / 2.0 - ch), toY(-da1 / 2.0));
+        ctx.stroke();
+
+        // Root lines
+        ctx.strokeStyle = '#94a3b8';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(toX(-L / 2.0), toY(df1 / 2.0));
+        ctx.lineTo(toX(L / 2.0), toY(df1 / 2.0));
+        ctx.moveTo(toX(-L / 2.0), toY(-df1 / 2.0));
+        ctx.lineTo(toX(L / 2.0), toY(-df1 / 2.0));
+        ctx.stroke();
+        ctx.restore();
+
+        // 5. Dimension Callouts
+        if (this.showDims) {
+            this.drawDimLine(ctx, toX(-L / 2.0), toY(da1 / 2.0 + 8.0), toX(L / 2.0), toY(da1 / 2.0 + 8.0), `L = ${L.toFixed(2)} mm`, -10);
+            this.drawDimLine(ctx, toX(-L / 2.0 - th - 12.0), toY(-da1 / 2.0), toX(-L / 2.0 - th - 12.0), toY(da1 / 2.0), `da1 = ${da1.toFixed(2)}`, -14);
+            this.drawDimLine(ctx, toX(L / 2.0 + th + 12.0), toY(-d1 / 2.0), toX(L / 2.0 + th + 12.0), toY(d1 / 2.0), `d1 = ${d1.toFixed(2)}`, 14);
+            this.drawDimLine(ctx, toX(L / 2.0 + th + 24.0), toY(-df1 / 2.0), toX(L / 2.0 + th + 24.0), toY(df1 / 2.0), `df1 = ${df1.toFixed(2)}`, 14);
+            this.drawDimLine(ctx, toX(0), toY(da1 / 2.0 + 3.0), toX(px), toY(da1 / 2.0 + 3.0), `px = ${px.toFixed(3)} mm`, -8);
+            this.drawDimLine(ctx, toX(-sx / 2.0), toY(d1 / 2.0), toX(sx / 2.0), toY(d1 / 2.0), `sx = ${sx.toFixed(3)}`, -10);
+
+            // Pressure angle callout arc on tooth +1
+            ctx.save();
+            ctx.strokeStyle = '#f59e0b';
+            ctx.fillStyle = '#f59e0b';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            ctx.arc(toX(px), toY(d1 / 2.0), 16 * this.zoom, -Math.PI / 2.0, -Math.PI / 2.0 + alfaxRad, false);
+            ctx.stroke();
+            ctx.font = 'bold 11px Inter, sans-serif';
+            ctx.fillText(`αx = ${alfaxDeg.toFixed(2)}°`, toX(px + 0.15 * mx), toY(d1 / 2.0 + 0.35 * ha1));
+            ctx.restore();
         }
     }
 
@@ -814,19 +1215,38 @@ class WormCanvasRenderer {
         ctx.fillStyle = 'rgba(15, 23, 42, 0.86)';
         ctx.strokeStyle = '#334155';
         ctx.lineWidth = 1;
-        ctx.fillRect(14, 14, 305, 92);
-        ctx.strokeRect(14, 14, 305, 92);
+        ctx.fillRect(14, 14, 345, 96);
+        ctx.strokeRect(14, 14, 345, 96);
 
         const typeNames = ["", "ZA (Archimedean)", "ZN (Normal Straight)", "ZI (Involute)", "ZK (Cone Milled)", "ZH (Cavex Concave)"];
         ctx.fillStyle = '#38bdf8';
         ctx.font = 'bold 12px Inter, sans-serif';
-        ctx.fillText(`TRỤC VÍT - BÁNH VÍT (${typeNames[g.toothType] || 'ZN'})`, 24, 34);
 
-        ctx.fillStyle = '#e2e8f0';
-        ctx.font = '11px Inter, sans-serif';
-        ctx.fillText(`z1 = ${g.z1} | z2 = ${g.z2} | i = ${g.i.toFixed(2)} | q = ${g.q.toFixed(3)}`, 24, 54);
-        ctx.fillText(`mn = ${g.mn.toFixed(3)} mm | mx = ${g.mx.toFixed(3)} mm | γ = ${g.gama.toFixed(3)}°`, 24, 72);
-        ctx.fillText(`a = ${g.a.toFixed(3)} mm | d1 = ${g.d1.toFixed(2)} | d2 = ${g.d2.toFixed(2)} | η = ${g.etages_pct.toFixed(2)}%`, 24, 90);
+        if (this.viewMode === 'normal_profile') {
+            ctx.fillText(`MẶT CẮT PHÁP TUYẾN BIÊN DẠNG RĂNG (N-N)`, 24, 34);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '11px Inter, sans-serif';
+            const alfan = (g.toothType === 1
+                ? Math.atan(Math.tan((g.alfax || 20) * Math.PI / 180.0) * Math.cos((g.gama || 0) * Math.PI / 180.0)) * 180 / Math.PI
+                : (g.alfa0 || 20));
+            ctx.fillText(`mn = ${g.mn.toFixed(3)} mm | αn = ${alfan.toFixed(2)}° | pn = ${(Math.PI * g.mn).toFixed(3)} mm`, 24, 54);
+            ctx.fillText(`sn = ${(Math.PI * g.mn / 2).toFixed(3)} mm | ha1 = ${((g.da1 - g.d1)/2).toFixed(3)} | hf1 = ${((g.d1 - g.df1)/2).toFixed(3)} mm`, 24, 72);
+            ctx.fillText(`ρf0 = ${(0.38 * g.mn).toFixed(3)} mm (0.38 mn) | Kiểu ren: ${typeNames[g.toothType] || 'ZN'}`, 24, 90);
+        } else if (this.viewMode === 'tangential_profile') {
+            ctx.fillText(`MẶT CẮT DỌC TRỤC / TIẾP TUYẾN TRỤC VÍT (A-A)`, 24, 34);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.fillText(`mx = ${g.mx.toFixed(3)} mm | αx = ${g.alfax.toFixed(2)}° | γ = ${g.gama.toFixed(3)}°`, 24, 54);
+            ctx.fillText(`px = ${g.px.toFixed(3)} mm | sx = ${g.sx1.toFixed(3)} mm | L = ${g.L.toFixed(2)} mm`, 24, 72);
+            ctx.fillText(`d1 = ${g.d1.toFixed(2)} mm | da1 = ${g.da1.toFixed(2)} mm | df1 = ${g.df1.toFixed(2)} mm`, 24, 90);
+        } else {
+            ctx.fillText(`TRỤC VÍT - BÁNH VÍT (${typeNames[g.toothType] || 'ZN'})`, 24, 34);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.fillText(`z1 = ${g.z1} | z2 = ${g.z2} | i = ${g.i.toFixed(2)} | q = ${g.q.toFixed(3)}`, 24, 54);
+            ctx.fillText(`mn = ${g.mn.toFixed(3)} mm | mx = ${g.mx.toFixed(3)} mm | γ = ${g.gama.toFixed(3)}°`, 24, 72);
+            ctx.fillText(`a = ${g.a.toFixed(3)} mm | d1 = ${g.d1.toFixed(2)} | d2 = ${g.d2.toFixed(2)} | η = ${g.etages_pct.toFixed(2)}%`, 24, 90);
+        }
         ctx.restore();
     }
 
@@ -939,13 +1359,216 @@ class WormCanvasRenderer {
             });
         };
 
-        if (mode === 'worm_left') {
+        if (mode === 'normal_profile') {
+            const mn = g.mn;
+            const alfanRad = (g.toothType === 1
+                ? Math.atan(Math.tan((g.alfax || 20) * Math.PI / 180.0) * Math.cos((g.gama || 0) * Math.PI / 180.0))
+                : (g.alfa0 || 20) * Math.PI / 180.0);
+            const alfanDeg = (alfanRad * 180.0) / Math.PI;
+            const pn = Math.PI * mn;
+            const sn = pn / 2.0;
+            const en = pn / 2.0;
+            const ha1 = (g.da1 - g.d1) / 2.0;
+            const hf1 = (g.d1 - g.df1) / 2.0;
+            const rhof0 = 0.38 * mn;
+            const tanA = Math.tan(alfanRad);
+            const sinA = Math.sin(alfanRad);
+            const cosA = Math.cos(alfanRad);
+            const san = Math.max(0.08 * mn, sn - 2.0 * ha1 * tanA);
+            const yStock = -hf1 - 1.5 * mn;
+
+            const xL = -2.5 * pn;
+            const xR = 2.5 * pn;
+            addLine(xL, 0, xR, 0, 'PITCH_LINE');
+            addLine(xL, ha1, xR, ha1, 'LIMIT_LINES');
+            addLine(xL, -hf1, xR, -hf1, 'LIMIT_LINES');
+            addLine(xL, yStock, xR, yStock, 'OUTLINE');
+            addLine(xL, yStock, xL, -hf1, 'OUTLINE');
+            addLine(xR, yStock, xR, -hf1, 'OUTLINE');
+
+            const teeth = [-2, -1, 0, 1, 2];
+            teeth.forEach(k => {
+                const xk = k * pn;
+                addLine(xk, yStock, xk, ha1 + mn * 0.5, 'AXIS');
+
+                const xRootL = xk - sn / 2.0 - hf1 * tanA;
+                const xRootR = xk + sn / 2.0 + hf1 * tanA;
+                const xTipL = xk - san / 2.0;
+                const xTipR = xk + san / 2.0;
+
+                const xcL = xRootL - rhof0 * ((1.0 - sinA) / cosA);
+                const xcR = xRootR + rhof0 * ((1.0 - sinA) / cosA);
+                const xtL = xRootL + rhof0 * (1.0 - sinA) * tanA;
+                const xtR = xRootR - rhof0 * (1.0 - sinA) * tanA;
+                const ytL = -hf1 + rhof0 * (1.0 - sinA);
+                const ytR = -hf1 + rhof0 * (1.0 - sinA);
+
+                // Flanks & Tip
+                addLine(xtL, ytL, xTipL, ha1, 'OUTLINE');
+                addLine(xTipL, ha1, xTipR, ha1, 'OUTLINE');
+                addLine(xTipR, ha1, xtR, ytR, 'OUTLINE');
+
+                // Fillet arcs
+                addArc(xcL, -hf1 + rhof0, rhof0, 270.0, 360.0 - alfanDeg, 'OUTLINE');
+                addArc(xcR, -hf1 + rhof0, rhof0, 180.0 + alfanDeg, 270.0, 'OUTLINE');
+
+                // Root land between teeth
+                if (k < 2) {
+                    const nextXk = (k + 1) * pn;
+                    const nextXRootL = nextXk - sn / 2.0 - hf1 * tanA;
+                    const nextXcL = nextXRootL - rhof0 * ((1.0 - sinA) / cosA);
+                    addLine(xcR, -hf1, nextXcL, -hf1, 'OUTLINE');
+                }
+            });
+
+            // Dimensions on DIMS layer
+            addLine(-pn / 2.0, ha1 + mn * 0.4, pn / 2.0, ha1 + mn * 0.4, 'DIMS');
+            addText(0, ha1 + mn * 0.45, mn * 0.28, `pn = ${pn.toFixed(4)} mm`, 'DIMS');
+
+            addLine(-sn / 2.0, 0, sn / 2.0, 0, 'DIMS');
+            addText(0, mn * 0.15, mn * 0.26, `sn = ${sn.toFixed(4)} mm`, 'DIMS');
+
+            addLine(-1.6 * pn, 0, -1.6 * pn, ha1, 'DIMS');
+            addText(-1.6 * pn - mn * 0.8, ha1 / 2.0, mn * 0.26, `ha1 = ${ha1.toFixed(3)} mm`, 'DIMS');
+
+            addLine(-1.6 * pn, 0, -1.6 * pn, -hf1, 'DIMS');
+            addText(-1.6 * pn - mn * 0.8, -hf1 / 2.0, mn * 0.26, `hf1 = ${hf1.toFixed(3)} mm`, 'DIMS');
+
+            // Manufacturing Parameter Table on MFG_TABLE layer
+            const tblX = xR + mn * 1.5;
+            let tblY = ha1 + mn * 0.8;
+            const rows = [
+                `WORM NORMAL TOOTH PROFILE (DIN 3975 / DIN 3996)`,
+                `Normal Module mn: ${mn.toFixed(4)} mm`,
+                `Normal Pressure Angle alfan: ${alfanDeg.toFixed(4)} deg`,
+                `Normal Pitch pn: ${pn.toFixed(4)} mm`,
+                `Normal Tooth Thickness sn: ${sn.toFixed(4)} mm`,
+                `Normal Space Width en: ${en.toFixed(4)} mm`,
+                `Addendum ha1: ${ha1.toFixed(3)} mm`,
+                `Dedendum hf1: ${hf1.toFixed(3)} mm`,
+                `Whole Tooth Depth h1: ${(ha1 + hf1).toFixed(3)} mm`,
+                `Root Fillet Radius rhof0: ${rhof0.toFixed(3)} mm (0.38*mn)`,
+                `Tip Land Width san: ${san.toFixed(3)} mm`,
+                `Root Land Width efn: ${(en - 2.0 * hf1 * tanA).toFixed(3)} mm`
+            ];
+            rows.forEach(r => {
+                addText(tblX, tblY, mn * 0.30, r, 'MFG_TABLE');
+                tblY -= mn * 0.58;
+            });
+        } else if (mode === 'tangential_profile') {
+            const { mx, px, alfax, gama, sx1: sx, da1, d1, df1, L, l1, l2, Shaft_ds: ds, Shaft_th: th, DXF_Beta } = g;
+            const ha1 = (da1 - d1) / 2.0;
+            const hf1 = (d1 - df1) / 2.0;
+            const alfaxRad = (alfax * Math.PI) / 180.0;
+            const tanAx = Math.tan(alfaxRad);
+            const sa1 = Math.max(0.08 * mx, sx - 2.0 * ha1 * tanAx);
+
+            // Centerline
+            addLine(-l1 - 5, 0, l2 + 5, 0, 'AXIS');
+
+            // Pitch lines
+            addLine(-L / 2.0, d1 / 2.0, L / 2.0, d1 / 2.0, 'PITCH_LINE');
+            addLine(-L / 2.0, -d1 / 2.0, L / 2.0, -d1 / 2.0, 'PITCH_LINE');
+
+            // Tip & Root lines
+            addLine(-L / 2.0, da1 / 2.0, L / 2.0, da1 / 2.0, 'LIMIT_LINES');
+            addLine(-L / 2.0, -da1 / 2.0, L / 2.0, -da1 / 2.0, 'LIMIT_LINES');
+            addLine(-L / 2.0, df1 / 2.0, L / 2.0, df1 / 2.0, 'LIMIT_LINES');
+            addLine(-L / 2.0, -df1 / 2.0, L / 2.0, -df1 / 2.0, 'LIMIT_LINES');
+
+            // Shaft shoulders and extensions
+            addLine(-l1, ds / 2.0, -L / 2.0 - th, ds / 2.0, 'OUTLINE');
+            addLine(-l1, -ds / 2.0, -L / 2.0 - th, -ds / 2.0, 'OUTLINE');
+            addLine(-l1, -ds / 2.0, -l1, ds / 2.0, 'OUTLINE');
+
+            addLine(L / 2.0 + th, ds / 2.0, l2, ds / 2.0, 'OUTLINE');
+            addLine(L / 2.0 + th, -ds / 2.0, l2, -ds / 2.0, 'OUTLINE');
+            addLine(l2, -ds / 2.0, l2, ds / 2.0, 'OUTLINE');
+
+            // Shoulders
+            addLine(-L / 2.0 - th, ds / 2.0, -L / 2.0 - th, df1 / 2.0, 'OUTLINE');
+            addLine(-L / 2.0 - th, -ds / 2.0, -L / 2.0 - th, -df1 / 2.0, 'OUTLINE');
+            addLine(-L / 2.0 - th, df1 / 2.0, -L / 2.0, df1 / 2.0, 'OUTLINE');
+            addLine(-L / 2.0 - th, -df1 / 2.0, -L / 2.0, -df1 / 2.0, 'OUTLINE');
+
+            addLine(L / 2.0, df1 / 2.0, L / 2.0 + th, df1 / 2.0, 'OUTLINE');
+            addLine(L / 2.0, -df1 / 2.0, L / 2.0 + th, -df1 / 2.0, 'OUTLINE');
+            addLine(L / 2.0 + th, ds / 2.0, L / 2.0 + th, df1 / 2.0, 'OUTLINE');
+            addLine(L / 2.0 + th, -ds / 2.0, L / 2.0 + th, -df1 / 2.0, 'OUTLINE');
+
+            // End chamfers
+            const ch = Math.tan((DXF_Beta * Math.PI) / 180.0) * ((da1 - df1) / 2.0);
+            addLine(-L / 2.0, df1 / 2.0, -L / 2.0 + ch, da1 / 2.0, 'OUTLINE');
+            addLine(L / 2.0, df1 / 2.0, L / 2.0 - ch, da1 / 2.0, 'OUTLINE');
+            addLine(-L / 2.0, -df1 / 2.0, -L / 2.0 + ch, -da1 / 2.0, 'OUTLINE');
+            addLine(L / 2.0, -df1 / 2.0, L / 2.0 - ch, -da1 / 2.0, 'OUTLINE');
+
+            // Upper & Lower teeth along [-L/2 + ch, L/2 - ch]
+            const nP = Math.ceil(L / px) + 1;
+            for (let k = -nP; k <= nP; k++) {
+                const xcTop = k * px;
+                const xL_flank = xcTop - sa1 / 2.0;
+                const xR_flank = xcTop + sa1 / 2.0;
+                const xL_root = xcTop - sx / 2.0 - hf1 * tanAx;
+                const xR_root = xcTop + sx / 2.0 + hf1 * tanAx;
+
+                if (xL_root >= -L / 2.0 && xR_root <= L / 2.0) {
+                    addLine(xL_root, df1 / 2.0, xL_flank, da1 / 2.0, 'OUTLINE');
+                    addLine(xL_flank, da1 / 2.0, xR_flank, da1 / 2.0, 'OUTLINE');
+                    addLine(xR_flank, da1 / 2.0, xR_root, df1 / 2.0, 'OUTLINE');
+                }
+
+                const xcBot = xcTop + (g.z1 % 2 === 1 ? px / 2.0 : 0.0);
+                const xL_bflank = xcBot - sa1 / 2.0;
+                const xR_bflank = xcBot + sa1 / 2.0;
+                const xL_broot = xcBot - sx / 2.0 - hf1 * tanAx;
+                const xR_broot = xcBot + sx / 2.0 + hf1 * tanAx;
+
+                if (xL_broot >= -L / 2.0 && xR_broot <= L / 2.0) {
+                    addLine(xL_broot, -df1 / 2.0, xL_bflank, -da1 / 2.0, 'OUTLINE');
+                    addLine(xL_bflank, -da1 / 2.0, xR_bflank, -da1 / 2.0, 'OUTLINE');
+                    addLine(xR_bflank, -da1 / 2.0, xR_broot, -df1 / 2.0, 'OUTLINE');
+                }
+            }
+
+            // Dimensions on DIMS layer
+            addLine(-L / 2.0, da1 / 2.0 + 8, L / 2.0, da1 / 2.0 + 8, 'DIMS');
+            addText(0, da1 / 2.0 + 10, 3.5, `L = ${L.toFixed(3)} mm`, 'DIMS');
+
+            addLine(-L / 2.0 - 15, -da1 / 2.0, -L / 2.0 - 15, da1 / 2.0, 'DIMS');
+            addText(-L / 2.0 - 25, 0, 3.5, `da1 = ${da1.toFixed(3)} mm`, 'DIMS');
+
+            addLine(-L / 2.0 - 8, -d1 / 2.0, -L / 2.0 - 8, d1 / 2.0, 'DIMS');
+            addText(-L / 2.0 - 12, 0, 3.0, `d1 = ${d1.toFixed(3)} mm`, 'DIMS');
+
+            // Manufacturing Parameter Table on MFG_TABLE layer
+            const tblX = l2 + 15;
+            let tblY = da1 / 2.0 + 8;
+            const rows = [
+                `WORM AXIAL / TANGENTIAL TOOTH PROFILE (DIN 3975)`,
+                `Axial Module mx: ${mx.toFixed(4)} mm`,
+                `Axial Pressure Angle alfax: ${alfax.toFixed(4)} deg`,
+                `Lead Angle gama: ${gama.toFixed(4)} deg`,
+                `Axial Pitch px: ${px.toFixed(4)} mm`,
+                `Axial Tooth Thickness sx: ${sx.toFixed(4)} mm`,
+                `Pitch Diameter d1: ${d1.toFixed(3)} mm`,
+                `Tip Diameter da1: ${da1.toFixed(3)} mm`,
+                `Root Diameter df1: ${df1.toFixed(3)} mm`,
+                `Worm Thread Length L: ${L.toFixed(3)} mm`,
+                `Shaft Shoulder Diameter ds: ${ds.toFixed(2)} mm`,
+                `End Chamfer Angle: ${DXF_Beta} deg`
+            ];
+            rows.forEach(r => {
+                addText(tblX, tblY, 3.2, r, 'MFG_TABLE');
+                tblY -= 6.5;
+            });
+        } else if (mode === 'worm_left') {
             dxfWheel(0, 0, g.da1, g.d1, g.df1, 0, true);
-        } else if (mode === 'worm_front') {
+        } else if (mode === 'worm_front' || mode === 'worm') {
             dxfWorm(0, 0);
         } else if (mode === 'gear_front') {
             dxfWheel(0, 0, g.de2, g.d2, g.da2, g.df2, false);
-        } else if (mode === 'gear_left') {
+        } else if (mode === 'gear_left' || mode === 'wheel') {
             dxfWWheel(0, 0);
         } else if (mode === 'assembly_left') {
             dxfWheel(0, -g.a, g.da1, g.d1, g.df1, 0, true);

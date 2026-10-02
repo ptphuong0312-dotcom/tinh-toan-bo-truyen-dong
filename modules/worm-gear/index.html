@@ -1613,6 +1613,10 @@
                         <button type="button" class="btn btn-primary" id="btnViewAssembly">📐 Bản Vẽ Lắp 2 Hình Chiếu</button>
                         <button type="button" class="btn btn-secondary" id="btnViewWorm">🔩 Chi Tiết Trục Vít</button>
                         <button type="button" class="btn btn-secondary" id="btnViewWheel">⚙️ Chi Tiết Bánh Vít (Mặt Cắt Họng)</button>
+                        <button type="button" class="btn btn-secondary" id="btnViewNormalProfile" title="Mặt cắt biên dạng răng theo phương pháp tuyến N-N (DIN 3975)">📐 Mặt Cắt Pháp Tuyến (N-N)</button>
+                        <button type="button" class="btn btn-secondary" id="btnViewTangentialProfile" title="Mặt cắt biên dạng răng theo phương tiếp tuyến / dọc trục A-A (DIN 3975)">📏 Mặt Cắt Tiếp Tuyến (A-A)</button>
+                        <button type="button" class="btn btn-secondary" id="btnToggleWorm2D" title="Ẩn/Hiện Trục Vít trên bản vẽ 2D">🔩 Trục Vít: Hiện</button>
+                        <button type="button" class="btn btn-secondary" id="btnToggleWheel2D" title="Ẩn/Hiện Bánh Vít trên bản vẽ 2D">⚙️ Bánh Vít: Hiện</button>
                         <button type="button" class="btn btn-secondary" id="btnPlayAnim">▶ Mô Phỏng Ăn Khớp</button>
                         <label style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; background: rgba(15, 23, 42, 0.6); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color);">
                             Tốc độ:
@@ -1621,7 +1625,32 @@
                         </label>
                         <button type="button" class="btn btn-secondary" id="btnToggleDims">📏 Kích Thước</button>
                         <button type="button" class="btn btn-secondary" id="btnResetView">🔍 Căn Giữa</button>
-                        <button type="button" class="btn btn-primary" id="btnExportDXF" style="background-color: #107c41; border-color: #107c41;">💾 Xuất Bản Vẽ 2D CAD (.DXF)</button>
+
+                        <!-- 2D DXF Export Dropdown -->
+                        <div class="dropdown" style="position: relative; display: inline-block;">
+                            <button type="button" class="btn" id="btnExport2DMenu" style="background-color: #107c41; border-color: #107c41; color: #fff; font-weight: 700; cursor: pointer;">
+                                💾 Xuất File 2D CAD (.DXF) ▾
+                            </button>
+                            <div id="export2DDropdown" style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); min-width: 320px; padding: 0.5rem 0; margin-top: 4px;">
+                                <div style="padding: 4px 12px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
+                                    Xuất Theo Hình Chiếu Đang Chọn
+                                </div>
+                                <a href="javascript:void(0)" id="expDxfCurrent" style="display: block; padding: 6px 14px; color: #10b981; font-weight: 700; font-size: 0.85rem; text-decoration: none;">💾 Xuất Hình Đang Xem Hiện Tại (.dxf)</a>
+                                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                                <div style="padding: 4px 12px; font-size: 0.75rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;">
+                                    Biên Dạng Răng Pháp Tuyến & Tiếp Tuyến
+                                </div>
+                                <a href="javascript:void(0)" id="expDxfNormalProfile" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">📐 Xuất Biên Dạng Pháp Tuyến N-N (.dxf)</a>
+                                <a href="javascript:void(0)" id="expDxfTangentialProfile" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">📏 Xuất Biên Dạng Tiếp Tuyến / Dọc Trục A-A (.dxf)</a>
+                                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                                <div style="padding: 4px 12px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
+                                    Bản Vẽ Chi Tiết & Lắp Ráp
+                                </div>
+                                <a href="javascript:void(0)" id="expDxfAssembly" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🔗 Bản Vẽ Lắp Đầy Đủ 2 Hình + Bảng (.dxf)</a>
+                                <a href="javascript:void(0)" id="expDxfWormFront" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🔩 Chi Tiết Trục Vít (Đứng) (.dxf)</a>
+                                <a href="javascript:void(0)" id="expDxfWheelThroat" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">⚙️ Chi Tiết Bánh Vít (Cắt Họng) (.dxf)</a>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- 3D Action Toolbar -->
@@ -1639,6 +1668,10 @@
                                 <option value="rear">🔍 Soi Mặt Sau Sườn Răng (Vết In Tiếp Xúc)</option>
                             </select>
                         </div>
+
+                        <!-- 3D Visibility Toggles -->
+                        <button type="button" class="btn btn-secondary" id="btnToggleWorm" title="Ẩn/Hiện Trục Vít 1 trong không gian 3D">🔩 Trục Vít: Hiện</button>
+                        <button type="button" class="btn btn-secondary" id="btnToggleWheel" title="Ẩn/Hiện Bánh Vít 2 trong không gian 3D">⚙️ Bánh Vít: Hiện</button>
 
                         <!-- Speed & Play -->
                         <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.25); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border-color);">

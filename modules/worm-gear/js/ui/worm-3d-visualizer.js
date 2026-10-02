@@ -45,6 +45,8 @@ class Worm3DVisualizer {
 
         this.wireframeMode = false;
         this.flankOnlyMode = false;
+        this.wormVisible = true;
+        this.wheelVisible = true;
         this.contactMode = 'theory'; // 'theory' (Mặc định: Đường tiếp xúc liên hợp) | 'crowning' (Vết elip có độ vồng)
         this.meshDensityLevel = 8; // Default Level 8 (Ultra Precision CAD)
 
@@ -194,9 +196,11 @@ class Worm3DVisualizer {
         // Position Worm 1 at (0, -a, 0) and Worm Wheel 2 at (0, 0, 0)
         if (this.wormGroup) {
             this.wormGroup.position.set(0, -this.centerDistA, 0);
+            this.wormGroup.visible = this.wormVisible;
         }
         if (this.wheelGroup) {
             this.wheelGroup.position.set(0, 0, 0);
+            this.wheelGroup.visible = this.wheelVisible;
         }
 
         this.initialWheelAngle = 0.0;
@@ -400,6 +404,30 @@ class Worm3DVisualizer {
         if (this.wormSurfMesh) this.wormSurfMesh.visible = this.flankOnlyMode;
         if (this.wheelSurfMesh) this.wheelSurfMesh.visible = this.flankOnlyMode;
         return this.flankOnlyMode;
+    }
+
+    setWormVisible(visible) {
+        this.wormVisible = !!visible;
+        if (this.wormGroup) {
+            this.wormGroup.visible = this.wormVisible;
+        }
+        return this.wormVisible;
+    }
+
+    setWheelVisible(visible) {
+        this.wheelVisible = !!visible;
+        if (this.wheelGroup) {
+            this.wheelGroup.visible = this.wheelVisible;
+        }
+        return this.wheelVisible;
+    }
+
+    toggleWormVisible() {
+        return this.setWormVisible(!this.wormVisible);
+    }
+
+    toggleWheelVisible() {
+        return this.setWheelVisible(!this.wheelVisible);
     }
 
     setMeshDensityLevel(level) {

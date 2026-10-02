@@ -534,8 +534,9 @@ class WormUIController {
         }
 
         // 2. 2D Canvas Controls
+        const viewBtnIds = ['btnViewAssembly', 'btnViewWorm', 'btnViewWheel', 'btnViewNormalProfile', 'btnViewTangentialProfile'];
         const setViewBtnActive = (activeBtnId, mode) => {
-            ['btnViewAssembly', 'btnViewWorm', 'btnViewWheel'].forEach(id => {
+            viewBtnIds.forEach(id => {
                 const b = document.getElementById(id);
                 if (b) {
                     b.classList.toggle('btn-primary', id === activeBtnId);
@@ -554,6 +555,30 @@ class WormUIController {
 
         const btnWheel = document.getElementById('btnViewWheel');
         if (btnWheel) btnWheel.addEventListener('click', () => setViewBtnActive('btnViewWheel', 'wheel'));
+
+        const btnNormal = document.getElementById('btnViewNormalProfile');
+        if (btnNormal) btnNormal.addEventListener('click', () => setViewBtnActive('btnViewNormalProfile', 'normal_profile'));
+
+        const btnTangential = document.getElementById('btnViewTangentialProfile');
+        if (btnTangential) btnTangential.addEventListener('click', () => setViewBtnActive('btnViewTangentialProfile', 'tangential_profile'));
+
+        const btnToggleWorm2D = document.getElementById('btnToggleWorm2D');
+        if (btnToggleWorm2D) {
+            btnToggleWorm2D.addEventListener('click', () => {
+                const vis = this.canvasRenderer.toggleWormVisible();
+                btnToggleWorm2D.textContent = vis ? '🔩 Trục Vít: Hiện' : '🔩 Trục Vít: Ẩn';
+                btnToggleWorm2D.style.opacity = vis ? '1' : '0.6';
+            });
+        }
+
+        const btnToggleWheel2D = document.getElementById('btnToggleWheel2D');
+        if (btnToggleWheel2D) {
+            btnToggleWheel2D.addEventListener('click', () => {
+                const vis = this.canvasRenderer.toggleWheelVisible();
+                btnToggleWheel2D.textContent = vis ? '⚙️ Bánh Vít: Hiện' : '⚙️ Bánh Vít: Ẩn';
+                btnToggleWheel2D.style.opacity = vis ? '1' : '0.6';
+            });
+        }
 
         const btnPlay = document.getElementById('btnPlayAnim');
         if (btnPlay) {
@@ -588,6 +613,38 @@ class WormUIController {
             });
         }
 
+        // 2D DXF Export Dropdown & Items
+        const btnExport2DMenu = document.getElementById('btnExport2DMenu');
+        const export2DDropdown = document.getElementById('export2DDropdown');
+        if (btnExport2DMenu && export2DDropdown) {
+            btnExport2DMenu.addEventListener('click', (e) => {
+                e.stopPropagation();
+                export2DDropdown.style.display = (export2DDropdown.style.display === 'block') ? 'none' : 'block';
+            });
+            document.addEventListener('click', () => {
+                export2DDropdown.style.display = 'none';
+            });
+        }
+
+        const bind2DExp = (id, mode) => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (export2DDropdown) export2DDropdown.style.display = 'none';
+                    const targetMode = mode === 'current' ? this.canvasRenderer.viewMode : mode;
+                    this.canvasRenderer.exportDXF(targetMode);
+                });
+            }
+        };
+
+        bind2DExp('expDxfCurrent', 'current');
+        bind2DExp('expDxfNormalProfile', 'normal_profile');
+        bind2DExp('expDxfTangentialProfile', 'tangential_profile');
+        bind2DExp('expDxfAssembly', 'assembly');
+        bind2DExp('expDxfWormFront', 'worm_front');
+        bind2DExp('expDxfWheelThroat', 'gear_left');
+
         const btnExportDXF = document.getElementById('btnExportDXF');
         if (btnExportDXF) {
             btnExportDXF.addEventListener('click', () => {
@@ -607,6 +664,25 @@ class WormUIController {
             btnReset3DView.addEventListener('click', () => {
                 if (sel3DViewPreset) sel3DViewPreset.value = 'iso';
                 this.visualizer3D.setViewPreset('iso');
+            });
+        }
+
+        // 3D Worm and Wheel Visibility Toggles
+        const btnToggleWorm = document.getElementById('btnToggleWorm');
+        if (btnToggleWorm && this.visualizer3D) {
+            btnToggleWorm.addEventListener('click', () => {
+                const vis = this.visualizer3D.toggleWormVisible();
+                btnToggleWorm.textContent = vis ? '🔩 Trục Vít: Hiện' : '🔩 Trục Vít: Ẩn';
+                btnToggleWorm.style.opacity = vis ? '1' : '0.6';
+            });
+        }
+
+        const btnToggleWheel = document.getElementById('btnToggleWheel');
+        if (btnToggleWheel && this.visualizer3D) {
+            btnToggleWheel.addEventListener('click', () => {
+                const vis = this.visualizer3D.toggleWheelVisible();
+                btnToggleWheel.textContent = vis ? '⚙️ Bánh Vít: Hiện' : '⚙️ Bánh Vít: Ẩn';
+                btnToggleWheel.style.opacity = vis ? '1' : '0.6';
             });
         }
 
@@ -1250,4 +1326,5 @@ class WormUIController {
 
 document.addEventListener('DOMContentLoaded', () => {
     window.WormUI = new WormUIController();
+    window.wormUI = window.WormUI;
 });

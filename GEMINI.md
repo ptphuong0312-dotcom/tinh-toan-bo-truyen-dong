@@ -1411,3 +1411,54 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      Tọa độ hình học $(x, y, z)$ của từng đỉnh được bảo toàn chính xác đến $0.0001\text{ mm}$, khe hở tiếp xúc $0.000\text{ mm}$, độ ăn khớp liên hợp và cơ chế in màu vết tiếp xúc (Back-face imprint) không bị thay đổi.
    - **Định dạng xuất STEP AP214 / STL độ nét cao cho Mastercam & SolidWorks**:
      Hợp nhất các mặt đa giác (Polygons / B-Rep faces) trong STEP file với mật độ siêu mịn (Cấp 8-10: 280-380 lát cắt, 28-36 điểm trên sườn), loại bỏ hoàn toàn hiện tượng rung dao hay gằn dao khi lập trình gia công CAM 4-trục / 5-trục.
+
+---
+
+### Quy Tắc 61: Quy Chuẩn Điều Khiển Ẩn/Hiện Độc Lập Trục Vít & Bánh Vít (2D & 3D) Kèm 2 Hình Chiếu Biên Dạng Răng 2D Chuẩn Pháp Tuyến & Tiếp Tuyến (DIN 3975) & Xuất File CAD DXF R12 Độc Lập
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"Tôi muốn có thêm chức năng ẩn hiện trục vít/ bánh vít. Bên phần 2D ngoài các hình hiện tại tôi muốn bổ sung thêm 2 hình : 1 hình chiếu pháp tuyến của trục vít và 1 hình tiếp tuyến trục vít để thể hiện biên dạng răng 2D của trục vít theo phương pháp tuyến và tiếp tuyến của răng trục vít. Từ đó cũng thêm chức năng xuất file dxf cho 2 hình chiếu này"*.
+2. **Quy Chuẩn Điều Khiển Ẩn/Hiện Độc Lập (Independent Component Visibility Protocol)**:
+   - **Trong 3D WebGL**:
+     * Cung cấp 2 nút toggle `#btnToggleWorm` và `#btnToggleWheel` trên `#toolbar3D`.
+     * Cho phép kỹ sư cơ khí ẩn/hiện độc lập Trục Vít 1 (`this.wormGroup.visible`) hoặc Bánh Vít 2 (`this.wheelGroup.visible`).
+     * Phục vụ đắc lực việc kiểm tra bề mặt, soi chân răng, kiểm tra vết tiếp xúc và quan sát hình học chi tiết mà không bị chi tiết còn lại che khuất tầm nhìn.
+     * Cập nhật trạng thái nhãn thời gian thực: `[🔩 Trục Vít: Hiện]` / `[🔩 Trục Vít: Ẩn]`, `[⚙️ Bánh Vít: Hiện]` / `[⚙️ Bánh Vít: Ẩn]`.
+   - **Trong 2D CAD Canvas**:
+     * Cung cấp 2 nút toggle `#btnToggleWorm2D` và `#btnToggleWheel2D` trên `#toolbar2D`.
+     * Cho phép bật/tắt hiển thị Trục Vít hoặc Bánh Vít ngay trên bản vẽ lắp ráp 2 hình chiếu (`assembly`), giúp bóc tách chi tiết phục vụ gia công xưởng.
+3. **Quy Chuẩn Hình Chiếu / Mặt Cắt Biên Dạng Răng Pháp Tuyến N-N (Normal Profile Section - DIN 3975)**:
+   - Thể hiện thanh răng sinh cơ bản theo phương vuông góc với đường xoắn vít (mặt phẳng $N-N$ nghiêng góc $\gamma$):
+     * Mô đun pháp: $m_n$.
+     * Góc ăn khớp pháp: $lpha_n$ (với ZN: $lpha_n = lpha_0 = 20^\circ$; với ZA: $	anlpha_n = 	anlpha_x \cos\gamma$).
+     * Bước răng pháp: $p_n = \pi \cdot m_n$.
+     * Chiều dày răng pháp: $s_n = p_n / 2$.
+     * Chiều rộng rãnh răng pháp: $e_n = p_n / 2$.
+     * Chiều cao đỉnh răng: $h_{a1} = (d_{a1} - d_1) / 2$.
+     * Chiều cao chân răng: $h_{f1} = (d_1 - d_{f1}) / 2$.
+     * Bán kính lượn chân răng chuẩn: $ho_{f0} = 0.38 \cdot m_n$.
+     * Đáy rãnh có cung lượn tròn tiếp tuyến giải tích $C^1$ vẽ qua `arcTo` nối liền sườn răng thẳng nghiêng $lpha_n$ với đáy rãnh $y = -h_{f1}$.
+     * Gạch mặt cắt kim loại $45^\circ$, đường tâm răng, đường chia $y = 0$, đường đỉnh $+h_{a1}$, đường chân $-h_{f1}$.
+     * Đầy đủ đường gióng kích thước chuẩn cơ khí: $p_n, s_n, e_n, h_{a1}, h_{f1}, lpha_n, ho_{f0}$.
+4. **Quy Chuẩn Hình Chiếu / Mặt Cắt Biên Dạng Răng Tiếp Tuyến - Dọc Trục A-A (Tangential / Axial Profile Section - DIN 3975)**:
+   - Thể hiện mặt cắt dọc trục chứa đường tâm trục vít ($y = 0$):
+     * Mô đun ngang/dọc trục: $m_x = m_n / \cos\gamma$.
+     * Bước dọc trục: $p_x = \pi \cdot m_x$.
+     * Chiều dày răng dọc trục: $s_x = p_x / 2$.
+     * Góc ăn khớp dọc trục: $	anlpha_x = 	anlpha_n / \cos\gamma$.
+     * Đường kính vòng chia: $d_1 = q \cdot m_x$.
+     * Đường kính vòng đỉnh: $d_{a1} = d_1 + 2 h_{a1}$.
+     * Đường kính vòng chân: $d_{f1} = d_1 - 2 h_{f1}$.
+     * Bán kính lượn ngang: $ho_{f0x} = ho_{f0} / \cos\gamma$.
+     * Vát mép đầu ren góc $eta$ (chamfer angle).
+     * Bổ dọc đối xứng trục gồm ngõng trục, vai trục ($d_s, t$), thân trục đường kính $d_{f1}$, và các răng hình thang trên/dưới lệch bước $p_x/2$ (nếu $z_1$ lẻ).
+     * Gạch mặt cắt $45^\circ$, đường tâm trục $y = 0$, đường chia $\pm d_1/2$, đường đỉnh $\pm d_{a1}/2$, đường chân $\pm d_{f1}/2$.
+     * Đầy đủ đường gióng kích thước chuẩn: $L, d_{a1}, d_1, d_{f1}, p_x, s_x, lpha_x, \gamma$.
+5. **Quy Chuẩn Menu Dropdown Xuất Bản Vẽ CAD DXF Release 12 (AC1009)**:
+   - Tích hợp menu thả xuống `[💾 Xuất File 2D CAD (.DXF) ▾]` trên thanh công cụ 2D với 6 tùy chọn trực quan:
+     * `expDxfCurrent`: Xuất hình đang xem hiện tại theo đúng chế độ hiển thị.
+     * `expDxfNormalProfile`: Xuất biên dạng pháp tuyến N-N kèm bảng thông số chế tạo DIN 3975.
+     * `expDxfTangentialProfile`: Xuất biên dạng tiếp tuyến A-A kèm kích thước đường kính $d_1, d_{a1}, d_{f1}, L$ và bảng thông số.
+     * `expDxfAssembly`: Xuất bản vẽ lắp ráp tổng thể 2 hình chiếu + bảng BOM.
+     * `expDxfWormFront`: Xuất chi tiết trục vít hình chiếu đứng.
+     * `expDxfWheelThroat`: Xuất chi tiết bánh vít mặt cắt họng lõm.
+   - Cấu trúc file DXF R12 chuẩn hóa với các layer chuyên dụng: `OUTLINE`, `AXIS`, `PITCH_LINE`, `LIMIT_LINES`, `DIMS`, `MFG_TABLE`. Tương thích 100% với AutoCAD, SolidWorks, Inventor, Mastercam, LibreCAD.

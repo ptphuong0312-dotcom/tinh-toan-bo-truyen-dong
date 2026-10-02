@@ -2551,3 +2551,53 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
      - Tại giao tuyến giữa sườn ren và đỉnh ren, các đỉnh thuộc sườn mang pháp tuyến sườn, các đỉnh thuộc đỉnh ren mang pháp tuyến trụ. Cạnh đỉnh ren giữ nguyên độ sắc nét cơ khí chuẩn xác, không bị tròn vo như nhựa mềm dẻo.
   5. *Bảo Toàn Tuyệt Đối Hình Học Ăn Khớp ($0.000\text{ mm}$ Penetration)*:
      - Tọa độ đỉnh $(x, y, z)$ không đổi, bảo toàn 100% ăn khớp liên hợp và cơ chế in màu vết tiếp xúc (Back-face contact imprint).
+
+---
+
+## 36. ĐỢT TỐI ƯU HÓA 36: TÍCH HỢP TÍNH NĂNG ẨN/HIỆN ĐỘC LẬP TRỤC VÍT & BÁNH VÍT (2D & 3D), BỔ SUNG 2 HÌNH CHIẾU BIÊN DẠNG RĂNG PHÁP TUYẾN (N-N) & TIẾP TUYẾN / DỌC TRỤC (A-A) KÈM XUẤT CAD DXF RELEASE 12
+
+* **Bối cảnh & Lệnh trực tiếp từ SirPhuong**:
+  - *"Tôi muốn có thêm chức năng ẩn hiện trục vít/ bánh vít. Bên phần 2D ngoài các hình hiện tại tôi muốn bổ sung thêm 2 hình : 1 hình chiếu pháp tuyến của trục vít và 1 hình tiếp tuyến trục vít để thể hiện biên dạng răng 2D của trục vít theo phương pháp tuyến và tiếp tuyến của răng trục vít. Từ đó cũng thêm chức năng xuất file dxf cho 2 hình chiếu này"*.
+
+* **Giải pháp kỹ thuật toàn diện**:
+  1. *Tính năng điều khiển Ẩn/Hiện độc lập (Independent Visibility Toggles) trên cả 2D & 3D*:
+     - **3D WebGL**:
+       * Bổ sung thuộc tính `wormVisible` và `wheelVisible` trong `Worm3DVisualizer`.
+       * Bổ sung các phương thức `setWormVisible()`, `setWheelVisible()`, `toggleWormVisible()`, `toggleWheelVisible()`.
+       * Tích hợp 2 nút bấm toggle trên thanh công cụ 3D (`#toolbar3D`): `[🔩 Trục Vít: Hiện]` (`#btnToggleWorm`) và `[⚙️ Bánh Vít: Hiện]` (`#btnToggleWheel`).
+       * Khi ẩn một chi tiết, nút bấm chuyển trạng thái trực quan sang `[...: Ẩn]` với độ mờ 60%, giúp người dùng soi chi tiết còn lại (bề mặt ren, chân răng, rãnh họng) mà không bị che khuất.
+     - **2D CAD Canvas**:
+       * Bổ sung thuộc tính `showWorm` và `showWheel` trong `WormCanvasRenderer`.
+       * Bổ sung 2 nút toggle trên thanh công cụ 2D (`#toolbar2D`): `[🔩 Trục Vít: Hiện]` (`#btnToggleWorm2D`) và `[⚙️ Bánh Vít: Hiện]` (`#btnToggleWheel2D`).
+       * Cho phép bóc tách độc lập Trục Vít hoặc Bánh Vít ngay trên bản vẽ lắp ráp 2 hình chiếu (`assembly`).
+  2. *Hình chiếu / Mặt cắt biên dạng răng theo phương pháp tuyến N-N (`normal_profile` - DIN 3975)*:
+     - Thể hiện thanh răng cơ bản trên mặt cắt vuông góc đường xoắn vít (nghiêng góc nâng $\gamma$):
+       * $m_n = 4.233	ext{ mm}$, $lpha_n = 20.00^\circ$, $p_n = \pi \cdot m_n = 13.299	ext{ mm}$.
+       * $s_n = e_n = p_n / 2 = 6.650	ext{ mm}$, $h_{a1} = 4.233	ext{ mm}$, $h_{f1} = 5.292	ext{ mm}$.
+       * Bán kính lượn chân răng chuẩn DIN 3975: $ho_{f0} = 0.38 \cdot m_n = 1.609	ext{ mm}$.
+       * Cung lượn chân răng tiếp tuyến giải tích $C^1$ vẽ qua `arcTo` nối liền sườn răng thẳng với đáy rãnh $y = -h_{f1}$.
+       * Gạch mặt cắt $45^\circ$, đường chia vàng hổ phách $y = 0$, đường đỉnh cyan $y = +h_{a1}$, đường chân xám $y = -h_{f1}$.
+       * Đầy đủ đường gióng kích thước chuẩn: $p_n, s_n, e_n, h_{a1}, h_{f1}, lpha_n, ho_{f0}$.
+  3. *Hình chiếu / Mặt cắt biên dạng răng theo phương tiếp tuyến - dọc trục A-A (`tangential_profile` - DIN 3975)*:
+     - Thể hiện mặt cắt dọc trục chứa đường tâm trục vít ($y = 0$):
+       * $m_x = m_n / \cos\gamma = 4.263	ext{ mm}$, $lpha_x = 20.13^\circ$, $\gamma = 6.710^\circ$, $p_x = 13.391	ext{ mm}$.
+       * $d_1 = 36.23	ext{ mm}$, $d_{a1} = 44.70	ext{ mm}$, $d_{f1} = 25.65	ext{ mm}$, $L = 56.73	ext{ mm}$.
+       * Đường tâm trục $y = 0$ (gạch-chấm đỏ), thân trục, ngõng trục, vai trục ($d_s, t$), vát mép đầu ren $eta$.
+       * Các răng hình thang trên và dưới lệch bước $p_x/2$ (khi $z_1$ lẻ), gạch mặt cắt kim loại $45^\circ$.
+       * Đầy đủ đường gióng kích thước: $L, d_{a1}, d_1, d_{f1}, p_x, s_x, lpha_x$.
+  4. *Bộ xuất bản vẽ CAD DXF Release 12 (AC1009) độc lập 100% offline*:
+     - Tích hợp menu thả xuống `[💾 Xuất File 2D CAD (.DXF) ▾]` trên thanh công cụ 2D:
+       * `expDxfCurrent`: Xuất theo hình đang chọn trên Canvas.
+       * `expDxfNormalProfile`: Xuất biên dạng răng pháp tuyến N-N (DIN 3975) kèm bảng thông số chế tạo.
+       * `expDxfTangentialProfile`: Xuất biên dạng răng tiếp tuyến / dọc trục A-A kèm bảng thông số chế tạo.
+       * `expDxfAssembly`, `expDxfWormFront`, `expDxfWheelThroat`: Xuất các hình chiếu chi tiết và bản vẽ lắp.
+     - Phân tầng layer chuẩn kỹ thuật: `OUTLINE`, `AXIS`, `PITCH_LINE`, `LIMIT_LINES`, `DIMS`, `MFG_TABLE`. Tương thích tuyệt đối với AutoCAD, SolidWorks, Mastercam, Inventor.
+
+* **Kết quả đo kiểm & Thẩm tra tự động (Playwright Automated Test Suite)**:
+  - Tự động chạy script `modules/worm-gear/tests/test_worm_features.py`:
+    * Thẩm tra 2D Normal Profile view: Khởi tạo và render thành công, HUD và kích thước hiển thị sắc nét.
+    * Thẩm tra 2D Tangential Profile view: Khởi tạo và render thành công, các đường gióng $L, d_{a1}, d_1, d_{f1}, p_x, s_x, lpha_x$ bố trí khoa học, không đè chữ.
+    * Thẩm tra 2D Toggles: Ẩn/hiện độc lập Trục Vít / Bánh Vít trong bản vẽ lắp đạt chuẩn.
+    * Thẩm tra DXF Export: File DXF tạo thành công với dung lượng đầy đủ (`normal_profile`: 5,229 bytes, `tangential_profile`: 5,635 bytes), cấu trúc AC1009 hợp lệ.
+    * Thẩm tra 3D WebGL Toggles: Ẩn/hiện Trục Vít 1 và Bánh Vít 2 thời gian thực không lỗi console.
+    * 0 lỗi JavaScript/GLSL Console.

@@ -1473,3 +1473,27 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
       * Giao tuyến giữa sườn răng và đỉnh ren giữ nguyên cạnh cơ khí sắc nét (feature edge) vì đỉnh sườn mang pháp tuyến sườn, đỉnh đỉnh ren mang pháp tuyến trụ.
     - **Bảo toàn tuyệt đối hình học ăn khớp**:
       * Tọa độ đỉnh $(x, y, z)$ không đổi, bảo toàn $0.000\text{ mm}$ khe hở ăn khớp và cơ chế in màu vết tiếp xúc (Back-face contact imprint).
+
+---
+
+17. **ẨN/HIỆN ĐỘC LẬP TRỤC VÍT & BÁNH VÍT (2D & 3D), HÌNH CHIẾU BIÊN DẠNG RĂNG PHÁP TUYẾN (N-N) & TIẾP TUYẾN / DỌC TRỤC (A-A) KÈM XUẤT DXF R12 ĐỘC LẬP**:
+    - **Điều khiển ẩn/hiện độc lập (Independent Component Visibility)**:
+      * Trong 3D: Nút `[🔩 Trục Vít: Hiện]` (`#btnToggleWorm`) và `[⚙️ Bánh Vít: Hiện]` (`#btnToggleWheel`) điều khiển độc lập `wormGroup.visible` và `wheelGroup.visible`. Cho phép người dùng soi chi tiết sườn ren, đỉnh ren, rãnh họng mà không bị chi tiết còn lại che khuất.
+      * Trong 2D: Nút `[🔩 Trục Vít: Hiện]` (`#btnToggleWorm2D`) và `[⚙️ Bánh Vít: Hiện]` (`#btnToggleWheel2D`) cho phép ẩn/hiện từng chi tiết ngay trong bản vẽ lắp ráp 2 hình chiếu (`assembly`).
+    - **Hình chiếu / Mặt cắt biên dạng răng pháp tuyến N-N (`normal_profile` - DIN 3975)**:
+      * Mặt cắt vuông góc đường xoắn vít (nghiêng góc nâng $\gamma$): $m_n, lpha_n, p_n = \pi m_n, s_n = e_n = p_n/2, h_{a1}, h_{f1}, ho_{f0} = 0.38 m_n$.
+      * Lượn chân răng tiếp tuyến giải tích $C^1$ vẽ qua `arcTo` nối liền sườn răng thẳng nghiêng $lpha_n$ với đáy rãnh $y = -h_{f1}$.
+      * Gạch mặt cắt $45^\circ$, đường tâm răng, đường chia $y = 0$, đường đỉnh $+h_{a1}$, đường chân $-h_{f1}$.
+      * Đầy đủ đường gióng kích thước chuẩn: $p_n, s_n, e_n, h_{a1}, h_{f1}, lpha_n, ho_{f0}$.
+    - **Hình chiếu / Mặt cắt biên dạng răng tiếp tuyến - dọc trục A-A (`tangential_profile` - DIN 3975)**:
+      * Mặt cắt dọc trục chứa tâm trục vít ($y = 0$): $m_x = m_n/\cos\gamma, lpha_x, \gamma, p_x = \pi m_x, s_x = p_x/2$.
+      * Đường kính $d_1, d_{a1}, d_{f1}$, chiều dài ren $L$, ngõng trục, vai trục ($d_s, t$), vát mép đầu ren $eta$.
+      * Răng hình thang trên/dưới lệch bước $p_x/2$ (khi $z_1$ lẻ), gạch mặt cắt kim loại $45^\circ$.
+      * Đầy đủ đường gióng kích thước: $L, d_{a1}, d_1, d_{f1}, p_x, s_x, lpha_x$.
+    - **Xuất bản vẽ CAD DXF Release 12 (AC1009) độc lập 100% offline**:
+      * Menu dropdown `[💾 Xuất File 2D CAD (.DXF) ▾]` trên thanh công cụ 2D:
+        - `expDxfCurrent`: Xuất theo hình đang chọn.
+        - `expDxfNormalProfile`: Xuất biên dạng pháp tuyến N-N kèm bảng thông số DIN 3975.
+        - `expDxfTangentialProfile`: Xuất biên dạng tiếp tuyến A-A kèm kích thước và bảng thông số.
+        - `expDxfAssembly`, `expDxfWormFront`, `expDxfWheelThroat`: Xuất bản vẽ lắp và chi tiết.
+      * Phân tầng layer chuẩn kỹ thuật: `OUTLINE`, `AXIS`, `PITCH_LINE`, `LIMIT_LINES`, `DIMS`, `MFG_TABLE`. Tương thích tuyệt đối với AutoCAD, SolidWorks, Mastercam, Inventor.
