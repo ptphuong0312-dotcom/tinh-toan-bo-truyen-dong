@@ -1031,9 +1031,9 @@ const Worm3DGenerator = {
         const tanA = Math.tan(mc.MC_alfa_rad);
         const handSign = mc.handSign;
 
-        const numSlices = opt.numWormSlices || 36;
-        const ptsR = opt.ptsPerFlank || 8;
-        const wormTipPts = 4;
+        const numSlices = opt.numWormSlices || 160;
+        const ptsR = opt.ptsPerFlank || 16;
+        const wormTipPts = opt.wormTipPts || 12;
 
         const surfaces = [];
         const curves = [];
@@ -1118,9 +1118,9 @@ const Worm3DGenerator = {
         mc.surfaceOnly = true;
         mc.contactMode = opt.contactMode || 'theory';
 
-        const numSlices = opt.numWheelSlices || 25;
-        const ptsR = opt.ptsPerFlank || 8;
-        const wheelTipPts = 3;
+        const numSlices = opt.numWheelSlices || 60;
+        const ptsR = opt.ptsPerFlank || 16;
+        const wheelTipPts = opt.wheelTipPts || 10;
         const pitchAngle = (2.0 * Math.PI) / z2;
 
         const surfaces = [];

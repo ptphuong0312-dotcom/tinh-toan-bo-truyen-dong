@@ -5924,9 +5924,9 @@ const Worm3DGenerator = {
         const tanA = Math.tan(mc.MC_alfa_rad);
         const handSign = mc.handSign;
 
-        const numSlices = opt.numWormSlices || 36;
-        const ptsR = opt.ptsPerFlank || 8;
-        const wormTipPts = 4;
+        const numSlices = opt.numWormSlices || 160;
+        const ptsR = opt.ptsPerFlank || 16;
+        const wormTipPts = opt.wormTipPts || 12;
 
         const surfaces = [];
         const curves = [];
@@ -6011,9 +6011,9 @@ const Worm3DGenerator = {
         mc.surfaceOnly = true;
         mc.contactMode = opt.contactMode || 'theory';
 
-        const numSlices = opt.numWheelSlices || 25;
-        const ptsR = opt.ptsPerFlank || 8;
-        const wheelTipPts = 3;
+        const numSlices = opt.numWheelSlices || 60;
+        const ptsR = opt.ptsPerFlank || 16;
+        const wheelTipPts = opt.wheelTipPts || 10;
         const pitchAngle = (2.0 * Math.PI) / z2;
 
         const surfaces = [];
@@ -6660,7 +6660,7 @@ const Worm3DExporter = {
             const K1 = Nu - 1;
             const K2 = Nv - 1;
             const M1 = Math.min(3, Nu - 1);
-            const M2 = Math.min(1, Nv - 1);
+            const M2 = Math.min(3, Nv - 1); // Bicubic B-Spline (Degree 3 in U and V) for C2 curvature continuity
 
             const uKnots = [];
             for (let i = 0; i <= M1; i++) uKnots.push('0');

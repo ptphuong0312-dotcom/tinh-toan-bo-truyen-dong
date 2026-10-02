@@ -554,7 +554,7 @@ const Worm3DExporter = {
             const K1 = Nu - 1;
             const K2 = Nv - 1;
             const M1 = Math.min(3, Nu - 1);
-            const M2 = Math.min(1, Nv - 1);
+            const M2 = Math.min(3, Nv - 1); // Bicubic B-Spline (Degree 3 in U and V) for C2 curvature continuity
 
             const uKnots = [];
             for (let i = 0; i <= M1; i++) uKnots.push('0');

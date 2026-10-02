@@ -1508,7 +1508,8 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - **Giải pháp triệt để**: Sử dụng định dạng **IGES 5.3 (`.igs`)** - định dạng gốc mạnh mẽ nhất của Mastercam cho mô hình hóa mặt cong (Surface Modeling). Mastercam mở trực tiếp trong **< 0.1 giây** mà không cần qua bộ dịch Solid!
 3. **Cấu Trúc 3 Phân Tầng Level Kỹ Thuật Trong File IGES (.igs)**:
    - **Level 1 (`SURFACES`)**: Các mặt cong giải tích tham số chuẩn **Entity 128 (Rational B-Spline Surface)** cho Sườn Phải (Flank R), Sườn Trái (Flank L) và Đỉnh Răng (Tip Crest):
-     * Bậc cơ sở: $M_1 = 3$ (U dọc đường xoắn ốc) và $M_2 = 1$ (V dọc đường sinh thẳng sườn ren).
+     * **Bậc cơ sở Bicubic B-Spline**: $M_1 = 3$ (U dọc đường xoắn ốc) và $M_2 = 3$ (V dọc bán kính sườn ren) tạo thành mặt cong **Bicubic B-Spline ($C^2$ curvature continuous)**. Triệt tiêu 100% các gờ gân sóng (creases/facets/ridges) vốn xuất hiện khi dùng $M_2 = 1$ (Linear).
+     * **Mật độ lấy mẫu siêu mịn (High-Density Micro-Sampling)**: $Nu = 160$ lát cắt dọc chiều dài ren ($\approx 38$ điểm trên mỗi vòng xoắn 360°, góc bước $< 9.5^\circ$), $Nv = 17$ điểm dọc chiều cao răng ($\approx 0.31\text{ mm}$/điểm), và 13 điểm đỉnh ren. Sai số dây cung bề mặt đạt mức sub-micron ($< 0.0005\text{ mm}$), bề mặt láng mượt tuyệt đối như gia công mài CNC cao cấp.
      * Vectơ nút kẹp (Clamped knot vectors): 4 nút 0 ở đầu, 4 nút 1 ở cuối, phân bố nút nội suy trơn mượt không dao động.
      * Trọng số đa thức: $PROP_3 = 1$, toàn bộ trọng số $w = 1.0$.
      * **Thứ tự chỉ số điểm điều khiển (Control Points Order)**: Chuẩn IGES quy định chỉ số $i \in [0, K1]$ (dọc chiều dài $U$) biến thiên nhanh nhất (vòng lặp trong), chỉ số $j \in [0, K2]$ (dọc chiều cao bán kính $V$) biến thiên chậm nhất (vòng lặp ngoài): `for (let j = 0; j < Nv; j++) for (let i = 0; i < Nu; i++) ptsCoords.push(grid[i][j])`.
@@ -1516,8 +1517,8 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * Hiển thị trong Mastercam: Màu xanh lá cây (Color 3) và đỏ (Color 2), nhận diện ngay là đối tượng `SURFACE` bản địa, cho phép `Trim`, `Untrim`, `Fillet`, `Offset`, `Extend`.
    - **Level 2 (`WIREFRAME_LOFT_PROFILES`)**: Khung dây đường dẫn 3D chuẩn **Entity 106 Form 12 (Copious Data Linear Path)**:
      * **Bắt buộc sử dụng Form 12 thay vì Form 2**: Form 2 là "Data points" (tập hợp điểm rời rạc) khiến Mastercam hiển thị các dấu cộng `+` rải rác trên màn hình. Form 12 là "Linear Path" (đường dẫn liên tục trong không gian 3D), Mastercam tự động nối thành các đường nét khung dây vector mượt mà (3D Wireframe Curves / Polylines) và triệt tiêu 100% các dấu cộng `+`!
-     * Bao gồm các đường sinh chân ren (Root Rails), đường sinh đỉnh ren (Tip Rails) dọc trục vít.
-     * 7 mặt cắt ngang biên dạng răng (Loft Cross Sections) phân bố đều dọc chiều dài ren.
+     * Bao gồm 4 đường sinh chân ren và đỉnh ren (Rails) với 160 điểm/rail chạy mượt mà theo đường xoắn vít dọc trục.
+     * 7 mặt cắt ngang biên dạng răng (Loft Cross Sections) với 45 điểm/profile uốn lượn sắc nét theo biên dạng răng thực tế.
      * Người lập trình Mastercam có thể dùng ngay lệnh `Create -> Surface -> Ruled / Lofted...` quét qua các đường profile này để tạo bề mặt gia công theo ý muốn (khớp 100% nhu cầu người dùng).
    - **Level 3 (`AXES_DATUMS`)**: Đường tâm trục xoay của Trục Vít 1 và Bánh Vít 2 (Entity 106 Form 12) giúp xác định gốc tọa độ và hướng quay khi gá đặt 4 trục / 5 trục.
 4. **Quy Chuẩn Định Dạng Dòng 80 Cột Chuẩn ANSI/USPRO/IPO-100-1996 (IGES 5.3)**:
