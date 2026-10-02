@@ -2945,6 +2945,7 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
 * **Kết quả đo kiểm & Nghiệm thu**:
   - Tệp IGES Bánh vít: **83,575 dòng, 6.87 MB, xuất đủ 160 bề mặt B-spline cho 40 răng**.
   - Tệp IGES Trục vít: **16,444 dòng, 1.35 MB, xuất đủ 4 bề mặt B-spline cho ren và lõi đặc**.
+  - Tệp IGES Cặp Ăn Khớp Lắp Ghép (Assembly Pair): **118,703 dòng, 8.31 MB, 168 bề mặt phân tầng chuẩn Level 1 (Trục vít 1), Level 2 (Bánh vít 2 gồm đủ 40 răng 360°), Level 3 (2 đường tâm trục quay)**. Quản lý bật/tắt độc lập từng chi tiết qua Mastercam Level Manager (`Alt + Z`).
   - Thẩm tra quy chuẩn IGES 5.3: **100% dòng đạt chính xác 80 ký tự, 0 split tokens, 0 NaN/undefined**.
   - Kiểm thử Playwright tự động trên Web App: **PASS 100%**.
 
