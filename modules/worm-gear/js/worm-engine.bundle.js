@@ -5924,23 +5924,30 @@ const Worm3DGenerator = {
         const tanA = Math.tan(mc.MC_alfa_rad);
         const handSign = mc.handSign;
 
-        const numSlices = opt.numWormSlices || 160;
+        const numSlices = opt.numWormSlices || 200;
         const ptsR = opt.ptsPerFlank || 16;
-        const wormTipPts = opt.wormTipPts || 12;
+        const wormTipPts = opt.wormTipPts || 16;
+        const wormRootPts = opt.wormRootPts || 16;
 
         const surfaces = [];
         const curves = [];
+
+        const ra1 = mc.ra1 || (mc.MC_da1 * 0.5);
+
+        // Precompute axial step and lead curvature compensations
+        const dx = L / (numSlices - 1);
+        const dphi_u = (2.0 * Math.PI / pz) * dx;
+        const scale_u = 1.0 / ((2.0 + Math.cos(dphi_u)) / 3.0);
 
         for (let k = 0; k < z1; k++) {
             const startPhase = (k * 2.0 * Math.PI) / z1;
             const gridR = [];
             const gridL = [];
             const gridTip = [];
-
-            const ra1 = mc.ra1 || (mc.MC_da1 * 0.5);
+            const gridRoot = [];
 
             for (let s = 0; s < numSlices; s++) {
-                const x = -L * 0.5 + s * (L / (numSlices - 1));
+                const x = -L * 0.5 + s * dx;
                 const phi0 = handSign * (2.0 * Math.PI / pz) * x + startPhase;
 
                 const sliceR = [];
@@ -5959,34 +5966,80 @@ const Worm3DGenerator = {
                     sliceL.push([x, R * Math.cos(phiL), R * Math.sin(phiL)]);
                 }
 
+                // 1. Tip Crest Arc (Seamlessly connecting Flank R top to Flank L top at radius ra1)
                 const sliceTip = [];
-                const phiTipR = phi0 - (2.0 * Math.PI / pz) * (halfSx1 - (ra1 - r1) * tanA);
-                const phiTipL = phi0 + (2.0 * Math.PI / pz) * (halfSx1 - (ra1 - r1) * tanA);
+                const pTipR = sliceR[ptsR];
+                const pTipL = sliceL[ptsR];
+                const phiTipR = Math.atan2(pTipR[2], pTipR[1]);
+                let phiTipL = Math.atan2(pTipL[2], pTipL[1]);
+                while (phiTipL < phiTipR) phiTipL += 2.0 * Math.PI;
+
+                const dphi_tip = phiTipL - phiTipR;
+                const dphi_tip_step = dphi_tip / wormTipPts;
+                const scale_v_tip = 1.0 / ((2.0 + Math.cos(dphi_tip_step)) / 3.0);
 
                 for (let t = 0; t <= wormTipPts; t++) {
-                    const fracTip = t / wormTipPts;
-                    const phi = phiTipR + fracTip * (phiTipL - phiTipR);
-                    sliceTip.push([x, ra1 * Math.cos(phi), ra1 * Math.sin(phi)]);
+                    if (t === 0) {
+                        sliceTip.push([pTipR[0], pTipR[1], pTipR[2]]);
+                    } else if (t === wormTipPts) {
+                        sliceTip.push([pTipL[0], pTipL[1], pTipL[2]]);
+                    } else {
+                        const fracTip = t / wormTipPts;
+                        const phi = phiTipR + fracTip * dphi_tip;
+                        const rComp = ra1 * scale_v_tip;
+                        sliceTip.push([x, rComp * Math.cos(phi), rComp * Math.sin(phi)]);
+                    }
+                }
+
+                // 2. Root Flute / Shaft Core (Seamlessly connecting Flank L root of thread k to Flank R root of thread k+1 at radius rf1)
+                const sliceRoot = [];
+                const pRootL = sliceL[0];
+                const phiRootL = Math.atan2(pRootL[2], pRootL[1]);
+
+                const w_root = halfSx1 - (rf1 - r1) * tanA;
+                const dPhi_root = (2.0 * Math.PI / pz) * w_root;
+                const dphi_root = (2.0 * Math.PI / z1) - 2.0 * dPhi_root;
+                const phiR_next = phiRootL + dphi_root;
+                const dphi_root_step = dphi_root / wormRootPts;
+                const scale_v_root = 1.0 / ((2.0 + Math.cos(dphi_root_step)) / 3.0);
+
+                const pRootR_next = [x, rf1 * Math.cos(phiR_next), rf1 * Math.sin(phiR_next)];
+
+                for (let t = 0; t <= wormRootPts; t++) {
+                    if (t === 0) {
+                        sliceRoot.push([pRootL[0], pRootL[1], pRootL[2]]);
+                    } else if (t === wormRootPts) {
+                        sliceRoot.push([pRootR_next[0], pRootR_next[1], pRootR_next[2]]);
+                    } else {
+                        const fracRoot = t / wormRootPts;
+                        const phi = phiRootL + fracRoot * dphi_root;
+                        const rComp = rf1 * scale_v_root;
+                        sliceRoot.push([x, rComp * Math.cos(phi), rComp * Math.sin(phi)]);
+                    }
                 }
 
                 gridR.push(sliceR);
                 gridL.push(sliceL);
                 gridTip.push(sliceTip);
+                gridRoot.push(sliceRoot);
             }
 
             surfaces.push({ label: `WORM_FLANK_R_${k+1}`, grid: gridR, color: 3 });
             surfaces.push({ label: `WORM_FLANK_L_${k+1}`, grid: gridL, color: 3 });
             surfaces.push({ label: `WORM_TIP_${k+1}`, grid: gridTip, color: 2 });
+            surfaces.push({ label: `WORM_ROOT_${k+1}`, grid: gridRoot, color: 1 });
 
             // Rails along length
             const railRootR = gridR.map(s => s[0]);
             const railTipR = gridR.map(s => s[ptsR]);
             const railRootL = gridL.map(s => s[0]);
             const railTipL = gridL.map(s => s[ptsR]);
+            const railRootVly = gridRoot.map(s => s[Math.round(wormRootPts / 2)]);
             curves.push({ label: `RAIL_ROT_R${k+1}`, points: railRootR, color: 1 });
-            curves.push({ label: `RAIL_TIP_R${k+1}`, points: railTipR, color: 1 });
+            curves.push({ label: `RAIL_TIP_R${k+1}`, points: railTipR, color: 2 });
             curves.push({ label: `RAIL_ROT_L${k+1}`, points: railRootL, color: 1 });
-            curves.push({ label: `RAIL_TIP_L${k+1}`, points: railTipL, color: 1 });
+            curves.push({ label: `RAIL_TIP_L${k+1}`, points: railTipL, color: 2 });
+            curves.push({ label: `RAIL_ROOT_VLY${k+1}`, points: railRootVly, color: 1 });
 
             // Cross-Section Profile slices for Ruled/Lofted
             const numProfiles = 7;
@@ -5996,6 +6049,7 @@ const Worm3DGenerator = {
                 for (let m = 0; m <= ptsR; m++) prof.push(gridR[sIdx][m]);
                 for (let t = 1; t <= wormTipPts; t++) prof.push(gridTip[sIdx][t]);
                 for (let m = ptsR - 1; m >= 0; m--) prof.push(gridL[sIdx][m]);
+                for (let t = 1; t <= wormRootPts; t++) prof.push(gridRoot[sIdx][t]);
                 curves.push({ label: `LOFT_SEC_${p+1}`, points: prof, color: 5 });
             }
         }
@@ -6013,7 +6067,8 @@ const Worm3DGenerator = {
 
         const numSlices = opt.numWheelSlices || 60;
         const ptsR = opt.ptsPerFlank || 16;
-        const wheelTipPts = opt.wheelTipPts || 10;
+        const wheelTipPts = opt.wheelTipPts || 12;
+        const wheelRootPts = opt.wheelRootPts || 12;
         const pitchAngle = (2.0 * Math.PI) / z2;
 
         const surfaces = [];
@@ -6025,6 +6080,7 @@ const Worm3DGenerator = {
             const gridDrive = [];
             const gridCoast = [];
             const gridTip = [];
+            const gridRoot = [];
 
             for (let s = 0; s < numSlices; s++) {
                 const z = -halfB + s * (b2H / (numSlices - 1));
@@ -6052,26 +6108,70 @@ const Worm3DGenerator = {
                     sliceCoast.push([r * Math.cos(thetaCoast), r * Math.sin(thetaCoast), z]);
                 }
 
+                // 1. Tip Crest Arc
                 const sliceTip = [];
                 const pTipDrive = sliceDrive[ptsR];
                 const pTipCoast = sliceCoast[ptsR];
                 const thDrive = Math.atan2(pTipDrive[1], pTipDrive[0]);
-                const thCoast = Math.atan2(pTipCoast[1], pTipCoast[0]);
+                let thCoast = Math.atan2(pTipCoast[1], pTipCoast[0]);
+                while (thCoast < thDrive) thCoast += 2.0 * Math.PI;
+
+                const dth_tip = thCoast - thDrive;
+                const dth_tip_step = dth_tip / wheelTipPts;
+                const scale_v_wheel_tip = 1.0 / ((2.0 + Math.cos(dth_tip_step)) / 3.0);
 
                 for (let t = 0; t <= wheelTipPts; t++) {
-                    const fracTip = t / wheelTipPts;
-                    const th = thDrive + fracTip * (thCoast - thDrive);
-                    sliceTip.push([rTip * Math.cos(th), rTip * Math.sin(th), z]);
+                    if (t === 0) {
+                        sliceTip.push([pTipDrive[0], pTipDrive[1], pTipDrive[2]]);
+                    } else if (t === wheelTipPts) {
+                        sliceTip.push([pTipCoast[0], pTipCoast[1], pTipCoast[2]]);
+                    } else {
+                        const fracTip = t / wheelTipPts;
+                        const th = thDrive + fracTip * dth_tip;
+                        const rComp = rTip * scale_v_wheel_tip;
+                        sliceTip.push([rComp * Math.cos(th), rComp * Math.sin(th), z]);
+                    }
+                }
+
+                // 2. Root Throat Rim (Connecting Coast Flank root of tooth j to Drive Flank root of tooth j+1)
+                const sliceRoot = [];
+                const pCoastRoot = sliceCoast[0];
+                const thCoastRoot = Math.atan2(pCoastRoot[1], pCoastRoot[0]);
+
+                let thSpaceR_root = this.evalConjugateFlankTheta(rRoot, z, +1, mc);
+                if (thSpaceR_root === null) thSpaceR_root = -Math.PI * 0.5 + (0.5 * mc.MC_sx1 / mc.r2);
+                let thDriveNext = thSpaceR_root + (j + 1) * pitchAngle;
+                while (thDriveNext < thCoastRoot) thDriveNext += 2.0 * Math.PI;
+
+                const dth_root = thDriveNext - thCoastRoot;
+                const dth_root_step = dth_root / wheelRootPts;
+                const scale_v_wheel_root = 1.0 / ((2.0 + Math.cos(dth_root_step)) / 3.0);
+
+                const pDriveNext = [rRoot * Math.cos(thDriveNext), rRoot * Math.sin(thDriveNext), z];
+
+                for (let t = 0; t <= wheelRootPts; t++) {
+                    if (t === 0) {
+                        sliceRoot.push([pCoastRoot[0], pCoastRoot[1], pCoastRoot[2]]);
+                    } else if (t === wheelRootPts) {
+                        sliceRoot.push([pDriveNext[0], pDriveNext[1], pDriveNext[2]]);
+                    } else {
+                        const fracRoot = t / wheelRootPts;
+                        const th = thCoastRoot + fracRoot * dth_root;
+                        const rComp = rRoot * scale_v_wheel_root;
+                        sliceRoot.push([rComp * Math.cos(th), rComp * Math.sin(th), z]);
+                    }
                 }
 
                 gridDrive.push(sliceDrive);
                 gridCoast.push(sliceCoast);
                 gridTip.push(sliceTip);
+                gridRoot.push(sliceRoot);
             }
 
             surfaces.push({ label: `WHEEL_DRV_${j+1}`, grid: gridDrive, color: 4 });
             surfaces.push({ label: `WHEEL_CST_${j+1}`, grid: gridCoast, color: 4 });
             surfaces.push({ label: `WHEEL_TIP_${j+1}`, grid: gridTip, color: 2 });
+            surfaces.push({ label: `WHEEL_ROOT_${j+1}`, grid: gridRoot, color: 6 });
 
             if (j === 0) {
                 const numCross = 5;
@@ -6081,8 +6181,11 @@ const Worm3DGenerator = {
                     for (let m = 0; m <= ptsR; m++) prof.push(gridDrive[sIdx][m]);
                     for (let t = 1; t <= wheelTipPts; t++) prof.push(gridTip[sIdx][t]);
                     for (let m = ptsR - 1; m >= 0; m--) prof.push(gridCoast[sIdx][m]);
+                    for (let t = 1; t <= wheelRootPts; t++) prof.push(gridRoot[sIdx][t]);
                     curves.push({ label: `THROAT_SEC_${c+1}`, points: prof, color: 5 });
                 }
+                const railRootThroat = gridRoot.map(s => s[Math.round(wheelRootPts / 2)]);
+                curves.push({ label: `RAIL_THROAT_ROOT`, points: railRootThroat, color: 6 });
             }
         }
 

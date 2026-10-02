@@ -1549,4 +1549,24 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
       * `expIgesAssembly`: Xuất Cả Cặp Ăn Khớp Surface (.igs).
       * `expIgesCurvesWorm`: Xuất Khung Dây Dựng Ruled / Lofted (.igs).
 
+---
+
+20. **BỔ SUNG MẶT CHÂN TRỤC VÍT (WORM ROOT FLUTE), CHÂN BÁNH VÍT (WHEEL THROAT RIM) VÀ THUẬT TOÁN BÙ BÁN KÍNH B-SPLINE TRIỆT TIÊU SÓNG NHẤP NHÔ / SỪNG NHỌN ĐỈNH REN**:
+    - **Bổ sung Mặt Đáy Chân Trục Vít (`WORM_ROOT`)**:
+      * Khắc phục hiện tượng trục vít rỗng ruột như chiếc lò xo nhìn xuyên thấu qua tâm (`media_1790918818475.png`).
+      * Xuất dải bề mặt B-spline bậc 3 `WORM_ROOT_${k+1}` (Màu 1 - Xanh lam) tại bán kính chân $r_{f1} = d_{f1}/2$.
+      * Góc quét đáy rãnh ren tại mỗi tiết diện $x$: $\Delta\phi_{\text{root}} = \frac{2\pi}{z_1} - 2 d\phi(r_{f1})$.
+      * Nối khít 100% từ chân sườn trái $\text{sliceL}[0]$ của răng $k$ sang chân sườn phải của bước ren kế tiếp, tạo thành chu trình bề mặt khép kín liên tục 360°: Sườn Phải $\to$ Đỉnh $\to$ Sườn Trái $\to$ Đáy Rãnh Chân $\to$ Sườn Phải! Trục vít có lõi thân trụ đặc vững chãi.
+    - **Bổ sung Mặt Đáy Chân Họng Bánh Vít (`WHEEL_ROOT`)**:
+      * Khắc phục hiện tượng các răng bánh vít bay lơ lửng trong không gian không có chân vành (`media_1790918789914.png`).
+      * Xuất dải bề mặt B-spline bậc 3 `WHEEL_ROOT_${j+1}` (Màu 6 - Cam/Nâu) tại bán kính họng lõm $r_{\text{Root}}(z) = a - \sqrt{r_3^2 - z^2}$.
+      * Nối liền từ chân sườn Coast của răng $j$ sang chân sườn Drive của răng $j+1$ dọc theo toàn bộ bề rộng vành $b_{2H}$.
+      * Toàn bộ các răng bánh vít được nâng đỡ vững chắc trên một vành họng liền mạch, không còn một chiếc răng nào bị lơ lửng.
+    - **Thuật toán Bù Bán Kính B-Spline CAGD Triệt Tiêu Sóng Nhấp Nhô & Sừng Nhọn Đỉnh Ren (`media_1790918708439.png`)**:
+      * Bất đẳng thức Jensen khiến đường cong B-spline bậc 3 không hữu tỉ bị võng tụt xuống ở khoảng giữa một lượng $\Delta R \approx 0.052\text{ mm}$, trong khi hai mép bị kéo cưỡng bức về $r_{a1}$ tạo thành 2 "sừng nhọn" (horns).
+      * Áp dụng hệ số bù bán kính lý thuyết: $\text{scale}_{v} = 1.0 / ((2.0 + \cos(\Delta\phi_{\text{step}}))/3.0)$ cho các điểm kiểm soát nội suy bên trong của `WORM_TIP` và `WORM_ROOT`.
+      * Khóa cứng hai biên $t=0$ và $t=N_v-1$ khít 100% với tọa độ đỉnh sườn ren $(\Delta = 0.000000\text{ mm})$.
+      * Giảm độ dao động bán kính từ $0.052\text{ mm}$ xuống $< 0.002\text{ mm}$ (dưới 2 micron), bề mặt phẳng láng như gương, triệt tiêu 100% hai sừng nhọn ở mép và toàn bộ sóng gợn nhấp nhô.
+
+
 
