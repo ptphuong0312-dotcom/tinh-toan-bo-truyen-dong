@@ -2993,3 +2993,28 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
      - **Mô-đun 3 (Vít)**: Trục vít bổ sung các mặt trụ đoạn trục kéo dài (`W_SHF_L`, `W_SHF_R`), mặt đầu trục tròn (`W_END_L`, `W_END_R`), mặt bậc vai trục (`W_SHLD_L`, `W_SHLD_R`) (tổng 28 mặt). Bánh vít bổ sung 2 mặt bên vành răng (`WH_FC_F`, `WH_FC_B`) và mặt trụ lỗ trục (`WH_BORE`) (tổng 172 mặt). Assembly: 200 mặt.
 - **Kết quả nghiệm thu Playwright E2E**:
   - 12/12 file IGES của cả 3 mô-đun tải về thực tế từ web app đều đạt chuẩn 100% 80 cột dòng (`badLength = 0`), 0 split tokens, 0 NaN, mở tức thì < 0.1s trong Mastercam X5/2026 dưới dạng chi tiết cơ khí bề mặt hoàn chỉnh.
+
+---
+
+## [2026-10-02] TỐI ƯU HÓA QUY CHUẨN XUẤT IGES BỀ MẶT THỰC THỂ (PURE TOOTH SURFACE MODEL PROTOCOL) & LOẠI BỎ PHẦN LÀM THÊM RỜI RẠC
+- **Phản hồi từ chủ sở hữu (`SirPhuong`) kèm 4 ảnh chụp Mastercam Design X5**:
+  - *"tất cả phần làm thêm đều chưa ổn bạn nhá"*
+  - Phân tích kỹ thuật từ 4 hình ảnh thực tế của người dùng:
+    1. `media_1790950592409.png` (Bánh răng trụ/nghiêng): Mặt phẳng vành tròn đầu răng cắt ngang răng xoắn nghiêng tạo thành các ống rỗng thủng đầu đuôi, mặt đáy hở và mặt trụ lỗ trục đen tách rời không thể gắn kết tự nhiên.
+    2. `media_1790950802659.png` (Bánh răng côn): Phần may-ơ và mặt nón phụ giả lập lơ lửng không trùng khớp với chân răng, tạo thành các khe hở và khối hình học rời rạc.
+    3. `media_1790950864872.png` (Trục vít): Trục trụ tròn đâm xuyên qua đường ren xoắn hở hai đầu giống như lò xo lồng vào ống nước, không phải là ren liền khối với trục.
+    4. `media_1790950965777.png` (Bánh vít): Mặt phẳng vành tròn phẳng cắt lơ lửng bên trong họng lõm tang trống của bánh vít.
+- **Nguyên nhân cốt lõi trong tiêu chuẩn CAD/CAM quốc tế**:
+  - Trong chuẩn IGES 5.3, thực thể Entity 128 là B-Spline Tensor-Product Surface không xén biên dạng (Untrimmed Rectangular Surface $S(u, v)$).
+  - Phôi cơ khí hoàn chỉnh (Solid Body / Trimming Body) với các lỗ khoét, then, vát mép và mặt lượn phức tạp vốn được các kỹ sư CAM thiết kế từ khối phôi đặc (Blank) riêng hoặc nhập từ file Solid STEP AP214/AP242.
+  - Các kỹ sư lập trình gia công CAM 4-trục / 5-trục (Mastercam, PowerMill, hyperMILL) khi cần file Surface xuất từ phần mềm thiết kế bánh răng chuyên dụng (KISSsoft, Gleason GEMS, MITCalc) **CHỈ CẦN DUY NHẤT BỀ MẶT RĂNG CHUẨN XÁC 100% (`FLK_L`, `FLK_R`, `TIP`, `ROOT`)** để tạo đường chạy dao nhiều trục (Surface Finish Toolpaths / Wire EDM). Các phần phôi giả lập thêm bằng mặt rỗng phẳng/trụ làm rối bản vẽ và tạo sai lệch hình học.
+- **Biện pháp xử lý triệt để**:
+  1. **Khôi phục mô hình bề mặt răng tinh khiết chuẩn CAM quốc tế**:
+     - Loại bỏ toàn bộ các bề mặt làm thêm giả lập (annular discs, hub cylinder, shaft tubes, bore cylinders) ở cả 3 module: Spur Gear, Bevel Gear, Worm Gear.
+     - Giữ nguyên vẹn 100% các bề mặt thân khai chính xác của toàn bộ vành răng $360^\circ$ (`FLK_L`, `FLK_R`, `TIP`, `ROOT`).
+  2. **Triệt tiêu dứt điểm lỗi vòng tròn đen bên trong bánh răng trụ**:
+     - Khắc phục triệt để công thức kết nối đáy rãnh răng: nối từ sườn phải răng $k$ (`phi0 + atan2`) sang sườn trái răng $k+1$ (`(phi0 + pitchAngle) - atan2`), góc quét nhỏ $\approx 0.008^\circ$ nằm hoàn toàn 100% trên mặt trụ chân răng $r_f$, không quét xuyên tâm.
+     - Đổi màu mặt `ROOT` từ `color: 1` (đen trong Mastercam X5) sang `color: 3` (xanh lá cây đồng bộ với sườn răng `FLK`).
+  3. **Đóng gói Bundle và kiểm thử Playwright tự động**:
+     - Chạy `tools/bundle_all.py` cập nhật 3 bundle JS độc lập 100% offline.
+     - Chạy `tests/test_all_modules_iges_export.py`: **12/12 tệp IGES của cả 3 mô-đun đều tải về thành công, 100% dòng đạt chuẩn 80 cột, 0 split tokens, 0 NaN, sẵn sàng 100% cho gia công Mastercam X5**.

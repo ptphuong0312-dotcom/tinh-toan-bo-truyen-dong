@@ -1622,3 +1622,21 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * **Đoạn trục mở rộng & vai trục (Shaft Extensions & Shoulders - Trục vít)**: Xuất các mặt trụ đoạn trục đầu vào/ra (`W_SHF_L`, `W_SHF_R`), mặt đầu trục tròn (`W_END_L`, `W_END_R`), và mặt bậc vai trục (`W_SHLD_L`, `W_SHLD_R`).
 4. **Kiểm Thử Toàn Diện Playwright Headless Browser**:
    - 12/12 file IGES của cả 3 mô-đun (Bánh dẫn, Bánh bị dẫn, Cả cặp ăn khớp, Khung dây loft) đều đạt chuẩn 100% 80 cột (`badLength = 0`), 0 split tokens, 0 NaN, mở tức thì trong Mastercam dưới dạng mô hình bề mặt Surface chi tiết hoàn chỉnh.
+
+---
+
+### Quy Tắc 66: Quy Chuẩn Bề Mặt Răng Tinh Khiết Cho Gia Công CAM Đa Trục (Pure Tooth Surface CAM Machining Protocol) & Loại Bỏ Khối Phôi Giả Lập Rời Rạc
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"tất cả phần làm thêm đều chưa ổn bạn nhá"*
+   - Phân tích từ 4 ảnh chụp thực tế Mastercam Design X5: Các khối hình học phôi làm thêm (vành phẳng annular disc, trụ may-ơ, ống trụ trục xuyên suốt, trụ lỗ) khi dựng bằng các mặt B-spline chữ nhật không xén (Entity 128 Untrimmed) bị hở hai đầu răng nghiêng, đâm xuyên qua đường ren xoắn hở như lò xo lồng ống, và lơ lửng bên trong họng lõm tang trống bánh vít.
+2. **Nguyên Tắc Bất Biến Của Mô Hình Bề Mặt Gia Công CAM Bánh Răng**:
+   - Trong chuẩn công nghiệp CAD/CAM quốc tế (Mastercam, PowerMill, hyperMILL), mục đích duy nhất của việc xuất IGES B-Spline Surface từ phần mềm tính toán răng chuyên dụng là **cung cấp các bề mặt răng liên hợp chính xác $100\%$ (`FLK_L`, `FLK_R`, `TIP`, `ROOT`) để lập trình đường chạy dao gia công tinh bề mặt 4-trục / 5-trục (Surface Finish / Swarf Milling) hoặc cắt dây Wire EDM**.
+   - Các kỹ sư gia công sẽ lấy phôi tiện (Blank) từ thiết kế cơ khí tổng thể (thường vẽ từ Solid STEP hoặc khối tiện đặc có then, bậc, ren, vát mép chuyên biệt) và gán các mặt sườn răng IGES vào để gia công.
+   - **Tuyệt đối KHÔNG tự ý chèn các mặt phẳng / mặt trụ giả lập thô sơ (Blank additions) vào file IGES Surface**. File IGES phải là một khối vành răng $360^\circ$ hoàn hảo, sắc nét, kín khít, mượt mà và không có bất kỳ hình học rác nào.
+3. **Triệt Tiêu Hoàn Toàn Vòng Tròn Đen Bánh Răng Trụ & Đồng Bộ Màu Sắc Mastercam**:
+   - Sửa dứt điểm công thức chân răng: nối từ sườn phải răng $k$ (`phi0 + atan2`) sang sườn trái răng $k+1$ (`(phi0 + pitchAngle) - atan2`), góc quét nhỏ $\approx 0.008^\circ$ nằm trọn vẹn trên mặt trụ chân răng $r_f$, không quét xuyên tâm bánh răng.
+   - Toàn bộ các mặt chân răng `ROOT` sử dụng `color: 3` (xanh lá cây) đồng nhất với sườn răng `FLK`, triệt tiêu hoàn toàn mã màu `color: 1` (màu đen trong Mastercam X5).
+4. **Kiểm Tra & Đóng Gói Bundle**:
+   - Luôn chạy `python tools/bundle_all.py` sau mọi chỉnh sửa mã nguồn JavaScript.
+   - Kiểm thử Playwright tự động (`python tests/test_all_modules_iges_export.py`): bảo đảm toàn bộ 12/12 tệp IGES của cả 3 mô-đun đều tải về thành công, 100% dòng đạt chuẩn 80 cột dòng (`badLength = 0`), 0 split tokens, 0 NaN, mở tức thì và hiển thị mượt mà trên Mastercam.
+

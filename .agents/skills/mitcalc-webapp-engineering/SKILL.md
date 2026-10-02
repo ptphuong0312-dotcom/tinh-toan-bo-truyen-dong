@@ -1615,3 +1615,21 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
      * **Đoạn trục mở rộng & vai trục (Shaft Extensions & Shoulders - Trục vít)**: Mặt trụ đoạn trục đầu vào/ra, mặt đầu trục tròn, mặt bậc vai trục.
 3. **Kiểm Thử Toàn Diện Playwright Headless Browser**:
    - 12/12 file IGES đạt chuẩn 100% 80 cột dòng, mở tức thì < 0.1s trong Mastercam X5/2026 dưới dạng chi tiết cơ khí bề mặt hoàn chỉnh.
+
+---
+
+### 22. Quy Chuẩn Bề Mặt Răng Tinh Khiết Chuẩn Quốc Tế Cho Gia Công CAM 5 Trục (Pure Tooth Surface CAM Machining Protocol)
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"tất cả phần làm thêm đều chưa ổn bạn nhá"*
+   - Khi dựng phôi bánh răng bằng các mặt B-spline chữ nhật không xén (Entity 128 Untrimmed), các hình học phôi làm thêm (vành phẳng annular disc, trụ may-ơ, ống trụ trục xuyên suốt) bị hở hai đầu răng nghiêng, đâm xuyên qua đường ren xoắn hở như lò xo lồng ống, và lơ lửng bên trong họng lõm tang trống bánh vít.
+2. **Quy Tắc Mô Hình Bề Mặt Gia Công CAM Bánh Răng**:
+   - Trong chuẩn CAD/CAM quốc tế (Mastercam, PowerMill, hyperMILL), mục đích cốt lõi của việc xuất IGES B-Spline Surface từ phần mềm tính toán răng chuyên dụng là **cung cấp các bề mặt răng liên hợp chính xác $100\%$ (`FLK_L`, `FLK_R`, `TIP`, `ROOT`) để lập trình đường chạy dao gia công tinh bề mặt 4-trục / 5-trục (Surface Finish / Swarf Milling) hoặc cắt dây Wire EDM**.
+   - Các kỹ sư gia công sẽ lấy phôi tiện (Blank) từ thiết kế cơ khí tổng thể và gán các mặt sườn răng IGES vào để gia công.
+   - **Tuyệt đối KHÔNG chèn các mặt phẳng / mặt trụ giả lập thô sơ (Blank additions) vào file IGES Surface**. File IGES phải là một khối vành răng $360^\circ$ hoàn hảo, sắc nét, kín khít, mượt mà và không có bất kỳ hình học rác nào.
+3. **Triệt Tiêu Hoàn Toàn Vòng Tròn Đen Bánh Răng Trụ & Đổi Màu ROOT**:
+   - Sửa dứt điểm công thức chân răng: nối từ sườn phải răng $k$ (`phi0 + atan2`) sang sườn trái răng $k+1$ (`(phi0 + pitchAngle) - atan2`), góc quét nhỏ $\approx 0.008^\circ$ nằm trọn vẹn trên mặt trụ chân răng $r_f$, không quét xuyên tâm bánh răng.
+   - Toàn bộ các mặt chân răng `ROOT` sử dụng `color: 3` (xanh lá cây) đồng nhất với sườn răng `FLK`, triệt tiêu hoàn toàn mã màu `color: 1` (màu đen trong Mastercam X5).
+4. **Kiểm Tra & Đóng Gói Bundle**:
+   - Chạy `python tools/bundle_all.py` sau mọi chỉnh sửa.
+   - Kiểm thử Playwright tự động (`python tests/test_all_modules_iges_export.py`): 12/12 tệp IGES của cả 3 mô-đun đều tải về thành công, 100% dòng đạt chuẩn 80 cột dòng (`badLength = 0`), 0 split tokens, 0 NaN, mở tức thì và hiển thị mượt mà trên Mastercam.
+
