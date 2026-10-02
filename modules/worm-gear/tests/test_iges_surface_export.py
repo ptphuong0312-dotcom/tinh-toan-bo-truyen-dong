@@ -138,6 +138,12 @@ def test_iges_surface_export():
         assert has_s and has_g and has_d and has_p and has_t, "Missing required IGES section (S, G, D, P, T)"
         print("SUCCESS: All IGES Sections (S, G, D, P, T) are present and strictly ordered!")
 
+        # Verify ZERO split tokens across line boundaries (no numbers sliced across column 64)
+        p_all_lines = [l for l in lines if l[72] == 'P']
+        split_tokens = [i+1 for i in range(len(p_all_lines) - 1) if p_all_lines[i][:64].rstrip() and p_all_lines[i][:64].rstrip()[-1] not in (',', ';')]
+        assert len(split_tokens) == 0, f"Found {len(split_tokens)} split tokens across line boundaries: {split_tokens[:5]}"
+        print("SUCCESS: 0 split tokens! Every line cleanly ends with comma/semicolon, no sliced numbers!")
+
         # Verify Entity 128 (B-Spline Surface) and Entity 106 (Wireframe Copious Data)
         has_entity_128 = any('128' in l[:8] and l[72] == 'D' for l in lines)
         has_entity_106 = any('106' in l[:8] and l[72] == 'D' for l in lines)

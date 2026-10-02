@@ -1525,8 +1525,12 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * Đoạn Start (`S`): 72 ký tự mô tả + `S` + 7 ký tự số thứ tự dòng.
      * Đoạn Global (`G`): Dãy tham số chuỗi Hollerith (`nH...`), đơn vị mm (`2HMM`), độ phân giải $0.0001$, phiên bản IGES 5.3 (mã 11).
      * Đoạn Directory Entry (`D`): Mỗi thực thể gồm đúng 2 dòng 80 ký tự, chứa mã thực thể (128 hoặc 106), con trỏ sang đoạn P, Level, Color, Form (Form 0 cho 128, Form 12 cho 106), và nhãn tên 8 ký tự căn trái (`FLANK_R `, `LOFT_SEC`, `AXIS_W1 `).
-     * Đoạn Parameter Data (`P`): Dữ liệu tham số cắt thành từng đoạn 64 ký tự + 8 ký tự con trỏ D + `P` + 7 ký tự số thứ tự.
+     * Đoạn Parameter Data (`P`): Dữ liệu tham số cắt thành từng đoạn tối đa 64 ký tự + 8 ký tự con trỏ D + `P` + 7 ký tự số thứ tự.
      * Đoạn Terminate (`T`): Đúng 1 dòng tổng kết số lượng dòng `S`, `G`, `D`, `P`.
+   - **Quy Chuẩn Đóng Gói Dòng Tham Số Khép Kín Theo Token (Token-Aware Parameter Data Line Wrapping Protocol - Zero Split Tokens)**:
+     * Theo mục 2.2.4 đặc tả IGES 5.3: Các tham số trong đoạn Parameter Data (`P`) là dạng Free-Format phân tách bằng dấu phẩy `,` và kết thúc bằng chấm phẩy `;`.
+     * **LỖI KỸ THUẬT NGUY HIỂM ĐÃ TRIỆT TIÊU**: Tuyệt đối KHÔNG được cắt xén chuỗi ký tự thô ở vị trí 64 (`pData.slice(i, i + 64)`). Việc cắt thô khiến các số thực ví dụ `-10.67969` bị chẻ đôi thành `-10.` ở cuối dòng và `67969` ở đầu dòng tiếp theo. Trình phân tích IGES của Mastercam đọc `67969` thành một tọa độ $+67,969.0\text{ mm}$ (gần 68 mét!). Hậu quả là Mastercam vẽ các đường thẳng dài vô tận bắn ngang dọc màn hình, tạo thành một mạng nhện hỗn loạn (Bird's nest/Spaghetti lines).
+     * **Quy chuẩn bắt buộc**: Phải đóng gói theo từng token tham số nguyên vẹn (`token + delim`). Nếu chiều dài dòng hiện tại cộng chiều dài token tiếp theo $> 64$, dòng hiện tại phải được kết thúc và đệm khoảng trắng đến cột 64, token tiếp theo được chuyển sang cột 1 của dòng mới. Đảm bảo **100% các dòng đều kết thúc bằng dấu phẩy `,` hoặc chấm phẩy `;` trước cột 64** và **0 token bị cắt đôi**!
 5. **Tối Ưu Hóa Dung Lượng & Mặt Lưới STEP AP214**:
    - Đối với xuất file STEP mặt sườn rỗng (`exportSTEPSurface`), giới hạn số lát cắt hợp lý (48 lát $\times$ 8 điểm $\approx 800$ tam giác thay vì 13,231 tam giác), giảm tải 10 lần giúp Mastercam mở mượt mà nếu người dùng vẫn chọn định dạng STEP.
 6. **Đồng Bộ Hoàn Chỉnh Trên Giao Diện Web App**:
@@ -1535,7 +1539,7 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * `expIgesWheel`: 💎 Xuất Bánh Vít 2 Surface Mastercam (.igs).
      * `expIgesAssembly`: 💎 Xuất Cả Cặp Ăn Khớp Surface (.igs).
      * `expIgesCurvesWorm`: 📐 Xuất Khung Dây Dựng Ruled / Lofted (.igs).
-   - Kiểm thử tự động Playwright xác nhận 100% đạt chuẩn: 570/570 dòng file `.igs` chuẩn 80 ký tự, mở tức thì < 0.1s, dung lượng tệp 46.7 KB, 12 đường cong Entity 106 Form 12 (0 dấu cộng), bề mặt Entity 128 không suy biến ($r_{tip} - r_{root} = 9.525\text{ mm}$).
+   - Kiểm thử tự động Playwright xác nhận 100% đạt chuẩn: 601/601 dòng file `.igs` chuẩn 80 ký tự, mở tức thì < 0.1s, dung lượng tệp 49.4 KB, 12 đường cong Entity 106 Form 12 (0 dấu cộng), bề mặt Entity 128 không suy biến ($r_{tip} - r_{root} = 9.525\text{ mm}$), **0 split tokens across line boundaries**.
 
 
 

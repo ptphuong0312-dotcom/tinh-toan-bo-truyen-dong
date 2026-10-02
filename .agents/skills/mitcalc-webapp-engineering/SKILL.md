@@ -1534,8 +1534,9 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
         - **Triệt tiêu 100% đám mây dấu cộng (`+`)**: Định dạng chuẩn `Form = 12` ("Linear Path in 3D") thay vì `Form = 2` ("Data Points"). Mastercam sẽ tự động nối các điểm thành các đường cong/polyline liên tục, nhẵn bóng mượt, hiển thị 0 dấu cộng (`+`).
         - Dùng trực tiếp cho lệnh `Create -> Surface -> Ruled / Lofted...` của Mastercam để quét tạo bề mặt gia công.
       * **Level 3 (`AXES_DATUMS`)**: Đường tâm trục xoay Trục Vít 1 và Bánh Vít 2 (Entity 106 Form 12).
-    - **Quy chuẩn dòng 80 cột nghiêm ngặt**:
+    - **Quy chuẩn dòng 80 cột nghiêm ngặt & Cơ chế đóng gói Token-Aware (Zero Split Tokens)**:
       * Toàn bộ các dòng trong file `.igs` đều có độ dài chính xác **80 ký tự** (`S`, `G`, `D`, `P`, `T`).
+      * **Triệt tiêu lỗi cắt đôi số thực qua cột 64 (Token-Aware Wrapping)**: Tuyệt đối không cắt chuỗi thô ở ký tự 64 (`pData.slice(i, i+64)`). Toàn bộ tham số được duyệt theo từng token nguyên vẹn (`token + delim`), nếu không vừa dòng 64 ký tự thì chuyển nguyên token sang dòng mới. Bảo đảm 100% dòng P kết thúc bằng dấu phẩy `,` hoặc chấm phẩy `;` trước cột 64. Không một số thực nào bị cắt đôi (như `-10.67969` bị chẻ thành `-10.` và `67969` mm = 68 mét tạo các tia bắn vô tận trong Mastercam).
       * Nhãn thực thể trong trường 18-19 của dòng DE 2 phải được căn trái và đệm đúng 8 khoảng trắng: `(label + '        ').slice(0, 8)`.
       * Dòng Terminate `T`: Đúng 1 dòng 80 ký tự tổng kết số lượng dòng `S`, `G`, `D`, `P`.
     - **Tối ưu hóa số lượng mặt STEP AP214**:

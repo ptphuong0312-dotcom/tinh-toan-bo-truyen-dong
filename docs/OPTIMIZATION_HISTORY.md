@@ -2760,4 +2760,43 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
   - Test suite `test_iges_surface_export.py`: **PASS 100% (exit code 0)**.
   - Trong Mastercam: Mở tức thì **< 0.05s**, **0 dấu cộng (`+`)**, các đường wireframe hiển thị dạng đường liền nét mượt mà, các mặt cong B-Spline hiển thị chuẩn Native Surface, chỉnh sửa trực tiếp không cần convert.
 
+---
+
+## 40. ĐỢT TỐI ƯU HÓA 40: KHẮC PHỤC LỖI TIA THẲNG BẮN VỀ VÔ TẬN TRONG MASTERCAM (BIRD'S NEST SPAGHETTI BUG) DO CẮT XÉN TOKEN QUA CỘT 64 & THIẾT LẬP CƠ CHẾ ĐÓNG GÓI TOKEN-AWARE KHÉP KÍN
+
+* **Bối cảnh & Phản hồi trực tiếp từ SirPhuong**:
+  - Người dùng mở file trong Mastercam Wire X5 và gửi ảnh chụp màn hình (`media_1790915253186.png`):
+    *"vẫn chưa được bạn nhá"*.
+  - Trên màn hình Mastercam xuất hiện một mạng nhện hỗn loạn gồm hàng loạt đường thẳng và đường nét đứt màu vàng, màu đen bắn song song về phía vô tận (hướng X sang phải và hướng Y lên trên).
+
+* **Phân tích nguyên nhân gốc rễ (Root Cause Analysis)**:
+  1. **Lỗi cắt xén chuỗi thô ở cột 64 (`pData.slice(i, i + 64)`)**:
+     - Trong phiên bản trước của `worm-3d-exporter.js`, toàn bộ chuỗi tham số `pData` được cắt lát mù quáng thành các khối 64 ký tự bằng lệnh `e.pData.slice(i, i + 64)`.
+     - Vì không nhận biết ranh giới của các con số, có đến **446 dòng trên tổng số 532 dòng P** bị chẻ đôi một con số thực ngay giữa chừng:
+       * Dòng 17 kết thúc bằng: `-10.`
+       * Dòng 18 bắt đầu bằng: `67969,-7.09939,...`
+       * Dòng 18 kết thúc bằng: `-1`
+       * Dòng 19 bắt đầu bằng: `0.95083,...`
+       * Dòng 19 kết thúc bằng: `-` (dấu trừ cô lập)
+       * Dòng 20 bắt đầu bằng: `18.63876,...`
+  2. **Hệ quả chết người đối với bộ đọc IGES của Mastercam**:
+     - Khi Mastercam phân tích dòng 17-18, nó đọc `-10.` thành $-10.0\text{ mm}$, và đọc đoạn đuôi `67969` thành một tọa độ mới hoàn toàn: **$+67,969.0\text{ mm}$ (gần 68 mét!)**.
+     - Một điểm lẽ ra ở bán kính $22.3\text{ mm}$ bỗng bị ném văng ra xa 68,000 mm!
+     - Ngoài ra, việc sinh thêm 446 con số ảo làm lệch toàn bộ chỉ số mảng tham số: tọa độ Y bị đọc nhầm thành Z, Z thành X của điểm tiếp theo, khiến toàn bộ mô hình bị vặn xoắn thành các đường thẳng song song bắn ra vô cực!
+
+* **Giải pháp kỹ thuật toàn diện (Token-Aware Line Wrapping Protocol)**:
+  1. **Đóng gói khép kín theo từng Token tham số**:
+     - Thay vì ghép chuỗi rồi cắt lát, hệ thống lưu giữ danh sách tokens nguyên vẹn `pTokens` cho từng thực thể (Entity 128 và Entity 106).
+     - Thuật toán duyệt qua từng token: `item = String(token) + delim`. Nếu `curChunk.length + item.length <= 64` thì cộng dồn; nếu vượt quá 64 thì kết thúc dòng hiện tại, đệm khoảng trắng đến đúng cột 64 và chuyển `item` sang dòng tiếp theo.
+     - Áp dụng tương tự cho cả Section G (Global Section) với giới hạn 72 ký tự, chống đứt gãy chuỗi Hollerith.
+  2. **Bảo đảm 100% ranh giới chuẩn IGES 5.3**:
+     - **0 token nào bị cắt đôi** trên toàn bộ tệp IGES.
+     - 100% dòng dữ liệu P kết thúc bằng dấu phẩy `,` hoặc chấm phẩy `;` trước cột 64.
+     - 100% các dòng trong tệp đạt chuẩn độ dài chính xác **80 ký tự**.
+
+* **Kết quả đo kiểm & Nghiệm thu**:
+  - Chạy kịch bản tự động `check_splits.py`: **0 split tokens (tuyệt đối 0 lỗi cắt đôi)**.
+  - Chạy `test_iges_surface_export.py` bằng Playwright: **PASS 100%**.
+  - Toàn bộ tọa độ trong file IGES nằm gọn gàng trong phạm vi cơ khí chính xác $[-28.36\text{ mm}, +28.36\text{ mm}]$, triệt tiêu 100% các tia bắn ra xa 68 mét.
+
 

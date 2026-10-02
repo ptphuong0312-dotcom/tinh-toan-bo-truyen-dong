@@ -6633,11 +6633,20 @@ const Worm3DExporter = {
             '24HMITCalc-Gear-Engineering',
             11, 0
         ];
-        const gStr = gTokens.join(',') + ';';
-        const gLines = [];
-        for (let i = 0; i < gStr.length; i += 72) {
-            gLines.push(padLine(gStr.slice(i, i + 72), 'G', gLines.length + 1));
+        const gChunks = [];
+        let curG = '';
+        for (let i = 0; i < gTokens.length; i++) {
+            const delim = (i === gTokens.length - 1) ? ';' : ',';
+            const item = String(gTokens[i]) + delim;
+            if (curG.length + item.length <= 72) {
+                curG += item;
+            } else {
+                gChunks.push(curG);
+                curG = item;
+            }
         }
+        if (curG.length > 0) gChunks.push(curG);
+        const gLines = gChunks.map((chunk, idx) => padLine(chunk, 'G', idx + 1));
 
         // Entities preparation
         const entityList = [];
@@ -6681,7 +6690,7 @@ const Worm3DExporter = {
                 }
             }
 
-            const pData = [
+            const pTokens = [
                 128, K1, K2, M1, M2,
                 0, 0, 1, 0, 0,
                 ...uKnots,
@@ -6689,7 +6698,7 @@ const Worm3DExporter = {
                 ...weights,
                 ...ptsCoords,
                 0, 1, 0, 1
-            ].join(',') + ';';
+            ];
 
             entityList.push({
                 type: 128,
@@ -6697,7 +6706,7 @@ const Worm3DExporter = {
                 level: s.level || 1,
                 color: s.color || 3,
                 label: s.label || 'SURFACE',
-                pData
+                pTokens
             });
         });
 
@@ -6712,18 +6721,18 @@ const Worm3DExporter = {
                 coords.push(Number(pts[i][1]).toFixed(5));
                 coords.push(Number(pts[i][2]).toFixed(5));
             }
-            const pData = '106,2,' + N + ',' + coords.join(',') + ';';
+            const pTokens = [106, 2, N, ...coords];
             entityList.push({
                 type: 106,
                 form: 12, // Form 12 = Linear Path in 3D (connected 3D wireframe curve, NOT discrete point markers!)
                 level: c.level || 2,
                 color: c.color || 5,
                 label: c.label || 'CURVE',
-                pData
+                pTokens
             });
         });
 
-        // Compute P lines & DE lines
+        // Compute P lines & DE lines with strict token-aware line wrapping
         const dLines = [];
         const pLines = [];
         let pSeq = 1;
@@ -6733,9 +6742,22 @@ const Worm3DExporter = {
             const deLine2Seq = idx * 2 + 2;
             const pStartPtr = pSeq;
 
+            // Strictly token-aware: each token is placed completely within column 1-64.
+            // No parameter, number, or sign ever crosses column 64!
             const chunks = [];
-            for (let i = 0; i < e.pData.length; i += 64) {
-                chunks.push(e.pData.slice(i, i + 64));
+            let curChunk = '';
+            for (let i = 0; i < e.pTokens.length; i++) {
+                const delim = (i === e.pTokens.length - 1) ? ';' : ',';
+                const item = String(e.pTokens[i]) + delim;
+                if (curChunk.length + item.length <= 64) {
+                    curChunk += item;
+                } else {
+                    chunks.push(curChunk);
+                    curChunk = item;
+                }
+            }
+            if (curChunk.length > 0) {
+                chunks.push(curChunk);
             }
 
             dLines.push(deL1(e.type, pStartPtr, e.level, deLine1Seq));
