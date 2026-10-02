@@ -682,8 +682,15 @@ class Worm3DVisualizer {
             }
         ];
 
+        const wheelSurfaces = wheelData.surfaces.map(s => ({
+            label: s.label,
+            color: s.color,
+            level: 2,
+            grid: s.grid
+        }));
+
         return {
-            surfaces: shiftedSurfaces.concat(wheelData.surfaces),
+            surfaces: shiftedSurfaces.concat(wheelSurfaces),
             curves: shiftedCurves
         };
     }
