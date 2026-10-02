@@ -1016,6 +1016,185 @@ const Worm3DGenerator = {
         };
     },
 
+    /**
+     * Extracts parametric grid surfaces and generator curves for native CAD/CAM surface export (IGES / Mastercam)
+     */
+    getWormParametricData(opt = {}) {
+        const mc = this.extractMC3DParams(opt);
+        const z1 = mc.MC_z1;
+        const px = mc.MC_px;
+        const pz = mc.MC_pxn;
+        const L = mc.MC_L;
+        const r1 = mc.r1;
+        const rf1 = mc.rf1;
+        const halfSx1 = mc.MC_sx1;
+        const tanA = Math.tan(mc.MC_alfa_rad);
+        const handSign = mc.handSign;
+
+        const numSlices = opt.numWormSlices || 36;
+        const ptsR = opt.ptsPerFlank || 8;
+        const wormTipPts = 4;
+
+        const surfaces = [];
+        const curves = [];
+
+        for (let k = 0; k < z1; k++) {
+            const startPhase = (k * 2.0 * Math.PI) / z1;
+            const gridR = [];
+            const gridL = [];
+            const gridTip = [];
+
+            for (let s = 0; s < numSlices; s++) {
+                const x = -L * 0.5 + s * (L / (numSlices - 1));
+                const rBlank = this.evalWormBlankRadius(x, mc);
+                const phi0 = handSign * (2.0 * Math.PI / pz) * x + startPhase;
+
+                const sliceR = [];
+                const sliceL = [];
+
+                for (let m = 0; m <= ptsR; m++) {
+                    const frac = m / ptsR;
+                    const R = rf1 + frac * (rBlank - rf1);
+                    const w = halfSx1 - (R - r1) * tanA;
+                    const dPhi = (2.0 * Math.PI / pz) * w;
+
+                    const phiR = phi0 - dPhi;
+                    const phiL = phi0 + dPhi;
+
+                    sliceR.push([x, R * Math.cos(phiR), R * Math.sin(phiR)]);
+                    sliceL.push([x, R * Math.cos(phiL), R * Math.sin(phiL)]);
+                }
+
+                const sliceTip = [];
+                const phiTipR = phi0 - (2.0 * Math.PI / pz) * (halfSx1 - (rBlank - r1) * tanA);
+                const phiTipL = phi0 + (2.0 * Math.PI / pz) * (halfSx1 - (rBlank - r1) * tanA);
+
+                for (let t = 0; t <= wormTipPts; t++) {
+                    const fracTip = t / wormTipPts;
+                    const phi = phiTipR + fracTip * (phiTipL - phiTipR);
+                    sliceTip.push([x, rBlank * Math.cos(phi), rBlank * Math.sin(phi)]);
+                }
+
+                gridR.push(sliceR);
+                gridL.push(sliceL);
+                gridTip.push(sliceTip);
+            }
+
+            surfaces.push({ label: `WORM_FLANK_R_${k+1}`, grid: gridR, color: 3 });
+            surfaces.push({ label: `WORM_FLANK_L_${k+1}`, grid: gridL, color: 3 });
+            surfaces.push({ label: `WORM_TIP_${k+1}`, grid: gridTip, color: 2 });
+
+            // Rails along length
+            const railRootR = gridR.map(s => s[0]);
+            const railTipR = gridR.map(s => s[ptsR]);
+            const railRootL = gridL.map(s => s[0]);
+            const railTipL = gridL.map(s => s[ptsR]);
+            curves.push({ label: `RAIL_ROT_R${k+1}`, points: railRootR, color: 1 });
+            curves.push({ label: `RAIL_TIP_R${k+1}`, points: railTipR, color: 1 });
+            curves.push({ label: `RAIL_ROT_L${k+1}`, points: railRootL, color: 1 });
+            curves.push({ label: `RAIL_TIP_L${k+1}`, points: railTipL, color: 1 });
+
+            // Cross-Section Profile slices for Ruled/Lofted
+            const numProfiles = 7;
+            for (let p = 0; p < numProfiles; p++) {
+                const sIdx = Math.round((p / (numProfiles - 1)) * (numSlices - 1));
+                const prof = [];
+                for (let m = 0; m <= ptsR; m++) prof.push(gridR[sIdx][m]);
+                for (let t = 1; t <= wormTipPts; t++) prof.push(gridTip[sIdx][t]);
+                for (let m = ptsR - 1; m >= 0; m--) prof.push(gridL[sIdx][m]);
+                curves.push({ label: `LOFT_SEC_${p+1}`, points: prof, color: 5 });
+            }
+        }
+
+        return { surfaces, curves, mc };
+    },
+
+    getWheelParametricData(opt = {}) {
+        const mc = this.extractMC3DParams(opt);
+        const z2 = mc.MC_z2;
+        const b2H = mc.MC_b2H;
+        const halfB = 0.5 * b2H;
+        mc.surfaceOnly = true;
+        mc.contactMode = opt.contactMode || 'theory';
+
+        const numSlices = opt.numWheelSlices || 25;
+        const ptsR = opt.ptsPerFlank || 8;
+        const wheelTipPts = 3;
+        const pitchAngle = (2.0 * Math.PI) / z2;
+
+        const surfaces = [];
+        const curves = [];
+
+        const activeTeeth = Math.min(z2, opt.exportAllTeeth ? z2 : Math.min(8, z2));
+
+        for (let j = 0; j < activeTeeth; j++) {
+            const gridDrive = [];
+            const gridCoast = [];
+            const gridTip = [];
+
+            for (let s = 0; s < numSlices; s++) {
+                const z = -halfB + s * (b2H / (numSlices - 1));
+                const blank = this.evalWheelBlank(z, mc);
+                const rRoot = blank.rRoot;
+                const rTip = blank.rTip;
+
+                const sliceDrive = [];
+                const sliceCoast = [];
+
+                for (let m = 0; m <= ptsR; m++) {
+                    const frac = m / ptsR;
+                    const r = rRoot + frac * (rTip - rRoot);
+
+                    let thSpaceR = this.evalConjugateFlankTheta(r, z, +1, mc);
+                    let thSpaceL = this.evalConjugateFlankTheta(r, z, -1, mc);
+
+                    if (thSpaceR === null) thSpaceR = -Math.PI * 0.5 + (0.5 * mc.MC_sx1 / mc.r2);
+                    if (thSpaceL === null) thSpaceL = -Math.PI * 0.5 - (0.5 * mc.MC_sx1 / mc.r2);
+
+                    const thetaDrive = thSpaceR + j * pitchAngle;
+                    const thetaCoast = thSpaceL + (j + 1) * pitchAngle;
+
+                    sliceDrive.push([r * Math.cos(thetaDrive), r * Math.sin(thetaDrive), z]);
+                    sliceCoast.push([r * Math.cos(thetaCoast), r * Math.sin(thetaCoast), z]);
+                }
+
+                const sliceTip = [];
+                const pTipDrive = sliceDrive[ptsR];
+                const pTipCoast = sliceCoast[ptsR];
+                const thDrive = Math.atan2(pTipDrive[1], pTipDrive[0]);
+                const thCoast = Math.atan2(pTipCoast[1], pTipCoast[0]);
+
+                for (let t = 0; t <= wheelTipPts; t++) {
+                    const fracTip = t / wheelTipPts;
+                    const th = thDrive + fracTip * (thCoast - thDrive);
+                    sliceTip.push([rTip * Math.cos(th), rTip * Math.sin(th), z]);
+                }
+
+                gridDrive.push(sliceDrive);
+                gridCoast.push(sliceCoast);
+                gridTip.push(sliceTip);
+            }
+
+            surfaces.push({ label: `WHEEL_DRV_${j+1}`, grid: gridDrive, color: 4 });
+            surfaces.push({ label: `WHEEL_CST_${j+1}`, grid: gridCoast, color: 4 });
+            surfaces.push({ label: `WHEEL_TIP_${j+1}`, grid: gridTip, color: 2 });
+
+            if (j === 0) {
+                const numCross = 5;
+                for (let c = 0; c < numCross; c++) {
+                    const sIdx = Math.round((c / (numCross - 1)) * (numSlices - 1));
+                    const prof = [];
+                    for (let m = 0; m <= ptsR; m++) prof.push(gridDrive[sIdx][m]);
+                    for (let t = 1; t <= wheelTipPts; t++) prof.push(gridTip[sIdx][t]);
+                    for (let m = ptsR - 1; m >= 0; m--) prof.push(gridCoast[sIdx][m]);
+                    curves.push({ label: `THROAT_SEC_${c+1}`, points: prof, color: 5 });
+                }
+            }
+        }
+
+        return { surfaces, curves, mc };
+    },
+
     generateWormSurfaceMesh(opt = {}) {
         return this.generateWormMesh(Object.assign({}, opt, { surfaceOnly: true }));
     },

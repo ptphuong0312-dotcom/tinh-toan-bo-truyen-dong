@@ -554,16 +554,15 @@ class Worm3DVisualizer {
         const activeLevel = Math.max(1, Math.min(10, parseInt(this.meshDensityLevel) || 8));
         const density = Worm3DGenerator.getDensitySettings(activeLevel, this.geom.z1, this.geom.z2);
 
-        // High-Precision CAD Export Settings for Mastercam & SolidWorks:
-        // Worm: 240+ slices along thread, 24+ points per flank (eliminates all faceting/bumps).
-        // Wheel: 45 slices along face width, 14 points per flank (silky smooth, compact STEP size).
+        // Balanced CAD Export Settings for Mastercam & SolidWorks STEP compatibility:
+        // Capped to prevent Mastercam Parasolid translator stalls (eliminating the 13,231 faces bottleneck)
         const stepOpts = forStep ? {
-            numWormSlices: Math.max(240, density.wormSlices),
-            ptsPerFlank: Math.max(24, density.wormPtsR),
-            wormTipPts: Math.max(14, density.wormTipPts),
-            numWheelSlices: Math.min(45, Math.max(35, density.wheelSlices)),
-            wheelPtsR: Math.min(16, Math.max(12, density.wheelPtsR)),
-            wheelTipPts: Math.max(4, density.wheelTipPts)
+            numWormSlices: surfaceOnly ? 48 : Math.min(96, Math.max(48, density.wormSlices)),
+            ptsPerFlank: surfaceOnly ? 8 : Math.min(12, Math.max(8, density.wormPtsR)),
+            wormTipPts: surfaceOnly ? 4 : Math.min(6, Math.max(4, density.wormTipPts)),
+            numWheelSlices: surfaceOnly ? 25 : Math.min(32, Math.max(22, density.wheelSlices)),
+            wheelPtsR: surfaceOnly ? 8 : Math.min(10, Math.max(8, density.wheelPtsR)),
+            wheelTipPts: 3
         } : {
             meshDensityLevel: activeLevel
         };
@@ -606,6 +605,92 @@ class Worm3DVisualizer {
             return [tWorm, tWheel];
         }
         return tWorm.concat(tWheel);
+    }
+
+    /**
+     * Extracts true parametric B-Spline surfaces and wireframe profile curves for Mastercam IGES export.
+     * @param {string} type - 'worm', 'wheel', 'assembly', or 'curves_worm'
+     */
+    getParametricData(type = 'worm') {
+        if (!this.geom || typeof Worm3DGenerator === 'undefined') return { surfaces: [], curves: [] };
+
+        const a = this.centerDistA || parseFloat(this.geom.a) || 103.3663;
+        const L = parseFloat(this.geom.L) || 56.0;
+        const b2H = parseFloat(this.geom.b2H) || 33.57;
+
+        if (type === 'worm' || type === 'pinion') {
+            const data = Worm3DGenerator.getWormParametricData(this.geom);
+            data.curves.push({
+                label: 'AXIS_W1',
+                points: [[-L * 0.5 - 15, 0, 0], [L * 0.5 + 15, 0, 0]],
+                color: 1,
+                level: 3
+            });
+            return data;
+        }
+
+        if (type === 'wheel' || type === 'gear') {
+            const data = Worm3DGenerator.getWheelParametricData(this.geom);
+            data.curves.push({
+                label: 'AXIS_W2',
+                points: [[0, 0, -b2H * 0.5 - 15], [0, 0, b2H * 0.5 + 15]],
+                color: 1,
+                level: 3
+            });
+            return data;
+        }
+
+        if (type === 'curves_worm') {
+            const data = Worm3DGenerator.getWormParametricData(this.geom);
+            return {
+                surfaces: [],
+                curves: [
+                    ...data.curves,
+                    {
+                        label: 'AXIS_W1',
+                        points: [[-L * 0.5 - 15, 0, 0], [L * 0.5 + 15, 0, 0]],
+                        color: 1,
+                        level: 3
+                    }
+                ]
+            };
+        }
+
+        // Assembly Pair: Worm 1 translated along Y by -a, Worm Wheel 2 at origin
+        const wormData = Worm3DGenerator.getWormParametricData(this.geom);
+        const wheelData = Worm3DGenerator.getWheelParametricData(this.geom);
+
+        const shiftedSurfaces = wormData.surfaces.map(s => ({
+            label: s.label,
+            color: s.color,
+            level: 1,
+            grid: s.grid.map(slice => slice.map(p => [p[0], p[1] - a, p[2]]))
+        }));
+
+        const shiftedCurves = wormData.curves.map(c => ({
+            label: c.label,
+            color: c.color,
+            level: 2,
+            points: c.points.map(p => [p[0], p[1] - a, p[2]])
+        }));
+
+        shiftedCurves.push({
+            label: 'AXIS_W1',
+            points: [[-L * 0.5 - 15, -a, 0], [L * 0.5 + 15, -a, 0]],
+            color: 1,
+            level: 3
+        });
+        shiftedCurves.push({
+            label: 'AXIS_W2',
+            points: [[0, 0, -b2H * 0.5 - 15], [0, 0, b2H * 0.5 + 15]],
+            color: 1,
+            level: 3
+        });
+
+        return {
+            surfaces: shiftedSurfaces.concat(wheelData.surfaces),
+            curves: shiftedCurves.concat(wheelData.curves)
+        };
     }
 }
 

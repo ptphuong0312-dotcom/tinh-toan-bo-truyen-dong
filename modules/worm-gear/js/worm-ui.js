@@ -793,6 +793,12 @@ class WormUIController {
             }
         };
 
+        // IGES 5.3 Mastercam Native Surface & Wireframe
+        bind3DExp('expIgesWorm', 'iges', 'worm');
+        bind3DExp('expIgesWheel', 'iges', 'wheel');
+        bind3DExp('expIgesAssembly', 'iges', 'assembly');
+        bind3DExp('expIgesCurvesWorm', 'iges_curves', 'worm');
+
         bind3DExp('expStepWorm', 'step', 'worm');
         bind3DExp('expStepWheel', 'step', 'wheel');
         bind3DExp('expStepAssembly', 'step', 'assembly');
@@ -816,6 +822,22 @@ class WormUIController {
         const g = this.latestResult;
         const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK' };
         const typeCode = typeNames[g.toothType] || 'ZN';
+
+        // Native Mastercam IGES 5.3 Surface / Wireframe Export
+        if (format === 'iges' || format === 'iges_curves') {
+            const pData = this.visualizer3D.getParametricData(format === 'iges_curves' ? 'curves_worm' : target);
+            let igsFilename = '';
+            if (format === 'iges_curves') {
+                igsFilename = `Khung_Day_Truc_Vit_1_${typeCode}_z${g.z1}_Ruled_Loft.igs`;
+            } else if (target === 'worm') {
+                igsFilename = `Truc_Vit_1_${typeCode}_z${g.z1}_Mastercam_Surface.igs`;
+            } else if (target === 'wheel') {
+                igsFilename = `Banh_Vit_Lom_2_${typeCode}_z${g.z2}_Mastercam_Surface.igs`;
+            } else {
+                igsFilename = `Cap_Truc_Vit_Banh_Vit_${typeCode}_z${g.z1}x${g.z2}_Mastercam_Surface.igs`;
+            }
+            return Worm3DExporter.exportIGES(pData, igsFilename, true);
+        }
 
         const isSurface = (format === 'step_surface' || format === 'stl_surface');
         const forStep = (format === 'step' || format === 'step_surface');

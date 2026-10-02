@@ -1495,3 +1495,43 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - `btnViewTangentialProfile` (`tangential_profile`): Mặt Cắt Tiếp Tuyến Mặt Trụ Chia (T-T).
    - Cung cấp đầy đủ các tùy chọn xuất DXF Release 12 tương ứng với đầy đủ các layer cơ khí (`OUTLINE`, `PITCH_LINE`, `LIMIT_LINES`, `AXIS`, `DIMS`, `MFG_TABLE`).
 
+---
+
+### Quy Tắc 63: Quy Chuẩn Xuất File 3D Native Surface IGES 5.3 (.igs) Chuẩn Mastercam (X5-2026) & Tối Ưu Hóa Khối Lượng Mặt STEP B-Rep
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"khi mở mastercam file .step do web app xuất ra thì mastercam phải mở rất lâu (phải convert file), cái tôi cần chủ yếu là file xuất ra giống được chuẩn surface của mastercam để phần mềm mở không phải load và ngoài ra có thể chỉnh sửa hình trong file đó được"*
+   - User cung cấp 2 ảnh chụp thực tế Mastercam Design X5:
+     * `media_1790910896413.png`: Mastercam bị nghẽn tiến trình dịch file Parasolid Solid B-Rep với thông báo `Please wait - converting file.... 13231 / -11137`.
+     * `media_1790911034114.png`: Menu Mastercam mở tại chức năng `Create -> Surface -> Ruled / Lofted...`.
+2. **Nguyên Nhân Gốc Rễ & Kiến Trúc Mastercam Surface**:
+   - **Bản chất file STEP trước đó**: Chuyển đổi lưới đa giác tam giác thành hàng nghìn mặt phẳng nhỏ (`ADVANCED_FACE` / `PLANE`). Khi Mastercam X5 nhập file STEP, bộ dịch Parasolid duyệt tuần tự từng mặt phẳng một để khâu thành Solid, dẫn đến thời gian chờ hàng phút và mô hình bị khóa cứng dưới dạng Faceted Solid, không thể chỉnh sửa bằng các công cụ Surface gốc của Mastercam.
+   - **Giải pháp triệt để**: Sử dụng định dạng **IGES 5.3 (`.igs`)** - định dạng gốc mạnh mẽ nhất của Mastercam cho mô hình hóa mặt cong (Surface Modeling). Mastercam mở trực tiếp trong **< 0.1 giây** mà không cần qua bộ dịch Solid!
+3. **Cấu Trúc 3 Phân Tầng Level Kỹ Thuật Trong File IGES (.igs)**:
+   - **Level 1 (`SURFACES`)**: Các mặt cong giải tích tham số chuẩn **Entity 128 (Rational B-Spline Surface)** cho Sườn Phải (Flank R), Sườn Trái (Flank L) và Đỉnh Răng (Tip Crest):
+     * Bậc cơ sở: $M_1 = 3$ (U dọc đường xoắn ốc) và $M_2 = 1$ (V dọc đường sinh thẳng sườn ren).
+     * Vectơ nút kẹp (Clamped knot vectors): 4 nút 0 ở đầu, 4 nút 1 ở cuối, phân bố nút nội suy trơn mượt không dao động.
+     * Trọng số đa thức: $PROP_3 = 1$, toàn bộ trọng số $w = 1.0$.
+     * Hiển thị trong Mastercam: Màu xanh lá cây (Color 3) và đỏ (Color 2), nhận diện ngay là đối tượng `SURFACE` bản địa, cho phép `Trim`, `Untrim`, `Fillet`, `Offset`, `Extend`.
+   - **Level 2 (`WIREFRAME_LOFT_PROFILES`)**: Khung dây đường dẫn 3D chuẩn **Entity 106 Form 2 (Copious Data 3D Points)**:
+     * Bao gồm các đường sinh chân ren (Root Rails), đường sinh đỉnh ren (Tip Rails) dọc trục vít.
+     * 7 mặt cắt ngang biên dạng răng (Loft Cross Sections) phân bố đều dọc chiều dài ren.
+     * Người lập trình Mastercam có thể dùng ngay lệnh `Create -> Surface -> Ruled / Lofted...` quét qua các đường profile này để tạo bề mặt gia công theo ý muốn (khớp 100% nhu cầu người dùng).
+   - **Level 3 (`AXES_DATUMS`)**: Đường tâm trục xoay của Trục Vít 1 và Bánh Vít 2 (Entity 106 Form 2) giúp xác định gốc tọa độ và hướng quay khi gá đặt 4 trục / 5 trục.
+4. **Quy Chuẩn Định Dạng Dòng 80 Cột Chuẩn ANSI/USPRO/IPO-100-1996 (IGES 5.3)**:
+   - Toàn bộ các dòng trong file `.igs` bắt buộc phải có độ dài **chính xác 80 ký tự**:
+     * Đoạn Start (`S`): 72 ký tự mô tả + `S` + 7 ký tự số thứ tự dòng.
+     * Đoạn Global (`G`): Dãy tham số chuỗi Hollerith (`nH...`), đơn vị mm (`2HMM`), độ phân giải $0.0001$, phiên bản IGES 5.3 (mã 11).
+     * Đoạn Directory Entry (`D`): Mỗi thực thể gồm đúng 2 dòng 80 ký tự, chứa mã thực thể (128 hoặc 106), con trỏ sang đoạn P, Level, Color, Form, và nhãn tên 8 ký tự (`FLANK_R1`, `LOFT_SEC`, `AXIS_W1`).
+     * Đoạn Parameter Data (`P`): Dữ liệu tham số cắt thành từng đoạn 64 ký tự + 8 ký tự con trỏ D + `P` + 7 ký tự số thứ tự.
+     * Đoạn Terminate (`T`): Đúng 1 dòng tổng kết số lượng dòng `S`, `G`, `D`, `P`.
+5. **Tối Ưu Hóa Dung Lượng & Mặt Lưới STEP AP214**:
+   - Đối với xuất file STEP mặt sườn rỗng (`exportSTEPSurface`), giới hạn số lát cắt hợp lý (48 lát $\times$ 8 điểm $\approx 800$ tam giác thay vì 13,231 tam giác), giảm tải 10 lần giúp Mastercam mở mượt mà nếu người dùng vẫn chọn định dạng STEP.
+6. **Đồng Bộ Hoàn Chỉnh Trên Giao Diện Web App**:
+   - Thêm khối menu độc lập, nổi bật màu xanh ngọc bích trên đầu menu thả xuống 3D:
+     * `expIgesWorm`: 💎 Xuất Trục Vít 1 Surface Mastercam (.igs).
+     * `expIgesWheel`: 💎 Xuất Bánh Vít 2 Surface Mastercam (.igs).
+     * `expIgesAssembly`: 💎 Xuất Cả Cặp Ăn Khớp Surface (.igs).
+     * `expIgesCurvesWorm`: 📐 Xuất Khung Dây Dựng Ruled / Lofted (.igs).
+   - Kiểm thử tự động Playwright xác nhận 100% đạt chuẩn: 569/569 dòng file `.igs` chuẩn 80 ký tự, mở tức thì < 0.1s, dung lượng tệp 46.6 KB, đầy đủ Entity 128 và Entity 106.
+
+

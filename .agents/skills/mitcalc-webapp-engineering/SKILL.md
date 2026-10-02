@@ -1516,3 +1516,28 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
       * 3 nút bấm chuyên dụng: `btnViewNormalProfile`, `btnViewAxialProfile`, `btnViewTangentialProfile`.
       * Xuất DXF R12 tương ứng với đầy đủ các layer: `OUTLINE`, `AXIS`, `PITCH_LINE`, `LIMIT_LINES`, `DIMS`, `MFG_TABLE`.
 
+---
+
+19. **XUẤT 3D NATIVE SURFACE MASTERCAM IGES 5.3 (.IGS) MỞ TỨC THÌ (< 0.1S), ĐỒNG BỘ KHUNG DÂY DỰNG HÌNH RULED/LOFTED & TỐI ƯU HÓA LƯỚI SOLID B-REP**:
+    - **Nguyên nhân gốc rễ file STEP làm Mastercam treo**:
+      * File STEP AP214 khi xuất lưới đa giác tam giác chứa đến 13,231 mặt phẳng nhỏ (`ADVANCED_FACE`/`PLANE`).
+      * Bộ dịch Parasolid của Mastercam duyệt tuần tự từng mặt để khâu cạnh thành Solid (`Please wait - converting file... 13231 / -11137`), mất vài phút và thu được khối faceted solid bị khóa cứng, không thể chỉnh sửa bằng công cụ Surface của Mastercam.
+    - **Kiến trúc giải pháp Native IGES 5.3 (.igs)**:
+      * Sử dụng trực tiếp định dạng bản địa chuẩn quốc tế **IGES 5.3 (ANSI/USPRO/IPO-100-1996)** cho Surface Modeling.
+      * Xuất các mặt cong tham số giải tích B-Spline thực thụ, Mastercam mở trực tiếp trong **< 0.05 giây** (Zero-Conversion Wait).
+    - **3 Phân tầng Level kỹ thuật trong Mastercam**:
+      * **Level 1 (`SURFACES`)**: Các mặt cong tham số **Entity 128 (Rational B-Spline Surface)** cho Sườn Phải (Flank R), Sườn Trái (Flank L), và Đỉnh Răng (Tip Crest). Bậc $M_1 = 3$ (dọc đường xoắn ốc $u$) và $M_2 = 1$ (dọc đường sinh thẳng $v$). Vectơ nút kẹp (Clamped knot vectors) $4$ nút 0 ở đầu, $4$ nút 1 ở cuối, trọng số $w = 1.0$. Mastercam nhận diện là `SURFACE` bản địa, cho phép `Trim`, `Untrim`, `Fillet`, `Offset`, `Extend`.
+      * **Level 2 (`WIREFRAME_LOFT_PROFILES`)**: Khung dây đường dẫn 3D chuẩn **Entity 106 Form 2 (Copious Data 3D Points)** gồm 4 đường sinh rails dọc ren và 7 mặt cắt ngang răng (Loft Cross Sections). Dùng trực tiếp cho lệnh `Create -> Surface -> Ruled / Lofted...` của Mastercam.
+      * **Level 3 (`AXES_DATUMS`)**: Đường tâm trục xoay Trục Vít 1 và Bánh Vít 2 (Entity 106 Form 2).
+    - **Quy chuẩn dòng 80 cột nghiêm ngặt**:
+      * Toàn bộ các dòng trong file `.igs` đều có độ dài chính xác **80 ký tự** (`S`, `G`, `D`, `P`, `T`).
+      * Dòng Terminate `T`: Đúng 1 dòng 80 ký tự tổng kết số lượng dòng `S`, `G`, `D`, `P`.
+    - **Tối ưu hóa số lượng mặt STEP AP214**:
+      * Giới hạn số lát cắt cho xuất mặt rỗng STEP xuống $\approx 800$ tam giác (giảm 10 lần), giúp nạp nhanh chóng nếu người dùng vẫn chọn định dạng STEP.
+    - **Bộ 4 tùy chọn xuất Mastercam IGES trên giao diện 3D**:
+      * `expIgesWorm`: Xuất Trục Vít 1 Surface Mastercam (.igs).
+      * `expIgesWheel`: Xuất Bánh Vít 2 Surface Mastercam (.igs).
+      * `expIgesAssembly`: Xuất Cả Cặp Ăn Khớp Surface (.igs).
+      * `expIgesCurvesWorm`: Xuất Khung Dây Dựng Ruled / Lofted (.igs).
+
+

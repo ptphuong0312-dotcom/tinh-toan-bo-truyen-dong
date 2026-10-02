@@ -453,6 +453,208 @@ const Worm3DExporter = {
         const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
         if (autoDownload) this.downloadBlob(blob, filename);
         return { blob, text: textContent, triangleCount: totalTriangles };
+    },
+
+    /**
+     * Exports True Parametric B-Spline Surfaces (Entity 128) and Wireframe Profile Curves (Entity 106 Form 2)
+     * strictly formatted according to ANSI/USPRO/IPO-100-1996 (IGES 5.3) for Mastercam (X5-2026) & SolidWorks.
+     * Level 1: SURFACES (Flanks, Tip Crests) - True surfaces, opens instantly in Mastercam without solid conversion!
+     * Level 2: WIREFRAME_LOFT_PROFILES (Tooth cross profiles, Helical/Throat Rails) for Mastercam Create -> Surface -> Ruled/Lofted.
+     * Level 3: AXES_DATUMS (Shaft / wheel rotation centerlines).
+     *
+     * @param {Object|Array} parametricData - { surfaces, curves, mc } or array of such objects
+     * @param {string} filename - Target .igs filename
+     * @param {boolean} autoDownload - Triggers browser Blob download
+     */
+    exportIGES(parametricData, filename = 'worm_gear_surface.igs', autoDownload = true) {
+        let surfaces = [];
+        let curves = [];
+        if (Array.isArray(parametricData)) {
+            parametricData.forEach(p => {
+                if (p && p.surfaces) surfaces.push(...p.surfaces);
+                if (p && p.curves) curves.push(...p.curves);
+            });
+        } else if (parametricData) {
+            if (parametricData.surfaces) surfaces.push(...parametricData.surfaces);
+            if (parametricData.curves) curves.push(...parametricData.curves);
+        }
+
+        const pad8 = (v) => ('        ' + v).slice(-8);
+        const padLine = (txt, char, seq) => {
+            const p = (txt + ' '.repeat(72)).slice(0, 72);
+            const s = ('       ' + seq).slice(-7);
+            return p + char + s;
+        };
+        const deL1 = (eType, pPtr, level, seq) => {
+            return pad8(eType) + pad8(pPtr) + pad8(0) + pad8(1) + pad8(level) + pad8(0) + pad8(0) + pad8(0) + pad8('00000000') + 'D' + ('       ' + seq).slice(-7);
+        };
+        const deL2 = (eType, color, pCnt, form, label, seq) => {
+            return pad8(eType) + pad8(1) + pad8(color) + pad8(pCnt) + pad8(form) + pad8(0) + pad8(0) + pad8(('        ' + label).slice(-8)) + pad8(0) + 'D' + ('       ' + seq).slice(-7);
+        };
+        const pLine = (chunk, dePtr, seq) => {
+            const c = (chunk + ' '.repeat(64)).slice(0, 64);
+            return c + pad8(dePtr) + 'P' + ('       ' + seq).slice(-7);
+        };
+
+        // Start Section S
+        const sLines = [
+            padLine('MITCalc Web App - 3D Worm Gear Native Surface Export for Mastercam X5-2026', 'S', 1),
+            padLine('Direct Parametric B-Spline Surfaces & Wireframe Profiles - Zero Conversion', 'S', 2)
+        ];
+
+        // Global Section G
+        const now = new Date();
+        const dateStr = now.getFullYear().toString() +
+            String(now.getMonth() + 1).padStart(2, '0') +
+            String(now.getDate()).padStart(2, '0') + '.' +
+            String(now.getHours()).padStart(2, '0') +
+            String(now.getMinutes()).padStart(2, '0') +
+            String(now.getSeconds()).padStart(2, '0');
+
+        const gTokens = [
+            '1H,', '1H;',
+            '33HMITCalc 3D Worm Gear Surface CAD',
+            filename.length + 'H' + filename,
+            '21HAntigravity CAD Engine',
+            '12HMastercam X5',
+            32, 38, 6, 308, 15,
+            '12HMastercam X5',
+            '1.0', 2, '2HMM', 1, '1.0',
+            '15H' + dateStr,
+            '0.0001', '1000.0',
+            '9HSirPhuong',
+            '24HMITCalc-Gear-Engineering',
+            11, 0
+        ];
+        const gStr = gTokens.join(',') + ';';
+        const gLines = [];
+        for (let i = 0; i < gStr.length; i += 72) {
+            gLines.push(padLine(gStr.slice(i, i + 72), 'G', gLines.length + 1));
+        }
+
+        // Entities preparation
+        const entityList = [];
+
+        // 1. Parametric B-Spline Surfaces (Entity 128) - Level 1 (SURFACES)
+        surfaces.forEach(s => {
+            const grid = s.grid;
+            if (!grid || !grid.length || !grid[0].length) return;
+            const Nu = grid.length;
+            const Nv = grid[0].length;
+            const K1 = Nu - 1;
+            const K2 = Nv - 1;
+            const M1 = Math.min(3, Nu - 1);
+            const M2 = Math.min(1, Nv - 1);
+
+            const uKnots = [];
+            for (let i = 0; i <= M1; i++) uKnots.push('0');
+            const uInt = Nu - M1 - 1;
+            for (let i = 1; i <= uInt; i++) uKnots.push((i / (uInt + 1)).toFixed(6));
+            for (let i = 0; i <= M1; i++) uKnots.push('1');
+
+            const vKnots = [];
+            for (let j = 0; j <= M2; j++) vKnots.push('0');
+            const vInt = Nv - M2 - 1;
+            for (let j = 1; j <= vInt; j++) vKnots.push((j / (vInt + 1)).toFixed(6));
+            for (let j = 0; j <= M2; j++) vKnots.push('1');
+
+            const totalPts = Nu * Nv;
+            const weights = new Array(totalPts).fill('1');
+
+            const ptsCoords = [];
+            for (let i = 0; i < Nu; i++) {
+                for (let j = 0; j < Nv; j++) {
+                    const pt = grid[i][j];
+                    ptsCoords.push(Number(pt[0]).toFixed(5));
+                    ptsCoords.push(Number(pt[1]).toFixed(5));
+                    ptsCoords.push(Number(pt[2]).toFixed(5));
+                }
+            }
+
+            const pData = [
+                128, K1, K2, M1, M2,
+                0, 0, 1, 0, 0,
+                ...uKnots,
+                ...vKnots,
+                ...weights,
+                ...ptsCoords,
+                0, 1, 0, 1
+            ].join(',') + ';';
+
+            entityList.push({
+                type: 128,
+                form: 0,
+                level: s.level || 1,
+                color: s.color || 3,
+                label: s.label || 'SURFACE',
+                pData
+            });
+        });
+
+        // 2. Wireframe Profiles and Rails (Entity 106 Form 2 Copious Data) - Level 2 / Level 3
+        curves.forEach(c => {
+            const pts = c.points;
+            if (!pts || !pts.length) return;
+            const N = pts.length;
+            const coords = [];
+            for (let i = 0; i < N; i++) {
+                coords.push(Number(pts[i][0]).toFixed(5));
+                coords.push(Number(pts[i][1]).toFixed(5));
+                coords.push(Number(pts[i][2]).toFixed(5));
+            }
+            const pData = '106,2,' + N + ',' + coords.join(',') + ';';
+            entityList.push({
+                type: 106,
+                form: 2,
+                level: c.level || 2,
+                color: c.color || 5,
+                label: c.label || 'CURVE',
+                pData
+            });
+        });
+
+        // Compute P lines & DE lines
+        const dLines = [];
+        const pLines = [];
+        let pSeq = 1;
+
+        entityList.forEach((e, idx) => {
+            const deLine1Seq = idx * 2 + 1;
+            const deLine2Seq = idx * 2 + 2;
+            const pStartPtr = pSeq;
+
+            const chunks = [];
+            for (let i = 0; i < e.pData.length; i += 64) {
+                chunks.push(e.pData.slice(i, i + 64));
+            }
+
+            dLines.push(deL1(e.type, pStartPtr, e.level, deLine1Seq));
+            dLines.push(deL2(e.type, e.color, chunks.length, e.form, e.label, deLine2Seq));
+
+            chunks.forEach(chunk => {
+                pLines.push(pLine(chunk, deLine1Seq, pSeq++));
+            });
+        });
+
+        // Terminate Section T
+        const sCnt = String(sLines.length).padStart(7, ' ');
+        const gCnt = String(gLines.length).padStart(7, ' ');
+        const dCnt = String(dLines.length).padStart(7, ' ');
+        const pCnt = String(pLines.length).padStart(7, ' ');
+        const tLine = `S${sCnt}G${gCnt}D${dCnt}P${pCnt}` + ' '.repeat(40) + 'T      1';
+
+        const allLines = sLines.concat(gLines, dLines, pLines, [tLine]);
+        const igesContent = allLines.join('\r\n') + '\r\n';
+        const blob = new Blob([igesContent], { type: 'application/iges;charset=utf-8' });
+        if (autoDownload) this.downloadBlob(blob, filename);
+
+        return {
+            content: igesContent,
+            blob,
+            numSurfaces: surfaces.length,
+            numCurves: curves.length,
+            totalLines: allLines.length
+        };
     }
 };
 

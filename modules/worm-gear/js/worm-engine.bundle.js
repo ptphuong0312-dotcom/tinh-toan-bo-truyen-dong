@@ -5909,6 +5909,185 @@ const Worm3DGenerator = {
         };
     },
 
+    /**
+     * Extracts parametric grid surfaces and generator curves for native CAD/CAM surface export (IGES / Mastercam)
+     */
+    getWormParametricData(opt = {}) {
+        const mc = this.extractMC3DParams(opt);
+        const z1 = mc.MC_z1;
+        const px = mc.MC_px;
+        const pz = mc.MC_pxn;
+        const L = mc.MC_L;
+        const r1 = mc.r1;
+        const rf1 = mc.rf1;
+        const halfSx1 = mc.MC_sx1;
+        const tanA = Math.tan(mc.MC_alfa_rad);
+        const handSign = mc.handSign;
+
+        const numSlices = opt.numWormSlices || 36;
+        const ptsR = opt.ptsPerFlank || 8;
+        const wormTipPts = 4;
+
+        const surfaces = [];
+        const curves = [];
+
+        for (let k = 0; k < z1; k++) {
+            const startPhase = (k * 2.0 * Math.PI) / z1;
+            const gridR = [];
+            const gridL = [];
+            const gridTip = [];
+
+            for (let s = 0; s < numSlices; s++) {
+                const x = -L * 0.5 + s * (L / (numSlices - 1));
+                const rBlank = this.evalWormBlankRadius(x, mc);
+                const phi0 = handSign * (2.0 * Math.PI / pz) * x + startPhase;
+
+                const sliceR = [];
+                const sliceL = [];
+
+                for (let m = 0; m <= ptsR; m++) {
+                    const frac = m / ptsR;
+                    const R = rf1 + frac * (rBlank - rf1);
+                    const w = halfSx1 - (R - r1) * tanA;
+                    const dPhi = (2.0 * Math.PI / pz) * w;
+
+                    const phiR = phi0 - dPhi;
+                    const phiL = phi0 + dPhi;
+
+                    sliceR.push([x, R * Math.cos(phiR), R * Math.sin(phiR)]);
+                    sliceL.push([x, R * Math.cos(phiL), R * Math.sin(phiL)]);
+                }
+
+                const sliceTip = [];
+                const phiTipR = phi0 - (2.0 * Math.PI / pz) * (halfSx1 - (rBlank - r1) * tanA);
+                const phiTipL = phi0 + (2.0 * Math.PI / pz) * (halfSx1 - (rBlank - r1) * tanA);
+
+                for (let t = 0; t <= wormTipPts; t++) {
+                    const fracTip = t / wormTipPts;
+                    const phi = phiTipR + fracTip * (phiTipL - phiTipR);
+                    sliceTip.push([x, rBlank * Math.cos(phi), rBlank * Math.sin(phi)]);
+                }
+
+                gridR.push(sliceR);
+                gridL.push(sliceL);
+                gridTip.push(sliceTip);
+            }
+
+            surfaces.push({ label: `WORM_FLANK_R_${k+1}`, grid: gridR, color: 3 });
+            surfaces.push({ label: `WORM_FLANK_L_${k+1}`, grid: gridL, color: 3 });
+            surfaces.push({ label: `WORM_TIP_${k+1}`, grid: gridTip, color: 2 });
+
+            // Rails along length
+            const railRootR = gridR.map(s => s[0]);
+            const railTipR = gridR.map(s => s[ptsR]);
+            const railRootL = gridL.map(s => s[0]);
+            const railTipL = gridL.map(s => s[ptsR]);
+            curves.push({ label: `RAIL_ROT_R${k+1}`, points: railRootR, color: 1 });
+            curves.push({ label: `RAIL_TIP_R${k+1}`, points: railTipR, color: 1 });
+            curves.push({ label: `RAIL_ROT_L${k+1}`, points: railRootL, color: 1 });
+            curves.push({ label: `RAIL_TIP_L${k+1}`, points: railTipL, color: 1 });
+
+            // Cross-Section Profile slices for Ruled/Lofted
+            const numProfiles = 7;
+            for (let p = 0; p < numProfiles; p++) {
+                const sIdx = Math.round((p / (numProfiles - 1)) * (numSlices - 1));
+                const prof = [];
+                for (let m = 0; m <= ptsR; m++) prof.push(gridR[sIdx][m]);
+                for (let t = 1; t <= wormTipPts; t++) prof.push(gridTip[sIdx][t]);
+                for (let m = ptsR - 1; m >= 0; m--) prof.push(gridL[sIdx][m]);
+                curves.push({ label: `LOFT_SEC_${p+1}`, points: prof, color: 5 });
+            }
+        }
+
+        return { surfaces, curves, mc };
+    },
+
+    getWheelParametricData(opt = {}) {
+        const mc = this.extractMC3DParams(opt);
+        const z2 = mc.MC_z2;
+        const b2H = mc.MC_b2H;
+        const halfB = 0.5 * b2H;
+        mc.surfaceOnly = true;
+        mc.contactMode = opt.contactMode || 'theory';
+
+        const numSlices = opt.numWheelSlices || 25;
+        const ptsR = opt.ptsPerFlank || 8;
+        const wheelTipPts = 3;
+        const pitchAngle = (2.0 * Math.PI) / z2;
+
+        const surfaces = [];
+        const curves = [];
+
+        const activeTeeth = Math.min(z2, opt.exportAllTeeth ? z2 : Math.min(8, z2));
+
+        for (let j = 0; j < activeTeeth; j++) {
+            const gridDrive = [];
+            const gridCoast = [];
+            const gridTip = [];
+
+            for (let s = 0; s < numSlices; s++) {
+                const z = -halfB + s * (b2H / (numSlices - 1));
+                const blank = this.evalWheelBlank(z, mc);
+                const rRoot = blank.rRoot;
+                const rTip = blank.rTip;
+
+                const sliceDrive = [];
+                const sliceCoast = [];
+
+                for (let m = 0; m <= ptsR; m++) {
+                    const frac = m / ptsR;
+                    const r = rRoot + frac * (rTip - rRoot);
+
+                    let thSpaceR = this.evalConjugateFlankTheta(r, z, +1, mc);
+                    let thSpaceL = this.evalConjugateFlankTheta(r, z, -1, mc);
+
+                    if (thSpaceR === null) thSpaceR = -Math.PI * 0.5 + (0.5 * mc.MC_sx1 / mc.r2);
+                    if (thSpaceL === null) thSpaceL = -Math.PI * 0.5 - (0.5 * mc.MC_sx1 / mc.r2);
+
+                    const thetaDrive = thSpaceR + j * pitchAngle;
+                    const thetaCoast = thSpaceL + (j + 1) * pitchAngle;
+
+                    sliceDrive.push([r * Math.cos(thetaDrive), r * Math.sin(thetaDrive), z]);
+                    sliceCoast.push([r * Math.cos(thetaCoast), r * Math.sin(thetaCoast), z]);
+                }
+
+                const sliceTip = [];
+                const pTipDrive = sliceDrive[ptsR];
+                const pTipCoast = sliceCoast[ptsR];
+                const thDrive = Math.atan2(pTipDrive[1], pTipDrive[0]);
+                const thCoast = Math.atan2(pTipCoast[1], pTipCoast[0]);
+
+                for (let t = 0; t <= wheelTipPts; t++) {
+                    const fracTip = t / wheelTipPts;
+                    const th = thDrive + fracTip * (thCoast - thDrive);
+                    sliceTip.push([rTip * Math.cos(th), rTip * Math.sin(th), z]);
+                }
+
+                gridDrive.push(sliceDrive);
+                gridCoast.push(sliceCoast);
+                gridTip.push(sliceTip);
+            }
+
+            surfaces.push({ label: `WHEEL_DRV_${j+1}`, grid: gridDrive, color: 4 });
+            surfaces.push({ label: `WHEEL_CST_${j+1}`, grid: gridCoast, color: 4 });
+            surfaces.push({ label: `WHEEL_TIP_${j+1}`, grid: gridTip, color: 2 });
+
+            if (j === 0) {
+                const numCross = 5;
+                for (let c = 0; c < numCross; c++) {
+                    const sIdx = Math.round((c / (numCross - 1)) * (numSlices - 1));
+                    const prof = [];
+                    for (let m = 0; m <= ptsR; m++) prof.push(gridDrive[sIdx][m]);
+                    for (let t = 1; t <= wheelTipPts; t++) prof.push(gridTip[sIdx][t]);
+                    for (let m = ptsR - 1; m >= 0; m--) prof.push(gridCoast[sIdx][m]);
+                    curves.push({ label: `THROAT_SEC_${c+1}`, points: prof, color: 5 });
+                }
+            }
+        }
+
+        return { surfaces, curves, mc };
+    },
+
     generateWormSurfaceMesh(opt = {}) {
         return this.generateWormMesh(Object.assign({}, opt, { surfaceOnly: true }));
     },
@@ -6379,6 +6558,208 @@ const Worm3DExporter = {
         const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
         if (autoDownload) this.downloadBlob(blob, filename);
         return { blob, text: textContent, triangleCount: totalTriangles };
+    },
+
+    /**
+     * Exports True Parametric B-Spline Surfaces (Entity 128) and Wireframe Profile Curves (Entity 106 Form 2)
+     * strictly formatted according to ANSI/USPRO/IPO-100-1996 (IGES 5.3) for Mastercam (X5-2026) & SolidWorks.
+     * Level 1: SURFACES (Flanks, Tip Crests) - True surfaces, opens instantly in Mastercam without solid conversion!
+     * Level 2: WIREFRAME_LOFT_PROFILES (Tooth cross profiles, Helical/Throat Rails) for Mastercam Create -> Surface -> Ruled/Lofted.
+     * Level 3: AXES_DATUMS (Shaft / wheel rotation centerlines).
+     *
+     * @param {Object|Array} parametricData - { surfaces, curves, mc } or array of such objects
+     * @param {string} filename - Target .igs filename
+     * @param {boolean} autoDownload - Triggers browser Blob download
+     */
+    exportIGES(parametricData, filename = 'worm_gear_surface.igs', autoDownload = true) {
+        let surfaces = [];
+        let curves = [];
+        if (Array.isArray(parametricData)) {
+            parametricData.forEach(p => {
+                if (p && p.surfaces) surfaces.push(...p.surfaces);
+                if (p && p.curves) curves.push(...p.curves);
+            });
+        } else if (parametricData) {
+            if (parametricData.surfaces) surfaces.push(...parametricData.surfaces);
+            if (parametricData.curves) curves.push(...parametricData.curves);
+        }
+
+        const pad8 = (v) => ('        ' + v).slice(-8);
+        const padLine = (txt, char, seq) => {
+            const p = (txt + ' '.repeat(72)).slice(0, 72);
+            const s = ('       ' + seq).slice(-7);
+            return p + char + s;
+        };
+        const deL1 = (eType, pPtr, level, seq) => {
+            return pad8(eType) + pad8(pPtr) + pad8(0) + pad8(1) + pad8(level) + pad8(0) + pad8(0) + pad8(0) + pad8('00000000') + 'D' + ('       ' + seq).slice(-7);
+        };
+        const deL2 = (eType, color, pCnt, form, label, seq) => {
+            return pad8(eType) + pad8(1) + pad8(color) + pad8(pCnt) + pad8(form) + pad8(0) + pad8(0) + pad8(('        ' + label).slice(-8)) + pad8(0) + 'D' + ('       ' + seq).slice(-7);
+        };
+        const pLine = (chunk, dePtr, seq) => {
+            const c = (chunk + ' '.repeat(64)).slice(0, 64);
+            return c + pad8(dePtr) + 'P' + ('       ' + seq).slice(-7);
+        };
+
+        // Start Section S
+        const sLines = [
+            padLine('MITCalc Web App - 3D Worm Gear Native Surface Export for Mastercam X5-2026', 'S', 1),
+            padLine('Direct Parametric B-Spline Surfaces & Wireframe Profiles - Zero Conversion', 'S', 2)
+        ];
+
+        // Global Section G
+        const now = new Date();
+        const dateStr = now.getFullYear().toString() +
+            String(now.getMonth() + 1).padStart(2, '0') +
+            String(now.getDate()).padStart(2, '0') + '.' +
+            String(now.getHours()).padStart(2, '0') +
+            String(now.getMinutes()).padStart(2, '0') +
+            String(now.getSeconds()).padStart(2, '0');
+
+        const gTokens = [
+            '1H,', '1H;',
+            '33HMITCalc 3D Worm Gear Surface CAD',
+            filename.length + 'H' + filename,
+            '21HAntigravity CAD Engine',
+            '12HMastercam X5',
+            32, 38, 6, 308, 15,
+            '12HMastercam X5',
+            '1.0', 2, '2HMM', 1, '1.0',
+            '15H' + dateStr,
+            '0.0001', '1000.0',
+            '9HSirPhuong',
+            '24HMITCalc-Gear-Engineering',
+            11, 0
+        ];
+        const gStr = gTokens.join(',') + ';';
+        const gLines = [];
+        for (let i = 0; i < gStr.length; i += 72) {
+            gLines.push(padLine(gStr.slice(i, i + 72), 'G', gLines.length + 1));
+        }
+
+        // Entities preparation
+        const entityList = [];
+
+        // 1. Parametric B-Spline Surfaces (Entity 128) - Level 1 (SURFACES)
+        surfaces.forEach(s => {
+            const grid = s.grid;
+            if (!grid || !grid.length || !grid[0].length) return;
+            const Nu = grid.length;
+            const Nv = grid[0].length;
+            const K1 = Nu - 1;
+            const K2 = Nv - 1;
+            const M1 = Math.min(3, Nu - 1);
+            const M2 = Math.min(1, Nv - 1);
+
+            const uKnots = [];
+            for (let i = 0; i <= M1; i++) uKnots.push('0');
+            const uInt = Nu - M1 - 1;
+            for (let i = 1; i <= uInt; i++) uKnots.push((i / (uInt + 1)).toFixed(6));
+            for (let i = 0; i <= M1; i++) uKnots.push('1');
+
+            const vKnots = [];
+            for (let j = 0; j <= M2; j++) vKnots.push('0');
+            const vInt = Nv - M2 - 1;
+            for (let j = 1; j <= vInt; j++) vKnots.push((j / (vInt + 1)).toFixed(6));
+            for (let j = 0; j <= M2; j++) vKnots.push('1');
+
+            const totalPts = Nu * Nv;
+            const weights = new Array(totalPts).fill('1');
+
+            const ptsCoords = [];
+            for (let i = 0; i < Nu; i++) {
+                for (let j = 0; j < Nv; j++) {
+                    const pt = grid[i][j];
+                    ptsCoords.push(Number(pt[0]).toFixed(5));
+                    ptsCoords.push(Number(pt[1]).toFixed(5));
+                    ptsCoords.push(Number(pt[2]).toFixed(5));
+                }
+            }
+
+            const pData = [
+                128, K1, K2, M1, M2,
+                0, 0, 1, 0, 0,
+                ...uKnots,
+                ...vKnots,
+                ...weights,
+                ...ptsCoords,
+                0, 1, 0, 1
+            ].join(',') + ';';
+
+            entityList.push({
+                type: 128,
+                form: 0,
+                level: s.level || 1,
+                color: s.color || 3,
+                label: s.label || 'SURFACE',
+                pData
+            });
+        });
+
+        // 2. Wireframe Profiles and Rails (Entity 106 Form 2 Copious Data) - Level 2 / Level 3
+        curves.forEach(c => {
+            const pts = c.points;
+            if (!pts || !pts.length) return;
+            const N = pts.length;
+            const coords = [];
+            for (let i = 0; i < N; i++) {
+                coords.push(Number(pts[i][0]).toFixed(5));
+                coords.push(Number(pts[i][1]).toFixed(5));
+                coords.push(Number(pts[i][2]).toFixed(5));
+            }
+            const pData = '106,2,' + N + ',' + coords.join(',') + ';';
+            entityList.push({
+                type: 106,
+                form: 2,
+                level: c.level || 2,
+                color: c.color || 5,
+                label: c.label || 'CURVE',
+                pData
+            });
+        });
+
+        // Compute P lines & DE lines
+        const dLines = [];
+        const pLines = [];
+        let pSeq = 1;
+
+        entityList.forEach((e, idx) => {
+            const deLine1Seq = idx * 2 + 1;
+            const deLine2Seq = idx * 2 + 2;
+            const pStartPtr = pSeq;
+
+            const chunks = [];
+            for (let i = 0; i < e.pData.length; i += 64) {
+                chunks.push(e.pData.slice(i, i + 64));
+            }
+
+            dLines.push(deL1(e.type, pStartPtr, e.level, deLine1Seq));
+            dLines.push(deL2(e.type, e.color, chunks.length, e.form, e.label, deLine2Seq));
+
+            chunks.forEach(chunk => {
+                pLines.push(pLine(chunk, deLine1Seq, pSeq++));
+            });
+        });
+
+        // Terminate Section T
+        const sCnt = String(sLines.length).padStart(7, ' ');
+        const gCnt = String(gLines.length).padStart(7, ' ');
+        const dCnt = String(dLines.length).padStart(7, ' ');
+        const pCnt = String(pLines.length).padStart(7, ' ');
+        const tLine = `S${sCnt}G${gCnt}D${dCnt}P${pCnt}` + ' '.repeat(40) + 'T      1';
+
+        const allLines = sLines.concat(gLines, dLines, pLines, [tLine]);
+        const igesContent = allLines.join('\r\n') + '\r\n';
+        const blob = new Blob([igesContent], { type: 'application/iges;charset=utf-8' });
+        if (autoDownload) this.downloadBlob(blob, filename);
+
+        return {
+            content: igesContent,
+            blob,
+            numSurfaces: surfaces.length,
+            numCurves: curves.length,
+            totalLines: allLines.length
+        };
     }
 };
 
@@ -6944,16 +7325,15 @@ class Worm3DVisualizer {
         const activeLevel = Math.max(1, Math.min(10, parseInt(this.meshDensityLevel) || 8));
         const density = Worm3DGenerator.getDensitySettings(activeLevel, this.geom.z1, this.geom.z2);
 
-        // High-Precision CAD Export Settings for Mastercam & SolidWorks:
-        // Worm: 240+ slices along thread, 24+ points per flank (eliminates all faceting/bumps).
-        // Wheel: 45 slices along face width, 14 points per flank (silky smooth, compact STEP size).
+        // Balanced CAD Export Settings for Mastercam & SolidWorks STEP compatibility:
+        // Capped to prevent Mastercam Parasolid translator stalls (eliminating the 13,231 faces bottleneck)
         const stepOpts = forStep ? {
-            numWormSlices: Math.max(240, density.wormSlices),
-            ptsPerFlank: Math.max(24, density.wormPtsR),
-            wormTipPts: Math.max(14, density.wormTipPts),
-            numWheelSlices: Math.min(45, Math.max(35, density.wheelSlices)),
-            wheelPtsR: Math.min(16, Math.max(12, density.wheelPtsR)),
-            wheelTipPts: Math.max(4, density.wheelTipPts)
+            numWormSlices: surfaceOnly ? 48 : Math.min(96, Math.max(48, density.wormSlices)),
+            ptsPerFlank: surfaceOnly ? 8 : Math.min(12, Math.max(8, density.wormPtsR)),
+            wormTipPts: surfaceOnly ? 4 : Math.min(6, Math.max(4, density.wormTipPts)),
+            numWheelSlices: surfaceOnly ? 25 : Math.min(32, Math.max(22, density.wheelSlices)),
+            wheelPtsR: surfaceOnly ? 8 : Math.min(10, Math.max(8, density.wheelPtsR)),
+            wheelTipPts: 3
         } : {
             meshDensityLevel: activeLevel
         };
@@ -6996,6 +7376,92 @@ class Worm3DVisualizer {
             return [tWorm, tWheel];
         }
         return tWorm.concat(tWheel);
+    }
+
+    /**
+     * Extracts true parametric B-Spline surfaces and wireframe profile curves for Mastercam IGES export.
+     * @param {string} type - 'worm', 'wheel', 'assembly', or 'curves_worm'
+     */
+    getParametricData(type = 'worm') {
+        if (!this.geom || typeof Worm3DGenerator === 'undefined') return { surfaces: [], curves: [] };
+
+        const a = this.centerDistA || parseFloat(this.geom.a) || 103.3663;
+        const L = parseFloat(this.geom.L) || 56.0;
+        const b2H = parseFloat(this.geom.b2H) || 33.57;
+
+        if (type === 'worm' || type === 'pinion') {
+            const data = Worm3DGenerator.getWormParametricData(this.geom);
+            data.curves.push({
+                label: 'AXIS_W1',
+                points: [[-L * 0.5 - 15, 0, 0], [L * 0.5 + 15, 0, 0]],
+                color: 1,
+                level: 3
+            });
+            return data;
+        }
+
+        if (type === 'wheel' || type === 'gear') {
+            const data = Worm3DGenerator.getWheelParametricData(this.geom);
+            data.curves.push({
+                label: 'AXIS_W2',
+                points: [[0, 0, -b2H * 0.5 - 15], [0, 0, b2H * 0.5 + 15]],
+                color: 1,
+                level: 3
+            });
+            return data;
+        }
+
+        if (type === 'curves_worm') {
+            const data = Worm3DGenerator.getWormParametricData(this.geom);
+            return {
+                surfaces: [],
+                curves: [
+                    ...data.curves,
+                    {
+                        label: 'AXIS_W1',
+                        points: [[-L * 0.5 - 15, 0, 0], [L * 0.5 + 15, 0, 0]],
+                        color: 1,
+                        level: 3
+                    }
+                ]
+            };
+        }
+
+        // Assembly Pair: Worm 1 translated along Y by -a, Worm Wheel 2 at origin
+        const wormData = Worm3DGenerator.getWormParametricData(this.geom);
+        const wheelData = Worm3DGenerator.getWheelParametricData(this.geom);
+
+        const shiftedSurfaces = wormData.surfaces.map(s => ({
+            label: s.label,
+            color: s.color,
+            level: 1,
+            grid: s.grid.map(slice => slice.map(p => [p[0], p[1] - a, p[2]]))
+        }));
+
+        const shiftedCurves = wormData.curves.map(c => ({
+            label: c.label,
+            color: c.color,
+            level: 2,
+            points: c.points.map(p => [p[0], p[1] - a, p[2]])
+        }));
+
+        shiftedCurves.push({
+            label: 'AXIS_W1',
+            points: [[-L * 0.5 - 15, -a, 0], [L * 0.5 + 15, -a, 0]],
+            color: 1,
+            level: 3
+        });
+        shiftedCurves.push({
+            label: 'AXIS_W2',
+            points: [[0, 0, -b2H * 0.5 - 15], [0, 0, b2H * 0.5 + 15]],
+            color: 1,
+            level: 3
+        });
+
+        return {
+            surfaces: shiftedSurfaces.concat(wheelData.surfaces),
+            curves: shiftedCurves.concat(wheelData.curves)
+        };
     }
 }
 
@@ -7800,6 +8266,12 @@ class WormUIController {
             }
         };
 
+        // IGES 5.3 Mastercam Native Surface & Wireframe
+        bind3DExp('expIgesWorm', 'iges', 'worm');
+        bind3DExp('expIgesWheel', 'iges', 'wheel');
+        bind3DExp('expIgesAssembly', 'iges', 'assembly');
+        bind3DExp('expIgesCurvesWorm', 'iges_curves', 'worm');
+
         bind3DExp('expStepWorm', 'step', 'worm');
         bind3DExp('expStepWheel', 'step', 'wheel');
         bind3DExp('expStepAssembly', 'step', 'assembly');
@@ -7823,6 +8295,22 @@ class WormUIController {
         const g = this.latestResult;
         const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK' };
         const typeCode = typeNames[g.toothType] || 'ZN';
+
+        // Native Mastercam IGES 5.3 Surface / Wireframe Export
+        if (format === 'iges' || format === 'iges_curves') {
+            const pData = this.visualizer3D.getParametricData(format === 'iges_curves' ? 'curves_worm' : target);
+            let igsFilename = '';
+            if (format === 'iges_curves') {
+                igsFilename = `Khung_Day_Truc_Vit_1_${typeCode}_z${g.z1}_Ruled_Loft.igs`;
+            } else if (target === 'worm') {
+                igsFilename = `Truc_Vit_1_${typeCode}_z${g.z1}_Mastercam_Surface.igs`;
+            } else if (target === 'wheel') {
+                igsFilename = `Banh_Vit_Lom_2_${typeCode}_z${g.z2}_Mastercam_Surface.igs`;
+            } else {
+                igsFilename = `Cap_Truc_Vit_Banh_Vit_${typeCode}_z${g.z1}x${g.z2}_Mastercam_Surface.igs`;
+            }
+            return Worm3DExporter.exportIGES(pData, igsFilename, true);
+        }
 
         const isSurface = (format === 'step_surface' || format === 'stl_surface');
         const forStep = (format === 'step' || format === 'step_surface');
