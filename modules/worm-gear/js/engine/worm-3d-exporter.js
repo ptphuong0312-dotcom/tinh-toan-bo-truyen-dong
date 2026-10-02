@@ -489,7 +489,8 @@ const Worm3DExporter = {
             return pad8(eType) + pad8(pPtr) + pad8(0) + pad8(1) + pad8(level) + pad8(0) + pad8(0) + pad8(0) + pad8('00000000') + 'D' + ('       ' + seq).slice(-7);
         };
         const deL2 = (eType, color, pCnt, form, label, seq) => {
-            return pad8(eType) + pad8(1) + pad8(color) + pad8(pCnt) + pad8(form) + pad8(0) + pad8(0) + pad8(('        ' + label).slice(-8)) + pad8(0) + 'D' + ('       ' + seq).slice(-7);
+            const padLbl = (label + '        ').slice(0, 8);
+            return pad8(eType) + pad8(1) + pad8(color) + pad8(pCnt) + pad8(form) + pad8(0) + pad8(0) + padLbl + pad8(0) + 'D' + ('       ' + seq).slice(-7);
         };
         const pLine = (chunk, dePtr, seq) => {
             const c = (chunk + ' '.repeat(64)).slice(0, 64);
@@ -562,8 +563,11 @@ const Worm3DExporter = {
             const weights = new Array(totalPts).fill('1');
 
             const ptsCoords = [];
-            for (let i = 0; i < Nu; i++) {
-                for (let j = 0; j < Nv; j++) {
+            // IGES Entity 128 Specification:
+            // First index i (0 .. K1 = Nu - 1, along U) varies FASTEST (inner loop)
+            // Second index j (0 .. K2 = Nv - 1, along V) varies slowest (outer loop)
+            for (let j = 0; j < Nv; j++) {
+                for (let i = 0; i < Nu; i++) {
                     const pt = grid[i][j];
                     ptsCoords.push(Number(pt[0]).toFixed(5));
                     ptsCoords.push(Number(pt[1]).toFixed(5));
@@ -591,7 +595,7 @@ const Worm3DExporter = {
             });
         });
 
-        // 2. Wireframe Profiles and Rails (Entity 106 Form 2 Copious Data) - Level 2 / Level 3
+        // 2. Wireframe Profiles and Rails (Entity 106 Form 12 Copious Data: Linear Path) - Level 2 / Level 3
         curves.forEach(c => {
             const pts = c.points;
             if (!pts || !pts.length) return;
@@ -605,7 +609,7 @@ const Worm3DExporter = {
             const pData = '106,2,' + N + ',' + coords.join(',') + ';';
             entityList.push({
                 type: 106,
-                form: 2,
+                form: 12, // Form 12 = Linear Path in 3D (connected 3D wireframe curve, NOT discrete point markers!)
                 level: c.level || 2,
                 color: c.color || 5,
                 label: c.label || 'CURVE',

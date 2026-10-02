@@ -1044,9 +1044,10 @@ const Worm3DGenerator = {
             const gridL = [];
             const gridTip = [];
 
+            const ra1 = mc.ra1 || (mc.MC_da1 * 0.5);
+
             for (let s = 0; s < numSlices; s++) {
                 const x = -L * 0.5 + s * (L / (numSlices - 1));
-                const rBlank = this.evalWormBlankRadius(x, mc);
                 const phi0 = handSign * (2.0 * Math.PI / pz) * x + startPhase;
 
                 const sliceR = [];
@@ -1054,7 +1055,7 @@ const Worm3DGenerator = {
 
                 for (let m = 0; m <= ptsR; m++) {
                     const frac = m / ptsR;
-                    const R = rf1 + frac * (rBlank - rf1);
+                    const R = rf1 + frac * (ra1 - rf1);
                     const w = halfSx1 - (R - r1) * tanA;
                     const dPhi = (2.0 * Math.PI / pz) * w;
 
@@ -1066,13 +1067,13 @@ const Worm3DGenerator = {
                 }
 
                 const sliceTip = [];
-                const phiTipR = phi0 - (2.0 * Math.PI / pz) * (halfSx1 - (rBlank - r1) * tanA);
-                const phiTipL = phi0 + (2.0 * Math.PI / pz) * (halfSx1 - (rBlank - r1) * tanA);
+                const phiTipR = phi0 - (2.0 * Math.PI / pz) * (halfSx1 - (ra1 - r1) * tanA);
+                const phiTipL = phi0 + (2.0 * Math.PI / pz) * (halfSx1 - (ra1 - r1) * tanA);
 
                 for (let t = 0; t <= wormTipPts; t++) {
                     const fracTip = t / wormTipPts;
                     const phi = phiTipR + fracTip * (phiTipL - phiTipR);
-                    sliceTip.push([x, rBlank * Math.cos(phi), rBlank * Math.sin(phi)]);
+                    sliceTip.push([x, ra1 * Math.cos(phi), ra1 * Math.sin(phi)]);
                 }
 
                 gridR.push(sliceR);

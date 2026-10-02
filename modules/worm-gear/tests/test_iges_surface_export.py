@@ -145,6 +145,30 @@ def test_iges_surface_export():
         assert has_entity_106, "Entity 106 (Wireframe Copious Data) not found in Directory Entry"
         print("SUCCESS: Both Entity 128 (Parametric Surface) and Entity 106 (Wireframe Curves) are verified!")
 
+        # Verify Entity 106 uses Form 12 (Linear Path for continuous 3D wireframe, eliminating '+' point markers)
+        d2_lines_106 = [l for l in lines if l[72] == 'D' and int(l[73:80]) % 2 == 0 and l[:8].strip() == '106']
+        assert len(d2_lines_106) > 0, "No Entity 106 Line 2 records found"
+        for d2 in d2_lines_106:
+            form_num = int(d2[32:40].strip())
+            assert form_num == 12, f"Entity 106 should have Form 12 (Linear Path), got Form {form_num}"
+        print(f"SUCCESS: All {len(d2_lines_106)} Entity 106 curves use Form 12 (Linear Path - 0 point markers)!")
+
+        # Verify Entity 128 has non-degenerate control points across radius
+        p_lines_128 = [l for l in lines if l[72] == 'P' and l[64:72].strip() == '1']
+        p_data_128 = ''.join([l[:64] for l in p_lines_128]).rstrip(';')
+        tokens_128 = p_data_128.split(',')
+        K1 = int(tokens_128[1])
+        K2 = int(tokens_128[2])
+        M1 = int(tokens_128[3])
+        M2 = int(tokens_128[4])
+        pts_offset = 10 + (K1 + M1 + 2) + (K2 + M2 + 2) + (K1 + 1) * (K2 + 1)
+        r_root = (float(tokens_128[pts_offset + 1])**2 + float(tokens_128[pts_offset + 2])**2)**0.5
+        tip_idx = pts_offset + K2 * (K1 + 1) * 3
+        r_tip = (float(tokens_128[tip_idx + 1])**2 + float(tokens_128[tip_idx + 2])**2)**0.5
+        print(f"Entity 128 Flank R: r_root = {r_root:.3f} mm, r_tip = {r_tip:.3f} mm (delta = {r_tip - r_root:.3f} mm)")
+        assert r_tip > r_root + 5.0, f"Entity 128 surface is degenerate! r_tip={r_tip}, r_root={r_root}"
+        print("SUCCESS: Entity 128 surface has true, non-degenerate B-Spline patch geometry!")
+
         # Check terminate line
         term_line = lines[-1]
         assert term_line[72] == 'T', f"Last line should be T record, got {term_line}"

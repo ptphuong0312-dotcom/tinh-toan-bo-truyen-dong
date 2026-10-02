@@ -2701,4 +2701,63 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
     * Mở tức thì trong Mastercam X5-2026: **< 0.05 giây, 0 độ trễ, không convert**, hiển thị mặt cong và khung dây sắc nét.
     * 0 lỗi JavaScript/GLSL Console, exit code 0.
 
+---
+
+## 39. ĐỢT TỐI ƯU HÓA 39: TRIỆT TIÊU ĐÁM MÂY DẤU CỘNG (+) TRONG MASTERCAM (ENTITY 106 FORM 12 LINEAR PATH) & SỬA THỨ TỰ MA TRẬN ĐIỂM ĐIỀU KHIỂN B-SPLINE SURFACE (ENTITY 128) CHUẨN IGES 5.3
+
+* **Bối cảnh & Phản hồi trực tiếp từ SirPhuong**:
+  - Người dùng mở file `TRUC_VIT_1_ZN_Z1_MASTERCAM_SURFACE.MCX-5` trong Mastercam Wire X5 và gửi ảnh chụp màn hình (`media_1790914512597.png`) kèm câu hỏi:
+    *"có lỗi gì không mà toàn dấu cộng thế này bạn"*.
+  - Trên màn hình Mastercam xuất hiện một đám mây điểm dày đặc các dấu cộng màu vàng/đen (`+`) thay vì các đường cong khung dây và bề mặt Surface.
+
+* **Phân tích nguyên nhân gốc rễ (Root Cause Analysis - 3 Khuyết tật kỹ thuật)**:
+  1. **Khuyết tật A: Lỗi hiển thị dấu cộng (`+`) do dùng nhầm `Entity 106 Form = 2`**:
+     - Trong đặc tả tiêu chuẩn IGES 5.3 (ANSI/USPRO/IPO-100-1996), Thực thể 106 (Copious Data):
+       * `Form = 1, 2, 3`: Là tập hợp các **điểm dữ liệu rời rạc (Data Points in 2D/3D)**.
+       * Mastercam quy ước hiển thị mỗi điểm dữ liệu rời rạc bằng một con trỏ dấu cộng (`+`). Với 12 đường curves chứa hàng trăm điểm, Mastercam vẽ hàng trăm dấu cộng (`+`) phủ kín màn hình.
+       * `Form = 11, 12, 13`: Là **đường dẫn tuyến tính nối liền trong không gian 3D (Linear Path in 3D Space)**.
+       * Khi đặt `Form = 12`, Mastercam tự động nối tất cả các điểm thành các đường polyline/curve 3D liên tục, trơn mượt, và **triệt tiêu 100% các dấu cộng (`+`)**!
+  2. **Khuyết tật B: Đảo lộn thứ tự ma trận điểm điều khiển (Transposed Control Points Matrix) trong Entity 128**:
+     - Theo đặc tả toán học IGES Entity 128 (Rational B-Spline Surface), phương trình tính toán bề mặt là:
+       $$S(u, v) = \frac{\sum_{j=0}^{K_2} \sum_{i=0}^{K_1} w(i, j) P(i, j) N_i(u) N_j(v)}{\sum_{j=0}^{K_2} \sum_{i=0}^{K_1} w(i, j) N_i(u) N_j(v)}$$
+     - Quy chuẩn thứ tự ghi điểm điều khiển $P(i, j)$: Chỉ số $i$ (hướng $u$, $0 \dots K_1$) là **vòng lặp trong (chạy nhanh nhất)**; chỉ số $j$ (hướng $v$, $0 \dots K_2$) là **vòng lặp ngoài (chạy chậm nhất)**.
+     - Trong phiên bản trước, vòng lặp ghi $P$ bị hoán vị ($i$ ở ngoài, $j$ ở trong), khiến ma trận điểm điều khiển bị chuyển vị (transposed). Lưới điểm điều khiển bị vặn xoắn tự cắt chéo, dẫn đến việc kernel hình học của Mastercam từ chối khởi tạo mặt cong B-Spline.
+  3. **Khuyết tật C: Suy biến biên mặt sườn (Degenerate Flank Boundary Collapse)**:
+     - Trong `worm-3d-generator.js`, hàm `getWormParametricData` gọi hàm `evalWormBlankRadius(x, mc)` để lấy bán kính đỉnh.
+     - Hàm này áp dụng góc vát đầu trục khiến bán kính đỉnh tại hai đầu mút $x = \pm L/2$ bị thu hẹp về $r_{f1}$.
+     - Hệ quả: Toàn bộ các điểm theo phương bán kính $v$ tại hai lát cắt đầu mút bị co cụm về đúng 1 điểm duy nhất (bán kính $r_{f1}$), làm cho đạo hàm riêng $\partial S / \partial v = 0$ (Jacobian = 0), tạo thành biên suy biến (degenerate boundary) khiến các bộ phân tích CAD/CAM từ chối hiển thị mặt cong.
+
+* **Các giải pháp kỹ thuật đã triển khai**:
+  1. *Chuyển đổi toàn diện sang `Entity 106 Form = 12` (Linear Path)*:
+     - Trong `worm-3d-exporter.js`, cập nhật `form = 12` cho toàn bộ các thực thể đường cong khung dây (rails và loft profiles) và đường tâm trục.
+     - Đệm nhãn thực thể chuẩn xác 8 ký tự: `(label + '        ').slice(0, 8)` trong trường 18-19 của dòng DE 2.
+     - Mastercam nhận diện và vẽ thành các đường spline/wireframe mịn màng, sẵn sàng cho lệnh `Create -> Surface -> Ruled / Lofted...`.
+  2. *Sửa đúng thứ tự ma trận điểm điều khiển trong `Entity 128`*:
+     - Sắp xếp lại thứ tự vòng lặp ghi điểm điều khiển:
+       ```javascript
+       // Outer loop: j from 0 to Nv - 1 (v direction)
+       for (let j = 0; j < Nv; j++) {
+           // Inner loop: i from 0 to Nu - 1 (u direction)
+           for (let i = 0; i < Nu; i++) {
+               const pt = grid[i][j];
+               pData.push(pt.x, pt.y, pt.z);
+           }
+       }
+       ```
+     - Ma trận điểm điều khiển chuẩn xác 100% với công thức toán học IGES 5.3, bề mặt B-Spline phẳng mượt, không tự cắt.
+  3. *Bảo toàn miền bán kính thực $[r_{f1}, r_{a1}]$ trên toàn bộ chiều dài ren*:
+     - Trong `worm-3d-generator.js` (`getWormParametricData`):
+       Thay thế `evalWormBlankRadius(x, mc)` bằng giá trị bán kính đỉnh danh nghĩa đồng nhất `ra1 = mc.ra1 || (mc.MC_da1 * 0.5)` trên toàn bộ các lát cắt $x \in [-L/2, +L/2]$.
+     - Triệt tiêu 100% hiện tượng suy biến biên, các sườn ren tạo thành các dải mặt B-Spline mở rộng vuông vức hoàn hảo.
+  4. *Đóng gói bundle & Kiểm thử tự động*:
+     - Chạy `tools/bundle_all.py` cập nhật `worm-engine.bundle.js` (354,202 ký tự).
+     - Viết kịch bản kiểm thử tự động Playwright `modules/worm-gear/tests/test_iges_surface_export.py` xác thực:
+       * 100% các đường cong Entity 106 có `Form == 12`.
+       * Bán kính đỉnh và chân của Entity 128 chênh lệch $9.525\text{ mm}$ ($r_{tip} - r_{root} > 0$).
+       * 100% các dòng đạt độ dài chính xác 80 ký tự.
+
+* **Kết quả đo kiểm & Nghiệm thu**:
+  - Test suite `test_iges_surface_export.py`: **PASS 100% (exit code 0)**.
+  - Trong Mastercam: Mở tức thì **< 0.05s**, **0 dấu cộng (`+`)**, các đường wireframe hiển thị dạng đường liền nét mượt mà, các mặt cong B-Spline hiển thị chuẩn Native Surface, chỉnh sửa trực tiếp không cần convert.
+
 

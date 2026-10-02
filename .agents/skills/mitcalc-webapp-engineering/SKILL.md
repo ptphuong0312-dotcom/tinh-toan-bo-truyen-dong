@@ -1526,11 +1526,17 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
       * Sử dụng trực tiếp định dạng bản địa chuẩn quốc tế **IGES 5.3 (ANSI/USPRO/IPO-100-1996)** cho Surface Modeling.
       * Xuất các mặt cong tham số giải tích B-Spline thực thụ, Mastercam mở trực tiếp trong **< 0.05 giây** (Zero-Conversion Wait).
     - **3 Phân tầng Level kỹ thuật trong Mastercam**:
-      * **Level 1 (`SURFACES`)**: Các mặt cong tham số **Entity 128 (Rational B-Spline Surface)** cho Sườn Phải (Flank R), Sườn Trái (Flank L), và Đỉnh Răng (Tip Crest). Bậc $M_1 = 3$ (dọc đường xoắn ốc $u$) và $M_2 = 1$ (dọc đường sinh thẳng $v$). Vectơ nút kẹp (Clamped knot vectors) $4$ nút 0 ở đầu, $4$ nút 1 ở cuối, trọng số $w = 1.0$. Mastercam nhận diện là `SURFACE` bản địa, cho phép `Trim`, `Untrim`, `Fillet`, `Offset`, `Extend`.
-      * **Level 2 (`WIREFRAME_LOFT_PROFILES`)**: Khung dây đường dẫn 3D chuẩn **Entity 106 Form 2 (Copious Data 3D Points)** gồm 4 đường sinh rails dọc ren và 7 mặt cắt ngang răng (Loft Cross Sections). Dùng trực tiếp cho lệnh `Create -> Surface -> Ruled / Lofted...` của Mastercam.
-      * **Level 3 (`AXES_DATUMS`)**: Đường tâm trục xoay Trục Vít 1 và Bánh Vít 2 (Entity 106 Form 2).
+      * **Level 1 (`SURFACES`)**: Các mặt cong tham số **Entity 128 (Rational B-Spline Surface)** cho Sườn Phải (Flank R), Sườn Trái (Flank L), và Đỉnh Răng (Tip Crest). Bậc $M_1 = 3$ (dọc đường xoắn ốc $u$) và $M_2 = 1$ (dọc đường sinh thẳng $v$). Vectơ nút kẹp (Clamped knot vectors) $4$ nút 0 ở đầu, $4$ nút 1 ở cuối, trọng số $w = 1.0$.
+        - **Thứ tự ma trận điểm điều khiển chuẩn IGES Entity 128**: Vòng lặp ngoài $j = 0 \dots N_v-1$ (chỉ số $v$, biến thiên chậm), vòng lặp trong $i = 0 \dots N_u-1$ (chỉ số $u$, biến thiên nhanh) theo đúng công thức vi phân kép $\sum_{j=0}^{K2} \sum_{i=0}^{K1} w(i,j) P(i,j) N_i(u) N_j(v)$. Triệt tiêu hoàn toàn lỗi đảo ma trận làm mặt cong bị xoắn chéo tự cắt.
+        - **Bảo toàn biên tham số không suy biến (Non-Degenerate Helicoid Domain)**: Miền bán kính sườn răng $[r_{f1}, r_{a1}]$ giữ nguyên vẹn trên toàn bộ chiều dài ren $x \in [-L/2, +L/2]$, không thu hẹp về $r_{f1}$ tại 2 mặt đầu để tránh làm suy biến Jacobian của mặt B-Spline.
+        - Mastercam nhận diện là `SURFACE` bản địa, cho phép `Trim`, `Untrim`, `Fillet`, `Offset`, `Extend`.
+      * **Level 2 (`WIREFRAME_LOFT_PROFILES`)**: Khung dây đường dẫn 3D chuẩn **Entity 106 Form 12 (Linear Path in 3D Space)** gồm 4 đường sinh rails dọc ren và 7 mặt cắt ngang răng (Loft Cross Sections).
+        - **Triệt tiêu 100% đám mây dấu cộng (`+`)**: Định dạng chuẩn `Form = 12` ("Linear Path in 3D") thay vì `Form = 2` ("Data Points"). Mastercam sẽ tự động nối các điểm thành các đường cong/polyline liên tục, nhẵn bóng mượt, hiển thị 0 dấu cộng (`+`).
+        - Dùng trực tiếp cho lệnh `Create -> Surface -> Ruled / Lofted...` của Mastercam để quét tạo bề mặt gia công.
+      * **Level 3 (`AXES_DATUMS`)**: Đường tâm trục xoay Trục Vít 1 và Bánh Vít 2 (Entity 106 Form 12).
     - **Quy chuẩn dòng 80 cột nghiêm ngặt**:
       * Toàn bộ các dòng trong file `.igs` đều có độ dài chính xác **80 ký tự** (`S`, `G`, `D`, `P`, `T`).
+      * Nhãn thực thể trong trường 18-19 của dòng DE 2 phải được căn trái và đệm đúng 8 khoảng trắng: `(label + '        ').slice(0, 8)`.
       * Dòng Terminate `T`: Đúng 1 dòng 80 ký tự tổng kết số lượng dòng `S`, `G`, `D`, `P`.
     - **Tối ưu hóa số lượng mặt STEP AP214**:
       * Giới hạn số lát cắt cho xuất mặt rỗng STEP xuống $\approx 800$ tam giác (giảm 10 lần), giúp nạp nhanh chóng nếu người dùng vẫn chọn định dạng STEP.

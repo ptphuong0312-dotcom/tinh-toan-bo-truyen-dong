@@ -1511,17 +1511,20 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * Bậc cơ sở: $M_1 = 3$ (U dọc đường xoắn ốc) và $M_2 = 1$ (V dọc đường sinh thẳng sườn ren).
      * Vectơ nút kẹp (Clamped knot vectors): 4 nút 0 ở đầu, 4 nút 1 ở cuối, phân bố nút nội suy trơn mượt không dao động.
      * Trọng số đa thức: $PROP_3 = 1$, toàn bộ trọng số $w = 1.0$.
+     * **Thứ tự chỉ số điểm điều khiển (Control Points Order)**: Chuẩn IGES quy định chỉ số $i \in [0, K1]$ (dọc chiều dài $U$) biến thiên nhanh nhất (vòng lặp trong), chỉ số $j \in [0, K2]$ (dọc chiều cao bán kính $V$) biến thiên chậm nhất (vòng lặp ngoài): `for (let j = 0; j < Nv; j++) for (let i = 0; i < Nu; i++) ptsCoords.push(grid[i][j])`.
+     * **Bảo toàn dải bán kính không suy biến (Non-Degenerate Boundary Patch)**: Bán kính sườn ren trải đều từ $rf_1$ đến $ra_1$ trên toàn bộ chiều dài ren $L$, không dùng bán kính vát mép $rBlank$ làm co cụm điểm ở 2 đầu ren về $rf_1$ (tránh lỗi suy biến cạnh Jacobian = 0 khiến Mastercam từ chối nạp mặt).
      * Hiển thị trong Mastercam: Màu xanh lá cây (Color 3) và đỏ (Color 2), nhận diện ngay là đối tượng `SURFACE` bản địa, cho phép `Trim`, `Untrim`, `Fillet`, `Offset`, `Extend`.
-   - **Level 2 (`WIREFRAME_LOFT_PROFILES`)**: Khung dây đường dẫn 3D chuẩn **Entity 106 Form 2 (Copious Data 3D Points)**:
+   - **Level 2 (`WIREFRAME_LOFT_PROFILES`)**: Khung dây đường dẫn 3D chuẩn **Entity 106 Form 12 (Copious Data Linear Path)**:
+     * **Bắt buộc sử dụng Form 12 thay vì Form 2**: Form 2 là "Data points" (tập hợp điểm rời rạc) khiến Mastercam hiển thị các dấu cộng `+` rải rác trên màn hình. Form 12 là "Linear Path" (đường dẫn liên tục trong không gian 3D), Mastercam tự động nối thành các đường nét khung dây vector mượt mà (3D Wireframe Curves / Polylines) và triệt tiêu 100% các dấu cộng `+`!
      * Bao gồm các đường sinh chân ren (Root Rails), đường sinh đỉnh ren (Tip Rails) dọc trục vít.
      * 7 mặt cắt ngang biên dạng răng (Loft Cross Sections) phân bố đều dọc chiều dài ren.
      * Người lập trình Mastercam có thể dùng ngay lệnh `Create -> Surface -> Ruled / Lofted...` quét qua các đường profile này để tạo bề mặt gia công theo ý muốn (khớp 100% nhu cầu người dùng).
-   - **Level 3 (`AXES_DATUMS`)**: Đường tâm trục xoay của Trục Vít 1 và Bánh Vít 2 (Entity 106 Form 2) giúp xác định gốc tọa độ và hướng quay khi gá đặt 4 trục / 5 trục.
+   - **Level 3 (`AXES_DATUMS`)**: Đường tâm trục xoay của Trục Vít 1 và Bánh Vít 2 (Entity 106 Form 12) giúp xác định gốc tọa độ và hướng quay khi gá đặt 4 trục / 5 trục.
 4. **Quy Chuẩn Định Dạng Dòng 80 Cột Chuẩn ANSI/USPRO/IPO-100-1996 (IGES 5.3)**:
    - Toàn bộ các dòng trong file `.igs` bắt buộc phải có độ dài **chính xác 80 ký tự**:
      * Đoạn Start (`S`): 72 ký tự mô tả + `S` + 7 ký tự số thứ tự dòng.
      * Đoạn Global (`G`): Dãy tham số chuỗi Hollerith (`nH...`), đơn vị mm (`2HMM`), độ phân giải $0.0001$, phiên bản IGES 5.3 (mã 11).
-     * Đoạn Directory Entry (`D`): Mỗi thực thể gồm đúng 2 dòng 80 ký tự, chứa mã thực thể (128 hoặc 106), con trỏ sang đoạn P, Level, Color, Form, và nhãn tên 8 ký tự (`FLANK_R1`, `LOFT_SEC`, `AXIS_W1`).
+     * Đoạn Directory Entry (`D`): Mỗi thực thể gồm đúng 2 dòng 80 ký tự, chứa mã thực thể (128 hoặc 106), con trỏ sang đoạn P, Level, Color, Form (Form 0 cho 128, Form 12 cho 106), và nhãn tên 8 ký tự căn trái (`FLANK_R `, `LOFT_SEC`, `AXIS_W1 `).
      * Đoạn Parameter Data (`P`): Dữ liệu tham số cắt thành từng đoạn 64 ký tự + 8 ký tự con trỏ D + `P` + 7 ký tự số thứ tự.
      * Đoạn Terminate (`T`): Đúng 1 dòng tổng kết số lượng dòng `S`, `G`, `D`, `P`.
 5. **Tối Ưu Hóa Dung Lượng & Mặt Lưới STEP AP214**:
@@ -1532,6 +1535,7 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * `expIgesWheel`: 💎 Xuất Bánh Vít 2 Surface Mastercam (.igs).
      * `expIgesAssembly`: 💎 Xuất Cả Cặp Ăn Khớp Surface (.igs).
      * `expIgesCurvesWorm`: 📐 Xuất Khung Dây Dựng Ruled / Lofted (.igs).
-   - Kiểm thử tự động Playwright xác nhận 100% đạt chuẩn: 569/569 dòng file `.igs` chuẩn 80 ký tự, mở tức thì < 0.1s, dung lượng tệp 46.6 KB, đầy đủ Entity 128 và Entity 106.
+   - Kiểm thử tự động Playwright xác nhận 100% đạt chuẩn: 570/570 dòng file `.igs` chuẩn 80 ký tự, mở tức thì < 0.1s, dung lượng tệp 46.7 KB, 12 đường cong Entity 106 Form 12 (0 dấu cộng), bề mặt Entity 128 không suy biến ($r_{tip} - r_{root} = 9.525\text{ mm}$).
+
 
 
