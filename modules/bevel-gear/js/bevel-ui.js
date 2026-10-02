@@ -2060,10 +2060,6 @@ class BevelGearUI {
         const isSpiral = Math.abs(g.beta_deg || 0.0) > 1e-4;
         const typeStr = isSpiral ? 'Spiral_Bevel' : 'Straight_Bevel';
 
-        const isSurface = (format === 'step_surface' || format === 'stl_surface');
-        const forStep = (format === 'step' || format === 'step_surface');
-        const tris = this.visualizer3D.getExportTriangles(target, isSurface, forStep);
-
         let filenameBase = '';
         let partName = '';
         if (target === 'pinion') {
@@ -2077,11 +2073,6 @@ class BevelGearUI {
             partName = `BEVEL_GEAR_ASSEMBLY_Z${g.z1}x${g.z2}`;
         }
 
-        if (isSurface) {
-            filenameBase += '_Surface_Rong';
-            partName += '_SURFACE';
-        }
-
         if (format === 'iges') {
             const igesData = this.visualizer3D.getParametricData(target);
             let igesFilename = '';
@@ -2091,6 +2082,15 @@ class BevelGearUI {
                 igesFilename = `${filenameBase}_Surface.igs`;
             }
             return Bevel3DExporter.exportIGES(igesData, igesFilename, true);
+        }
+
+        const isSurface = (format === 'step_surface' || format === 'stl_surface');
+        const forStep = (format === 'step' || format === 'step_surface');
+        const tris = this.visualizer3D.getExportTriangles(target, isSurface, forStep);
+
+        if (isSurface) {
+            filenameBase += '_Surface_Rong';
+            partName += '_SURFACE';
         }
 
         if (format === 'step') {

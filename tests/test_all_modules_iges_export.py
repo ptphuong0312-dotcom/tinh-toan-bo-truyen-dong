@@ -1,6 +1,10 @@
 import os
+import sys
 import re
 from playwright.sync_api import sync_playwright
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 def test_all_modules_iges():
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))

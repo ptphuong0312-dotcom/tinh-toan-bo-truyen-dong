@@ -692,7 +692,7 @@ export class Bevel3DVisualizer {
         const dBore2 = parseFloat(this.geom.dBore2) || 100.0;
 
         const hp = (typeof BevelGearCanvas !== 'undefined' && BevelGearCanvas.computeBlankAndHubParams)
-            ? BevelGearCanvas.computeBlankAndHubParams(g, this.hubOverrides)
+            ? BevelGearCanvas.computeBlankAndHubParams(this.geom, this.hubOverrides)
             : null;
         const rHub1 = hp ? hp.rHub1 : undefined;
         const z_hub_end1 = hp ? hp.z_hub_end1 : undefined;
