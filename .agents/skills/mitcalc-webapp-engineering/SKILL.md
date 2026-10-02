@@ -1494,6 +1494,25 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
       * Menu dropdown `[💾 Xuất File 2D CAD (.DXF) ▾]` trên thanh công cụ 2D:
         - `expDxfCurrent`: Xuất theo hình đang chọn.
         - `expDxfNormalProfile`: Xuất biên dạng pháp tuyến N-N kèm bảng thông số DIN 3975.
-        - `expDxfTangentialProfile`: Xuất biên dạng tiếp tuyến A-A kèm kích thước và bảng thông số.
+        - `expDxfAxialProfile`: Xuất biên dạng dọc trục A-A kèm kích thước và bảng thông số.
+        - `expDxfTangentialProfile`: Xuất biên dạng tiếp tuyến mặt trụ chia T-T kèm dải răng xiên $\gamma$ và bảng thông số.
         - `expDxfAssembly`, `expDxfWormFront`, `expDxfWheelThroat`: Xuất bản vẽ lắp và chi tiết.
       * Phân tầng layer chuẩn kỹ thuật: `OUTLINE`, `AXIS`, `PITCH_LINE`, `LIMIT_LINES`, `DIMS`, `MFG_TABLE`. Tương thích tuyệt đối với AutoCAD, SolidWorks, Mastercam, Inventor.
+
+---
+
+18. **PHÂN ĐỊNH RẠCH RÒI & HOÀN THIỆN TRỌN BỘ 3 MẶT CẮT KỸ THUẬT 2D TRỤC VÍT (PHÁP TUYẾN N-N, DỌC TRỤC A-A VÀ TIẾP TUYẾN MẶT TRỤ CHIA T-T) CHUẨN DIN 3975 & BỘ XUẤT DXF R12**:
+    - **Phân định rạch ròi bản chất hình học**:
+      * *Mặt cắt pháp tuyến (Normal Section $N-N$)*: Vuông góc với đường xoắn vít trên mặt trụ chia, thể hiện thanh răng cơ bản chuẩn dao cắt ($m_n, \alpha_n, p_n, s_n, \rho_{f0} = 0.38 m_n$).
+      * *Mặt cắt dọc trục (Axial Section $A-A$)*: Đi qua đường tâm trục xoay ($y = 0$), thể hiện đường kính chia $d_1$, đỉnh $d_{a1}$, chân $d_{f1}$, bước trục $p_x$, góc ăn khớp dọc trục $\alpha_x$, cổ trục, vai trục và ren đối xứng.
+      * *Mặt cắt tiếp tuyến mặt trụ chia (Pitch Tangent Section $T-T$)*: Tiếp xúc với mặt trụ chia tại $y = d_1/2$ (song song với trục $X$), thể hiện dải tiếp xúc phẳng có bề rộng hữu hạn $B_t = 2\sqrt{r_{a1}^2 - r_1^2} = \sqrt{d_{a1}^2 - d_1^2}$, các ren xuất hiện dưới dạng các dải răng xiên nghiêng góc nâng $\gamma$. Chiều dày răng thu hẹp dần từ $s_x$ tại tâm $z = 0$ về $s_{a1}$ tại biên dải $z = \pm w_t$.
+    - **Giải thuật dựng hình 2D Mặt Cắt Tiếp Tuyến Mặt Trụ Chia $T-T$ (`renderTangentialProfileView`)**:
+      * Bề rộng dải cắt: $w_t = 0.5\sqrt{d_{a1}^2 - d_1^2} \implies B_t = 2 w_t$.
+      * Dựng bóng mờ (Ghost background) toàn bộ thân trục vít và cổ trục để kỹ sư định vị không gian 3D.
+      * Dựng đường sinh chia tiếp xúc (Pitch Generator Line) tại $z = 0$ (đỏ gạch-chấm) kèm các điểm tiếp xúc ăn khớp (Pitch points) chấm tròn vàng hổ phách tại $x_k = k \cdot p_x$.
+      * Dựng các dải răng xiên nghiêng góc $\gamma$ với biên dạng má răng thuôn mượt theo hàm bán kính $r(z) = \sqrt{r_1^2 + z^2}$, gạch mặt cắt $45^\circ$.
+      * Đầy đủ kích thước kỹ thuật: Chiều dài ren $L$, Bề rộng dải cắt $B_t$, Bước dọc trục $p_x$, Chiều dày răng $s_x$, và Cung đo góc nâng ren $\gamma$.
+    - **Đồng bộ toàn diện hệ thống điều khiển 2D & Bộ xuất DXF Release 12**:
+      * 3 nút bấm chuyên dụng: `btnViewNormalProfile`, `btnViewAxialProfile`, `btnViewTangentialProfile`.
+      * Xuất DXF R12 tương ứng với đầy đủ các layer: `OUTLINE`, `AXIS`, `PITCH_LINE`, `LIMIT_LINES`, `DIMS`, `MFG_TABLE`.
+

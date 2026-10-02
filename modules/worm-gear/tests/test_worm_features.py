@@ -38,8 +38,20 @@ def test_worm_features():
         page.locator("#container2D").screenshot(path=norm_shot)
         print(f"Saved Normal Profile screenshot to {norm_shot}")
 
-        # 2. TEST 2D TANGENTIAL PROFILE VIEW
-        print("Testing 2D Tangential Profile view...")
+        # 2. TEST 2D AXIAL PROFILE VIEW (A-A)
+        print("Testing 2D Axial Profile view (A-A)...")
+        page.click("#btnViewAxialProfile")
+        time.sleep(0.5)
+        view_mode_axial = page.evaluate("window.wormUI.canvasRenderer.viewMode")
+        print(f"2D View Mode after clicking Axial Profile: {view_mode_axial}")
+        assert view_mode_axial == "axial_profile", f"Expected axial_profile, got {view_mode_axial}"
+
+        axial_shot = os.path.join(artifact_dir, "worm_2d_axial_profile.png")
+        page.locator("#container2D").screenshot(path=axial_shot)
+        print(f"Saved Axial Profile screenshot to {axial_shot}")
+
+        # 3. TEST 2D TANGENTIAL PROFILE VIEW (T-T)
+        print("Testing 2D Tangential Profile view (T-T)...")
         page.click("#btnViewTangentialProfile")
         time.sleep(0.5)
         view_mode_tang = page.evaluate("window.wormUI.canvasRenderer.viewMode")
@@ -50,7 +62,7 @@ def test_worm_features():
         page.locator("#container2D").screenshot(path=tang_shot)
         print(f"Saved Tangential Profile screenshot to {tang_shot}")
 
-        # 3. TEST 2D ASSEMBLY WITH TOGGLES
+        # 4. TEST 2D ASSEMBLY WITH TOGGLES
         print("Testing 2D Assembly view and Worm/Wheel toggles...")
         page.click("#btnViewAssembly")
         time.sleep(0.5)
@@ -76,7 +88,7 @@ def test_worm_features():
         page.click("#btnToggleWheel2D") # show wheel again
         time.sleep(0.3)
 
-        # 4. TEST DXF EXPORTS FOR NORMAL & TANGENTIAL PROFILES
+        # 5. TEST DXF EXPORTS FOR NORMAL, AXIAL & TANGENTIAL PROFILES
         print("Testing DXF generation...")
         dxf_test_script = """
         () => {
@@ -94,8 +106,13 @@ def test_worm_features():
             // Test normal_profile DXF
             renderer.exportDXF('normal_profile');
             if (capturedBlob) {
-                // Read text synchronously or store size
                 res.normal_profile_blob_size = capturedBlob.size;
+            }
+
+            // Test axial_profile DXF
+            renderer.exportDXF('axial_profile');
+            if (capturedBlob) {
+                res.axial_profile_blob_size = capturedBlob.size;
             }
 
             // Test tangential_profile DXF
@@ -111,6 +128,7 @@ def test_worm_features():
         dxf_res = page.evaluate(dxf_test_script)
         print("DXF export test result:", dxf_res)
         assert dxf_res.get("normal_profile_blob_size", 0) > 1000, "normal_profile DXF blob is too small"
+        assert dxf_res.get("axial_profile_blob_size", 0) > 1000, "axial_profile DXF blob is too small"
         assert dxf_res.get("tangential_profile_blob_size", 0) > 1000, "tangential_profile DXF blob is too small"
 
         # 5. TEST 3D WEBGL AND VISIBILITY TOGGLES

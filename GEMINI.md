@@ -1454,11 +1454,44 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * Gạch mặt cắt $45^\circ$, đường tâm trục $y = 0$, đường chia $\pm d_1/2$, đường đỉnh $\pm d_{a1}/2$, đường chân $\pm d_{f1}/2$.
      * Đầy đủ đường gióng kích thước chuẩn: $L, d_{a1}, d_1, d_{f1}, p_x, s_x, lpha_x, \gamma$.
 5. **Quy Chuẩn Menu Dropdown Xuất Bản Vẽ CAD DXF Release 12 (AC1009)**:
-   - Tích hợp menu thả xuống `[💾 Xuất File 2D CAD (.DXF) ▾]` trên thanh công cụ 2D với 6 tùy chọn trực quan:
+   - Tích hợp menu thả xuống `[💾 Xuất File 2D CAD (.DXF) ▾]` trên thanh công cụ 2D với 7 tùy chọn trực quan:
      * `expDxfCurrent`: Xuất hình đang xem hiện tại theo đúng chế độ hiển thị.
      * `expDxfNormalProfile`: Xuất biên dạng pháp tuyến N-N kèm bảng thông số chế tạo DIN 3975.
-     * `expDxfTangentialProfile`: Xuất biên dạng tiếp tuyến A-A kèm kích thước đường kính $d_1, d_{a1}, d_{f1}, L$ và bảng thông số.
+     * `expDxfAxialProfile`: Xuất biên dạng dọc trục A-A kèm kích thước đường kính $d_1, d_{a1}, d_{f1}, L$ và bảng thông số.
+     * `expDxfTangentialProfile`: Xuất biên dạng tiếp tuyến mặt trụ chia T-T ($y = d_1/2$) kèm dải răng xiên $\gamma$, bề rộng $B_t$ và bảng chế tạo.
      * `expDxfAssembly`: Xuất bản vẽ lắp ráp tổng thể 2 hình chiếu + bảng BOM.
      * `expDxfWormFront`: Xuất chi tiết trục vít hình chiếu đứng.
      * `expDxfWheelThroat`: Xuất chi tiết bánh vít mặt cắt họng lõm.
    - Cấu trúc file DXF R12 chuẩn hóa với các layer chuyên dụng: `OUTLINE`, `AXIS`, `PITCH_LINE`, `LIMIT_LINES`, `DIMS`, `MFG_TABLE`. Tương thích 100% với AutoCAD, SolidWorks, Inventor, Mastercam, LibreCAD.
+
+---
+
+### Quy Tắc 62: Quy Chuẩn Phân Định Rạch Ròi & Hoàn Thiện Bộ 3 Mặt Cắt 2D Trục Vít (Pháp Tuyến N-N, Dọc Trục A-A, và Tiếp Tuyến Mặt Trụ Chia T-T) Chuẩn DIN 3975 / ISO 1122-1
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - Phân định chuẩn xác và cung cấp đầy đủ 3 mặt cắt kỹ thuật cơ khí độc lập cho Trục Vít:
+     * **Mặt Cắt Pháp Tuyến (Normal Section $N-N$)**: Cắt bởi mặt phẳng vuông góc với đường xoắn vít trên mặt trụ chia.
+     * **Mặt Cắt Dọc Trục (Axial Section $A-A$)**: Cắt bởi mặt phẳng đi qua đường tâm trục xoay ($y = 0$).
+     * **Mặt Cắt Tiếp Tuyến Mặt Trụ Chia (Pitch Tangent Section $T-T$)**: Cắt bởi mặt phẳng tiếp tuyến với mặt trụ chia tại $y = d_1/2$ (song song với trục $X$ và tiếp xúc đường sinh chia).
+2. **Bản Chất Hình Học & Toán Học Của Mặt Cắt Tiếp Tuyến Mặt Trụ Chia ($T-T$)**:
+   - **Vị trí mặt cắt**: $y = d_1/2$ (mặt phẳng nằm ngang tiếp xúc lưng đỉnh hình trụ chia).
+   - **Giao tuyến với hình trụ đỉnh $d_{a1}$**: Tạo thành dải cắt có bề rộng hữu hạn:
+     $$w_t = \sqrt{r_{a1}^2 - r_1^2} = \frac{1}{2}\sqrt{d_{a1}^2 - d_1^2} \implies B_t = 2 \cdot w_t = \sqrt{d_{a1}^2 - d_1^2}$$
+   - **Đường sinh tiếp xúc tiếp tuyến (Pitch Generator Line)**: Nằm tại tâm dải $z = 0$, là nơi mặt phẳng tiếp xúc với mặt trụ chia.
+   - **Biên dạng các mối ren trên mặt phẳng tiếp tuyến**:
+     * Mỗi mối ren $k$ cắt qua mặt phẳng $y = d_1/2$ tạo thành dải răng xiên nghiêng một góc nâng ren $\gamma$ so với phương ngang.
+     * Điểm giữa ren cắt qua đường sinh chia tại: $x_k = k \cdot p_x$.
+     * Đường tâm sườn ren trên mặt tiếp tuyến: $X_c(z) = x_k + \text{handSign} \cdot z \cdot \tan\gamma$.
+     * Tại khoảng cách $z \in [-w_t, w_t]$, bán kính tới tâm trục là $r(z) = \sqrt{r_1^2 + z^2}$. Chiều dày răng dọc trục thu hẹp dần từ $s_x$ ở $z = 0$ về $s_{a1}$ ở $z = \pm w_t$:
+       $$s_x(z) = \max(0.08 m_x, s_x - 2 (r(z) - r_1) \tan\alpha_x)$$
+     * Biên dạng 2 má răng: $X_L(z) = X_c(z) - s_x(z)/2$ và $X_R(z) = X_c(z) + s_x(z)/2$.
+   - **Hiển thị trực quan 2D**:
+     * Vẽ hình chiếu bóng ma mờ (Ghost background) thể hiện toàn bộ cổ trục và thân trụ $d_{a1}$ để người kỹ sư định vị không gian.
+     * Nổi bật dải tiếp xúc $B_t$ với các dải răng xiên màu xanh cyan, gạch mặt cắt $45^\circ$.
+     * Các điểm ăn khớp tiếp xúc vòng chia (Pitch points) chấm tròn vàng hổ phách trên đường sinh tiếp xúc đỏ chấm-gạch.
+     * Cung đo góc nâng ren $\gamma$, kích thước bước dọc trục $p_x$, bước pháp $p_n$, chiều dày răng $s_x$, $s_n$, chiều dài ren $L$, và bề rộng dải tiếp xúc $B_t$.
+3. **Đồng Bộ Hoàn Toàn Bộ 3 Nút Bấm 2D & Hệ Thống Xuất DXF R12**:
+   - `btnViewNormalProfile` (`normal_profile`): Mặt Cắt Pháp Tuyến (N-N).
+   - `btnViewAxialProfile` (`axial_profile`): Mặt Cắt Dọc Trục (A-A).
+   - `btnViewTangentialProfile` (`tangential_profile`): Mặt Cắt Tiếp Tuyến Mặt Trụ Chia (T-T).
+   - Cung cấp đầy đủ các tùy chọn xuất DXF Release 12 tương ứng với đầy đủ các layer cơ khí (`OUTLINE`, `PITCH_LINE`, `LIMIT_LINES`, `AXIS`, `DIMS`, `MFG_TABLE`).
+

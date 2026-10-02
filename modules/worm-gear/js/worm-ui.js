@@ -534,7 +534,7 @@ class WormUIController {
         }
 
         // 2. 2D Canvas Controls
-        const viewBtnIds = ['btnViewAssembly', 'btnViewWorm', 'btnViewWheel', 'btnViewNormalProfile', 'btnViewTangentialProfile'];
+        const viewBtnIds = ['btnViewAssembly', 'btnViewWorm', 'btnViewWheel', 'btnViewNormalProfile', 'btnViewAxialProfile', 'btnViewTangentialProfile'];
         const setViewBtnActive = (activeBtnId, mode) => {
             viewBtnIds.forEach(id => {
                 const b = document.getElementById(id);
@@ -558,6 +558,9 @@ class WormUIController {
 
         const btnNormal = document.getElementById('btnViewNormalProfile');
         if (btnNormal) btnNormal.addEventListener('click', () => setViewBtnActive('btnViewNormalProfile', 'normal_profile'));
+
+        const btnAxial = document.getElementById('btnViewAxialProfile');
+        if (btnAxial) btnAxial.addEventListener('click', () => setViewBtnActive('btnViewAxialProfile', 'axial_profile'));
 
         const btnTangential = document.getElementById('btnViewTangentialProfile');
         if (btnTangential) btnTangential.addEventListener('click', () => setViewBtnActive('btnViewTangentialProfile', 'tangential_profile'));
@@ -640,6 +643,7 @@ class WormUIController {
 
         bind2DExp('expDxfCurrent', 'current');
         bind2DExp('expDxfNormalProfile', 'normal_profile');
+        bind2DExp('expDxfAxialProfile', 'axial_profile');
         bind2DExp('expDxfTangentialProfile', 'tangential_profile');
         bind2DExp('expDxfAssembly', 'assembly');
         bind2DExp('expDxfWormFront', 'worm_front');

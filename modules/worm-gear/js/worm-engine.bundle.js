@@ -3243,6 +3243,8 @@ class WormCanvasRenderer {
             this.renderWheelDetailView(ctx, W, H, g);
         } else if (this.viewMode === 'normal_profile') {
             this.renderNormalProfileView(ctx, W, H, g);
+        } else if (this.viewMode === 'axial_profile') {
+            this.renderAxialProfileView(ctx, W, H, g);
         } else if (this.viewMode === 'tangential_profile') {
             this.renderTangentialProfileView(ctx, W, H, g);
         }
@@ -3610,7 +3612,7 @@ class WormCanvasRenderer {
         }
     }
 
-    renderTangentialProfileView(ctx, W, H, g) {
+    renderAxialProfileView(ctx, W, H, g) {
         const mx = g.mx;
         const px = g.px;
         const alfaxRad = (g.alfax * Math.PI) / 180.0;
@@ -3808,6 +3810,224 @@ class WormCanvasRenderer {
             ctx.stroke();
             ctx.font = 'bold 11px Inter, sans-serif';
             ctx.fillText(`αx = ${alfaxDeg.toFixed(2)}°`, toX(px + 0.15 * mx), toY(d1 / 2.0 + 0.35 * ha1));
+            ctx.restore();
+        }
+    }
+
+    renderTangentialProfileView(ctx, W, H, g) {
+        const mx = g.mx;
+        const mn = g.mn;
+        const px = g.px;
+        const pn = Math.PI * mn;
+        const alfaxRad = (g.alfax * Math.PI) / 180.0;
+        const alfaxDeg = g.alfax;
+        const gama = g.gama;
+        const gamaRad = (gama * Math.PI) / 180.0;
+        const sx = g.sx1;
+        const sn = pn / 2.0;
+        const d1 = g.d1;
+        const da1 = g.da1;
+        const df1 = g.df1;
+        const ha1 = (da1 - d1) / 2.0;
+        const ds = g.Shaft_ds;
+        const th = g.Shaft_th;
+        const L = g.L;
+        const l1 = g.l1;
+        const l2 = g.l2;
+        const beta = g.DXF_Beta || 15.0;
+
+        // Tangent Plane slice width at y = d1/2
+        const r1 = d1 / 2.0;
+        const ra1 = da1 / 2.0;
+        const wt = Math.sqrt(Math.max(0, ra1 * ra1 - r1 * r1)); // half chord
+        const bt = 2.0 * wt; // total chord width of tangent cut
+        const tanAx = Math.tan(alfaxRad);
+        const tanGama = Math.tan(gamaRad);
+
+        const minX = -l1 - 12.0;
+        const maxX = l2 + 12.0;
+        const minY = -Math.max(da1 / 2.0, wt * 1.35) * 1.15;
+        const maxY = Math.max(da1 / 2.0, wt * 1.35) * 1.15;
+
+        const spanX = maxX - minX;
+        const spanY = maxY - minY;
+        const baseScale = Math.min((W * 0.84) / spanX, (H * 0.72) / spanY);
+        const scale = baseScale * this.zoom;
+
+        const cxWorld = (minX + maxX) / 2.0;
+        const cyWorld = 0.0;
+        const cxScr = W / 2.0 + this.panX;
+        const cyScr = H / 2.0 + this.panY;
+
+        const toX = (wx) => cxScr + (wx - cxWorld) * scale;
+        const toY = (wz) => cyScr - (wz - cyWorld) * scale;
+
+        // 1. Ghost Background: Worm Outline in Top View (Shaft extensions & Body cylinder)
+        ctx.save();
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.25)';
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.04)';
+        ctx.lineWidth = 1.0;
+        // Shaft extension left
+        ctx.strokeRect(toX(-l1), toY(ds / 2.0), (l1 - L / 2.0 - th) * scale, ds * scale);
+        // Shaft extension right
+        ctx.strokeRect(toX(L / 2.0 + th), toY(ds / 2.0), (l2 - L / 2.0 - th) * scale, ds * scale);
+        // Shoulders
+        ctx.strokeRect(toX(-L / 2.0 - th), toY(df1 / 2.0), th * scale, df1 * scale);
+        ctx.strokeRect(toX(L / 2.0), toY(df1 / 2.0), th * scale, df1 * scale);
+        // Tip cylinder projection (ghost boundary)
+        ctx.setLineDash([4, 4]);
+        ctx.strokeRect(toX(-L / 2.0), toY(da1 / 2.0), L * scale, da1 * scale);
+        ctx.restore();
+
+        // 2. Central Tangent Cut Band: [-L/2, L/2] x [-wt, wt]
+        const ch = Math.tan((beta * Math.PI) / 180.0) * ha1;
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(toX(-L / 2.0), toY(0));
+        ctx.lineTo(toX(-L / 2.0 + ch), toY(wt));
+        ctx.lineTo(toX(L / 2.0 - ch), toY(wt));
+        ctx.lineTo(toX(L / 2.0), toY(0));
+        ctx.lineTo(toX(L / 2.0 - ch), toY(-wt));
+        ctx.lineTo(toX(-L / 2.0 + ch), toY(-wt));
+        ctx.closePath();
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.35)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.restore();
+
+        // 3. Centerline along worm axis / Pitch generator line at Z = 0
+        ctx.save();
+        ctx.strokeStyle = '#f43f5e';
+        ctx.lineWidth = 1.3;
+        ctx.setLineDash([10, 4, 2, 4]);
+        ctx.beginPath();
+        ctx.moveTo(toX(minX), toY(0));
+        ctx.lineTo(toX(maxX), toY(0));
+        ctx.stroke();
+        ctx.restore();
+
+        // 4. Helical Teeth Ribbons on Tangent Plane
+        const handSign = (parseInt(g.teethOrientation) === 2) ? -1.0 : 1.0;
+        const nP = Math.ceil(L / px) + 2;
+
+        ctx.save();
+        // Clip to Tangent Cut Band
+        ctx.beginPath();
+        ctx.moveTo(toX(-L / 2.0), toY(0));
+        ctx.lineTo(toX(-L / 2.0 + ch), toY(wt));
+        ctx.lineTo(toX(L / 2.0 - ch), toY(wt));
+        ctx.lineTo(toX(L / 2.0), toY(0));
+        ctx.lineTo(toX(L / 2.0 - ch), toY(-wt));
+        ctx.lineTo(toX(-L / 2.0 + ch), toY(-wt));
+        ctx.closePath();
+        ctx.clip();
+
+        const numZSteps = 16;
+        for (let k = -nP; k <= nP; k++) {
+            const xk = k * px;
+            const ptsR = [];
+            const ptsL = [];
+
+            for (let i = 0; i <= numZSteps; i++) {
+                const zVal = -wt + (2.0 * wt * i) / numZSteps;
+                const rz = Math.sqrt(r1 * r1 + zVal * zVal);
+                const deltaR = Math.max(0, rz - r1);
+                const sxz = Math.max(0.08 * mx, sx - 2.0 * deltaR * tanAx);
+                const xc = xk + handSign * zVal * tanGama;
+                ptsR.push({ x: xc + sxz / 2.0, z: zVal });
+                ptsL.push({ x: xc - sxz / 2.0, z: zVal });
+            }
+
+            // Draw tooth polygon
+            ctx.beginPath();
+            ptsR.forEach((pt, idx) => {
+                if (idx === 0) ctx.moveTo(toX(pt.x), toY(pt.z));
+                else ctx.lineTo(toX(pt.x), toY(pt.z));
+            });
+            for (let i = ptsL.length - 1; i >= 0; i--) {
+                ctx.lineTo(toX(ptsL[i].x), toY(ptsL[i].z));
+            }
+            ctx.closePath();
+
+            ctx.fillStyle = 'rgba(56, 189, 248, 0.35)';
+            ctx.fill();
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.6;
+            ctx.stroke();
+
+            // Pitch point on generator line Z = 0
+            ctx.save();
+            ctx.fillStyle = '#f59e0b';
+            ctx.strokeStyle = '#d97706';
+            ctx.lineWidth = 1.0;
+            ctx.beginPath();
+            ctx.arc(toX(xk), toY(0), 3.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // 45-degree Hatching across all teeth in tangent cut
+        ctx.save();
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.22)';
+        ctx.lineWidth = 1.0;
+        const hStep = 10 * Math.max(0.6, this.zoom);
+        for (let d = -W - H; d <= W + H; d += hStep) {
+            ctx.beginPath();
+            ctx.moveTo(d, 0);
+            ctx.lineTo(d + H, H);
+            ctx.stroke();
+        }
+        ctx.restore();
+        ctx.restore(); // end clip
+
+        // 5. Tangent Band Limit Lines (Z = +wt and Z = -wt)
+        ctx.save();
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([6, 4]);
+        ctx.beginPath();
+        ctx.moveTo(toX(-L / 2.0 + ch), toY(wt));
+        ctx.lineTo(toX(L / 2.0 - ch), toY(wt));
+        ctx.moveTo(toX(-L / 2.0 + ch), toY(-wt));
+        ctx.lineTo(toX(L / 2.0 - ch), toY(-wt));
+        ctx.stroke();
+        ctx.restore();
+
+        // 6. Dimensions and Callouts
+        if (this.showDims) {
+            // Total Length L
+            this.drawDimLine(ctx, toX(-L / 2.0), toY(wt + 8.0), toX(L / 2.0), toY(wt + 8.0), `L = ${L.toFixed(2)} mm`, -10);
+
+            // Contact Width Bt
+            this.drawDimLine(ctx, toX(-L / 2.0 - th - 12.0), toY(-wt), toX(-L / 2.0 - th - 12.0), toY(wt), `Bt = ${bt.toFixed(2)} mm`, -14);
+
+            // Axial Pitch px along generator line
+            this.drawDimLine(ctx, toX(0), toY(0), toX(px), toY(0), `px = ${px.toFixed(3)} mm`, 14);
+
+            // Axial Tooth Thickness sx
+            this.drawDimLine(ctx, toX(-sx / 2.0), toY(0), toX(sx / 2.0), toY(0), `sx = ${sx.toFixed(3)}`, -14);
+
+            // Lead angle callout arc
+            ctx.save();
+            ctx.strokeStyle = '#f59e0b';
+            ctx.fillStyle = '#f59e0b';
+            ctx.lineWidth = 1.3;
+            ctx.beginPath();
+            ctx.moveTo(toX(0), toY(0));
+            ctx.lineTo(toX(0), toY(wt * 0.9));
+            ctx.stroke();
+
+            const arcR = 24 * this.zoom;
+            ctx.beginPath();
+            ctx.arc(toX(0), toY(0), arcR, -Math.PI / 2.0, -Math.PI / 2.0 + handSign * gamaRad, handSign < 0);
+            ctx.stroke();
+            ctx.font = 'bold 11px Inter, sans-serif';
+            ctx.fillText(`γ = ${gama.toFixed(2)}°`, toX(handSign * arcR * 0.7), toY(wt * 0.45));
             ctx.restore();
         }
     }
@@ -4148,13 +4368,22 @@ class WormCanvasRenderer {
             ctx.fillText(`mn = ${g.mn.toFixed(3)} mm | αn = ${alfan.toFixed(2)}° | pn = ${(Math.PI * g.mn).toFixed(3)} mm`, 24, 54);
             ctx.fillText(`sn = ${(Math.PI * g.mn / 2).toFixed(3)} mm | ha1 = ${((g.da1 - g.d1)/2).toFixed(3)} | hf1 = ${((g.d1 - g.df1)/2).toFixed(3)} mm`, 24, 72);
             ctx.fillText(`ρf0 = ${(0.38 * g.mn).toFixed(3)} mm (0.38 mn) | Kiểu ren: ${typeNames[g.toothType] || 'ZN'}`, 24, 90);
-        } else if (this.viewMode === 'tangential_profile') {
-            ctx.fillText(`MẶT CẮT DỌC TRỤC / TIẾP TUYẾN TRỤC VÍT (A-A)`, 24, 34);
+        } else if (this.viewMode === 'axial_profile') {
+            ctx.fillText(`MẶT CẮT DỌC TRỤC TRỤC VÍT (A-A)`, 24, 34);
             ctx.fillStyle = '#e2e8f0';
             ctx.font = '11px Inter, sans-serif';
             ctx.fillText(`mx = ${g.mx.toFixed(3)} mm | αx = ${g.alfax.toFixed(2)}° | γ = ${g.gama.toFixed(3)}°`, 24, 54);
             ctx.fillText(`px = ${g.px.toFixed(3)} mm | sx = ${g.sx1.toFixed(3)} mm | L = ${g.L.toFixed(2)} mm`, 24, 72);
             ctx.fillText(`d1 = ${g.d1.toFixed(2)} mm | da1 = ${g.da1.toFixed(2)} mm | df1 = ${g.df1.toFixed(2)} mm`, 24, 90);
+        } else if (this.viewMode === 'tangential_profile') {
+            const wt = 0.5 * Math.sqrt(Math.max(0, g.da1 * g.da1 - g.d1 * g.d1));
+            const bt = 2.0 * wt;
+            ctx.fillText(`MẶT CẮT TIẾP TUYẾN MẶT TRỤ CHIA (T-T)`, 24, 34);
+            ctx.fillStyle = '#e2e8f0';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.fillText(`Mặt phẳng y = d1/2 (${(g.d1/2).toFixed(2)} mm) tiếp xúc mặt trụ chia | Bề rộng tiếp xúc Bt = ${bt.toFixed(2)} mm`, 24, 54);
+            ctx.fillText(`γ = ${g.gama.toFixed(3)}° | px = ${g.px.toFixed(3)} mm | pn = ${(Math.PI * g.mn).toFixed(3)} mm`, 24, 72);
+            ctx.fillText(`sx = ${g.sx1.toFixed(3)} mm | sn = ${(Math.PI * g.mn / 2).toFixed(3)} mm | L = ${g.L.toFixed(2)} mm`, 24, 90);
         } else {
             ctx.fillText(`TRỤC VÍT - BÁNH VÍT (${typeNames[g.toothType] || 'ZN'})`, 24, 34);
             ctx.fillStyle = '#e2e8f0';
@@ -4371,7 +4600,7 @@ class WormCanvasRenderer {
                 addText(tblX, tblY, mn * 0.30, r, 'MFG_TABLE');
                 tblY -= mn * 0.58;
             });
-        } else if (mode === 'tangential_profile') {
+        } else if (mode === 'axial_profile') {
             const { mx, px, alfax, gama, sx1: sx, da1, d1, df1, L, l1, l2, Shaft_ds: ds, Shaft_th: th, DXF_Beta } = g;
             const ha1 = (da1 - d1) / 2.0;
             const hf1 = (d1 - df1) / 2.0;
@@ -4461,7 +4690,7 @@ class WormCanvasRenderer {
             const tblX = l2 + 15;
             let tblY = da1 / 2.0 + 8;
             const rows = [
-                `WORM AXIAL / TANGENTIAL TOOTH PROFILE (DIN 3975)`,
+                `WORM AXIAL TOOTH PROFILE A-A (DIN 3975)`,
                 `Axial Module mx: ${mx.toFixed(4)} mm`,
                 `Axial Pressure Angle alfax: ${alfax.toFixed(4)} deg`,
                 `Lead Angle gama: ${gama.toFixed(4)} deg`,
@@ -4473,6 +4702,127 @@ class WormCanvasRenderer {
                 `Worm Thread Length L: ${L.toFixed(3)} mm`,
                 `Shaft Shoulder Diameter ds: ${ds.toFixed(2)} mm`,
                 `End Chamfer Angle: ${DXF_Beta} deg`
+            ];
+            rows.forEach(r => {
+                addText(tblX, tblY, 3.2, r, 'MFG_TABLE');
+                tblY -= 6.5;
+            });
+        } else if (mode === 'tangential_profile') {
+            const { mx, mn, px, alfax, gama, sx1: sx, da1, d1, df1, L, l1, l2, Shaft_ds: ds, Shaft_th: th, DXF_Beta } = g;
+            const pn = Math.PI * mn;
+            const sn = pn / 2.0;
+            const alfaxRad = (alfax * Math.PI) / 180.0;
+            const gamaRad = (gama * Math.PI) / 180.0;
+            const tanAx = Math.tan(alfaxRad);
+            const tanGama = Math.tan(gamaRad);
+            const r1 = d1 / 2.0;
+            const ra1 = da1 / 2.0;
+            const wt = Math.sqrt(Math.max(0, ra1 * ra1 - r1 * r1));
+            const bt = 2.0 * wt;
+            const beta = DXF_Beta || 15.0;
+            const ch = Math.tan((beta * Math.PI) / 180.0) * ((da1 - d1) / 2.0);
+            const handSign = (parseInt(g.teethOrientation) === 2) ? -1.0 : 1.0;
+
+            // 1. Centerline along worm axis / Pitch generator line (y = d1/2)
+            addLine(-l1 - 5, 0, l2 + 5, 0, 'AXIS');
+
+            // 2. Tangent Cut Boundary Lines (Z = +wt and Z = -wt)
+            addLine(-L / 2.0 + ch, wt, L / 2.0 - ch, wt, 'LIMIT_LINES');
+            addLine(-L / 2.0 + ch, -wt, L / 2.0 - ch, -wt, 'LIMIT_LINES');
+            addLine(-L / 2.0, 0, -L / 2.0 + ch, wt, 'LIMIT_LINES');
+            addLine(-L / 2.0, 0, -L / 2.0 + ch, -wt, 'LIMIT_LINES');
+            addLine(L / 2.0, 0, L / 2.0 - ch, wt, 'LIMIT_LINES');
+            addLine(L / 2.0, 0, L / 2.0 - ch, -wt, 'LIMIT_LINES');
+
+            // Ghost outer cylinder bounds
+            addLine(-L / 2.0, da1 / 2.0, L / 2.0, da1 / 2.0, 'PITCH_LINE');
+            addLine(-L / 2.0, -da1 / 2.0, L / 2.0, -da1 / 2.0, 'PITCH_LINE');
+
+            // Shaft shoulders and extensions
+            addLine(-l1, ds / 2.0, -L / 2.0 - th, ds / 2.0, 'OUTLINE');
+            addLine(-l1, -ds / 2.0, -L / 2.0 - th, -ds / 2.0, 'OUTLINE');
+            addLine(-l1, -ds / 2.0, -l1, ds / 2.0, 'OUTLINE');
+            addLine(L / 2.0 + th, ds / 2.0, l2, ds / 2.0, 'OUTLINE');
+            addLine(L / 2.0 + th, -ds / 2.0, l2, -ds / 2.0, 'OUTLINE');
+            addLine(l2, -ds / 2.0, l2, ds / 2.0, 'OUTLINE');
+
+            // Shoulders
+            addLine(-L / 2.0 - th, ds / 2.0, -L / 2.0 - th, df1 / 2.0, 'OUTLINE');
+            addLine(-L / 2.0 - th, -ds / 2.0, -L / 2.0 - th, -df1 / 2.0, 'OUTLINE');
+            addLine(-L / 2.0 - th, df1 / 2.0, -L / 2.0, df1 / 2.0, 'OUTLINE');
+            addLine(-L / 2.0 - th, -df1 / 2.0, -L / 2.0, -df1 / 2.0, 'OUTLINE');
+            addLine(L / 2.0, df1 / 2.0, L / 2.0 + th, df1 / 2.0, 'OUTLINE');
+            addLine(L / 2.0, -df1 / 2.0, L / 2.0 + th, -df1 / 2.0, 'OUTLINE');
+            addLine(L / 2.0 + th, ds / 2.0, L / 2.0 + th, df1 / 2.0, 'OUTLINE');
+            addLine(L / 2.0 + th, -ds / 2.0, L / 2.0 + th, -df1 / 2.0, 'OUTLINE');
+
+            // 3. Teeth ribbons across tangent plane
+            const nP = Math.ceil(L / px) + 2;
+            const numSteps = 10;
+            for (let k = -nP; k <= nP; k++) {
+                const xk = k * px;
+                const ptsR = [];
+                const ptsL = [];
+
+                for (let i = 0; i <= numSteps; i++) {
+                    const zVal = -wt + (2.0 * wt * i) / numSteps;
+                    const rz = Math.sqrt(r1 * r1 + zVal * zVal);
+                    const deltaR = Math.max(0, rz - r1);
+                    const sxz = Math.max(0.08 * mx, sx - 2.0 * deltaR * tanAx);
+                    const xc = xk + handSign * zVal * tanGama;
+                    ptsR.push({ x: xc + sxz / 2.0, z: zVal });
+                    ptsL.push({ x: xc - sxz / 2.0, z: zVal });
+                }
+
+                // Only draw if inside [-L/2, L/2]
+                const xMid = xk;
+                if (xMid >= -L / 2.0 - px && xMid <= L / 2.0 + px) {
+                    for (let i = 0; i < ptsR.length - 1; i++) {
+                        addLine(ptsR[i].x, ptsR[i].z, ptsR[i + 1].x, ptsR[i + 1].z, 'OUTLINE');
+                    }
+                    for (let i = 0; i < ptsL.length - 1; i++) {
+                        addLine(ptsL[i].x, ptsL[i].z, ptsL[i + 1].x, ptsL[i + 1].z, 'OUTLINE');
+                    }
+                    addLine(ptsL[ptsL.length - 1].x, wt, ptsR[ptsR.length - 1].x, wt, 'OUTLINE');
+                    addLine(ptsL[0].x, -wt, ptsR[0].x, -wt, 'OUTLINE');
+
+                    if (xk >= -L / 2.0 && xk <= L / 2.0) {
+                        addCircle(xk, 0, 0.6 * mx, 'PITCH_LINE');
+                    }
+                }
+            }
+
+            // Dimensions on DIMS layer
+            addLine(-L / 2.0, wt + 8.0, L / 2.0, wt + 8.0, 'DIMS');
+            addText(0, wt + 10.0, 3.5, `L = ${L.toFixed(3)} mm`, 'DIMS');
+
+            addLine(-L / 2.0 - 15, -wt, -L / 2.0 - 15, wt, 'DIMS');
+            addText(-L / 2.0 - 25, 0, 3.5, `Bt = ${bt.toFixed(3)} mm`, 'DIMS');
+
+            addLine(0, 0, px, 0, 'DIMS');
+            addText(px / 2.0, 1.5, 3.0, `px = ${px.toFixed(4)} mm`, 'DIMS');
+
+            addLine(-sx / 2.0, -2.5, sx / 2.0, -2.5, 'DIMS');
+            addText(0, -5.5, 3.0, `sx = ${sx.toFixed(4)} mm`, 'DIMS');
+
+            // Manufacturing Parameter Table on MFG_TABLE layer
+            const tblX = l2 + 15;
+            let tblY = wt + 8.0;
+            const rows = [
+                `WORM PITCH CYLINDER TANGENT SECTION T-T (DIN 3975)`,
+                `Tangent Plane Position y: ${(d1 / 2.0).toFixed(4)} mm`,
+                `Contact Slice Width Bt: ${bt.toFixed(4)} mm`,
+                `Lead Angle gama: ${gama.toFixed(4)} deg`,
+                `Axial Module mx: ${mx.toFixed(4)} mm`,
+                `Axial Pitch px: ${px.toFixed(4)} mm`,
+                `Normal Module mn: ${mn.toFixed(4)} mm`,
+                `Normal Pitch pn: ${pn.toFixed(4)} mm`,
+                `Axial Tooth Thickness sx: ${sx.toFixed(4)} mm`,
+                `Normal Tooth Thickness sn: ${sn.toFixed(4)} mm`,
+                `Pitch Diameter d1: ${d1.toFixed(3)} mm`,
+                `Tip Diameter da1: ${da1.toFixed(3)} mm`,
+                `Thread Length L: ${L.toFixed(3)} mm`,
+                `Number of Threads z1: ${g.z1}`
             ];
             rows.forEach(r => {
                 addText(tblX, tblY, 3.2, r, 'MFG_TABLE');
@@ -7191,7 +7541,7 @@ class WormUIController {
         }
 
         // 2. 2D Canvas Controls
-        const viewBtnIds = ['btnViewAssembly', 'btnViewWorm', 'btnViewWheel', 'btnViewNormalProfile', 'btnViewTangentialProfile'];
+        const viewBtnIds = ['btnViewAssembly', 'btnViewWorm', 'btnViewWheel', 'btnViewNormalProfile', 'btnViewAxialProfile', 'btnViewTangentialProfile'];
         const setViewBtnActive = (activeBtnId, mode) => {
             viewBtnIds.forEach(id => {
                 const b = document.getElementById(id);
@@ -7215,6 +7565,9 @@ class WormUIController {
 
         const btnNormal = document.getElementById('btnViewNormalProfile');
         if (btnNormal) btnNormal.addEventListener('click', () => setViewBtnActive('btnViewNormalProfile', 'normal_profile'));
+
+        const btnAxial = document.getElementById('btnViewAxialProfile');
+        if (btnAxial) btnAxial.addEventListener('click', () => setViewBtnActive('btnViewAxialProfile', 'axial_profile'));
 
         const btnTangential = document.getElementById('btnViewTangentialProfile');
         if (btnTangential) btnTangential.addEventListener('click', () => setViewBtnActive('btnViewTangentialProfile', 'tangential_profile'));
@@ -7297,6 +7650,7 @@ class WormUIController {
 
         bind2DExp('expDxfCurrent', 'current');
         bind2DExp('expDxfNormalProfile', 'normal_profile');
+        bind2DExp('expDxfAxialProfile', 'axial_profile');
         bind2DExp('expDxfTangentialProfile', 'tangential_profile');
         bind2DExp('expDxfAssembly', 'assembly');
         bind2DExp('expDxfWormFront', 'worm_front');

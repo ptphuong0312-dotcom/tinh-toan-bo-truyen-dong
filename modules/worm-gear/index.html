@@ -1613,8 +1613,9 @@
                         <button type="button" class="btn btn-primary" id="btnViewAssembly">📐 Bản Vẽ Lắp 2 Hình Chiếu</button>
                         <button type="button" class="btn btn-secondary" id="btnViewWorm">🔩 Chi Tiết Trục Vít</button>
                         <button type="button" class="btn btn-secondary" id="btnViewWheel">⚙️ Chi Tiết Bánh Vít (Mặt Cắt Họng)</button>
-                        <button type="button" class="btn btn-secondary" id="btnViewNormalProfile" title="Mặt cắt biên dạng răng theo phương pháp tuyến N-N (DIN 3975)">📐 Mặt Cắt Pháp Tuyến (N-N)</button>
-                        <button type="button" class="btn btn-secondary" id="btnViewTangentialProfile" title="Mặt cắt biên dạng răng theo phương tiếp tuyến / dọc trục A-A (DIN 3975)">📏 Mặt Cắt Tiếp Tuyến (A-A)</button>
+                        <button type="button" class="btn btn-secondary" id="btnViewNormalProfile" title="Mặt cắt biên dạng răng theo phương pháp tuyến N-N (DIN 3975)">📐 MC Pháp Tuyến (N-N)</button>
+                        <button type="button" class="btn btn-secondary" id="btnViewAxialProfile" title="Mặt cắt biên dạng răng theo phương dọc trục A-A (DIN 3975)">📏 MC Dọc Trục (A-A)</button>
+                        <button type="button" class="btn btn-secondary" id="btnViewTangentialProfile" title="Mặt cắt tiếp tuyến mặt trụ chia T-T (Tangent Plane to Pitch Cylinder y = d1/2)">📐 MC Tiếp Tuyến (T-T)</button>
                         <button type="button" class="btn btn-secondary" id="btnToggleWorm2D" title="Ẩn/Hiện Trục Vít trên bản vẽ 2D">🔩 Trục Vít: Hiện</button>
                         <button type="button" class="btn btn-secondary" id="btnToggleWheel2D" title="Ẩn/Hiện Bánh Vít trên bản vẽ 2D">⚙️ Bánh Vít: Hiện</button>
                         <button type="button" class="btn btn-secondary" id="btnPlayAnim">▶ Mô Phỏng Ăn Khớp</button>
@@ -1631,17 +1632,18 @@
                             <button type="button" class="btn" id="btnExport2DMenu" style="background-color: #107c41; border-color: #107c41; color: #fff; font-weight: 700; cursor: pointer;">
                                 💾 Xuất File 2D CAD (.DXF) ▾
                             </button>
-                            <div id="export2DDropdown" style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); min-width: 320px; padding: 0.5rem 0; margin-top: 4px;">
+                            <div id="export2DDropdown" style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); min-width: 330px; padding: 0.5rem 0; margin-top: 4px;">
                                 <div style="padding: 4px 12px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
                                     Xuất Theo Hình Chiếu Đang Chọn
                                 </div>
                                 <a href="javascript:void(0)" id="expDxfCurrent" style="display: block; padding: 6px 14px; color: #10b981; font-weight: 700; font-size: 0.85rem; text-decoration: none;">💾 Xuất Hình Đang Xem Hiện Tại (.dxf)</a>
                                 <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
                                 <div style="padding: 4px 12px; font-size: 0.75rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;">
-                                    Biên Dạng Răng Pháp Tuyến & Tiếp Tuyến
+                                    Mặt Cắt Biên Dạng Răng Chuyên Dụng
                                 </div>
-                                <a href="javascript:void(0)" id="expDxfNormalProfile" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">📐 Xuất Biên Dạng Pháp Tuyến N-N (.dxf)</a>
-                                <a href="javascript:void(0)" id="expDxfTangentialProfile" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">📏 Xuất Biên Dạng Tiếp Tuyến / Dọc Trục A-A (.dxf)</a>
+                                <a href="javascript:void(0)" id="expDxfNormalProfile" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">📐 Xuất MC Pháp Tuyến N-N (.dxf)</a>
+                                <a href="javascript:void(0)" id="expDxfAxialProfile" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">📏 Xuất MC Dọc Trục A-A (.dxf)</a>
+                                <a href="javascript:void(0)" id="expDxfTangentialProfile" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">📐 Xuất MC Tiếp Tuyến Mặt Trụ Chia T-T (.dxf)</a>
                                 <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
                                 <div style="padding: 4px 12px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
                                     Bản Vẽ Chi Tiết & Lắp Ráp

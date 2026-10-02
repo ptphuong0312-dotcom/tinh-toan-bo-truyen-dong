@@ -2601,3 +2601,40 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
     * Thẩm tra DXF Export: File DXF tạo thành công với dung lượng đầy đủ (`normal_profile`: 5,229 bytes, `tangential_profile`: 5,635 bytes), cấu trúc AC1009 hợp lệ.
     * Thẩm tra 3D WebGL Toggles: Ẩn/hiện Trục Vít 1 và Bánh Vít 2 thời gian thực không lỗi console.
     * 0 lỗi JavaScript/GLSL Console.
+
+---
+
+## 37. ĐỢT TỐI ƯU HÓA 37: PHÂN ĐỊNH RẠCH RÒI & HOÀN THIỆN ĐỦ BỘ 3 MẶT CẮT KỸ THUẬT CƠ KHÍ 2D TRỤC VÍT (PHÁP TUYẾN N-N, DỌC TRỤC A-A VÀ TIẾP TUYẾN MẶT TRỤ CHIA T-T) CHUẨN DIN 3975 & BỘ XUẤT DXF R12
+
+* **Bối cảnh & Chỉ đạo từ SirPhuong**:
+  - Người dùng hỏi làm rõ: *"hiện tại trên web app bạn đang làm là như này à: Mặt Cắt Pháp Là mặt phẳng vuông góc với đường xoắn ốc; Mặt Cắt Tiếp là Mặt cắt liên hệ phương tiếp tuyến ăn khớp / Mặt cắt dọc trục (Axial Section A - A )"*.
+  - Người dùng đồng thuận với đề xuất chuẩn hóa: *"được bạn hãy làm như đề xuất của bạn nói"*.
+
+* **Phân tích hình học cơ khí chuẩn xác (Geometric & Manufacturing Theory)**:
+  1. **Mặt cắt pháp tuyến (Normal Section $N-N$)**: Vuông góc với đường xoắn vít trên mặt trụ chia. Thể hiện biên dạng thanh răng cơ bản danh nghĩa của dao cắt ($m_n, \alpha_n, p_n, s_n, \rho_{f0} = 0.38 m_n$).
+  2. **Mặt cắt dọc trục (Axial Section $A-A$)**: Cắt qua đường tâm trục xoay ($y = 0$). Thể hiện đường kính chia $d_1$, đỉnh $d_{a1}$, chân $d_{f1}$, bước trục $p_x$, góc ăn khớp dọc trục $\alpha_x$, cổ trục, vai trục và ren đối xứng.
+  3. **Mặt cắt tiếp tuyến mặt trụ chia (Pitch Tangent Section $T-T$)**: Cắt bởi mặt phẳng tiếp tuyến với mặt trụ chia tại $y = d_1/2$ (song song với trục $X$). Giao tuyến với nón đỉnh $d_{a1}$ tạo thành dải tiếp xúc phẳng có bề rộng hữu hạn $B_t = 2\sqrt{r_{a1}^2 - r_1^2} = \sqrt{d_{a1}^2 - d_1^2}$. Các ren xuất hiện dưới dạng các dải răng xiên nghiêng góc nâng $\gamma$. Chiều dày răng thu hẹp dần từ $s_x$ tại tâm $z = 0$ về $s_{a1}$ tại biên dải $z = \pm w_t$.
+
+* **Các giải pháp kỹ thuật đã triển khai**:
+  1. *Tách bạch và cung cấp trọn bộ 3 nút bấm trên thanh công cụ 2D*:
+     - `[📐 MC Pháp Tuyến (N-N)]` (`btnViewNormalProfile`) -> chế độ `normal_profile`.
+     - `[📏 MC Dọc Trục (A-A)]` (`btnViewAxialProfile`) -> chế độ `axial_profile`.
+     - `[📐 MC Tiếp Tuyến (T-T)]` (`btnViewTangentialProfile`) -> chế độ `tangential_profile`.
+  2. *Xây dựng giải thuật dựng hình Mặt Cắt Tiếp Tuyến Mặt Trụ Chia $T-T$ (`renderTangentialProfileView`)*:
+     - Tính toán bề rộng dải cắt: $w_t = 0.5\sqrt{d_{a1}^2 - d_1^2} \implies B_t = 2 w_t$.
+     - Dựng bóng mờ (Ghost background) toàn bộ thân trục vít và cổ trục để kỹ sư định vị không gian 3D.
+     - Dựng đường sinh chia tiếp xúc (Pitch Generator Line) tại $z = 0$ (đỏ gạch-chấm) kèm các điểm tiếp xúc ăn khớp (Pitch points) chấm tròn vàng hổ phách tại $x_k = k \cdot p_x$.
+     - Dựng các dải răng xiên nghiêng góc $\gamma$ với biên dạng má răng thuôn mượt theo hàm bán kính $r(z) = \sqrt{r_1^2 + z^2}$, gạch mặt cắt $45^\circ$.
+     - Đầy đủ kích thước kỹ thuật: Chiều dài ren $L$, Bề rộng dải cắt $B_t$, Bước dọc trục $p_x$, Chiều dày răng $s_x$, và Cung đo góc nâng ren $\gamma$.
+  3. *Tích hợp xuất file CAD DXF Release 12 (AC1009) cho cả 3 mặt cắt*:
+     - Bổ sung tùy chọn `expDxfAxialProfile` và `expDxfTangentialProfile` vào menu dropdown xuất 2D CAD.
+     - Xuất đầy đủ các layer kỹ thuật: `OUTLINE`, `AXIS`, `PITCH_LINE`, `LIMIT_LINES`, `DIMS`, `MFG_TABLE`.
+
+* **Kết quả đo kiểm & Thẩm tra tự động (Playwright Automated Test Suite)**:
+  - Tự động chạy script `modules/worm-gear/tests/test_worm_features.py`:
+    * Thẩm tra 2D Normal Profile view (`normal_profile`): PASS (DXF blob: 5,229 bytes).
+    * Thẩm tra 2D Axial Profile view (`axial_profile`): PASS (DXF blob: 5,626 bytes).
+    * Thẩm tra 2D Tangential Profile view (`tangential_profile`): PASS (DXF blob: 17,179 bytes).
+    * Thẩm tra hình ảnh chụp thực tế: `worm_2d_normal_profile.png`, `worm_2d_axial_profile.png`, `worm_2d_tangential_profile.png` hiển thị sắc nét, chuẩn xác 100%.
+    * 0 lỗi JavaScript/GLSL Console, exit code 0.
+
