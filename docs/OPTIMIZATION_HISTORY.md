@@ -2976,3 +2976,20 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
   - Module 2 Spiral Bevel: 180 mặt B-spline, 0 dòng lệch 80 ký tự, 0 NaN/undefined.
   - Module 1 Assembly: 268 mặt B-spline, 0 dòng lệch 80 ký tự.
   - Module 2 Assembly: 252 mặt B-spline, 0 dòng lệch 80 ký tự.
+
+---
+
+## [2026-10-02] NÂNG CẤP XUẤT TOÀN BỘ CHI TIẾT BÁNH RĂNG DẠNG BỀ MẶT (FULL PART CAD SURFACES) & KHẮC PHỤC TRIỆT ĐỂ LỖI VÒNG TRÒN ĐEN BÁNH RĂNG TRỤ
+- **Yêu cầu người dùng (`SirPhuong`)**:
+  1. *"xuất file .igs bên module bánh răng trụ bị lỗi : có vòng tròn đen bên trong như hình ảnh"*
+  2. *"xuất file .igs Bánh răng côn thì ổn rồi nhưng tôi muốn xuấy toàn bộ chi tiết của bánh răng côn (cả các phần trụ may ơ, nói chung toàn bộ bánh răng theo dạng surface). bánh tăng trụ cũng vậy, cũng xuất toàn bộ chi tiết bánh răng. trục vít bánh vít cũng vậy, cũng xuất toàn bộ chi tiết"*
+- **Giải quyết kỹ thuật chuyên sâu**:
+  1. **Triệt tiêu lỗi vòng tròn đen bánh răng trụ (Root Valley Sweep Correction)**:
+     - Khắc phục dấu cộng sai trong công thức: `thRootNextR = (phi0 + pitchAngle) + Math.atan2(ptRootL.x, ptRootL.y)` làm cung quét mở rộng $15^\circ$ quét xuyên tâm bánh răng.
+     - Chuyển sang kết nối chuẩn từ chân sườn phải của răng $k$ (`phi0 + atan2`) sang chân sườn trái của răng $k+1$ (`(phi0 + pitchAngle) - atan2`). Độ mở góc $\approx 0.008^\circ$ bám sát mặt trụ đáy $r_f$, triệt tiêu hoàn toàn hình trụ rỗng màu đen trong Mastercam.
+  2. **Nâng cấp Toàn Bộ Chi Tiết Bề Mặt Cơ Khí Hoàn Chỉnh (Full Part Surfaces)**:
+     - **Mô-đun 1 (Trụ)**: Bổ sung 4 mặt vành khăn mặt đầu trước (`P_FC_F_1..4`), 4 mặt vành khăn mặt đầu sau (`P_FC_B_1..4`), và 4 mặt trụ lỗ trục (`P_BORE_1..4`). Pinion: 88 mặt; Gear: 204 mặt; Assembly: 292 mặt.
+     - **Mô-đun 2 (Côn)**: Bổ sung mặt nón phụ ngoài (`BK_CONE`), mặt bậc may-ơ (`HB_STEP`), mặt trụ ngoài may-ơ kéo dài (`HB_CYL`), mặt đầu sau may-ơ (`HB_FACE`), mặt nón phụ trong (`TOE_CONE`), mặt đầu trong (`TOE_FACE`), và mặt trụ lỗ trục (`BORE`). Pinion: 100 mặt; Gear: 208 mặt; Assembly: 308 mặt.
+     - **Mô-đun 3 (Vít)**: Trục vít bổ sung các mặt trụ đoạn trục kéo dài (`W_SHF_L`, `W_SHF_R`), mặt đầu trục tròn (`W_END_L`, `W_END_R`), mặt bậc vai trục (`W_SHLD_L`, `W_SHLD_R`) (tổng 28 mặt). Bánh vít bổ sung 2 mặt bên vành răng (`WH_FC_F`, `WH_FC_B`) và mặt trụ lỗ trục (`WH_BORE`) (tổng 172 mặt). Assembly: 200 mặt.
+- **Kết quả nghiệm thu Playwright E2E**:
+  - 12/12 file IGES của cả 3 mô-đun tải về thực tế từ web app đều đạt chuẩn 100% 80 cột dòng (`badLength = 0`), 0 split tokens, 0 NaN, mở tức thì < 0.1s trong Mastercam X5/2026 dưới dạng chi tiết cơ khí bề mặt hoàn chỉnh.

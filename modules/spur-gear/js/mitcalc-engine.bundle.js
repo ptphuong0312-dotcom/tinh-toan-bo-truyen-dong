@@ -4157,16 +4157,16 @@ const Gear3DGenerator = {
                     sliceL.push([pt.r * Math.sin(th), pt.r * Math.cos(th), zCoord]);
                 }
 
-                // 4. Root Valley (connecting left flank root of tooth k to right flank root of tooth k+1)
+                // 4. Root Valley (connecting right flank root of tooth k to left flank root of tooth k+1)
                 const rawRoot = [];
-                const ptRootL = half[half.length - 1];
-                const thRootL = phi0 - Math.atan2(ptRootL.x, ptRootL.y);
-                const thRootNextR = (phi0 + pitchAngle) + Math.atan2(ptRootL.x, ptRootL.y);
+                const ptRoot = half[half.length - 1];
+                const thRootR = phi0 + Math.atan2(ptRoot.x, ptRoot.y);
+                const thRootNextL = (phi0 + pitchAngle) - Math.atan2(ptRoot.x, ptRoot.y);
                 const rf = df * 0.5;
-                const rootPts = 12;
+                const rootPts = 6;
                 for (let t = 0; t <= rootPts; t++) {
                     const frac = t / rootPts;
-                    const th = thRootL + frac * (thRootNextR - thRootL);
+                    const th = thRootR + frac * (thRootNextL - thRootR);
                     rawRoot.push([rf * Math.sin(th), rf * Math.cos(th), zCoord]);
                 }
                 const sliceRoot = this.fitCubicBSplineCtrlPts(rawRoot);
@@ -4197,7 +4197,66 @@ const Gear3DGenerator = {
             }
         }
 
+        // 5. Complete Gear Part Blank Surfaces (Front Face, Back Face, Shaft Bore Cylinder)
+        const isPinion = (opt.isPinion !== undefined) ? opt.isPinion : (opt.level === 1 || opt.hand === 1);
+        const prefix = isPinion ? 'P' : 'G';
+        const level = opt.level || (isPinion ? 1 : 2);
+        const rIn = (opt.dBore ? opt.dBore * 0.5 : df * 0.225);
+        const rOut = df * 0.5;
+
+        // Front Face at Z = +b/2 (4 Quadrants)
+        const frontFace = this.createAnnularFaceSurfaces(rIn, rOut, b * 0.5, `${prefix}_FC_F`, 2, level);
+        surfaces.push(...frontFace);
+
+        // Back Face at Z = -b/2 (4 Quadrants)
+        const backFace = this.createAnnularFaceSurfaces(rIn, rOut, -b * 0.5, `${prefix}_FC_B`, 2, level);
+        surfaces.push(...backFace);
+
+        // Shaft Bore Cylinder (4 Quadrants)
+        const bore = this.createCylinderSurfaces(rIn, -b * 0.5, b * 0.5, `${prefix}_BORE`, 1, level);
+        surfaces.push(...bore);
+
         return { surfaces, curves };
+    },
+
+    createAnnularFaceSurfaces(rIn, rOut, z, labelPrefix, color = 2, level = 1, numQuad = 4, ptsPerQuad = 5) {
+        const surfaces = [];
+        const dPhi = (2.0 * Math.PI) / numQuad;
+        for (let q = 0; q < numQuad; q++) {
+            const phi0 = q * dPhi;
+            const grid = [];
+            for (let i = 0; i < ptsPerQuad; i++) {
+                const phi = phi0 + (i / (ptsPerQuad - 1)) * dPhi;
+                const slice = [];
+                for (let j = 0; j < 3; j++) {
+                    const r = rIn + (j / 2) * (rOut - rIn);
+                    slice.push([r * Math.sin(phi), r * Math.cos(phi), z]);
+                }
+                grid.push(slice);
+            }
+            surfaces.push({ label: `${labelPrefix}_${q + 1}`, grid, color, level });
+        }
+        return surfaces;
+    },
+
+    createCylinderSurfaces(r, z0, z1, labelPrefix, color = 1, level = 1, numQuad = 4, ptsPerQuad = 5) {
+        const surfaces = [];
+        const dPhi = (2.0 * Math.PI) / numQuad;
+        for (let q = 0; q < numQuad; q++) {
+            const phi0 = q * dPhi;
+            const grid = [];
+            for (let i = 0; i < ptsPerQuad; i++) {
+                const phi = phi0 + (i / (ptsPerQuad - 1)) * dPhi;
+                const slice = [];
+                for (let j = 0; j < 3; j++) {
+                    const z = z0 + (j / 2) * (z1 - z0);
+                    slice.push([r * Math.sin(phi), r * Math.cos(phi), z]);
+                }
+                grid.push(slice);
+            }
+            surfaces.push({ label: `${labelPrefix}_${q + 1}`, grid, color, level });
+        }
+        return surfaces;
     }
 };
 

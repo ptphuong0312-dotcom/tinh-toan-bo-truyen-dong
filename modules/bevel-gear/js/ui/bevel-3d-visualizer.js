@@ -840,11 +840,22 @@ export class Bevel3DVisualizer {
         const hf_e2 = parseFloat(this.geom.hfe2) || (hf2 * (Re / Rm));
         const sn_e2 = parseFloat(this.geom.sne2) || (mmn * 1.30);
 
+        const hp = (typeof BevelGearCanvas !== 'undefined' && BevelGearCanvas.computeBlankAndHubParams)
+            ? BevelGearCanvas.computeBlankAndHubParams(this.geom, this.hubOverrides)
+            : null;
+        const rHub1 = hp ? hp.rHub1 : undefined;
+        const z_hub_end1 = hp ? hp.z_hub_end1 : undefined;
+        const rHub2 = hp ? hp.rHub2 : undefined;
+        const z_hub_end2 = hp ? hp.z_hub_end2 : undefined;
+        const dBore1 = parseFloat(this.geom.dBore1) || 50.0;
+        const dBore2 = parseFloat(this.geom.dBore2) || 100.0;
+
         const base1 = {
             z: z1, mmn, b, Re, Rm, Ri,
             delta: delta1, alfa, beta, gearingType,
             ha_e: ha_e1, hf_e: hf_e1, sn_e: sn_e1,
             hand: 1, isPinion: true, level: 1,
+            rHub: rHub1, z_hub_end: z_hub_end1, dBore: dBore1,
             exportAllTeeth: true,
             includeCurves: (type === 'curves')
         };
@@ -854,6 +865,7 @@ export class Bevel3DVisualizer {
             delta: delta2, alfa, beta, gearingType,
             ha_e: ha_e2, hf_e: hf_e2, sn_e: sn_e2,
             hand: -1, isPinion: false, level: 2,
+            rHub: rHub2, z_hub_end: z_hub_end2, dBore: dBore2,
             exportAllTeeth: true,
             includeCurves: (type === 'curves')
         };

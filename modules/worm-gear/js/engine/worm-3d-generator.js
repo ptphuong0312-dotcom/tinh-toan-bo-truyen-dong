@@ -1226,6 +1226,33 @@ const Worm3DGenerator = {
             }
         }
 
+        // Complete Worm Shaft Blank Surfaces (Left Shaft, Left End, Left Shoulder, Right Shaft, Right End, Right Shoulder)
+        const rShaft = Math.min(rf1, Math.max(2.0, mc.MC_ds1 * 0.5));
+        const l1 = Math.max(L * 0.5 + mc.MC_t1 + 8.0, parseFloat(opt.l1) || 50.0);
+        const l2 = Math.max(L * 0.5 + mc.MC_t1 + 8.0, parseFloat(opt.l2) || 50.0);
+
+        // 1. Left Shaft Cylinder (x: -l1 -> -L/2)
+        surfaces.push(...this.createCylinderSurfaces(rShaft, -l1, -L * 0.5, 'W_SHF_L', 1, 1, 'x'));
+
+        // 2. Left Shaft End Circular Face (x = -l1, r: 0 -> rShaft)
+        surfaces.push(...this.createCircularFaceSurfaces(rShaft, -l1, 'W_END_L', 2, 1, 'x'));
+
+        // 3. Left Shoulder Annular Face (x = -L/2, r: rShaft -> rf1)
+        if (rf1 > rShaft + 0.1) {
+            surfaces.push(...this.createAnnularFaceSurfaces(rShaft, rf1, -L * 0.5, 'W_SHLD_L', 2, 1, 'x'));
+        }
+
+        // 4. Right Shaft Cylinder (x: +L/2 -> +l2)
+        surfaces.push(...this.createCylinderSurfaces(rShaft, L * 0.5, l2, 'W_SHF_R', 1, 1, 'x'));
+
+        // 5. Right Shaft End Circular Face (x = +l2, r: 0 -> rShaft)
+        surfaces.push(...this.createCircularFaceSurfaces(rShaft, l2, 'W_END_R', 2, 1, 'x'));
+
+        // 6. Right Shoulder Annular Face (x = +L/2, r: rShaft -> rf1)
+        if (rf1 > rShaft + 0.1) {
+            surfaces.push(...this.createAnnularFaceSurfaces(rShaft, rf1, L * 0.5, 'W_SHLD_R', 2, 1, 'x'));
+        }
+
         return { surfaces, curves, mc };
     },
 
@@ -1340,7 +1367,94 @@ const Worm3DGenerator = {
             }
         }
 
+        // Complete Worm Wheel Blank Surfaces (Front Side Face, Back Side Face, Shaft Bore Cylinder)
+        const df2 = mc.MC_df2;
+        const rRootEdge = df2 * 0.5;
+        const dBore2 = Math.min(df2 * 0.65, Math.max(16.0, mc.ShaftDB2 || (df2 * 0.32)));
+        const rBore2 = dBore2 * 0.5;
+
+        // 1. Front Side Annular Face at Z = +halfB
+        surfaces.push(...this.createAnnularFaceSurfaces(rBore2, rRootEdge, halfB, 'WH_FC_F', 2, 2, 'z'));
+
+        // 2. Back Side Annular Face at Z = -halfB
+        surfaces.push(...this.createAnnularFaceSurfaces(rBore2, rRootEdge, -halfB, 'WH_FC_B', 2, 2, 'z'));
+
+        // 3. Shaft Bore Cylinder (radius rBore2 from -halfB to +halfB)
+        surfaces.push(...this.createCylinderSurfaces(rBore2, -halfB, halfB, 'WH_BORE', 1, 2, 'z'));
+
         return { surfaces, curves, mc };
+    },
+
+    createCylinderSurfaces(r, u0, u1, labelPrefix, color = 1, level = 1, axis = 'z', numQuad = 4, ptsPerQuad = 5) {
+        const surfaces = [];
+        const dPhi = (2.0 * Math.PI) / numQuad;
+        for (let q = 0; q < numQuad; q++) {
+            const phi0 = q * dPhi;
+            const grid = [];
+            for (let i = 0; i < ptsPerQuad; i++) {
+                const phi = phi0 + (i / (ptsPerQuad - 1)) * dPhi;
+                const slice = [];
+                for (let j = 0; j < 3; j++) {
+                    const u = u0 + (j / 2) * (u1 - u0);
+                    if (axis === 'x') {
+                        slice.push([u, r * Math.cos(phi), r * Math.sin(phi)]);
+                    } else {
+                        slice.push([r * Math.cos(phi), r * Math.sin(phi), u]);
+                    }
+                }
+                grid.push(slice);
+            }
+            surfaces.push({ label: `${labelPrefix}_${q + 1}`, grid, color, level });
+        }
+        return surfaces;
+    },
+
+    createAnnularFaceSurfaces(rIn, rOut, pos, labelPrefix, color = 2, level = 1, axis = 'z', numQuad = 4, ptsPerQuad = 5) {
+        const surfaces = [];
+        const dPhi = (2.0 * Math.PI) / numQuad;
+        for (let q = 0; q < numQuad; q++) {
+            const phi0 = q * dPhi;
+            const grid = [];
+            for (let i = 0; i < ptsPerQuad; i++) {
+                const phi = phi0 + (i / (ptsPerQuad - 1)) * dPhi;
+                const slice = [];
+                for (let j = 0; j < 3; j++) {
+                    const r = rIn + (j / 2) * (rOut - rIn);
+                    if (axis === 'x') {
+                        slice.push([pos, r * Math.cos(phi), r * Math.sin(phi)]);
+                    } else {
+                        slice.push([r * Math.cos(phi), r * Math.sin(phi), pos]);
+                    }
+                }
+                grid.push(slice);
+            }
+            surfaces.push({ label: `${labelPrefix}_${q + 1}`, grid, color, level });
+        }
+        return surfaces;
+    },
+
+    createCircularFaceSurfaces(rMax, pos, labelPrefix, color = 2, level = 1, axis = 'x', numQuad = 4, ptsPerQuad = 5) {
+        const surfaces = [];
+        const dPhi = (2.0 * Math.PI) / numQuad;
+        for (let q = 0; q < numQuad; q++) {
+            const phi0 = q * dPhi;
+            const grid = [];
+            for (let i = 0; i < ptsPerQuad; i++) {
+                const phi = phi0 + (i / (ptsPerQuad - 1)) * dPhi;
+                const slice = [];
+                for (let j = 0; j < 3; j++) {
+                    const r = (j / 2) * rMax;
+                    if (axis === 'x') {
+                        slice.push([pos, r * Math.cos(phi), r * Math.sin(phi)]);
+                    } else {
+                        slice.push([r * Math.cos(phi), r * Math.sin(phi), pos]);
+                    }
+                }
+                grid.push(slice);
+            }
+            surfaces.push({ label: `${labelPrefix}_${q + 1}`, grid, color, level });
+        }
+        return surfaces;
     },
 
     generateWormSurfaceMesh(opt = {}) {
