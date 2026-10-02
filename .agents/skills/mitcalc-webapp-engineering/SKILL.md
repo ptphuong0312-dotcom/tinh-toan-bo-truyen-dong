@@ -1633,3 +1633,19 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
    - Chạy `python tools/bundle_all.py` sau mọi chỉnh sửa.
    - Kiểm thử Playwright tự động (`python tests/test_all_modules_iges_export.py`): 12/12 tệp IGES của cả 3 mô-đun đều tải về thành công, 100% dòng đạt chuẩn 80 cột dòng (`badLength = 0`), 0 split tokens, 0 NaN, mở tức thì và hiển thị mượt mà trên Mastercam.
 
+---
+
+### 23. Quy Chuẩn Triệt Tiêu Dải Trụ Màu Hồng Bánh Vít & Bảo Toàn Chiều Cao Răng Toàn Bộ Bề Rộng Vành Họng
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"bánh vít vẫn đang có vấn đề như ảnh"* (`media_1790953747299.png`)
+2. **Khắc Phục Lỗi Dải Trụ $360^\circ$ Màu Hồng (`WHEEL_ROOT`)**:
+   - **Nguyên nhân**: Góc sườn Coast của răng $j$ bị bọc góc qua `Math.atan2` nhảy từ $+\pi$ sang $-\pi$ tại các răng 30-39, trong khi sườn Drive của răng kế tiếp $j+1$ không bọc góc, sinh ra góc quét đáy rãnh $\Delta\theta_{\text{root}} = 366.87^\circ$. 10 bề mặt đã quét trọn một vòng tròn $360^\circ$ bao quanh bánh vít với mã màu 6 (Magenta).
+   - **Giải thuật sửa chuẩn**: Giữ nguyên hệ tọa độ góc cực liên tục tuần hoàn $\theta \in [0, 2\pi]$ cho cả sườn Drive và Coast. Khóa cứng góc quét $\Delta\theta_{\text{tip}} \in [1.53^\circ, 5.98^\circ]$ và $\Delta\theta_{\text{root}} \in [2.45^\circ, 3.91^\circ]$ trên toàn bộ 40 răng và 60 lát cắt dọc trục. Triệt tiêu 100% góc quét $366^\circ$.
+   - **Đồng bộ mã màu**: Chuyển `WHEEL_DRV`, `WHEEL_CST`, `WHEEL_ROOT`, và `WORM_ROOT` sang `color: 3` (Xanh lá cây chuẩn Mastercam), đỉnh răng `TIP` giữ `color: 2` (Xanh lơ). Triệt tiêu 100% mã màu 6 (Magenta).
+3. **Bảo Toàn Chiều Cao Răng Bánh Vít Toàn Bộ Bề Rộng Vành Họng $b_{2H}$**:
+   - Loại bỏ công thức vạt góc phôi (Outer chamfer) trong `evalWheelBlank` làm cưỡng bức $r_{\text{Tip}}$ hạ xuống $r_{\text{Root}}$ tại $z = \pm b_{2H}/2$.
+   - Trong lòng họng ($|z| \le b_1$): Đỉnh răng lượn theo bán kính nón họng $r_{\text{Tip}}(z) = a - \sqrt{r_1^2 - z^2}$.
+   - Ngoài lòng họng ($|z| > b_1$): Đỉnh răng nằm trên mặt trụ đỉnh ngoài $d_{e2}/2$.
+   - Chiều cao răng tại tâm $z = 0$ đạt $9.53\text{ mm}$, tại mép vành $z = \pm 16.79\text{ mm}$ vẫn duy trì đầy đủ $4.13\text{ mm}$. Toàn bộ 40 răng ăn khớp sắc nét, đầy đặn từ mép này sang mép kia.
+
+

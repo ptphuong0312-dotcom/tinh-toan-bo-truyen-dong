@@ -668,3 +668,11 @@ export const Gear3DGenerator = {
         return { surfaces, curves };
     }
 };
+
+if (typeof window !== 'undefined') {
+    window.Gear3DGenerator = Gear3DGenerator;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { Gear3DGenerator };
+}
+

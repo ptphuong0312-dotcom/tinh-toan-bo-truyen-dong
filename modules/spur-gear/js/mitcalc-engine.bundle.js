@@ -4201,6 +4201,14 @@ const Gear3DGenerator = {
     }
 };
 
+if (typeof window !== 'undefined') {
+    window.Gear3DGenerator = Gear3DGenerator;
+}
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { Gear3DGenerator };
+}
+
+
 /**
  * MITCalc Web App - 3D CAD Exporter for SolidWorks & Mastercam
  * Generates industry-standard 3D CAD files:

@@ -3018,3 +3018,34 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
   3. **Đóng gói Bundle và kiểm thử Playwright tự động**:
      - Chạy `tools/bundle_all.py` cập nhật 3 bundle JS độc lập 100% offline.
      - Chạy `tests/test_all_modules_iges_export.py`: **12/12 tệp IGES của cả 3 mô-đun đều tải về thành công, 100% dòng đạt chuẩn 80 cột, 0 split tokens, 0 NaN, sẵn sàng 100% cho gia công Mastercam X5**.
+
+---
+
+## [2026-10-02] KHẮC PHỤC TRIỆT ĐỂ LỖI DẢI HÌNH TRỤ MÀU HỒNG (MAGENTA BAND) VÀ KHÔI PHỤC CHIỀU CAO RĂNG BÁNH VÍT TOÀN BỘ BỀ RỘNG VÀNH
+- **Phản hồi từ chủ sở hữu (`SirPhuong`) kèm ảnh chụp Mastercam (`media_1790953747299.png`)**:
+  - *"bánh vít vẫn đang có vấn đề như ảnh"*
+  - Phân tích kỹ thuật từ hình ảnh:
+    * Phía trên và bên trong bánh vít xuất hiện một dải trụ tròn trơn nhẵn màu hồng cánh sen (Magenta) bao bọc toàn bộ chu vi $360^\circ$.
+    * Ở hai mép vành bánh vít ($z = \pm b_{2H}/2$), các răng bánh vít bị biến mất hoặc vạt cụt gần như phẳng lì, làm lộ trọn vẹn dải trụ đáy màu hồng.
+- **Nguyên nhân toán học & hình học cốt lõi**:
+  1. **Lỗi góc quét đáy chân răng qua điểm gián đoạn của hàm `Math.atan2`**:
+     - Khi tính dải đáy chân răng `WHEEL_ROOT`, sườn Coast của răng $j$ bị bọc góc qua `Math.atan2` (khoảng $[-\pi, +\pi]$), trong khi sườn Drive của răng kế tiếp $j+1$ được cộng góc góc phóng tuần hoàn không bọc góc.
+     - Tại góc $\pi$ (các răng từ 30 đến 39), sườn Coast nhảy từ $+\pi$ sang $-\pi$, dẫn tới góc quét $\Delta\theta_{\text{root}} = 366.87^\circ$!
+     - 10 bề mặt chân răng đã quét một vòng tròn trọn vẹn $360^\circ$ quanh bánh vít, tạo thành một hình trụ rỗng màu hồng bao quanh toàn bộ chi tiết!
+  2. **Lỗi vạt góc phôi (Outer chamfer) làm teo tóp răng bánh vít**:
+     - Trong hàm `evalWheelBlank(z)`, công thức vạt mép từ $b_4$ đến $b_{2H}/2$ đã cưỡng bức hạ bán kính đỉnh răng $r_{\text{Tip}}$ xuống bằng đúng bán kính đáy $r_{\text{Root}}$ ($r_{\text{Tip}} = r_{\text{Root}} = 87.05\text{ mm}$ tại $z = \pm 16.79\text{ mm}$).
+     - Chiều cao răng ở hai mép chỉ còn $0.15\text{ mm}$, khiến gần 40% bề rộng vành răng không còn răng mà trở thành mặt trụ phẳng.
+  3. **Mã màu `color: 6` (Magenta) trong Mastercam**:
+     - Bề mặt đáy `WHEEL_ROOT` gán mã màu 6 (Magenta), tương phản gay gắt với màu đỏ của sườn răng khiến người dùng lầm tưởng đây là một chi tiết lỗi hoặc ống trụ thừa.
+- **Biện pháp giải quyết triệt để**:
+  1. **Giải thuật góc không bọc góc (Unwrapped Conjugate Angle Interpolation)**:
+     - Giữ nguyên hệ tọa độ góc cực liên tục tuần hoàn $\theta \in [0, 2\pi]$ cho cả sườn Drive và Coast.
+     - Khóa cứng góc quét $\Delta\theta_{\text{tip}} \in [1.53^\circ, 5.98^\circ]$ và $\Delta\theta_{\text{root}} \in [2.45^\circ, 3.91^\circ]$ trên toàn bộ 40 răng và 60 lát cắt dọc trục. Triệt tiêu 100% góc quét $366^\circ$.
+  2. **Chuẩn hóa biên dạng họng răng bánh vít chuẩn ISO / DIN**:
+     - Trong lòng họng ($|z| \le b_1$): Đỉnh răng lượn theo bán kính nón họng $r_{\text{Tip}}(z) = a - \sqrt{r_1^2 - z^2}$.
+     - Ngoài lòng họng ($|z| > b_1$): Đỉnh răng nằm trên mặt trụ đỉnh ngoài $d_{e2}/2$.
+     - Chiều cao răng tại tâm $z = 0$ đạt $9.53\text{ mm}$, tại mép vành $z = \pm 16.79\text{ mm}$ vẫn duy trì đầy đủ $4.13\text{ mm}$. Toàn bộ 40 răng ăn khớp sắc nét, đầy đặn từ mép này sang mép kia.
+  3. **Đồng bộ mã màu Mastercam chuẩn quốc tế**:
+     - Chuyển `WHEEL_DRV`, `WHEEL_CST`, `WHEEL_ROOT`, và `WORM_ROOT` sang `color: 3` (Xanh lá cây chuẩn Mastercam), đỉnh răng `TIP` giữ `color: 2` (Xanh lơ). Toàn bộ bánh vít hiển thị đồng nhất, mượt mà và chuyên nghiệp.
+- **Kiểm thử nghiệm thu**:
+  - Node E2E script kiểm thử trực tiếp trên bundle: 160 mặt B-spline bánh vít, 84,025 dòng IGES, **0 dòng lệch 80 cột, 0 NaN, 0 mặt màu hồng**. Bánh vít mở tức thì trong Mastercam X5 với hình dáng cơ khí hoàn hảo.

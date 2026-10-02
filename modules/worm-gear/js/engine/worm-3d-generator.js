@@ -165,37 +165,10 @@ const Worm3DGenerator = {
         const v4 = r3 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3 * r3 - b2H * b2H));
 
         let rTip;
-        if (halfB > b3) {
-            // Case 1: Wide face width (DXF.bas lines 173-180)
-            if (absZ <= b1) {
-                rTip = a - Math.sqrt(Math.max(0.0, r1 * r1 - absZ * absZ));
-            } else if (absZ <= b3) {
-                const t = (absZ - b1) / Math.max(1e-6, b3 - b1);
-                rTip = (de2 * 0.5) - t * ((de2 * 0.5) - (df2 * 0.5 + v3));
-            } else {
-                rTip = df2 * 0.5 + v3;
-            }
-        } else if (halfB < (b1 * r3 / r1)) {
-            // Case 2: Narrow face width (DXF.bas lines 182-189)
-            const b5 = (halfB * r1) / r3;
-            const v5 = r1 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r1 * r1 - 4.0 * b5 * b5));
-            if (absZ <= b5) {
-                rTip = a - Math.sqrt(Math.max(0.0, r1 * r1 - absZ * absZ));
-            } else {
-                const t = (absZ - b5) / Math.max(1e-6, halfB - b5);
-                rTip = (da2 * 0.5 + v5) - t * ((da2 * 0.5 + v5) - (df2 * 0.5 + v4));
-            }
+        if (absZ <= b1) {
+            rTip = a - Math.sqrt(Math.max(0.0, r1 * r1 - absZ * absZ));
         } else {
-            // Case 3: Standard MITCalc WWheel geometry with side chamfer (DXF.bas lines 191-198)
-            if (absZ <= b1) {
-                rTip = a - Math.sqrt(Math.max(0.0, r1 * r1 - absZ * absZ));
-            } else if (absZ <= b4) {
-                rTip = de2 * 0.5;
-            } else {
-                // Chamfer / bevel from de2/2 at b4 down to (df2/2 + v4) at halfB (~33.75 deg slope)
-                const t = (absZ - b4) / Math.max(1e-6, halfB - b4);
-                rTip = (de2 * 0.5) - t * ((de2 * 0.5) - (df2 * 0.5 + v4));
-            }
+            rTip = de2 * 0.5;
         }
 
         let rRoot;
@@ -206,7 +179,7 @@ const Worm3DGenerator = {
         }
 
         return {
-            rTip: Math.max(rRoot + 0.15, rTip),
+            rTip: Math.max(rRoot + 0.5 * mc.mn, rTip),
             rRoot: rRoot
         };
     },
@@ -1167,7 +1140,7 @@ const Worm3DGenerator = {
             surfaces.push({ label: `WORM_FLANK_R_${k+1}`, grid: gridR, color: 3 });
             surfaces.push({ label: `WORM_FLANK_L_${k+1}`, grid: gridL, color: 3 });
             surfaces.push({ label: `WORM_TIP_${k+1}`, grid: gridTip, color: 2 });
-            surfaces.push({ label: `WORM_ROOT_${k+1}`, grid: gridRoot, color: 1 });
+            surfaces.push({ label: `WORM_ROOT_${k+1}`, grid: gridRoot, color: 3 });
 
             // Only generate wireframe curves when explicitly requested (keeps pure surface file pristine in Mastercam)
             if (opt.includeCurves || opt.curvesOnly) {
@@ -1264,6 +1237,9 @@ const Worm3DGenerator = {
                 const sliceDrive = [];
                 const sliceCoast = [];
 
+                let thSpaceR_root = null, thSpaceL_root = null;
+                let thSpaceR_tip = null, thSpaceL_tip = null;
+
                 for (let m = 0; m <= ptsR; m++) {
                     const frac = m / ptsR;
                     const r = rRoot + frac * (rTip - rRoot);
@@ -1274,6 +1250,15 @@ const Worm3DGenerator = {
                     if (thSpaceR === null) thSpaceR = -Math.PI * 0.5 + (0.5 * mc.MC_sx1 / mc.r2);
                     if (thSpaceL === null) thSpaceL = -Math.PI * 0.5 - (0.5 * mc.MC_sx1 / mc.r2);
 
+                    if (m === 0) {
+                        thSpaceR_root = thSpaceR;
+                        thSpaceL_root = thSpaceL;
+                    }
+                    if (m === ptsR) {
+                        thSpaceR_tip = thSpaceR;
+                        thSpaceL_tip = thSpaceL;
+                    }
+
                     const thetaDrive = thSpaceR + j * pitchAngle;
                     const thetaCoast = thSpaceL + (j + 1) * pitchAngle;
 
@@ -1282,35 +1267,33 @@ const Worm3DGenerator = {
                 }
 
                 // 1. Tip Crest Arc: sample directly on exact blank throat, then solve exact B-spline control points
-                const pTipDrive = sliceDrive[ptsR];
-                const pTipCoast = sliceCoast[ptsR];
-                const thDrive = Math.atan2(pTipDrive[1], pTipDrive[0]);
-                let thCoast = Math.atan2(pTipCoast[1], pTipCoast[0]);
-                while (thCoast < thDrive) thCoast += 2.0 * Math.PI;
+                const thetaTipDrive = thSpaceR_tip + j * pitchAngle;
+                const thetaTipCoast = thSpaceL_tip + (j + 1) * pitchAngle;
+                let dth_tip = thetaTipCoast - thetaTipDrive;
+                while (dth_tip < 0) dth_tip += 2.0 * Math.PI;
+                while (dth_tip > Math.PI) dth_tip -= 2.0 * Math.PI;
+                if (dth_tip < 0) dth_tip += 2.0 * Math.PI;
 
-                const dth_tip = thCoast - thDrive;
                 const rawSliceTip = [];
                 for (let t = 0; t <= wheelTipPts; t++) {
                     const fracTip = t / wheelTipPts;
-                    const th = thDrive + fracTip * dth_tip;
+                    const th = thetaTipDrive + fracTip * dth_tip;
                     rawSliceTip.push([rTip * Math.cos(th), rTip * Math.sin(th), z]);
                 }
                 const sliceTip = this.fitCubicBSplineCtrlPts(rawSliceTip);
 
                 // 2. Root Throat Rim: sample directly on exact root throat, then solve exact B-spline control points
-                const pCoastRoot = sliceCoast[0];
-                const thCoastRoot = Math.atan2(pCoastRoot[1], pCoastRoot[0]);
+                const thetaRootCoast = thSpaceL_root + (j + 1) * pitchAngle;
+                const thetaRootDriveNext = thSpaceR_root + (j + 1) * pitchAngle;
+                let dth_root = thetaRootDriveNext - thetaRootCoast;
+                while (dth_root < 0) dth_root += 2.0 * Math.PI;
+                while (dth_root > Math.PI) dth_root -= 2.0 * Math.PI;
+                if (dth_root < 0) dth_root += 2.0 * Math.PI;
 
-                let thSpaceR_root = this.evalConjugateFlankTheta(rRoot, z, +1, mc);
-                if (thSpaceR_root === null) thSpaceR_root = -Math.PI * 0.5 + (0.5 * mc.MC_sx1 / mc.r2);
-                let thDriveNext = thSpaceR_root + (j + 1) * pitchAngle;
-                while (thDriveNext < thCoastRoot) thDriveNext += 2.0 * Math.PI;
-
-                const dth_root = thDriveNext - thCoastRoot;
                 const rawSliceRoot = [];
                 for (let t = 0; t <= wheelRootPts; t++) {
                     const fracRoot = t / wheelRootPts;
-                    const th = thCoastRoot + fracRoot * dth_root;
+                    const th = thetaRootCoast + fracRoot * dth_root;
                     rawSliceRoot.push([rRoot * Math.cos(th), rRoot * Math.sin(th), z]);
                 }
                 const sliceRoot = this.fitCubicBSplineCtrlPts(rawSliceRoot);
@@ -1321,10 +1304,10 @@ const Worm3DGenerator = {
                 gridRoot.push(sliceRoot);
             }
 
-            surfaces.push({ label: `WHEEL_DRV_${j+1}`, grid: gridDrive, color: 4 });
-            surfaces.push({ label: `WHEEL_CST_${j+1}`, grid: gridCoast, color: 4 });
+            surfaces.push({ label: `WHEEL_DRV_${j+1}`, grid: gridDrive, color: 3 });
+            surfaces.push({ label: `WHEEL_CST_${j+1}`, grid: gridCoast, color: 3 });
             surfaces.push({ label: `WHEEL_TIP_${j+1}`, grid: gridTip, color: 2 });
-            surfaces.push({ label: `WHEEL_ROOT_${j+1}`, grid: gridRoot, color: 6 });
+            surfaces.push({ label: `WHEEL_ROOT_${j+1}`, grid: gridRoot, color: 3 });
 
             if (opt.includeCurves && j === 0) {
                 const numCross = 5;
