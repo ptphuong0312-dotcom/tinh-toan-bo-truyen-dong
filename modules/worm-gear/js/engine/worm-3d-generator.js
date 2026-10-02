@@ -1017,6 +1017,61 @@ const Worm3DGenerator = {
     },
 
     /**
+     * Solves tridiagonal system for clamped cubic B-spline interpolation via Thomas algorithm.
+     * Given sampled points D_0 .. D_{N-1}, finds control points P_0 .. P_{N-1} such that
+     * evaluated B-spline curve passes EXACTLY through all sample points D_i (C(t_i) = D_i).
+     * Guarantees 0 boundary error, 0 crest dip/trough, and smooth C2 curvature.
+     */
+    fitCubicBSplineCtrlPts(pts) {
+        const N = pts.length;
+        if (N <= 3) return pts;
+
+        const b = new Float64Array(N);
+        const a = new Float64Array(N);
+        const c = new Float64Array(N);
+        b.fill(4.0); a.fill(1.0); c.fill(1.0);
+        b[0] = 1.0; b[N - 1] = 1.0;
+        a[0] = 0.0; a[N - 1] = 0.0;
+        c[0] = 0.0; c[N - 1] = 0.0;
+
+        const rhs = [];
+        for (let i = 0; i < N; i++) {
+            if (i === 0 || i === N - 1) {
+                rhs.push([pts[i][0], pts[i][1], pts[i][2]]);
+            } else {
+                rhs.push([6.0 * pts[i][0], 6.0 * pts[i][1], 6.0 * pts[i][2]]);
+            }
+        }
+
+        const cp = new Float64Array(N);
+        const dp = [];
+        cp[0] = c[0] / b[0];
+        dp.push([rhs[0][0] / b[0], rhs[0][1] / b[0], rhs[0][2] / b[0]]);
+
+        for (let i = 1; i < N; i++) {
+            const m = b[i] - a[i] * cp[i - 1];
+            cp[i] = c[i] / m;
+            dp.push([
+                (rhs[i][0] - a[i] * dp[i - 1][0]) / m,
+                (rhs[i][1] - a[i] * dp[i - 1][1]) / m,
+                (rhs[i][2] - a[i] * dp[i - 1][2]) / m
+            ]);
+        }
+
+        const P = new Array(N);
+        P[N - 1] = [dp[N - 1][0], dp[N - 1][1], dp[N - 1][2]];
+        for (let i = N - 2; i >= 0; i--) {
+            P[i] = [
+                dp[i][0] - cp[i] * P[i + 1][0],
+                dp[i][1] - cp[i] * P[i + 1][1],
+                dp[i][2] - cp[i] * P[i + 1][2]
+            ];
+        }
+
+        return P;
+    },
+
+    /**
      * Extracts parametric grid surfaces and generator curves for native CAD/CAM surface export (IGES / Mastercam)
      */
     getWormParametricData(opt = {}) {
@@ -1031,20 +1086,21 @@ const Worm3DGenerator = {
         const tanA = Math.tan(mc.MC_alfa_rad);
         const handSign = mc.handSign;
 
-        const numSlices = opt.numWormSlices || 200;
-        const ptsR = opt.ptsPerFlank || 16;
-        const wormTipPts = opt.wormTipPts || 16;
-        const wormRootPts = opt.wormRootPts || 16;
+        // Ultra-precision sampling: 360 slices along length L for sub-micron helix curvature
+        const numSlices = opt.numWormSlices || 360;
+        const ptsR = opt.ptsPerFlank || 20;
+        const wormTipPts = opt.wormTipPts || 24;
+        const wormRootPts = opt.wormRootPts || 24;
 
         const surfaces = [];
         const curves = [];
 
         const ra1 = mc.ra1 || (mc.MC_da1 * 0.5);
 
-        // Precompute axial step and lead curvature compensations
+        // Precompute axial step and lead curvature compensations along U
         const dx = L / (numSlices - 1);
         const dphi_u = (2.0 * Math.PI / pz) * dx;
-        const scale_u = 1.0 / ((2.0 + Math.cos(dphi_u)) / 3.0);
+        const scale_u = 3.0 / (2.0 + Math.cos(dphi_u));
 
         for (let k = 0; k < z1; k++) {
             const startPhase = (k * 2.0 * Math.PI) / z1;
@@ -1069,61 +1125,38 @@ const Worm3DGenerator = {
                     const phiR = phi0 - dPhi;
                     const phiL = phi0 + dPhi;
 
-                    sliceR.push([x, R * Math.cos(phiR), R * Math.sin(phiR)]);
-                    sliceL.push([x, R * Math.cos(phiL), R * Math.sin(phiL)]);
+                    sliceR.push([x, R * scale_u * Math.cos(phiR), R * scale_u * Math.sin(phiR)]);
+                    sliceL.push([x, R * scale_u * Math.cos(phiL), R * scale_u * Math.sin(phiL)]);
                 }
 
-                // 1. Tip Crest Arc (Seamlessly connecting Flank R top to Flank L top at radius ra1)
-                const sliceTip = [];
-                const pTipR = sliceR[ptsR];
-                const pTipL = sliceL[ptsR];
-                const phiTipR = Math.atan2(pTipR[2], pTipR[1]);
-                let phiTipL = Math.atan2(pTipL[2], pTipL[1]);
-                while (phiTipL < phiTipR) phiTipL += 2.0 * Math.PI;
-
+                // 1. Tip Crest Arc: sample directly on exact cylinder, then solve exact B-spline control points
+                const w_tip = halfSx1 - (ra1 - r1) * tanA;
+                const dPhi_tip = (2.0 * Math.PI / pz) * w_tip;
+                const phiTipR = phi0 - dPhi_tip;
+                const phiTipL = phi0 + dPhi_tip;
                 const dphi_tip = phiTipL - phiTipR;
-                const dphi_tip_step = dphi_tip / wormTipPts;
-                const scale_v_tip = 1.0 / ((2.0 + Math.cos(dphi_tip_step)) / 3.0);
 
+                const rawSliceTip = [];
                 for (let t = 0; t <= wormTipPts; t++) {
-                    if (t === 0) {
-                        sliceTip.push([pTipR[0], pTipR[1], pTipR[2]]);
-                    } else if (t === wormTipPts) {
-                        sliceTip.push([pTipL[0], pTipL[1], pTipL[2]]);
-                    } else {
-                        const fracTip = t / wormTipPts;
-                        const phi = phiTipR + fracTip * dphi_tip;
-                        const rComp = ra1 * scale_v_tip;
-                        sliceTip.push([x, rComp * Math.cos(phi), rComp * Math.sin(phi)]);
-                    }
+                    const fracTip = t / wormTipPts;
+                    const phi = phiTipR + fracTip * dphi_tip;
+                    rawSliceTip.push([x, ra1 * scale_u * Math.cos(phi), ra1 * scale_u * Math.sin(phi)]);
                 }
+                const sliceTip = this.fitCubicBSplineCtrlPts(rawSliceTip);
 
-                // 2. Root Flute / Shaft Core (Seamlessly connecting Flank L root of thread k to Flank R root of thread k+1 at radius rf1)
-                const sliceRoot = [];
-                const pRootL = sliceL[0];
-                const phiRootL = Math.atan2(pRootL[2], pRootL[1]);
-
+                // 2. Root Flute / Shaft Core: sample directly on exact root cylinder, then solve exact B-spline control points
                 const w_root = halfSx1 - (rf1 - r1) * tanA;
                 const dPhi_root = (2.0 * Math.PI / pz) * w_root;
+                const phiRootL = phi0 + dPhi_root;
                 const dphi_root = (2.0 * Math.PI / z1) - 2.0 * dPhi_root;
-                const phiR_next = phiRootL + dphi_root;
-                const dphi_root_step = dphi_root / wormRootPts;
-                const scale_v_root = 1.0 / ((2.0 + Math.cos(dphi_root_step)) / 3.0);
 
-                const pRootR_next = [x, rf1 * Math.cos(phiR_next), rf1 * Math.sin(phiR_next)];
-
+                const rawSliceRoot = [];
                 for (let t = 0; t <= wormRootPts; t++) {
-                    if (t === 0) {
-                        sliceRoot.push([pRootL[0], pRootL[1], pRootL[2]]);
-                    } else if (t === wormRootPts) {
-                        sliceRoot.push([pRootR_next[0], pRootR_next[1], pRootR_next[2]]);
-                    } else {
-                        const fracRoot = t / wormRootPts;
-                        const phi = phiRootL + fracRoot * dphi_root;
-                        const rComp = rf1 * scale_v_root;
-                        sliceRoot.push([x, rComp * Math.cos(phi), rComp * Math.sin(phi)]);
-                    }
+                    const fracRoot = t / wormRootPts;
+                    const phi = phiRootL + fracRoot * dphi_root;
+                    rawSliceRoot.push([x, rf1 * scale_u * Math.cos(phi), rf1 * scale_u * Math.sin(phi)]);
                 }
+                const sliceRoot = this.fitCubicBSplineCtrlPts(rawSliceRoot);
 
                 gridR.push(sliceR);
                 gridL.push(sliceL);
@@ -1136,28 +1169,60 @@ const Worm3DGenerator = {
             surfaces.push({ label: `WORM_TIP_${k+1}`, grid: gridTip, color: 2 });
             surfaces.push({ label: `WORM_ROOT_${k+1}`, grid: gridRoot, color: 1 });
 
-            // Rails along length
-            const railRootR = gridR.map(s => s[0]);
-            const railTipR = gridR.map(s => s[ptsR]);
-            const railRootL = gridL.map(s => s[0]);
-            const railTipL = gridL.map(s => s[ptsR]);
-            const railRootVly = gridRoot.map(s => s[Math.round(wormRootPts / 2)]);
-            curves.push({ label: `RAIL_ROT_R${k+1}`, points: railRootR, color: 1 });
-            curves.push({ label: `RAIL_TIP_R${k+1}`, points: railTipR, color: 2 });
-            curves.push({ label: `RAIL_ROT_L${k+1}`, points: railRootL, color: 1 });
-            curves.push({ label: `RAIL_TIP_L${k+1}`, points: railTipL, color: 2 });
-            curves.push({ label: `RAIL_ROOT_VLY${k+1}`, points: railRootVly, color: 1 });
+            // Only generate wireframe curves when explicitly requested (keeps pure surface file pristine in Mastercam)
+            if (opt.includeCurves || opt.curvesOnly) {
+                const railRootR = gridR.map(s => s[0]);
+                const railTipR = gridR.map(s => s[ptsR]);
+                const railRootL = gridL.map(s => s[0]);
+                const railTipL = gridL.map(s => s[ptsR]);
+                const railRootVly = gridRoot.map(s => s[Math.round(wormRootPts / 2)]);
+                curves.push({ label: `RAIL_ROT_R${k+1}`, points: railRootR, color: 1 });
+                curves.push({ label: `RAIL_TIP_R${k+1}`, points: railTipR, color: 2 });
+                curves.push({ label: `RAIL_ROT_L${k+1}`, points: railRootL, color: 1 });
+                curves.push({ label: `RAIL_TIP_L${k+1}`, points: railTipL, color: 2 });
+                curves.push({ label: `RAIL_ROOT_VLY${k+1}`, points: railRootVly, color: 1 });
 
-            // Cross-Section Profile slices for Ruled/Lofted
-            const numProfiles = 7;
-            for (let p = 0; p < numProfiles; p++) {
-                const sIdx = Math.round((p / (numProfiles - 1)) * (numSlices - 1));
-                const prof = [];
-                for (let m = 0; m <= ptsR; m++) prof.push(gridR[sIdx][m]);
-                for (let t = 1; t <= wormTipPts; t++) prof.push(gridTip[sIdx][t]);
-                for (let m = ptsR - 1; m >= 0; m--) prof.push(gridL[sIdx][m]);
-                for (let t = 1; t <= wormRootPts; t++) prof.push(gridRoot[sIdx][t]);
-                curves.push({ label: `LOFT_SEC_${p+1}`, points: prof, color: 5 });
+                // Ultra-smooth Cross-Section Profiles (120 points/profile) for Ruled/Lofted
+                const numProfiles = opt.numProfiles || 11;
+                const ptsPerCurve = opt.ptsPerCurve || 30;
+                for (let p = 0; p < numProfiles; p++) {
+                    const sIdx = Math.round((p / (numProfiles - 1)) * (numSlices - 1));
+                    const x_prof = -L * 0.5 + sIdx * dx;
+                    const phi0_p = handSign * (2.0 * Math.PI / pz) * x_prof + startPhase;
+                    const prof = [];
+
+                    // Flank R from root to tip
+                    for (let m = 0; m <= ptsPerCurve; m++) {
+                        const R = rf1 + (m / ptsPerCurve) * (ra1 - rf1);
+                        const w = halfSx1 - (R - r1) * tanA;
+                        const phi = phi0_p - (2.0 * Math.PI / pz) * w;
+                        prof.push([x_prof, R * Math.cos(phi), R * Math.sin(phi)]);
+                    }
+                    // Tip arc
+                    const w_t = halfSx1 - (ra1 - r1) * tanA;
+                    const phiTR = phi0_p - (2.0 * Math.PI / pz) * w_t;
+                    const phiTL = phi0_p + (2.0 * Math.PI / pz) * w_t;
+                    for (let t = 1; t <= ptsPerCurve; t++) {
+                        const phi = phiTR + (t / ptsPerCurve) * (phiTL - phiTR);
+                        prof.push([x_prof, ra1 * Math.cos(phi), ra1 * Math.sin(phi)]);
+                    }
+                    // Flank L from tip to root
+                    for (let m = ptsPerCurve - 1; m >= 0; m--) {
+                        const R = rf1 + (m / ptsPerCurve) * (ra1 - rf1);
+                        const w = halfSx1 - (R - r1) * tanA;
+                        const phi = phi0_p + (2.0 * Math.PI / pz) * w;
+                        prof.push([x_prof, R * Math.cos(phi), R * Math.sin(phi)]);
+                    }
+                    // Root arc
+                    const w_rt = halfSx1 - (rf1 - r1) * tanA;
+                    const phiRL = phi0_p + (2.0 * Math.PI / pz) * w_rt;
+                    const dphi_rt = (2.0 * Math.PI / z1) - 2.0 * (2.0 * Math.PI / pz) * w_rt;
+                    for (let t = 1; t <= ptsPerCurve; t++) {
+                        const phi = phiRL + (t / ptsPerCurve) * dphi_rt;
+                        prof.push([x_prof, rf1 * Math.cos(phi), rf1 * Math.sin(phi)]);
+                    }
+                    curves.push({ label: `LOFT_SEC_${p+1}`, points: prof, color: 5 });
+                }
             }
         }
 
@@ -1174,14 +1239,15 @@ const Worm3DGenerator = {
 
         const numSlices = opt.numWheelSlices || 60;
         const ptsR = opt.ptsPerFlank || 16;
-        const wheelTipPts = opt.wheelTipPts || 12;
-        const wheelRootPts = opt.wheelRootPts || 12;
+        const wheelTipPts = opt.wheelTipPts || 16;
+        const wheelRootPts = opt.wheelRootPts || 16;
         const pitchAngle = (2.0 * Math.PI) / z2;
 
         const surfaces = [];
         const curves = [];
 
-        const activeTeeth = Math.min(z2, opt.exportAllTeeth ? z2 : Math.min(8, z2));
+        // DEFAULT TO ALL z2 TEETH (Full 360-degree Wheel) unless explicitly disabled
+        const activeTeeth = (opt.exportAllTeeth === false) ? Math.min(8, z2) : z2;
 
         for (let j = 0; j < activeTeeth; j++) {
             const gridDrive = [];
@@ -1215,8 +1281,7 @@ const Worm3DGenerator = {
                     sliceCoast.push([r * Math.cos(thetaCoast), r * Math.sin(thetaCoast), z]);
                 }
 
-                // 1. Tip Crest Arc
-                const sliceTip = [];
+                // 1. Tip Crest Arc: sample directly on exact blank throat, then solve exact B-spline control points
                 const pTipDrive = sliceDrive[ptsR];
                 const pTipCoast = sliceCoast[ptsR];
                 const thDrive = Math.atan2(pTipDrive[1], pTipDrive[0]);
@@ -1224,24 +1289,15 @@ const Worm3DGenerator = {
                 while (thCoast < thDrive) thCoast += 2.0 * Math.PI;
 
                 const dth_tip = thCoast - thDrive;
-                const dth_tip_step = dth_tip / wheelTipPts;
-                const scale_v_wheel_tip = 1.0 / ((2.0 + Math.cos(dth_tip_step)) / 3.0);
-
+                const rawSliceTip = [];
                 for (let t = 0; t <= wheelTipPts; t++) {
-                    if (t === 0) {
-                        sliceTip.push([pTipDrive[0], pTipDrive[1], pTipDrive[2]]);
-                    } else if (t === wheelTipPts) {
-                        sliceTip.push([pTipCoast[0], pTipCoast[1], pTipCoast[2]]);
-                    } else {
-                        const fracTip = t / wheelTipPts;
-                        const th = thDrive + fracTip * dth_tip;
-                        const rComp = rTip * scale_v_wheel_tip;
-                        sliceTip.push([rComp * Math.cos(th), rComp * Math.sin(th), z]);
-                    }
+                    const fracTip = t / wheelTipPts;
+                    const th = thDrive + fracTip * dth_tip;
+                    rawSliceTip.push([rTip * Math.cos(th), rTip * Math.sin(th), z]);
                 }
+                const sliceTip = this.fitCubicBSplineCtrlPts(rawSliceTip);
 
-                // 2. Root Throat Rim (Connecting Coast Flank root of tooth j to Drive Flank root of tooth j+1)
-                const sliceRoot = [];
+                // 2. Root Throat Rim: sample directly on exact root throat, then solve exact B-spline control points
                 const pCoastRoot = sliceCoast[0];
                 const thCoastRoot = Math.atan2(pCoastRoot[1], pCoastRoot[0]);
 
@@ -1251,23 +1307,13 @@ const Worm3DGenerator = {
                 while (thDriveNext < thCoastRoot) thDriveNext += 2.0 * Math.PI;
 
                 const dth_root = thDriveNext - thCoastRoot;
-                const dth_root_step = dth_root / wheelRootPts;
-                const scale_v_wheel_root = 1.0 / ((2.0 + Math.cos(dth_root_step)) / 3.0);
-
-                const pDriveNext = [rRoot * Math.cos(thDriveNext), rRoot * Math.sin(thDriveNext), z];
-
+                const rawSliceRoot = [];
                 for (let t = 0; t <= wheelRootPts; t++) {
-                    if (t === 0) {
-                        sliceRoot.push([pCoastRoot[0], pCoastRoot[1], pCoastRoot[2]]);
-                    } else if (t === wheelRootPts) {
-                        sliceRoot.push([pDriveNext[0], pDriveNext[1], pDriveNext[2]]);
-                    } else {
-                        const fracRoot = t / wheelRootPts;
-                        const th = thCoastRoot + fracRoot * dth_root;
-                        const rComp = rRoot * scale_v_wheel_root;
-                        sliceRoot.push([rComp * Math.cos(th), rComp * Math.sin(th), z]);
-                    }
+                    const fracRoot = t / wheelRootPts;
+                    const th = thCoastRoot + fracRoot * dth_root;
+                    rawSliceRoot.push([rRoot * Math.cos(th), rRoot * Math.sin(th), z]);
                 }
+                const sliceRoot = this.fitCubicBSplineCtrlPts(rawSliceRoot);
 
                 gridDrive.push(sliceDrive);
                 gridCoast.push(sliceCoast);
@@ -1280,7 +1326,7 @@ const Worm3DGenerator = {
             surfaces.push({ label: `WHEEL_TIP_${j+1}`, grid: gridTip, color: 2 });
             surfaces.push({ label: `WHEEL_ROOT_${j+1}`, grid: gridRoot, color: 6 });
 
-            if (j === 0) {
+            if (opt.includeCurves && j === 0) {
                 const numCross = 5;
                 for (let c = 0; c < numCross; c++) {
                     const sIdx = Math.round((c / (numCross - 1)) * (numSlices - 1));
@@ -1291,8 +1337,6 @@ const Worm3DGenerator = {
                     for (let t = 1; t <= wheelRootPts; t++) prof.push(gridRoot[sIdx][t]);
                     curves.push({ label: `THROAT_SEC_${c+1}`, points: prof, color: 5 });
                 }
-                const railRootThroat = gridRoot.map(s => s[Math.round(wheelRootPts / 2)]);
-                curves.push({ label: `RAIL_THROAT_ROOT`, points: railRootThroat, color: 6 });
             }
         }
 

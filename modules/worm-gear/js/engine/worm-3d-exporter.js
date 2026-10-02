@@ -489,7 +489,16 @@ const Worm3DExporter = {
             return pad8(eType) + pad8(pPtr) + pad8(0) + pad8(1) + pad8(level) + pad8(0) + pad8(0) + pad8(0) + pad8('00000000') + 'D' + ('       ' + seq).slice(-7);
         };
         const deL2 = (eType, color, pCnt, form, label, seq) => {
-            const padLbl = (label + '        ').slice(0, 8);
+            const shortLbl = (label || '')
+                .replace('WHEEL_DRV_', 'DRV_')
+                .replace('WHEEL_CST_', 'CST_')
+                .replace('WHEEL_TIP_', 'TIP_')
+                .replace('WHEEL_ROOT_', 'ROT_')
+                .replace('WORM_FLANK_R_', 'FLK_R')
+                .replace('WORM_FLANK_L_', 'FLK_L')
+                .replace('WORM_TIP_', 'TIP_W')
+                .replace('WORM_ROOT_', 'ROT_W');
+            const padLbl = (shortLbl + '        ').slice(0, 8);
             return pad8(eType) + pad8(1) + pad8(color) + pad8(pCnt) + pad8(form) + pad8(0) + pad8(0) + padLbl + pad8(0) + 'D' + ('       ' + seq).slice(-7);
         };
         const pLine = (chunk, dePtr, seq) => {

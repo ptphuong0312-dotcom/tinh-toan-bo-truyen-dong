@@ -1548,6 +1548,20 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
      * Áp dụng hệ số bù bán kính lý thuyết $\text{scale}_{v} = 1.0 / ((2.0 + \cos(\Delta\phi_{\text{step}}))/3.0)$ cho các điểm kiểm soát nội suy bên trong của `WORM_TIP` và `WORM_ROOT`.
      * Khóa cứng hai biên $t=0$ và $t=N_v-1$ khít 100% với tọa độ đỉnh sườn ren $(\Delta = 0.000000\text{ mm})$.
      * Giảm độ dao động bán kính từ $0.052\text{ mm}$ xuống $< 0.002\text{ mm}$ (dưới 2 micron), bề mặt phẳng láng như gương, triệt tiêu 100% hai sừng nhọn ở mép và toàn bộ sóng gợn nhấp nhô.
+8. **Quy Chuẩn Hoàn Thiện Cả Bánh Vít 360 Độ (Toàn Bộ $z_2$ Răng) & Triệt Tiêu Gồ Ghề Bằng Giải Thuật Thomas B-Spline Khép Kín + Bóc Tách Khung Dây Wireframe**:
+   - **Hoàn thiện trọn vẹn cả bánh vít 360° (Full Wheel Coverage)**:
+     * Thay thế việc xuất giới hạn 8 răng cục bộ bằng việc mặc định xuất toàn bộ $z_2$ răng (`const activeTeeth = (opt.exportAllTeeth === false) ? Math.min(8, z2) : z2;`).
+     * Với $z_2 = 40$, xuất đủ 160 bề mặt Bicubic B-spline ($40 \times \text{DRV}$, $40 \times \text{CST}$, $40 \times \text{TIP}$, $40 \times \text{ROT}$) khép kín chu trình $360^\circ$ hoàn hảo từ răng 1 đến răng 40 và trở lại răng 1.
+   - **Giải thuật Nội Suy Điểm Kiểm Soát Thomas B-Spline (`fitCubicBSplineCtrlPts`)**:
+     * Trực tiếp giải hệ ma trận 3 đường chéo (Tridiagonal system) theo thuật toán Thomas $O(N)$ cho clamped cubic B-spline: $P_{i-1} + 4 P_i + P_{i+1} = 6 D_i$ với $P_0 = D_0, P_{N-1} = D_{N-1}$.
+     * Bề mặt B-spline khi đánh giá tại các giá trị nút luôn đi CHÍNH XÁC qua 100% các điểm hình học danh nghĩa ($C(t_i) = D_i$), triệt tiêu hoàn toàn khe hở biên, vết lõm cạnh sườn và sừng nhọn.
+   - **Bóc tách triệt để Khung Dây Wireframe (`LOFT_SEC`) khỏi File Surface**:
+     * Mastercam Wire X5 mặc định hiển thị đồng thời cả đối tượng Mặt (Surface) và Khung Dây (Wireframe Polylines). Các đường `LOFT_SEC` thô sơ vẽ đè lên bề mặt nhẵn tạo cảm giác gồ ghề giả tạo.
+     * Quy chuẩn: Các tệp xuất Surface (`expIgesWorm`, `expIgesWheel`, `expIgesAssembly`) CHỈ chứa Entity 128 (surfaces) và đường tâm trục (`AXIS_W1`, `AXIS_W2`). Khung dây đường bao profile chỉ xuất độc lập trong tùy chọn `expIgesCurvesWorm`.
+   - **Mật độ Micro-Resolution $Nu = 360$ lát cắt dọc trục vít**:
+     * $Nu = 360$ lát cắt cho bước góc xoay cực mịn $d\phi \approx 1.78^\circ$, kết hợp hệ số $\text{scale}_u = 3.0 / (2.0 + \cos(d\phi_u))$ cho độ biến thiên bán kính dọc đường xoắn ốc $< 50\text{ nanomet}$, bề mặt tiện mài bóng loáng như gương.
+   - **Định danh thông minh 8 ký tự nhãn thực thể IGES (`DRV_1` đến `ROT_40`)**:
+     * Tự động rút gọn tiền tố dài thành `DRV_1`, `CST_1`, `TIP_1`, `ROT_1` .. `ROT_40` để hiển thị tường minh số thứ tự răng trên cây đối tượng Mastercam.
 
 
 

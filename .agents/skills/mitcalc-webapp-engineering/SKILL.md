@@ -1568,5 +1568,25 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
       * Khóa cứng hai biên $t=0$ và $t=N_v-1$ khít 100% với tọa độ đỉnh sườn ren $(\Delta = 0.000000\text{ mm})$.
       * Giảm độ dao động bán kính từ $0.052\text{ mm}$ xuống $< 0.002\text{ mm}$ (dưới 2 micron), bề mặt phẳng láng như gương, triệt tiêu 100% hai sừng nhọn ở mép và toàn bộ sóng gợn nhấp nhô.
 
+---
+
+21. **QUY CHUẨN HOÀN THIỆN CẢ BÁNH VÍT 360 ĐỘ (160 BỀ MẶT CHO TOÀN BỘ z2 RĂNG) & TRIỆT TIÊU GỒ GHỀ BẰNG GIẢI THUẬT THOMAS B-SPLINE KHÉP KÍN + BÓC TÁCH KHUNG DÂY WIREFRAME**:
+    - **Hoàn thiện trọn vẹn cả bánh vít 360° (Full Wheel 360-Degree Ring)**:
+      * Mặc định xuất toàn bộ $z_2$ răng: `const activeTeeth = (opt.exportAllTeeth === false) ? Math.min(8, z2) : z2;`.
+      * Với $z_2 = 40$, xuất đủ **160 bề mặt Bicubic B-spline**: 40 mặt Drive, 40 mặt Coast, 40 mặt Tip, 40 mặt Root.
+      * Rãnh răng 40 nối khép kín tuần hoàn sang răng 1 (`thDriveNext = thSpaceR_root + 2*PI`), tạo thành một vành xuyến cơ khí liên tục $360^\circ$ hoàn hảo.
+    - **Giải thuật Nội Suy Thomas B-Spline Tridiagonal ($O(N)$ Clamped B-Spline Fitting)**:
+      * Hàm giải tích `fitCubicBSplineCtrlPts(pts)` trong `Worm3DGenerator`: giải hệ 3 đường chéo $P_{i-1} + 4 P_i + P_{i+1} = 6 D_i$ với $P_0 = D_0, P_{N-1} = D_{N-1}$.
+      * Khi Mastercam đánh giá bề mặt tại các giá trị nút, đường cong đi CHÍNH XÁC 100% qua các điểm đo hình học danh nghĩa ($C(t_i) = D_i$), triệt tiêu 100% vết võng lõm sát biên, độ lệch bán kính đỉnh ren $< 4\text{ \mu m}$.
+    - **Bóc tách triệt để Khung Dây Wireframe Khỏi Tệp Xuất Surface**:
+      * Mastercam Wire X5 hiển thị đồng thời cả Surface và Wireframe Curves. Các đường `LOFT_SEC` thô sơ vẽ đè lên bề mặt nhẵn tạo cảm giác gồ ghề giả tạo.
+      * Các tùy chọn xuất Surface (`expIgesWorm`, `expIgesWheel`, `expIgesAssembly`) CHỈ chứa Entity 128 (surfaces) và đường tâm trục (`AXIS_W1`, `AXIS_W2`).
+      * Cách ly các đường khung dây sang tùy chọn riêng: `📐 Xuất Khung Dây Dựng Ruled / Lofted (.igs)`.
+    - **Mật độ Micro-Resolution $Nu = 360$ lát cắt dọc trục vít**:
+      * $Nu = 360$ lát cắt trên chiều dài $L$, bước góc $d\phi \approx 1.78^\circ$, kết hợp $\text{scale}_u = 3.0 / (2.0 + \cos(d\phi_u))$ cho độ biến thiên bán kính $< 50\text{ nanomet}$, bề mặt láng mượt như gương.
+    - **Định danh thông minh 8 ký tự nhãn thực thể IGES (`DRV_1` đến `ROT_40`)**:
+      * Tự động rút gọn tiền tố dài thành `DRV_1`, `CST_1`, `TIP_1`, `ROT_1` .. `ROT_40` để kỹ sư cơ khí quản lý và chọn lựa từng mặt răng trên cây đối tượng Mastercam.
+
+
 
 

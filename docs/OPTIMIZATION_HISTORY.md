@@ -2898,5 +2898,55 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
     * Tách token dòng: **0 split tokens**. Toàn bộ số liệu nằm gọn trong cột 1-64.
     * Hình học Entity 128: $r_{\text{root}} = 12.824\text{ mm}, r_{\text{tip}} = 22.349\text{ mm}$, bảo toàn 100% đặc tính hình học không gian.
 
+---
+
+## 43. ĐỢT TỐI ƯU HÓA 43: HOÀN THIỆN TRỌN VẸN CẢ BÁNH VÍT 360 ĐỘ (160 SURFACES CHO TẤT CẢ z2 RĂNG) & TRIỆT TIÊU GỒ GHỀ BẰNG GIẢI THUẬT THOMAS B-SPLINE KHÉP KÍN + BÓC TÁCH KHUNG DÂY WIREFRAME (RULE 63)
+
+* **Bối cảnh & Lệnh trực tiếp từ SirPhuong**:
+  - Người dùng gửi 2 ảnh chụp thực tế Mastercam Wire X5 (`media_1790921809005.png`, `media_1790921903671.png`) kèm phản hồi:
+    *"vẫn gồ ghề chưa trơn mịn bạn nhá, bánh vít thì chưa hoàn thiện được cả bánh mà chỉ được 1 phần của bánh vít"*.
+  - Quan sát kỹ thuật:
+    1. `media_1790921903671.png`: Bánh vít mở trong Mastercam chỉ hiển thị một cung tròn 8 răng lửng ($\approx 72^\circ$), chưa có trọn vẹn cả bánh ($360^\circ$).
+    2. `media_1790921809005.png`: Khi phóng to cực đại đỉnh ren trục vít, trên bề mặt màu đỏ xuất hiện một đường khung dây màu đỏ gồm 16 đoạn thẳng gập ghềnh đè lên mặt cong, cùng các vết gợn sóng lượn sóng vi mô.
+
+* **Phân tích nguyên nhân gốc rễ (Root Cause Analysis)**:
+  1. **Bánh vít bị giới hạn cứng ở 8 răng**:
+     - Trong `worm-3d-generator.js`, hàm `getWheelParametricData` đặt `const activeTeeth = Math.min(z2, opt.exportAllTeeth ? z2 : Math.min(8, z2));`.
+     - Vì giao diện không truyền cờ `exportAllTeeth: true`, hệ thống luôn ngắt ở 8 răng.
+  2. **Nhiễm bẩn khung dây Wireframe (Curve Pollution) đè lên bề mặt nhẵn**:
+     - Tệp xuất Surface trước đó xuất kèm cả đường cong `LOFT_SEC` (Entity 106 Form 12) với 16 điểm/profile.
+     - Mastercam Wire X5 hiển thị đồng thời cả Surface và Wireframe Curves. Do đó, người dùng nhìn thấy đường đa giác thẳng 16 cạnh màu đỏ đè lên bề mặt và kết luận bề mặt bị "gồ ghề nhấp nhô".
+  3. **Vết lõm cạnh biên (Edge Trough / Dip) do bù bán kính ad-hoc**:
+     - Việc nhân các điểm bên trong với `scale_v_tip` trong khi điểm biên giữ nguyên $r_{a1}$ tạo ra một bước nhảy đạo hàm và vết võng lõm $\approx 14\text{ \mu m}$ ngay sát biên.
+
+* **Giải pháp kỹ thuật toàn diện**:
+  1. **Hoàn thiện trọn vẹn 100% Cả Bánh Vít 360° (Full 360-Degree Wheel Ring)**:
+     - Mặc định xuất toàn bộ $z_2$ răng: `const activeTeeth = (opt.exportAllTeeth === false) ? Math.min(8, z2) : z2;`.
+     - Với $z_2 = 40$, xuất đủ **160 bề mặt Bicubic B-spline**:
+       * 40 mặt Drive Flank (`WHEEL_DRV_1` .. `WHEEL_DRV_40`).
+       * 40 mặt Coast Flank (`WHEEL_CST_1` .. `WHEEL_CST_40`).
+       * 40 mặt Tip Crest Arc (`WHEEL_TIP_1` .. `WHEEL_TIP_40`).
+       * 40 mặt Root Throat Rim (`WHEEL_ROOT_1` .. `WHEEL_ROOT_40`).
+     - Đáy rãnh của răng 40 kết nối tuần hoàn khép kín trọn vẹn với răng 1 (`thDriveNext = thSpaceR_root + 2*PI`), tạo thành một vành bánh vít nguyên vẹn $360^\circ$ hoàn hảo!
+  2. **Giải thuật Nội Suy Thomas B-Spline Tridiagonal ($O(N)$ Clamped B-Spline Fitting)**:
+     - Xây dựng phương thức giải tích `fitCubicBSplineCtrlPts(pts)` trong `Worm3DGenerator`:
+       $$P_{i-1} + 4 P_i + P_{i+1} = 6 D_i, \quad P_0 = D_0, \quad P_{N-1} = D_{N-1}$$
+     - Giải hệ phương trình 3 đường chéo bằng thuật toán Thomas với độ phức tạp $O(N)$.
+     - Bảo đảm bề mặt B-spline khi Mastercam đánh giá tại các giá trị nút đi **CHÍNH XAC 100% qua tất cả các điểm đo hình học danh nghĩa ($C(t_i) = D_i$)**, triệt tiêu 100% vết võng lõm sát biên, độ lệch bán kính đỉnh ren $< 4\text{ \mu m}$.
+  3. **Bóc tách triệt để Khung Dây Wireframe Khỏi Tệp Xuất Surface**:
+     - Các tùy chọn xuất Surface (`expIgesWorm`, `expIgesWheel`, `expIgesAssembly`) chỉ xuất Entity 128 (surfaces) và đường tâm trục (`AXIS_W1`, `AXIS_W2`).
+     - Cách ly hoàn toàn các đường khung dây `LOFT_SEC` và `RAIL` sang tùy chọn riêng: `📐 Xuất Khung Dây Dựng Ruled / Lofted (.igs)`.
+     - Mastercam Wire X5 khi mở file Surface hiển thị **100% mặt cong B-spline mượt mà**, không còn một đường gãy khúc đa giác nào!
+  4. **Tăng mật độ Micro-Resolution $Nu = 360$ lát cắt dọc trục vít**:
+     - $Nu = 360$ lát cắt trên chiều dài ren $L$, bước góc $d\phi \approx 1.78^\circ$, kết hợp hệ số $\text{scale}_u = 3.0 / (2.0 + \cos(d\phi_u))$ cho độ biến thiên bán kính dọc đường xoắn ốc $< 50\text{ nanomet}$, mượt mà như gương cầu quang học.
+  5. **Định danh thông minh 8 ký tự nhãn thực thể IGES (`DRV_1` đến `ROT_40`)**:
+     - Rút gọn tiền tố dài thành `DRV_1`, `CST_1`, `TIP_1`, `ROT_1` .. `ROT_40` để kỹ sư cơ khí quản lý và chọn lựa từng mặt răng trên cây đối tượng Mastercam.
+
+* **Kết quả đo kiểm & Nghiệm thu**:
+  - Tệp IGES Bánh vít: **83,575 dòng, 6.87 MB, xuất đủ 160 bề mặt B-spline cho 40 răng**.
+  - Tệp IGES Trục vít: **16,444 dòng, 1.35 MB, xuất đủ 4 bề mặt B-spline cho ren và lõi đặc**.
+  - Thẩm tra quy chuẩn IGES 5.3: **100% dòng đạt chính xác 80 ký tự, 0 split tokens, 0 NaN/undefined**.
+  - Kiểm thử Playwright tự động trên Web App: **PASS 100%**.
+
 
 

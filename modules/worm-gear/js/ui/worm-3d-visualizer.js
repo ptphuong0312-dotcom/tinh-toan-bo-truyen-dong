@@ -619,29 +619,29 @@ class Worm3DVisualizer {
         const b2H = parseFloat(this.geom.b2H) || 33.57;
 
         if (type === 'worm' || type === 'pinion') {
-            const data = Worm3DGenerator.getWormParametricData(this.geom);
-            data.curves.push({
+            const data = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { includeCurves: false }));
+            data.curves = [{
                 label: 'AXIS_W1',
                 points: [[-L * 0.5 - 15, 0, 0], [L * 0.5 + 15, 0, 0]],
                 color: 1,
                 level: 3
-            });
+            }];
             return data;
         }
 
         if (type === 'wheel' || type === 'gear') {
-            const data = Worm3DGenerator.getWheelParametricData(this.geom);
-            data.curves.push({
+            const data = Worm3DGenerator.getWheelParametricData(Object.assign({}, this.geom, { exportAllTeeth: true, includeCurves: false }));
+            data.curves = [{
                 label: 'AXIS_W2',
                 points: [[0, 0, -b2H * 0.5 - 15], [0, 0, b2H * 0.5 + 15]],
                 color: 1,
                 level: 3
-            });
+            }];
             return data;
         }
 
         if (type === 'curves_worm') {
-            const data = Worm3DGenerator.getWormParametricData(this.geom);
+            const data = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { curvesOnly: true, includeCurves: true, ptsPerCurve: 60, numProfiles: 11 }));
             return {
                 surfaces: [],
                 curves: [
@@ -656,9 +656,9 @@ class Worm3DVisualizer {
             };
         }
 
-        // Assembly Pair: Worm 1 translated along Y by -a, Worm Wheel 2 at origin
-        const wormData = Worm3DGenerator.getWormParametricData(this.geom);
-        const wheelData = Worm3DGenerator.getWheelParametricData(this.geom);
+        // Assembly Pair: Worm 1 translated along Y by -a, Worm Wheel 2 at origin (full 360-deg)
+        const wormData = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { includeCurves: false }));
+        const wheelData = Worm3DGenerator.getWheelParametricData(Object.assign({}, this.geom, { exportAllTeeth: true, includeCurves: false }));
 
         const shiftedSurfaces = wormData.surfaces.map(s => ({
             label: s.label,
@@ -667,29 +667,24 @@ class Worm3DVisualizer {
             grid: s.grid.map(slice => slice.map(p => [p[0], p[1] - a, p[2]]))
         }));
 
-        const shiftedCurves = wormData.curves.map(c => ({
-            label: c.label,
-            color: c.color,
-            level: 2,
-            points: c.points.map(p => [p[0], p[1] - a, p[2]])
-        }));
-
-        shiftedCurves.push({
-            label: 'AXIS_W1',
-            points: [[-L * 0.5 - 15, -a, 0], [L * 0.5 + 15, -a, 0]],
-            color: 1,
-            level: 3
-        });
-        shiftedCurves.push({
-            label: 'AXIS_W2',
-            points: [[0, 0, -b2H * 0.5 - 15], [0, 0, b2H * 0.5 + 15]],
-            color: 1,
-            level: 3
-        });
+        const shiftedCurves = [
+            {
+                label: 'AXIS_W1',
+                points: [[-L * 0.5 - 15, -a, 0], [L * 0.5 + 15, -a, 0]],
+                color: 1,
+                level: 3
+            },
+            {
+                label: 'AXIS_W2',
+                points: [[0, 0, -b2H * 0.5 - 15], [0, 0, b2H * 0.5 + 15]],
+                color: 1,
+                level: 3
+            }
+        ];
 
         return {
             surfaces: shiftedSurfaces.concat(wheelData.surfaces),
-            curves: shiftedCurves.concat(wheelData.curves)
+            curves: shiftedCurves
         };
     }
 }
