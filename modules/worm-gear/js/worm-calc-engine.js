@@ -675,6 +675,7 @@ const WormCalcEngine = {
             // Section 19.0 (CAD & DXFTables)
             dstFlag, Shaft_ds_prop, Shaft_th_prop, Shaft_ds, Shaft_th, DXF_Beta, DXF_AutoScale,
             DXF_WheelChamferFlag, DXF_WheelChamfer, DXF_WheelChamfer_b4: b4_actual, DXF_WheelChamfer_dz: dz_actual, DXF_WheelChamfer_dr: dr_chamfer_prop, DXF_WheelChamfer_b1: b1_chamfer,
+            MC_b4: b4_actual, MC_chamferAngle: DXF_WheelChamfer,
             ABOM01, ABOM02, ABOM03, BBOM01, BBOM02, BBOM03,
             dxf_worm_m, dxf_worm_z1, dxf_worm_alfa, dxf_worm_d1, dxf_worm_da1, dxf_worm_L, dxf_worm_mat, dxf_worm_a, dxf_worm_z2,
             dxf_wheel_m, dxf_wheel_z2, dxf_wheel_alfa, dxf_wheel_d2, dxf_wheel_da2, dxf_wheel_b2H, dxf_wheel_x2, dxf_wheel_mat, dxf_wheel_a, dxf_wheel_z1,

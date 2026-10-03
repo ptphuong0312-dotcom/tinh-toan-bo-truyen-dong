@@ -1940,11 +1940,11 @@ const WORM_WHEEL_MATERIALS = [
 const WORM_STD_TABLES = {
     // T_ToothType (Tables!B7:B11)
     T_ToothType: [
-        { id: 1, code: "ZA", label: "ZA (A) Wormgear — Trục vít Ác-si-mét (Archimedean)" },
-        { id: 2, code: "ZN", label: "ZN (N) Wormgear — Trục vít কনボリュート pháp tuyến (Normal Straight)" },
-        { id: 3, code: "ZI", label: "ZI (I) Wormgear — Trục vít Thân khai (Involute)" },
-        { id: 4, code: "ZK", label: "ZK (K) Wormgear — Trục vít Gia công bằng đá mài/dao côn (Cone Milled)" },
-        { id: 5, code: "ZH", label: "ZH (C) Wormgear — Trục vít Biên dạng lõm Cavex (Concave Profile)" }
+        { id: 1, code: "ZA", name: "ZA (A) Wormgear — Trục vít Ác-si-mét (Archimedean)", label: "ZA (A) Wormgear — Trục vít Ác-si-mét (Archimedean)" },
+        { id: 2, code: "ZN", name: "ZN (N) Wormgear — Trục vít pháp tuyến (Normal Straight)", label: "ZN (N) Wormgear — Trục vít pháp tuyến (Normal Straight)" },
+        { id: 3, code: "ZI", name: "ZI (I) Wormgear — Trục vít Thân khai (Involute)", label: "ZI (I) Wormgear — Trục vít Thân khai (Involute)" },
+        { id: 4, code: "ZK", name: "ZK (K) Wormgear — Trục vít Gia công bằng đá mài/dao côn (Cone Milled)", label: "ZK (K) Wormgear — Trục vít Gia công bằng đá mài/dao côn (Cone Milled)" },
+        { id: 5, code: "ZH", name: "ZH (C) Wormgear — Trục vít Biên dạng lõm Cavex (Concave Profile)", label: "ZH (C) Wormgear — Trục vít Biên dạng lõm Cavex (Concave Profile)" }
     ],
 
     // T_DesignCooling (Tables!B31:G33)
@@ -2786,6 +2786,7 @@ const WormCalcEngine = {
             // Section 19.0 (CAD & DXFTables)
             dstFlag, Shaft_ds_prop, Shaft_th_prop, Shaft_ds, Shaft_th, DXF_Beta, DXF_AutoScale,
             DXF_WheelChamferFlag, DXF_WheelChamfer, DXF_WheelChamfer_b4: b4_actual, DXF_WheelChamfer_dz: dz_actual, DXF_WheelChamfer_dr: dr_chamfer_prop, DXF_WheelChamfer_b1: b1_chamfer,
+            MC_b4: b4_actual, MC_chamferAngle: DXF_WheelChamfer,
             ABOM01, ABOM02, ABOM03, BBOM01, BBOM02, BBOM03,
             dxf_worm_m, dxf_worm_z1, dxf_worm_alfa, dxf_worm_d1, dxf_worm_da1, dxf_worm_L, dxf_worm_mat, dxf_worm_a, dxf_worm_z2,
             dxf_wheel_m, dxf_wheel_z2, dxf_wheel_alfa, dxf_wheel_d2, dxf_wheel_da2, dxf_wheel_b2H, dxf_wheel_x2, dxf_wheel_mat, dxf_wheel_a, dxf_wheel_z1,
@@ -4308,6 +4309,20 @@ class WormCanvasRenderer {
             ctx.arc(toX(wx), toY(wormCenterY), r1 * scale, -angTipL, -angTipR, signY > 0);
             ctx.stroke();
 
+            // Chamfer and flat lands on the wheel rim (responsive in real-time)
+            const b4 = g.DXF_WheelChamfer_b4 !== undefined ? g.DXF_WheelChamfer_b4 : ((b2h / 2.0) * (r1 / r3));
+            ctx.beginPath();
+            // Left flat rim & chamfer
+            ctx.moveTo(toX(wx - b1), toY(yTipEdge));
+            ctx.lineTo(toX(wx - b4), toY(yTipEdge));
+            ctx.lineTo(toX(wx - b2h / 2.0), toY(yRootEdge));
+
+            // Right flat rim & chamfer
+            ctx.moveTo(toX(wx + b1), toY(yTipEdge));
+            ctx.lineTo(toX(wx + b4), toY(yTipEdge));
+            ctx.lineTo(toX(wx + b2h / 2.0), toY(yRootEdge));
+            ctx.stroke();
+
             // Concave pitch throat arc (radius r2, dashed)
             const v2 = Math.min(r2 * 0.9, (de2 - dm2) / 2.0);
             const b2 = Math.min(b2h / 2.0, Math.sqrt(Math.max(0.0, v2 * (2.0 * r2 - v2))));
@@ -4505,7 +4520,7 @@ class WormCanvasRenderer {
             const v4 = r3 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3 * r3 - b2h * b2h));
             const b1 = Math.min(b2h / 2.0, Math.sqrt(Math.max(0.0, v1 * (2.0 * r1 - v1))));
             const b2 = Math.min(b2h / 2.0, Math.sqrt(Math.max(0.0, v2 * (2.0 * r2 - v2))));
-            const b4 = (b2h / 2.0) * (r1 / r3);
+            const b4 = g.DXF_WheelChamfer_b4 !== undefined ? g.DXF_WheelChamfer_b4 : ((b2h / 2.0) * (r1 / r3));
 
             // Top and bottom throat arcs & rim lines
             [-1, 1].forEach(sy => {
@@ -5029,7 +5044,11 @@ const Worm3DGenerator = {
         const r_outer = 0.5 * de2;
         const v1 = r_throat_tip - (a - r_outer);
         const b1 = Math.sqrt(Math.max(0.0, v1 * (2.0 * r_throat_tip - v1)));
-        const MC_b4 = (opt.MC_b4 !== undefined) ? parseFloat(opt.MC_b4) : ((b2H * 0.5 * r_throat_tip) / r_throat_root);
+        const MC_b4 = (opt.MC_b4 !== undefined) 
+            ? parseFloat(opt.MC_b4) 
+            : ((opt.DXF_WheelChamfer_b4 !== undefined) 
+                ? parseFloat(opt.DXF_WheelChamfer_b4) 
+                : ((b2H * 0.5 * r_throat_tip) / r_throat_root));
 
         return {
             MC_a: a, MC_px: px, MC_pxn, MC_pxnhalf,
@@ -7772,14 +7791,14 @@ class WormUIController {
             list.forEach(item => {
                 const opt = document.createElement('option');
                 opt.value = item.id;
-                opt.textContent = labelFn ? labelFn(item) : item.name;
+                opt.textContent = labelFn ? labelFn(item) : (item.label || item.name || item.code || item.id);
                 if (item.id === defaultId) opt.selected = true;
                 sel.appendChild(opt);
             });
         };
 
         if (typeof WORM_STD_TABLES !== 'undefined') {
-            fillSelect('sel_toothType', WORM_STD_TABLES.T_ToothType, 2);
+            fillSelect('sel_toothType', WORM_STD_TABLES.T_ToothType, 2, item => item.label || item.name);
             fillSelect('sel_loadTypeA', WORM_STD_TABLES.T_LoadType, 1);
             fillSelect('sel_loadTypeB', WORM_STD_TABLES.T_LoadType, 1);
             fillSelect('sel_designCooling', WORM_STD_TABLES.T_DesignCooling, 1);
@@ -7826,9 +7845,10 @@ class WormUIController {
                     pane.style.display = 'block';
                 }
                 if (targetId === 'tabCanvas') {
-                    if (this.activeMode === '2D') {
+                    if (this.canvasRenderer) {
                         this.canvasRenderer.render();
-                    } else if (this.activeMode === '3D' && this.visualizer3D) {
+                    }
+                    if (this.visualizer3D) {
                         this.visualizer3D.onResize();
                         if (this.latestResult) {
                             this.visualizer3D.setGeometry(this.latestResult);
@@ -8492,6 +8512,7 @@ class WormUIController {
 
     export3DCAD(format, target) {
         if (!this.visualizer3D || !this.latestResult || typeof Worm3DExporter === 'undefined') return;
+        this.visualizer3D.setGeometry(this.latestResult);
         const g = this.latestResult;
         const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK' };
         const typeCode = typeNames[g.toothType] || 'ZN';
@@ -8648,7 +8669,7 @@ class WormUIController {
         this.setVal('badge3DA', `${res.a.toFixed(3)} mm`);
         this.setVal('badge3DGama', `${res.gama.toFixed(3)}°`);
 
-        if (this.visualizer3D && this.activeMode === '3D') {
+        if (this.visualizer3D) {
             const curW = this.visualizer3D.wormAngle;
             const curG = this.visualizer3D.wheelAngle;
             this.visualizer3D.setGeometry(res);

@@ -3070,3 +3070,29 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
   3. **Đóng gói Bundle & Kiểm thử Node.js**:
      - Bundle qua `bundle_all.py`.
      - Kiểm thử `node -e`: `DXF_WheelChamfer = 33.7°`, `b4 = 9.95 mm`, `dz = 6.83 mm`, `rTip` tại mép co dần từ $91.61\text{ mm}$ xuống $88.32\text{ mm}$, 100% PASS.
+
+---
+
+## [2026-10-03] TỐI ƯU CẤU TRÚC MỤC 4.0, LƯỢC BỎ MỤC 2.0, KHẮC PHỤC MENU BIÊN DẠNG REN VÀ ĐỒNG BỘ ĐỘNG 2D/3D THỜI GIAN THỰC
+- **Yêu cầu trực tiếp từ chủ sở hữu (`SirPhuong`)**:
+  1. *"tôi muốn 'Góc vát mép vành bánh vít (Wheel rim chamfer angle θ2)' phải nằm trong mục '4.0 thiết kế hình học ...' khi thay đổi nó thì tất cả kích thước hình học từ 2D đến 3D đều phải thay đổi theo chứ không phải chỉ mỗi khi xuất file mới thay đổi"*.
+  2. *"bỏ mục 2.0 đi cho tôi chỉ dữ lại duy nhất lựa chọn 'Kiểu biên dạng ren trục vít (Type of worm profile - DIN 3975)', nhưng Kiểu biên dạng ren trục vít (Type of worm profile - DIN 3975) cũng đang bị lỗi chưa hiển thị lựa chọn. cho 'Kiểu biên dạng ren trục vít (Type of worm profile - DIN 3975)' vào mục '4.0 thiết kế hình học ...'"*.
+- **Phân tích nguyên nhân & Giải pháp thực hiện**:
+  1. **Khắc phục lỗi menu 'Kiểu biên dạng ren trục vít' bị trống**:
+     - `WORM_STD_TABLES.T_ToothType` trong `worm-materials.js` chỉ có các trường `{ id, code, label }`, không có trường `.name`.
+     - Hàm `fillSelect` trong `worm-ui.js` đọc `item.name`, dẫn tới `undefined` và hiển thị trắng.
+     - Đã bổ sung trường `name` cho toàn bộ danh mục DIN 3975 và nâng cấp `fillSelect` với fallback đa tầng: `item.label || item.name || item.code || item.id`.
+     - Kết quả: Dropdown hiển thị đầy đủ, sắc nét 5 tùy chọn chuẩn DIN 3975: ZA, ZN, ZI, ZK, ZH.
+  2. **Lược bỏ hoàn toàn Mục 2.0 (Zero-Force Protocol)**:
+     - Xóa trọn vẹn Phân mục 2.0 khỏi giao diện `index.html` theo Quy Tắc 1 (Zero-Force Scope Protocol), chuyển duy nhất thông số hình học cốt lõi "Kiểu biên dạng ren trục vít (DIN 3975)" lên đầu Mục 4.0 thành Hàng 4.0.
+  3. **Chuyển 'Góc vát mép vành bánh vít' về Mục 4.0 (Hàng 4.21)**:
+     - Đặt Hàng 4.21 ngay sau Hàng 4.20 (`b2H`), gồm ô nhập `#inp_DXF_WheelChamfer`, badge hiển thị `#out_DXF_WheelChamfer_info` (`b4=..., Δb=... mm`), và checkbox tự động DIN 3975.
+     - Đánh lại số thứ tự các hàng tiếp theo chuẩn hóa: 4.22 ($x_2$), 4.23 ($d_1, d_2$), 4.24 ($a_{\text{req}} / a$), 4.25 (Solve Fit $a$), 4.26 ($m$), 4.27 ($\eta$).
+  4. **Đồng bộ hóa 2D Canvas và 3D WebGL thời gian thực**:
+     - **Tính toán**: `WormCalcEngine` xuất `MC_b4: b4_actual` và `MC_chamferAngle: DXF_WheelChamfer` trực tiếp lên kết quả tính toán.
+     - **2D Canvas (`worm-canvas.js`)**: Hàm `drawWheelAxialSection` và `dxfWWheel` vẽ động đường vát mép nối từ $(wx - b_4, yTipEdge)$ xuống $(wx - b_{2H}/2, yRootEdge)$ cùng các dải mép phẳng.
+     - **3D WebGL (`worm-ui.js`)**: Gỡ bỏ điều kiện giới hạn `this.activeMode === '3D'` trong `recalculate()`, đồng thời kích hoạt làm tươi hình học `setGeometry(this.latestResult)` khi chuyển tab và trước khi xuất file 3D CAD.
+- **Kiểm thử nghiệm thu tự động (Playwright E2E & IGES 5.3)**:
+  - `test_sec4_reorg.py`: Mục 2.0 hoàn toàn biến mất (`sec2_found: False`), menu 4.0 có 5 tùy chọn đầy đủ, đổi $\theta_2 = 50.0^\circ$ lập tức đổi $b_4 = 13.0\text{ mm}$ và 3D mesh được tái tạo tức thì.
+  - `test_worm_features.py`: PASS 100% tất cả 2D profile và 3D WebGL.
+  - `test_iges_surface_export.py`: PASS 100% tất cả các file xuất Mastercam IGES/STEP.

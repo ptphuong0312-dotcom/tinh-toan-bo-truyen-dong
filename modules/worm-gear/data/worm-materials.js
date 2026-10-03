@@ -295,11 +295,11 @@ const WORM_WHEEL_MATERIALS = [
 const WORM_STD_TABLES = {
     // T_ToothType (Tables!B7:B11)
     T_ToothType: [
-        { id: 1, code: "ZA", label: "ZA (A) Wormgear — Trục vít Ác-si-mét (Archimedean)" },
-        { id: 2, code: "ZN", label: "ZN (N) Wormgear — Trục vít কনボリュート pháp tuyến (Normal Straight)" },
-        { id: 3, code: "ZI", label: "ZI (I) Wormgear — Trục vít Thân khai (Involute)" },
-        { id: 4, code: "ZK", label: "ZK (K) Wormgear — Trục vít Gia công bằng đá mài/dao côn (Cone Milled)" },
-        { id: 5, code: "ZH", label: "ZH (C) Wormgear — Trục vít Biên dạng lõm Cavex (Concave Profile)" }
+        { id: 1, code: "ZA", name: "ZA (A) Wormgear — Trục vít Ác-si-mét (Archimedean)", label: "ZA (A) Wormgear — Trục vít Ác-si-mét (Archimedean)" },
+        { id: 2, code: "ZN", name: "ZN (N) Wormgear — Trục vít pháp tuyến (Normal Straight)", label: "ZN (N) Wormgear — Trục vít pháp tuyến (Normal Straight)" },
+        { id: 3, code: "ZI", name: "ZI (I) Wormgear — Trục vít Thân khai (Involute)", label: "ZI (I) Wormgear — Trục vít Thân khai (Involute)" },
+        { id: 4, code: "ZK", name: "ZK (K) Wormgear — Trục vít Gia công bằng đá mài/dao côn (Cone Milled)", label: "ZK (K) Wormgear — Trục vít Gia công bằng đá mài/dao côn (Cone Milled)" },
+        { id: 5, code: "ZH", name: "ZH (C) Wormgear — Trục vít Biên dạng lõm Cavex (Concave Profile)", label: "ZH (C) Wormgear — Trục vít Biên dạng lõm Cavex (Concave Profile)" }
     ],
 
     // T_DesignCooling (Tables!B31:G33)

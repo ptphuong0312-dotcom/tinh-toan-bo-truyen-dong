@@ -1365,6 +1365,20 @@ class WormCanvasRenderer {
             ctx.arc(toX(wx), toY(wormCenterY), r1 * scale, -angTipL, -angTipR, signY > 0);
             ctx.stroke();
 
+            // Chamfer and flat lands on the wheel rim (responsive in real-time)
+            const b4 = g.DXF_WheelChamfer_b4 !== undefined ? g.DXF_WheelChamfer_b4 : ((b2h / 2.0) * (r1 / r3));
+            ctx.beginPath();
+            // Left flat rim & chamfer
+            ctx.moveTo(toX(wx - b1), toY(yTipEdge));
+            ctx.lineTo(toX(wx - b4), toY(yTipEdge));
+            ctx.lineTo(toX(wx - b2h / 2.0), toY(yRootEdge));
+
+            // Right flat rim & chamfer
+            ctx.moveTo(toX(wx + b1), toY(yTipEdge));
+            ctx.lineTo(toX(wx + b4), toY(yTipEdge));
+            ctx.lineTo(toX(wx + b2h / 2.0), toY(yRootEdge));
+            ctx.stroke();
+
             // Concave pitch throat arc (radius r2, dashed)
             const v2 = Math.min(r2 * 0.9, (de2 - dm2) / 2.0);
             const b2 = Math.min(b2h / 2.0, Math.sqrt(Math.max(0.0, v2 * (2.0 * r2 - v2))));
@@ -1562,7 +1576,7 @@ class WormCanvasRenderer {
             const v4 = r3 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3 * r3 - b2h * b2h));
             const b1 = Math.min(b2h / 2.0, Math.sqrt(Math.max(0.0, v1 * (2.0 * r1 - v1))));
             const b2 = Math.min(b2h / 2.0, Math.sqrt(Math.max(0.0, v2 * (2.0 * r2 - v2))));
-            const b4 = (b2h / 2.0) * (r1 / r3);
+            const b4 = g.DXF_WheelChamfer_b4 !== undefined ? g.DXF_WheelChamfer_b4 : ((b2h / 2.0) * (r1 / r3));
 
             // Top and bottom throat arcs & rim lines
             [-1, 1].forEach(sy => {

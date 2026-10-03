@@ -100,14 +100,14 @@ class WormUIController {
             list.forEach(item => {
                 const opt = document.createElement('option');
                 opt.value = item.id;
-                opt.textContent = labelFn ? labelFn(item) : item.name;
+                opt.textContent = labelFn ? labelFn(item) : (item.label || item.name || item.code || item.id);
                 if (item.id === defaultId) opt.selected = true;
                 sel.appendChild(opt);
             });
         };
 
         if (typeof WORM_STD_TABLES !== 'undefined') {
-            fillSelect('sel_toothType', WORM_STD_TABLES.T_ToothType, 2);
+            fillSelect('sel_toothType', WORM_STD_TABLES.T_ToothType, 2, item => item.label || item.name);
             fillSelect('sel_loadTypeA', WORM_STD_TABLES.T_LoadType, 1);
             fillSelect('sel_loadTypeB', WORM_STD_TABLES.T_LoadType, 1);
             fillSelect('sel_designCooling', WORM_STD_TABLES.T_DesignCooling, 1);
@@ -154,9 +154,10 @@ class WormUIController {
                     pane.style.display = 'block';
                 }
                 if (targetId === 'tabCanvas') {
-                    if (this.activeMode === '2D') {
+                    if (this.canvasRenderer) {
                         this.canvasRenderer.render();
-                    } else if (this.activeMode === '3D' && this.visualizer3D) {
+                    }
+                    if (this.visualizer3D) {
                         this.visualizer3D.onResize();
                         if (this.latestResult) {
                             this.visualizer3D.setGeometry(this.latestResult);
@@ -820,6 +821,7 @@ class WormUIController {
 
     export3DCAD(format, target) {
         if (!this.visualizer3D || !this.latestResult || typeof Worm3DExporter === 'undefined') return;
+        this.visualizer3D.setGeometry(this.latestResult);
         const g = this.latestResult;
         const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK' };
         const typeCode = typeNames[g.toothType] || 'ZN';
@@ -976,7 +978,7 @@ class WormUIController {
         this.setVal('badge3DA', `${res.a.toFixed(3)} mm`);
         this.setVal('badge3DGama', `${res.gama.toFixed(3)}°`);
 
-        if (this.visualizer3D && this.activeMode === '3D') {
+        if (this.visualizer3D) {
             const curW = this.visualizer3D.wormAngle;
             const curG = this.visualizer3D.wheelAngle;
             this.visualizer3D.setGeometry(res);

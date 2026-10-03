@@ -1665,3 +1665,27 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
 
 
 
+
+---
+
+### 25. Quy Chuẩn Tái Cấu Trúc Mục 4.0, Lược Bỏ Mục 2.0 & Đồng Bộ Động 2D/3D Thời Gian Thực Của Bánh Vít
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"tôi muốn 'Góc vát mép vành bánh vít (Wheel rim chamfer angle θ2)' phải nằm trong mục '4.0 thiết kế hình học ...' khi thay đổi nó thì tất cả kích thước hình học từ 2D đến 3D đều phải thay đổi theo chứ không phải chỉ mỗi khi xuất file mới thay đổi"*.
+   - *"bỏ mục 2.0 đi cho tôi chỉ dữ lại duy nhất lựa chọn 'Kiểu biên dạng ren trục vít (Type of worm profile - DIN 3975)', nhưng Kiểu biên dạng ren trục vít (Type of worm profile - DIN 3975) cũng đang bị lỗi chưa hiển thị lựa chọn. cho 'Kiểu biên dạng ren trục vít (Type of worm profile - DIN 3975)' vào mục '4.0 thiết kế hình học ...'"*.
+2. **Cấu Trúc Chuẩn Hóa Mục 4.0 Thiết Kế Hình Học**:
+   - **Hàng 4.0**: Kiểu biên dạng ren trục vít (Type of worm profile - DIN 3975), dropdown 5 tùy chọn hiển thị đầy đủ tên gọi kỹ thuật:
+     * `1: ZA (A) — Trục vít Ác-si-mét (Archimedean)`
+     * `2: ZN (N) — Trục vít pháp tuyến (Normal Straight)`
+     * `3: ZI (I) — Trục vít Thân khai (Involute)`
+     * `4: ZK (K) — Trục vít Gia công bằng đá mài/dao côn (Cone Milled)`
+     * `5: ZH (C) — Trục vít Biên dạng lõm Cavex (Concave Profile)`
+   - **Lược bỏ hoàn toàn Mục 2.0**: Tuân thủ tuyệt đối Quy Tắc 1 (Zero-Force Scope Protocol), loại bỏ các thông số vật liệu, bôi trơn và lực trung gian, giữ giao diện tập trung và tinh gọn.
+   - **Hàng 4.20**: Chiều rộng vành răng bánh vít $b_{2H}$.
+   - **Hàng 4.21**: Góc vát mép vành bánh vít $\theta_2$ (`#inp_DXF_WheelChamfer`) kèm checkbox tự động (`#chk_DXF_WheelChamferFlag`) và badge `#out_DXF_WheelChamfer_info` hiển thị tọa độ $b_4$ và bề rộng dải vát $\Delta b$.
+   - **Đánh số chuẩn hóa các hàng tiếp theo**: 4.22 ($x_2$), 4.23 ($d_1, d_2$), 4.24 ($a_{\text{req}} / a$), 4.25 (Fit $a$), 4.26 ($m$), 4.27 ($\eta$).
+3. **Cơ Chế Phản Ứng Động Thời Gian Thực 2D/3D (Real-Time Reactive Pipeline)**:
+   - Khi người dùng điều chỉnh góc vát $\theta_2$ hoặc bất kỳ thông số nào trong Mục 4.0:
+     * **Engine tính toán**: Xuất trực tiếp `MC_b4` và `MC_chamferAngle` lên đối tượng kết quả.
+     * **2D Canvas**: Cập nhật tức thời mặt cắt họng bánh vít gồm cung tròn đỉnh $b_1$, đoạn phẳng $b_1 \to b_4$, và đường vát mép xiên $b_4 \to b_{2H}/2$.
+     * **3D WebGL**: Gỡ bỏ điều kiện lọc tab, tự động tái tạo mesh 3D và parametric surface ngay trong `recalculate()`.
+     * **Xuất CAD 2D/3D**: Tệp DXF và tệp 3D Mastercam IGES/STEP luôn sử dụng hình học cập nhật mới nhất mà không cần chuyển qua lại giữa các tab.

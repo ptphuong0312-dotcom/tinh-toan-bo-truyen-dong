@@ -109,7 +109,11 @@ const Worm3DGenerator = {
         const r_outer = 0.5 * de2;
         const v1 = r_throat_tip - (a - r_outer);
         const b1 = Math.sqrt(Math.max(0.0, v1 * (2.0 * r_throat_tip - v1)));
-        const MC_b4 = (opt.MC_b4 !== undefined) ? parseFloat(opt.MC_b4) : ((b2H * 0.5 * r_throat_tip) / r_throat_root);
+        const MC_b4 = (opt.MC_b4 !== undefined) 
+            ? parseFloat(opt.MC_b4) 
+            : ((opt.DXF_WheelChamfer_b4 !== undefined) 
+                ? parseFloat(opt.DXF_WheelChamfer_b4) 
+                : ((b2H * 0.5 * r_throat_tip) / r_throat_root));
 
         return {
             MC_a: a, MC_px: px, MC_pxn, MC_pxnhalf,
