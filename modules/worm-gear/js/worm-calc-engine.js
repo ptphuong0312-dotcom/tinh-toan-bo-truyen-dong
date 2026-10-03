@@ -528,15 +528,19 @@ const WormCalcEngine = {
         const DXF_WheelChamfer = DXF_WheelChamferFlag ? theta_chamfer_prop : (isNaN(rawChamferVal) ? theta_chamfer_prop : rawChamferVal);
 
         let b4_actual = b4_chamfer_prop;
+        let rEdge_actual = rEdge_chamfer;
         if (!DXF_WheelChamferFlag) {
             if (DXF_WheelChamfer <= 0.1) {
                 b4_actual = halfB_chamfer; // 0 deg: Không vát mép (cạnh vành vuông phẳng)
+                rEdge_actual = de2 / 2.0;
             } else if (DXF_WheelChamfer < 89.9) {
                 const tanAngle = Math.tan((DXF_WheelChamfer * Math.PI) / 180.0);
                 b4_actual = Math.max(b1_chamfer, halfB_chamfer - (dr_chamfer_prop / tanAngle));
+                rEdge_actual = Math.max(rEdge_chamfer, (de2 / 2.0) - (halfB_chamfer - b4_actual) * tanAngle);
             }
         }
         const dz_actual = Math.max(0.0, halfB_chamfer - b4_actual);
+        const dr_actual = Math.max(0.0, (de2 / 2.0) - rEdge_actual);
 
         const ABOM01 = "Worm gear - Worm";
         const ABOM02 = `z1=${z1}, mn=${Math.round(mn * 100.0) / 100.0}`;
@@ -606,7 +610,7 @@ const WormCalcEngine = {
             MC_da1, MC_d1, MC_df1, MC_sn1, MC_sx1, MC_en1, MC_ex1, MC_ds1, MC_t1, MC_beta1,
             MC_z2, MC_b2H, MC_da2, MC_d2, MC_df2, MC_de2, MC_sn2, MC_sx2, MC_en2, MC_ex2,
             MC_d1cutmin, MC_d1cut, MC_d1cutmax, MC_pxnhalf,
-            MC_b4: b4_actual, MC_chamferAngle: DXF_WheelChamfer
+            MC_b4: b4_actual, MC_rEdge: rEdge_actual, MC_chamferAngle: DXF_WheelChamfer
         };
 
         // Data1 coordinates for Section 4.0 Dynamic Plot (Chart 1963)
@@ -622,7 +626,7 @@ const WormCalcEngine = {
         ); // Data1!F45
         const chartData1 = this.computeChartData1({
             a, da1, d1, df1, da2, d2, df2, de2, L, b2H, l1, l2, BeSi,
-            b4: b4_actual, b1: b1_chamfer
+            b4: b4_actual, b1: b1_chamfer, rEdge: rEdge_actual
         });
 
         return {
@@ -678,8 +682,8 @@ const WormCalcEngine = {
             XX_z1, XX_z2, XXX_i, XX_n1, XX_n2_ratio, XX_i, XX_Mk2, XX_n2, XX_Pw2,
             // Section 19.0 (CAD & DXFTables)
             dstFlag, Shaft_ds_prop, Shaft_th_prop, Shaft_ds, Shaft_th, DXF_Beta, DXF_AutoScale,
-            DXF_WheelChamferFlag, DXF_WheelChamfer, DXF_WheelChamfer_b4: b4_actual, DXF_WheelChamfer_dz: dz_actual, DXF_WheelChamfer_dr: dr_chamfer_prop, DXF_WheelChamfer_b1: b1_chamfer,
-            MC_b4: b4_actual, MC_chamferAngle: DXF_WheelChamfer,
+            DXF_WheelChamferFlag, DXF_WheelChamfer, DXF_WheelChamfer_b4: b4_actual, DXF_WheelChamfer_dz: dz_actual, DXF_WheelChamfer_dr: dr_actual, DXF_WheelChamfer_b1: b1_chamfer, DXF_WheelChamfer_rEdge: rEdge_actual,
+            MC_b4: b4_actual, MC_rEdge: rEdge_actual, MC_chamferAngle: DXF_WheelChamfer,
             ABOM01, ABOM02, ABOM03, BBOM01, BBOM02, BBOM03,
             dxf_worm_m, dxf_worm_z1, dxf_worm_alfa, dxf_worm_d1, dxf_worm_da1, dxf_worm_L, dxf_worm_mat, dxf_worm_a, dxf_worm_z2,
             dxf_wheel_m, dxf_wheel_z2, dxf_wheel_alfa, dxf_wheel_d2, dxf_wheel_da2, dxf_wheel_b2H, dxf_wheel_x2, dxf_wheel_mat, dxf_wheel_a, dxf_wheel_z1,
@@ -793,10 +797,15 @@ const WormCalcEngine = {
         const b4 = Math.min(halfB, Math.max(0, g.b4 !== undefined ? g.b4 : halfB));
         const b1 = Math.min(b4, Math.max(0, g.b1 !== undefined ? g.b1 : 0));
         const de2 = g.de2 || (da2 + 1.6);
+        const df2 = g.df2 || (da2 - 4.8 * (g.mn || 4));
         const r1 = a - da2 / 2.0;
-        const yTopThroat = da2 / 2.0;
+        const r3 = a - df2 / 2.0;
+        const v4 = r3 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3 * r3 - b2H * b2H));
+        const rRootEdge = df2 / 2.0 + v4;
         const yTopOuter = de2 / 2.0;
-        const yTopEdge = (b4 >= halfB - 1e-4) ? yTopOuter : yTopThroat;
+        const yTopEdge = (g.rEdge !== undefined) 
+            ? g.rEdge 
+            : ((b4 >= halfB - 1e-4) ? yTopOuter : rRootEdge);
 
         // Top contour points (from -halfB to +halfB)
         const topPts = [];

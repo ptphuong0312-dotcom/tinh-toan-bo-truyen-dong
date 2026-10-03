@@ -1751,3 +1751,31 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - **ZI (Thân khai - Involute)**: Biên dạng thân khai (Involute Helicoid) có vòng tròn cơ sở $d_{b1} = d_1 \cos\alpha_t$ và góc nâng cơ sở $\gamma_b$.
    - **ZK (Đá mài/dao côn - Cone Milled)**: Biên dạng hình thành khi gia công bằng dao phay ngón côn hoặc đá mài côn hai phía.
    - **ZH (Biên dạng lõm Cavex - Concave Profile)**: Ren trục vít lõm, răng bánh vít lồi; chịu tải uốn và tiếp xúc cao hơn, hệ số tổn thất $h_x$ và hiệu suất $\eta_{\text{ges}}$ tối ưu nhất theo DIN 3996.
+
+---
+
+### Quy Tắc 72: Quy Chuẩn Đồng Bộ Tuyệt Đối 1-to-1 Toàn Diện Kích Thước Hình Học & Mép Vát Bánh Vít Giữa 2D và 3D (Comprehensive 2D/3D Geometric & Chamfer Synchronization Protocol - DIN 3975)
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"tôi thấy chỗ vát của bánh vít giữa bản vẽ 2D và bản mô phỏng 3D vẫn chưa đồng bộ, ngoài ra bạn kiểm tra lại toàn bộ các kích thước để 2D và 3D đồng bộ với nhau"*
+2. **Bản Chất Kỹ Thuật Gây Sai Lệch Giữa 2D và 3D Trước Đó**:
+   - **Góc nghiêng mép vát 2D vs 3D**:
+     * Trong 2D (`DXF.bas` lines 380-395 và `drawWheelThroatSection`): Đường vát mép nối từ $(b_4, d_{e2}/2)$ xuống $(b_{2H}/2, d_{f2}/2 + v_4)$. Tại đây, $\Delta r = d_{e2}/2 - (d_{f2}/2 + v_4) = 4.563\text{ mm}$, $\Delta z = b_{2H}/2 - b_4 = 6.830\text{ mm}$, góc vát $\theta_2 = 33.74^\circ$. Điểm kết thúc của mép vát tại mép ngoài $z = \pm b_{2H}/2$ chạm đúng cung đáy rãnh ($r_{\text{Edge}} = 87.052\text{ mm}$), tại đó chiều cao răng $h = 0$.
+     * Trong 3D (`worm-3d-generator.js` `evalWheelBlank`): Đường vát mép lại hạ xuống $r_{\text{EdgeNominal}} = d_{a2}/2 = 89.484\text{ mm}$, dẫn đến $\Delta r_{\text{3D}} = 2.131\text{ mm}$, góc vát thực tế chỉ có $17.3^\circ$ (chỉ bằng một nửa 2D!) và tại mép ngoài $z = \pm b_{2H}/2$ vẫn còn một bức tường thịt răng cao $2.43\text{ mm}$ chưa được vát!
+     * Trên Biểu đồ Section 4.0 (`computeChartData1`): Điểm vát mép ngoài `yTopEdge` cũng bị cố định ở $d_{a2}/2 = 89.484\text{ mm}$ thay vì $d_{f2}/2 + v_4 = 87.052\text{ mm}$.
+   - **Lý do trước đây bị kẹp clamp $rTip \ge rRoot + 0.3 m_n$**:
+     * Do giải thuật biên dạng thân khai liên hợp khi $h \to 0$ trước đây bị fallback về hằng số góc cố định $\pm 0.0608$ rad, khiến đỉnh răng bị phình to tạo thành gai/sừng nhọn.
+3. **Giải Pháp Đồng Bộ Triệt Để Đạt Chuẩn Zero-Tolerance ($\Delta = 0.000000$)**:
+   - **Đồng bộ công thức bán kính mép vát $r_{\text{Edge}}$ xuyên suốt 100% hệ thống**:
+     $$r_{\text{Edge}} = \begin{cases} d_{e2} / 2 & \text{khi } \theta_2 \le 0.1^\circ \text{ (vành vuông phẳng, } b_4 = b_{2H}/2 \text{)} \\ \max\left(d_{f2}/2 + v_4, \; d_{e2}/2 - (b_{2H}/2 - b_4)\tan\theta_2\right) & \text{khi } \theta_2 > 0.1^\circ \end{cases}$$
+     Với góc vát tiêu chuẩn DIN 3975: $r_{\text{Edge}} = d_{f2}/2 + v_4 = 87.0516\text{ mm}$. Cả 2D Canvas, 2D DXF, Biểu đồ Mục 4.0 và 3D WebGL Blank đều dùng chung giá trị này đến 6 chữ số thập phân!
+   - **Triệt tiêu toàn diện hiện tượng sừng nhọn khi $rTip \to rRoot$**:
+     * Sử dụng giải thuật nội suy kế thừa góc pha liên hợp từ lát cắt lân cận $s-1$ khi cực trị hội tụ gần $0$.
+     * Đỉnh răng thuôn nhọn mượt mà $100\%$ về cung đáy rãnh, không phát sinh sừng nhọn, không tạo tam giác suy biến.
+   - **Đồng bộ hóa 100% toàn bộ kích thước hình học giữa 2D và 3D**:
+     * Khoảng cách trục: $a = 103.3663\text{ mm}$ (2D = 3D = Excel).
+     * Trục vít 1: $z_1 = 1$, $d_1 = 36.2315$, $d_{a1} = 44.6982$, $d_{f1} = 25.6482$, $L = 56.7267$, $l_1 = l_2 = 89.4839$, $\gamma = 6.7098^\circ$, $\beta_1 = 10^\circ$, $d_{s1} = 21.4$, $t_1 = 1.1$.
+     * Bánh vít 2: $z_2 = 40$, $d_2 = 170.5012$, $d_{a2} = 178.9678$, $d_{f2} = 159.9178$, $d_{e2} = 183.2300$, $b_{2H} = 33.5700$, $r_1 = 13.8824$, $r_3 = 23.4074$, $v_1 = 2.1311$, $v_4 = 7.0927$, $b_1 = 7.3911$, $b_4 = 9.9548$, $d_{\text{Bore2}} = 50.0\text{ mm}$.
+   - **Mặt cắt trục kỹ thuật 2D Canvas (`drawWheelThroatSection`)**:
+     * Bổ sung đầy đủ đường bao khép kín toàn bộ thân bánh vít từ lỗ trục đến đỉnh họng và mép vát.
+     * Tô nền mặt cắt kim loại kỹ thuật kèm gạch mặt cắt $45^\circ$ (Hatching).
+     * Thể hiện rõ cung đáy rãnh răng $r_3$ màu xanh cyan `#38bdf8` và đường sinh chia $r_2$ nét đứt vàng hổ phách `#fbbf24`.

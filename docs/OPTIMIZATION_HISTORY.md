@@ -3146,3 +3146,40 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
 ### 4. Kiểm Thử & Đóng Gói
 - Đóng gói bundle `worm-engine.bundle.js` (370,466 ký tự).
 - Chạy kiểm thử Playwright tự động: 0 lỗi console, tải về đầy đủ ảnh chứng thực trực quan tại 0°, 33.7° và 60°.
+
+---
+
+## [2026-10-03] ĐỒNG BỘ TOÀN DIỆN 100% KÍCH THƯỚC HÌNH HỌC & MÉP VÁT BÁNH VÍT GIỮA 2D VÀ 3D WEBGL (QUY TẮC 72)
+### 1. Bối Cảnh & Phản Hồi Từ Chủ Sở Hữu (`SirPhuong`)
+- *"tôi thấy chỗ vát của bánh vít giữa bản vẽ 2D và bản mô phỏng 3D vẫn chưa đồng bộ, ngoài ra bạn kiểm tra lại toàn bộ các kích thước để 2D và 3D đồng bộ với nhau"*
+
+### 2. Nguyên Nhân Kỹ Thuật Đã Phát Hiện & Giải Phẫu
+1. **Sai lệch góc vát và điểm dừng mép ngoài giữa 2D và 3D**:
+   - Trong 2D (`DXF.bas` lines 380-395 và `drawWheelThroatSection`): Đường vát mép nối từ $(b_4, d_{e2}/2)$ xuống $(b_{2H}/2, d_{f2}/2 + v_4)$ với góc vát $\theta_2 = 33.74^\circ$. Điểm kết thúc của mép vát tại $z = \pm b_{2H}/2$ chạm đúng cung đáy rãnh ($r_{\text{Edge}} = 87.052\text{ mm}$), tại đó chiều cao răng $h = 0$.
+   - Trong 3D (`worm-3d-generator.js` `evalWheelBlank`): Đường vát mép hạ xuống $r_{\text{EdgeNominal}} = d_{a2}/2 = 89.484\text{ mm}$ ($\theta_2 = 17.3^\circ$), để lại một gờ thịt răng cao $2.43\text{ mm}$ tại mặt đầu $z = \pm b_{2H}/2$.
+   - Trên Biểu đồ Section 4.0 (`computeChartData1`): Điểm vát mép ngoài `yTopEdge` cũng bị cố định ở $d_{a2}/2 = 89.484\text{ mm}$ thay vì $d_{f2}/2 + v_4 = 87.052\text{ mm}$.
+2. **Kẹp clamp $rTip \ge rRoot + 0.3 m_n$**:
+   - Do trước đây khi $h \to 0$, giải thuật thân khai liên hợp bị fallback về hằng số góc cố định $\pm 0.0608$ rad, làm nảy sinh sừng nhọn.
+
+### 3. Giải Pháp Nâng Cấp Hoàn Toàn Đồng Bộ (Zero-Tolerance Protocol)
+1. **Công thức bán kính mép vát $r_{\text{Edge}}$ đồng nhất toàn hệ thống**:
+   $$r_{\text{Edge}} = \begin{cases} d_{e2} / 2 & \text{khi } \theta_2 \le 0.1^\circ \text{ (vành vuông phẳng, } b_4 = b_{2H}/2 \text{)} \\ \max\left(d_{f2}/2 + v_4, \; d_{e2}/2 - (b_{2H}/2 - b_4)\tan\theta_2\right) & \text{khi } \theta_2 > 0.1^\circ \end{cases}$$
+   Với góc vát tiêu chuẩn DIN 3975: $r_{\text{Edge}} = d_{f2}/2 + v_4 = 87.0516\text{ mm}$. Cả 2D Canvas, 2D DXF, Biểu đồ Mục 4.0 và 3D WebGL Blank đều dùng chung giá trị này đến 6 chữ số thập phân ($\Delta = 0.000000$)!
+2. **Triệt tiêu toàn diện sừng nhọn**:
+   - Sử dụng giải thuật nội suy kế thừa góc pha liên hợp từ lát cắt $s-1$ khi $h \to 0$. Răng thuôn nhọn mượt mà $100\%$ về cung chân răng mà không phát sinh gai nhọn.
+3. **Đồng bộ hóa 100% kích thước hình học 2D vs 3D**:
+   - Khoảng cách trục $a = 103.3663\text{ mm}$ (2D = 3D = Excel).
+   - Trục vít 1: $z_1 = 1$, $d_1 = 36.2315$, $d_{a1} = 44.6982$, $d_{f1} = 25.6482$, $L = 56.7267$, $l_1 = l_2 = 89.4839$, $\gamma = 6.7098^\circ$, $\beta_1 = 10^\circ$, $d_{s1} = 21.4$, $t_1 = 1.1$.
+   - Bánh vít 2: $z_2 = 40$, $d_2 = 170.5012$, $d_{a2} = 178.9678$, $d_{f2} = 159.9178$, $d_{e2} = 183.2300$, $b_{2H} = 33.5700$, $r_1 = 13.8824$, $r_3 = 23.4074$, $v_1 = 2.1311$, $v_4 = 7.0927$, $b_1 = 7.3911$, $b_4 = 9.9548$, $d_{\text{Bore2}} = 50.0\text{ mm}$.
+4. **Mặt cắt trục kỹ thuật 2D Canvas (`drawWheelThroatSection`)**:
+   - Bổ sung đường bao khép kín toàn bộ thân bánh vít từ lỗ trục đến đỉnh họng và mép vát kèm gạch mặt cắt kim loại $45^\circ$ (Hatching).
+   - Cung đáy răng $r_3$ màu xanh cyan `#38bdf8` và đường sinh chia $r_2$ nét đứt vàng hổ phách `#fbbf24`.
+
+### 4. Kết Quả Kiểm Thử Nghiệm Thu
+- **Bộ test kiểm thử chéo 5 kịch bản (`scratch/test_2d_3d_sync_suite.js`)**:
+  * Case 1 (Default DIN 3975 $33.7^\circ$): **PASS** ($\Delta = 0.000000$).
+  * Case 2 (Steep Chamfer $60^\circ$): **PASS** ($\Delta = 0.000000$).
+  * Case 3 (Gentle Chamfer $15^\circ$): **PASS** ($\Delta = 0.000000$).
+  * Case 4 (Square Flat Rim $0^\circ$): **PASS** ($\Delta = 0.000000$).
+  * Case 5 (Big Gear $z_1=2, z_2=50, m_n=5$): **PASS** ($\Delta = 0.000000$).
+  * 100% 0 NaNs, 0 tam giác suy biến!

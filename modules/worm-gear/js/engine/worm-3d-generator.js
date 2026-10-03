@@ -114,6 +114,14 @@ const Worm3DGenerator = {
             : ((opt.DXF_WheelChamfer_b4 !== undefined) 
                 ? parseFloat(opt.DXF_WheelChamfer_b4) 
                 : ((b2H * 0.5 * r_throat_tip) / r_throat_root));
+        const MC_chamferAngle = (opt.MC_chamferAngle !== undefined)
+            ? parseFloat(opt.MC_chamferAngle)
+            : (parseFloat(opt.DXF_WheelChamfer) || 33.7);
+        const MC_rEdge = (opt.MC_rEdge !== undefined && opt.MC_rEdge !== null)
+            ? parseFloat(opt.MC_rEdge)
+            : ((opt.DXF_WheelChamfer_rEdge !== undefined)
+                ? parseFloat(opt.DXF_WheelChamfer_rEdge)
+                : null);
 
         return {
             MC_a: a, MC_px: px, MC_pxn, MC_pxnhalf,
@@ -128,6 +136,7 @@ const Worm3DGenerator = {
             mn, dm2, l1, l2, handSign,
             r1, r2, rf1, ra1, rf2, ra2, gamma,
             r_throat_tip, r_throat_root, r_outer, b1, MC_b4,
+            MC_chamferAngle, MC_rEdge,
             ShaftDB2: parseFloat(opt.ShaftDB2) || 0
         };
     },
@@ -162,11 +171,21 @@ const Worm3DGenerator = {
         const r3 = a - df2 * 0.5;
 
         const v1 = r1 - (a - de2 * 0.5);
-        const v3 = r3 - (a - de2 * 0.5);
         const b1 = Math.sqrt(Math.max(0.0, v1 * (2.0 * r1 - v1)));
-        const b3 = Math.sqrt(Math.max(0.0, v3 * (2.0 * r3 - v3)));
         const b4 = (mc.MC_b4 !== undefined) ? mc.MC_b4 : ((halfB * r1) / r3);
         const v4 = r3 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3 * r3 - b2H * b2H));
+        const rRootEdge = df2 * 0.5 + v4;
+
+        let rEdge;
+        if (mc.MC_rEdge !== undefined && mc.MC_rEdge !== null) {
+            rEdge = mc.MC_rEdge;
+        } else if (b4 >= halfB - 1e-4) {
+            rEdge = de2 * 0.5;
+        } else {
+            const chamferAngle = (mc.MC_chamferAngle !== undefined) ? mc.MC_chamferAngle : 33.74;
+            const tanAngle = Math.tan((chamferAngle * Math.PI) / 180.0);
+            rEdge = Math.max(rRootEdge, (de2 * 0.5) - (halfB - b4) * tanAngle);
+        }
 
         let rTip;
         if (absZ <= b1) {
@@ -176,11 +195,10 @@ const Worm3DGenerator = {
             // Cylindrical crest land at maximum external diameter de2/2
             rTip = de2 * 0.5;
         } else {
-            // Smooth mechanical chamfer: transitions from de2/2 to da2/2 at face edge
-            // Preserves tooth integrity (dae2 per DIN 3975 / MITCalc Fig. 4.0) and eliminates sharp spikes
+            // Smooth mechanical chamfer: transitions from de2/2 to rEdge at face edge
+            // Preserves 100% 1-to-1 sync with 2D DXF.bas & Section 4.0 Chart
             const tChamfer = (absZ - b4) / Math.max(1e-6, halfB - b4);
-            const rEdgeNominal = da2 * 0.5;
-            rTip = (de2 * 0.5) - tChamfer * (de2 * 0.5 - rEdgeNominal);
+            rTip = (de2 * 0.5) - tChamfer * (de2 * 0.5 - rEdge);
         }
 
         let rRoot;
@@ -190,10 +208,10 @@ const Worm3DGenerator = {
             rRoot = df2 * 0.5;
         }
 
-        return {
-            rTip: Math.max(rRoot + 0.3 * mc.mn, rTip),
-            rRoot: rRoot
-        };
+        // rTip cannot fall below rRoot
+        rTip = Math.max(rRoot, rTip);
+
+        return { rTip, rRoot };
     },
 
     /**
@@ -753,8 +771,16 @@ const Worm3DGenerator = {
                     let thSpaceR = this.evalConjugateFlankTheta(r, z, +1, mc);
                     let thSpaceL = this.evalConjugateFlankTheta(r, z, -1, mc);
 
-                    if (thSpaceR === null) thSpaceR = -Math.PI * 0.5 + (0.5 * mc.MC_sx1 / mc.r2);
-                    if (thSpaceL === null) thSpaceL = -Math.PI * 0.5 - (0.5 * mc.MC_sx1 / mc.r2);
+                    if (thSpaceR === null) {
+                        thSpaceR = (s > 0 && slices[s - 1].teeth[j].rFlankL[m])
+                            ? (slices[s - 1].teeth[j].rFlankL[m].theta - j * pitchAngle)
+                            : (-Math.PI * 0.5 + (0.5 * mc.MC_sx1 / mc.r2));
+                    }
+                    if (thSpaceL === null) {
+                        thSpaceL = (s > 0 && slices[s - 1].teeth[j].rFlankR[m])
+                            ? (slices[s - 1].teeth[j].rFlankR[m].theta - (j + 1) * pitchAngle)
+                            : (-Math.PI * 0.5 - (0.5 * mc.MC_sx1 / mc.r2));
+                    }
 
                     const thetaToothL = thSpaceR + j * pitchAngle;
                     const thetaToothR = thSpaceL + (j + 1) * pitchAngle;
@@ -937,7 +963,7 @@ const Worm3DGenerator = {
                 const sData = slices[sIdx];
                 const zVal = sData.z;
                 const normalZ = (side === 0) ? -1 : 1;
-                const rRimRoot = sData.rRoot;
+                const rRimRoot = Math.min(sData.rRoot, sData.rTip);
 
                 // 1. Flat Annular Disk from rBore2 to rRimRoot
                 for (let k = 0; k < boreSegs; k++) {

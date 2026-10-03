@@ -2639,15 +2639,19 @@ const WormCalcEngine = {
         const DXF_WheelChamfer = DXF_WheelChamferFlag ? theta_chamfer_prop : (isNaN(rawChamferVal) ? theta_chamfer_prop : rawChamferVal);
 
         let b4_actual = b4_chamfer_prop;
+        let rEdge_actual = rEdge_chamfer;
         if (!DXF_WheelChamferFlag) {
             if (DXF_WheelChamfer <= 0.1) {
                 b4_actual = halfB_chamfer; // 0 deg: Không vát mép (cạnh vành vuông phẳng)
+                rEdge_actual = de2 / 2.0;
             } else if (DXF_WheelChamfer < 89.9) {
                 const tanAngle = Math.tan((DXF_WheelChamfer * Math.PI) / 180.0);
                 b4_actual = Math.max(b1_chamfer, halfB_chamfer - (dr_chamfer_prop / tanAngle));
+                rEdge_actual = Math.max(rEdge_chamfer, (de2 / 2.0) - (halfB_chamfer - b4_actual) * tanAngle);
             }
         }
         const dz_actual = Math.max(0.0, halfB_chamfer - b4_actual);
+        const dr_actual = Math.max(0.0, (de2 / 2.0) - rEdge_actual);
 
         const ABOM01 = "Worm gear - Worm";
         const ABOM02 = `z1=${z1}, mn=${Math.round(mn * 100.0) / 100.0}`;
@@ -2717,7 +2721,7 @@ const WormCalcEngine = {
             MC_da1, MC_d1, MC_df1, MC_sn1, MC_sx1, MC_en1, MC_ex1, MC_ds1, MC_t1, MC_beta1,
             MC_z2, MC_b2H, MC_da2, MC_d2, MC_df2, MC_de2, MC_sn2, MC_sx2, MC_en2, MC_ex2,
             MC_d1cutmin, MC_d1cut, MC_d1cutmax, MC_pxnhalf,
-            MC_b4: b4_actual, MC_chamferAngle: DXF_WheelChamfer
+            MC_b4: b4_actual, MC_rEdge: rEdge_actual, MC_chamferAngle: DXF_WheelChamfer
         };
 
         // Data1 coordinates for Section 4.0 Dynamic Plot (Chart 1963)
@@ -2733,7 +2737,7 @@ const WormCalcEngine = {
         ); // Data1!F45
         const chartData1 = this.computeChartData1({
             a, da1, d1, df1, da2, d2, df2, de2, L, b2H, l1, l2, BeSi,
-            b4: b4_actual, b1: b1_chamfer
+            b4: b4_actual, b1: b1_chamfer, rEdge: rEdge_actual
         });
 
         return {
@@ -2789,8 +2793,8 @@ const WormCalcEngine = {
             XX_z1, XX_z2, XXX_i, XX_n1, XX_n2_ratio, XX_i, XX_Mk2, XX_n2, XX_Pw2,
             // Section 19.0 (CAD & DXFTables)
             dstFlag, Shaft_ds_prop, Shaft_th_prop, Shaft_ds, Shaft_th, DXF_Beta, DXF_AutoScale,
-            DXF_WheelChamferFlag, DXF_WheelChamfer, DXF_WheelChamfer_b4: b4_actual, DXF_WheelChamfer_dz: dz_actual, DXF_WheelChamfer_dr: dr_chamfer_prop, DXF_WheelChamfer_b1: b1_chamfer,
-            MC_b4: b4_actual, MC_chamferAngle: DXF_WheelChamfer,
+            DXF_WheelChamferFlag, DXF_WheelChamfer, DXF_WheelChamfer_b4: b4_actual, DXF_WheelChamfer_dz: dz_actual, DXF_WheelChamfer_dr: dr_actual, DXF_WheelChamfer_b1: b1_chamfer, DXF_WheelChamfer_rEdge: rEdge_actual,
+            MC_b4: b4_actual, MC_rEdge: rEdge_actual, MC_chamferAngle: DXF_WheelChamfer,
             ABOM01, ABOM02, ABOM03, BBOM01, BBOM02, BBOM03,
             dxf_worm_m, dxf_worm_z1, dxf_worm_alfa, dxf_worm_d1, dxf_worm_da1, dxf_worm_L, dxf_worm_mat, dxf_worm_a, dxf_worm_z2,
             dxf_wheel_m, dxf_wheel_z2, dxf_wheel_alfa, dxf_wheel_d2, dxf_wheel_da2, dxf_wheel_b2H, dxf_wheel_x2, dxf_wheel_mat, dxf_wheel_a, dxf_wheel_z1,
@@ -2904,10 +2908,15 @@ const WormCalcEngine = {
         const b4 = Math.min(halfB, Math.max(0, g.b4 !== undefined ? g.b4 : halfB));
         const b1 = Math.min(b4, Math.max(0, g.b1 !== undefined ? g.b1 : 0));
         const de2 = g.de2 || (da2 + 1.6);
+        const df2 = g.df2 || (da2 - 4.8 * (g.mn || 4));
         const r1 = a - da2 / 2.0;
-        const yTopThroat = da2 / 2.0;
+        const r3 = a - df2 / 2.0;
+        const v4 = r3 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3 * r3 - b2H * b2H));
+        const rRootEdge = df2 / 2.0 + v4;
         const yTopOuter = de2 / 2.0;
-        const yTopEdge = (b4 >= halfB - 1e-4) ? yTopOuter : yTopThroat;
+        const yTopEdge = (g.rEdge !== undefined) 
+            ? g.rEdge 
+            : ((b4 >= halfB - 1e-4) ? yTopOuter : rRootEdge);
 
         // Top contour points (from -halfB to +halfB)
         const topPts = [];
@@ -4096,7 +4105,8 @@ class WormCanvasRenderer {
         const r_da2 = (g.da2 / 2.0) * scale;
         const r_d2 = (g.d2 / 2.0) * scale;
         const r_df2 = (g.df2 / 2.0) * scale;
-        const r_bore = Math.max(8, (g.ShaftDB2 / 2.0) * scale);
+        const dBore2 = Math.min(g.df2 * 0.65, Math.max(16.0, g.ShaftDB2 || (g.df2 * 0.32)));
+        const r_bore = (dBore2 / 2.0) * scale;
 
         const handSign = (parseInt(g.teethOrientation) === 2) ? -1.0 : 1.0;
         const wheelRot = -handSign * (this.animPhase * g.z1) / z2;
@@ -4296,78 +4306,87 @@ class WormCanvasRenderer {
 
         const v4 = r3 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3 * r3 - b2h * b2h));
 
+        const halfB = b2h / 2.0;
+        const dBore2 = Math.min(df2 * 0.65, Math.max(16.0, g.ShaftDB2 || (df2 * 0.32)));
+        const rBore = dBore2 * 0.5;
+
+        const v1 = Math.min(r1 * 0.9, (de2 - da2) / 2.0);
+        const b1 = Math.min(halfB, Math.sqrt(Math.max(0.0, v1 * (2.0 * r1 - v1))));
+        const b4 = Math.min(halfB, Math.max(b1, g.DXF_WheelChamfer_b4 !== undefined ? g.DXF_WheelChamfer_b4 : ((halfB * r1) / r3)));
+        const rRootEdge = df2 / 2.0 + v4;
+        const rEdgeVal = (g.DXF_WheelChamfer_rEdge !== undefined) 
+            ? g.DXF_WheelChamfer_rEdge 
+            : ((b4 >= halfB - 1e-4) ? (de2 / 2.0) : rRootEdge);
+
         ctx.save();
         // Draw upper and lower wheel body halves with concave throat arcs
         [-1, 1].forEach(signY => {
             const wormCenterY = wy + signY * a;
-            const yRootEdge = wy + signY * (df2 / 2.0 + v4);
-            const yBore = wy + signY * (g.ShaftDB2 / 2.0);
+            const yBore = wy + signY * rBore;
+            const yTipOuter = wy + signY * (de2 / 2.0);
+            const yEdge = wy + signY * rEdgeVal;
+            const yRootEdge = wy + signY * rRootEdge;
 
+            // 1. Draw solid wheel body outline & fill
             ctx.fillStyle = 'rgba(245, 158, 11, 0.16)';
             ctx.strokeStyle = '#f59e0b';
             ctx.lineWidth = 1.8;
 
             ctx.beginPath();
-            ctx.moveTo(toX(wx - b2h / 2.0), toY(yBore));
-            ctx.lineTo(toX(wx - b2h / 2.0), toY(yRootEdge));
-            // Concave root throat arc around (wx, wormCenterY) of radius r3
-            const angL = Math.atan2(yRootEdge - wormCenterY, -b2h / 2.0);
-            const angR = Math.atan2(yRootEdge - wormCenterY, b2h / 2.0);
-            ctx.arc(
-                toX(wx),
-                toY(wormCenterY),
-                r3 * scale,
-                -angL,
-                -angR,
-                signY > 0
-            );
-            ctx.lineTo(toX(wx + b2h / 2.0), toY(yBore));
+            ctx.moveTo(toX(wx - halfB), toY(yBore));
+            ctx.lineTo(toX(wx - halfB), toY(yEdge));
+            if (b4 < halfB - 0.05) {
+                ctx.lineTo(toX(wx - b4), toY(yTipOuter));
+            }
+            ctx.lineTo(toX(wx - b1), toY(yTipOuter));
+            // Concave throat tip arc hugging worm
+            const angTipL = Math.atan2(yTipOuter - wormCenterY, -b1);
+            const angTipR = Math.atan2(yTipOuter - wormCenterY, b1);
+            ctx.arc(toX(wx), toY(wormCenterY), r1 * scale, -angTipL, -angTipR, signY > 0);
+
+            ctx.lineTo(toX(wx + b1), toY(yTipOuter));
+            if (b4 < halfB - 0.05) {
+                ctx.lineTo(toX(wx + b4), toY(yTipOuter));
+            }
+            ctx.lineTo(toX(wx + halfB), toY(yEdge));
+            ctx.lineTo(toX(wx + halfB), toY(yBore));
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
 
-            // Concave tip throat arc (radius r1)
-            const v1 = Math.min(r1 * 0.9, (de2 - da2) / 2.0);
-            const b1 = Math.min(b2h / 2.0, Math.sqrt(Math.max(0.0, v1 * (2.0 * r1 - v1))));
-            const yTipEdge = wy + signY * (da2 / 2.0 + v1);
-            const angTipL = Math.atan2(yTipEdge - wormCenterY, -b1);
-            const angTipR = Math.atan2(yTipEdge - wormCenterY, b1);
+            // 2. 45-degree Hatch lines inside the wheel body
+            ctx.save();
+            ctx.clip();
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.22)';
+            ctx.lineWidth = 1.0;
+            const hStep = 10 * Math.max(0.6, this.zoom);
+            const xMinS = toX(wx - halfB) - 60;
+            const xMaxS = toX(wx + halfB) + 60;
+            const yMinS = Math.min(toY(yBore), toY(yTipOuter)) - 60;
+            const yMaxS = Math.max(toY(yBore), toY(yTipOuter)) + 60;
+            for (let d = xMinS - (yMaxS - yMinS); d <= xMaxS + (yMaxS - yMinS); d += hStep) {
+                ctx.beginPath();
+                ctx.moveTo(d, yMaxS);
+                ctx.lineTo(d + (yMaxS - yMinS), yMinS);
+                ctx.stroke();
+            }
+            ctx.restore();
 
+            // 3. Concave Root Throat Arc (indicates tooth root depth)
             ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 1.8;
+            ctx.lineWidth = 1.6;
+            const angRootL = Math.atan2(yRootEdge - wormCenterY, -halfB);
+            const angRootR = Math.atan2(yRootEdge - wormCenterY, halfB);
             ctx.beginPath();
-            ctx.arc(toX(wx), toY(wormCenterY), r1 * scale, -angTipL, -angTipR, signY > 0);
+            ctx.arc(toX(wx), toY(wormCenterY), r3 * scale, -angRootL, -angRootR, signY > 0);
             ctx.stroke();
 
-            // Chamfer and flat lands on the wheel rim (responsive in real-time)
-            const b4 = Math.min(b2h / 2.0, Math.max(b1, g.DXF_WheelChamfer_b4 !== undefined ? g.DXF_WheelChamfer_b4 : ((b2h / 2.0) * (r1 / r3))));
-            ctx.beginPath();
-            // Left flat rim & chamfer
-            ctx.moveTo(toX(wx - b1), toY(yTipEdge));
-            ctx.lineTo(toX(wx - b4), toY(yTipEdge));
-            if (b4 < b2h / 2.0 - 0.05) {
-                ctx.lineTo(toX(wx - b2h / 2.0), toY(yRootEdge));
-            } else {
-                ctx.lineTo(toX(wx - b2h / 2.0), toY(yTipEdge));
-            }
-
-            // Right flat rim & chamfer
-            ctx.moveTo(toX(wx + b1), toY(yTipEdge));
-            ctx.lineTo(toX(wx + b4), toY(yTipEdge));
-            if (b4 < b2h / 2.0 - 0.05) {
-                ctx.lineTo(toX(wx + b2h / 2.0), toY(yRootEdge));
-            } else {
-                ctx.lineTo(toX(wx + b2h / 2.0), toY(yTipEdge));
-            }
-            ctx.stroke();
-
-            // Concave pitch throat arc (radius r2, dashed)
+            // 4. Concave Pitch Throat Arc (dashed centerline)
             const v2 = Math.min(r2 * 0.9, (de2 - dm2) / 2.0);
-            const b2 = Math.min(b2h / 2.0, Math.sqrt(Math.max(0.0, v2 * (2.0 * r2 - v2))));
-            const yPitchEdge = wy + signY * (dm2 / 2.0 + v2);
-            const angPitchL = Math.atan2(yPitchEdge - wormCenterY, -b2);
-            const angPitchR = Math.atan2(yPitchEdge - wormCenterY, b2);
-
+            const b2 = Math.min(halfB, Math.sqrt(Math.max(0.0, v2 * (2.0 * r2 - v2))));
+            const yPitchOuter = wy + signY * (dm2 / 2.0 + v2);
+            const angPitchL = Math.atan2(yPitchOuter - wormCenterY, -b2);
+            const angPitchR = Math.atan2(yPitchOuter - wormCenterY, b2);
             ctx.strokeStyle = '#fbbf24';
             ctx.lineWidth = 1.2;
             ctx.setLineDash([5, 4]);
@@ -4558,7 +4577,11 @@ class WormCanvasRenderer {
             const v4 = r3 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3 * r3 - b2h * b2h));
             const b1 = Math.min(b2h / 2.0, Math.sqrt(Math.max(0.0, v1 * (2.0 * r1 - v1))));
             const b2 = Math.min(b2h / 2.0, Math.sqrt(Math.max(0.0, v2 * (2.0 * r2 - v2))));
-            const b4 = g.DXF_WheelChamfer_b4 !== undefined ? g.DXF_WheelChamfer_b4 : ((b2h / 2.0) * (r1 / r3));
+            const b4 = (g.DXF_WheelChamfer_b4 !== undefined) ? g.DXF_WheelChamfer_b4 : ((b2h / 2.0) * (r1 / r3));
+            const rEdge = (g.DXF_WheelChamfer_rEdge !== undefined) 
+                ? g.DXF_WheelChamfer_rEdge 
+                : ((b4 >= b2h / 2.0 - 1e-4) ? (de2 / 2.0) : (df2 / 2.0 + v4));
+            const yTipOuter = da2 / 2.0 + v1;
 
             // Top and bottom throat arcs & rim lines
             [-1, 1].forEach(sy => {
@@ -4575,12 +4598,17 @@ class WormCanvasRenderer {
                 const degP2 = (Math.atan2(-sy * (r2 - v2), b2) * 180.0) / Math.PI;
                 addArc(x1, wy, r2, sy > 0 ? degP1 : degP2, sy > 0 ? degP2 : degP1, 'AXIS');
 
-                addLine(x1 - b2h / 2.0, y1 + sy * (df2 / 2.0 + v4), x1 - b2h / 2.0, y1, 'OUTLINE');
-                addLine(x1 + b2h / 2.0, y1 + sy * (df2 / 2.0 + v4), x1 + b2h / 2.0, y1, 'OUTLINE');
-                addLine(x1 - b2h / 2.0, y1 + sy * (df2 / 2.0 + v4), x1 - b4, y1 + sy * (da2 / 2.0 + v1), 'OUTLINE');
-                addLine(x1 + b2h / 2.0, y1 + sy * (df2 / 2.0 + v4), x1 + b4, y1 + sy * (da2 / 2.0 + v1), 'OUTLINE');
-                addLine(x1 - b4, y1 + sy * (da2 / 2.0 + v1), x1 - b1, y1 + sy * (da2 / 2.0 + v1), 'OUTLINE');
-                addLine(x1 + b4, y1 + sy * (da2 / 2.0 + v1), x1 + b1, y1 + sy * (da2 / 2.0 + v1), 'OUTLINE');
+                addLine(x1 - b2h / 2.0, y1 + sy * rEdge, x1 - b2h / 2.0, y1, 'OUTLINE');
+                addLine(x1 + b2h / 2.0, y1 + sy * rEdge, x1 + b2h / 2.0, y1, 'OUTLINE');
+                if (b4 < b2h / 2.0 - 0.05) {
+                    addLine(x1 - b2h / 2.0, y1 + sy * rEdge, x1 - b4, y1 + sy * yTipOuter, 'OUTLINE');
+                    addLine(x1 + b2h / 2.0, y1 + sy * rEdge, x1 + b4, y1 + sy * yTipOuter, 'OUTLINE');
+                    addLine(x1 - b4, y1 + sy * yTipOuter, x1 - b1, y1 + sy * yTipOuter, 'OUTLINE');
+                    addLine(x1 + b4, y1 + sy * yTipOuter, x1 + b1, y1 + sy * yTipOuter, 'OUTLINE');
+                } else {
+                    addLine(x1 - b2h / 2.0, y1 + sy * yTipOuter, x1 - b1, y1 + sy * yTipOuter, 'OUTLINE');
+                    addLine(x1 + b2h / 2.0, y1 + sy * yTipOuter, x1 + b1, y1 + sy * yTipOuter, 'OUTLINE');
+                }
             });
         };
 
@@ -5087,6 +5115,14 @@ const Worm3DGenerator = {
             : ((opt.DXF_WheelChamfer_b4 !== undefined) 
                 ? parseFloat(opt.DXF_WheelChamfer_b4) 
                 : ((b2H * 0.5 * r_throat_tip) / r_throat_root));
+        const MC_chamferAngle = (opt.MC_chamferAngle !== undefined)
+            ? parseFloat(opt.MC_chamferAngle)
+            : (parseFloat(opt.DXF_WheelChamfer) || 33.7);
+        const MC_rEdge = (opt.MC_rEdge !== undefined && opt.MC_rEdge !== null)
+            ? parseFloat(opt.MC_rEdge)
+            : ((opt.DXF_WheelChamfer_rEdge !== undefined)
+                ? parseFloat(opt.DXF_WheelChamfer_rEdge)
+                : null);
 
         return {
             MC_a: a, MC_px: px, MC_pxn, MC_pxnhalf,
@@ -5101,6 +5137,7 @@ const Worm3DGenerator = {
             mn, dm2, l1, l2, handSign,
             r1, r2, rf1, ra1, rf2, ra2, gamma,
             r_throat_tip, r_throat_root, r_outer, b1, MC_b4,
+            MC_chamferAngle, MC_rEdge,
             ShaftDB2: parseFloat(opt.ShaftDB2) || 0
         };
     },
@@ -5135,11 +5172,21 @@ const Worm3DGenerator = {
         const r3 = a - df2 * 0.5;
 
         const v1 = r1 - (a - de2 * 0.5);
-        const v3 = r3 - (a - de2 * 0.5);
         const b1 = Math.sqrt(Math.max(0.0, v1 * (2.0 * r1 - v1)));
-        const b3 = Math.sqrt(Math.max(0.0, v3 * (2.0 * r3 - v3)));
         const b4 = (mc.MC_b4 !== undefined) ? mc.MC_b4 : ((halfB * r1) / r3);
         const v4 = r3 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3 * r3 - b2H * b2H));
+        const rRootEdge = df2 * 0.5 + v4;
+
+        let rEdge;
+        if (mc.MC_rEdge !== undefined && mc.MC_rEdge !== null) {
+            rEdge = mc.MC_rEdge;
+        } else if (b4 >= halfB - 1e-4) {
+            rEdge = de2 * 0.5;
+        } else {
+            const chamferAngle = (mc.MC_chamferAngle !== undefined) ? mc.MC_chamferAngle : 33.74;
+            const tanAngle = Math.tan((chamferAngle * Math.PI) / 180.0);
+            rEdge = Math.max(rRootEdge, (de2 * 0.5) - (halfB - b4) * tanAngle);
+        }
 
         let rTip;
         if (absZ <= b1) {
@@ -5149,11 +5196,10 @@ const Worm3DGenerator = {
             // Cylindrical crest land at maximum external diameter de2/2
             rTip = de2 * 0.5;
         } else {
-            // Smooth mechanical chamfer: transitions from de2/2 to da2/2 at face edge
-            // Preserves tooth integrity (dae2 per DIN 3975 / MITCalc Fig. 4.0) and eliminates sharp spikes
+            // Smooth mechanical chamfer: transitions from de2/2 to rEdge at face edge
+            // Preserves 100% 1-to-1 sync with 2D DXF.bas & Section 4.0 Chart
             const tChamfer = (absZ - b4) / Math.max(1e-6, halfB - b4);
-            const rEdgeNominal = da2 * 0.5;
-            rTip = (de2 * 0.5) - tChamfer * (de2 * 0.5 - rEdgeNominal);
+            rTip = (de2 * 0.5) - tChamfer * (de2 * 0.5 - rEdge);
         }
 
         let rRoot;
@@ -5163,10 +5209,10 @@ const Worm3DGenerator = {
             rRoot = df2 * 0.5;
         }
 
-        return {
-            rTip: Math.max(rRoot + 0.3 * mc.mn, rTip),
-            rRoot: rRoot
-        };
+        // rTip cannot fall below rRoot
+        rTip = Math.max(rRoot, rTip);
+
+        return { rTip, rRoot };
     },
 
     /**
@@ -5726,8 +5772,16 @@ const Worm3DGenerator = {
                     let thSpaceR = this.evalConjugateFlankTheta(r, z, +1, mc);
                     let thSpaceL = this.evalConjugateFlankTheta(r, z, -1, mc);
 
-                    if (thSpaceR === null) thSpaceR = -Math.PI * 0.5 + (0.5 * mc.MC_sx1 / mc.r2);
-                    if (thSpaceL === null) thSpaceL = -Math.PI * 0.5 - (0.5 * mc.MC_sx1 / mc.r2);
+                    if (thSpaceR === null) {
+                        thSpaceR = (s > 0 && slices[s - 1].teeth[j].rFlankL[m])
+                            ? (slices[s - 1].teeth[j].rFlankL[m].theta - j * pitchAngle)
+                            : (-Math.PI * 0.5 + (0.5 * mc.MC_sx1 / mc.r2));
+                    }
+                    if (thSpaceL === null) {
+                        thSpaceL = (s > 0 && slices[s - 1].teeth[j].rFlankR[m])
+                            ? (slices[s - 1].teeth[j].rFlankR[m].theta - (j + 1) * pitchAngle)
+                            : (-Math.PI * 0.5 - (0.5 * mc.MC_sx1 / mc.r2));
+                    }
 
                     const thetaToothL = thSpaceR + j * pitchAngle;
                     const thetaToothR = thSpaceL + (j + 1) * pitchAngle;
@@ -5910,7 +5964,7 @@ const Worm3DGenerator = {
                 const sData = slices[sIdx];
                 const zVal = sData.z;
                 const normalZ = (side === 0) ? -1 : 1;
-                const rRimRoot = sData.rRoot;
+                const rRimRoot = Math.min(sData.rRoot, sData.rTip);
 
                 // 1. Flat Annular Disk from rBore2 to rRimRoot
                 for (let k = 0; k < boreSegs; k++) {

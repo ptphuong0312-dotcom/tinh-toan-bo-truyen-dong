@@ -1727,3 +1727,19 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
    - ZI: Thân khai (Involute helicoid), có đường kính cơ sở $d_{b1}$.
    - ZK: Gia công bằng dao phay/đá mài côn.
    - ZH: Ren lõm Cavex, hiệu suất $\eta$ và sức bền uốn/tiếp xúc cao nhất.
+
+---
+
+### 28. Quy Chuẩn Đồng Bộ Tuyệt Đối 1-to-1 Toàn Diện Kích Thước Hình Học & Mép Vát Bánh Vít Giữa 2D và 3D (Comprehensive 2D/3D Geometric & Chamfer Synchronization Protocol - DIN 3975)
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"tôi thấy chỗ vát của bánh vít giữa bản vẽ 2D và bản mô phỏng 3D vẫn chưa đồng bộ, ngoài ra bạn kiểm tra lại toàn bộ các kích thước để 2D và 3D đồng bộ với nhau"*
+2. **Nguyên Nhân Sai Lệch Giữa 2D và 3D**:
+   - 2D (`DXF.bas` lines 380-395 và `drawWheelThroatSection`) nối đường vát từ $(b_4, d_{e2}/2)$ xuống tận đáy rãnh $(b_{2H}/2, d_{f2}/2 + v_4)$ với góc vát $\theta_2 = 33.74^\circ$ ($r_{\text{Edge}} = 87.052\text{ mm}$), tại đó chiều cao răng $h = 0$.
+   - 3D (`worm-3d-generator.js`) trước đây lại nối xuống $r_{\text{EdgeNominal}} = d_{a2}/2 = 89.484\text{ mm}$ ($\theta_2 = 17.3^\circ$), để lại một gờ thịt răng cao $2.43\text{ mm}$ tại mặt đầu $z = \pm b_{2H}/2$.
+   - Biểu đồ Mục 4.0 (`computeChartData1`) cũng dừng ở $d_{a2}/2 = 89.484\text{ mm}$ thay vì $d_{f2}/2 + v_4 = 87.052\text{ mm}$.
+3. **Giải Pháp Đồng Bộ Đạt Chuẩn Zero-Tolerance ($\Delta = 0.000000$)**:
+   - Đồng bộ hóa công thức $r_{\text{Edge}}$ cho cả 2D Canvas, 2D DXF, Biểu đồ Mục 4.0 và 3D WebGL Blank:
+     $$r_{\text{Edge}} = \begin{cases} d_{e2} / 2 & \text{khi } \theta_2 \le 0.1^\circ \text{ (vành vuông phẳng, } b_4 = b_{2H}/2 \text{)} \\ \max\left(d_{f2}/2 + v_4, \; d_{e2}/2 - (b_{2H}/2 - b_4)\tan\theta_2\right) & \text{khi } \theta_2 > 0.1^\circ \end{cases}$$
+   - Khắc phục triệt để hiện tượng sừng nhọn khi $rTip \to rRoot$: nội suy kế thừa góc pha liên hợp từ lát cắt $s-1$ khi $h \to 0$. Răng thuôn nhọn mượt mà $100\%$ về cung chân răng mà không phát sinh gai nhọn.
+   - Kiểm tra chéo toàn bộ kích thước: Khoảng cách trục $a = 103.3663\text{ mm}$, đường kính chia $d_1 = 36.2315, d_2 = 170.5012$, đỉnh $d_{a1} = 44.6982, d_{a2} = 178.9678$, đáy $d_{f1} = 25.6482, d_{f2} = 159.9178$, đỉnh lớn nhất $d_{e2} = 183.2300$, chiều rộng vành $b_{2H} = 33.5700$, bán kính họng $r_1 = 13.8824, r_3 = 23.4074$, độ vát $b_1 = 7.3911, b_4 = 9.9548$, lỗ trục $d_{\text{Bore2}} = 50.0\text{ mm}$ — 100% khớp tuyệt đối giữa 2D và 3D!
+   - 2D Canvas: Vẽ đầy đủ thân bánh vít khép kín kèm gạch mặt cắt kim loại $45^\circ$, cung đáy răng $r_3$ xanh cyan và đường sinh chia $r_2$ nét đứt vàng.
