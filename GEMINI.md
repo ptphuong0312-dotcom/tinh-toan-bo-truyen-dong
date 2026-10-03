@@ -1655,4 +1655,24 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - Ngoài lòng họng ($|z| > b_1$): Đỉnh răng nằm trên mặt trụ đỉnh ngoài $d_{e2}/2$.
    - Chiều cao răng tại tâm $z = 0$ đạt $9.53\text{ mm}$, tại mép vành $z = \pm 16.79\text{ mm}$ vẫn duy trì đầy đủ $4.13\text{ mm}$. Toàn bộ 40 răng ăn khớp sắc nét, đầy đặn từ mép này sang mép kia.
 
+---
+
+### Quy Tắc 68: Quy Chuẩn Minh Bạch & Điều Khiển Thông Số Mép Vát Vành Bánh Vít (Worm Wheel Rim Chamfer Protocol — DIN 3975)
+1. **Bối Cảnh & Phản Hồi Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"thay vì để DIN 3975 tự động tính qua de2 và b2H, tôi chưa thấy thông số mà phần mềm tự tính mép vát"*
+   - **Thực tế MITCalc 1.74 bản gốc**: Tác giả MITCalc chỉ hiển thị ô nhập cho Trục Vít tại Mục 19.4 (`Angle of worm shrink β`), còn đối với Bánh Vít, MITCalc giấu kín 100% công thức tính mép vát nón phụ ($b_1, b_4, v_1, v_4, \theta_2$) bên trong mã macro VBA (`DXF.bas` dòng 168-198), không hề hiển thị ra bất kỳ ô tính nào trên sheet tính toán.
+2. **Minh Bạch Hóa & Cung Cấp Điều Khiển Trực Tiếp Trên Bảng Tính (Tab 1)**:
+   - Bổ sung dòng thông số **Mục 19.5**: `Góc vát mép vành bánh vít (Wheel rim chamfer angle θ2)`.
+   - Cung cấp Checkbox **`[X] Tự động (DIN 3975)`** (`#chk_DXF_WheelChamferFlag`):
+     * Khi tích chọn: phần mềm tự động tính toán góc vát nón phụ $\theta_2 \approx 33.7^\circ$ và tọa độ bắt đầu vát $b_4 = \frac{b_{2H}}{2} \cdot \frac{r_1}{r_3}$ từ cặp $(d_{e2}, b_{2H})$.
+     * Khi bỏ tích: cho phép người dùng tự do gõ góc vát $\theta_2$ bất kỳ ($45^\circ, 30^\circ$, hoặc $0^\circ$ để giữ cạnh vành vuông góc phẳng).
+   - Hiển thị trực quan: `b4 = 10.0 mm (tọa độ bắt đầu vát), Δb = 6.8 mm (bề rộng dải vát mép)` để kỹ sư và thợ gia công xưởng kiểm tra dễ dàng.
+3. **Đồng Bộ Mô Hình 3D WebGL & Tệp CAD Xuất Ra**:
+   - Trong `evalWheelBlank(z)` của `worm-3d-generator.js`:
+     * Khi $|z| \le b_1$: Đỉnh răng theo cung họng lõm $r_{\text{Tip}}(z) = a - \sqrt{r_1^2 - z^2}$.
+     * Khi $b_1 < |z| \le b_4$: Đỉnh răng phẳng theo đường kính ngoài $d_{e2}/2$.
+     * Khi $b_4 < |z| \le b_{2H}/2$: Đỉnh răng hạ đều theo đường sinh nón vát mép $\Delta r(z) = \frac{|z| - b_4}{b_{2H}/2 - b_4} (d_{e2}/2 - r_{\text{edge}})$.
+   - Răng bánh vít vẫn duy trì độ cao tối thiểu an toàn ($h \ge 0.3 \cdot m_n$) để mặt sườn và đỉnh răng không bị suy biến, tạo nên hình dáng cơ khí hoàn hảo và sắc nét.
+
+
 

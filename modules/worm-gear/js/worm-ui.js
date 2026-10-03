@@ -275,6 +275,7 @@ class WormUIController {
         toggleAutoInput('chk_Flagb2H', ['inp_b2H_Input']);
         toggleAutoInput('chk_de2Flag', ['inp_de2Input']);
         toggleAutoInput('chk_dstFlag', ['inp_Shaft_ds', 'inp_Shaft_th']);
+        toggleAutoInput('chk_DXF_WheelChamferFlag', ['inp_DXF_WheelChamfer']);
     }
 
     bindInputsAndControls() {
@@ -315,7 +316,7 @@ class WormUIController {
         });
 
         // Auto checkboxes
-        ['chk_kaFlag', 'chk_rf1Flag', 'chk_l1l2_flag', 'chk_FlagL', 'chk_Flagb2H', 'chk_de2Flag', 'chk_dstFlag'].forEach(chkId => {
+        ['chk_kaFlag', 'chk_rf1Flag', 'chk_l1l2_flag', 'chk_FlagL', 'chk_Flagb2H', 'chk_de2Flag', 'chk_dstFlag', 'chk_DXF_WheelChamferFlag'].forEach(chkId => {
             const chk = document.getElementById(chkId);
             if (chk) {
                 chk.addEventListener('change', () => {
@@ -951,7 +952,9 @@ class WormUIController {
             dstFlag: document.getElementById('chk_dstFlag')?.checked ?? true,
             Shaft_ds: this.parseVal('inp_Shaft_ds', 21.4),
             Shaft_th: this.parseVal('inp_Shaft_th', 1.1),
-            DXF_Beta: this.parseVal('inp_DXF_Beta', 10.0)
+            DXF_Beta: this.parseVal('inp_DXF_Beta', 10.0),
+            DXF_WheelChamferFlag: document.getElementById('chk_DXF_WheelChamferFlag')?.checked ?? true,
+            DXF_WheelChamfer: this.parseVal('inp_DXF_WheelChamfer', 42.7)
         };
     }
 
@@ -1191,6 +1194,13 @@ class WormUIController {
             this.setVal('inp_Shaft_ds', r.Shaft_ds, 1);
             this.setVal('inp_Shaft_th', r.Shaft_th, 1);
         }
+        if (r.DXF_WheelChamferFlag) {
+            this.setVal('inp_DXF_WheelChamfer', r.DXF_WheelChamfer, 1);
+        }
+        const wheelChamferInfoEl = document.getElementById('out_DXF_WheelChamfer_info');
+        if (wheelChamferInfoEl && r.DXF_WheelChamfer_b4 !== undefined) {
+            wheelChamferInfoEl.textContent = `b4=${r.DXF_WheelChamfer_b4.toFixed(1)}, Δb=${r.DXF_WheelChamfer_dz.toFixed(1)} mm`;
+        }
         this.setVal('out_ABOM', `${r.ABOM01} | ${r.ABOM02} | ${r.ABOM03}`);
         this.setVal('out_BBOM', `${r.BBOM01} | ${r.BBOM02} | ${r.BBOM03}`);
 
@@ -1343,6 +1353,7 @@ class WormUIController {
 
         setChkDirect('chk_dstFlag', true);
         setValDirect('inp_DXF_Beta', '10.0');
+        setChkDirect('chk_DXF_WheelChamferFlag', true);
 
         this.syncRadioCalcQVisuals();
         this.syncAutoFlagsVisuals();

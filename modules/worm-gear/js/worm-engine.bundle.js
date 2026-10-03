@@ -2621,6 +2621,31 @@ const WormCalcEngine = {
         const DXF_Beta = (p.DXF_Beta !== undefined && String(p.DXF_Beta).trim() !== '') ? parseFloat(p.DXF_Beta) : 10.0; // O417
         const DXF_AutoScale = a / 100.0; // X415
 
+        // Worm Wheel Rim Chamfer according to DIN 3975 / DXF.bas lines 168-198
+        const r1_chamfer = a - da2 / 2.0;
+        const r3_chamfer = a - df2 / 2.0;
+        const v1_chamfer = r1_chamfer - (a - de2 / 2.0);
+        const b1_chamfer = Math.sqrt(Math.max(0.0, v1_chamfer * (2.0 * r1_chamfer - v1_chamfer)));
+        const halfB_chamfer = b2H / 2.0;
+        const b4_chamfer_prop = (halfB_chamfer * r1_chamfer) / r3_chamfer;
+        const v4_chamfer = r3_chamfer - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3_chamfer * r3_chamfer - b2H * b2H));
+        const rEdge_chamfer = df2 / 2.0 + v4_chamfer;
+        const dz_chamfer_prop = halfB_chamfer - b4_chamfer_prop;
+        const dr_chamfer_prop = de2 / 2.0 - rEdge_chamfer;
+        const theta_chamfer_prop = Math.round(((Math.atan2(dr_chamfer_prop, Math.max(1e-4, dz_chamfer_prop)) * 180.0) / Math.PI) * 10.0) / 10.0; // deg so với trục
+
+        const DXF_WheelChamferFlag = (p.DXF_WheelChamferFlag !== undefined) ? Boolean(p.DXF_WheelChamferFlag) : true;
+        const DXF_WheelChamfer = DXF_WheelChamferFlag 
+            ? theta_chamfer_prop 
+            : ((p.DXF_WheelChamfer !== undefined && String(p.DXF_WheelChamfer).trim() !== '') ? parseFloat(p.DXF_WheelChamfer) : theta_chamfer_prop);
+
+        let b4_actual = b4_chamfer_prop;
+        if (!DXF_WheelChamferFlag && DXF_WheelChamfer > 0.1 && DXF_WheelChamfer < 89.9) {
+            const tanAngle = Math.tan((DXF_WheelChamfer * Math.PI) / 180.0);
+            b4_actual = Math.max(b1_chamfer, halfB_chamfer - (dr_chamfer_prop / tanAngle));
+        }
+        const dz_actual = Math.max(0.0, halfB_chamfer - b4_actual);
+
         const ABOM01 = "Worm gear - Worm";
         const ABOM02 = `z1=${z1}, mn=${Math.round(mn * 100.0) / 100.0}`;
         const ABOM03 = `Material: ${wormMat.designation}`;
@@ -2688,7 +2713,8 @@ const WormCalcEngine = {
             MC_a, MC_px, MC_pxn, MC_alfa, MC_z1, MC_z1sw, MC_arrang, MC_L,
             MC_da1, MC_d1, MC_df1, MC_sn1, MC_sx1, MC_en1, MC_ex1, MC_ds1, MC_t1, MC_beta1,
             MC_z2, MC_b2H, MC_da2, MC_d2, MC_df2, MC_de2, MC_sn2, MC_sx2, MC_en2, MC_ex2,
-            MC_d1cutmin, MC_d1cut, MC_d1cutmax, MC_pxnhalf
+            MC_d1cutmin, MC_d1cut, MC_d1cutmax, MC_pxnhalf,
+            MC_b4: b4_actual, MC_chamferAngle: DXF_WheelChamfer
         };
 
         // Data1 coordinates for Section 4.0 Dynamic Plot (Chart 1963)
@@ -2759,6 +2785,7 @@ const WormCalcEngine = {
             XX_z1, XX_z2, XXX_i, XX_n1, XX_n2_ratio, XX_i, XX_Mk2, XX_n2, XX_Pw2,
             // Section 19.0 (CAD & DXFTables)
             dstFlag, Shaft_ds_prop, Shaft_th_prop, Shaft_ds, Shaft_th, DXF_Beta, DXF_AutoScale,
+            DXF_WheelChamferFlag, DXF_WheelChamfer, DXF_WheelChamfer_b4: b4_actual, DXF_WheelChamfer_dz: dz_actual, DXF_WheelChamfer_dr: dr_chamfer_prop, DXF_WheelChamfer_b1: b1_chamfer,
             ABOM01, ABOM02, ABOM03, BBOM01, BBOM02, BBOM03,
             dxf_worm_m, dxf_worm_z1, dxf_worm_alfa, dxf_worm_d1, dxf_worm_da1, dxf_worm_L, dxf_worm_mat, dxf_worm_a, dxf_worm_z2,
             dxf_wheel_m, dxf_wheel_z2, dxf_wheel_alfa, dxf_wheel_d2, dxf_wheel_da2, dxf_wheel_b2H, dxf_wheel_x2, dxf_wheel_mat, dxf_wheel_a, dxf_wheel_z1,
@@ -5002,6 +5029,7 @@ const Worm3DGenerator = {
         const r_outer = 0.5 * de2;
         const v1 = r_throat_tip - (a - r_outer);
         const b1 = Math.sqrt(Math.max(0.0, v1 * (2.0 * r_throat_tip - v1)));
+        const MC_b4 = (opt.MC_b4 !== undefined) ? parseFloat(opt.MC_b4) : ((b2H * 0.5 * r_throat_tip) / r_throat_root);
 
         return {
             MC_a: a, MC_px: px, MC_pxn, MC_pxnhalf,
@@ -5015,7 +5043,7 @@ const Worm3DGenerator = {
             MC_sn2: MC_sx2, MC_sx2, MC_en2: MC_sx2, MC_ex2: MC_sx2,
             mn, dm2, l1, l2, handSign,
             r1, r2, rf1, ra1, rf2, ra2, gamma,
-            r_throat_tip, r_throat_root, r_outer, b1,
+            r_throat_tip, r_throat_root, r_outer, b1, MC_b4,
             ShaftDB2: parseFloat(opt.ShaftDB2) || 0
         };
     },
@@ -5053,15 +5081,18 @@ const Worm3DGenerator = {
         const v3 = r3 - (a - de2 * 0.5);
         const b1 = Math.sqrt(Math.max(0.0, v1 * (2.0 * r1 - v1)));
         const b3 = Math.sqrt(Math.max(0.0, v3 * (2.0 * r3 - v3)));
-        const b4 = (halfB * r1) / r3;
-
+        const b4 = (mc.MC_b4 !== undefined) ? mc.MC_b4 : ((halfB * r1) / r3);
         const v4 = r3 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3 * r3 - b2H * b2H));
 
         let rTip;
         if (absZ <= b1) {
             rTip = a - Math.sqrt(Math.max(0.0, r1 * r1 - absZ * absZ));
-        } else {
+        } else if (absZ <= b4) {
             rTip = de2 * 0.5;
+        } else {
+            const tChamfer = (absZ - b4) / Math.max(1e-6, halfB - b4);
+            const rEdge = df2 * 0.5 + v4;
+            rTip = (de2 * 0.5) - tChamfer * ((de2 * 0.5) - rEdge);
         }
 
         let rRoot;
@@ -5072,7 +5103,7 @@ const Worm3DGenerator = {
         }
 
         return {
-            rTip: Math.max(rRoot + 0.5 * mc.mn, rTip),
+            rTip: Math.max(rRoot + 0.3 * mc.mn, rTip),
             rRoot: rRoot
         };
     },
@@ -7916,6 +7947,7 @@ class WormUIController {
         toggleAutoInput('chk_Flagb2H', ['inp_b2H_Input']);
         toggleAutoInput('chk_de2Flag', ['inp_de2Input']);
         toggleAutoInput('chk_dstFlag', ['inp_Shaft_ds', 'inp_Shaft_th']);
+        toggleAutoInput('chk_DXF_WheelChamferFlag', ['inp_DXF_WheelChamfer']);
     }
 
     bindInputsAndControls() {
@@ -7956,7 +7988,7 @@ class WormUIController {
         });
 
         // Auto checkboxes
-        ['chk_kaFlag', 'chk_rf1Flag', 'chk_l1l2_flag', 'chk_FlagL', 'chk_Flagb2H', 'chk_de2Flag', 'chk_dstFlag'].forEach(chkId => {
+        ['chk_kaFlag', 'chk_rf1Flag', 'chk_l1l2_flag', 'chk_FlagL', 'chk_Flagb2H', 'chk_de2Flag', 'chk_dstFlag', 'chk_DXF_WheelChamferFlag'].forEach(chkId => {
             const chk = document.getElementById(chkId);
             if (chk) {
                 chk.addEventListener('change', () => {
@@ -8592,7 +8624,9 @@ class WormUIController {
             dstFlag: document.getElementById('chk_dstFlag')?.checked ?? true,
             Shaft_ds: this.parseVal('inp_Shaft_ds', 21.4),
             Shaft_th: this.parseVal('inp_Shaft_th', 1.1),
-            DXF_Beta: this.parseVal('inp_DXF_Beta', 10.0)
+            DXF_Beta: this.parseVal('inp_DXF_Beta', 10.0),
+            DXF_WheelChamferFlag: document.getElementById('chk_DXF_WheelChamferFlag')?.checked ?? true,
+            DXF_WheelChamfer: this.parseVal('inp_DXF_WheelChamfer', 42.7)
         };
     }
 
@@ -8832,6 +8866,13 @@ class WormUIController {
             this.setVal('inp_Shaft_ds', r.Shaft_ds, 1);
             this.setVal('inp_Shaft_th', r.Shaft_th, 1);
         }
+        if (r.DXF_WheelChamferFlag) {
+            this.setVal('inp_DXF_WheelChamfer', r.DXF_WheelChamfer, 1);
+        }
+        const wheelChamferInfoEl = document.getElementById('out_DXF_WheelChamfer_info');
+        if (wheelChamferInfoEl && r.DXF_WheelChamfer_b4 !== undefined) {
+            wheelChamferInfoEl.textContent = `b4=${r.DXF_WheelChamfer_b4.toFixed(1)}, Δb=${r.DXF_WheelChamfer_dz.toFixed(1)} mm`;
+        }
         this.setVal('out_ABOM', `${r.ABOM01} | ${r.ABOM02} | ${r.ABOM03}`);
         this.setVal('out_BBOM', `${r.BBOM01} | ${r.BBOM02} | ${r.BBOM03}`);
 
@@ -8984,6 +9025,7 @@ class WormUIController {
 
         setChkDirect('chk_dstFlag', true);
         setValDirect('inp_DXF_Beta', '10.0');
+        setChkDirect('chk_DXF_WheelChamferFlag', true);
 
         this.syncRadioCalcQVisuals();
         this.syncAutoFlagsVisuals();

@@ -1648,4 +1648,20 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
    - Ngoài lòng họng ($|z| > b_1$): Đỉnh răng nằm trên mặt trụ đỉnh ngoài $d_{e2}/2$.
    - Chiều cao răng tại tâm $z = 0$ đạt $9.53\text{ mm}$, tại mép vành $z = \pm 16.79\text{ mm}$ vẫn duy trì đầy đủ $4.13\text{ mm}$. Toàn bộ 40 răng ăn khớp sắc nét, đầy đặn từ mép này sang mép kia.
 
+---
+
+### 24. Quy Chuẩn Minh Bạch & Điều Khiển Thông Số Mép Vát Vành Bánh Vít (Worm Wheel Rim Chamfer Protocol — DIN 3975)
+1. **Lệnh & Phản Hồi Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"thay vì để DIN 3975 tự động tính qua de2 và b2H, tôi chưa thấy thông số mà phần mềm tự tính mép vát"*
+2. **Nguyên Nhân Bản Gốc MITCalc 1.74**:
+   - MITCalc 1.74 (`Gear4_01.xlsb`) chỉ có dòng 19.4 cho Trục Vít (`Angle of worm shrink β`), còn đối với Bánh Vít, MITCalc giấu kín công thức mép vát bên trong VBA `DXF.bas` dòng 168-198 ($b_1, b_4, v_1, v_4, \theta_2$) chứ không hiển thị ra bất kỳ ô tính nào trên sheet tính toán.
+3. **Giải Pháp Triệt Để Trên Web App**:
+   - Bổ sung dòng **Mục 19.5**: `Góc vát mép vành bánh vít (Wheel rim chamfer angle θ2)`.
+   - Cung cấp Checkbox **`[X] Tự động (DIN 3975)`** (`#chk_DXF_WheelChamferFlag`):
+     * Tự động tính toán: $\theta_2 \approx 33.7^\circ$ và $b_4 = \frac{b_{2H}}{2} \cdot \frac{r_1}{r_3}$ từ cặp $(d_{e2}, b_{2H})$.
+     * Tùy chỉnh: Bỏ tích để gõ góc vát $\theta_2$ bất kỳ ($45^\circ, 30^\circ, 0^\circ$).
+   - Hiển thị trực quan: `b4 = 10.0 mm (bắt đầu vát), Δb = 6.8 mm (chiều rộng vát)` để kiểm tra gia công.
+   - Đồng bộ giải thuật vào `evalWheelBlank` của mô hình 3D: ngoài $b_4$, đỉnh răng hạ đều theo đường sinh nón vát mép nối từ $(b_4, d_{e2}/2)$ xuống cạnh ngoài $(b_{2H}/2, d_{f2}/2 + v_4)$. Răng duy trì độ cao an toàn $h \ge 0.3 \cdot m_n$, không suy biến.
+
+
 

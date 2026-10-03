@@ -109,6 +109,7 @@ const Worm3DGenerator = {
         const r_outer = 0.5 * de2;
         const v1 = r_throat_tip - (a - r_outer);
         const b1 = Math.sqrt(Math.max(0.0, v1 * (2.0 * r_throat_tip - v1)));
+        const MC_b4 = (opt.MC_b4 !== undefined) ? parseFloat(opt.MC_b4) : ((b2H * 0.5 * r_throat_tip) / r_throat_root);
 
         return {
             MC_a: a, MC_px: px, MC_pxn, MC_pxnhalf,
@@ -122,7 +123,7 @@ const Worm3DGenerator = {
             MC_sn2: MC_sx2, MC_sx2, MC_en2: MC_sx2, MC_ex2: MC_sx2,
             mn, dm2, l1, l2, handSign,
             r1, r2, rf1, ra1, rf2, ra2, gamma,
-            r_throat_tip, r_throat_root, r_outer, b1,
+            r_throat_tip, r_throat_root, r_outer, b1, MC_b4,
             ShaftDB2: parseFloat(opt.ShaftDB2) || 0
         };
     },
@@ -160,15 +161,18 @@ const Worm3DGenerator = {
         const v3 = r3 - (a - de2 * 0.5);
         const b1 = Math.sqrt(Math.max(0.0, v1 * (2.0 * r1 - v1)));
         const b3 = Math.sqrt(Math.max(0.0, v3 * (2.0 * r3 - v3)));
-        const b4 = (halfB * r1) / r3;
-
+        const b4 = (mc.MC_b4 !== undefined) ? mc.MC_b4 : ((halfB * r1) / r3);
         const v4 = r3 - 0.5 * Math.sqrt(Math.max(0.0, 4.0 * r3 * r3 - b2H * b2H));
 
         let rTip;
         if (absZ <= b1) {
             rTip = a - Math.sqrt(Math.max(0.0, r1 * r1 - absZ * absZ));
-        } else {
+        } else if (absZ <= b4) {
             rTip = de2 * 0.5;
+        } else {
+            const tChamfer = (absZ - b4) / Math.max(1e-6, halfB - b4);
+            const rEdge = df2 * 0.5 + v4;
+            rTip = (de2 * 0.5) - tChamfer * ((de2 * 0.5) - rEdge);
         }
 
         let rRoot;
@@ -179,7 +183,7 @@ const Worm3DGenerator = {
         }
 
         return {
-            rTip: Math.max(rRoot + 0.5 * mc.mn, rTip),
+            rTip: Math.max(rRoot + 0.3 * mc.mn, rTip),
             rRoot: rRoot
         };
     },

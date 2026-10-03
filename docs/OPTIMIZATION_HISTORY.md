@@ -3049,3 +3049,24 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
      - Chuyển `WHEEL_DRV`, `WHEEL_CST`, `WHEEL_ROOT`, và `WORM_ROOT` sang `color: 3` (Xanh lá cây chuẩn Mastercam), đỉnh răng `TIP` giữ `color: 2` (Xanh lơ). Toàn bộ bánh vít hiển thị đồng nhất, mượt mà và chuyên nghiệp.
 - **Kiểm thử nghiệm thu**:
   - Node E2E script kiểm thử trực tiếp trên bundle: 160 mặt B-spline bánh vít, 84,025 dòng IGES, **0 dòng lệch 80 cột, 0 NaN, 0 mặt màu hồng**. Bánh vít mở tức thì trong Mastercam X5 với hình dáng cơ khí hoàn hảo.
+
+---
+
+## [2026-10-03] BỔ SUNG DÒNG THÔNG SỐ VÀ ĐIỀU KHIỂN MÉP VÁT BÁNH VÍT (DIN 3975) RA BẢNG TÍNH CƠ KHÍ & ĐỒNG BỘ MÔ HÌNH 3D
+- **Phản hồi từ chủ sở hữu (`SirPhuong`)**:
+  - *"thay vì để DIN 3975 tự động tính qua de2 và b2H, tôi chưa thấy thông số mà phần mềm tự tính mép vát"*
+  - **Phân tích nguyên nhân**:
+    * Trong bản gốc MITCalc 1.74 (`Gear4_01.xlsb`), tác giả chỉ tạo ô nhập tại Mục 19.4 cho Trục Vít (`Angle of worm shrink β = 10°`).
+    * Đối với Bánh Vít, MITCalc giấu kín 100% công thức tính mép vát nón ($b_1, b_4, v_1, v_4, \theta$) bên trong macro VBA vẽ CAD (`DXF.bas` dòng 168-198) chứ không hiển thị ra bất kỳ ô tính nào trên sheet tính toán. Do Web App ban đầu kế thừa 1-to-1 nên người dùng không thấy được thông số này trên giao diện.
+- **Biện pháp giải quyết & Nâng cấp vượt trội**:
+  1. **Bổ sung dòng thông số 19.5 trên Bảng Tính Cơ Khí (Tab 1)**:
+     - Tên dòng: `Góc vát mép vành bánh vít (Wheel rim chamfer angle θ2)`.
+     - Ô nhập: `#inp_DXF_WheelChamfer` kèm Checkbox `[X] Tự động (DIN 3975)` (`#chk_DXF_WheelChamferFlag`).
+     - Hiển thị thông số chi tiết: `b4 = 10.0 mm (tọa độ bắt đầu vát), Δb = 6.8 mm (chiều rộng dải vát mép)`.
+     - Cho phép người dùng gõ góc vát tùy ý (ví dụ $45^\circ, 30^\circ, 0^\circ$) khi bỏ tích tự động.
+  2. **Đồng bộ giải thuật vát mép vào mô hình 3D (`worm-3d-generator.js`)**:
+     - Trong `evalWheelBlank(z)`: ngoài cung tròn họng lõm ($|z| \le b_1$) và đỉnh ngoài $d_{e2}/2$ ($b_1 < |z| \le b_4$), đoạn vành ngoài ($|z| > b_4$) được tính theo phương trình đường xiên nón phụ nối từ $(b_4, d_{e2}/2)$ xuống cạnh ngoài $(b_{2H}/2, d_{f2}/2 + v_4)$.
+     - Mô hình 3D hiển thị chuẩn xác mép vát nón $\theta \approx 33.7^\circ$ theo DIN 3975, răng đầy đủ và không bị phẳng ngang.
+  3. **Đóng gói Bundle & Kiểm thử Node.js**:
+     - Bundle qua `bundle_all.py`.
+     - Kiểm thử `node -e`: `DXF_WheelChamfer = 33.7°`, `b4 = 9.95 mm`, `dz = 6.83 mm`, `rTip` tại mép co dần từ $91.61\text{ mm}$ xuống $88.32\text{ mm}$, 100% PASS.
