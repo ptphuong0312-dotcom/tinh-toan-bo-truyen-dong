@@ -526,9 +526,12 @@
                                         <td><span class="cell-limit" id="out_DXF_WheelChamfer_info">b4=10.0, Δb=6.8 mm</span></td>
                                         <td>độ (°)</td>
                                         <td>
-                                            <label class="q-radio-label">
-                                                <input type="checkbox" id="chk_DXF_WheelChamferFlag" checked> Tự động
-                                            </label>
+                                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                <input type="range" id="slider_WheelChamfer" min="0" max="65" step="0.5" value="33.7" style="width: 100%; accent-color: #38bdf8;" title="Kéo thanh trượt để điều chỉnh góc vát mép vành bánh vít θ2">
+                                                <label class="q-radio-label" style="font-size: 0.75rem; justify-content: flex-end;">
+                                                    <input type="checkbox" id="chk_DXF_WheelChamferFlag" checked> Tự động
+                                                </label>
+                                            </div>
                                         </td>
                                     </tr>
                                     <tr>

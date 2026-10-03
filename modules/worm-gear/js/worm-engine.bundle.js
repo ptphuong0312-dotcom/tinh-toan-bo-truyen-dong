@@ -2635,14 +2635,17 @@ const WormCalcEngine = {
         const theta_chamfer_prop = Math.round(((Math.atan2(dr_chamfer_prop, Math.max(1e-4, dz_chamfer_prop)) * 180.0) / Math.PI) * 10.0) / 10.0; // deg so với trục
 
         const DXF_WheelChamferFlag = (p.DXF_WheelChamferFlag !== undefined) ? Boolean(p.DXF_WheelChamferFlag) : true;
-        const DXF_WheelChamfer = DXF_WheelChamferFlag 
-            ? theta_chamfer_prop 
-            : ((p.DXF_WheelChamfer !== undefined && String(p.DXF_WheelChamfer).trim() !== '') ? parseFloat(p.DXF_WheelChamfer) : theta_chamfer_prop);
+        const rawChamferVal = (p.DXF_WheelChamfer !== undefined && String(p.DXF_WheelChamfer).trim() !== '') ? parseFloat(p.DXF_WheelChamfer) : theta_chamfer_prop;
+        const DXF_WheelChamfer = DXF_WheelChamferFlag ? theta_chamfer_prop : (isNaN(rawChamferVal) ? theta_chamfer_prop : rawChamferVal);
 
         let b4_actual = b4_chamfer_prop;
-        if (!DXF_WheelChamferFlag && DXF_WheelChamfer > 0.1 && DXF_WheelChamfer < 89.9) {
-            const tanAngle = Math.tan((DXF_WheelChamfer * Math.PI) / 180.0);
-            b4_actual = Math.max(b1_chamfer, halfB_chamfer - (dr_chamfer_prop / tanAngle));
+        if (!DXF_WheelChamferFlag) {
+            if (DXF_WheelChamfer <= 0.1) {
+                b4_actual = halfB_chamfer; // 0 deg: Không vát mép (cạnh vành vuông phẳng)
+            } else if (DXF_WheelChamfer < 89.9) {
+                const tanAngle = Math.tan((DXF_WheelChamfer * Math.PI) / 180.0);
+                b4_actual = Math.max(b1_chamfer, halfB_chamfer - (dr_chamfer_prop / tanAngle));
+            }
         }
         const dz_actual = Math.max(0.0, halfB_chamfer - b4_actual);
 
@@ -2729,7 +2732,8 @@ const WormCalcEngine = {
             d2 / 4.0
         ); // Data1!F45
         const chartData1 = this.computeChartData1({
-            a, da1, d1, df1, da2, d2, df2, L, b2H, l1, l2, BeSi
+            a, da1, d1, df1, da2, d2, df2, de2, L, b2H, l1, l2, BeSi,
+            b4: b4_actual, b1: b1_chamfer
         });
 
         return {
@@ -2895,17 +2899,43 @@ const WormCalcEngine = {
             { x: C50, y: D47 }
         ];
 
-        // Wheel side rectangle (Data1!C60:D64)
-        const C60 = C9 - b2H / 2.0;
-        const C62 = C9 + b2H / 2.0;
-        const D60 = da2 / 2.0;
-        const wheelBox = [
-            { x: C60, y: D60 },
-            { x: C60, y: -D60 },
-            { x: C62, y: -D60 },
-            { x: C62, y: D60 },
-            { x: C60, y: D60 }
-        ];
+        // Wheel throat contour with dynamic rim chamfer (Chart 1963)
+        const halfB = b2H / 2.0;
+        const b4 = Math.min(halfB, Math.max(0, g.b4 !== undefined ? g.b4 : halfB));
+        const b1 = Math.min(b4, Math.max(0, g.b1 !== undefined ? g.b1 : 0));
+        const de2 = g.de2 || (da2 + 1.6);
+        const r1 = a - da2 / 2.0;
+        const yTopThroat = da2 / 2.0;
+        const yTopOuter = de2 / 2.0;
+        const yTopEdge = (b4 >= halfB - 1e-4) ? yTopOuter : yTopThroat;
+
+        // Top contour points (from -halfB to +halfB)
+        const topPts = [];
+        topPts.push({ x: C9 - halfB, y: yTopEdge });
+        if (b4 < halfB - 0.05) {
+            topPts.push({ x: C9 - b4, y: yTopOuter });
+        }
+        if (b1 < b4 - 0.05) {
+            topPts.push({ x: C9 - b1, y: yTopOuter });
+        }
+        // Throat arc samples across [-b1, +b1]
+        const numArc = 10;
+        for (let i = 0; i <= numArc; i++) {
+            const z = -b1 + (2.0 * b1 * i) / numArc;
+            const yArc = a - Math.sqrt(Math.max(0.0, r1 * r1 - z * z));
+            topPts.push({ x: C9 + z, y: yArc });
+        }
+        if (b1 < b4 - 0.05) {
+            topPts.push({ x: C9 + b1, y: yTopOuter });
+        }
+        if (b4 < halfB - 0.05) {
+            topPts.push({ x: C9 + b4, y: yTopOuter });
+        }
+        topPts.push({ x: C9 + halfB, y: yTopEdge });
+
+        // Symmetrical bottom contour points
+        const bottomPts = topPts.map(pt => ({ x: pt.x, y: -pt.y })).reverse();
+        const wheelBox = [...topPts, ...bottomPts, topPts[0]];
 
         // 4 Bearing boxes (Data1!C67:D86)
         const C67 = C11 + BeSi;
@@ -4310,17 +4340,25 @@ class WormCanvasRenderer {
             ctx.stroke();
 
             // Chamfer and flat lands on the wheel rim (responsive in real-time)
-            const b4 = g.DXF_WheelChamfer_b4 !== undefined ? g.DXF_WheelChamfer_b4 : ((b2h / 2.0) * (r1 / r3));
+            const b4 = Math.min(b2h / 2.0, Math.max(b1, g.DXF_WheelChamfer_b4 !== undefined ? g.DXF_WheelChamfer_b4 : ((b2h / 2.0) * (r1 / r3))));
             ctx.beginPath();
             // Left flat rim & chamfer
             ctx.moveTo(toX(wx - b1), toY(yTipEdge));
             ctx.lineTo(toX(wx - b4), toY(yTipEdge));
-            ctx.lineTo(toX(wx - b2h / 2.0), toY(yRootEdge));
+            if (b4 < b2h / 2.0 - 0.05) {
+                ctx.lineTo(toX(wx - b2h / 2.0), toY(yRootEdge));
+            } else {
+                ctx.lineTo(toX(wx - b2h / 2.0), toY(yTipEdge));
+            }
 
             // Right flat rim & chamfer
             ctx.moveTo(toX(wx + b1), toY(yTipEdge));
             ctx.lineTo(toX(wx + b4), toY(yTipEdge));
-            ctx.lineTo(toX(wx + b2h / 2.0), toY(yRootEdge));
+            if (b4 < b2h / 2.0 - 0.05) {
+                ctx.lineTo(toX(wx + b2h / 2.0), toY(yRootEdge));
+            } else {
+                ctx.lineTo(toX(wx + b2h / 2.0), toY(yTipEdge));
+            }
             ctx.stroke();
 
             // Concave pitch throat arc (radius r2, dashed)
@@ -7971,7 +8009,7 @@ class WormUIController {
         toggleAutoInput('chk_Flagb2H', ['inp_b2H_Input']);
         toggleAutoInput('chk_de2Flag', ['inp_de2Input']);
         toggleAutoInput('chk_dstFlag', ['inp_Shaft_ds', 'inp_Shaft_th']);
-        toggleAutoInput('chk_DXF_WheelChamferFlag', ['inp_DXF_WheelChamfer']);
+        // Wheel chamfer θ2 is directly editable and controlled via interactive slider
     }
 
     bindInputsAndControls() {
@@ -8033,6 +8071,33 @@ class WormUIController {
             inpX2.addEventListener('input', () => {
                 const v = this.parseVal('inp_x2', 0);
                 sliderX2.value = Math.max(-1, Math.min(1, v));
+            });
+        }
+
+        // Slider Wheel Chamfer <-> inp_DXF_WheelChamfer (Responsive Real-time θ2)
+        const sliderChamfer = document.getElementById('slider_WheelChamfer');
+        const inpChamfer = document.getElementById('inp_DXF_WheelChamfer');
+        const chkChamfer = document.getElementById('chk_DXF_WheelChamferFlag');
+        if (sliderChamfer && inpChamfer) {
+            sliderChamfer.addEventListener('input', () => {
+                if (chkChamfer) chkChamfer.checked = false;
+                inpChamfer.value = parseFloat(sliderChamfer.value).toFixed(1);
+                this.recalculate();
+            });
+            inpChamfer.addEventListener('input', () => {
+                if (chkChamfer) chkChamfer.checked = false;
+                const v = this.parseVal('inp_DXF_WheelChamfer', 33.7);
+                sliderChamfer.value = Math.max(0, Math.min(65, v));
+                this.recalculate();
+            });
+        }
+        if (chkChamfer) {
+            chkChamfer.addEventListener('change', () => {
+                if (chkChamfer.checked && this.latestResult) {
+                    inpChamfer.value = this.latestResult.DXF_WheelChamfer.toFixed(1);
+                    if (sliderChamfer) sliderChamfer.value = this.latestResult.DXF_WheelChamfer.toFixed(1);
+                }
+                this.recalculate();
             });
         }
 
@@ -8893,6 +8958,8 @@ class WormUIController {
         }
         if (r.DXF_WheelChamferFlag) {
             this.setVal('inp_DXF_WheelChamfer', r.DXF_WheelChamfer, 1);
+            const slChamfer = document.getElementById('slider_WheelChamfer');
+            if (slChamfer) slChamfer.value = r.DXF_WheelChamfer.toFixed(1);
         }
         const wheelChamferInfoEl = document.getElementById('out_DXF_WheelChamfer_info');
         if (wheelChamferInfoEl && r.DXF_WheelChamfer_b4 !== undefined) {

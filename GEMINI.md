@@ -1720,3 +1720,34 @@ Mỗi module đều phải hoàn thiện trọn vẹn 100% (công thức, kiểm
    - **Điều chỉnh bán kính mép ngoài**: Thay vì hạ đỉnh răng xuống tận chân răng, đường vát nón phụ chuyển tiếp từ $d_{e2}/2 = 91.61\text{ mm}$ tại $b_4$ hạ êm dịu về bán kính đỉnh danh nghĩa của họng lõm $r_{\text{Edge}} = d_{a2}/2 = 89.48\text{ mm}$ tại $z = b_{2H}/2$ (phù hợp hoàn hảo với đường kính gờ ngoài $d_{ae2}$ trên bản vẽ chuẩn ISO/DIN và hình minh họa MITCalc 1.74 `image9.png`).
    - **Bảo toàn chiều cao răng thực tế**: Tại mép ngoài cùng $z = \pm b_{2H}/2$, chiều cao răng vẫn duy trì đầy đặn $h \ge 2.43\text{ mm}$ (lớn hơn $0.7 \cdot m_n$).
    - **Triệt tiêu hoàn toàn sừng nhọn**: Góc nghiêng nón vát mép chuyển tiếp nhẹ nhàng, triệt tiêu góc gãy tại $b_4$, sườn răng và đỉnh răng kết thúc tự nhiên, các đỉnh răng tròn trịa, vuông vắn và bóng mượt như gia công phay lăn răng thực tế trên máy xưởng.
+
+---
+
+### Quy Tắc 71: Quy Chuẩn Điều Khiển Đồng Bộ Động Thời Gian Thực Mép Vát Bánh Vít & Phân Định 5 Kiểu Biên Dạng Ren Trục Vít (DIN 3975)
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"khi tôi thay đổi thông số góc vát mép vành bánh vít thì không thấy phần mô phỏng thay đổi, tôi muốn thay đổi đồng nhất luôn mà"*
+   - *"khi tôi thay đổi lựa chọn trong mục này 'Kiểu biên dạng ren trục vít (Type of worm profile - DIN 3975)' thì có điều gì xảy ra"*
+2. **Nguyên Nhân Gây Ra Hiện Tượng Mép Vát Không Đổi Trước Đó**:
+   - **Ô nhập liệu bị khóa ngầm**: Khi Checkbox "Tự động (DIN 3975)" được tích chọn mặc định, hàm `toggleAutoInput` đã gán `readOnly = true` cho ô `#inp_DXF_WheelChamfer`. Người dùng nhấn vào gõ không được, hoặc nếu kích hoạt sự kiện thì hàm `recalculate()` lại lập tức ghi đè giá trị tự động $33.7^\circ$ lên ô.
+   - **Thiếu thanh trượt trực quan**: Hàng 4.22 ($x_2$) có thanh trượt tương tác rất mượt, nhưng hàng 4.21 trước đó chỉ có ô chữ và checkbox nên khó điều khiển.
+   - **Biểu đồ Section 4.0 (`wormSec4ChartCanvas`) vẽ hình chữ nhật cứng**: Khung vẽ của Mục 4.0 trước đây vẽ một khối hộp chữ nhật phẳng 4 điểm (`Data1!C60:D64`), hoàn toàn không thể hiện họng lõm hay mép vát, khiến người dùng khi thao tác tại Mục 4.0 không nhìn thấy bất kỳ phản hồi trực quan nào!
+3. **Giải Pháp Nâng Cấp Hoàn Toàn Đồng Bộ (Full Synchronous Pipeline)**:
+   - **Bãi bỏ thuộc tính `readOnly`**: Ô `#inp_DXF_WheelChamfer` luôn luôn mở để người dùng gõ số bất cứ lúc nào.
+   - **Tích hợp Slider điều khiển `#slider_WheelChamfer` ($0^\circ \div 65^\circ$)**:
+     * Khi kéo slider hoặc nhập số: Checkbox "Tự động" tự động bỏ tích chuyển sang chế độ tùy biến cá nhân.
+     * Khi tích lại "Tự động": Lập tức khôi phục góc vát tiêu chuẩn DIN 3975 ($33.7^\circ$).
+     * Hỗ trợ góc $0^\circ$: Vành bánh vít vuông phẳng hoàn toàn ($b_4 = b_{2H}/2$), không vát mép (dành cho bánh vít trụ).
+   - **Biến Biểu Đồ Mục 4.0 (`wormSec4ChartCanvas`) thành Biểu Đồ Hình Học Thực Thể Sống Động**:
+     * Cung tròn họng đỉnh $r_1$ ôm trục vít ($|z| \le b_1$).
+     * Đoạn phẳng trụ đỉnh lớn nhất $d_{e2}/2$ ($b_1 \le |z| \le b_4$).
+     * Đoạn nón vát mép xiên góc $\theta_2$ ($b_4 \le |z| \le b_{2H}/2$).
+     * Khi kéo thanh trượt góc vát $\theta_2$, mép vát trên biểu đồ ngay dưới Section 4.0 co giãn tức thì trong tích tắc!
+   - **Đồng bộ 2D Canvas & 3D WebGL Tab 2**:
+     * 2D Canvas: Vẽ mặt cắt họng ăn khớp với góc vát $\theta_2$ chuẩn xác.
+     * 3D WebGL: Mesh 3D của 40 răng bánh vít cập nhật tức thời theo $\theta_2$ (từ vát vuông $0^\circ$ đến vát đứng $60^\circ$).
+4. **Phân Định 5 Kiểu Biên Dạng Ren Trục Vít (DIN 3975 / DIN 3996)**:
+   - **ZA (Ác-si-mét - Archimedean)**: Biên dạng thẳng trong mặt cắt dọc trục ($A-A$). Thông số gốc là mô đun dọc trục $m_x$ và góc ăn khớp dọc trục $\alpha_x = 20^\circ$. Mô đun pháp $m_n = m_x \cos\gamma$. Đường kính chia $d_2 = m_x z_2$.
+   - **ZN (Pháp tuyến - Normal Straight)**: Biên dạng thẳng trong mặt cắt pháp tuyến ($N-N$). Thông số gốc là mô đun pháp $m_n$ và $\alpha_n = 20^\circ$. Mô đun dọc trục $m_x = m_n / \cos\gamma$. Đường kính chia $d_2 = m_n z_2 / \cos\gamma$.
+   - **ZI (Thân khai - Involute)**: Biên dạng thân khai (Involute Helicoid) có vòng tròn cơ sở $d_{b1} = d_1 \cos\alpha_t$ và góc nâng cơ sở $\gamma_b$.
+   - **ZK (Đá mài/dao côn - Cone Milled)**: Biên dạng hình thành khi gia công bằng dao phay ngón côn hoặc đá mài côn hai phía.
+   - **ZH (Biên dạng lõm Cavex - Concave Profile)**: Ren trục vít lõm, răng bánh vít lồi; chịu tải uốn và tiếp xúc cao hơn, hệ số tổn thất $h_x$ và hiệu suất $\eta_{\text{ges}}$ tối ưu nhất theo DIN 3996.

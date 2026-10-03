@@ -276,7 +276,7 @@ class WormUIController {
         toggleAutoInput('chk_Flagb2H', ['inp_b2H_Input']);
         toggleAutoInput('chk_de2Flag', ['inp_de2Input']);
         toggleAutoInput('chk_dstFlag', ['inp_Shaft_ds', 'inp_Shaft_th']);
-        toggleAutoInput('chk_DXF_WheelChamferFlag', ['inp_DXF_WheelChamfer']);
+        // Wheel chamfer θ2 is directly editable and controlled via interactive slider
     }
 
     bindInputsAndControls() {
@@ -338,6 +338,33 @@ class WormUIController {
             inpX2.addEventListener('input', () => {
                 const v = this.parseVal('inp_x2', 0);
                 sliderX2.value = Math.max(-1, Math.min(1, v));
+            });
+        }
+
+        // Slider Wheel Chamfer <-> inp_DXF_WheelChamfer (Responsive Real-time θ2)
+        const sliderChamfer = document.getElementById('slider_WheelChamfer');
+        const inpChamfer = document.getElementById('inp_DXF_WheelChamfer');
+        const chkChamfer = document.getElementById('chk_DXF_WheelChamferFlag');
+        if (sliderChamfer && inpChamfer) {
+            sliderChamfer.addEventListener('input', () => {
+                if (chkChamfer) chkChamfer.checked = false;
+                inpChamfer.value = parseFloat(sliderChamfer.value).toFixed(1);
+                this.recalculate();
+            });
+            inpChamfer.addEventListener('input', () => {
+                if (chkChamfer) chkChamfer.checked = false;
+                const v = this.parseVal('inp_DXF_WheelChamfer', 33.7);
+                sliderChamfer.value = Math.max(0, Math.min(65, v));
+                this.recalculate();
+            });
+        }
+        if (chkChamfer) {
+            chkChamfer.addEventListener('change', () => {
+                if (chkChamfer.checked && this.latestResult) {
+                    inpChamfer.value = this.latestResult.DXF_WheelChamfer.toFixed(1);
+                    if (sliderChamfer) sliderChamfer.value = this.latestResult.DXF_WheelChamfer.toFixed(1);
+                }
+                this.recalculate();
             });
         }
 
@@ -1198,6 +1225,8 @@ class WormUIController {
         }
         if (r.DXF_WheelChamferFlag) {
             this.setVal('inp_DXF_WheelChamfer', r.DXF_WheelChamfer, 1);
+            const slChamfer = document.getElementById('slider_WheelChamfer');
+            if (slChamfer) slChamfer.value = r.DXF_WheelChamfer.toFixed(1);
         }
         const wheelChamferInfoEl = document.getElementById('out_DXF_WheelChamfer_info');
         if (wheelChamferInfoEl && r.DXF_WheelChamfer_b4 !== undefined) {

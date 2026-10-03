@@ -1708,3 +1708,22 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
    - **Bán kính mép ngoài mượt mà**: Đường vát nón phụ chuyển tiếp từ $d_{e2}/2$ tại $b_4$ hạ êm dịu về bán kính đỉnh danh nghĩa của họng lõm $r_{\text{Edge}} = d_{a2}/2$ tại $z = b_{2H}/2$ (khớp với đường kính gờ ngoài $d_{ae2}$ trên hình minh họa MITCalc 1.74 `image9.png`).
    - **Bảo toàn chiều cao răng**: Tại mép ngoài cùng $z = \pm b_{2H}/2$, chiều cao răng vẫn duy trì đầy đặn $h \ge 2.43\text{ mm}$.
    - **Triệt tiêu hoàn toàn sừng nhọn**: Triệt tiêu góc gãy tại $b_4$, sườn răng và đỉnh răng kết thúc tự nhiên, các đỉnh răng tròn trịa, vuông vắn và bóng mượt như phay lăn răng thực tế.
+
+---
+
+### 27. Quy Chuẩn Điều Khiển Đồng Bộ Động Thời Gian Thực Mép Vát Bánh Vít & Phân Định 5 Kiểu Biên Dạng Ren Trục Vít (DIN 3975)
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"khi tôi thay đổi thông số góc vát mép vành bánh vít thì không thấy phần mô phỏng thay đổi, tôi muốn thay đổi đồng nhất luôn mà"*
+   - *"khi tôi thay đổi lựa chọn trong mục này 'Kiểu biên dạng ren trục vít (Type of worm profile - DIN 3975)' thì có điều gì xảy ra"*
+2. **Khắc Phục Lỗi Đồng Bộ Trực Quan Góc Vát $\theta_2$**:
+   - Loại bỏ `readOnly = true` trên ô nhập `#inp_DXF_WheelChamfer`.
+   - Bổ sung thanh trượt tương tác `#slider_WheelChamfer` ($0^\circ \div 65^\circ$, bước $0.5^\circ$) ở hàng 4.21.
+   - Khi kéo slider: Checkbox tự động nhả bỏ tích, engine tính toán lại tức thời $b_4$, $\Delta b$.
+   - Nâng cấp `computeChartData1`: Vẽ đúng biên dạng họng bánh vít thực tế gồm cung đỉnh $r_1$, gờ phẳng $d_{e2}/2$ và đường vát mép $\theta_2$. Khi kéo slider ở Mục 4.0, biểu đồ Descartes ngay bên cạnh co giãn tức thì.
+   - Đồng bộ 2D Throat Section và 3D WebGL mesh ($0^\circ$ vành vuông phẳng, $33.7^\circ$ DIN tự động, $60^\circ$ vát đứng sắc sảo).
+3. **Phân Định 5 Kiểu Biên Dạng Ren Trục Vít DIN 3975**:
+   - ZA: Gốc mô đun dọc trục $m_x$, răng thẳng ở mặt cắt dọc trục $A-A$.
+   - ZN: Gốc mô đun pháp $m_n$, răng thẳng ở mặt cắt pháp tuyến $N-N$.
+   - ZI: Thân khai (Involute helicoid), có đường kính cơ sở $d_{b1}$.
+   - ZK: Gia công bằng dao phay/đá mài côn.
+   - ZH: Ren lõm Cavex, hiệu suất $\eta$ và sức bền uốn/tiếp xúc cao nhất.

@@ -3121,3 +3121,28 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
   - `wheel_3d_top_rim.png`: Toàn bộ 40 răng bánh vít lượn họng lõm ôm trục vít mượt mà, không còn bất kỳ đỉnh nhọn hay sừng thừa nào.
   - Đóng gói bundle qua `tools/bundle_all.py` thành công.
   - `test_worm_features.py` & `test_iges_surface_export.py`: 100% PASS.
+
+---
+
+## [2026-10-03] Đồng Bộ Động Thời Gian Thực Góc Vát Mép Vành Bánh Vít (Slider + 2D/3D Mesh) & Phân Định 5 Kiểu Biên Dạng Trục Vít DIN 3975 (Quy Tắc 71)
+
+### 1. Bối Cảnh & Phản Hồi Từ Chủ Sở Hữu (`SirPhuong`)
+- *"khi tôi thay đổi thông số góc vát mép vành bánh vít thì không thấy phần mô phỏng thay đổi, tôi muốn thay đổi đồng nhất luôn mà"*
+- *"khi tôi thay đổi lựa chọn trong mục này 'Kiểu biên dạng ren trục vít (Type of worm profile - DIN 3975)' thì có điều gì xảy ra"*
+
+### 2. Nguyên Nhân Kỹ Thuật Đã Phát Hiện
+1. **Khóa ngầm ô nhập liệu**: Checkbox "Tự động" đã vô tình áp đặt thuộc tính `readOnly = true` cho `#inp_DXF_WheelChamfer`, ngăn cản người dùng gõ số hoặc tự động ghi đè lại 33.7°.
+2. **Thiếu thanh trượt điều khiển**: Không có slider như hàng 4.22 ($x_2$) khiến thao tác kém linh hoạt.
+3. **Biểu đồ Section 4.0 (`wormSec4ChartCanvas`) chỉ vẽ hình chữ nhật phẳng 4 điểm**: Hoàn toàn không phản ánh đường nón vát mép hay cung họng lõm, khiến người dùng nhìn vào biểu đồ không thấy biến đổi.
+
+### 3. Giải Pháp & Thành Tựu Kỹ Thuật
+1. **Bỏ khóa `readOnly`**: Cho phép người dùng nhập tự do bất kỳ góc nào từ 0° đến 65°.
+2. **Tích hợp thanh trượt `#slider_WheelChamfer`**: Điều khiển mượt mà thời gian thực, tự động nhả Checkbox "Tự động" khi kéo, tự động khôi phục giá trị chuẩn DIN 3975 khi tích chọn lại.
+3. **Nâng cấp `computeChartData1`**: Biểu đồ Descartes của Mục 4.0 vẽ chính xác đường bao họng bánh vít và đường vát mép nón phụ. Khi kéo slider, góc vát co giãn tức thời trên biểu đồ ngay dưới Section 4.0!
+4. **Hỗ trợ góc 0° (Vành vuông phẳng)**: Thích hợp cho bánh vít trụ không vát mép ($b_4 = b_{2H}/2$).
+5. **Đồng bộ toàn diện 2D & 3D WebGL**: Cả 2D Throat Section và 3D Mesh đều cập nhật góc vát đồng nhất trong tích tắc.
+6. **Làm rõ 5 kiểu biên dạng ren trục vít DIN 3975**: Phân định rạch ròi ZA, ZN, ZI, ZK, ZH về mặt hình học, động học, hiệu suất và chất lượng ăn khớp.
+
+### 4. Kiểm Thử & Đóng Gói
+- Đóng gói bundle `worm-engine.bundle.js` (370,466 ký tự).
+- Chạy kiểm thử Playwright tự động: 0 lỗi console, tải về đầy đủ ảnh chứng thực trực quan tại 0°, 33.7° và 60°.

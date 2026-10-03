@@ -524,14 +524,17 @@ const WormCalcEngine = {
         const theta_chamfer_prop = Math.round(((Math.atan2(dr_chamfer_prop, Math.max(1e-4, dz_chamfer_prop)) * 180.0) / Math.PI) * 10.0) / 10.0; // deg so với trục
 
         const DXF_WheelChamferFlag = (p.DXF_WheelChamferFlag !== undefined) ? Boolean(p.DXF_WheelChamferFlag) : true;
-        const DXF_WheelChamfer = DXF_WheelChamferFlag 
-            ? theta_chamfer_prop 
-            : ((p.DXF_WheelChamfer !== undefined && String(p.DXF_WheelChamfer).trim() !== '') ? parseFloat(p.DXF_WheelChamfer) : theta_chamfer_prop);
+        const rawChamferVal = (p.DXF_WheelChamfer !== undefined && String(p.DXF_WheelChamfer).trim() !== '') ? parseFloat(p.DXF_WheelChamfer) : theta_chamfer_prop;
+        const DXF_WheelChamfer = DXF_WheelChamferFlag ? theta_chamfer_prop : (isNaN(rawChamferVal) ? theta_chamfer_prop : rawChamferVal);
 
         let b4_actual = b4_chamfer_prop;
-        if (!DXF_WheelChamferFlag && DXF_WheelChamfer > 0.1 && DXF_WheelChamfer < 89.9) {
-            const tanAngle = Math.tan((DXF_WheelChamfer * Math.PI) / 180.0);
-            b4_actual = Math.max(b1_chamfer, halfB_chamfer - (dr_chamfer_prop / tanAngle));
+        if (!DXF_WheelChamferFlag) {
+            if (DXF_WheelChamfer <= 0.1) {
+                b4_actual = halfB_chamfer; // 0 deg: Không vát mép (cạnh vành vuông phẳng)
+            } else if (DXF_WheelChamfer < 89.9) {
+                const tanAngle = Math.tan((DXF_WheelChamfer * Math.PI) / 180.0);
+                b4_actual = Math.max(b1_chamfer, halfB_chamfer - (dr_chamfer_prop / tanAngle));
+            }
         }
         const dz_actual = Math.max(0.0, halfB_chamfer - b4_actual);
 
@@ -618,7 +621,8 @@ const WormCalcEngine = {
             d2 / 4.0
         ); // Data1!F45
         const chartData1 = this.computeChartData1({
-            a, da1, d1, df1, da2, d2, df2, L, b2H, l1, l2, BeSi
+            a, da1, d1, df1, da2, d2, df2, de2, L, b2H, l1, l2, BeSi,
+            b4: b4_actual, b1: b1_chamfer
         });
 
         return {
@@ -784,17 +788,43 @@ const WormCalcEngine = {
             { x: C50, y: D47 }
         ];
 
-        // Wheel side rectangle (Data1!C60:D64)
-        const C60 = C9 - b2H / 2.0;
-        const C62 = C9 + b2H / 2.0;
-        const D60 = da2 / 2.0;
-        const wheelBox = [
-            { x: C60, y: D60 },
-            { x: C60, y: -D60 },
-            { x: C62, y: -D60 },
-            { x: C62, y: D60 },
-            { x: C60, y: D60 }
-        ];
+        // Wheel throat contour with dynamic rim chamfer (Chart 1963)
+        const halfB = b2H / 2.0;
+        const b4 = Math.min(halfB, Math.max(0, g.b4 !== undefined ? g.b4 : halfB));
+        const b1 = Math.min(b4, Math.max(0, g.b1 !== undefined ? g.b1 : 0));
+        const de2 = g.de2 || (da2 + 1.6);
+        const r1 = a - da2 / 2.0;
+        const yTopThroat = da2 / 2.0;
+        const yTopOuter = de2 / 2.0;
+        const yTopEdge = (b4 >= halfB - 1e-4) ? yTopOuter : yTopThroat;
+
+        // Top contour points (from -halfB to +halfB)
+        const topPts = [];
+        topPts.push({ x: C9 - halfB, y: yTopEdge });
+        if (b4 < halfB - 0.05) {
+            topPts.push({ x: C9 - b4, y: yTopOuter });
+        }
+        if (b1 < b4 - 0.05) {
+            topPts.push({ x: C9 - b1, y: yTopOuter });
+        }
+        // Throat arc samples across [-b1, +b1]
+        const numArc = 10;
+        for (let i = 0; i <= numArc; i++) {
+            const z = -b1 + (2.0 * b1 * i) / numArc;
+            const yArc = a - Math.sqrt(Math.max(0.0, r1 * r1 - z * z));
+            topPts.push({ x: C9 + z, y: yArc });
+        }
+        if (b1 < b4 - 0.05) {
+            topPts.push({ x: C9 + b1, y: yTopOuter });
+        }
+        if (b4 < halfB - 0.05) {
+            topPts.push({ x: C9 + b4, y: yTopOuter });
+        }
+        topPts.push({ x: C9 + halfB, y: yTopEdge });
+
+        // Symmetrical bottom contour points
+        const bottomPts = topPts.map(pt => ({ x: pt.x, y: -pt.y })).reverse();
+        const wheelBox = [...topPts, ...bottomPts, topPts[0]];
 
         // 4 Bearing boxes (Data1!C67:D86)
         const C67 = C11 + BeSi;
