@@ -120,10 +120,17 @@ class WormUIController {
                 const sel = document.getElementById(elId);
                 if (!sel || !Array.isArray(arr)) return;
                 sel.innerHTML = `<option value="">${placeholder}</option>`;
-                arr.forEach(v => {
+                arr.forEach(item => {
                     const opt = document.createElement('option');
-                    opt.value = v;
-                    opt.textContent = v;
+                    if (typeof item === 'object' && item !== null) {
+                        const val = item.val !== undefined ? item.val : (item.m !== undefined ? item.m : (item.value !== undefined ? item.value : item.id));
+                        const lbl = item.label || item.name || (item.m !== undefined ? `${item.m} mm` : String(val));
+                        opt.value = val;
+                        opt.textContent = lbl;
+                    } else {
+                        opt.value = item;
+                        opt.textContent = item;
+                    }
                     sel.appendChild(opt);
                 });
             };
