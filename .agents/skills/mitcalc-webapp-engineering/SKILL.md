@@ -1481,10 +1481,12 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
       * Trong 3D: Nút `[🔩 Trục Vít: Hiện]` (`#btnToggleWorm`) và `[⚙️ Bánh Vít: Hiện]` (`#btnToggleWheel`) điều khiển độc lập `wormGroup.visible` và `wheelGroup.visible`. Cho phép người dùng soi chi tiết sườn ren, đỉnh ren, rãnh họng mà không bị chi tiết còn lại che khuất.
       * Trong 2D: Nút `[🔩 Trục Vít: Hiện]` (`#btnToggleWorm2D`) và `[⚙️ Bánh Vít: Hiện]` (`#btnToggleWheel2D`) cho phép ẩn/hiện từng chi tiết ngay trong bản vẽ lắp ráp 2 hình chiếu (`assembly`).
     - **Hình chiếu / Mặt cắt biên dạng răng pháp tuyến N-N (`normal_profile` - DIN 3975)**:
-      * Mặt cắt vuông góc đường xoắn vít (nghiêng góc nâng $\gamma$): $m_n, lpha_n, p_n = \pi m_n, s_n = e_n = p_n/2, h_{a1}, h_{f1}, ho_{f0} = 0.38 m_n$.
+      * Mặt cắt vuông góc đường xoắn vít (nghiêng góc nâng $\gamma$): $m_n, lpha_n, p_n = \pi m_n, s_n = e_n = p_n/2, h_{a1}, h_{f1}, 
+ho_{f0} = 0.38 m_n$.
       * Lượn chân răng tiếp tuyến giải tích $C^1$ vẽ qua `arcTo` nối liền sườn răng thẳng nghiêng $lpha_n$ với đáy rãnh $y = -h_{f1}$.
       * Gạch mặt cắt $45^\circ$, đường tâm răng, đường chia $y = 0$, đường đỉnh $+h_{a1}$, đường chân $-h_{f1}$.
-      * Đầy đủ đường gióng kích thước chuẩn: $p_n, s_n, e_n, h_{a1}, h_{f1}, lpha_n, ho_{f0}$.
+      * Đầy đủ đường gióng kích thước chuẩn: $p_n, s_n, e_n, h_{a1}, h_{f1}, lpha_n, 
+ho_{f0}$.
     - **Hình chiếu / Mặt cắt biên dạng răng tiếp tuyến - dọc trục A-A (`tangential_profile` - DIN 3975)**:
       * Mặt cắt dọc trục chứa tâm trục vít ($y = 0$): $m_x = m_n/\cos\gamma, lpha_x, \gamma, p_x = \pi m_x, s_x = p_x/2$.
       * Đường kính $d_1, d_{a1}, d_{f1}$, chiều dài ren $L$, ngõng trục, vai trục ($d_s, t$), vát mép đầu ren $eta$.
@@ -1743,3 +1745,32 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
    - Khắc phục triệt để hiện tượng sừng nhọn khi $rTip \to rRoot$: nội suy kế thừa góc pha liên hợp từ lát cắt $s-1$ khi $h \to 0$. Răng thuôn nhọn mượt mà $100\%$ về cung chân răng mà không phát sinh gai nhọn.
    - Kiểm tra chéo toàn bộ kích thước: Khoảng cách trục $a = 103.3663\text{ mm}$, đường kính chia $d_1 = 36.2315, d_2 = 170.5012$, đỉnh $d_{a1} = 44.6982, d_{a2} = 178.9678$, đáy $d_{f1} = 25.6482, d_{f2} = 159.9178$, đỉnh lớn nhất $d_{e2} = 183.2300$, chiều rộng vành $b_{2H} = 33.5700$, bán kính họng $r_1 = 13.8824, r_3 = 23.4074$, độ vát $b_1 = 7.3911, b_4 = 9.9548$, lỗ trục $d_{\text{Bore2}} = 50.0\text{ mm}$ — 100% khớp tuyệt đối giữa 2D và 3D!
    - 2D Canvas: Vẽ đầy đủ thân bánh vít khép kín kèm gạch mặt cắt kim loại $45^\circ$, cung đáy răng $r_3$ xanh cyan và đường sinh chia $r_2$ nét đứt vàng.
+
+---
+
+### Quy Tắc 73: Quy Chuẩn Mặc Định Trục Vít Ác-Si-Mét (Archimedean ZA), Gom Toàn Bộ Kích Thước Phôi Vào Mục 4.0 & Tối Ưu Accordion Thu Gọn (Archimedean Default, Blank Parameters Unification & Accordion Streamline Protocol)
+**Ngày áp dụng**: 03/10/2026  
+**Module**: Bộ truyền Trục Vít - Bánh Vít (`modules/worm-gear/`)  
+**Bối cảnh**: Người dùng (`SirPhuong`) chủ yếu thiết kế và gia công thực tế bộ truyền trục vít dạng Ác-si-mét (Archimedean - ZA), yêu cầu đặt loại này làm mặc định; chuyển 2 thông số phôi trục vít gồm kích thước vai trục ($d_s, t$) và góc vát mép đầu ren ($eta$) từ Mục 19.0 vào Mục 4.0 để tập trung toàn bộ kích thước hình học phôi tại một nơi duy nhất; đồng thời để mặc định ẩn (thu gọn) Mục 6.0 (Hiệu suất DIN 3996) và Mục 12.0 (Chuẩn Mỹ AGMA 6022-C93) giúp giao diện thoáng đãng, tập trung cao độ.
+
+1. **Thiết Lập Mặc Định Loại Trục Vít Ác-Si-Mét (Archimedean - Type ZA / DIN 3975)**:
+   - `toothType = 1` (ZA) làm giá trị mặc định xuyên suốt `worm-calc-engine.js`, `worm-ui.js`, `index.html` và hàm `resetDefaults()`.
+   - Hệ quy chiếu hình học đặc thù của ZA:
+     * Mô đun thiết kế chính: **Mô đun dọc trục $m_x$** (`sym_module_mode = 'mx'`). Mô đun pháp tuyến liên hợp $m_n = m_x \cos\gamma$.
+     * Góc ăn khớp danh nghĩa: **Góc ăn khớp dọc trục $lpha_x = 20^\circ$** (`lbl_alfa_type = 'Góc dọc trục αx (Hệ ZA)'`).
+     * Đường kính chia: $d_1 = q \cdot m_x$, $d_2 = z_2 \cdot m_x$.
+     * Khoảng cách trục: $a = 0.5 \cdot (d_1 + d_2) + x_2 \cdot m_x$.
+     * Bảng chế tạo BOM và DXFTables tự động ghi rõ $m_x$.
+
+2. **Gom Toàn Diện Thông Số Phôi & Vát Mép Vào Mục 4.0 (Unified Workpiece Blank Architecture)**:
+   - Bổ sung **Dòng 4.22**: `Kích thước vai trục vít: Đường kính / Chiều rộng (Shaft shoulder ds, t)` kèm checkbox `[x] Tự động (chk_dstFlag)` ($d_s pprox d_{f1} - m_n$, $t pprox m_n / 4$).
+   - Bổ sung **Dòng 4.23**: `Góc vát mép đầu ren trục vít (Angle of worm shrink β)` (mặc định $10.0^\circ$, dải $5^\circ \div 25^\circ$).
+   - Kết hợp hoàn hảo với **Dòng 4.20** ($L, b_{2H}$) và **Dòng 4.21** ($	heta_2$), đưa Mục 4.0 trở thành trung tâm điều khiển 100% hình học phôi thô và vát mép của cả Trục Vít lẫn Bánh Vít.
+   - Khi kỹ sư thay đổi bất kỳ kích thước nào ($d_s, t, eta, 	heta_2, L, b_{2H}$), cả 2D Canvas, 3D WebGL và file xuất DXF đều cập nhật phản hồi thời gian thực tức thì.
+
+3. **Tinh Gọn Giao Diện 2 Phân Mục Kết Quả (Section 6.0 & 12.0 Streamline)**:
+   - **Mục 6.0 (Hiệu suất & Tổn thất DIN 3996)**: Cấu hình mặc định thu gọn (`class="calc-section collapsed"`, biểu tượng `▶`).
+   - **Mục 12.0 (Kích thước theo tiêu chuẩn Mỹ AGMA 6022-C93)**: Cấu hình mặc định thu gọn (`class="calc-section collapsed"`, biểu tượng `▶`).
+   - Màn hình khởi động chỉ giữ mở sẵn 2 phân mục kỹ thuật cốt lõi: **Mục 4.0 (Thiết kế hình học)** và **Mục 5.0 (Kích thước chi tiết DIN 3975)**.
+   - **Section 19.0 (CAD DXF & DXFTables)**: Tinh giản chỉ còn **Dòng 19.1 (`Scale`)** và **Dòng 19.2 (`BOM`)** cùng 5 nút xuất bản vẽ chuyên dụng, triệt tiêu hoàn toàn sự trùng lặp dữ liệu.
+

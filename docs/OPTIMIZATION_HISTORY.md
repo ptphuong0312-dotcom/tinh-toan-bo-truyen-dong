@@ -2574,10 +2574,12 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
      - Thể hiện thanh răng cơ bản trên mặt cắt vuông góc đường xoắn vít (nghiêng góc nâng $\gamma$):
        * $m_n = 4.233	ext{ mm}$, $lpha_n = 20.00^\circ$, $p_n = \pi \cdot m_n = 13.299	ext{ mm}$.
        * $s_n = e_n = p_n / 2 = 6.650	ext{ mm}$, $h_{a1} = 4.233	ext{ mm}$, $h_{f1} = 5.292	ext{ mm}$.
-       * Bán kính lượn chân răng chuẩn DIN 3975: $ho_{f0} = 0.38 \cdot m_n = 1.609	ext{ mm}$.
+       * Bán kính lượn chân răng chuẩn DIN 3975: $
+ho_{f0} = 0.38 \cdot m_n = 1.609	ext{ mm}$.
        * Cung lượn chân răng tiếp tuyến giải tích $C^1$ vẽ qua `arcTo` nối liền sườn răng thẳng với đáy rãnh $y = -h_{f1}$.
        * Gạch mặt cắt $45^\circ$, đường chia vàng hổ phách $y = 0$, đường đỉnh cyan $y = +h_{a1}$, đường chân xám $y = -h_{f1}$.
-       * Đầy đủ đường gióng kích thước chuẩn: $p_n, s_n, e_n, h_{a1}, h_{f1}, lpha_n, ho_{f0}$.
+       * Đầy đủ đường gióng kích thước chuẩn: $p_n, s_n, e_n, h_{a1}, h_{f1}, lpha_n, 
+ho_{f0}$.
   3. *Hình chiếu / Mặt cắt biên dạng răng theo phương tiếp tuyến - dọc trục A-A (`tangential_profile` - DIN 3975)*:
      - Thể hiện mặt cắt dọc trục chứa đường tâm trục vít ($y = 0$):
        * $m_x = m_n / \cos\gamma = 4.263	ext{ mm}$, $lpha_x = 20.13^\circ$, $\gamma = 6.710^\circ$, $p_x = 13.391	ext{ mm}$.
@@ -3183,3 +3185,15 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
   * Case 4 (Square Flat Rim $0^\circ$): **PASS** ($\Delta = 0.000000$).
   * Case 5 (Big Gear $z_1=2, z_2=50, m_n=5$): **PASS** ($\Delta = 0.000000$).
   * 100% 0 NaNs, 0 tam giác suy biến!
+
+## 2026-10-03 - Quy Tắc 73: Mặc Định Trục Vít Ác-Si-Mét (ZA), Gom Kích Thước Phôi Vào Mục 4.0 & Ẩn Mặc Định Mục 6.0, 12.0
+- **Yêu cầu người dùng (SirPhuong)**:
+  1. Đặt loại ren trục vít Ác-si-mét (Archimedean - ZA) làm mặc định cho module trục vít bánh vít.
+  2. Chuyển thông số phôi vai trục vít (ds, t) và góc vát đầu ren (beta) vào Mục 4.0.
+  3. Để mặc định ẩn (collapsed) Mục 6.0 và Mục 12.0.
+- **Triển khai kỹ thuật**:
+  - `worm-calc-engine.js`: `toothType = 1` (ZA) làm mặc định; cập nhật BOM và DXFTables sang ký hiệu mô đun dọc trục mx.
+  - `worm-ui.js`: `fillSelect` chọn `sel_toothType` = 1, `collectParams` fallback = 1, `resetDefaults()` = 1.
+  - `index.html`: Thêm Dòng 4.22 (ds, t) và Dòng 4.23 (beta) vào Section 4.0; renumber các dòng tiếp theo; Section 6.0 và 12.0 thêm class `collapsed` và biểu tượng `▶`; Section 19.0 tinh giản còn 19.1 (Scale) và 19.2 (BOM).
+  - Đóng gói toàn bộ bundle JavaScript thuần `worm-engine.bundle.js` qua `tools/bundle_all.py`.
+  - Kiểm thử tự động bằng Playwright: Xác nhận 100% các trạng thái collapsed, giá trị mặc định toothType=1, ds=21.2mm, th=1.1mm, beta=10.0deg.

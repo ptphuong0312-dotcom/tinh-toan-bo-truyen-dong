@@ -107,7 +107,7 @@ class WormUIController {
         };
 
         if (typeof WORM_STD_TABLES !== 'undefined') {
-            fillSelect('sel_toothType', WORM_STD_TABLES.T_ToothType, 2, item => item.label || item.name);
+            fillSelect('sel_toothType', WORM_STD_TABLES.T_ToothType, 1, item => item.label || item.name);
             fillSelect('sel_loadTypeA', WORM_STD_TABLES.T_LoadType, 1);
             fillSelect('sel_loadTypeB', WORM_STD_TABLES.T_LoadType, 1);
             fillSelect('sel_designCooling', WORM_STD_TABLES.T_DesignCooling, 1);
@@ -916,7 +916,7 @@ class WormUIController {
             // Section 2.0
             matP: parseInt(document.getElementById('sel_matP')?.value || '41', 10),
             matW: parseInt(document.getElementById('sel_matW')?.value || '7', 10),
-            toothType: parseInt(document.getElementById('sel_toothType')?.value || '2', 10),
+            toothType: parseInt(document.getElementById('sel_toothType')?.value || '1', 10),
             loadTypeA: parseInt(document.getElementById('sel_loadTypeA')?.value || '1', 10),
             loadTypeB: parseInt(document.getElementById('sel_loadTypeB')?.value || '1', 10),
             designCooling: parseInt(document.getElementById('sel_designCooling')?.value || '1', 10),
@@ -1336,7 +1336,7 @@ class WormUIController {
 
         setValDirect('sel_matP', '41');
         setValDirect('sel_matW', '7');
-        setValDirect('sel_toothType', '2');
+        setValDirect('sel_toothType', '1');
         setValDirect('sel_loadTypeA', '1');
         setValDirect('sel_loadTypeB', '1');
         setValDirect('sel_designCooling', '1');

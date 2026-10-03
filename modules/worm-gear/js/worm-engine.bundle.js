@@ -2206,7 +2206,7 @@ const WormCalcEngine = {
         const wheelMat = this.getWheelMaterial(matW);
         const MatTypeW = wheelMat.matTypeW || 1; // X128: 1=Bronze, 2=Cast Iron, 3=Al Bronze
 
-        const toothType = parseInt(p.toothType !== undefined ? p.toothType : 2); // 1=ZA, 2=ZN, 3=ZI, 4=ZK, 5=ZH
+        const toothType = parseInt(p.toothType !== undefined ? p.toothType : 1); // 1=ZA (Archimedean default), 2=ZN, 3=ZI, 4=ZK, 5=ZH
         const loadTypeA = parseInt(p.loadTypeA !== undefined ? p.loadTypeA : 1); // 1..4
         const loadTypeB = parseInt(p.loadTypeB !== undefined ? p.loadTypeB : 1); // 1..4
         const designCooling = parseInt(p.designCooling !== undefined ? p.designCooling : 1); // 1=Worm bath, 2=Gear bath, 3=Oil-spray
@@ -2653,15 +2653,17 @@ const WormCalcEngine = {
         const dz_actual = Math.max(0.0, halfB_chamfer - b4_actual);
         const dr_actual = Math.max(0.0, (de2 / 2.0) - rEdge_actual);
 
+        const m_sym = (toothType === 1) ? 'mx' : 'mn';
+        const m_val = (toothType === 1) ? mx : mn;
         const ABOM01 = "Worm gear - Worm";
-        const ABOM02 = `z1=${z1}, mn=${Math.round(mn * 100.0) / 100.0}`;
+        const ABOM02 = `z1=${z1}, ${m_sym}=${Math.round(m_val * 100.0) / 100.0}`;
         const ABOM03 = `Material: ${wormMat.designation}`;
         const BBOM01 = "Worm gear - Gear";
-        const BBOM02 = `z2=${z2}, mn=${Math.round(mn * 100.0) / 100.0}`;
+        const BBOM02 = `z2=${z2}, ${m_sym}=${Math.round(m_val * 100.0) / 100.0}`;
         const BBOM03 = `Material: ${wheelMat.designation}`;
 
         // DXFTables values (DXFTables!D4:D29)
-        const dxf_worm_m = mn; // D4
+        const dxf_worm_m = m_val; // D4
         const dxf_worm_z1 = z1; // D5
         const dxf_worm_alfa = alfa0; // D6
         const dxf_worm_d1 = Math.round(d1 * 1000.0) / 1000.0; // D7
@@ -2671,7 +2673,7 @@ const WormCalcEngine = {
         const dxf_worm_a = Math.round(a * 1000.0) / 1000.0; // D12
         const dxf_worm_z2 = z2; // D14
 
-        const dxf_wheel_m = mn; // D18
+        const dxf_wheel_m = m_val; // D18
         const dxf_wheel_z2 = z2; // D19
         const dxf_wheel_alfa = alfa0; // D20
         const dxf_wheel_d2 = Math.round(d2 * 1000.0) / 1000.0; // D21
@@ -7894,7 +7896,7 @@ class WormUIController {
         };
 
         if (typeof WORM_STD_TABLES !== 'undefined') {
-            fillSelect('sel_toothType', WORM_STD_TABLES.T_ToothType, 2, item => item.label || item.name);
+            fillSelect('sel_toothType', WORM_STD_TABLES.T_ToothType, 1, item => item.label || item.name);
             fillSelect('sel_loadTypeA', WORM_STD_TABLES.T_LoadType, 1);
             fillSelect('sel_loadTypeB', WORM_STD_TABLES.T_LoadType, 1);
             fillSelect('sel_designCooling', WORM_STD_TABLES.T_DesignCooling, 1);
@@ -8703,7 +8705,7 @@ class WormUIController {
             // Section 2.0
             matP: parseInt(document.getElementById('sel_matP')?.value || '41', 10),
             matW: parseInt(document.getElementById('sel_matW')?.value || '7', 10),
-            toothType: parseInt(document.getElementById('sel_toothType')?.value || '2', 10),
+            toothType: parseInt(document.getElementById('sel_toothType')?.value || '1', 10),
             loadTypeA: parseInt(document.getElementById('sel_loadTypeA')?.value || '1', 10),
             loadTypeB: parseInt(document.getElementById('sel_loadTypeB')?.value || '1', 10),
             designCooling: parseInt(document.getElementById('sel_designCooling')?.value || '1', 10),
@@ -9123,7 +9125,7 @@ class WormUIController {
 
         setValDirect('sel_matP', '41');
         setValDirect('sel_matW', '7');
-        setValDirect('sel_toothType', '2');
+        setValDirect('sel_toothType', '1');
         setValDirect('sel_loadTypeA', '1');
         setValDirect('sel_loadTypeB', '1');
         setValDirect('sel_designCooling', '1');
