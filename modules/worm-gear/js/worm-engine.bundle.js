@@ -5105,13 +5105,17 @@ const Worm3DGenerator = {
 
         let rTip;
         if (absZ <= b1) {
+            // Concave throat arc hugging the worm
             rTip = a - Math.sqrt(Math.max(0.0, r1 * r1 - absZ * absZ));
         } else if (absZ <= b4) {
+            // Cylindrical crest land at maximum external diameter de2/2
             rTip = de2 * 0.5;
         } else {
+            // Smooth mechanical chamfer: transitions from de2/2 to da2/2 at face edge
+            // Preserves tooth integrity (dae2 per DIN 3975 / MITCalc Fig. 4.0) and eliminates sharp spikes
             const tChamfer = (absZ - b4) / Math.max(1e-6, halfB - b4);
-            const rEdge = df2 * 0.5 + v4;
-            rTip = (de2 * 0.5) - tChamfer * ((de2 * 0.5) - rEdge);
+            const rEdgeNominal = da2 * 0.5;
+            rTip = (de2 * 0.5) - tChamfer * (de2 * 0.5 - rEdgeNominal);
         }
 
         let rRoot;

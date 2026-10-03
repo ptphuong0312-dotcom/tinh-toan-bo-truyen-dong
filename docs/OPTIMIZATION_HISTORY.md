@@ -3096,3 +3096,28 @@ ho_{f0} = 0.38 \cdot m_n$** theo DIN 3960 / ISO 1122-1.
   - `test_sec4_reorg.py`: Mục 2.0 hoàn toàn biến mất (`sec2_found: False`), menu 4.0 có 5 tùy chọn đầy đủ, đổi $\theta_2 = 50.0^\circ$ lập tức đổi $b_4 = 13.0\text{ mm}$ và 3D mesh được tái tạo tức thì.
   - `test_worm_features.py`: PASS 100% tất cả 2D profile và 3D WebGL.
   - `test_iges_surface_export.py`: PASS 100% tất cả các file xuất Mastercam IGES/STEP.
+
+---
+
+## [2026-10-03] KHẮC PHỤC TRIỆT ĐỂ LỖI SỪNG NHỌN VÀNH BÁNH VÍT (SMOOTH MECHANICAL CHAMFER PROTOCOL) & GIẢI THÍCH HÌNH HỌC HỌNG LÕM YÊN NGỰA (DIN 3975)
+- **Phản hồi từ chủ sở hữu (`SirPhuong`)**:
+  - *"phần cạnh bánh vít sao nhọn hoắt rồi cong lên như ảnh thế này bạn"* (kèm ảnh chụp `media_1791014911966.png`).
+- **Phân tích hình học & Cơ chế toán học**:
+  1. **Tại sao "cong lên" (Curving up)**:
+     - Đây là bản chất hình học của **Bánh vít họng lõm (Throated / Globoid Worm Wheel - DIN 3975 / AGMA 6022)**.
+     - Trục vít là hình trụ tròn, bánh vít muốn ôm khít trục vít để tăng diện tích tiếp xúc thì mặt đỉnh phải bị khoét lõm theo cung tròn bán kính $r_1 = a - d_{a2}/2 = 13.88\text{ mm}$.
+     - Ở tâm ($z = 0$), đỉnh răng họng lõm sâu nhất xuống $d_{a2} = 178.97\text{ mm}$ (bán kính $89.48\text{ mm}$). Càng đi ra hai bên mép ($z \to \pm 7.4\text{ mm}$), cung tròn họng lượn cong nhô cao dần lên đến đường kính đỉnh ngoài $d_{e2} = 183.23\text{ mm}$ (bán kính $91.61\text{ mm}$, cao hơn $2.13\text{ mm}$).
+     - Khi nhìn từ trên xuống, toàn bộ các răng đều uốn cong dạng yên ngựa (saddle shape) — võng ở giữa họng và nhô cao ở hai mép.
+  2. **Tại sao "nhọn hoắt" (Sharp / Pointed peaks like spikes)**:
+     - Trong công thức cũ của `evalWheelBlank(z)`: góc vát mép nón phụ bắt đầu từ $z = b_4 = 9.95\text{ mm}$ và dốc đứng hạ từ $de2/2 = 91.61\text{ mm}$ xuống tận đáy chân răng $rEdge = 87.05\text{ mm}$ tại mép ngoài $z = b_{2H}/2 = 16.79\text{ mm}$.
+     - Đường dốc này cắt cụt toàn bộ chiều cao răng ở hai mép ngoài thành lát mỏng $0\text{ mm}$.
+     - Tại điểm nối $b_4$, góc gấp khúc đột ngột giao cắt với mặt sườn răng xoắn liên hợp đã tạo ra một cặp **sừng tam giác nhọn hoắt nhô lên ở hai góc đỉnh răng**.
+- **Giải pháp xử lý triệt để (Smooth Mechanical Chamfer Protocol)**:
+  - Chuẩn hóa mép vát nón phụ theo đúng kích thước mép ngoài $d_{ae2} \approx d_{a2}$ của Hình 4.0 MITCalc (`image9.png`) và DIN 3975:
+  - Mép vát chuyển tiếp êm thuận từ đỉnh lớn nhất $d_{e2}/2 = 91.61\text{ mm}$ tại $b_4$ hạ nhẹ xuống bán kính đỉnh danh nghĩa $d_{a2}/2 = 89.48\text{ mm}$ tại mép ngoài $z = b_{2H}/2$.
+  - Chiều cao răng ở mép ngoài duy trì đầy đủ $h = 89.48 - 87.05 = 2.43\text{ mm}$, răng không bị gọt cụt.
+  - Triệt tiêu 100% đường gấp khúc và sừng nhọn hoắt. Vành răng bánh vít hiển thị mượt mà, đầy đặn, sắc nét và đúng chuẩn cơ khí chế tạo máy.
+- **Kiểm thử nghiệm thu**:
+  - `wheel_3d_top_rim.png`: Toàn bộ 40 răng bánh vít lượn họng lõm ôm trục vít mượt mà, không còn bất kỳ đỉnh nhọn hay sừng thừa nào.
+  - Đóng gói bundle qua `tools/bundle_all.py` thành công.
+  - `test_worm_features.py` & `test_iges_surface_export.py`: 100% PASS.

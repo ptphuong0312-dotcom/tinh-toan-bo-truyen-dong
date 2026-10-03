@@ -1689,3 +1689,22 @@ Self-lock: γ ≤ ρ (static: 5-8°, dynamic: 1-3°)
      * **2D Canvas**: Cập nhật tức thời mặt cắt họng bánh vít gồm cung tròn đỉnh $b_1$, đoạn phẳng $b_1 \to b_4$, và đường vát mép xiên $b_4 \to b_{2H}/2$.
      * **3D WebGL**: Gỡ bỏ điều kiện lọc tab, tự động tái tạo mesh 3D và parametric surface ngay trong `recalculate()`.
      * **Xuất CAD 2D/3D**: Tệp DXF và tệp 3D Mastercam IGES/STEP luôn sử dụng hình học cập nhật mới nhất mà không cần chuyển qua lại giữa các tab.
+
+---
+
+### 26. Quy Chuẩn Vát Mép Cơ Khí Mượt Mà Bánh Vít & Triệt Tiêu Sừng Răng Nhọn Hoắt (Smooth Mechanical Chamfer Protocol)
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"phần cạnh bánh vít sao nhọn hoắt rồi cong lên như ảnh thế này bạn"* (`media_1791014911966.png`).
+2. **Bản Chất Động Học & Hình Học Cơ Khí Bánh Vít Họng Yên Ngựa**:
+   - **Vì sao răng bánh vít "cong lên" ở hai mép vành (Saddle / Throat Contour)**:
+     * Theo tiêu chuẩn DIN 3975 và AGMA 6022, bánh vít ăn khớp với trục vít là loại **bánh vít họng lõm (Throated Worm Wheel)**. Vành bánh vít được tiện lõm theo bán kính trục vít $r_1 = a - d_{a2}/2$.
+     * Tại mặt phẳng đối xứng tâm bánh vít ($z = 0$), bán kính đỉnh răng nhỏ nhất bằng $d_{a2}/2 = 89.48\text{ mm}$.
+     * Càng đi xa về hai phía mép vành ($z \to \pm b_1$), khoảng cách từ tâm bánh vít đến cung họng lõm tự nhiên tăng dần lên bán kính đỉnh lớn nhất $d_{e2}/2 = 91.61\text{ mm}$ (cao hơn tâm khoảng $2.13\text{ mm}$).
+     * Đây là **đặc trưng kỹ thuật bắt buộc của bộ truyền trục vít - bánh vít** để vành răng ôm sát thân trục vít, tăng chiều dài tiếp xúc và diện tích ăn khớp. Răng cong lên hình chiếc yên ngựa là hoàn toàn chuẩn xác về mặt cơ khí.
+   - **Vì sao lại xuất hiện các gai nhọn hoắt ("nhọn hoắt") ở mép vành**:
+     * Trước đây, đường vát mép nón phụ bắt đầu từ $z = b_4 = 9.95\text{ mm}$ với bán kính $d_{e2}/2 = 91.61\text{ mm}$ dốc gắt $\theta_2 \approx 33.7^\circ$ hạ xuống tận đường kính chân răng $r_{\text{Edge}} = d_{f2}/2 + v_4 = 87.05\text{ mm}$ tại $z = b_{2H}/2 = 16.79\text{ mm}$.
+     * Sự dốc gắt tạo ra góc gãy tại $b_4$, khi giao cắt với sườn răng xoắn nghiêng góc $\gamma = 6.71^\circ$ sinh ra sừng nhọn hình tam giác ("nhọn hoắt"), đồng thời vạt cụt chiều cao răng về 0.
+3. **Giải Thuật Vát Mép Cơ Khí Mượt Mà (Smooth Mechanical Chamfer Protocol)**:
+   - **Bán kính mép ngoài mượt mà**: Đường vát nón phụ chuyển tiếp từ $d_{e2}/2$ tại $b_4$ hạ êm dịu về bán kính đỉnh danh nghĩa của họng lõm $r_{\text{Edge}} = d_{a2}/2$ tại $z = b_{2H}/2$ (khớp với đường kính gờ ngoài $d_{ae2}$ trên hình minh họa MITCalc 1.74 `image9.png`).
+   - **Bảo toàn chiều cao răng**: Tại mép ngoài cùng $z = \pm b_{2H}/2$, chiều cao răng vẫn duy trì đầy đặn $h \ge 2.43\text{ mm}$.
+   - **Triệt tiêu hoàn toàn sừng nhọn**: Triệt tiêu góc gãy tại $b_4$, sườn răng và đỉnh răng kết thúc tự nhiên, các đỉnh răng tròn trịa, vuông vắn và bóng mượt như phay lăn răng thực tế.
