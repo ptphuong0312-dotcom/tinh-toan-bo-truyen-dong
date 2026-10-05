@@ -4055,6 +4055,7 @@ class BevelGearCanvas {
         this.panX = 0;
         this.panY = 0;
         this.zoom = 1.0;
+        this.angle1 = 0;
         this.render();
         return this.viewMode;
     }
@@ -4168,6 +4169,7 @@ class BevelGearCanvas {
         this.zoom = 1.0;
         this.panX = 0;
         this.panY = 0;
+        this.angle1 = 0;
         this.render();
     }
 
@@ -5166,8 +5168,8 @@ class BevelGearCanvas {
             ha_s: hai2, hf_s: hfi2, sn_s: sni2, ptsPerFlank, ptsFillet
         });
 
-        // Oscillation motion: Lắc đi lắc lại
-        const maxOsc = 0.16; // ~9.2 degrees
+        // Oscillation motion: Lắc đi lắc lại điều hòa lăn liên hợp
+        const maxOsc = 0.12; // ~6.9 degrees (dao động mượt mà trong dải ăn khớp an toàn)
         const oscAngle1 = maxOsc * Math.sin(this.angle1);
 
         // Layout: 2 equal panels
@@ -5257,8 +5259,10 @@ class BevelGearCanvas {
             const pPsi1 = (2.0 * Math.PI / z1) * slice1.cosD;
             const pPsi2 = (2.0 * Math.PI / z2) * slice2.cosD;
 
-            // Pure conjugate rolling oscillation
-            const oscAngle2 = -oscAngle1 * (rv1 / rv2);
+            // Pure conjugate rolling oscillation (Zero-Slip Conjugate Meshing)
+            // Pinion (center below) and Gear 2 (center above) both move in +X when psi increases: x = r*sin(psi).
+            // Therefore, both must have the SAME positive sign to roll without slip at contact point P(0,0):
+            const oscAngle2 = oscAngle1 * (rv1 / rv2);
             const phase1 = oscAngle1 / pPsi1;
             const phase2 = oscAngle2 / pPsi2;
 

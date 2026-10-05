@@ -1786,8 +1786,8 @@ ho_{f0}$.
      * `[ 📐 Mặt Cắt Trục (ISO 23509) ]`: Bản vẽ mặt cắt trục bổ dọc kỹ thuật kèm Inset biên dạng ăn khớp.
      * `[ ⚙️ Ăn Khớp Ảo Ngoài & Trong (Tredgold) ]`: Hiển thị song song 2 bảng mô phỏng: Cặp Mặt Ngoài ($R_e$, $m_{et}$) bên trái và Cặp Mặt Trong ($R_i$, $m_{it}$) bên phải.
    - **Giải thuật dao động điều hòa lăn liên hợp không trượt (Harmonic Conjugate Oscillation)**:
-     $$\theta_{\text{osc}} = \theta_{\max} \cdot \sin(\text{this.angle1}), \quad \theta_{\max} = 0.16\text{ rad} \approx 9.2^\circ$$
-     $$\theta_{v2} = -\theta_{\text{osc}} \cdot \frac{r_{v1}}{r_{v2}}$$
+     $$\theta_{\text{osc}} = \theta_{\max} \cdot \sin(\text{this.angle1}), \quad \theta_{\max} = 0.12\text{ rad} \approx 6.9^\circ$$
+     $$\theta_{v2} = +\theta_{\text{osc}} \cdot \frac{r_{v1}}{r_{v2}}$$
      Bước cung chia $\pi m_t$ của Bánh 1 và Bánh 2 trùng khớp tuyệt đối, độ trượt tiếp xúc tại điểm chia $P(0, 0)$ bằng 0 ($\Delta = 1.77 \times 10^{-15}\text{ mm}$).
    - Đầy đủ các đường hình học: Thân khai sườn răng, cung lượn chân răng $R = \rho_{f0} = 0.38\cdot m$ (xanh ngọc lục bảo `#10b981`), vòng chia (vàng hổ phách `#facc15`), vòng chân (xanh lá cây nét đứt), vòng đỉnh, đường ăn khớp (hồng đỏ `#f43f5e`), điểm ăn khớp $P(0, 0)$ và vòng tròn minh họa tâm bán kính dao cắt $R_{\text{chân}}$ tại răng số 0.
 

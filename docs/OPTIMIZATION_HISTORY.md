@@ -3292,8 +3292,8 @@ ho_{f0}$.
        * `[ 📐 Mặt Cắt Trục (ISO 23509) ]`: Chế độ mặt cắt trục kỹ thuật bổ dọc + Inset biên dạng răng.
        * `[ ⚙️ Ăn Khớp Ảo Ngoài & Trong (Tredgold) ]`: Chế độ mô phỏng song song 2 cặp bánh răng ảo Ngoài & Trong.
      - Phát triển thuật toán dao động điều hòa lăn không trượt (Harmonic Conjugate Oscillation):
-       $$\theta_{\text{osc}} = \theta_{\max} \cdot \sin(\text{this.angle1}), \quad \theta_{\max} = 0.16\text{ rad} \approx 9.2^\circ$$
-       $$\theta_{v2} = -\theta_{\text{osc}} \cdot \frac{r_{v1}}{r_{v2}}$$
+       $$\theta_{\text{osc}} = \theta_{\max} \cdot \sin(\text{this.angle1}), \quad \theta_{\max} = 0.12\text{ rad} \approx 6.9^\circ$$
+       $$\theta_{v2} = +\theta_{\text{osc}} \cdot \frac{r_{v1}}{r_{v2}}$$
        Do bước cung chia $\pi m_t$ của 2 bánh luôn bằng nhau tuyệt đối, độ dịch chuyển cung lăn tại điểm ăn khớp $P(0, 0)$ của Bánh 1 và Bánh 2 trùng khít đến $1.77 \times 10^{-15}\text{ mm}$ (Zero Slip).
      - Hiển thị đầy đủ biên dạng thân khai, cung tròn chân răng tiếp tuyến $C^1$ ($R = \rho_{f0} = 0.38\cdot m$), vòng chia (amber dash-dot), vòng đáy (green dashed), vòng đỉnh, đường ăn khớp (line of action) và điểm ăn khớp $P(0, 0)$.
   2. **Động cơ xuất DXF Tổng Hợp Chuẩn Release 12 AC1009 (`bevel-dxf-exporter.js`)**:
