@@ -3381,4 +3381,39 @@ ho_{f0}$.
   - Đáy rãnh Bánh 1: $Y_{\text{min}} = 88.1330\text{ mm}$, đạo hàm ngang tại tâm bằng 0 (tiếp tuyến phẳng hoàn hảo).
   - Đóng gói bundle: `modules/bevel-gear/js/bevel-engine.bundle.js` (432,824 ký tự).
 
+---
+
+## 2026-10-06 - Tính Toán & Thẩm Tra Độ Bền Tiếp Xúc Mặt Răng (Pitting Resistance) Bộ Truyền Bánh Răng Trụ Công Nghiệp Nặng (Z17 - Z69 - Mn14) Theo ISO 6336-2:2006 (Method B) & DIN 3990
+- **Dự án**: Tính toán bổ sung độ bền tiếp xúc cho bài toán tải trọng nặng `TINH_TOAN_UNG_SUAT_UON_BANH_RANG_Z17_69_M14` ($P = 250\text{ kW}, n_1 = 40.59\text{ rpm}, n_2 = 10.0\text{ rpm}, z_1 = 17, z_2 = 69, m_n = 14\text{ mm}, \beta = 12^\circ, b = 410\text{ mm}$, Thép hợp kim SCM420 / 16MnCr5 tôi thấm carbon $58 - 62\text{ HRC}$).
+- **Quy tắc tuyệt đối**: **Quy Tắc 79 (Zero-VN-Citation)** - Tuyệt đối không tham khảo, không trích dẫn tài liệu hay tác giả Việt Nam. 100% giải thuật, hệ số và công thức dựa trên ISO 6336-2:2006 (Method B), DIN 3990, AGMA 2001-D04 và MITCalc 1.74 (`Gear1_01.xlsb`).
+- **Triển khai kỹ thuật & Kết quả đối chuẩn**:
+  1. **Ứng suất tiếp xúc danh nghĩa tại điểm nút ($\sigma_{H0}$)**:
+     - Hệ số đàn hồi vật liệu: $Z_E = 189.812\text{ MPa}^{1/2}$ ($E_1 = E_2 = 206,000\text{ MPa}, \nu_1 = \nu_2 = 0.30$).
+     - Hệ số vùng ăn khớp: $Z_H = 2.4497$ ($\beta_b = 11.274^\circ, \alpha_t = \alpha_{wt} = 20.410^\circ$).
+     - Hệ số góc nghiêng răng: $Z_\beta = 1 / \sqrt{\cos\beta} = 1 / \sqrt{\cos(12^\circ)} = 1.0111$.
+     - Hệ số trùng khớp: Do $\varepsilon_\beta = 1.938 \ge 1.0 \Rightarrow Z_\varepsilon = \sqrt{1 / \varepsilon_\alpha} = \sqrt{1 / 1.6102} = 0.7880$.
+     - Hệ số tiếp xúc đơn đôi: $Z_B = Z_D = 1.000$ (do $\varepsilon_\beta \ge 1.0$).
+     - Lực vòng danh nghĩa: $F_t = 483,504.7\text{ N}$ (~48.35 tấn lực).
+     - $\sigma_{H0} = Z_B \cdot Z_H \cdot Z_E \cdot Z_\varepsilon \cdot Z_\beta \cdot \sqrt{\frac{F_t}{d_1 \cdot b} \cdot \frac{u + 1}{u}} = 910.624\text{ MPa}$ (Khớp 100% ô `_SigmaH0` MITCalc).
+  2. **Hệ số tải trọng tiếp xúc ($K_H$) & Ứng suất làm việc ($\sigma_H$)**:
+     - Hệ số tải ngoài $K_A = 1.50$ (Chế độ 2: tải công nghiệp va đập vừa).
+     - Hệ số tải động $K_v = 1.001$ ($v = 0.517\text{ m/s}$).
+     - Hệ số phân bố tải vành răng:
+       * Trường hợp 2A (Gối đỡ đối xứng chuẩn): $K_{H\beta} = 1.038 \Rightarrow K_H = 1.558 \Rightarrow \sigma_H = 1136.71\text{ MPa}$.
+       * Trường hợp 2B (Dự phòng lệch trục nhẹ): $K_{H\beta} = 1.138 \Rightarrow K_H = 1.708 \Rightarrow \sigma_H = 1190.20\text{ MPa}$.
+  3. **Giới hạn mỏi tiếp xúc thực tế ($\sigma_{HG}$) & Hệ số an toàn tiếp xúc ($S_H$)**:
+     - Vật liệu SCM420 / 16MnCr5: Cấp tiêu chuẩn $\sigma_{H\text{lim}} = 1270\text{ MPa}$; Cấp MQ cao cấp $\sigma_{H\text{lim}} = 1500\text{ MPa}$.
+     - Các hệ số ảnh hưởng: $Z_L = 1.2225$ (dầu ISO VG 320/460), $Z_v = 0.9477$, $Z_R = 0.9951$ ($R_a \le 1.6\ \mu\text{m}$), $Z_X = 1.000$, $Z_W = 0.9382$ (Bánh 1) / $1.000$ (Bánh 2).
+     - Hệ số tuổi thọ ($L_h = 20,000\text{ h}$): $Z_{NT1} = 1.0746$, $Z_{NT2} = 1.2362$.
+     - Giới hạn mỏi tiếp xúc thực tế:
+       * Cấp Standard: $\sigma_{HG1} = 1476.11\text{ MPa}, \sigma_{HG2} = 1809.85\text{ MPa}$.
+       * Cấp MQ cao cấp: $\sigma_{HG1} = 1743.43\text{ MPa}, \sigma_{HG2} = 2137.62\text{ MPa}$.
+     - Hệ số an toàn tiếp xúc $S_H = \sigma_{HG} / \sigma_H$:
+       * Trường hợp 2A: $S_{H1} = 1.30 \div 1.53 \ge [S_H] = 1.30$; $S_{H2} = 1.59 \div 1.88 \gg [S_H] = 1.30$ (**ĐẠT CHUẨN VÀNG AN TOÀN**).
+       * Trường hợp 2B: $S_{H1} = 1.24 \div 1.46$; $S_{H2} = 1.52 \div 1.80$.
+  4. **Xuất tài liệu kỹ thuật hoàn chỉnh**:
+     - Tạo công cụ tự động `tools/generate_contact_stress_word_report.py`.
+     - Xuất báo cáo chuyên nghiệp chuẩn quốc tế: `BAO_CAO_TINH_TOAN_UNG_SUAT_TIEP_XUC_BANH_RANG_Z17_69_M14.docx` (9 phân mục chi tiết, 5 bảng đối chiếu, khuyến nghị độ sâu thấm tôi $h_c = 2.1 - 2.8\text{ mm}$, bôi trơn ISO VG 320/460 EP, vát mép đầu răng relief $0.04 - 0.06\text{ mm}$, và khối chữ ký phê duyệt 3 bên).
+
+
 

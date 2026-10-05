@@ -1925,3 +1925,54 @@ ho_{f0} / \cos\gamma$.
      * Chiều dày răng: $s_v = m \left(\frac{\pi}{2} + 2 x \tan\alpha + x_t\right)$.
      * Bề rộng rãnh răng: $e_v = \pi m - s_v = m \left(\frac{\pi}{2} - 2 x \tan\alpha - x_t\right)$.
    - **Hệ số dịch chỉnh quy đổi tương đương CAD**: $x_{\text{eq}} = x + \frac{x_t}{2\tan\alpha}$.
+
+---
+
+### Quy Tắc 80: Quy Chuẩn Tính Toán & Thẩm Tra Độ Bền Tiếp Xúc Mặt Răng (Pitting Resistance) Theo ISO 6336-2:2006 (Method B) & DIN 3990
+**Ngày áp dụng**: 06/10/2026  
+**Tiêu chuẩn**: ISO 6336-2:2006 (Method B), DIN 3990, AGMA 2001-D04, ISO 6336-5  
+**Mục tiêu**: Thẩm tra khả năng chịu mỏi tiếp xúc mặt răng (chống tróc rỗ tế vi - pitting) đối với các bộ truyền bánh răng công nghiệp nặng công suất lớn ($P \ge 250\text{ kW}, m_n \ge 14\text{ mm}, b \ge 400\text{ mm}$).
+
+1. **Công thức Ứng suất tiếp xúc danh nghĩa tại điểm nút ($\sigma_{H0}$)**:
+   $$\sigma_{H0} = Z_B \cdot Z_H \cdot Z_E \cdot Z_\varepsilon \cdot Z_\beta \cdot \sqrt{\frac{F_t}{d_1 \cdot b} \cdot \frac{u + 1}{u}}$$
+   - **Hệ số đàn hồi vật liệu ($Z_E$)**:
+     $$Z_E = \sqrt{\frac{1}{\pi \left( \frac{1 - \nu_1^2}{E_1} + \frac{1 - \nu_2^2}{E_2} \right)}} \approx 189.812\text{ MPa}^{1/2} \quad (\text{Thép - Thép: } E = 206000\text{ MPa}, \nu = 0.30)$$
+   - **Hệ số vùng ăn khớp ($Z_H$)**:
+     $$Z_H = \sqrt{\frac{2 \cos\beta_b}{\cos^2\alpha_t \tan\alpha_{wt}}}$$
+     với $\beta_b = \arcsin(\sin\beta \cos\alpha_n)$, $\tan\alpha_t = \tan\alpha_n / \cos\beta$.
+   - **Hệ số góc nghiêng răng ($Z_\beta$)**:
+     $$Z_\beta = \frac{1}{\sqrt{\cos\beta}}$$
+   - **Hệ số trùng khớp ($Z_\varepsilon$)**:
+     * Khi $\varepsilon_\beta \ge 1.0$: $Z_\varepsilon = \sqrt{\frac{1}{\varepsilon_\alpha}}$.
+     * Khi $\varepsilon_\beta < 1.0$: $Z_\varepsilon = \sqrt{\frac{4 - \varepsilon_\alpha}{3} (1 - \varepsilon_\beta) + \frac{\varepsilon_\beta}{\varepsilon_\alpha}}$.
+   - **Hệ số ăn khớp đơn đôi ($Z_B, Z_D$)**:
+     * Với bánh răng nghiêng có $\varepsilon_\beta \ge 1.0$: $Z_B = Z_D = 1.000$ (tải phân bố liên tục đa răng).
+
+2. **Xác định các hệ số tải trọng tiếp xúc ($K_H$)**:
+   $$K_H = K_A \cdot K_v \cdot K_{H\beta} \cdot K_{H\alpha}$$
+   - $K_A$: Hệ số tải ngoài / ứng dụng (ISO 6336-6). Chế độ công nghiệp va đập vừa: $K_A = 1.50$.
+   - $K_v$: Hệ số tải động nội tại (ISO 6336-1 Method B). Với vận tốc thấp $v < 1\text{ m/s}$: $K_v \approx 1.001$.
+   - $K_{H\beta}$: Hệ số phân bố tải theo chiều rộng vành răng (Gối đỡ đối xứng chuẩn: $1.038$; lệch trục nhẹ: $1.138$).
+   - $K_{H\alpha}$: Hệ số phân bố tải giữa các đôi răng (Răng nghiêng mài cấp chính xác ISO 6: $K_{H\alpha} = 1.000$).
+
+3. **Ứng suất tiếp xúc làm việc thực tế ($\sigma_H$)**:
+   $$\sigma_H = Z_B \cdot \sigma_{H0} \cdot \sqrt{K_H}$$
+
+4. **Giới hạn mỏi tiếp xúc thực tế ($\sigma_{HG}$) & Ứng suất tiếp xúc cho phép ($\sigma_{HP}$)**:
+   $$\sigma_{HG} = \sigma_{H\text{lim}} \cdot Z_{NT} \cdot Z_L \cdot Z_v \cdot Z_R \cdot Z_W \cdot Z_X$$
+   $$\sigma_{HP} = \frac{\sigma_{HG}}{S_{H\text{min}}}$$
+   - $\sigma_{H\text{lim}}$: Giới hạn mỏi tiếp xúc cơ sở theo ISO 6336-5 ($1270\text{ MPa}$ cho cấp Standard; $1500\text{ MPa}$ cho cấp MQ cao cấp).
+   - $Z_L$: Hệ số chất bôi trơn ($Z_L = C_{ZL} + \frac{4(1 - C_{ZL})}{(1.2 + 80 / \nu_{50})^2}$, dầu ISO VG 320/460 cho $Z_L \approx 1.222$).
+   - $Z_v$: Hệ số vận tốc vòng ($Z_v = C_{ZV} + \frac{2(1 - C_{ZV})}{\sqrt{0.8 + 32 / v}}$, với $v = 0.517\text{ m/s} \Rightarrow Z_v \approx 0.948$).
+   - $Z_R$: Hệ số độ nhám bề mặt ($Z_R = (3 / R_z)^{C_{ZR}}$, với $R_a \le 1.6\ \mu\text{m} \Rightarrow Z_R \approx 0.995$).
+   - $Z_X$: Hệ số kích thước mô đun ($Z_X = 1.000$ đối với thép tôi thấm carbon).
+   - $Z_W$: Hệ số cứng hóa bề mặt ($Z_W = 0.9382$ cho bánh nhỏ, $1.000$ cho bánh lớn).
+   - $Z_{NT}$: Hệ số tuổi thọ mỏi tiếp xúc ($N_L < N_{H\text{lim}} \Rightarrow Z_{NT} = (N_{H\text{lim}} / N_L)^{1/q_H}$, $Z_{NT1} \approx 1.075, Z_{NT2} \approx 1.236$).
+
+5. **Hệ số an toàn chống tróc rỗ tiếp xúc ($S_H$)**:
+   $$S_H = \frac{\sigma_{HG}}{\sigma_H} \ge [S_H]_{\min} = 1.30$$
+
+6. **Các khuyến nghị công nghệ cốt lõi**:
+   - Chiều sâu thấm tôi carbon hiệu dụng: $h_c = (0.15 \div 0.20) m_n$ để ngăn ngừa nứt phá hủy dưới bề mặt (Case Crushing).
+   - Dầu bôi trơn chịu cực áp EP: Độ nhớt ISO VG 320 hoặc ISO VG 460 ở 40°C.
+   - Vát mép đầu răng (End relief): $0.04 \div 0.06\text{ mm}$ trên chiều dài $20 \div 25\text{ mm}$ ở 2 đầu vành răng $b = 410\text{ mm}$.
