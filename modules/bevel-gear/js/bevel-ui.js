@@ -1599,6 +1599,31 @@ class BevelGearUI {
         set('out_av', g.av);
         set('out_avi', g.avi);
 
+        // Virtual tooth thicknesses & slot widths (Outer, Mean, Inner)
+        set4('out_sve1', g.sve1);
+        set4('out_sve2', g.sve2);
+        set4('out_svm1', g.svm1);
+        set4('out_svm2', g.svm2);
+        set4('out_svi1', g.svi1);
+        set4('out_svi2', g.svi2);
+
+        set4('out_eve1', g.eve1);
+        set4('out_eve2', g.eve2);
+        set4('out_evm1', g.evm1);
+        set4('out_evm2', g.evm2);
+        set4('out_evi1', g.evi1);
+        set4('out_evi2', g.evi2);
+
+        // Virtual chordal inspection (Mean section)
+        set4('out_svc1', g.svc1);
+        set4('out_svc2', g.svc2);
+        set4('out_hvc1', g.hvc1);
+        set4('out_hvc2', g.hvc2);
+
+        // Equivalent profile shift for CAD
+        set4('out_xeq1', g.x_eq1);
+        set4('out_xeq2', g.x_eq2);
+
         // Section 8.0: Qualitative indexes
         set4('out_ea', g.ea);
         set4('out_eb', g.eb);

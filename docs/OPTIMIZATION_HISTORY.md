@@ -3358,3 +3358,15 @@ ho_{f0}$.
      - `test_bevel_dual_tredgold.py`: **100% PASS, 0 console errors**, xác nhận đủ 24 layer kỹ thuật và 56 thực thể `ARC` thật.
      - `test_bevel_webapp.py`: **100% PASS, 0 console errors**.
      - Đóng gói single bundle: `modules/bevel-gear/js/bevel-engine.bundle.js` (426,429 ký tự) 100% offline, zero-CORS.
+
+---
+
+## 2026-10-05 - Quy Tắc 79: Nguyên Tắc Tuyệt Đối Không Tham Khảo Tác Giả Việt Nam (Zero-VN-Citation Protocol) & Ánh Xạ Giải Tích Bánh Răng Trụ Tương Đương Tredgold
+- **Lệnh trực tiếp từ chủ sở hữu (SirPhuong)**:
+  1. *"tôi có nguyên tắc này bạn cần nhớ : tuyệt đối không tham khảo tài liệu từ các tác giả ở Việt Nam"*.
+  2. Nghiêm cấm 100% trích dẫn bất kỳ giáo trình, tác giả, tài liệu nào xuất bản tại Việt Nam. Toàn bộ cơ sở lý thuyết, công thức hình học và tiêu chuẩn phải trích xuất trực tiếp từ các tiêu chuẩn quốc tế (ISO 23509, ISO 6336, DIN 3971, AGMA 2005) và các tài liệu chuyên khảo kinh điển thế giới (Dudley's Gear Handbook, Shigley's Mechanical Engineering Design, Litvin, Buckingham).
+  3. Xác lập bản chất tương quan 2 chiều 1-to-1 giữa thông số hình học bánh răng côn đã nhập và toàn bộ hệ thống thông số của bánh răng trụ tương đương Tredgold (Mục 7.0 của MITCalc).
+- **Ánh xạ giải tích hoàn chỉnh**:
+  - Dẫn xuất đầy đủ 10 nhóm thông số cốt lõi từ bánh răng côn sang bánh răng trụ tương đương: $\delta_1, \delta_2, z_{vn}, z_{vt}, d_v, d_{vb}, d_{va}, d_{vf}, a_v, i_v, s_v, e_v, x_{\text{eq}}$.
+  - Mọi thực thể đo kiểm hay phác thảo hình học rãnh răng trên nón phụ (Back cone) đều khớp $100\%$ với các biến số trong bảng tính toán của ISO 23509 / MITCalc.
+

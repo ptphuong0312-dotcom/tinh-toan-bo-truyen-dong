@@ -1894,3 +1894,34 @@ ho_{f0} / \cos\gamma$.
      * **Layer `*_R0` (Đáy vuông sắc $R = 0$)**: Sườn thân khai ăn khớp kéo thẳng xuống đáy chân răng $r_{vf}$ tạo thành góc vuông sắc $90^\circ$ không bo tròn. Chuyên dụng cho Mastercam để lập trình phay CNC: CAM tự động tính toán đường chạy dao và bù bán kính dao phay ngón/dao phay cầu bất kỳ mà không bị cấn cung fillet.
    - Khắc phục triệt để lỗi tự giao cắt (Self-Intersections): Mọi đường bao rãnh răng đều đạt chuẩn Jordan khép kín với **0 điểm tự cắt (100% Zero-Self-Intersection)**.
    - Cặp rãnh răng Ngoài & Trong của Bánh 1 đồng tâm tuyệt đối tại $O_1(670, 0)$; Cặp rãnh răng Bánh 2 đồng tâm tuyệt đối tại $O_2(890, 0)$.
+
+---
+
+### Quy Tắc 79: Nguyên Tắc Tuyệt Đối Không Tham Khảo Tác Giả Việt Nam (Zero-VN-Citation Protocol) & Quy Trình Dẫn Xuất Bánh Răng Trụ Tương Đương Tredgold
+**Lệnh trực tiếp từ chủ sở hữu (`SirPhuong`)**:  
+*"tôi có nguyên tắc này bạn cần nhớ : tuyệt đối không tham khảo tài liệu từ các tác giả ở Việt Nam"*
+
+1. **Quy Chuẩn Tham Khảo Quốc Tế 100% (Zero-VN-Citation)**:
+   - Nghiêm cấm tuyệt đối mọi trích dẫn giáo trình, tài liệu tham khảo, tác giả hay công thức nguồn từ Việt Nam trong toàn bộ dự án, mã nguồn và thảo luận kỹ thuật.
+   - 100% các tiêu chuẩn, giải thuật và công thức bắt buộc phải tham chiếu từ:
+     * **Tiêu chuẩn quốc tế chính thức**: ISO 23509, ISO 6336, ISO 1122-1, DIN 3971, DIN 3965, AGMA 2005-D03, ANSI/AGMA, BS, JIS.
+     * **Tài liệu chuyên khảo kinh điển quốc tế**: Dudley's Gear Handbook (Dennis P. Townsend), Shigley's Mechanical Engineering Design, Buckingham's Analytical Mechanics of Gears, Faydor L. Litvin (Gear Geometry and Applied Theory), Niemann/Winter (Maschinenelemente).
+     * **Bản gốc MITCalc 1.74**: `Gear1_01.xlsb`, `Gear2_01.xlsb`, `Gear7_01.xlsb`.
+
+2. **Quy Trình Dẫn Xuất Bánh Răng Trụ Tương Đương (Tredgold Virtual Cylindrical Gear Derivation)**:
+   Từ tập hợp các thông số đầu vào của bánh răng côn ($z_1, z_2, m, \alpha, \beta, b, x_1, x_2, x_{t1}, x_{t2}, \Sigma$):
+   - **Góc nón chia**: $\tan\delta_1 = \frac{\sin\Sigma}{\frac{z_2}{z_1} + \cos\Sigma}, \quad \delta_2 = \Sigma - \delta_1$. Khi $\Sigma = 90^\circ$: $\tan\delta_1 = \frac{z_1}{z_2} = \frac{1}{i}, \tan\delta_2 = i$.
+   - **Số răng tương đương Tredgold**:
+     * Pháp diện: $z_{vn1} = \frac{z_1}{\cos\delta_1}, \quad z_{vn2} = \frac{z_2}{\cos\delta_2}$.
+     * Tiếp tuyến: $z_{vt1} = \frac{z_1}{\cos\delta_1 \cos^3\beta_m}, \quad z_{vt2} = \frac{z_2}{\cos\delta_2 \cos^3\beta_m}$.
+   - **Đường kính hình học tương đương**:
+     * Vòng chia: $d_{v1} = \frac{d_{m1}}{\cos\delta_1}, \quad d_{v2} = \frac{d_{m2}}{\cos\delta_2}$.
+     * Vòng cơ sở: $d_{vb1} = d_{v1} \cos\alpha_t, \quad d_{vb2} = d_{v2} \cos\alpha_t$.
+     * Vòng đỉnh: $d_{va1} = d_{v1} + 2 h_{a1}, \quad d_{va2} = d_{v2} + 2 h_{a2}$.
+     * Vòng đáy: $d_{vf1} = d_{v1} - 2 h_{f1}, \quad d_{vf2} = d_{v2} - 2 h_{f2}$.
+   - **Khoảng cách trục tương đương**: $a_v = \frac{d_{v1} + d_{v2}}{2}$.
+   - **Tỉ số truyền tương đương**: $i_v = \frac{z_{vn2}}{z_{vn1}} = i^2$ (với $\Sigma = 90^\circ$).
+   - **Chiều dày răng & Bề rộng rãnh tương đương**:
+     * Chiều dày răng: $s_v = m \left(\frac{\pi}{2} + 2 x \tan\alpha + x_t\right)$.
+     * Bề rộng rãnh răng: $e_v = \pi m - s_v = m \left(\frac{\pi}{2} - 2 x \tan\alpha - x_t\right)$.
+   - **Hệ số dịch chỉnh quy đổi tương đương CAD**: $x_{\text{eq}} = x + \frac{x_t}{2\tan\alpha}$.

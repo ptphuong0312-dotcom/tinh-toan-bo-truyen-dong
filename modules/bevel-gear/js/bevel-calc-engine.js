@@ -249,6 +249,35 @@ const BevelCalcEngine = {
         const dvfi2 = dvi2 - 2.0 * hfi2;
         const avi = (dvi1 + dvi2) * 0.5;
 
+        // 15b. Virtual Tooth Thickness & Slot Width (Tredgold: ISO 23509 / DIN 3971)
+        // Outer section (e)
+        const sve1 = sne1;
+        const sve2 = sne2;
+        const eve1 = Math.PI * men - sve1;
+        const eve2 = Math.PI * men - sve2;
+
+        // Mean section (m - Standard ISO/DIN)
+        const svm1 = sn1;
+        const svm2 = sn2;
+        const evm1 = Math.PI * mmn - svm1;
+        const evm2 = Math.PI * mmn - svm2;
+
+        // Inner section (i)
+        const svi1 = sni1;
+        const svi2 = sni2;
+        const evi1 = Math.PI * min_mod - svi1;
+        const evi2 = Math.PI * min_mod - svi2;
+
+        // Virtual Chordal Tooth Thickness & Chordal Height (Mean section)
+        const svc1 = dvm1 * Math.sin(svm1 / (dvm1 || 1.0));
+        const svc2 = dvm2 * Math.sin(svm2 / (dvm2 || 1.0));
+        const hvc1 = ha1 + 0.5 * dvm1 * (1.0 - Math.cos(svm1 / (dvm1 || 1.0)));
+        const hvc2 = ha2 + 0.5 * dvm2 * (1.0 - Math.cos(svm2 / (dvm2 || 1.0)));
+
+        // Single Equivalent Profile Shift for standard CAD without xt (x_eq = x + xt / (2 * tan_alfa))
+        const x_eq1 = x1 + xt1 / (2.0 * (tan_alfa || 1.0));
+        const x_eq2 = x2 + xt2 / (2.0 * (tan_alfa || 1.0));
+
         // 16. Analytical contact ratios (ISO 23509)
         const cos_A1 = Math.min(1.0, Math.max(0.0, dva1 !== 0 ? dvb1 / dva1 : 1.0));
         const cos_A2 = Math.min(1.0, Math.max(0.0, dva2 !== 0 ? dvb2 / dva2 : 1.0));
@@ -313,6 +342,11 @@ const BevelCalcEngine = {
             dvm1, dvm2, dva1, dva2, dvb1, dvb2, dvf1, dvf2, av, iv,
             dve1, dve2, dvae1, dvae2, dvbe1, dvbe2, dvfe1, dvfe2, ave,
             dvi1, dvi2, dvai1, dvai2, dvbi1, dvbi2, dvfi1, dvfi2, avi,
+            sve1, sve2, eve1, eve2,
+            svm1, svm2, evm1, evm2,
+            svi1, svi2, evi1, evi2,
+            svc1, svc2, hvc1, hvc2,
+            x_eq1, x_eq2,
             ea, eb, eg,
             apex1, apex2,
             sc1, sc2, hc1, hc2,
