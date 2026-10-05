@@ -354,6 +354,15 @@ class BevelGearUI {
         bindDXFSec16('btnExportDXFSec16Gear', 'gear');
         bindDXFSec16('btnExportDXFSec16Assembly', 'assembly');
 
+        const btnExportDXFSec16Unified = document.getElementById('btnExportDXFSec16Unified');
+        if (btnExportDXFSec16Unified) {
+            btnExportDXFSec16Unified.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (exportDXFSec16Dropdown) exportDXFSec16Dropdown.style.display = 'none';
+                this.exportUnifiedDXF();
+            });
+        }
+
         // Canvas 2D DXF Dropdown
         const btnExportDXFCanvasMenu = document.getElementById('btnExportDXFCanvasMenu');
         const exportDXFCanvasDropdown = document.getElementById('exportDXFCanvasDropdown');
@@ -380,6 +389,49 @@ class BevelGearUI {
         bindDXFCanvas('expDxfPinionCanvas', 'pinion');
         bindDXFCanvas('expDxfGearCanvas', 'gear');
         bindDXFCanvas('expDxfAssemblyCanvas', 'assembly');
+
+        // Unified DXF Export (Conjugate Mesh Pairs + Concentric CAM Slots + Technical Specs)
+        const expDxfUnifiedCanvas = document.getElementById('expDxfUnifiedCanvas');
+        if (expDxfUnifiedCanvas) {
+            expDxfUnifiedCanvas.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (exportDXFCanvasDropdown) exportDXFCanvasDropdown.style.display = 'none';
+                this.exportUnifiedDXF();
+            });
+        }
+
+        // 2D View Mode Selector (Axial ISO 23509 vs Dual Tredgold Virtual Mesh)
+        const btn2DViewAxial = document.getElementById('btn2DViewAxial');
+        const btn2DViewMesh = document.getElementById('btn2DViewMesh');
+        if (btn2DViewAxial && btn2DViewMesh) {
+            btn2DViewAxial.addEventListener('click', () => {
+                if (this.canvasController) this.canvasController.setViewMode('axial');
+                btn2DViewAxial.style.background = '#2563eb';
+                btn2DViewAxial.style.color = '#fff';
+                btn2DViewAxial.style.fontWeight = '700';
+                btn2DViewMesh.style.background = 'transparent';
+                btn2DViewMesh.style.color = 'var(--text-secondary)';
+                btn2DViewMesh.style.fontWeight = '600';
+                const vTitle = document.getElementById('visualizerTitle');
+                const vDesc = document.getElementById('visualizerDesc');
+                if (vTitle) vTitle.textContent = '📐 Mô Hình 2D Nón Bánh Răng Ăn Khớp & Biên Dạng Răng Có R Chân (ISO 23509)';
+                if (vDesc) vDesc.textContent = 'Mặt cắt trục bổ dọc ISO 23509 khép kín, kết hợp Biên dạng răng ăn khớp 2D Tredgold có bán kính lượn chân răng R chân = 0.38·mmn.';
+            });
+
+            btn2DViewMesh.addEventListener('click', () => {
+                if (this.canvasController) this.canvasController.setViewMode('tredgold_dual');
+                btn2DViewMesh.style.background = '#059669';
+                btn2DViewMesh.style.color = '#fff';
+                btn2DViewMesh.style.fontWeight = '700';
+                btn2DViewAxial.style.background = 'transparent';
+                btn2DViewAxial.style.color = 'var(--text-secondary)';
+                btn2DViewAxial.style.fontWeight = '600';
+                const vTitle = document.getElementById('visualizerTitle');
+                const vDesc = document.getElementById('visualizerDesc');
+                if (vTitle) vTitle.textContent = '⚙️ Mô Phỏng 2 Cặp Bánh Răng Tương Đương Mặt Ngoài (Re) & Mặt Trong (Ri) [Tredgold]';
+                if (vDesc) vDesc.textContent = 'Hai cặp bánh răng tương đương 5-7 răng ăn khớp liên hợp, dao động lắc đi lắc lại thể hiện chính xác chuyển động lăn không trượt và bán kính lượn chân răng R chân = 0.38·m.';
+            });
+        }
 
         // Fallback for direct DXF buttons if present
         const btnExportDXFCanvas = document.getElementById('btnExportDXFCanvas');
@@ -2107,6 +2159,18 @@ class BevelGearUI {
         g._hubOverrides = this.canvasController ? this.canvasController.hubOverrides : null;
         if (typeof BevelDxfExporter !== 'undefined') {
             BevelDxfExporter.downloadDXF(g, target, this.profileResolution || 6);
+        }
+    }
+
+    exportUnifiedDXF() {
+        const g = this.lastGeom || (typeof BevelCalcEngine !== 'undefined' ? BevelCalcEngine.calculate(this.inputs) : null);
+        if (!g) return;
+        g._hubOverrides = this.canvasController ? this.canvasController.hubOverrides : null;
+        const resLevel = this.canvasController ? this.canvasController.profileResolution : 6;
+        if (typeof BevelDxfExporter !== 'undefined' && BevelDxfExporter.downloadUnifiedTredgoldDXF) {
+            BevelDxfExporter.downloadUnifiedTredgoldDXF(g, resLevel);
+        } else {
+            alert('Mô-đun BevelDxfExporter chưa sẵn sàng.');
         }
     }
 

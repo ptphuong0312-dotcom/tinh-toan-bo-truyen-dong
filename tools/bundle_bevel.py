@@ -55,10 +55,10 @@ bundle = (
     + mat_clean + "\n\n"
     + engine_clean + "\n\n"
     + gen3d_code + "\n\n"
+    + dxf_code + "\n\n"
     + canvas_clean + "\n\n"
     + exp3d_code + "\n\n"
     + vis3d_code + "\n\n"
-    + dxf_code + "\n\n"
     + ui_content + "\n"
 )
 

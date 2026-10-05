@@ -21,6 +21,7 @@ class BevelGearCanvas {
         this.animDirection = 1; // 1: Thuận, -1: Nghịch
         this.isRunning = false;
         this.profileResolution = 6;
+        this.viewMode = 'axial'; // 'axial' (ISO 23509) or 'tredgold_dual' (Outer Re & Inner Ri meshing)
 
         // Layer visibility toggles
         this.showDimensions = true;
@@ -38,6 +39,15 @@ class BevelGearCanvas {
 
         this.initEvents();
         this.animate();
+    }
+
+    setViewMode(mode) {
+        this.viewMode = (mode === 'tredgold_dual') ? 'tredgold_dual' : 'axial';
+        this.panX = 0;
+        this.panY = 0;
+        this.zoom = 1.0;
+        this.render();
+        return this.viewMode;
     }
 
     setProfileResolution(level) {
@@ -376,6 +386,12 @@ class BevelGearCanvas {
 
         const g = this.geom;
         const bp = this._get3DMatchedBlankParams(g);
+
+        // View Mode: 'tredgold_dual' renders 2 pairs of virtual spur gears (Outer Re & Inner Ri) oscillating concurrently
+        if (this.viewMode === 'tredgold_dual') {
+            this.renderTredgoldDualPairs(ctx, bp, w, h);
+            return;
+        }
 
         // Split viewport layout:
         // Left Viewport (0 .. 730): 2D Axial Cross-Section (with Extended Hub & Full Tooth Root)
@@ -1083,6 +1099,354 @@ class BevelGearCanvas {
         ctx.fillText('■ Bánh bị dẫn 2', panelX + panelW - 12, footY + 36);
 
         ctx.restore();
+    }
+
+    /**
+     * Renders 2 Pairs of Tredgold Virtual Gears (Outer Re and Inner Ri) Meshing Concurrently
+     * Each pair features 5-7 teeth oscillating smoothly (lắc đi lắc lại) to demonstrate conjugate contact.
+     */
+    renderTredgoldDualPairs(ctx, bp, w, h) {
+        if (!ctx || !this.geom) return;
+        const g = this.geom;
+        const z1 = parseInt(g.z1) || 18;
+        const z2 = parseInt(g.z2) || 45;
+        const mmn = parseFloat(g.mmn) || 10.0;
+        const met = parseFloat(g.met) || (mmn * 1.0667);
+        const mit = parseFloat(g.mit) || (mmn * 0.7234);
+        const Re = parseFloat(bp.Re);
+        const Ri = parseFloat(bp.Ri);
+        const Rm = parseFloat(bp.Rm);
+        const b = parseFloat(bp.b);
+        const delta1 = bp.d1;
+        const delta2 = bp.d2;
+        const alfa = ((g.alfa_deg !== undefined ? g.alfa_deg : 20.0) * Math.PI) / 180.0;
+        const beta = ((g.beta_deg !== undefined ? g.beta_deg : 0.0) * Math.PI) / 180.0;
+        const isSpiral = Math.abs(beta) > 1e-4;
+
+        const hae1 = bp.hae1, hfe1 = bp.hfe1, hai1 = bp.hai1, hfi1 = bp.hfi1;
+        const hae2 = bp.hae2, hfe2 = bp.hfe2, hai2 = bp.hai2, hfi2 = bp.hfi2;
+        const sne1 = parseFloat(g.sne1) || (mmn * 1.84 * Re / Rm);
+        const sne2 = parseFloat(g.sne2) || (mmn * 1.30 * Re / Rm);
+        const sni1 = parseFloat(g.sni1) || (sne1 * Ri / Re);
+        const sni2 = parseFloat(g.sni2) || (sne2 * Ri / Re);
+
+        const resTable = (typeof BEVEL_PROFILE_RESOLUTIONS !== 'undefined') ? BEVEL_PROFILE_RESOLUTIONS : {
+            1: { ptsPerFlank: 6 }, 2: { ptsPerFlank: 8 }, 3: { ptsPerFlank: 10 }, 4: { ptsPerFlank: 12 },
+            5: { ptsPerFlank: 14 }, 6: { ptsPerFlank: 16 }, 7: { ptsPerFlank: 18 }, 8: { ptsPerFlank: 20 },
+            9: { ptsPerFlank: 24 }, 10: { ptsPerFlank: 28 }, 11: { ptsPerFlank: 32 }
+        };
+        const ptsPerFlank = (resTable[this.profileResolution] ? resTable[this.profileResolution].ptsPerFlank : 16);
+        const ptsFillet = Math.max(6, Math.round(ptsPerFlank * 0.4));
+
+        // Generate Slices for Outer (Re) and Inner (Ri)
+        const slice1_e = Bevel3DGenerator.generateSliceToothContour({
+            z: z1, mmn, Rm, R_s: Re, delta: delta1, alfa, beta, isSpiral,
+            ha_s: hae1, hf_s: hfe1, sn_s: sne1, ptsPerFlank, ptsFillet
+        });
+        const slice2_e = Bevel3DGenerator.generateSliceToothContour({
+            z: z2, mmn, Rm, R_s: Re, delta: delta2, alfa, beta, isSpiral,
+            ha_s: hae2, hf_s: hfe2, sn_s: sne2, ptsPerFlank, ptsFillet
+        });
+
+        const slice1_i = Bevel3DGenerator.generateSliceToothContour({
+            z: z1, mmn, Rm, R_s: Ri, delta: delta1, alfa, beta, isSpiral,
+            ha_s: hai1, hf_s: hfi1, sn_s: sni1, ptsPerFlank, ptsFillet
+        });
+        const slice2_i = Bevel3DGenerator.generateSliceToothContour({
+            z: z2, mmn, Rm, R_s: Ri, delta: delta2, alfa, beta, isSpiral,
+            ha_s: hai2, hf_s: hfi2, sn_s: sni2, ptsPerFlank, ptsFillet
+        });
+
+        // Oscillation motion: Lắc đi lắc lại
+        const maxOsc = 0.16; // ~9.2 degrees
+        const oscAngle1 = maxOsc * Math.sin(this.angle1);
+
+        // Layout: 2 equal panels
+        const panelGap = 14;
+        const panelW = Math.floor((w - 24 - panelGap) / 2);
+        const panelH = h - 24;
+        const p1X = 12;
+        const p1Y = 12;
+        const p2X = p1X + panelW + panelGap;
+        const p2Y = 12;
+
+        const renderSingleMeshPanel = (panelX, panelY, isOuter, slice1, slice2, mVal) => {
+            ctx.save();
+
+            // 1. Panel Box
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.88)';
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(panelX, panelY, panelW, panelH, 8);
+            else ctx.rect(panelX, panelY, panelW, panelH);
+            ctx.fill();
+            ctx.strokeStyle = isOuter ? '#0284c7' : '#059669';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 2. Header Box
+            const hdrH = 46;
+            ctx.fillStyle = isOuter ? '#0c4a6e' : '#064e3b';
+            ctx.beginPath();
+            if (ctx.roundRect) ctx.roundRect(panelX, panelY, panelW, hdrH, [8, 8, 0, 0]);
+            else ctx.rect(panelX, panelY, panelW, hdrH);
+            ctx.fill();
+
+            ctx.fillStyle = isOuter ? '#38bdf8' : '#34d399';
+            ctx.font = 'bold 12px system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(
+                isOuter ? `⚙️ CẶP 1: ĂN KHỚP MẶT NGOÀI (Outer Cone Re = ${Re.toFixed(1)} mm)`
+                        : `⚙️ CẶP 2: ĂN KHỚP MẶT TRONG (Inner Cone Ri = ${Ri.toFixed(1)} mm)`,
+                panelX + 12, panelY + 18
+            );
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10.5px Consolas, monospace';
+            const zv1Str = (z1 / Math.cos(delta1)).toFixed(1);
+            const zv2Str = (z2 / Math.cos(delta2)).toFixed(1);
+            ctx.fillText(
+                `m=${mVal.toFixed(3)} mm | z1=${z1} (zv1=${zv1Str}) | z2=${z2} (zv2=${zv2Str}) | δ1=${(delta1*180/Math.PI).toFixed(2)}° | δ2=${(delta2*180/Math.PI).toFixed(2)}°`,
+                panelX + 12, panelY + 36
+            );
+
+            // 3. Viewport Clip
+            const viewX = panelX + 2;
+            const viewY = panelY + hdrH + 2;
+            const viewW = panelW - 4;
+            const viewH = panelH - hdrH - 52;
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(viewX, viewY, viewW, viewH);
+            ctx.clip();
+
+            // Grid
+            ctx.strokeStyle = 'rgba(148, 163, 184, 0.05)';
+            ctx.lineWidth = 1.0;
+            ctx.beginPath();
+            for (let gx = viewX; gx < viewX + viewW; gx += 24) {
+                ctx.moveTo(gx, viewY);
+                ctx.lineTo(gx, viewY + viewH);
+            }
+            for (let gy = viewY; gy < viewY + viewH; gy += 24) {
+                ctx.moveTo(viewX, gy);
+                ctx.lineTo(viewX + viewW, gy);
+            }
+            ctx.stroke();
+
+            // Transform to Pitch Contact Point P(0, 0)
+            const pitchScreenX = viewX + viewW * 0.50 + this.panX;
+            const pitchScreenY = viewY + viewH * 0.50 + this.panY;
+            const pitchLinear = Math.PI * mVal;
+            const toothScale = Math.min((viewW * 0.68) / (3.15 * pitchLinear), (viewH * 0.65) / (4.2 * mVal)) * this.zoom;
+
+            ctx.translate(pitchScreenX, pitchScreenY);
+            ctx.scale(toothScale, toothScale);
+
+            const rv1 = slice1.rv, rva1 = slice1.rva, rvf1 = slice1.rvf;
+            const rv2 = slice2.rv, rva2 = slice2.rva, rvf2 = slice2.rvf;
+            const pPsi1 = (2.0 * Math.PI / z1) * slice1.cosD;
+            const pPsi2 = (2.0 * Math.PI / z2) * slice2.cosD;
+
+            // Pure conjugate rolling oscillation
+            const oscAngle2 = -oscAngle1 * (rv1 / rv2);
+            const phase1 = oscAngle1 / pPsi1;
+            const phase2 = oscAngle2 / pPsi2;
+
+            // Draw multi-tooth gear segment
+            const drawGearSector = (slice, isPinion, phase, fillColor, strokeColor, filletColor) => {
+                const rv = slice.rv;
+                const rvf = slice.rvf;
+                const cosD = slice.cosD;
+                const pPsi = isPinion ? pPsi1 : pPsi2;
+                const rimDepth = Math.max(mVal * 2.2, (slice.rva - slice.rvf) * 1.15);
+                const rInnerRim = Math.max(2.0, rvf - rimDepth);
+                const kMin = -3, kMax = 3;
+
+                const toPt = (r, psi) => {
+                    if (isPinion) {
+                        return { x: r * Math.sin(psi), y: rv - r * Math.cos(psi) };
+                    } else {
+                        return { x: r * Math.sin(psi), y: -rv + r * Math.cos(psi) };
+                    }
+                };
+
+                const contourPts = [];
+                const filletArcs = [];
+
+                for (let k = kMin; k <= kMax; k++) {
+                    const centerPsi = isPinion ? (k + phase) * pPsi : (k + 0.5 + phase) * pPsi;
+                    let curFillet = [];
+                    for (let idx = 0; idx < slice.toothContour.length; idx++) {
+                        if (k > kMin && idx === 0) continue;
+                        const tc = slice.toothContour[idx];
+                        const r = rv + tc.h;
+                        const psi = centerPsi + tc.theta * cosD;
+                        const pt = toPt(r, psi);
+                        contourPts.push(pt);
+
+                        if (tc.zone === 'fillet') {
+                            curFillet.push(pt);
+                        } else if (curFillet.length > 0) {
+                            filletArcs.push(curFillet);
+                            curFillet = [];
+                        }
+                    }
+                    if (curFillet.length > 0) filletArcs.push(curFillet);
+                }
+
+                const maxPsi = (isPinion ? (kMax + phase) : (kMax + 0.5 + phase)) * pPsi + slice.half_pitch * cosD;
+                const minPsi = (isPinion ? (kMin + phase) : (kMin + 0.5 + phase)) * pPsi - slice.half_pitch * cosD;
+                const fullPoly = [...contourPts];
+                const rimSteps = 24;
+                for (let s = 0; s <= rimSteps; s++) {
+                    const psi = maxPsi - (s / rimSteps) * (maxPsi - minPsi);
+                    fullPoly.push(toPt(rInnerRim, psi));
+                }
+
+                ctx.beginPath();
+                ctx.moveTo(fullPoly[0].x, fullPoly[0].y);
+                for (let i = 1; i < fullPoly.length; i++) ctx.lineTo(fullPoly[i].x, fullPoly[i].y);
+                ctx.closePath();
+                ctx.fillStyle = fillColor;
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(contourPts[0].x, contourPts[0].y);
+                for (let i = 1; i < contourPts.length; i++) ctx.lineTo(contourPts[i].x, contourPts[i].y);
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = 1.8 / toothScale;
+                ctx.stroke();
+
+                ctx.strokeStyle = filletColor;
+                ctx.lineWidth = 2.8 / toothScale;
+                for (const arc of filletArcs) {
+                    if (arc.length < 2) continue;
+                    ctx.beginPath();
+                    ctx.moveTo(arc[0].x, arc[0].y);
+                    for (let i = 1; i < arc.length; i++) ctx.lineTo(arc[i].x, arc[i].y);
+                    ctx.stroke();
+                }
+            };
+
+            // Draw Gear 2 (Top) and Pinion 1 (Bottom)
+            drawGearSector(slice2, false, phase2, 'rgba(234, 88, 12, 0.36)', '#fb923c', '#facc15');
+            drawGearSector(slice1, true, phase1, 'rgba(2, 132, 199, 0.40)', '#38bdf8', '#10b981');
+
+            // Reference Circles
+            ctx.save();
+            ctx.setLineDash([5 / toothScale, 4 / toothScale]);
+            ctx.lineWidth = 1.0 / toothScale;
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.38)';
+            ctx.beginPath();
+            ctx.arc(0, rv1, rva1, -Math.PI * 0.78, -Math.PI * 0.22);
+            ctx.stroke();
+            ctx.strokeStyle = 'rgba(251, 146, 60, 0.38)';
+            ctx.beginPath();
+            ctx.arc(0, -rv2, rva2, Math.PI * 0.22, Math.PI * 0.78);
+            ctx.stroke();
+
+            // Root circles
+            ctx.setLineDash([3 / toothScale, 3 / toothScale]);
+            ctx.lineWidth = 1.0 / toothScale;
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+            ctx.beginPath();
+            ctx.arc(0, rv1, rvf1, -Math.PI * 0.78, -Math.PI * 0.22);
+            ctx.stroke();
+            ctx.strokeStyle = 'rgba(251, 146, 60, 0.45)';
+            ctx.beginPath();
+            ctx.arc(0, -rv2, rvf2, Math.PI * 0.22, Math.PI * 0.78);
+            ctx.stroke();
+
+            // Pitch circles
+            ctx.setLineDash([10 / toothScale, 4 / toothScale, 2 / toothScale, 4 / toothScale]);
+            ctx.lineWidth = 1.4 / toothScale;
+            ctx.strokeStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(0, rv1, rv1, -Math.PI * 0.78, -Math.PI * 0.22);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(0, -rv2, rv2, Math.PI * 0.22, Math.PI * 0.78);
+            ctx.stroke();
+
+            // Line of Action
+            const alfa_t = slice1.alfa_t;
+            const loaLen = mVal * 2.4;
+            ctx.setLineDash([5 / toothScale, 3 / toothScale]);
+            ctx.strokeStyle = 'rgba(244, 63, 94, 0.8)';
+            ctx.lineWidth = 1.3 / toothScale;
+            ctx.beginPath();
+            ctx.moveTo(-loaLen * Math.cos(alfa_t), -loaLen * Math.sin(alfa_t));
+            ctx.lineTo(loaLen * Math.cos(alfa_t), loaLen * Math.sin(alfa_t));
+            ctx.stroke();
+            ctx.restore();
+
+            // Pitch Point P(0, 0)
+            ctx.fillStyle = '#facc15';
+            ctx.beginPath();
+            ctx.arc(0, 0, 3.6 / toothScale, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 1.2 / toothScale;
+            ctx.stroke();
+
+            // Root Fillet Callout on Pinion 1 Tooth 0
+            const fSol1 = slice1.fillet;
+            if (fSol1) {
+                const rCf = Math.hypot(fSol1.Cfx, fSol1.Cfy);
+                const psiCf = (phase1 * pPsi1) + Math.atan2(fSol1.Cfx, fSol1.Cfy);
+                const cfx = rCf * Math.sin(psiCf);
+                const cfy = rv1 - rCf * Math.cos(psiCf);
+
+                ctx.save();
+                ctx.setLineDash([2.5 / toothScale, 2.5 / toothScale]);
+                ctx.strokeStyle = '#10b981';
+                ctx.lineWidth = 1.2 / toothScale;
+                ctx.beginPath();
+                ctx.arc(cfx, cfy, fSol1.Rf, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = '#10b981';
+                ctx.beginPath();
+                ctx.arc(cfx, cfy, 2.2 / toothScale, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            ctx.restore(); // End viewport clip
+
+            // 4. Footer Bar
+            const footY = panelY + panelH - 48;
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+            ctx.fillRect(panelX + 2, footY, panelW - 4, 46);
+            ctx.strokeStyle = 'rgba(51, 65, 85, 0.8)';
+            ctx.lineWidth = 1.0;
+            ctx.beginPath();
+            ctx.moveTo(panelX + 2, footY);
+            ctx.lineTo(panelX + panelW - 2, footY);
+            ctx.stroke();
+
+            const rf1Val = slice1.fillet ? slice1.fillet.Rf : (0.38 * mVal);
+            const rf2Val = slice2.fillet ? slice2.fillet.Rf : (0.38 * mVal);
+
+            ctx.font = 'bold 10px Consolas, monospace';
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#10b981';
+            ctx.fillText(`● R chân Bánh 1: ${rf1Val.toFixed(2)} mm (0.38·m)`, panelX + 10, footY + 16);
+            ctx.fillStyle = '#facc15';
+            ctx.fillText(`● R chân Bánh 2: ${rf2Val.toFixed(2)} mm | Cung đáy rãnh`, panelX + 10, footY + 32);
+
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillText('■ Bánh dẫn 1', panelX + panelW - 10, footY + 16);
+            ctx.fillStyle = '#fb923c';
+            ctx.fillText('■ Bánh bị dẫn 2', panelX + panelW - 10, footY + 32);
+
+            ctx.restore();
+        };
+
+        // Render Left Panel (Outer Re) and Right Panel (Inner Ri)
+        renderSingleMeshPanel(p1X, p1Y, true, slice1_e, slice2_e, met);
+        renderSingleMeshPanel(p2X, p2Y, false, slice1_i, slice2_i, mit);
     }
 
     drawCadDimensions(ctx, d) {

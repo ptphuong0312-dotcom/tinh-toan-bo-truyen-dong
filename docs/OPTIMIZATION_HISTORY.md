@@ -3270,3 +3270,49 @@ ho_{f0}$.
      - `deep_line_by_line_bevel_audit.py`: 115/115 ô tính PASS 100% với $\Delta = 0.000000$ so với bản gốc MITCalc 1.74 Excel COM.
      - Playwright browser test (`verify_bevel_sec7_and_sec17.py`): 100% PASS, Section 17 mặc định thu gọn, Section 7 mở rộng mượt mà và hiển thị đầy đủ 3 mặt cắt.
      - Đóng gói single bundle: `bevel-engine.bundle.js` (371,506 ký tự) sẵn sàng chạy 100% offline CORS-free.
+
+
+## 2026-10-05 - Quy Tắc 77: Mô Phỏng 2D Cặp Bánh Răng Tương Đương Ngoài - Trong (Tredgold Re & Ri) Dao Động Ăn Khớp & Xuất Bản Vẽ DXF Tổng Hợp Đồng Tâm Phục Vụ CAM Phay Rãnh Răng (Mastercam / SolidWorks Loft Cut)
+- **Yêu cầu người dùng (SirPhuong)**:
+  1. Trong phần mô phỏng 2D CAD (Tab 2 Canvas của Bevel Gear Web App):
+     - Dựng 2 cặp bánh răng tương đương Tredgold ăn khớp với nhau (mỗi bánh dựng cụm 5–7 răng do số răng ảo $z_v$ là số thực không nguyên).
+     - Hai cặp bánh răng này tương ứng với:
+       * Cặp 1: Mặt ngoài (Outer Cone $R_e$, mô đun $m_{et}$).
+       * Cặp 2: Mặt trong (Inner Cone $R_i$, mô đun $m_{it}$).
+     - Cặp bánh răng sẽ **lắc đi lắc lại** thể hiện chuyển động lăn liên hợp không trượt.
+  2. Gộp "Xuất Cặp Ăn Khớp 2D (5–7 Răng)" và "Xuất Bộ Biên Dạng RÃNH RĂNG Dựng Hình & Gia Công CAM (Slot Profiles)" thành **1 BẢN DXF DUY NHẤT**:
+     - Cặp rãnh Bánh Dẫn 1 (Ngoài $R_e$ & Trong $R_i$) phải xuất **ĐẶT ĐỒNG TÂM** (Concentric).
+     - Cặp rãnh Bánh Bị Dẫn 2 (Ngoài $R_e$ & Trong $R_i$) phải xuất **ĐẶT ĐỒNG TÂM** (Concentric).
+     - Biên dạng rãnh răng phải **căn giữa đối xứng hoàn hảo qua trục Y** (hoặc trục đứng $X = X_{\text{slot}}$).
+     - File DXF phải có đầy đủ thông tin **góc nón chia $\delta_1, \delta_2$**, $\delta_a, \delta_f$, mô đun và các thông số dựng hình/chế tạo để có thể nạp thẳng vào Mastercam / SolidWorks thực hiện lệnh `Loft Cut` phay rãnh răng bánh răng côn.
+- **Triển khai kỹ thuật & Kết quả**:
+  1. **Nâng cấp động cơ mô phỏng 2D Canvas (`bevel-canvas.js`)**:
+     - Bổ sung thuộc tính `this.viewMode = 'axial'` (mặc định) và `'tredgold_dual'`.
+     - Bộ chuyển đổi chế độ 2D Segmented Control trên Toolbar:
+       * `[ 📐 Mặt Cắt Trục (ISO 23509) ]`: Chế độ mặt cắt trục kỹ thuật bổ dọc + Inset biên dạng răng.
+       * `[ ⚙️ Ăn Khớp Ảo Ngoài & Trong (Tredgold) ]`: Chế độ mô phỏng song song 2 cặp bánh răng ảo Ngoài & Trong.
+     - Phát triển thuật toán dao động điều hòa lăn không trượt (Harmonic Conjugate Oscillation):
+       $$\theta_{\text{osc}} = \theta_{\max} \cdot \sin(\text{this.angle1}), \quad \theta_{\max} = 0.16\text{ rad} \approx 9.2^\circ$$
+       $$\theta_{v2} = -\theta_{\text{osc}} \cdot \frac{r_{v1}}{r_{v2}}$$
+       Do bước cung chia $\pi m_t$ của 2 bánh luôn bằng nhau tuyệt đối, độ dịch chuyển cung lăn tại điểm ăn khớp $P(0, 0)$ của Bánh 1 và Bánh 2 trùng khít đến $1.77 \times 10^{-15}\text{ mm}$ (Zero Slip).
+     - Hiển thị đầy đủ biên dạng thân khai, cung tròn chân răng tiếp tuyến $C^1$ ($R = \rho_{f0} = 0.38\cdot m$), vòng chia (amber dash-dot), vòng đáy (green dashed), vòng đỉnh, đường ăn khớp (line of action) và điểm ăn khớp $P(0, 0)$.
+  2. **Động cơ xuất DXF Tổng Hợp Chuẩn Release 12 AC1009 (`bevel-dxf-exporter.js`)**:
+     - Phát triển giải thuật tạo biên dạng **RÃNH RĂNG KHÉP KÍN (Closed Tooth Space Loop)** đối xứng trục đứng:
+       * Đường sườn thân khai bên trái và bên phải giải tích chính xác từ $r_a$ xuống $r_{\text{start}}$.
+       * Cung lượn dao cắt chân răng bán kính $R = 0.38\cdot m$ tiếp tuyến $C^1$ với sườn răng và vòng đáy $r_{vf}$.
+       * Đáy rãnh theo cung tròn $r_{vf}$ nối mượt mà giữa 2 góc lượn chân răng.
+       * Miệng rãnh đỉnh khép kín theo cung tròn bán kính $r_{va}$, tạo thành một đường bao POLYLINE khép kín (flag 70 = 1) hoàn chỉnh, sẵn sàng cho lệnh `Loft Cut` trong CAD/CAM.
+     - Cấu trúc layout 5 cụm kỹ thuật trong 1 file DXF duy nhất:
+       * **Cụm 1**: Cặp ăn khớp 2D mặt ngoài ($R_e$, $m_{et}$, 5–7 răng).
+       * **Cụm 2**: Cặp ăn khớp 2D mặt trong ($R_i$, $m_{it}$, 5–7 răng).
+       * **Cụm 3**: Cặp rãnh răng **ĐỒNG TÂM** Bánh Dẫn 1 (Outer & Inner Slots share common center $O_{v1}(X_3, 0)$) căn giữa trục đứng.
+       * **Cụm 4**: Cặp rãnh răng **ĐỒNG TÂM** Bánh Bị Dẫn 2 (Outer & Inner Slots share common center $O_{v2}(X_4, 0)$) căn giữa trục đứng.
+       * **Cụm 5**: Bảng thông số chế tạo Title Block (MFG_TABLE) kèm góc nón chia $\delta_1, \delta_2$, $\delta_a, \delta_f$, mô đun 3 mặt cắt, và hướng dẫn lofting Mastercam.
+     - Hệ thống 16 Layers chuyên dụng: `MESH_OUTER_PINION`, `MESH_OUTER_GEAR`, `MESH_INNER_PINION`, `MESH_INNER_GEAR`, `SLOT_PINION_OUTER`, `SLOT_PINION_INNER`, `SLOT_GEAR_OUTER`, `SLOT_GEAR_INNER`, `PITCH_CIRCLES`, `ROOT_CIRCLES`, `CENTER_AXES`, `LINE_OF_ACTION`, `MFG_TABLE`, `DIMENSIONS`.
+  3. **Tích hợp giao diện UI & Đóng gói bundle**:
+     - Tích hợp nút `💎 Xuất DXF Tổng Hợp (Ăn Khớp 2D + Rãnh Đồng Tâm CAM)` vào cả menu Canvas Tab 2 và Section 16.0 Tab 1.
+     - Đóng gói single bundle: `bevel-engine.bundle.js` (415,175 ký tự), chạy 100% offline, zero-CORS.
+  4. **Kiểm định chất lượng toàn diện**:
+     - Kiểm thử Playwright tự động (`tests/test_bevel_dual_tredgold.py`): **100% PASS, 0 lỗi JavaScript Console**.
+     - Kiểm định file DXF tải về bằng thư viện Python `ezdxf`: Đọc thành công 55 thực thể modelspace trên toàn bộ 16 layers.
+     - Kiểm định Live Audit đối chiếu với Excel COM MITCalc 1.74: **115/115 ô tính PASS 100.0% với $\Delta = 0.000000$**.

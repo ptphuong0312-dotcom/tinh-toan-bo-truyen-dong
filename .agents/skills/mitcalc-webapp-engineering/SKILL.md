@@ -1774,3 +1774,40 @@ ho_{f0}$.
    - Màn hình khởi động chỉ giữ mở sẵn 2 phân mục kỹ thuật cốt lõi: **Mục 4.0 (Thiết kế hình học)** và **Mục 5.0 (Kích thước chi tiết DIN 3975)**.
    - **Section 19.0 (CAD DXF & DXFTables)**: Tinh giản chỉ còn **Dòng 19.1 (`Scale`)** và **Dòng 19.2 (`BOM`)** cùng 5 nút xuất bản vẽ chuyên dụng, triệt tiêu hoàn toàn sự trùng lặp dữ liệu.
 
+---
+
+### Quy Tắc 77: Quy Chuẩn Mô Phỏng 2D Cặp Bánh Răng Tương Đương Ngoài - Trong (Tredgold Re & Ri) Dao Động Ăn Khớp & Xuất Bản Vẽ DXF Tổng Hợp Đồng Tâm Phục Vụ CAM Phay Rãnh Răng (Mastercam / SolidWorks Loft Cut)
+**Ngày áp dụng**: 05/10/2026  
+**Module**: Bộ truyền Bánh Răng Côn (`modules/bevel-gear/`)  
+**Bối cảnh**: Người dùng (`SirPhuong`) yêu cầu trong mô phỏng 2D CAD dựng 2 cặp bánh răng tương đương Tredgold ăn khớp liên hợp (5–7 răng mỗi bánh) lắc đi lắc lại thể hiện chính xác chuyển động lăn không trượt cho cả Mặt Ngoài ($R_e$) và Mặt Trong ($R_i$). Đồng thời gộp toàn bộ cặp ăn khớp 2D và biên dạng rãnh răng (slot profiles) gia công CAM vào **1 bản vẽ DXF duy nhất**, trong đó cặp rãnh răng Bánh Dẫn 1 và Bánh Bị Dẫn 2 phải xuất **đặt đồng tâm** (concentric), căn giữa trục đối xứng đứng $Y$, kèm góc nón chia $\delta_1, \delta_2$ và thông số dựng hình lofting cho SolidWorks / Mastercam.
+
+1. **Quy Chuẩn Mô Phỏng 2D Dual Tredgold Virtual Mesh (2 Cặp Ăn Khớp Ngoài & Trong)**:
+   - Tích hợp 2 chế độ hiển thị 2D trên thanh điều khiển phân đoạn (Segmented Control):
+     * `[ 📐 Mặt Cắt Trục (ISO 23509) ]`: Bản vẽ mặt cắt trục bổ dọc kỹ thuật kèm Inset biên dạng ăn khớp.
+     * `[ ⚙️ Ăn Khớp Ảo Ngoài & Trong (Tredgold) ]`: Hiển thị song song 2 bảng mô phỏng: Cặp Mặt Ngoài ($R_e$, $m_{et}$) bên trái và Cặp Mặt Trong ($R_i$, $m_{it}$) bên phải.
+   - **Giải thuật dao động điều hòa lăn liên hợp không trượt (Harmonic Conjugate Oscillation)**:
+     $$\theta_{\text{osc}} = \theta_{\max} \cdot \sin(\text{this.angle1}), \quad \theta_{\max} = 0.16\text{ rad} \approx 9.2^\circ$$
+     $$\theta_{v2} = -\theta_{\text{osc}} \cdot \frac{r_{v1}}{r_{v2}}$$
+     Bước cung chia $\pi m_t$ của Bánh 1 và Bánh 2 trùng khớp tuyệt đối, độ trượt tiếp xúc tại điểm chia $P(0, 0)$ bằng 0 ($\Delta = 1.77 \times 10^{-15}\text{ mm}$).
+   - Đầy đủ các đường hình học: Thân khai sườn răng, cung lượn chân răng $R = \rho_{f0} = 0.38\cdot m$ (xanh ngọc lục bảo `#10b981`), vòng chia (vàng hổ phách `#facc15`), vòng chân (xanh lá cây nét đứt), vòng đỉnh, đường ăn khớp (hồng đỏ `#f43f5e`), điểm ăn khớp $P(0, 0)$ và vòng tròn minh họa tâm bán kính dao cắt $R_{\text{chân}}$ tại răng số 0.
+
+2. **Quy Chuẩn Biên Dạng Rãnh Răng Khép Kín & Bố Cục Xuất DXF Tổng Hợp Đồng Tâm (CAM Tooth Slot Lofting)**:
+   - **Bản chất gia công phay CNC bánh răng côn**: Dao phay ngón hoặc dao phay cầu phay hết **khoang rãnh răng (tooth slot / space)** giữa 2 thân răng, không phải phay khối răng.
+   - **Giải thuật đường bao rãnh răng khép kín (Closed Tooth Space Loop)**:
+     * Căn giữa đối xứng trục đứng: Tâm cung chia đặt tại $(X_{\text{slot}}, 0)$, rãnh hướng thẳng đứng lên trục $+Y$.
+     * Sườn trái và sườn phải là thân khai giải tích chuẩn xác từ vòng đỉnh $r_{va}$ xuống điểm bắt đầu góc lượn $r_t$.
+     * Cung tròn chân răng bán kính $R = 0.38\cdot m$ tiếp tuyến trơn tru $C^1$ với thân khai và cung tròn đáy rãnh $r_{vf}$.
+     * Cung đỉnh tại $r_{va}$ khép kín toàn bộ đường bao thành 1 đường POLYLINE khép kín duy nhất (`70 = 1`).
+   - **Quy tắc ĐỒNG TÂM (Concentric Placement Protocol)**:
+     * Cặp rãnh Bánh Dẫn 1 (Ngoài $R_e$ & Trong $R_i$) cùng chia sẻ tâm ảo chung $O_{v1}(X_3, 0)$ và trục đứng $X = X_3$.
+     * Cặp rãnh Bánh Bị Dẫn 2 (Ngoài $R_e$ & Trong $R_i$) cùng chia sẻ tâm ảo chung $O_{v2}(X_4, 0)$ và trục đứng $X = X_4$.
+     * Nhờ đặt đồng tâm và cùng trục đối xứng, kỹ sư chỉ việc nạp file DXF vào SolidWorks hoặc Mastercam, đặt 2 mặt phác thảo tại khoảng cách $\Delta Z = b \cdot \cos\delta$ (hoặc xoay theo góc nón chia $\delta$), dùng lệnh `Loft Cut` là tạo thành rãnh răng 3D chuẩn xác 100% không bị vặn xoắn.
+   - **Bố cục 5 Cụm kỹ thuật trong 1 file DXF Release 12 AC1009**:
+     * Cụm 1: Cặp ăn khớp 2D mặt ngoài ($R_e$, $m_{et}$, 5–7 răng).
+     * Cụm 2: Cặp ăn khớp 2D mặt trong ($R_i$, $m_{it}$, 5–7 răng).
+     * Cụm 3: Cặp rãnh răng ĐỒNG TÂM Bánh Dẫn 1 (Pinion 1 Slots Concentric).
+     * Cụm 4: Cặp rãnh răng ĐỒNG TÂM Bánh Bị Dẫn 2 (Gear 2 Slots Concentric).
+     * Cụm 5: Bảng thông số chế tạo Title Block (MFG_TABLE) kèm góc nón chia $\delta_1, \delta_2$, $\delta_a, \delta_f$, mô đun 3 mặt cắt, và hướng dẫn lofting Mastercam.
+   - Hệ thống 16 Layers chuyên dụng phân định rạch ròi từng đối tượng đồ họa.
+
+
