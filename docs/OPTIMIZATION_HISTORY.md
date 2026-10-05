@@ -3244,3 +3244,29 @@ ho_{f0}$.
      - Kiểm thử Playwright `verify_bevel_handbook.py` xác nhận 100% các ô chọn, ký hiệu, và Section 17.0 hiển thị hoàn hảo.
 
 
+
+## 2026-10-05 - Quy Tắc 76: Nâng Cấp Mục 7.0 Đầy Đủ 3 Mặt Cắt (Ngoài / Trung Bình / Trong) Cho Bánh Răng Trụ Tương Đương Tredgold & Thiết Lập Mục 17.0 Cẩm Nang Mặc Định Thu Gọn (Collapsed)
+- **Yêu cầu người dùng (SirPhuong)**:
+  1. Trong Mục 7.0 (Bánh Răng Trụ Tương Đương - Tredgold): Tính toán và hiển thị đầy đủ cả 3 mặt cắt nón: Mô đun và kích thước hình học bánh răng ảo cho Mặt ngoài (Outer - e), Mặt trung bình (Mean - m), và Mặt trong (Inner - i).
+  2. Master Block 4 (Cẩm Nang & Hướng Dẫn Kỹ Thuật Chuyên Sâu Bánh Răng Côn - Mục 17.0) mặc định ở trạng thái ẩn (thu gọn/collapsed).
+- **Triển khai kỹ thuật & Kết quả**:
+  1. **Nâng cấp động cơ tính toán `bevel-calc-engine.js`**:
+     - Bổ sung tính toán bánh răng trụ ảo tại Mặt ngoài ($e$): $d_{ve1}, d_{ve2}, d_{vae1}, d_{vae2}, d_{vbe1}, d_{vbe2}, d_{vfe1}, d_{vfe2}, a_{ve}$.
+     - Bổ sung tính toán bánh răng trụ ảo tại Mặt trong ($i$): $d_{vi1}, d_{vi2}, d_{vai1}, d_{vai2}, d_{vbi1}, d_{vbi2}, d_{vfi1}, d_{vfi2}, a_{vi}$.
+     - Bảo toàn 100% các biến chuẩn mặt trung bình ($m$): $d_{vm1}, d_{vm2}, d_{va1}, d_{va2}, d_{vb1}, d_{vb2}, d_{vf1}, d_{vf2}, a_v, i_v$.
+  2. **Nâng cấp giao diện hiển thị `index.html` & `bevel-ui.js`**:
+     - Cấu trúc Section 7.0 thành 7 nhóm thông số chuyên nghiệp với các thanh tiêu đề phân nhóm (Header bars) nổi bật:
+       * Nhóm I: Số răng ảo & Tỉ số truyền ảo ($z_{vn}, z_v, i_v$).
+       * Nhóm II: Mô đun ảo tiếp tuyến & pháp tuyến ($m_t, m_n$) tại Ngoài, TB, Trong.
+       * Nhóm III: Đường kính chia ảo ($d_{ve}, d_{vm}, d_{vi}$).
+       * Nhóm IV: Đường kính đỉnh ảo ($d_{vae}, d_{va}, d_{vai}$).
+       * Nhóm V: Đường kính cơ sở ảo ($d_{vbe}, d_{vb}, d_{vbi}$).
+       * Nhóm VI: Đường kính đáy ảo ($d_{vfe}, d_{vf}, d_{vfi}$).
+       * Nhóm VII: Khoảng cách trục ảo ($a_{ve}, a_v, a_{vi}$).
+     - Nhấn mạnh thông số mặt trung bình là chuẩn ISO/DIN bằng viền vàng hổ phách `.highlight-key-param`.
+     - Chuyển Section 17.0 sang trạng thái mặc định thu gọn: `<div class="calc-section collapsed">` và biểu tượng `▶`.
+     - Cập nhật Mục 17.5 hướng dẫn chi tiết ứng dụng xưởng của từng mặt cắt (Ngoài: tiện phôi & đo bao; TB: tính bền & ăn khớp; Trong: kiểm tra thắt đáy).
+  3. **Kiểm định chất lượng & Đóng gói**:
+     - `deep_line_by_line_bevel_audit.py`: 115/115 ô tính PASS 100% với $\Delta = 0.000000$ so với bản gốc MITCalc 1.74 Excel COM.
+     - Playwright browser test (`verify_bevel_sec7_and_sec17.py`): 100% PASS, Section 17 mặc định thu gọn, Section 7 mở rộng mượt mà và hiển thị đầy đủ 3 mặt cắt.
+     - Đóng gói single bundle: `bevel-engine.bundle.js` (371,506 ký tự) sẵn sàng chạy 100% offline CORS-free.

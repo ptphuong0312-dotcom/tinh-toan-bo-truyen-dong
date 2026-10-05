@@ -1858,7 +1858,9 @@ const BevelCalcEngine = {
         const zv2 = cos_beta !== 0 ? zvn2 / Math.pow(cos_beta, 3) : zvn2;
         const zvt1 = zv1;
         const zvt2 = zv2;
+        const iv = zvt1 !== 0 ? zvt2 / zvt1 : 1.0;
 
+        // Mean cone section (Middle - ISO 23509 / MITCalc standard)
         const dvm1 = cos_delta1 !== 0 ? dm1 / cos_delta1 : dm1;
         const dvm2 = cos_delta2 !== 0 ? dm2 / cos_delta2 : dm2;
         const dva1 = dvm1 + 2.0 * ha1;
@@ -1868,7 +1870,28 @@ const BevelCalcEngine = {
         const dvf1 = dvm1 - 2.0 * hf1;
         const dvf2 = dvm2 - 2.0 * hf2;
         const av = (dvm1 + dvm2) * 0.5;
-        const iv = zvt1 !== 0 ? zvt2 / zvt1 : 1.0;
+
+        // Outer cone section (Outer - e)
+        const dve1 = cos_delta1 !== 0 ? de1 / cos_delta1 : de1;
+        const dve2 = cos_delta2 !== 0 ? de2 / cos_delta2 : de2;
+        const dvae1 = dve1 + 2.0 * hae1;
+        const dvae2 = dve2 + 2.0 * hae2;
+        const dvbe1 = dve1 * Math.cos(alfa);
+        const dvbe2 = dve2 * Math.cos(alfa);
+        const dvfe1 = dve1 - 2.0 * hfe1;
+        const dvfe2 = dve2 - 2.0 * hfe2;
+        const ave = (dve1 + dve2) * 0.5;
+
+        // Inner cone section (Inner - i)
+        const dvi1 = cos_delta1 !== 0 ? di1 / cos_delta1 : di1;
+        const dvi2 = cos_delta2 !== 0 ? di2 / cos_delta2 : di2;
+        const dvai1 = dvi1 + 2.0 * hai1;
+        const dvai2 = dvi2 + 2.0 * hai2;
+        const dvbi1 = dvi1 * Math.cos(alfa);
+        const dvbi2 = dvi2 * Math.cos(alfa);
+        const dvfi1 = dvi1 - 2.0 * hfi1;
+        const dvfi2 = dvi2 - 2.0 * hfi2;
+        const avi = (dvi1 + dvi2) * 0.5;
 
         // 16. Analytical contact ratios (ISO 23509)
         const cos_A1 = Math.min(1.0, Math.max(0.0, dva1 !== 0 ? dvb1 / dva1 : 1.0));
@@ -1932,6 +1955,8 @@ const BevelCalcEngine = {
             sae1, sae2, sa1, sa2, sai1, sai2, sae1_star, sae2_star,
             zvt1, zvt2, zvn1, zvn2, zv1, zv2,
             dvm1, dvm2, dva1, dva2, dvb1, dvb2, dvf1, dvf2, av, iv,
+            dve1, dve2, dvae1, dvae2, dvbe1, dvbe2, dvfe1, dvfe2, ave,
+            dvi1, dvi2, dvai1, dvai2, dvbi1, dvbi2, dvfi1, dvfi2, avi,
             ea, eb, eg,
             apex1, apex2,
             sc1, sc2, hc1, hc2,
@@ -8242,16 +8267,52 @@ class BevelGearUI {
         set('out_zvn2', g.zvn2);
         set('out_zv1', g.zv1);
         set('out_zv2', g.zv2);
+        set4('out_iv', g.iv);
+
+        // Virtual modules (Transverse & Normal)
+        set4('out_v_met', g.met);
+        set4('out_v_men', g.men);
+        set4('out_v_mmt', g.mmt);
+        set4('out_v_mmn', g.mmn);
+        set4('out_v_mit', g.mit);
+        set4('out_v_min', g.min_mod);
+
+        // Virtual pitch diameters (Outer, Mean, Inner)
+        set('out_dve1', g.dve1);
+        set('out_dve2', g.dve2);
         set('out_dvm1', g.dvm1);
         set('out_dvm2', g.dvm2);
+        set('out_dvi1', g.dvi1);
+        set('out_dvi2', g.dvi2);
+
+        // Virtual tip diameters (Outer, Mean, Inner)
+        set('out_dvae1', g.dvae1);
+        set('out_dvae2', g.dvae2);
         set('out_dva1', g.dva1);
         set('out_dva2', g.dva2);
+        set('out_dvai1', g.dvai1);
+        set('out_dvai2', g.dvai2);
+
+        // Virtual base diameters (Outer, Mean, Inner)
+        set('out_dvbe1', g.dvbe1);
+        set('out_dvbe2', g.dvbe2);
         set('out_dvb1', g.dvb1);
         set('out_dvb2', g.dvb2);
+        set('out_dvbi1', g.dvbi1);
+        set('out_dvbi2', g.dvbi2);
+
+        // Virtual root diameters (Outer, Mean, Inner)
+        set('out_dvfe1', g.dvfe1);
+        set('out_dvfe2', g.dvfe2);
         set('out_dvf1', g.dvf1);
         set('out_dvf2', g.dvf2);
+        set('out_dvfi1', g.dvfi1);
+        set('out_dvfi2', g.dvfi2);
+
+        // Virtual center distances (Outer, Mean, Inner)
+        set('out_ave', g.ave);
         set('out_av', g.av);
-        set4('out_iv', g.iv);
+        set('out_avi', g.avi);
 
         // Section 8.0: Qualitative indexes
         set4('out_ea', g.ea);

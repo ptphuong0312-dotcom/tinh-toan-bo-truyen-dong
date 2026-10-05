@@ -1500,16 +1500,52 @@ class BevelGearUI {
         set('out_zvn2', g.zvn2);
         set('out_zv1', g.zv1);
         set('out_zv2', g.zv2);
+        set4('out_iv', g.iv);
+
+        // Virtual modules (Transverse & Normal)
+        set4('out_v_met', g.met);
+        set4('out_v_men', g.men);
+        set4('out_v_mmt', g.mmt);
+        set4('out_v_mmn', g.mmn);
+        set4('out_v_mit', g.mit);
+        set4('out_v_min', g.min_mod);
+
+        // Virtual pitch diameters (Outer, Mean, Inner)
+        set('out_dve1', g.dve1);
+        set('out_dve2', g.dve2);
         set('out_dvm1', g.dvm1);
         set('out_dvm2', g.dvm2);
+        set('out_dvi1', g.dvi1);
+        set('out_dvi2', g.dvi2);
+
+        // Virtual tip diameters (Outer, Mean, Inner)
+        set('out_dvae1', g.dvae1);
+        set('out_dvae2', g.dvae2);
         set('out_dva1', g.dva1);
         set('out_dva2', g.dva2);
+        set('out_dvai1', g.dvai1);
+        set('out_dvai2', g.dvai2);
+
+        // Virtual base diameters (Outer, Mean, Inner)
+        set('out_dvbe1', g.dvbe1);
+        set('out_dvbe2', g.dvbe2);
         set('out_dvb1', g.dvb1);
         set('out_dvb2', g.dvb2);
+        set('out_dvbi1', g.dvbi1);
+        set('out_dvbi2', g.dvbi2);
+
+        // Virtual root diameters (Outer, Mean, Inner)
+        set('out_dvfe1', g.dvfe1);
+        set('out_dvfe2', g.dvfe2);
         set('out_dvf1', g.dvf1);
         set('out_dvf2', g.dvf2);
+        set('out_dvfi1', g.dvfi1);
+        set('out_dvfi2', g.dvfi2);
+
+        // Virtual center distances (Outer, Mean, Inner)
+        set('out_ave', g.ave);
         set('out_av', g.av);
-        set4('out_iv', g.iv);
+        set('out_avi', g.avi);
 
         // Section 8.0: Qualitative indexes
         set4('out_ea', g.ea);
