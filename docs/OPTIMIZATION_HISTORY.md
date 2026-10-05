@@ -3220,3 +3220,27 @@ ho_{f0}$.
        * Bánh vít 2: Dựng chuẩn mực theo **phương trình bao hình tiếp xúc động học Litvin** ($\mathbf{n}_1 \cdot \mathbf{v}^{(12)} = 0 \implies x_1 = \frac{u(u\cos\Phi - a + i p)}{N_{0y}}$), giải nghiệm giải tích tiếp xúc khép kín của họ mặt xoắn ốc Ác-si-mét, tạo ra các sườn răng liên hợp chuẩn xác tuyệt đối ($\Delta = 0.000000\text{ mm}$), tự động mở rộng rãnh răng theo bề rộng $z$ triệt tiêu hoàn toàn hiện tượng cọ sát (undercut/gouging) khi ăn khớp.
        * Các định dạng xuất 3D (STEP / IGES / STL) nạp vào Mastercam/SolidWorks gia công CNC 5 trục đều bảo toàn 100% bề mặt liên hợp ZA này.
 
+## 2026-10-05 - Quy Tắc 75: Thiết Lập Mặc Định Góc Pháp (αn) & Mô Đun Ngang Ngoài (met) Cho Bánh Răng Côn; Tích Hợp Mục 17.0 Cẩm Nang Kỹ Thuật Toàn Diện (ISO 23509 / DIN 3965 / Tredgold)
+- **Yêu cầu người dùng (SirPhuong)**:
+  1. Thêm một mục ở dưới cùng giải thích toàn diện:
+     - Phần 1: Khe hở cạnh răng (Backlash) & Lắp ghép (Dòng 4.11 – 4.14), phân tích kỹ lưỡng về $j_r$ so với $\Delta A_1, \Delta A_2$.
+     - Phần 2: Dịch chỉnh biên dạng & chiều dày răng (Mục 5.0, Dòng 5.1 – 5.9).
+     - Phần 3: Góc ăn khớp pháp ($\alpha_n$) và Góc ăn khớp ngang ($\alpha_t$).
+     - Phần 4: Bảng tổng hợp so sánh 5 phương pháp dịch chỉnh (A – E).
+     - Phần 5: Giải thích chi tiết Mục 7.0 Bánh răng trụ tương đương Tredgold ($z_{vn}, z_v, d_{vm}, d_{va}, d_{vb}, d_{vf}, a_v, i_v$).
+  2. Thiết lập mặc định Web App Bánh Răng Côn:
+     - Mặc định Dòng 4.3: Góc ăn khớp pháp (Normal pressure angle - $\alpha_n$).
+     - Mặc định Dòng 4.8: Mô đun ngang ngoài (Outer transverse module - $m_{et}$).
+- **Triển khai kỹ thuật & Kết quả**:
+  1. **Đồng bộ hóa mặc định $\alpha_n$ và $m_{et}$**:
+     - `index.html`: Cập nhật thẻ `<select id="selPressureAngleType">` chọn `normal` (B. Góc ăn khớp pháp), ký hiệu `αn`. Cập nhật thẻ `<select id="selModuleType">` chọn `transverse_outer` (A. Mô đun ngang ngoài), ký hiệu `met`.
+     - `bevel-ui.js`: Constructor và nút `[↺ Mặc Định]` thiết lập `isNormalPressureAngle: true`, `isOuterModule: true`, tự động gán giá trị và nhãn hiển thị tương ứng.
+  2. **Tích hợp Master Block 4 & Section 17.0 (Cẩm Nang & Hướng Dẫn Kỹ Thuật)**:
+     - Tạo Section 17.0 hoàn chỉnh với 5 phân mục thẻ card, bảng so sánh trực quan, công thức giải tích chuẩn mực và chỉ dẫn thực hành gia công/lắp ráp xưởng.
+     - Phân tích cặn kẽ quan hệ lượng giác: $j_r = \frac{j_n}{2\sin\alpha_n}$, $\Delta A_1 = \frac{j_r}{\sin\delta_1}$, $\Delta A_2 = \frac{j_r}{\sin\delta_2}$.
+     - Giải thích 8 thông số Tredgold Mục 7.0 và định lý $i_v = i^2$ khi $\Sigma = 90^\circ$.
+  3. **Đóng gói & Kiểm thử Playwright tự động**:
+     - Chạy `tools/bundle_all.py` rebundle `bevel-engine.bundle.js` thành công (369,209 ký tự).
+     - Kiểm thử Playwright `verify_bevel_handbook.py` xác nhận 100% các ô chọn, ký hiệu, và Section 17.0 hiển thị hoàn hảo.
+
+

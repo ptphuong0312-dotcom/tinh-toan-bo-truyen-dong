@@ -6771,7 +6771,9 @@ class BevelGearUI {
             jn: 0.291,
             mat1: '16MnCr5',
             mat2: '16MnCr5',
-            gearingType: 'straight_type1'
+            gearingType: 'straight_type1',
+            isNormalPressureAngle: true,
+            isOuterModule: true
         };
 
         this.lastGeom = null;
@@ -6811,8 +6813,18 @@ class BevelGearUI {
                     mmn: 10.0, b: 117.0, x1: 0.32, xt1: 0.04,
                     ha0: 1.0, c0: 0.2, Q: 6, auto_Q: false, auto_jn: true, jn: 0.291,
                     mat1: '16MnCr5', mat2: '16MnCr5',
-                    gearingType: 'straight_type1'
+                    gearingType: 'straight_type1',
+                    isNormalPressureAngle: true,
+                    isOuterModule: true
                 };
+                const selPAType = document.getElementById('selPressureAngleType');
+                if (selPAType) selPAType.value = 'normal';
+                const sym_alfa = document.getElementById('sym_alfa');
+                if (sym_alfa) sym_alfa.textContent = 'αn';
+                const selModType = document.getElementById('selModuleType');
+                if (selModType) selModType.value = 'transverse_outer';
+                const sym_module = document.getElementById('sym_module');
+                if (sym_module) sym_module.textContent = 'met';
                 if (this.canvasController) this.canvasController.resetHubOverrides(false);
                 const selGT = document.getElementById('selGearingType');
                 if (selGT) selGT.value = 'straight_type1';
@@ -7656,6 +7668,10 @@ class BevelGearUI {
 
         const selPAType = document.getElementById('selPressureAngleType');
         if (selPAType) {
+            selPAType.value = 'normal';
+            this.inputs.isNormalPressureAngle = true;
+            const sym = document.getElementById('sym_alfa');
+            if (sym) sym.textContent = 'αn';
             selPAType.addEventListener('change', () => {
                 const isNormal = selPAType.value === 'normal';
                 const sym = document.getElementById('sym_alfa');
@@ -7709,6 +7725,10 @@ class BevelGearUI {
         // Module Type selector
         const selModType = document.getElementById('selModuleType');
         if (selModType) {
+            selModType.value = 'transverse_outer';
+            this.inputs.isOuterModule = true;
+            const sym = document.getElementById('sym_module');
+            if (sym) sym.textContent = 'met';
             selModType.addEventListener('change', () => {
                 const isOuter = selModType.value === 'transverse_outer';
                 const sym = document.getElementById('sym_module');
