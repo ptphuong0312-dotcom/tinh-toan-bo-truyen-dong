@@ -89,14 +89,24 @@ def test_bevel_dual_tredgold():
         required_layers = [
             'MESH_OUTER_PINION', 'MESH_OUTER_GEAR',
             'MESH_INNER_PINION', 'MESH_INNER_GEAR',
-            'SLOT_PINION_OUTER', 'SLOT_PINION_INNER',
-            'SLOT_GEAR_OUTER', 'SLOT_GEAR_INNER',
-            'PITCH_CIRCLES', 'ROOT_CIRCLES', 'CENTER_AXES',
+            'MESH_TIP_ARCS',
+            'SLOT_PINION_OUTER_R', 'SLOT_PINION_OUTER_R0',
+            'SLOT_PINION_INNER_R', 'SLOT_PINION_INNER_R0',
+            'SLOT_GEAR_OUTER_R', 'SLOT_GEAR_OUTER_R0',
+            'SLOT_GEAR_INNER_R', 'SLOT_GEAR_INNER_R0',
+            'SLOT_TIP_ARCS', 'SLOT_ROOT_ARCS',
+            'PITCH_CIRCLES', 'ROOT_CIRCLES', 'TIP_CIRCLES',
+            'CENTER_AXES', 'LINE_OF_ACTION',
             'MFG_TABLE'
         ]
         for req in required_layers:
             assert req in layer_names, f"Missing required layer: {req}"
-        print("All required engineering layers present in unified DXF!")
+        
+        # Verify TRUE ARC entities
+        arcs = [e for e in doc.modelspace() if e.dxftype() == 'ARC']
+        print(f"Verified true ARC entities in DXF: {len(arcs)} arcs")
+        assert len(arcs) >= 28, f"Expected at least 28 ARC entities, got {len(arcs)}"
+        print("All required engineering layers and true circular ARCs verified!")
 
         # 6. Check console errors
         print("Console errors count:", len(console_errors))

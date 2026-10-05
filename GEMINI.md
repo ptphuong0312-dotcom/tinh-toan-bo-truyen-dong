@@ -1849,3 +1849,48 @@ ho_{f0} / \cos\gamma$.
      * Cụm 4: Cặp rãnh răng ĐỒNG TÂM Bánh Bị Dẫn 2 (Gear 2 Slots Concentric).
      * Cụm 5: Bảng thông số chế tạo Title Block (MFG_TABLE) kèm góc nón chia $\delta_1, \delta_2$, $\delta_a, \delta_f$, mô đun 3 mặt cắt, và hướng dẫn lofting Mastercam.
    - Hệ thống 16 Layers chuyên dụng phân định rạch ròi từng đối tượng đồ họa.
+
+
+---
+
+### Quy Tắc 78: Quy Chuẩn Bản Vẽ 2D CAD Xuất Thực Thể Cung Tròn Thật (True ARCs), Bộ Biên Dạng Rãnh Răng Đôi (Bo Cung R = 0.38*m & Đáy Vuông Sắc R = 0) và Giải Pháp Hình Học Không Gian 3D Cắt Trục Z Khi Đặt Trên Mặt Phẳng XY (True Arcs, Dual Slot R/R0 & 3D Spatial Geometry Protocol)
+**Ngày áp dụng**: 05/10/2026  
+**Module**: Bộ truyền Bánh Răng Côn (`modules/bevel-gear/`)  
+**Bối cảnh**: Người dùng (`SirPhuong`) phát hiện trong file DXF 2D xuất ra trước đó các vòng tròn và đỉnh răng bị nối bằng nhiều đoạn thẳng (đa giác gấp khúc), yêu cầu vẽ bằng **CUNG TRÒN THẬT (`ARC` entity)**; đồng thời giải bài toán hình học không gian 3D khi đặt bánh răng côn bất kỳ lên mặt phẳng $XY$, tâm tại $(0, 0)$, chóp nón Apex hướng $+Z$: tính góc hợp giữa 2 mặt phẳng chứa biên dạng răng trong ($R_i$) & ngoài ($R_e$) với mặt phẳng $XY$ và khoảng cách giữa 2 giao điểm của chúng khi cắt trục $Z$; ngoài ra đáy rãnh răng phải cung cấp cả hai bộ: vừa có bo cung dao cắt $R = 0.38\cdot m$ như hiện tại, vừa có đáy vuông sắc $R = 0$ phục vụ Mastercam tự động bù bán kính dao phay.
+
+1. **Giải Pháp Toán Học Giải Tích Không Gian 3D (Spatial Geometry Solution on XY Plane)**:
+   - **Gốc tọa độ & Định hướng**: Đặt bánh răng côn lên mặt phẳng $XY$, tâm bánh răng tại $(X=0, Y=0)$, chóp nón chung Apex $V$ hướng theo $+Z$.
+   - **Góc hợp giữa mặt phẳng chứa biên dạng răng và mặt phẳng $XY$**:
+     Mặt phẳng chứa biên dạng răng ảo Tredgold là mặt phẳng tiếp diện vuông góc với đường sinh nón chia. Do đường sinh nón chia hợp với trục quay $Z$ một góc $\delta$, nên pháp tuyến của mặt phẳng này hợp với trục $Z$ một góc $\delta$.
+     $$\implies \text{Góc nhị diện hợp giữa mặt phẳng chứa biên dạng răng và mặt phẳng } XY = \delta$$
+     * Bánh Dẫn 1: $\delta_1 = \text{delta1\_deg}^\circ$ (Ví dụ: $21.8014^\circ$).
+     * Bánh Bị Dẫn 2: $\delta_2 = \text{delta2\_deg}^\circ$ (Ví dụ: $68.1986^\circ$).
+   - **Khoảng cách giữa 2 điểm cắt trên trục $Z$ ($\Delta Z_{\text{cut}}$)**:
+     Mặt nón phụ ngoài cắt trục $Z$ tại điểm $Z_e^* = -\frac{R_e}{\cos\delta}$ (so với Apex $V$).
+     Mặt nón phụ trong cắt trục $Z$ tại điểm $Z_i^* = -\frac{R_i}{\cos\delta}$ (so với Apex $V$).
+     Khoảng cách giữa 2 điểm cắt của 2 mặt phẳng đó trên trục $Z$ luôn là hằng số độc lập với gốc tọa độ $Z$:
+     $$\Delta Z_{\text{cut}} = Z_i^* - Z_e^* = \frac{R_e - R_i}{\cos\delta} = \frac{b}{\cos\delta}$$
+     * Bánh Dẫn 1: $\Delta Z_{\text{cut, 1}} = \frac{b}{\cos\delta_1} = \frac{117}{\cos(21.8014^\circ)} = 126.013\text{ mm}$.
+     * Bánh Bị Dẫn 2: $\Delta Z_{\text{cut, 2}} = \frac{b}{\cos\delta_2} = \frac{117}{\cos(68.1986^\circ)} = 315.032\text{ mm}$.
+   - **Khoảng cách vuông góc giữa 2 mặt phẳng**: $d_{\text{normal}} = R_e - R_i = b = 117.000\text{ mm}$.
+   - **Khoảng cách dọc trục $Z$ giữa 2 vòng chia**: $\Delta Z_{\text{pitch}} = b \cdot \cos\delta$ ($108.632\text{ mm}$ với Bánh 1, $43.453\text{ mm}$ với Bánh 2).
+   - Toàn bộ các công thức và thông số số học cụ thể này được ghi rõ nét trong Title Block `MFG_TABLE` của file DXF.
+
+2. **Thực Thể Cung Tròn Thật trong AutoCAD DXF Release 12 (AC1009 True ARC Engine)**:
+   - Triệt tiêu 100% việc dùng đa giác xẻ nhỏ đoạn thẳng để vẽ vòng tròn hoặc đỉnh răng.
+   - Sử dụng hàm `addArc(cx, cy, r, sDeg, eDeg, layer)` xuất trực tiếp thực thể `ARC` AC1009 chuẩn xác:
+     * `PITCH_CIRCLES`: 8 cung tròn chia thật.
+     * `ROOT_CIRCLES`: 8 cung tròn chân răng thật.
+     * `TIP_CIRCLES`: 4 cung tròn đỉnh răng thật.
+     * `MESH_TIP_ARCS`: 28 cung tròn đỉnh răng thật cho từng răng trong cụm 5–7 răng ăn khớp.
+     * `SLOT_TIP_ARCS`: 4 cung tròn đỉnh rãnh răng thật.
+     * `SLOT_ROOT_ARCS`: 4 cung tròn đáy rãnh răng thật.
+     Tổng cộng: **56 thực thể `ARC` thật** được nhận diện trực tiếp trong AutoCAD, Mastercam và SolidWorks dưới dạng native circular arcs (cho phép bộ điều khiển CNC xuất lệnh nội suy cung tròn `G02/G03`).
+   - Tích hợp mã nhóm DXF 42 (`bulge = \tan(\theta/4)`) vào các đỉnh của đường bao `POLYLINE` khép kín: đỉnh răng và đáy rãnh được biểu diễn bằng cung tròn giải tích nguyên bản, triệt tiêu hoàn toàn góc gãy (Zero Faceting).
+
+3. **Bộ Layer Rãnh Răng Đôi (Dual Slot Layers: Bo Cung R & Đáy Vuông Sắc R=0)**:
+   - Cung cấp song song 2 giải pháp công nghệ:
+     * **Layer `*_R` (Bo cung dao cắt $R = 0.38\cdot m_t$)**: Thể hiện chính xác biên dạng hình học thực tế khi gia công bằng dao phay định hình hoặc dao chọc lăn răng. Dùng để kiểm thử 3D và phay tinh mặt răng.
+     * **Layer `*_R0` (Đáy vuông sắc $R = 0$)**: Sườn thân khai ăn khớp kéo thẳng xuống đáy chân răng $r_{vf}$ tạo thành góc vuông sắc $90^\circ$ không bo tròn. Chuyên dụng cho Mastercam để lập trình phay CNC: CAM tự động tính toán đường chạy dao và bù bán kính dao phay ngón/dao phay cầu bất kỳ mà không bị cấn cung fillet.
+   - Khắc phục triệt để lỗi tự giao cắt (Self-Intersections): Mọi đường bao rãnh răng đều đạt chuẩn Jordan khép kín với **0 điểm tự cắt (100% Zero-Self-Intersection)**.
+   - Cặp rãnh răng Ngoài & Trong của Bánh 1 đồng tâm tuyệt đối tại $O_1(670, 0)$; Cặp rãnh răng Bánh 2 đồng tâm tuyệt đối tại $O_2(890, 0)$.

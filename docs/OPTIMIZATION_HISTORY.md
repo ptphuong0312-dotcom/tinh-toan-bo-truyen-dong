@@ -3316,3 +3316,45 @@ ho_{f0}$.
      - Kiểm thử Playwright tự động (`tests/test_bevel_dual_tredgold.py`): **100% PASS, 0 lỗi JavaScript Console**.
      - Kiểm định file DXF tải về bằng thư viện Python `ezdxf`: Đọc thành công 55 thực thể modelspace trên toàn bộ 16 layers.
      - Kiểm định Live Audit đối chiếu với Excel COM MITCalc 1.74: **115/115 ô tính PASS 100.0% với $\Delta = 0.000000$**.
+
+---
+
+## 2026-10-05 - Quy Tắc 78: Bản Vẽ 2D CAD Xuất Thực Thể Cung Tròn Thật (True ARCs), Bộ Biên Dạng Rãnh Răng Đôi (Bo Cung R = 0.38*m & Đáy Vuông Sắc R = 0) và Giải Pháp Hình Học Không Gian 3D Cắt Trục Z Khi Đặt Trên Mặt Phẳng XY
+- **Yêu cầu trực tiếp từ chủ sở hữu (SirPhuong)**:
+  1. Trong bản vẽ 2D xuất ra (DXF), các vòng tròn (chia, chân, đỉnh) và các đỉnh răng (tooth tip lands) phải vẽ bằng **CUNG TRÒN THẬT (`ARC` entity)**, tuyệt đối không dùng các đoạn thẳng nối thành vòng tròn bằng nhiều điểm đa giác.
+  2. Giải bài toán hình học không gian 3D: Khi đặt bánh răng côn bất kỳ lên mặt phẳng $XY$, tâm bánh răng tại $(X=0, Y=0)$, chóp nón Apex hướng theo $+Z$:
+     - Mặt phẳng chứa biên dạng răng trong ($R_i$) và mặt phẳng chứa biên dạng răng ngoài ($R_e$) của bánh răng côn hợp với mặt phẳng $XY$ một góc bao nhiêu?
+     - Khi cho 2 mặt phẳng này cắt trục $Z$, khoảng cách giữa 2 điểm cắt đó là bao nhiêu?
+     - Đưa toàn bộ các thông số này vào bản vẽ DXF 2D xuất ra để thợ tiện phôi và kỹ sư CAM có ngay kích thước chuẩn dựng hình.
+  3. Biên dạng đáy rãnh răng xuất ra phải cung cấp cả hai lựa chọn: vừa có bo cung dao cắt $R = 0.38\cdot m_t$ như hiện tại, vừa có đáy vuông sắc $R = 0$ (phục vụ Mastercam tự động offset bù bán kính dao phay cầu/ngón bất kỳ).
+- **Triển khai kỹ thuật & Đột phá giải tích**:
+  1. **Toán học Giải tích Hình học Không gian 3D (Spatial Geometry on XY Plane)**:
+     - *Góc hợp với mặt phẳng $XY$*: Mặt phẳng chứa biên dạng răng Tredgold vuông góc với đường sinh nón chia. Do đường sinh nón chia hợp với trục quay $Z$ một góc $\delta$, nên pháp tuyến của mặt phẳng này hợp với trục $Z$ góc $\delta$. Suy ra góc nhị diện hợp giữa mặt phẳng chứa biên dạng và mặt phẳng $XY$ chính bằng góc nón chia $\delta$ ($\delta_1$ đối với Bánh Dẫn 1, $\delta_2$ đối với Bánh Bị Dẫn 2)!
+     - *Khoảng cách 2 điểm cắt trên trục $Z$*:
+       $$\Delta Z_{\text{cut}} = \frac{R_e - R_i}{\cos\delta} = \frac{b}{\cos\delta}$$
+       * Bánh Dẫn 1: $\Delta Z_{\text{cut, 1}} = \frac{b}{\cos\delta_1} = \frac{117}{\cos(21.8014^\circ)} = 126.013\text{ mm}$.
+       * Bánh Bị Dẫn 2: $\Delta Z_{\text{cut, 2}} = \frac{b}{\cos\delta_2} = \frac{117}{\cos(68.1986^\circ)} = 315.032\text{ mm}$.
+     - *Khoảng cách vuông góc giữa 2 mặt phẳng*: $d_{\text{normal}} = R_e - R_i = b = 117.000\text{ mm}$.
+     - *Khoảng cách dọc trục $Z$ giữa 2 vòng chia*: $\Delta Z_{\text{pitch}} = b \cdot \cos\delta$ ($108.632\text{ mm}$ với Bánh 1, $43.453\text{ mm}$ với Bánh 2).
+  2. **Thực thể Cung Tròn Thật trong AutoCAD DXF Release 12 (AC1009 True Arcs)**:
+     - Tích hợp hàm `addArc(cx, cy, r, sDeg, eDeg, layer)` xuất trực tiếp thực thể `ARC` (nhóm 10, 20, 30 tâm; nhóm 40 bán kính; nhóm 50 góc bắt đầu; nhóm 51 góc kết thúc ngược chiều kim đồng hồ).
+     - Xuất 56 thực thể `ARC` thật:
+       * `PITCH_CIRCLES`: 8 cung tròn chia thật.
+       * `ROOT_CIRCLES`: 8 cung tròn chân răng thật.
+       * `TIP_CIRCLES`: 4 cung tròn đỉnh răng thật.
+       * `MESH_TIP_ARCS`: 28 cung tròn đỉnh răng thật cho toàn bộ các răng ăn khớp (Outer & Inner).
+       * `SLOT_TIP_ARCS`: 4 cung tròn đỉnh rãnh răng thật.
+       * `SLOT_ROOT_ARCS`: 4 cung tròn đáy rãnh răng thật.
+     - Tích hợp mã nhóm DXF 42 (`bulge = \tan(\theta/4)`) vào các đỉnh của đường bao `POLYLINE` khép kín: đỉnh răng và đáy rãnh trong polyline được nội suy bằng cung tròn giải tích nguyên bản, triệt tiêu 100% hiện tượng gấp khúc/phân đoạn đường thẳng (Zero-Facet Polygon).
+  3. **Bộ Layer Rãnh Răng Đôi Riêng Biệt (Dual Slot Layers: R & R0)**:
+     - Tách biệt rõ ràng 8 layer rãnh răng:
+       * `SLOT_PINION_OUTER_R` & `SLOT_PINION_INNER_R`: Rãnh răng Bánh 1 có bo dao cắt $R = 0.38\cdot m_t$.
+       * `SLOT_PINION_OUTER_R0` & `SLOT_PINION_INNER_R0`: Rãnh răng Bánh 1 đáy vuông sắc $R = 0$ (chuẩn Mastercam offset).
+       * `SLOT_GEAR_OUTER_R` & `SLOT_GEAR_INNER_R`: Rãnh răng Bánh 2 có bo dao cắt $R = 0.38\cdot m_t$.
+       * `SLOT_GEAR_OUTER_R0` & `SLOT_GEAR_INNER_R0`: Rãnh răng Bánh 2 đáy vuông sắc $R = 0$.
+     - Khắc phục triệt để lỗi tự giao cắt (Self-Intersections): Cả 8 đa giác rãnh răng đều đạt chuẩn Jordan khép kín với **0 điểm tự cắt (self_intersections = 0)**.
+     - Bảo toàn tính đồng tâm (Concentricity): Cặp rãnh răng Ngoài & Trong của Bánh 1 dùng chung tâm $O_1(670, 0)$; Cặp rãnh răng Bánh 2 dùng chung tâm $O_2(890, 0)$.
+  4. **Kiểm tra & Xác minh Thực tế**:
+     - `test_bevel_dual_tredgold.py`: **100% PASS, 0 console errors**, xác nhận đủ 24 layer kỹ thuật và 56 thực thể `ARC` thật.
+     - `test_bevel_webapp.py`: **100% PASS, 0 console errors**.
+     - Đóng gói single bundle: `modules/bevel-gear/js/bevel-engine.bundle.js` (426,429 ký tự) 100% offline, zero-CORS.

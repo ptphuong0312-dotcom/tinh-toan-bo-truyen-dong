@@ -666,18 +666,26 @@ export const BevelDxfExporter = {
             '0', 'LTYPE', '2', 'DASHED', '70', '0', '3', 'Dashed __ __ __ __', '72', '65', '73', '2', '40', '19.05',
             '49', '12.7', '49', '-6.35',
             '0', 'ENDTAB',
-            '0', 'TABLE', '2', 'LAYER', '70', '15',
+            '0', 'TABLE', '2', 'LAYER', '70', '22',
             '0', 'LAYER', '2', '0', '70', '0', '62', '7', '6', 'CONTINUOUS',
             '0', 'LAYER', '2', 'MESH_OUTER_PINION', '70', '0', '62', '4', '6', 'CONTINUOUS', // Cyan
             '0', 'LAYER', '2', 'MESH_OUTER_GEAR', '70', '0', '62', '30', '6', 'CONTINUOUS',   // Orange
             '0', 'LAYER', '2', 'MESH_INNER_PINION', '70', '0', '62', '4', '6', 'CONTINUOUS', // Cyan
             '0', 'LAYER', '2', 'MESH_INNER_GEAR', '70', '0', '62', '30', '6', 'CONTINUOUS',   // Orange
-            '0', 'LAYER', '2', 'SLOT_PINION_OUTER', '70', '0', '62', '4', '6', 'CONTINUOUS', // Cyan
-            '0', 'LAYER', '2', 'SLOT_PINION_INNER', '70', '0', '62', '140', '6', 'CONTINUOUS', // Light Blue/Cyan
-            '0', 'LAYER', '2', 'SLOT_GEAR_OUTER', '70', '0', '62', '30', '6', 'CONTINUOUS',   // Orange
-            '0', 'LAYER', '2', 'SLOT_GEAR_INNER', '70', '0', '62', '40', '6', 'CONTINUOUS',   // Light Orange
+            '0', 'LAYER', '2', 'MESH_TIP_ARCS', '70', '0', '62', '6', '6', 'CONTINUOUS',      // Magenta
+            '0', 'LAYER', '2', 'SLOT_PINION_OUTER_R', '70', '0', '62', '4', '6', 'CONTINUOUS', // Cyan
+            '0', 'LAYER', '2', 'SLOT_PINION_OUTER_R0', '70', '0', '62', '5', '6', 'CONTINUOUS', // Blue (R=0 sharp)
+            '0', 'LAYER', '2', 'SLOT_PINION_INNER_R', '70', '0', '62', '140', '6', 'CONTINUOUS', // Light Blue
+            '0', 'LAYER', '2', 'SLOT_PINION_INNER_R0', '70', '0', '62', '150', '6', 'CONTINUOUS', // Blue-violet
+            '0', 'LAYER', '2', 'SLOT_GEAR_OUTER_R', '70', '0', '62', '30', '6', 'CONTINUOUS',   // Orange
+            '0', 'LAYER', '2', 'SLOT_GEAR_OUTER_R0', '70', '0', '62', '20', '6', 'CONTINUOUS',  // Red-orange (R=0 sharp)
+            '0', 'LAYER', '2', 'SLOT_GEAR_INNER_R', '70', '0', '62', '40', '6', 'CONTINUOUS',   // Light Orange
+            '0', 'LAYER', '2', 'SLOT_GEAR_INNER_R0', '70', '0', '62', '42', '6', 'CONTINUOUS',  // Amber
+            '0', 'LAYER', '2', 'SLOT_TIP_ARCS', '70', '0', '62', '6', '6', 'CONTINUOUS',       // Magenta
+            '0', 'LAYER', '2', 'SLOT_ROOT_ARCS', '70', '0', '62', '3', '6', 'CONTINUOUS',      // Green
             '0', 'LAYER', '2', 'PITCH_CIRCLES', '70', '0', '62', '2', '6', 'CENTER',          // Yellow
             '0', 'LAYER', '2', 'ROOT_CIRCLES', '70', '0', '62', '3', '6', 'DASHED',          // Green
+            '0', 'LAYER', '2', 'TIP_CIRCLES', '70', '0', '62', '6', '6', 'DASHED',           // Magenta
             '0', 'LAYER', '2', 'CENTER_AXES', '70', '0', '62', '1', '6', 'CENTER',           // Red
             '0', 'LAYER', '2', 'LINE_OF_ACTION', '70', '0', '62', '1', '6', 'DASHED',        // Red
             '0', 'LAYER', '2', 'MFG_TABLE', '70', '0', '62', '7', '6', 'CONTINUOUS',         // White
@@ -711,6 +719,20 @@ export const BevelDxfExporter = {
             );
         };
 
+        const addArc = (cx, cy, r, startAngleDeg, endAngleDeg, layer) => {
+            let sDeg = startAngleDeg % 360;
+            if (sDeg < 0) sDeg += 360;
+            let eDeg = endAngleDeg % 360;
+            if (eDeg < 0) eDeg += 360;
+            lines.push(
+                '0', 'ARC', '8', layer,
+                '10', cx.toFixed(4), '20', cy.toFixed(4), '30', '0.0',
+                '40', r.toFixed(4),
+                '50', sDeg.toFixed(4),
+                '51', eDeg.toFixed(4)
+            );
+        };
+
         const addPolyline = (pts, layer, closed = true) => {
             if (!pts || pts.length < 2) return;
             lines.push(
@@ -723,6 +745,9 @@ export const BevelDxfExporter = {
                     '0', 'VERTEX', '8', layer,
                     '10', pt.x.toFixed(4), '20', pt.y.toFixed(4), '30', '0.0'
                 );
+                if (pt.bulge !== undefined && Math.abs(pt.bulge) > 1e-6) {
+                    lines.push('42', pt.bulge.toFixed(6));
+                }
             }
             lines.push('0', 'SEQEND');
         };
@@ -768,31 +793,31 @@ export const BevelDxfExporter = {
         const sni1 = parseFloat(g.sni1) || (sne1 * Ri / Re);
         const sni2 = parseFloat(g.sni2) || (sne2 * Ri / Re);
 
-        const ptsFlank = res.ptsPerFlank;
-        const ptsFillet = Math.max(6, Math.round(ptsFlank * 0.4));
+        const ptsPerFlank = res.ptsPerFlank;
+        const ptsFillet = Math.max(6, Math.round(ptsPerFlank * 0.4));
 
-        // Generate Slices for Outer (Re) and Inner (Ri)
+        // Generate Slices
         const slice1_e = Bevel3DGenerator.generateSliceToothContour({
             z: z1, mmn, Rm, R_s: Re, delta: delta1, alfa, beta, isSpiral,
-            ha_s: hae1, hf_s: hfe1, sn_s: sne1, ptsPerFlank: ptsFlank, ptsFillet
+            ha_s: hae1, hf_s: hfe1, sn_s: sne1, ptsPerFlank, ptsFillet
         });
         slice1_e.z = z1;
 
         const slice2_e = Bevel3DGenerator.generateSliceToothContour({
             z: z2, mmn, Rm, R_s: Re, delta: delta2, alfa, beta, isSpiral,
-            ha_s: hae2, hf_s: hfe2, sn_s: sne2, ptsPerFlank: ptsFlank, ptsFillet
+            ha_s: hae2, hf_s: hfe2, sn_s: sne2, ptsPerFlank, ptsFillet
         });
         slice2_e.z = z2;
 
         const slice1_i = Bevel3DGenerator.generateSliceToothContour({
             z: z1, mmn, Rm, R_s: Ri, delta: delta1, alfa, beta, isSpiral,
-            ha_s: hai1, hf_s: hfi1, sn_s: sni1, ptsPerFlank: ptsFlank, ptsFillet
+            ha_s: hai1, hf_s: hfi1, sn_s: sni1, ptsPerFlank, ptsFillet
         });
         slice1_i.z = z1;
 
         const slice2_i = Bevel3DGenerator.generateSliceToothContour({
             z: z2, mmn, Rm, R_s: Ri, delta: delta2, alfa, beta, isSpiral,
-            ha_s: hai2, hf_s: hfi2, sn_s: sni2, ptsPerFlank: ptsFlank, ptsFillet
+            ha_s: hai2, hf_s: hfi2, sn_s: sni2, ptsPerFlank, ptsFillet
         });
         slice2_i.z = z2;
 
@@ -801,57 +826,106 @@ export const BevelDxfExporter = {
         const rvi1 = slice1_i.rv, rvai1 = slice1_i.rva, rvfi1 = slice1_i.rvf;
         const rvi2 = slice2_i.rv, rvai2 = slice2_i.rva, rvfi2 = slice2_i.rvf;
 
-        // Slot Generator: Closed Polyline Loop Centered at cx, cy, Symmetric about Vertical Axis
-        const buildClosedSlot = (slice, cx, cy) => {
-            const half_pitch = Math.PI / slice.z;
+        // Slot Generator: Closed Polyline Loop With Fillet R (0.38*m)
+        const buildClosedSlotWithFillet = (slice, cx, cy) => {
+            const half_pitch = slice.half_pitch;
             const cosD = slice.cosD;
             const rv = slice.rv;
             const rva = slice.rva;
-            const midIdx = Math.floor(slice.toothContour.length / 2);
+
+            let tipIdx = -1;
+            for (let i = Math.floor(slice.toothContour.length / 2); i < slice.toothContour.length; i++) {
+                if (slice.toothContour[i].zone === 'tip_corner') {
+                    tipIdx = i;
+                    break;
+                }
+            }
 
             const leftPts = [];
-            for (let i = midIdx; i < slice.toothContour.length; i++) {
+            for (let i = tipIdx; i < slice.toothContour.length; i++) {
                 const tc = slice.toothContour[i];
-                if (i === midIdx && tc.zone === 'tip_land') continue;
                 const r = rv + tc.h;
                 const psi = (tc.theta - half_pitch) * cosD;
-                leftPts.push({
-                    x: cx + r * Math.sin(psi),
-                    y: cy + r * Math.cos(psi)
-                });
+                leftPts.push({ x: cx + r * Math.sin(psi), y: cy + r * Math.cos(psi) });
             }
 
             const rightPts = [];
             for (let i = leftPts.length - 2; i >= 0; i--) {
-                rightPts.push({
-                    x: cx - (leftPts[i].x - cx),
-                    y: leftPts[i].y
-                });
+                rightPts.push({ x: cx - (leftPts[i].x - cx), y: leftPts[i].y });
             }
 
-            const tipPts = [];
-            const rightTip = rightPts[rightPts.length - 1];
-            const psiTip = Math.atan2(rightTip.x - cx, rightTip.y - cy);
-            const nSteps = 10;
-            for (let s = 1; s < nSteps; s++) {
-                const psi = psiTip - (s / nSteps) * (2.0 * psiTip);
-                tipPts.push({
-                    x: cx + rva * Math.sin(psi),
-                    y: cy + rva * Math.cos(psi)
-                });
-            }
+            const topTipRight = rightPts[rightPts.length - 1];
+            const psiTip = Math.atan2(topTipRight.x - cx, topTipRight.y - cy);
+            topTipRight.bulge = Math.tan(psiTip / 2);
 
-            return [...leftPts, ...rightPts, ...tipPts];
+            return { poly: [...leftPts, ...rightPts], psiTip };
         };
 
-        // Multi-Tooth Sector Generator (5-7 Teeth)
-        const buildToothSector = (slice, isPinion, cx, cy, kMin = -3, kMax = 3, phase = 0) => {
+        // Slot Generator: Closed Polyline Loop With R = 0 (Sharp Root Day Vuong Sac)
+        const buildClosedSlotR0 = (slice, cx, cy) => {
+            const half_pitch = slice.half_pitch;
+            const cosD = slice.cosD;
+            const rv = slice.rv;
+            const rvb = slice.rvb;
+            const rvf = slice.rvf;
+            const rva = slice.rva;
+            const inv_alfa_t = Math.tan(slice.alfa_t) - slice.alfa_t;
+            const psi_v = slice.psi_v || (1.57 / slice.z);
+            const psi_b = psi_v + inv_alfa_t;
+            const psi_half_pitch = half_pitch * cosD;
+
+            function evalInv(r_c) {
+                const alpha_c = Math.acos(Math.min(1.0, rvb / r_c));
+                const inv_c = Math.tan(alpha_c) - alpha_c;
+                const psi_c = Math.max(0.0001, psi_b - inv_c);
+                return psi_c * cosD;
+            }
+
+            const rStart = Math.max(rvb, rvf);
+            const nFlank = 20;
+
+            const leftPts = [];
+            for (let i = nFlank - 1; i >= 0; i--) {
+                const r = rStart + (i / (nFlank - 1)) * (rva - rStart);
+                const thetaTooth = evalInv(r);
+                const psiSlot = -(psi_half_pitch - thetaTooth);
+                leftPts.push({ x: cx + r * Math.sin(psiSlot), y: cy + r * Math.cos(psiSlot) });
+            }
+
+            let psiRoot = 0;
+            if (rvf < rvb - 1e-4) {
+                const psiSlotB = -(psi_half_pitch - psi_b * cosD);
+                psiRoot = Math.abs(psiSlotB);
+                leftPts.push({ x: cx + rvf * Math.sin(psiSlotB), y: cy + rvf * Math.cos(psiSlotB) });
+            } else {
+                const thetaStart = evalInv(rvf);
+                const psiSlotF = -(psi_half_pitch - thetaStart);
+                psiRoot = Math.abs(psiSlotF);
+            }
+
+            leftPts[leftPts.length - 1].bulge = -Math.tan(psiRoot / 2);
+
+            const rightPts = [];
+            for (let i = leftPts.length - 1; i >= 0; i--) {
+                rightPts.push({ x: cx - (leftPts[i].x - cx), y: leftPts[i].y });
+            }
+
+            const topTipRight = rightPts[rightPts.length - 1];
+            const psiTip = Math.atan2(topTipRight.x - cx, topTipRight.y - cy);
+            topTipRight.bulge = Math.tan(psiTip / 2);
+
+            return { poly: [...leftPts, ...rightPts], psiTip, psiRoot };
+        };
+
+        // Multi-Tooth Sector Generator (5-7 Teeth) with TRUE CIRCULAR ARCS on Tip Lands
+        const buildToothSector = (slice, isPinion, cx, cy, kMin = -3, kMax = 3) => {
             const rv = slice.rv;
             const rvf = slice.rvf;
+            const rva = slice.rva;
             const cosD = slice.cosD;
             const z = slice.z;
             const pPsi = (2.0 * Math.PI / z) * cosD;
-            const rimDepth = Math.max(10.0, (slice.rva - slice.rvf) * 1.15);
+            const rimDepth = Math.max(10.0, (rva - rvf) * 1.15);
             const rInnerRim = Math.max(2.0, rvf - rimDepth);
 
             const toPt = (r, psi) => ({
@@ -859,65 +933,91 @@ export const BevelDxfExporter = {
                 y: isPinion ? (cy + r * Math.cos(psi)) : (cy - r * Math.cos(psi))
             });
 
-            const contourPts = [];
-            for (let k = kMin; k <= kMax; k++) {
-                const centerPsi = isPinion ? (k + phase) * pPsi : (k + 0.5 + phase) * pPsi;
-                for (let idx = 0; idx < slice.toothContour.length; idx++) {
-                    if (k > kMin && idx === 0) continue;
-                    const tc = slice.toothContour[idx];
-                    const r = rv + tc.h;
-                    const psi = centerPsi + tc.theta * cosD;
-                    contourPts.push(toPt(r, psi));
+            let leftTipCornerIdx = -1;
+            let rightTipCornerIdx = -1;
+            for (let i = 0; i < slice.toothContour.length; i++) {
+                if (slice.toothContour[i].zone === 'tip_corner') {
+                    if (leftTipCornerIdx < 0) leftTipCornerIdx = i;
+                    else rightTipCornerIdx = i;
                 }
             }
 
-            const maxPsi = (isPinion ? (kMax + phase) : (kMax + 0.5 + phase)) * pPsi + slice.half_pitch * cosD;
-            const minPsi = (isPinion ? (kMin + phase) : (kMin + 0.5 + phase)) * pPsi - slice.half_pitch * cosD;
+            const contourPts = [];
+            const tipArcs = [];
+
+            for (let k = kMin; k <= kMax; k++) {
+                const centerPsi = isPinion ? k * pPsi : (k + 0.5) * pPsi;
+                for (let idx = 0; idx < slice.toothContour.length; idx++) {
+                    if (k > kMin && idx === 0) continue;
+                    if (slice.toothContour[idx].zone === 'tip_land') continue;
+
+                    const tc = slice.toothContour[idx];
+                    const r = rv + tc.h;
+                    const psi = centerPsi + tc.theta * cosD;
+                    const pt = toPt(r, psi);
+
+                    if (idx === leftTipCornerIdx && rightTipCornerIdx > 0) {
+                        const dPsiTip = Math.abs(slice.toothContour[rightTipCornerIdx].theta - slice.toothContour[leftTipCornerIdx].theta) * cosD;
+                        pt.bulge = isPinion ? -Math.tan(dPsiTip / 4) : Math.tan(dPsiTip / 4);
+
+                        const halfDeg = (dPsiTip * 180.0 / Math.PI) / 2.0;
+                        const centerDeg = isPinion ? (90.0 - (centerPsi * 180.0 / Math.PI)) : (270.0 - (centerPsi * 180.0 / Math.PI));
+                        tipArcs.push({
+                            cx, cy,
+                            r: rva,
+                            sDeg: centerDeg - halfDeg,
+                            eDeg: centerDeg + halfDeg
+                        });
+                    }
+
+                    contourPts.push(pt);
+                }
+            }
+
+            const maxPsi = (isPinion ? kMax : (kMax + 0.5)) * pPsi + slice.half_pitch * cosD;
+            const minPsi = (isPinion ? kMin : (kMin + 0.5)) * pPsi - slice.half_pitch * cosD;
             const fullPoly = [...contourPts];
             const rimSteps = 24;
             for (let s = 0; s <= rimSteps; s++) {
                 const psi = maxPsi - (s / rimSteps) * (maxPsi - minPsi);
                 fullPoly.push(toPt(rInnerRim, psi));
             }
-            return { fullPoly, minPsi, maxPsi, toPt };
+            return { fullPoly, minPsi, maxPsi, tipArcs, toPt };
         };
 
-        // Compact, Non-Overlapping Balanced Spacing
+        // Spacing
         const cx_mesh_out = 0;
         const cy_mesh_out = 0;
-
         const cx_mesh_in = cx_mesh_out + 350;
         const cy_mesh_in = 0;
-
         const cx_slot1 = cx_mesh_in + 320;
         const cy_slot1 = 0;
-
         const cx_slot2 = cx_slot1 + 220;
         const cy_slot2 = 0;
 
         // =========================================================================
-        // BLOCK 1: CẶP ĂN KHỚP 2D MẶT NGOÀI (Outer Cone Re, met, 5-7 răng)
+        // BLOCK 1: CẶP ĂN KHỚP 2D MẶT NGOÀI (Outer Cone Re, met)
         // =========================================================================
-        const sec1_e = buildToothSector(slice1_e, true, cx_mesh_out, cy_mesh_out - rve1, -3, 3, 0);
-        const sec2_e = buildToothSector(slice2_e, false, cx_mesh_out, cy_mesh_out + rve2, -3, 3, 0);
+        const sec1_e = buildToothSector(slice1_e, true, cx_mesh_out, cy_mesh_out - rve1, -3, 3);
+        const sec2_e = buildToothSector(slice2_e, false, cx_mesh_out, cy_mesh_out + rve2, -3, 3);
         addPolyline(sec1_e.fullPoly, 'MESH_OUTER_PINION', true);
         addPolyline(sec2_e.fullPoly, 'MESH_OUTER_GEAR', true);
 
-        const arcPtsOuter = (radius, isPinion) => {
-            const arr = [];
-            const sec = isPinion ? sec1_e : sec2_e;
-            for (let s = 0; s <= 32; s++) {
-                const psi = sec.minPsi + (s / 32) * (sec.maxPsi - sec.minPsi);
-                arr.push(sec.toPt(radius, psi));
-            }
-            return arr;
-        };
-        addPolyline(arcPtsOuter(rve1, true), 'PITCH_CIRCLES', false);
-        addPolyline(arcPtsOuter(rvfe1, true), 'ROOT_CIRCLES', false);
-        addPolyline(arcPtsOuter(rvae1, true), 'DIMENSIONS', false);
-        addPolyline(arcPtsOuter(rve2, false), 'PITCH_CIRCLES', false);
-        addPolyline(arcPtsOuter(rvfe2, false), 'ROOT_CIRCLES', false);
-        addPolyline(arcPtsOuter(rvae2, false), 'DIMENSIONS', false);
+        const psiMaxDeg1_e = Math.abs(sec1_e.maxPsi) * 180.0 / Math.PI;
+        const psiMaxDeg2_e = Math.abs(sec2_e.maxPsi) * 180.0 / Math.PI;
+
+        // TRUE ARCS: Pinion 1 Outer reference circles
+        addArc(cx_mesh_out, cy_mesh_out - rve1, rve1, 90.0 - psiMaxDeg1_e, 90.0 + psiMaxDeg1_e, 'PITCH_CIRCLES');
+        addArc(cx_mesh_out, cy_mesh_out - rve1, rvfe1, 90.0 - psiMaxDeg1_e, 90.0 + psiMaxDeg1_e, 'ROOT_CIRCLES');
+        addArc(cx_mesh_out, cy_mesh_out - rve1, rvae1, 90.0 - psiMaxDeg1_e, 90.0 + psiMaxDeg1_e, 'TIP_CIRCLES');
+
+        // TRUE ARCS: Gear 2 Outer reference circles
+        addArc(cx_mesh_out, cy_mesh_out + rve2, rve2, 270.0 - psiMaxDeg2_e, 270.0 + psiMaxDeg2_e, 'PITCH_CIRCLES');
+        addArc(cx_mesh_out, cy_mesh_out + rve2, rvfe2, 270.0 - psiMaxDeg2_e, 270.0 + psiMaxDeg2_e, 'ROOT_CIRCLES');
+        addArc(cx_mesh_out, cy_mesh_out + rve2, rvae2, 270.0 - psiMaxDeg2_e, 270.0 + psiMaxDeg2_e, 'TIP_CIRCLES');
+
+        for (const a of sec1_e.tipArcs) addArc(a.cx, a.cy, a.r, a.sDeg, a.eDeg, 'MESH_TIP_ARCS');
+        for (const a of sec2_e.tipArcs) addArc(a.cx, a.cy, a.r, a.sDeg, a.eDeg, 'MESH_TIP_ARCS');
 
         const loaLenE = met * 3.5;
         const alfa_t = slice1_e.alfa_t;
@@ -933,28 +1033,28 @@ export const BevelDxfExporter = {
         addText(`R chan dao cat: Rf1 = ${(0.38 * met).toFixed(2)} mm (0.38*met)`, cx_mesh_out - 120, rvae2 + 25, 3.2, 'MFG_TABLE');
 
         // =========================================================================
-        // BLOCK 2: CẶP ĂN KHỚP 2D MẶT TRONG (Inner Cone Ri, mit, 5-7 răng)
+        // BLOCK 2: CẶP ĂN KHỚP 2D MẶT TRONG (Inner Cone Ri, mit)
         // =========================================================================
-        const sec1_i = buildToothSector(slice1_i, true, cx_mesh_in, cy_mesh_in - rvi1, -3, 3, 0);
-        const sec2_i = buildToothSector(slice2_i, false, cx_mesh_in, cy_mesh_in + rvi2, -3, 3, 0);
+        const sec1_i = buildToothSector(slice1_i, true, cx_mesh_in, cy_mesh_in - rvi1, -3, 3);
+        const sec2_i = buildToothSector(slice2_i, false, cx_mesh_in, cy_mesh_in + rvi2, -3, 3);
         addPolyline(sec1_i.fullPoly, 'MESH_INNER_PINION', true);
         addPolyline(sec2_i.fullPoly, 'MESH_INNER_GEAR', true);
 
-        const arcPtsInner = (radius, isPinion) => {
-            const arr = [];
-            const sec = isPinion ? sec1_i : sec2_i;
-            for (let s = 0; s <= 32; s++) {
-                const psi = sec.minPsi + (s / 32) * (sec.maxPsi - sec.minPsi);
-                arr.push(sec.toPt(radius, psi));
-            }
-            return arr;
-        };
-        addPolyline(arcPtsInner(rvi1, true), 'PITCH_CIRCLES', false);
-        addPolyline(arcPtsInner(rvfi1, true), 'ROOT_CIRCLES', false);
-        addPolyline(arcPtsInner(rvai1, true), 'DIMENSIONS', false);
-        addPolyline(arcPtsInner(rvi2, false), 'PITCH_CIRCLES', false);
-        addPolyline(arcPtsInner(rvfi2, false), 'ROOT_CIRCLES', false);
-        addPolyline(arcPtsInner(rvai2, false), 'DIMENSIONS', false);
+        const psiMaxDeg1_i = Math.abs(sec1_i.maxPsi) * 180.0 / Math.PI;
+        const psiMaxDeg2_i = Math.abs(sec2_i.maxPsi) * 180.0 / Math.PI;
+
+        // TRUE ARCS: Pinion 1 Inner reference circles
+        addArc(cx_mesh_in, cy_mesh_in - rvi1, rvi1, 90.0 - psiMaxDeg1_i, 90.0 + psiMaxDeg1_i, 'PITCH_CIRCLES');
+        addArc(cx_mesh_in, cy_mesh_in - rvi1, rvfi1, 90.0 - psiMaxDeg1_i, 90.0 + psiMaxDeg1_i, 'ROOT_CIRCLES');
+        addArc(cx_mesh_in, cy_mesh_in - rvi1, rvai1, 90.0 - psiMaxDeg1_i, 90.0 + psiMaxDeg1_i, 'TIP_CIRCLES');
+
+        // TRUE ARCS: Gear 2 Inner reference circles
+        addArc(cx_mesh_in, cy_mesh_in + rvi2, rvi2, 270.0 - psiMaxDeg2_i, 270.0 + psiMaxDeg2_i, 'PITCH_CIRCLES');
+        addArc(cx_mesh_in, cy_mesh_in + rvi2, rvfi2, 270.0 - psiMaxDeg2_i, 270.0 + psiMaxDeg2_i, 'ROOT_CIRCLES');
+        addArc(cx_mesh_in, cy_mesh_in + rvi2, rvai2, 270.0 - psiMaxDeg2_i, 270.0 + psiMaxDeg2_i, 'TIP_CIRCLES');
+
+        for (const a of sec1_i.tipArcs) addArc(a.cx, a.cy, a.r, a.sDeg, a.eDeg, 'MESH_TIP_ARCS');
+        for (const a of sec2_i.tipArcs) addArc(a.cx, a.cy, a.r, a.sDeg, a.eDeg, 'MESH_TIP_ARCS');
 
         const loaLenI = mit * 3.5;
         addLine(
@@ -969,70 +1069,91 @@ export const BevelDxfExporter = {
         addText(`R chan dao cat: Rf1 = ${(0.38 * mit).toFixed(2)} mm (0.38*mit)`, cx_mesh_in - 120, rvai2 + 25, 3.2, 'MFG_TABLE');
 
         // =========================================================================
-        // BLOCK 3: CẶP RÃNH RĂNG ĐỒNG TÂM BÁNH DẪN 1 (Pinion 1 - Outer & Inner Slots)
-        // Both share virtual center (cx_slot1, cy_slot1)
+        // BLOCK 3: CẶP RÃNH RĂNG ĐỒNG TÂM BÁNH DẪN 1 (Pinion 1 Slots: R & R=0)
         // =========================================================================
-        const slot1_outer = buildClosedSlot(slice1_e, cx_slot1, cy_slot1);
-        const slot1_inner = buildClosedSlot(slice1_i, cx_slot1, cy_slot1);
-        addPolyline(slot1_outer, 'SLOT_PINION_OUTER', true);
-        addPolyline(slot1_inner, 'SLOT_PINION_INNER', true);
+        const slot1_e_R = buildClosedSlotWithFillet(slice1_e, cx_slot1, cy_slot1);
+        const slot1_i_R = buildClosedSlotWithFillet(slice1_i, cx_slot1, cy_slot1);
+        addPolyline(slot1_e_R.poly, 'SLOT_PINION_OUTER_R', true);
+        addPolyline(slot1_i_R.poly, 'SLOT_PINION_INNER_R', true);
 
-        // Center axis for Pinion 1 Slots
+        const slot1_e_R0 = buildClosedSlotR0(slice1_e, cx_slot1, cy_slot1);
+        const slot1_i_R0 = buildClosedSlotR0(slice1_i, cx_slot1, cy_slot1);
+        addPolyline(slot1_e_R0.poly, 'SLOT_PINION_OUTER_R0', true);
+        addPolyline(slot1_i_R0.poly, 'SLOT_PINION_INNER_R0', true);
+
+        // TRUE ARCS for Slot Tip & Root
+        const tipDeg1_e = slot1_e_R.psiTip * 180.0 / Math.PI;
+        const tipDeg1_i = slot1_i_R.psiTip * 180.0 / Math.PI;
+        addArc(cx_slot1, cy_slot1, rvae1, 90.0 - tipDeg1_e, 90.0 + tipDeg1_e, 'SLOT_TIP_ARCS');
+        addArc(cx_slot1, cy_slot1, rvai1, 90.0 - tipDeg1_i, 90.0 + tipDeg1_i, 'SLOT_TIP_ARCS');
+
+        const rootDeg1_e = slot1_e_R0.psiRoot * 180.0 / Math.PI;
+        const rootDeg1_i = slot1_i_R0.psiRoot * 180.0 / Math.PI;
+        addArc(cx_slot1, cy_slot1, rvfe1, 90.0 - rootDeg1_e, 90.0 + rootDeg1_e, 'SLOT_ROOT_ARCS');
+        addArc(cx_slot1, cy_slot1, rvfi1, 90.0 - rootDeg1_i, 90.0 + rootDeg1_i, 'SLOT_ROOT_ARCS');
+
+        // Concentric Reference Arcs (TRUE ARCS)
+        const spanArcDeg1 = 14.0;
+        addArc(cx_slot1, cy_slot1, rve1, 90.0 - spanArcDeg1, 90.0 + spanArcDeg1, 'PITCH_CIRCLES');
+        addArc(cx_slot1, cy_slot1, rvi1, 90.0 - spanArcDeg1, 90.0 + spanArcDeg1, 'PITCH_CIRCLES');
+        addArc(cx_slot1, cy_slot1, rvfe1, 90.0 - spanArcDeg1, 90.0 + spanArcDeg1, 'ROOT_CIRCLES');
+        addArc(cx_slot1, cy_slot1, rvfi1, 90.0 - spanArcDeg1, 90.0 + spanArcDeg1, 'ROOT_CIRCLES');
         addLine(cx_slot1, cy_slot1 + rvfi1 - 30, cx_slot1, cy_slot1 + rvae1 + 30, 'CENTER_AXES');
 
-        // Concentric Reference Arcs for Pinion 1 Slots
-        const addRefSlotArc = (radius, layer) => {
-            const arr = [];
-            const spanPsi = 0.22;
-            for (let s = 0; s <= 24; s++) {
-                const psi = -spanPsi + (s / 24) * (2 * spanPsi);
-                arr.push({ x: cx_slot1 + radius * Math.sin(psi), y: cy_slot1 + radius * Math.cos(psi) });
-            }
-            addPolyline(arr, layer, false);
-        };
-        addRefSlotArc(rve1, 'PITCH_CIRCLES');
-        addRefSlotArc(rvfe1, 'ROOT_CIRCLES');
-        addRefSlotArc(rvi1, 'PITCH_CIRCLES');
-        addRefSlotArc(rvfi1, 'ROOT_CIRCLES');
-
-        addText('CUM 3: CAP RANH RANG DONG TAM BANH DAN 1 (Pinion 1 Slots)', cx_slot1 - 95, rvae1 + 45, 4.0, 'MFG_TABLE');
+        addText('CUM 3: CAP RANH RANG DONG TAM BANH DAN 1 (Pinion 1 Slots: R & R=0)', cx_slot1 - 95, rvae1 + 45, 4.0, 'MFG_TABLE');
         addText(`Goc non chia delta1 = ${(delta1 * 180 / Math.PI).toFixed(4)} deg`, cx_slot1 - 95, rvae1 + 35, 3.2, 'MFG_TABLE');
-        addText(`LOFT CAM: Profile Ngoai (Re) va Profile Trong (Ri) dong tam tai (0,0)`, cx_slot1 - 95, rvae1 + 25, 3.0, 'MFG_TABLE');
+        addText(`Co 2 Layer: Layer *_R (bo cung R=0.38*m) & Layer *_R0 (day vuong R=0)`, cx_slot1 - 95, rvae1 + 25, 3.0, 'MFG_TABLE');
 
         // =========================================================================
-        // BLOCK 4: CẶP RÃNH RĂNG ĐỒNG TÂM BÁNH BỊ DẪN 2 (Gear 2 - Outer & Inner Slots)
-        // Both share virtual center (cx_slot2, cy_slot2)
+        // BLOCK 4: CẶP RÃNH RĂNG ĐỒNG TÂM BÁNH BỊ DẪN 2 (Gear 2 Slots: R & R=0)
         // =========================================================================
-        const slot2_outer = buildClosedSlot(slice2_e, cx_slot2, cy_slot2);
-        const slot2_inner = buildClosedSlot(slice2_i, cx_slot2, cy_slot2);
-        addPolyline(slot2_outer, 'SLOT_GEAR_OUTER', true);
-        addPolyline(slot2_inner, 'SLOT_GEAR_INNER', true);
+        const slot2_e_R = buildClosedSlotWithFillet(slice2_e, cx_slot2, cy_slot2);
+        const slot2_i_R = buildClosedSlotWithFillet(slice2_i, cx_slot2, cy_slot2);
+        addPolyline(slot2_e_R.poly, 'SLOT_GEAR_OUTER_R', true);
+        addPolyline(slot2_i_R.poly, 'SLOT_GEAR_INNER_R', true);
 
-        // Center axis for Gear 2 Slots
+        const slot2_e_R0 = buildClosedSlotR0(slice2_e, cx_slot2, cy_slot2);
+        const slot2_i_R0 = buildClosedSlotR0(slice2_i, cx_slot2, cy_slot2);
+        addPolyline(slot2_e_R0.poly, 'SLOT_GEAR_OUTER_R0', true);
+        addPolyline(slot2_i_R0.poly, 'SLOT_GEAR_INNER_R0', true);
+
+        // TRUE ARCS for Slot Tip & Root
+        const tipDeg2_e = slot2_e_R.psiTip * 180.0 / Math.PI;
+        const tipDeg2_i = slot2_i_R.psiTip * 180.0 / Math.PI;
+        addArc(cx_slot2, cy_slot2, rvae2, 90.0 - tipDeg2_e, 90.0 + tipDeg2_e, 'SLOT_TIP_ARCS');
+        addArc(cx_slot2, cy_slot2, rvai2, 90.0 - tipDeg2_i, 90.0 + tipDeg2_i, 'SLOT_TIP_ARCS');
+
+        const rootDeg2_e = slot2_e_R0.psiRoot * 180.0 / Math.PI;
+        const rootDeg2_i = slot2_i_R0.psiRoot * 180.0 / Math.PI;
+        addArc(cx_slot2, cy_slot2, rvfe2, 90.0 - rootDeg2_e, 90.0 + rootDeg2_e, 'SLOT_ROOT_ARCS');
+        addArc(cx_slot2, cy_slot2, rvfi2, 90.0 - rootDeg2_i, 90.0 + rootDeg2_i, 'SLOT_ROOT_ARCS');
+
+        // Concentric Reference Arcs (TRUE ARCS)
+        const spanArcDeg2 = 10.0;
+        addArc(cx_slot2, cy_slot2, rve2, 90.0 - spanArcDeg2, 90.0 + spanArcDeg2, 'PITCH_CIRCLES');
+        addArc(cx_slot2, cy_slot2, rvi2, 90.0 - spanArcDeg2, 90.0 + spanArcDeg2, 'PITCH_CIRCLES');
+        addArc(cx_slot2, cy_slot2, rvfe2, 90.0 - spanArcDeg2, 90.0 + spanArcDeg2, 'ROOT_CIRCLES');
+        addArc(cx_slot2, cy_slot2, rvfi2, 90.0 - spanArcDeg2, 90.0 + spanArcDeg2, 'ROOT_CIRCLES');
         addLine(cx_slot2, cy_slot2 + rvfi2 - 30, cx_slot2, cy_slot2 + rvae2 + 30, 'CENTER_AXES');
 
-        // Concentric Reference Arcs for Gear 2 Slots
-        const addRefSlotArc2 = (radius, layer) => {
-            const arr = [];
-            const spanPsi = 0.16;
-            for (let s = 0; s <= 24; s++) {
-                const psi = -spanPsi + (s / 24) * (2 * spanPsi);
-                arr.push({ x: cx_slot2 + radius * Math.sin(psi), y: cy_slot2 + radius * Math.cos(psi) });
-            }
-            addPolyline(arr, layer, false);
-        };
-        addRefSlotArc2(rve2, 'PITCH_CIRCLES');
-        addRefSlotArc2(rvfe2, 'ROOT_CIRCLES');
-        addRefSlotArc2(rvi2, 'PITCH_CIRCLES');
-        addRefSlotArc2(rvfi2, 'ROOT_CIRCLES');
-
-        addText('CUM 4: CAP RANH RANG DONG TAM BANH BI DAN 2 (Gear 2 Slots)', cx_slot2 - 95, rvae2 + 45, 4.0, 'MFG_TABLE');
+        addText('CUM 4: CAP RANH RANG DONG TAM BANH BI DAN 2 (Gear 2 Slots: R & R=0)', cx_slot2 - 95, rvae2 + 45, 4.0, 'MFG_TABLE');
         addText(`Goc non chia delta2 = ${(delta2 * 180 / Math.PI).toFixed(4)} deg`, cx_slot2 - 95, rvae2 + 35, 3.2, 'MFG_TABLE');
-        addText(`LOFT CAM: Profile Ngoai (Re) va Profile Trong (Ri) dong tam tai (0,0)`, cx_slot2 - 95, rvae2 + 25, 3.0, 'MFG_TABLE');
+        addText(`Co 2 Layer: Layer *_R (bo cung R=0.38*m) & Layer *_R0 (day vuong R=0)`, cx_slot2 - 95, rvae2 + 25, 3.0, 'MFG_TABLE');
 
         // =========================================================================
         // BLOCK 5: BẢNG THÔNG SỐ CHẾ TẠO & HƯỚNG DẪN DỰNG HÌNH SOLIDWORKS / MASTERCAM
         // =========================================================================
+        const cosD1 = Math.cos(delta1);
+        const cosD2 = Math.cos(delta2);
+        const deltaZ_cut1 = b / cosD1;
+        const deltaZ_cut2 = b / cosD2;
+        const Ze1_star = -Re / cosD1;
+        const Zi1_star = -Ri / cosD1;
+        const Ze2_star = -Re / cosD2;
+        const Zi2_star = -Ri / cosD2;
+        const deltaZ_pitch1 = b * cosD1;
+        const deltaZ_pitch2 = b * cosD2;
+
         const tblX = -120;
         let tblY = -rve1 - 60;
         const rowH = 7.5;
@@ -1052,8 +1173,52 @@ export const BevelDxfExporter = {
         addText(`- Ban kinh luon dao cat: Ngoai Rf_e = ${(0.38 * met).toFixed(3)} mm | Trong Rf_i = ${(0.38 * mit).toFixed(3)} mm (0.38*m)`, tblX, tblY, 3.5, 'MFG_TABLE');
         tblY -= rowH;
         addText(`- So rang ao Tredgold: Banh 1 zv1_e = ${(z1 / Math.cos(delta1)).toFixed(2)} | Banh 2 zv2_e = ${(z2 / Math.cos(delta2)).toFixed(2)}`, tblX, tblY, 3.5, 'MFG_TABLE');
+
+        tblY -= rowH * 1.4;
+        addText('=========================================================================================', tblX, tblY, 3.5, 'MFG_TABLE');
+        tblY -= rowH * 1.0;
+        addText('THONG SO KHONG GIAN 3D (KHI DAT BANH RANG TREN MAT PHANG XY, TAM X=0 Y=0, CHOP NON HUONG +Z):', tblX, tblY, 4.0, 'MFG_TABLE');
+        tblY -= rowH * 1.2;
+
+        addText(`[ BANH DAN 1 - PINION ]:`, tblX, tblY, 3.6, 'MFG_TABLE');
         tblY -= rowH;
-        addText(`- Huong dan CAM / SolidWorks: Nhap Cum 3 (Banh 1) hoac Cum 4 (Banh 2), dung 2 profile ranh dong tam de Loft Cut theo goc non!`, tblX, tblY, 3.5, 'MFG_TABLE');
+        addText(`  1. Goc hop giua mat phang chua bien dang rang (ngoai & trong) voi mat phang XY: delta1 = ${(delta1 * 180 / Math.PI).toFixed(4)} deg`, tblX, tblY, 3.3, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`  2. Khoang cach giua 2 diem cat cua 2 mat phang tren truc Z: delta_Z_cut1 = b / cos(delta1) = ${deltaZ_cut1.toFixed(3)} mm`, tblX, tblY, 3.3, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`     - Giao diem mat phang ngoai (Re) cat truc Z (so voi Apex V): Z_e1* = -Re / cos(delta1) = ${Ze1_star.toFixed(3)} mm`, tblX, tblY, 3.0, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`     - Giao diem mat phang trong (Ri) cat truc Z (so voi Apex V): Z_i1* = -Ri / cos(delta1) = ${Zi1_star.toFixed(3)} mm`, tblX, tblY, 3.0, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`  3. Khoang cach vuong goc giua 2 mat phang: d_normal = b = ${b.toFixed(3)} mm`, tblX, tblY, 3.3, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`  4. Khoang cach doc truc Z giua 2 vong chia: delta_Z_pitch1 = b * cos(delta1) = ${deltaZ_pitch1.toFixed(3)} mm`, tblX, tblY, 3.3, 'MFG_TABLE');
+
+        tblY -= rowH * 1.2;
+        addText(`[ BANH BI DAN 2 - GEAR ]:`, tblX, tblY, 3.6, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`  1. Goc hop giua mat phang chua bien dang rang (ngoai & trong) voi mat phang XY: delta2 = ${(delta2 * 180 / Math.PI).toFixed(4)} deg`, tblX, tblY, 3.3, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`  2. Khoang cach giua 2 diem cat cua 2 mat phang tren truc Z: delta_Z_cut2 = b / cos(delta2) = ${deltaZ_cut2.toFixed(3)} mm`, tblX, tblY, 3.3, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`     - Giao diem mat phang ngoai (Re) cat truc Z (so voi Apex V): Z_e2* = -Re / cos(delta2) = ${Ze2_star.toFixed(3)} mm`, tblX, tblY, 3.0, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`     - Giao diem mat phang trong (Ri) cat truc Z (so voi Apex V): Z_i2* = -Ri / cos(delta2) = ${Zi2_star.toFixed(3)} mm`, tblX, tblY, 3.0, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`  3. Khoang cach vuong goc giua 2 mat phang: d_normal = b = ${b.toFixed(3)} mm`, tblX, tblY, 3.3, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`  4. Khoang cach doc truc Z giua 2 vong chia: delta_Z_pitch2 = b * cos(delta2) = ${deltaZ_pitch2.toFixed(3)} mm`, tblX, tblY, 3.3, 'MFG_TABLE');
+
+        tblY -= rowH * 1.2;
+        addText(`HUONG DAN SOLIDWORKS / MASTERCAM LOFT CUT:`, tblX, tblY, 3.6, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`  - Chon Cum 3 (Pinion 1) hoac Cum 4 (Gear 2). Nhap 2 Sketch ranh rang dong tam vao 2 Plane cach nhau delta_Z_cut tren truc Z.`, tblX, tblY, 3.2, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`  - Layer *_R: bien dang ranh co bo cung dao cat R = 0.38*m (dung kiem thu 3D & phay tinh dung dao profile).`, tblX, tblY, 3.2, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`  - Layer *_R0: bien dang ranh day vuong R = 0 (khong bo R), chuyen dung Mastercam CAM tu dong offset bu ban kinh dao phay!`, tblX, tblY, 3.2, 'MFG_TABLE');
+        tblY -= rowH;
+        addText(`  - Thuc hien Lofted Cut giua 2 Sketch theo huong non de tao ranh rang chuan xac 100%!`, tblX, tblY, 3.2, 'MFG_TABLE');
 
         lines.push('0', 'ENDSEC', '0', 'EOF');
         return lines.join('\r\n');
