@@ -2247,7 +2247,7 @@ const WormCalcEngine = {
         const i_dev_pct = i_dev * 100.0;
         const n2 = n1 / i; // P120
 
-        const m_Input = (p.m_Input !== undefined && p.m_Input !== null && String(p.m_Input).trim() !== '') ? parseFloat(p.m_Input) : (25.4 / 6.0); // O167 (4.233333333333333)
+        const m_Input = (p.m_Input !== undefined && p.m_Input !== null && String(p.m_Input).trim() !== '') ? parseFloat(p.m_Input) : 4.0; // O167 (Default mx = 4.0 mm)
         const m_temp = m_Input; // T167 (SI)
         const CP = (m_temp * Math.PI) / 25.4; // O168
         const DP = 25.4 / m_temp; // P168
@@ -2256,7 +2256,7 @@ const WormCalcEngine = {
         const calc_q = parseInt(p.calc_q !== undefined ? p.calc_q : 1); // F163: 1=q input, 2=d1 input, 3=gama input
 
         let q = (p.q !== undefined && p.q !== null && String(p.q).trim() !== '') ? parseFloat(p.q) : 8.5;
-        let d1_Input = (p.d1_Input !== undefined && p.d1_Input !== null && String(p.d1_Input).trim() !== '') ? parseFloat(p.d1_Input) : 36.23149719358681;
+        let d1_Input = (p.d1_Input !== undefined && p.d1_Input !== null && String(p.d1_Input).trim() !== '') ? parseFloat(p.d1_Input) : 34.0;
         let gama = (p.gama !== undefined && p.gama !== null && String(p.gama).trim() !== '') ? parseFloat(p.gama) : 6.709836807756933;
 
         let mn, mx, d1;
@@ -8736,26 +8736,26 @@ class WormUIController {
             alfa_temp: this.parseVal('inp_alfa_temp', 20.0),
             calc_q: calc_q,
             q: this.parseVal('inp_q', 8.5),
-            d1_Input: this.parseVal('inp_d1_Input', 36.23149719358681),
+            d1_Input: this.parseVal('inp_d1_Input', 34.0),
             gama: this.parseVal('inp_gama', 6.709836807756933),
             teethOrientation: parseInt(document.getElementById('sel_teethOrientation')?.value || '1', 10),
-            m_Input: this.parseVal('inp_m_Input', 25.4 / 6.0),
+            m_Input: this.parseVal('inp_m_Input', 4.0),
             l1_proc: this.parseVal('inp_l1_proc', 50.0),
             l2_proc: this.parseVal('inp_l2_proc', 50.0),
             l1l2_flag: document.getElementById('chk_l1l2_flag')?.checked ?? true,
-            l1_input: this.parseVal('inp_l1_input', 89.4839149653023),
-            l2_input: this.parseVal('inp_l2_input', 89.4839149653023),
+            l1_input: this.parseVal('inp_l1_input', 84.0),
+            l2_input: this.parseVal('inp_l2_input', 84.0),
             FlagL: document.getElementById('chk_FlagL')?.checked ?? true,
-            L_Input: this.parseVal('inp_L_Input', 56.72666666666667),
+            L_Input: this.parseVal('inp_L_Input', 53.6),
             Flagb2H: document.getElementById('chk_Flagb2H')?.checked ?? true,
-            b2H_Input: this.parseVal('inp_b2H_Input', 33.57),
+            b2H_Input: this.parseVal('inp_b2H_Input', 31.5),
             x2: this.parseVal('inp_x2', 0.0),
             a_req1_Input: this.parseVal('inp_a_req1_Input', 100.0),
             FitAxis: parseInt(document.getElementById('sel_FitAxis')?.value || '2', 10),
 
             // Section 5.0
             de2Flag: document.getElementById('chk_de2Flag')?.checked ?? true,
-            de2Input: this.parseVal('inp_de2Input', 183.23),
+            de2Input: this.parseVal('inp_de2Input', 172.0),
 
             // Section 6.0
             bearingType: parseInt(document.getElementById('sel_bearingType')?.value || '1', 10),
@@ -9154,7 +9154,8 @@ class WormUIController {
         if (radio1) radio1.checked = true;
         setValDirect('inp_q', '8.5');
         setValDirect('sel_teethOrientation', '1');
-        setValDirect('inp_m_Input', String(25.4 / 6.0));
+        setValDirect('inp_m_Input', '4.0');
+        setValDirect('inp_d1_Input', '34.0');
         setValDirect('inp_l1_proc', '50.0');
         setValDirect('inp_l2_proc', '50.0');
         setChkDirect('chk_l1l2_flag', true);

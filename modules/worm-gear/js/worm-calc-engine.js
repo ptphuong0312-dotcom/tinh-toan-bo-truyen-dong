@@ -136,7 +136,7 @@ const WormCalcEngine = {
         const i_dev_pct = i_dev * 100.0;
         const n2 = n1 / i; // P120
 
-        const m_Input = (p.m_Input !== undefined && p.m_Input !== null && String(p.m_Input).trim() !== '') ? parseFloat(p.m_Input) : (25.4 / 6.0); // O167 (4.233333333333333)
+        const m_Input = (p.m_Input !== undefined && p.m_Input !== null && String(p.m_Input).trim() !== '') ? parseFloat(p.m_Input) : 4.0; // O167 (Default mx = 4.0 mm)
         const m_temp = m_Input; // T167 (SI)
         const CP = (m_temp * Math.PI) / 25.4; // O168
         const DP = 25.4 / m_temp; // P168
@@ -145,7 +145,7 @@ const WormCalcEngine = {
         const calc_q = parseInt(p.calc_q !== undefined ? p.calc_q : 1); // F163: 1=q input, 2=d1 input, 3=gama input
 
         let q = (p.q !== undefined && p.q !== null && String(p.q).trim() !== '') ? parseFloat(p.q) : 8.5;
-        let d1_Input = (p.d1_Input !== undefined && p.d1_Input !== null && String(p.d1_Input).trim() !== '') ? parseFloat(p.d1_Input) : 36.23149719358681;
+        let d1_Input = (p.d1_Input !== undefined && p.d1_Input !== null && String(p.d1_Input).trim() !== '') ? parseFloat(p.d1_Input) : 34.0;
         let gama = (p.gama !== undefined && p.gama !== null && String(p.gama).trim() !== '') ? parseFloat(p.gama) : 6.709836807756933;
 
         let mn, mx, d1;
