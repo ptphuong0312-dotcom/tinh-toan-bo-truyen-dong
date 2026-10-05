@@ -3744,34 +3744,94 @@ const BevelDxfExporter = {
             const half_pitch = slice.half_pitch;
             const cosD = slice.cosD;
             const rv = slice.rv;
+            const rvb = slice.rvb;
+            const rvf = slice.rvf;
             const rva = slice.rva;
+            const alfa_t = slice.alfa_t;
+            const inv_alfa_t = Math.tan(alfa_t) - alfa_t;
+            const psi_v = slice.psi_v || (1.57 / slice.z);
+            const psi_b = slice.psi_b || (psi_v + inv_alfa_t);
+            const psi_half_pitch = half_pitch * cosD;
 
-            let tipIdx = -1;
-            for (let i = Math.floor(slice.toothContour.length / 2); i < slice.toothContour.length; i++) {
-                if (slice.toothContour[i].zone === 'tip_corner') {
-                    tipIdx = i;
-                    break;
-                }
+            function evalFlank(r_c) {
+                const alpha_c = Math.acos(Math.min(1.0, rvb / r_c));
+                const inv_c = Math.tan(alpha_c) - alpha_c;
+                const psi_c = Math.max(0.0001, psi_b - inv_c);
+                return psi_half_pitch - psi_c;
             }
 
-            const leftPts = [];
-            for (let i = tipIdx; i < slice.toothContour.length; i++) {
-                const tc = slice.toothContour[i];
-                const r = rv + tc.h;
-                const psi = (tc.theta - half_pitch) * cosD;
-                leftPts.push({ x: cx + r * Math.sin(psi), y: cy + r * Math.cos(psi) });
+            const fillet = slice.fillet;
+            const Rf = (fillet && fillet.Rf) ? fillet.Rf : Math.min(0.38 * (mmn * Re / Rm), 0.75 * (rva - rvf));
+            const rt = (fillet && fillet.rt) ? Math.min(rva - 0.1, fillet.rt) : Math.max(rvb, rvf);
+            const alfa_f = (fillet && fillet.alfa_f !== undefined) ? fillet.alfa_f : 0.0;
+            const psi_t = (fillet && fillet.psi_t !== undefined) ? fillet.psi_t : (psi_b - (Math.tan(alfa_f) - alfa_f));
+            const psi_slot_t = psi_half_pitch - psi_t;
+
+            const Ptx = rt * Math.sin(psi_slot_t);
+            const Pty = rt * Math.cos(psi_slot_t);
+            const Cfx = Ptx - Rf * Math.cos(psi_slot_t + alfa_f);
+            const Cfy = Pty + Rf * Math.sin(psi_slot_t + alfa_f);
+
+            const psi_root = Math.atan2(Cfx, Cfy);
+            const gamma_flank = Math.atan2(Pty - Cfy, Ptx - Cfx);
+            const Prx = rvf * Math.sin(psi_root);
+            const Pry = rvf * Math.cos(psi_root);
+            const gamma_root = Math.atan2(Pry - Cfy, Prx - Cfx);
+            let dGamma = gamma_root - gamma_flank;
+            while (dGamma > Math.PI) dGamma -= 2.0 * Math.PI;
+            while (dGamma < -Math.PI) dGamma += 2.0 * Math.PI;
+
+            const nFlank = Math.max(12, res.ptsPerFlank || 16);
+            const rightFlank = [];
+            for (let k = 0; k < nFlank; k++) {
+                const frac = k / (nFlank - 1);
+                const r = rva - frac * (rva - rt);
+                const psi_slot = evalFlank(r);
+                rightFlank.push({ x: cx + r * Math.sin(psi_slot), y: cy + r * Math.cos(psi_slot) });
             }
 
-            const rightPts = [];
-            for (let i = leftPts.length - 2; i >= 0; i--) {
-                rightPts.push({ x: cx - (leftPts[i].x - cx), y: leftPts[i].y });
+            const nFillet = 8;
+            const rightFillet = [];
+            for (let k = 1; k <= nFillet; k++) {
+                const frac = k / nFillet;
+                const gamma = gamma_flank + frac * dGamma;
+                const fx = Cfx + Rf * Math.cos(gamma);
+                const fy = Cfy + Rf * Math.sin(gamma);
+                rightFillet.push({ x: cx + fx, y: cy + fy });
             }
 
-            const topTipRight = rightPts[rightPts.length - 1];
-            const psiTip = Math.atan2(topTipRight.x - cx, topTipRight.y - cy);
-            topTipRight.bulge = Math.tan(psiTip / 2);
+            const poly = [];
+            // 1. Left flank from rva down to rt: mirror of rightFlank across cx
+            for (let i = 0; i < rightFlank.length; i++) {
+                poly.push({ x: cx - (rightFlank[i].x - cx), y: rightFlank[i].y });
+            }
+            // 2. Left fillet from Pt down to Pr: mirror of rightFillet across cx
+            for (let i = 0; i < rightFillet.length; i++) {
+                poly.push({ x: cx - (rightFillet[i].x - cx), y: rightFillet[i].y });
+            }
+            // 3. Bottom root land arc along rvf from -psi_root to +psi_root
+            const nRoot = 8;
+            for (let s = 1; s < nRoot; s++) {
+                const psi = -psi_root + (s / nRoot) * (2.0 * psi_root);
+                poly.push({ x: cx + rvf * Math.sin(psi), y: cy + rvf * Math.cos(psi) });
+            }
+            // 4. Right fillet from Pr up to Pt: reverse of rightFillet
+            for (let i = rightFillet.length - 1; i >= 0; i--) {
+                poly.push({ x: rightFillet[i].x, y: rightFillet[i].y });
+            }
+            // 5. Right flank from rt up to rva: reverse of rightFlank
+            for (let i = rightFlank.length - 1; i >= 0; i--) {
+                poly.push({ x: rightFlank[i].x, y: rightFlank[i].y });
+            }
+            // 6. Top tip land arc along rva from +psi_tip back to -psi_tip
+            const psi_tip = evalFlank(rva);
+            const nTip = 10;
+            for (let s = 1; s < nTip; s++) {
+                const psi = psi_tip - (s / nTip) * (2.0 * psi_tip);
+                poly.push({ x: cx + rva * Math.sin(psi), y: cy + rva * Math.cos(psi) });
+            }
 
-            return { poly: [...leftPts, ...rightPts], psiTip };
+            return { poly, psiTip: psi_tip, psiRoot: psi_root };
         };
 
         // Slot Generator: Closed Polyline Loop With R = 0 (Sharp Root Day Vuong Sac)
@@ -3782,52 +3842,71 @@ const BevelDxfExporter = {
             const rvb = slice.rvb;
             const rvf = slice.rvf;
             const rva = slice.rva;
-            const inv_alfa_t = Math.tan(slice.alfa_t) - slice.alfa_t;
+            const alfa_t = slice.alfa_t;
+            const inv_alfa_t = Math.tan(alfa_t) - alfa_t;
             const psi_v = slice.psi_v || (1.57 / slice.z);
-            const psi_b = psi_v + inv_alfa_t;
+            const psi_b = slice.psi_b || (psi_v + inv_alfa_t);
             const psi_half_pitch = half_pitch * cosD;
 
-            function evalInv(r_c) {
+            function evalFlank(r_c) {
                 const alpha_c = Math.acos(Math.min(1.0, rvb / r_c));
                 const inv_c = Math.tan(alpha_c) - alpha_c;
                 const psi_c = Math.max(0.0001, psi_b - inv_c);
-                return psi_c * cosD;
+                return psi_half_pitch - psi_c;
             }
 
             const rStart = Math.max(rvb, rvf);
-            const nFlank = 20;
+            const nFlank = Math.max(12, res.ptsPerFlank || 16);
 
-            const leftPts = [];
-            for (let i = nFlank - 1; i >= 0; i--) {
-                const r = rStart + (i / (nFlank - 1)) * (rva - rStart);
-                const thetaTooth = evalInv(r);
-                const psiSlot = -(psi_half_pitch - thetaTooth);
-                leftPts.push({ x: cx + r * Math.sin(psiSlot), y: cy + r * Math.cos(psiSlot) });
+            const rightFlankR0 = [];
+            for (let k = 0; k < nFlank; k++) {
+                const frac = k / (nFlank - 1);
+                const r = rva - frac * (rva - rStart);
+                const psi_slot = evalFlank(r);
+                rightFlankR0.push({ x: cx + r * Math.sin(psi_slot), y: cy + r * Math.cos(psi_slot) });
             }
 
-            let psiRoot = 0;
+            let psi_root_R0 = 0;
+            const stemR0 = [];
             if (rvf < rvb - 1e-4) {
-                const psiSlotB = -(psi_half_pitch - psi_b * cosD);
-                psiRoot = Math.abs(psiSlotB);
-                leftPts.push({ x: cx + rvf * Math.sin(psiSlotB), y: cy + rvf * Math.cos(psiSlotB) });
+                psi_root_R0 = evalFlank(rvb);
+                stemR0.push({ x: cx + rvf * Math.sin(psi_root_R0), y: cy + rvf * Math.cos(psi_root_R0) });
             } else {
-                const thetaStart = evalInv(rvf);
-                const psiSlotF = -(psi_half_pitch - thetaStart);
-                psiRoot = Math.abs(psiSlotF);
+                psi_root_R0 = evalFlank(rvf);
             }
 
-            leftPts[leftPts.length - 1].bulge = -Math.tan(psiRoot / 2);
-
-            const rightPts = [];
-            for (let i = leftPts.length - 1; i >= 0; i--) {
-                rightPts.push({ x: cx - (leftPts[i].x - cx), y: leftPts[i].y });
+            const poly = [];
+            // 1. Left flank from rva down to rStart: mirror across cx
+            for (let i = 0; i < rightFlankR0.length; i++) {
+                poly.push({ x: cx - (rightFlankR0[i].x - cx), y: rightFlankR0[i].y });
+            }
+            // 2. Left stem
+            for (let i = 0; i < stemR0.length; i++) {
+                poly.push({ x: cx - (stemR0[i].x - cx), y: stemR0[i].y });
+            }
+            // 3. Bottom root land arc along rvf from -psi_root_R0 to +psi_root_R0
+            const nRoot = 8;
+            for (let s = 1; s < nRoot; s++) {
+                const psi = -psi_root_R0 + (s / nRoot) * (2.0 * psi_root_R0);
+                poly.push({ x: cx + rvf * Math.sin(psi), y: cy + rvf * Math.cos(psi) });
+            }
+            // 4. Right stem
+            for (let i = stemR0.length - 1; i >= 0; i--) {
+                poly.push({ x: stemR0[i].x, y: stemR0[i].y });
+            }
+            // 5. Right flank from rStart up to rva
+            for (let i = rightFlankR0.length - 1; i >= 0; i--) {
+                poly.push({ x: rightFlankR0[i].x, y: rightFlankR0[i].y });
+            }
+            // 6. Top tip land arc along rva from +psi_tip back to -psi_tip
+            const psi_tip = evalFlank(rva);
+            const nTip = 10;
+            for (let s = 1; s < nTip; s++) {
+                const psi = psi_tip - (s / nTip) * (2.0 * psi_tip);
+                poly.push({ x: cx + rva * Math.sin(psi), y: cy + rva * Math.cos(psi) });
             }
 
-            const topTipRight = rightPts[rightPts.length - 1];
-            const psiTip = Math.atan2(topTipRight.x - cx, topTipRight.y - cy);
-            topTipRight.bulge = Math.tan(psiTip / 2);
-
-            return { poly: [...leftPts, ...rightPts], psiTip, psiRoot };
+            return { poly, psiTip: psi_tip, psiRoot: psi_root_R0 };
         };
 
         // Multi-Tooth Sector Generator (5-7 Teeth) with TRUE CIRCULAR ARCS on Tip Lands

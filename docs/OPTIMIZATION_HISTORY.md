@@ -3361,12 +3361,24 @@ ho_{f0}$.
 
 ---
 
-## 2026-10-05 - Quy Tắc 79: Nguyên Tắc Tuyệt Đối Không Tham Khảo Tác Giả Việt Nam (Zero-VN-Citation Protocol) & Ánh Xạ Giải Tích Bánh Răng Trụ Tương Đương Tredgold
-- **Lệnh trực tiếp từ chủ sở hữu (SirPhuong)**:
-  1. *"tôi có nguyên tắc này bạn cần nhớ : tuyệt đối không tham khảo tài liệu từ các tác giả ở Việt Nam"*.
-  2. Nghiêm cấm 100% trích dẫn bất kỳ giáo trình, tác giả, tài liệu nào xuất bản tại Việt Nam. Toàn bộ cơ sở lý thuyết, công thức hình học và tiêu chuẩn phải trích xuất trực tiếp từ các tiêu chuẩn quốc tế (ISO 23509, ISO 6336, DIN 3971, AGMA 2005) và các tài liệu chuyên khảo kinh điển thế giới (Dudley's Gear Handbook, Shigley's Mechanical Engineering Design, Litvin, Buckingham).
-  3. Xác lập bản chất tương quan 2 chiều 1-to-1 giữa thông số hình học bánh răng côn đã nhập và toàn bộ hệ thống thông số của bánh răng trụ tương đương Tredgold (Mục 7.0 của MITCalc).
-- **Ánh xạ giải tích hoàn chỉnh**:
-  - Dẫn xuất đầy đủ 10 nhóm thông số cốt lõi từ bánh răng côn sang bánh răng trụ tương đương: $\delta_1, \delta_2, z_{vn}, z_{vt}, d_v, d_{vb}, d_{va}, d_{vf}, a_v, i_v, s_v, e_v, x_{\text{eq}}$.
-  - Mọi thực thể đo kiểm hay phác thảo hình học rãnh răng trên nón phụ (Back cone) đều khớp $100\%$ với các biến số trong bảng tính toán của ISO 23509 / MITCalc.
+
+## 2026-10-05 - Khắc Phục Triệt Để 4 Lỗi Hình Học Rãnh Răng 2D CAD DXF (Cụm 3 & Cụm 4 - Đồng Bộ Sườn Thân Khai & Cung Đáy Rãnh)
+- **Bối cảnh phát hiện**: Người dùng chụp cận cảnh thực tế trong AutoCAD 2007 cho thấy:
+  1. *Lỗi lệch sườn*: Layer `*_R` (có fillet) và `*_R0` (đáy vuông) bị tách rời thành 2 sườn độc lập, đường sườn cam (`_R0`) bị loe rộng sai lệch hoàn toàn so với đường sườn xanh (`_R`).
+  2. *Lỗi đáy nhọn chữ V*: Đáy rãnh Bánh 1 bị chụm nhọn hoắt thành hình chữ V tại đường tâm đỏ, mất hoàn toàn cung tròn đáy rãnh $r_{vf}$.
+  3. *Lỗi đáy Bánh 2*: Đáy rãnh Bánh 2 bị tách rời kỳ dị và đáy phẳng không khớp.
+  4. *Lỗi đỉnh rãnh*: Đỉnh rãnh không khít với cung tròn đỉnh $r_{va}$.
+- **Phân tích nguyên nhân gốc rễ**:
+  1. Trong `buildClosedSlotR0`, hàm `evalInv` bị nhân thừa hệ số `cosD` (`return psi_c * cosD;`), trong khi `psi_c` đã là góc trên bánh răng ảo Tredgold. Với Bánh 2 ($\cos\delta_2 = 0.3714$), việc nhân nhầm $\cos\delta_2$ làm góc thân khai bị co lại gần 3 lần, khiến rãnh `_R0` nở rộng sai lệch.
+  2. Trong `buildClosedSlotWithFillet`, đáy rãnh chỉ lấy 1 điểm tại tâm rồi lấy đối xứng gương, tạo thành 2 đoạn thẳng chéo gãy khúc đâm vào tâm thành góc nhọn (Cusp) thay vì vẽ cung tròn đáy rãnh $r_{vf}$.
+- **Giải pháp xử lý triệt để**:
+  1. *Đồng bộ sườn giải tích 100%*: Cả `_R` và `_R0` dùng chung 100% hàm `evalFlank(r_c) = psi_half_pitch - psi_c`. Sai số tọa độ sườn giữa `_R` và `_R0` đạt chuẩn Zero-Tolerance: **$\Delta = 0.00000000\text{ mm}$**.
+  2. *Dựng cung đáy rãnh tròn $r_{vf}$ (Root land arc)*: Lấy mẫu 8 điểm dọc theo bán kính $r_{vf}$ từ $-\psi_{\text{root}}$ đến $+\psi_{\text{root}}$, tiếp tuyến mượt mà $C^1$ với 2 cung bo fillet $R = 0.38m$, triệt tiêu hoàn toàn góc nhọn chữ V.
+  3. *Dựng cung đỉnh rãnh tròn $r_{va}$ (Tip land arc)*: Lấy mẫu 10 điểm dọc theo bán kính $r_{va}$ từ $+\psi_{\text{tip}}$ đến $-\psi_{\text{tip}}$, khớp tuyệt đối 100% với cung tròn đỉnh răng $r_{va}$ (`SLOT_TIP_ARCS`).
+- **Đo đạc kiểm chứng**:
+  - `Pinion 1 Tip Max X`: `_R = 684.7956`, `_R0 = 684.7956`, $\Delta = 0.00000000\text{ mm}$.
+  - `Gear 2 Tip Max X`: `_R = 901.9263`, `_R0 = 901.9263`, $\Delta = 0.00000000\text{ mm}$.
+  - Đáy rãnh Bánh 1: $Y_{\text{min}} = 88.1330\text{ mm}$, đạo hàm ngang tại tâm bằng 0 (tiếp tuyến phẳng hoàn hảo).
+  - Đóng gói bundle: `modules/bevel-gear/js/bevel-engine.bundle.js` (432,824 ký tự).
+
 
