@@ -2004,4 +2004,55 @@ ho_{f0} / \cos\gamma$.
    - **Đồng bộ hóa động học ăn khớp 3D**:
      $$\theta_{\text{gear}} = \theta_{\text{gear},0} + \frac{\theta_{\text{pinion}}}{i}$$
 
+---
+
+### Quy Tắc 84: Quy Chuẩn Tăng Gấp 3 Lần Độ Mịn DXF 11 Mức & Đồng Bộ Tuyệt Đối Sườn Răng Rãnh `_R` và `_R0` (Δ = 0.00000000 mm)
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"file xuất 2d .dxf các đường biên dạng profile răng tôi muốn mịn hơn tức là tăng số điểm nên gấp 3 lần để vẽ biên dạng đó để có độ chính xác cao hơn"*
+   - *"sao 2 đường profile răng trên ảnh tôi chụp nó không trùng nhau dù tôi chọn mức 11 rồi"*.
+2. **Quy Chuẩn Tăng Số Điểm Gấp 3 Lần (3x Analytical Involute Resolution Protocol)**:
+   - Tăng số điểm pháp tuyến trên mỗi sườn và tổng số điểm profile của 1 răng lên gấp 3 lần cho toàn bộ 11 mức của `BEVEL_PROFILE_RESOLUTIONS`:
+     * Mức 1: 18 pts/flank, 60 pts/tooth
+     * Mức 6: 48 pts/flank, 120 pts/tooth (Mặc định chuẩn x3)
+     * Mức 11: 96 pts/flank, 216 pts/tooth (Cung lượn dao cắt chân răng đạt 34 điểm).
+3. **Triệt Tiêu Hoàn Toàn Sai Lệch Giữa 2 Profile Rãnh Răng `_R` & `_R0` (Zero Chordal Sagitta Protocol)**:
+   - Dùng chung tập hợp đỉnh tọa độ phân tích `evalSlotFlankData()` cho cả đường rãnh bo góc dao cắt `_R` lẫn rãnh góc vuông `_R0` từ bán kính đỉnh $r_{va}$ xuống điểm chân răng tiếp tuyến $r_{\text{flankEnd}} = \max(r_t, r_{\text{start}})$.
+   - Khắc phục triệt để hiện tượng lệch pha đỉnh lưới đa tuyến (polyline chord sagitta) làm hở 0.0026 mm khi đo trên AutoCAD. Đạt sai số tuyệt đối $\Delta = 0.00000000\text{ mm}$ (trùng khít từng bit).
+
+---
+
+### Quy Tắc 85: Quy Chuẩn Ma Trận Thiết Kế Bánh Răng Côn Thực Tế (Mục 17.5) & Liên Kết 100% Độ Mịn File Surface .IGS Theo Cấp 2D
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"thêm nội dung trên 'ma trận lựa chọn thiết kế bánh răng côn…' vào cẩm nang hướng dẫn kĩ thuật"*
+   - *"bỏ mục 17.5 trong cẩm nang hướng dẫn kĩ thuật"*
+   - *"liên kết luôn chỉnh độ mịn file .igs theo chỉnh độ mịn bên 2D luôn"*.
+2. **Quy Chuẩn Ma Trận Thiết Kế 10 Kịch Bản & 4 Nguyên Tắc Vàng (Section 17.5 Guide)**:
+   - Thay thế toàn bộ Mục 17.5 cũ (Tredgold) bằng Ma trận lựa chọn thiết kế bánh răng côn thực tế phân loại theo 4 nhóm truyền động: Côn thẳng công nghiệp nhẹ & máy nông nghiệp; Côn xoắn tải nặng ô tô/tàu thủy (Gleason); Hộp giảm tốc công nghiệp tải trung bình; Hộp số hàng không/máy đua (Cyclo-Palloid).
+   - 4 nguyên tắc vàng bất biến: Cặp răng không cân xứng ($z_1 \le 17$) bắt buộc dịch chỉnh chiều cao ($x_1 > 0, x_2 < 0$); Tỉ số truyền lớn ($i \ge 3.0$) bổ sung dịch chỉnh tiếp tuyến ($x_{t1} > 0, x_{t2} < 0$); Chiều cao răng nón hội tụ theo Gleason vs không đổi theo Klingelnberg; Cặp bánh răng tỉ số 1:1 (Miter) giữ $x_1 = x_2 = 0$.
+3. **Quy Chuẩn Liên Kết Bậc Tự Do Lưới Mặt Cong Surface .IGS**:
+   - Cấp độ mịn của file xuất Mastercam `.igs` (NURBS Entity 128) được liên kết đồng bộ trực tiếp theo 11 mức độ mịn 2D: từ Mức 1 ($16 \times 12$ điểm/mặt, file ~487 KB) đến Mức 11 ($64 \times 52$ điểm cho nón thẳng, $64 \times 64$ điểm cho nón xoắn, đạt 3.328 đến 4.096 điểm/răng, file ~6.7 - 8.2 MB).
+
+---
+
+### Quy Tắc 86: Quy Chuẩn Tái Cấu Trúc Thanh Điều Khiển Master Bar 2D/3D Tinh Gọn, Nhãn Độ Mịn Sổ Xuống Ngắn Gọn & Hướng Nhìn Góc Trái Trong Màn Hình 3D
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"đơn giản hóa 2 tab trong ảnh bằng cách xóa sạch tất cả các chữ chỉ để lại 2 tab với tên '2D CAD' và '3D CAD'"*
+   - *"'xuất bản vẽ 2d cad đầy đủ...' và 'xuất file 3D...' bạn đổi tên thành 'Xuất file 2D' và 'Xuất file 3D' rồi bạn sắp xếp để ngang hàng với '2D CAD' và '3D CAD'"*
+   - *"thanh độ mịn của 2d và 3d cũng chuyển đến đứng ngang hàng với '2D CAD' và '3D CAD'. mức độ mịn của 2d bạn có thể chuyển thành dạng sổ xuống như của 3D ngoài ra đừng đặt tên mức độ mịn dài dòng mà đặt ngắn gọn, ví dụ : mức 7(132pts)"*
+   - *"thứ tự sắp xếp: '2D CAD' - 'Độ mịn (2D & .IGS)' - 'Xuất file 2D' - '3D CAD' - 'Độ mịn 3D' - 'Xuất file 3D'. 2 ô '2D CAD' và '3D CAD' có thể tô màu hay làm gì đó để làm nổi bật hơn các ô còn lại"*
+   - *"trong phần mô phỏng 3D: ô hướng nhìn bạn đặt vào bên trong màn hình mô phỏng 3D ở góc trái trên cùng cho tôi"*.
+2. **Quy Chuẩn Cấu Trúc Thanh Điều Khiển Master Bar 1 Hàng Duy Nhất (`#masterVisualizerNav`)**:
+   - Gom toàn bộ 6 thành phần vào một hàng ngang flexbox duy nhất:
+     $$\text{[ 📐 2D CAD ]} \rightarrow \text{[ 🎯 Độ mịn (2D & .IGS) ▾ ]} \rightarrow \text{[ 📥 Xuất file 2D ]} \rightarrow \text{[ 🧊 3D CAD ]} \rightarrow \text{[ 💎 Độ mịn 3D ▾ ]} \rightarrow \text{[ 📥 Xuất file 3D ▾ ]}$$
+   - **Tô màu nổi bật trạng thái Active của 2 nút Tab Mode**:
+     * Khi chọn Chế độ 2D: Nút `2D CAD` sáng rực rỡ với dải gradient xanh ngọc lục bảo (`#059669` $\rightarrow$ `#10b981`), viền phát sáng xanh neon `#34d399`, bóng sáng đổ bóng mềm; nút `3D CAD` chuyển trạng thái nền tối phụ trợ.
+     * Khi chọn Chế độ 3D: Nút `3D CAD` chuyển sáng dải gradient xanh dương da trời (`#0284c7` $\rightarrow$ `#38bdf8`), viền phát sáng `#7dd3fc`; nút `2D CAD` chuyển trạng thái nền tối.
+3. **Quy Chuẩn Dropdown Độ Mịn Rút Gọn Chuẩn Kỹ Thuật**:
+   - Thay thế toàn bộ thanh slider chiếm chỗ bằng thẻ `<select>` tích hợp gọn gàng:
+     * Dropdown Độ mịn 2D (`#selProfileResolutionCanvas`): 11 mức ngắn gọn: `Mức 1 (60pts)`, `Mức 2 (72pts)`, ..., `Mức 6 (120pts)`, `Mức 7 (132pts)`, ..., `Mức 11 (216pts)`. Đồng bộ song song 2 chiều với `#selProfileResolution` trong Section 16.
+     * Dropdown Độ mịn 3D (`#selMeshDensity`): 8 cấp tinh gọn: `Cấp 1 (Nhanh)`, `Cấp 2`, `Cấp 3`, `Cấp 4 (Cân bằng)`, `Cấp 5`, `Cấp 6 (Chuẩn CAM)`, `Cấp 7 (Nét cao)`, `Cấp 8 (Tuyệt đối)`.
+4. **Quy Chuẩn Overlay Hướng Nhìn Góc Trái Màn Hình 3D (Top-Left View Preset Overlay)**:
+   - Chuyển dropdown `#sel3DViewPreset` từ thanh công cụ ngoài vào nằm trực tiếp bên trong khung chứa canvas 3D (`#container3D`).
+   - Thiết lập `position: absolute; top: 12px; left: 12px; z-index: 10;` với nền kính mờ công nghệ tối (`rgba(15, 23, 42, 0.85)`), viền mỏng `#0284c7`, bo góc cong 6px.
+   - Giúp kỹ sư đổi góc nhìn (Isometric, Front, Top, Right, Mesh) tức thì trên không gian đồ họa 3D mà không chiếm dụng bất kỳ hàng công cụ nào của giao diện.
 

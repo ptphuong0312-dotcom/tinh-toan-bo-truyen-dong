@@ -8531,11 +8531,12 @@ class BevelGearUI {
             });
         }
 
-        // Profile Resolution Sliders (11 Levels: 1 to 11)
+        // Profile Resolution Controls (11 Levels: 1 to 11)
         const sliderResSec16 = document.getElementById('sliderProfileResolution');
         const lblResSec16 = document.getElementById('lblProfileResolution');
         const sliderResCanvas = document.getElementById('sliderProfileResolutionCanvas');
         const lblResCanvas = document.getElementById('lblProfileResolutionCanvas');
+        const selResCanvas = document.getElementById('selProfileResolutionCanvas');
 
         const updateResolutionUI = (lvl) => {
             this.profileResolution = parseInt(lvl) || 6;
@@ -8546,6 +8547,7 @@ class BevelGearUI {
             if (lblResSec16) lblResSec16.textContent = nameText;
             if (sliderResCanvas) sliderResCanvas.value = this.profileResolution;
             if (lblResCanvas) lblResCanvas.textContent = canvasText;
+            if (selResCanvas) selResCanvas.value = String(this.profileResolution);
             if (this.canvasController && typeof this.canvasController.setProfileResolution === 'function') {
                 this.canvasController.setProfileResolution(this.profileResolution);
             }
@@ -8556,6 +8558,9 @@ class BevelGearUI {
         }
         if (sliderResCanvas) {
             sliderResCanvas.addEventListener('input', (e) => updateResolutionUI(e.target.value));
+        }
+        if (selResCanvas) {
+            selResCanvas.addEventListener('change', (e) => updateResolutionUI(e.target.value));
         }
 
         // Section 16 Unified DXF Export (1 single file containing all 2D drawings)
@@ -8588,10 +8593,6 @@ class BevelGearUI {
                 btn2DViewMesh.style.background = 'transparent';
                 btn2DViewMesh.style.color = 'var(--text-secondary)';
                 btn2DViewMesh.style.fontWeight = '600';
-                const vTitle = document.getElementById('visualizerTitle');
-                const vDesc = document.getElementById('visualizerDesc');
-                if (vTitle) vTitle.textContent = '📐 Mô Hình 2D Nón Bánh Răng Ăn Khớp & Biên Dạng Răng Có R Chân (ISO 23509)';
-                if (vDesc) vDesc.textContent = 'Mặt cắt trục bổ dọc ISO 23509 khép kín, kết hợp Biên dạng răng ăn khớp 2D Tredgold có bán kính lượn chân răng R chân = 0.38·mmn.';
             });
 
             btn2DViewMesh.addEventListener('click', () => {
@@ -8602,10 +8603,6 @@ class BevelGearUI {
                 btn2DViewAxial.style.background = 'transparent';
                 btn2DViewAxial.style.color = 'var(--text-secondary)';
                 btn2DViewAxial.style.fontWeight = '600';
-                const vTitle = document.getElementById('visualizerTitle');
-                const vDesc = document.getElementById('visualizerDesc');
-                if (vTitle) vTitle.textContent = '⚙️ Mô Phỏng 2 Cặp Bánh Răng Tương Đương Mặt Ngoài (Re) & Mặt Trong (Ri) [Tredgold]';
-                if (vDesc) vDesc.textContent = 'Hai cặp bánh răng tương đương 5-7 răng ăn khớp liên hợp, dao động lắc đi lắc lại thể hiện chính xác chuyển động lăn không trượt và bán kính lượn chân răng R chân = 0.38·m.';
             });
         }
 
@@ -8652,17 +8649,19 @@ class BevelGearUI {
         if (btnMode2D && btnMode3D) {
             btnMode2D.addEventListener('click', () => {
                 this.activeMode = '2D';
-                btnMode2D.style.background = 'var(--accent-green)';
-                btnMode2D.style.color = '#000';
-                btnMode3D.style.background = 'transparent';
-                btnMode3D.style.color = 'var(--text-secondary)';
+                btnMode2D.style.background = 'linear-gradient(135deg, #059669 0%, #10b981 100%)';
+                btnMode2D.style.color = '#ffffff';
+                btnMode2D.style.border = '1.5px solid #34d399';
+                btnMode2D.style.boxShadow = '0 0 12px rgba(16, 185, 129, 0.45)';
+                btnMode3D.style.background = 'rgba(15, 23, 42, 0.7)';
+                btnMode3D.style.color = '#94a3b8';
+                btnMode3D.style.border = '1.5px solid #334155';
+                btnMode3D.style.boxShadow = 'none';
                 if (container2D) container2D.style.display = 'flex';
                 if (container3D) container3D.style.display = 'none';
                 if (toolbar2D) toolbar2D.style.display = 'flex';
                 if (toolbar3D) toolbar3D.style.display = 'none';
                 if (hubPanel2D) hubPanel2D.style.display = 'flex';
-                if (visualizerTitle) visualizerTitle.textContent = '📐 Mô Hình 2D Nón Bánh Răng Ăn Khớp & Biên Dạng Răng Có R Chân (ISO 23509)';
-                if (visualizerDesc) visualizerDesc.textContent = 'Mặt cắt trục 2D khớp 1-to-1 phôi 3D, kết hợp Biên dạng răng ăn khớp 2D Tredgold có bán kính lượn chân răng R chân = 0.38·mmn.';
                 if (this.canvasController) {
                     if (this.lastGeom) this.canvasController.setGeometry(this.lastGeom);
                     this.canvasController.resetView();
@@ -8672,17 +8671,19 @@ class BevelGearUI {
 
             btnMode3D.addEventListener('click', () => {
                 this.activeMode = '3D';
-                btnMode3D.style.background = 'var(--accent-cyan)';
-                btnMode3D.style.color = '#000';
-                btnMode2D.style.background = 'transparent';
-                btnMode2D.style.color = 'var(--text-secondary)';
+                btnMode3D.style.background = 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)';
+                btnMode3D.style.color = '#ffffff';
+                btnMode3D.style.border = '1.5px solid #7dd3fc';
+                btnMode3D.style.boxShadow = '0 0 12px rgba(56, 189, 248, 0.45)';
+                btnMode2D.style.background = 'rgba(15, 23, 42, 0.7)';
+                btnMode2D.style.color = '#94a3b8';
+                btnMode2D.style.border = '1.5px solid #334155';
+                btnMode2D.style.boxShadow = 'none';
                 if (container2D) container2D.style.display = 'none';
                 if (container3D) container3D.style.display = 'block';
                 if (toolbar2D) toolbar2D.style.display = 'none';
                 if (toolbar3D) toolbar3D.style.display = 'flex';
                 if (hubPanel2D) hubPanel2D.style.display = 'flex';
-                if (visualizerTitle) visualizerTitle.textContent = '🧊 Mô Phỏng Ăn Khớp 3D WebGL (Bevel Gears)';
-                if (visualizerDesc) visualizerDesc.textContent = 'Mô hình 3D thực thể có R chân = 0.38·mmn và May-ơ kéo dài đồng bộ 1-to-1 với 2D. Xuất file CAD STEP/STL cho SolidWorks & Mastercam.';
                 if (this.visualizer3D) {
                     this.visualizer3D.onResize();
                     if (this.lastGeom) {

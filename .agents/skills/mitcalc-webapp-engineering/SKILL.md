@@ -1948,3 +1948,23 @@ ho_{f0}$.
    - Cả hai thanh trượt điều khiển độ mịn 11 mức (`#sliderProfileResolution` tại Mục 16 và `#sliderProfileResolutionCanvas` tại Tab Canvas) điều khiển đồng thời cả 2D profile DXF và lưới tham số NURBS B-Spline Surface 3D Mastercam (`.igs`).
    - Bộ preset `igesGridPresets` tự động điều chỉnh số lát cắt dọc vành răng $V$ (12 đến 64 lát) và số điểm kiểm soát sườn thân khai $U$ (16 đến 64 điểm).
    - Tên file xuất tự động thêm hậu tố `_muc{resLevel}_Surface.igs` để kỹ sư xưởng dễ dàng phân biệt cấp độ mịn khi nhập vào Mastercam / SolidWorks.
+
+---
+
+### Quy Tắc 86: Quy Chuẩn Tái Cấu Trúc Master Bar 2D/3D Tinh Gọn 1 Hàng Ngang, Dropdown Độ Mịn Gọn Nhẹ & Overlay Hướng Nhìn Góc Trái Trong Màn Hình 3D
+**Ngày áp dụng**: 06/10/2026  
+**Module**: Bánh Răng Côn (`modules/bevel-gear/`)  
+1. **Master Bar Tinh Gọn 1 Hàng Ngang Duy Nhất (`#masterVisualizerNav`)**:
+   - Loại bỏ toàn bộ các tiêu đề `<h2>` và đoạn văn `<p>` thừa thãi.
+   - Bố cục flexbox duy nhất 6 thành phần:
+     `[ 📐 2D CAD ]` -> `[ 🎯 Độ mịn (2D & .IGS) ▾ ]` -> `[ 📥 Xuất file 2D ]` -> `[ 🧊 3D CAD ]` -> `[ 💎 Độ mịn 3D ▾ ]` -> `[ 📥 Xuất file 3D ▾ ]`.
+   - Hiệu ứng nổi bật trực quan cho nút Mode đang kích hoạt:
+     * Chế độ 2D Active: Gradient ngọc lục bảo `#059669` -> `#10b981`, viền sáng neon `#34d399`.
+     * Chế độ 3D Active: Gradient xanh da trời `#0284c7` -> `#38bdf8`, viền sáng `#7dd3fc`.
+2. **Dropdown Độ Mịn 2D & 3D Ngắn Gọn**:
+   - Thay slider chiếm diện tích bằng dropdown `<select id="selProfileResolutionCanvas">` 11 mức: `Mức 1 (60pts)` ... `Mức 11 (216pts)`. Đồng bộ 2 chiều với Section 16.
+   - Nhãn dropdown 3D `#selMeshDensity` rút gọn: `Cấp 1 (Nhanh)`, `Cấp 2`, `Cấp 3`, `Cấp 4 (Cân bằng)`, `Cấp 5`, `Cấp 6 (Chuẩn CAM)`, `Cấp 7 (Nét cao)`, `Cấp 8 (Tuyệt đối)`.
+3. **Overlay Hướng Nhìn Góc Trái Trong Khung 3D**:
+   - Chuyển dropdown `#sel3DViewPreset` vào nằm trực tiếp trong `#container3D` (`position: absolute; top: 12px; left: 12px; z-index: 10;`).
+   - Nền kính mờ `rgba(15, 23, 42, 0.85)`, viền mảnh `#0284c7`, bo góc 6px, giải phóng hoàn toàn không gian thanh công cụ.
+

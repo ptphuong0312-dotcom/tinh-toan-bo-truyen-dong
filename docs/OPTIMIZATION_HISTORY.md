@@ -3486,3 +3486,29 @@ ho_{f0}$.
   3. *Kiểm chứng thực nghiệm tự động*:
      - Node.js sandbox test: Cả 5 mức kiểm tra (Level 1, 3, 6, 9, 11) cho cả nón thẳng ($\beta = 0^\circ$) và nón xoắn ($\beta = 30^\circ$) đều PASS 100%, xuất đúng số lượng bề mặt NURBS ($72 \times 4$ dải mặt bên sườn răng) và chuỗi dữ liệu IGES hợp lệ.
      - Đóng gói bundle sạch hoàn toàn: `modules/bevel-gear/js/bevel-engine.bundle.js` (454,984 ký tự).
+
+## 2026-10-06 - Quy Tắc 86: Tái Cấu Trúc Thanh Điều Khiển Master Bar 2D/3D Tinh Gọn 1 Hàng Ngang, Dropdown Độ Mịn Ngắn Gọn & Overlay Hướng Nhìn Góc Trái Trong Màn Hình 3D
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  1. *Đơn giản hóa 2 tab*: Xóa sạch các chữ mô tả dài dòng, chỉ để lại 2 tab mang tên "2D CAD" và "3D CAD".
+  2. *Đổi tên nút xuất*: "Xuất bản vẽ 2d cad đầy đủ..." và "Xuất file 3D..." đổi thành "Xuất file 2D" và "Xuất file 3D", sắp xếp đứng ngang hàng cùng 2 tab.
+  3. *Chuyển thanh độ mịn*: Chuyển thanh độ mịn 2D và 3D đứng ngang hàng trên cùng 1 dãy. Độ mịn 2D chuyển thành dạng sổ xuống (dropdown) với nhãn ngắn gọn (ví dụ: `Mức 7 (132pts)`). Độ mịn 3D cũng rút gọn tên.
+  4. *Thứ tự sắp xếp bắt buộc*: "2D CAD" - "Độ mịn (2D & .IGS)" - "Xuất file 2D" - "3D CAD" - "Độ mịn 3D" - "Xuất file 3D". Làm nổi bật 2 ô "2D CAD" và "3D CAD" hơn các ô còn lại.
+  5. *Hướng nhìn 3D*: Chuyển ô chọn hướng nhìn đặt vào bên trong màn hình mô phỏng 3D ở góc trái trên cùng.
+- **Thực hiện kỹ thuật chi tiết**:
+  1. *Master Bar 1 hàng duy nhất (`#masterVisualizerNav`)*:
+     - Dọn sạch thẻ `<h2>` và `<p>` rườm rà.
+     - Sắp xếp chính xác theo thứ tự yêu cầu:
+       `[ 📐 2D CAD ]` -> `[ 🎯 Độ mịn (2D & .IGS) ▾ ]` -> `[ 📥 Xuất file 2D ]` -> `[ 🧊 3D CAD ]` -> `[ 💎 Độ mịn 3D ▾ ]` -> `[ 📥 Xuất file 3D ▾ ]`.
+     - Phân định rõ ràng nút Active:
+       * Chế độ 2D: Gradient xanh ngọc `#059669` -> `#10b981`, viền phát sáng `#34d399`, bóng sáng mềm.
+       * Chế độ 3D: Gradient xanh dương `#0284c7` -> `#38bdf8`, viền phát sáng `#7dd3fc`.
+  2. *Dropdown Độ Mịn 2D & 3D Siêu Gọn*:
+     - Thay slider 2D bằng `<select id="selProfileResolutionCanvas">` 11 mức: `Mức 1 (60pts)` ... `Mức 11 (216pts)`. Đồng bộ 2 chiều với Section 16.
+     - Rút gọn nhãn dropdown 3D `#selMeshDensity`: `Cấp 1 (Nhanh)`, `Cấp 2`, `Cấp 3`, `Cấp 4 (Cân bằng)`, `Cấp 5`, `Cấp 6 (Chuẩn CAM)`, `Cấp 7 (Nét cao)`, `Cấp 8 (Tuyệt đối)`.
+  3. *Overlay Hướng Nhìn Góc Trái Màn Hình 3D*:
+     - Đặt `#overlay3DViewPreset` vào bên trong `#container3D` với `position: absolute; top: 12px; left: 12px; z-index: 10;`.
+     - Nền kính mờ `rgba(15, 23, 42, 0.85)`, viền `#0284c7`, bo góc cong 6px.
+  4. *Kiểm thử & Đóng gói*:
+     - Kiểm thử Playwright tự động: Chụp ảnh xác thực 100% hiển thị trực quan và tương tác chuyển đổi qua lại giữa 2D và 3D.
+     - Đóng gói bundle sạch hoàn toàn: `modules/bevel-gear/js/bevel-engine.bundle.js` (454,259 ký tự).
+
