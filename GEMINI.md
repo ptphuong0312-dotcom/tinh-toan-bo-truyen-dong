@@ -2056,3 +2056,25 @@ ho_{f0} / \cos\gamma$.
    - Thiết lập `position: absolute; top: 12px; left: 12px; z-index: 10;` với nền kính mờ công nghệ tối (`rgba(15, 23, 42, 0.85)`), viền mỏng `#0284c7`, bo góc cong 6px.
    - Giúp kỹ sư đổi góc nhìn (Isometric, Front, Top, Right, Mesh) tức thì trên không gian đồ họa 3D mà không chiếm dụng bất kỳ hàng công cụ nào của giao diện.
 
+---
+
+### Quy Tắc 87: Quy Chuẩn Đồng Bộ Kiến Trúc Master Bar 2D/3D Tinh Gọn, Rút Gọn Icon-Only & Tối Ưu Toàn Diện Trên Cả 3 Mô-Đun (Bánh Răng Côn, Bánh Răng Trụ, Trục Vít - Bánh Vít)
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"vẫn tại mô phỏng 2D/3D module tính toán bánh răng côn tôi muốn bỏ đi những thứ sau : 2D CAD : bỏ đi các ô chữ phóng to, thu nhỏ, lùi, tiến, chiều thuận-nghich (không phải các chức năng); bỏ cả phần trong ảnh tôi gửi"* (Card biên dạng răng ăn khớp Tredgold góc phải).
+   - *"với module tính toán bánh răng trụ : cũng quy hoạch phần mô phỏng 2D/3D giống như bên bánh răng côn vừa quy hoạch sắp xếp"*
+   - *"Với module tính toán trục vít bánh vít : cũng quy hoạch phần mô phỏng 2D/3D giống như bên bánh răng côn vừa quy hoạch sắp xếp. tuy nhiên do hơi khác 1 chút nên bạn cần lưu ý sau : với '2D CAD' thì giữ nguyên phần trong ảnh cho tôi chỉ di chuyển mục 'xuất file 2D...', với '3D CAD' thì giữ nguyên phần trong ảnh cho tôi chỉ di chuyển mục 'độ mịn' và 'xuất file 3D...' hướng nhìn (đặt giống bên tính toán răng côn)"*.
+2. **Quy Chuẩn Mô-Đun Bánh Răng Côn (`modules/bevel-gear/`)**:
+   - Rút gọn thanh công cụ 2D thành dạng **Icon-Only**: `🔍` (Phóng to), `🔎` (Thu nhỏ), `🎯 Đặt Lại`, `▶ Chạy Mô Phỏng`, `🔄 ↻` / `🔄 ↺` (Đổi chiều quay), `⏮️` (Nhích lùi), `⏭️` (Nhích tiến). Loại bỏ hoàn toàn các chữ dài dòng gây rối mắt.
+   - Loại bỏ triệt tiêu khung card phụ "BIÊN DẠNG RĂNG ĂN KHỚP 2D (TREDGOLD - CÓ R CHÂN)" (`this.draw2DToothProfileInset(...)`) theo đúng đánh dấu viền đỏ của người dùng.
+   - Mặt cắt trục kỹ thuật cơ khí ISO 23509 được mở rộng trải trọn 100% bề ngang không gian bản vẽ (`w = 1200 px`), căn giữa tự động tuyệt đẹp, làm nổi bật đường kính đỉnh $d_{ae}$, góc nón $\delta$, khoảng cách đỉnh $L_{\text{Apex}}$ và may-ơ kéo dài.
+3. **Quy Chuẩn Mô-Đun Bánh Răng Trụ (`modules/spur-gear/`)**:
+   - Áp dụng cấu trúc Master Bar 1 hàng duy nhất:
+     $$\text{[ 📐 2D CAD ]} \rightarrow \text{[ 🎯 Độ mịn (2D & DXF): Mức 1-11 ▾ ]} \rightarrow \text{[ 📥 Xuất file 2D ▾ ]} \rightarrow \text{[ 🧊 3D CAD ]} \rightarrow \text{[ 💎 Độ mịn 3D: Cấp 1-11 ▾ ]} \rightarrow \text{[ 📥 Xuất file 3D ▾ ]}$$
+   - Thanh công cụ 2D chuẩn hóa Icon-Only: `🔍`, `🔎`, `🎯 Đặt Lại`, `▶️ Chạy Mô Phỏng`, `🔄 ↻` / `🔄 ↺`.
+   - Chuyển dropdown `#sel3DViewPreset` vào overlay góc trái trên cùng bên trong `#container3D`.
+4. **Quy Chuẩn Mô-Đun Trục Vít - Bánh Vít (`modules/worm-gear/`)**:
+   - Master Bar 1 hàng:
+     $$\text{[ 📐 2D CAD ]} \rightarrow \text{[ 📥 Xuất file 2D ▾ ]} \rightarrow \text{[ 🧊 3D CAD ]} \rightarrow \text{[ 💎 Độ mịn 3D: Cấp 1-10 ▾ ]} \rightarrow \text{[ 📥 Xuất file 3D ▾ ]}$$
+   - Giữ nguyên 100% các nút kỹ thuật chuyên dụng 2D: Bản Vẽ Lắp 2 Hình Chiếu, Chi Tiết Trục Vít, Chi Tiết Bánh Vít (Cắt Họng), MC Pháp Tuyến (N-N), MC Dọc Trục (A-A), MC Tiếp Tuyến (T-T), Trục Vít: Hiện/Ẩn, Bánh Vít: Hiện/Ẩn, Mô Phỏng Ăn Khớp, Tốc độ, Kích Thước, Căn Giữa. Chỉ nhấc mục Xuất File 2D CAD (.DXF) lên Master Bar.
+   - Giữ nguyên 100% các nút kỹ thuật chuyên dụng 3D: Trục Vít: Hiện/Ẩn, Bánh Vít: Hiện/Ẩn, Tốc độ, Chạy Mô Phỏng, Chiều (↻/↺), Nhích Lùi, Nhích Tiến, Khung Dây, Chỉ Mặt Bên, Đặt Lại. Nhấc Độ mịn 3D và Xuất file 3D lên Master Bar; chuyển Hướng nhìn vào overlay góc trái trên cùng bên trong `#container3D`.
+

@@ -524,10 +524,14 @@ class WormUIController {
         if (btnMode2D && btnMode3D) {
             btnMode2D.addEventListener('click', () => {
                 this.activeMode = '2D';
-                btnMode2D.style.background = 'var(--accent-green)';
-                btnMode2D.style.color = '#000';
-                btnMode3D.style.background = 'transparent';
-                btnMode3D.style.color = 'var(--text-secondary)';
+                btnMode2D.style.background = 'linear-gradient(135deg, #059669 0%, #10b981 100%)';
+                btnMode2D.style.color = '#ffffff';
+                btnMode2D.style.border = '1.5px solid #34d399';
+                btnMode2D.style.boxShadow = '0 0 12px rgba(16, 185, 129, 0.45)';
+                btnMode3D.style.background = 'rgba(15, 23, 42, 0.7)';
+                btnMode3D.style.color = '#94a3b8';
+                btnMode3D.style.border = '1.5px solid #334155';
+                btnMode3D.style.boxShadow = 'none';
                 if (container2D) container2D.style.display = 'flex';
                 if (container3D) container3D.style.display = 'none';
                 if (toolbar2D) toolbar2D.style.display = 'flex';
@@ -539,10 +543,14 @@ class WormUIController {
 
             btnMode3D.addEventListener('click', () => {
                 this.activeMode = '3D';
-                btnMode3D.style.background = 'var(--accent-cyan)';
-                btnMode3D.style.color = '#000';
-                btnMode2D.style.background = 'transparent';
-                btnMode2D.style.color = 'var(--text-secondary)';
+                btnMode3D.style.background = 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)';
+                btnMode3D.style.color = '#ffffff';
+                btnMode3D.style.border = '1.5px solid #7dd3fc';
+                btnMode3D.style.boxShadow = '0 0 12px rgba(56, 189, 248, 0.45)';
+                btnMode2D.style.background = 'rgba(15, 23, 42, 0.7)';
+                btnMode2D.style.color = '#94a3b8';
+                btnMode2D.style.border = '1.5px solid #334155';
+                btnMode2D.style.boxShadow = 'none';
                 if (container2D) container2D.style.display = 'none';
                 if (container3D) container3D.style.display = 'block';
                 if (toolbar2D) toolbar2D.style.display = 'none';

@@ -1968,3 +1968,27 @@ ho_{f0}$.
    - Chuyển dropdown `#sel3DViewPreset` vào nằm trực tiếp trong `#container3D` (`position: absolute; top: 12px; left: 12px; z-index: 10;`).
    - Nền kính mờ `rgba(15, 23, 42, 0.85)`, viền mảnh `#0284c7`, bo góc 6px, giải phóng hoàn toàn không gian thanh công cụ.
 
+---
+
+### Quy Tắc 87: Quy Chuẩn Đồng Bộ Kiến Trúc Master Bar 2D/3D Tinh Gọn, Rút Gọn Icon-Only & Tối Ưu Cho Cả 3 Mô-Đun (Bánh Răng Côn, Bánh Răng Trụ, Trục Vít - Bánh Vít)
+**Ngày áp dụng**: 07/10/2026  
+**Modules**: Bánh Răng Côn (`modules/bevel-gear/`), Bánh Răng Trụ (`modules/spur-gear/`), Trục Vít - Bánh Vít (`modules/worm-gear/`)  
+1. **Module Bánh Răng Côn (`modules/bevel-gear/`)**:
+   - Rút gọn 2D toolbar thành icon tinh gọn: `🔍`, `🔎`, `🎯 Đặt Lại`, `▶ Chạy Mô Phỏng`, `🔄 ↻` / `🔄 ↺` (Đổi chiều quay), `⏮️`, `⏭️`.
+   - Triệt tiêu hoàn toàn khung card phụ "BIÊN DẠNG RĂNG ĂN KHỚP 2D (TREDGOLD - CÓ R CHÂN)" (`this.draw2DToothProfileInset(...)`) theo đúng yêu cầu người dùng.
+   - Bản vẽ mặt cắt trục ISO 23509 tự động mở rộng và căn giữa trên toàn bộ chiều rộng canvas $w = 1200\text{ px}$.
+2. **Module Bánh Răng Trụ (`modules/spur-gear/`)**:
+   - Cấu trúc Master Bar 1 hàng chuẩn:
+     $$\text{[ 📐 2D CAD ]} \rightarrow \text{[ 🎯 Độ mịn (2D & DXF): Mức 1-11 ▾ ]} \rightarrow \text{[ 📥 Xuất file 2D ▾ ]} \rightarrow \text{[ 🧊 3D CAD ]} \rightarrow \text{[ 💎 Độ mịn 3D: Cấp 1-11 ▾ ]} \rightarrow \text{[ 📥 Xuất file 3D ▾ ]}$$
+   - Thanh công cụ 2D chuẩn hóa Icon-Only: `🔍`, `🔎`, `🎯 Đặt Lại`, `▶️ Chạy Mô Phỏng`, `🔄 ↻` / `🔄 ↺`.
+   - Overlay `#overlay3DViewPreset` đặt ở góc trái trên cùng bên trong `#container3D`.
+3. **Module Trục Vít - Bánh Vít (`modules/worm-gear/`)**:
+   - Master Bar:
+     $$\text{[ 📐 2D CAD ]} \rightarrow \text{[ 📥 Xuất file 2D ▾ ]} \rightarrow \text{[ 🧊 3D CAD ]} \rightarrow \text{[ 💎 Độ mịn 3D: Cấp 1-10 ▾ ]} \rightarrow \text{[ 📥 Xuất file 3D ▾ ]}$$
+   - Giữ nguyên 100% 12 nút điều khiển bản vẽ chuyên sâu 2D (Bản vẽ lắp, Chi tiết trục vít, Chi tiết bánh vít cắt họng, 3 mặt cắt DIN 3975 N-N / A-A / T-T, v.v.). Chỉ nhấc Xuất File 2D CAD (.DXF) lên Master Bar.
+   - Giữ nguyên 100% 10 nút tương tác 3D (Ẩn/Hiện, Tốc độ, Chạy Mô Phỏng, Chiều, Nhích Lùi/Tiến, Khung Dây, Chỉ Mặt Bên, Đặt Lại). Nhấc Độ mịn 3D và Xuất file 3D lên Master Bar; chuyển Hướng nhìn vào overlay góc trái trên cùng bên trong `#container3D`.
+4. **Kiểm Thử Tự Động & Đóng Gói Bundle Zero-CORS**:
+   - Đóng gói đồng bộ: `python tools/bundle_all.py` cập nhật 3 bundle sạch sẽ.
+   - Kiểm thử Playwright tự động: Xác thực hiển thị 2D & 3D trên cả 3 mô-đun, 0 lỗi Console, 0 lỗi WebGL.
+
+

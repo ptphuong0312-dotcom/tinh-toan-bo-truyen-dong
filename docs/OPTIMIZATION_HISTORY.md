@@ -3512,3 +3512,33 @@ ho_{f0}$.
      - Kiểm thử Playwright tự động: Chụp ảnh xác thực 100% hiển thị trực quan và tương tác chuyển đổi qua lại giữa 2D và 3D.
      - Đóng gói bundle sạch hoàn toàn: `modules/bevel-gear/js/bevel-engine.bundle.js` (454,259 ký tự).
 
+---
+
+## 2026-10-07 - Quy Tắc 87: Đồng Bộ Toàn Diện Kiến Trúc Master Bar 2D/3D Tinh Gọn, Rút Gọn Icon-Only & Tối Ưu Cho Cả 3 Mô-Đun (Bánh Răng Côn, Bánh Răng Trụ, Trục Vít - Bánh Vít)
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  1. *Tạo bản backup trước khi làm việc*: Đã tạo `backups/BACKUP_MITCalc_Gear_20261007_002630.zip` (71.04 MB).
+  2. *Module Bánh Răng Côn*:
+     - 2D CAD: Bỏ các chữ "phóng to, thu nhỏ, lùi, tiến, chiều thuận-nghịch", chuyển thành icon tinh gọn (`🔍`, `🔎`, `⏮️`, `⏭️`, `🔄 ↻` / `🔄 ↺`).
+     - Bỏ khung card phụ "BIÊN DẠNG RĂNG ĂN KHỚP 2D (TREDGOLD - CÓ R CHÂN)" (trong ảnh 1).
+  3. *Module Bánh Răng Trụ*: Quy hoạch phần mô phỏng 2D/3D giống như bánh răng côn: Master Bar 1 hàng ngang, 2D toolbar icon-only, overlay hướng nhìn ở góc trái trên cùng bên trong viewport 3D.
+  4. *Module Trục Vít - Bánh Vít*: Quy hoạch 2D/3D theo chuẩn Master Bar nhưng với lưu ý đặc biệt:
+     - 2D CAD: Giữ nguyên toàn bộ các nút kỹ thuật chi tiết (Bản Vẽ Lắp 2 Hình Chiếu, Chi Tiết Trục Vít, Chi Tiết Bánh Vít..., MC Pháp Tuyến, MC Dọc Trục, MC Tiếp Tuyến, Ẩn/Hiện, Ăn Khớp, Tốc độ, Kích Thước, Căn Giữa), chỉ di chuyển "Xuất File 2D CAD (.DXF) ▾" lên Master Bar.
+     - 3D CAD: Giữ nguyên các nút 3D (Ẩn/Hiện, Tốc độ, Chạy Mô Phỏng, Chiều, Nhích Lùi/Tiến, Khung Dây, Chỉ Mặt Bên, Đặt Lại), chỉ di chuyển "Độ mịn" và "Xuất file 3D..." lên Master Bar, và đặt "Hướng nhìn" vào overlay góc trái trên cùng bên trong viewport 3D.
+- **Thực hiện kỹ thuật chi tiết**:
+  1. *Module Bánh Răng Côn (`modules/bevel-gear/`)*:
+     - Dọn bỏ `this.draw2DToothProfileInset(...)` trong `bevel-canvas.js`, cho phép mặt cắt trục bổ dọc ISO 23509 mở rộng toàn màn hình $w = 1200\text{ px}$.
+     - Rút gọn 2D toolbar thành icon: `🔍`, `🔎`, `🎯 Đặt Lại`, `▶ Chạy Mô Phỏng`, `🔄 ↻` / `🔄 ↺`, `⏮️`, `⏭️`.
+  2. *Module Bánh Răng Trụ (`modules/spur-gear/`)*:
+     - Xây dựng `#masterVisualizerNav` chuẩn: `[ 📐 2D CAD ]` -> `[ 🎯 Độ mịn (2D & DXF) ▾ ]` -> `[ 📥 Xuất file 2D ▾ ]` -> `[ 🧊 3D CAD ]` -> `[ 💎 Độ mịn 3D ▾ ]` -> `[ 📥 Xuất file 3D ▾ ]`.
+     - Rút gọn 2D toolbar sang icon-only: `🔍`, `🔎`, `🎯 Đặt Lại`, `▶️ Chạy Mô Phỏng`, `🔄 ↻` / `🔄 ↺`.
+     - Đặt `#overlay3DViewPreset` vào góc trái trên cùng bên trong `#container3D`.
+  3. *Module Trục Vít - Bánh Vít (`modules/worm-gear/`)*:
+     - Master Bar: `[ 📐 2D CAD ]` -> `[ 📥 Xuất file 2D ▾ ]` -> `|` -> `[ 🧊 3D CAD ]` -> `[ 💎 Độ mịn 3D: Cấp 1-10 ▾ ]` -> `[ 📥 Xuất file 3D ▾ ]`.
+     - `#toolbar2D` bảo toàn 100% 12 nút điều khiển bản vẽ chuyên sâu (Bản vẽ lắp, 3 mặt cắt DIN 3975 N-N / A-A / T-T, v.v.).
+     - `#toolbar3D` bảo toàn 100% 10 nút điều khiển tương tác 3D (Ẩn/Hiện, Chiều, Nhích, Khung dây, Chỉ Mặt Bên, v.v.).
+     - Đặt `#overlay3DViewPreset` vào góc trái trên cùng bên trong `#container3D`.
+  4. *Đóng gói & Kiểm thử Playwright*:
+     - Chạy `python tools/bundle_all.py` đóng gói 3/3 mô-đun thành công 100%.
+     - Kiểm thử Playwright tự động chạy qua cả 3 mô-đun, chụp 6 ảnh screenshot (2D & 3D cho mỗi mô-đun), kiểm tra 0 lỗi Console và 0 lỗi WebGL.
+
+

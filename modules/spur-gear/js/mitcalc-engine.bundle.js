@@ -6335,6 +6335,8 @@ class SpurGearUI {
         if (slider1) slider1.value = lvl;
         const slider2 = document.getElementById('sliderProfileResolutionCanvas');
         if (slider2) slider2.value = lvl;
+        const selResCanvas = document.getElementById('selProfileResolutionCanvas');
+        if (selResCanvas) selResCanvas.value = String(lvl);
         const slider3 = document.getElementById('sliderProfileResolution3D');
         if (slider3) slider3.value = lvl;
         const selDensity = document.getElementById('selMeshDensity');
@@ -6476,11 +6478,13 @@ class SpurGearUI {
             btn2DDir.addEventListener('click', () => {
                 const dir = this.canvasController.toggleAnimDirection();
                 if (dir === 1) {
-                    btn2DDir.innerHTML = '🔄 Chiều: ↻ Thuận';
+                    btn2DDir.innerHTML = '🔄 ↻';
+                    btn2DDir.title = 'Đổi chiều quay mô phỏng (Hiện tại: ↻ Thuận)';
                     btn2DDir.style.color = '';
                     btn2DDir.style.borderColor = '';
                 } else {
-                    btn2DDir.innerHTML = '🔄 Chiều: ↺ Nghịch';
+                    btn2DDir.innerHTML = '🔄 ↺';
+                    btn2DDir.title = 'Đổi chiều quay mô phỏng (Hiện tại: ↺ Nghịch)';
                     btn2DDir.style.color = '#f59e0b';
                     btn2DDir.style.borderColor = '#d97706';
                 }
@@ -6552,6 +6556,13 @@ class SpurGearUI {
         setupResSlider('sliderProfileResolutionCanvas');
         setupResSlider('sliderProfileResolution3D');
 
+        const selResCanvas = document.getElementById('selProfileResolutionCanvas');
+        if (selResCanvas) {
+            selResCanvas.addEventListener('change', (e) => {
+                this.setProfileResolution(parseInt(e.target.value, 10) || 6);
+            });
+        }
+
         const selMeshDensity = document.getElementById('selMeshDensity');
         if (selMeshDensity) {
             selMeshDensity.addEventListener('change', (e) => {
@@ -6582,10 +6593,16 @@ class SpurGearUI {
         if (btnMode2D && btnMode3D) {
             btnMode2D.addEventListener('click', () => {
                 this.activeMode = '2D';
-                btnMode2D.style.background = 'var(--accent-green)';
-                btnMode2D.style.color = '#000';
-                btnMode3D.style.background = 'transparent';
-                btnMode3D.style.color = 'var(--text-secondary)';
+                btnMode2D.style.background = 'linear-gradient(135deg, #059669 0%, #10b981 100%)';
+                btnMode2D.style.color = '#ffffff';
+                btnMode2D.style.border = '1.5px solid #34d399';
+                btnMode2D.style.boxShadow = '0 0 12px rgba(16, 185, 129, 0.45)';
+
+                btnMode3D.style.background = 'rgba(15, 23, 42, 0.7)';
+                btnMode3D.style.color = '#94a3b8';
+                btnMode3D.style.border = '1.5px solid #334155';
+                btnMode3D.style.boxShadow = 'none';
+
                 if (container2D) container2D.style.display = 'flex';
                 if (container3D) container3D.style.display = 'none';
                 if (toolbar2D) toolbar2D.style.display = 'flex';
@@ -6600,10 +6617,16 @@ class SpurGearUI {
 
             btnMode3D.addEventListener('click', () => {
                 this.activeMode = '3D';
-                btnMode3D.style.background = 'var(--accent-cyan)';
-                btnMode3D.style.color = '#000';
-                btnMode2D.style.background = 'transparent';
-                btnMode2D.style.color = 'var(--text-secondary)';
+                btnMode3D.style.background = 'linear-gradient(135deg, #0284c7 0%, #38bdf8 100%)';
+                btnMode3D.style.color = '#ffffff';
+                btnMode3D.style.border = '1.5px solid #7dd3fc';
+                btnMode3D.style.boxShadow = '0 0 12px rgba(56, 189, 248, 0.45)';
+
+                btnMode2D.style.background = 'rgba(15, 23, 42, 0.7)';
+                btnMode2D.style.color = '#94a3b8';
+                btnMode2D.style.border = '1.5px solid #334155';
+                btnMode2D.style.boxShadow = 'none';
+
                 if (container2D) container2D.style.display = 'none';
                 if (container3D) container3D.style.display = 'block';
                 if (toolbar2D) toolbar2D.style.display = 'none';

@@ -2456,27 +2456,18 @@
 
                 <!-- 2D Specific Action Toolbar -->
                 <div id="toolbar2D" style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.75rem;">
-                    <!-- 2D View Mode Selector (Axial ISO 23509 vs Dual Tredgold Virtual Mesh) -->
-                    <div style="display: inline-flex; background: rgba(0,0,0,0.3); padding: 2px; border-radius: 6px; border: 1px solid var(--border-color);" title="Chuyển đổi góc nhìn mô phỏng 2D">
-                        <button type="button" id="btn2DViewAxial" class="btn btn-sm" style="background: #2563eb; color: #fff; font-weight: 700; border-radius: 4px; padding: 4px 10px; cursor: pointer; border: none; font-size: 0.8rem;">
-                            📐 Mặt Cắt Trục (ISO 23509)
-                        </button>
-                        <button type="button" id="btn2DViewMesh" class="btn btn-sm" style="background: transparent; color: var(--text-secondary); font-weight: 600; border-radius: 4px; padding: 4px 10px; cursor: pointer; border: none; font-size: 0.8rem;">
-                            ⚙️ Ăn Khớp Ảo Ngoài &amp; Trong (Tredgold)
-                        </button>
-                    </div>
                     <div style="display: flex; align-items: center; gap: 0.4rem; background: rgba(15, 23, 42, 0.6); padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid var(--border-color);">
                         <span style="font-size: 0.75rem; color: var(--text-secondary);">Tốc độ:</span>
                         <input type="range" id="sliderAnimSpeed" min="0.01" max="2.0" step="0.01" value="1.0" style="width: 80px; cursor: pointer;">
                         <span id="animSpeedVal" style="font-size: 0.75rem; color: var(--accent-cyan); font-weight: 700; width: 42px;">1.0x</span>
                     </div>
-                    <button type="button" class="btn btn-secondary" id="btnCanvasZoomIn">🔍 Phóng To (+)</button>
-                    <button type="button" class="btn btn-secondary" id="btnCanvasZoomOut">🔎 Thu Nhỏ (-)</button>
-                    <button type="button" class="btn btn-secondary" id="btnCanvasReset">🔄 Đặt Lại</button>
+                    <button type="button" class="btn btn-secondary" id="btnCanvasZoomIn" title="Phóng To (+)" style="padding: 4px 10px; font-size: 0.9rem;">🔍</button>
+                    <button type="button" class="btn btn-secondary" id="btnCanvasZoomOut" title="Thu Nhỏ (-)" style="padding: 4px 10px; font-size: 0.9rem;">🔎</button>
+                    <button type="button" class="btn btn-secondary" id="btnCanvasReset" title="Đặt lại góc nhìn và vị trí">🎯 Đặt Lại</button>
                     <button type="button" class="btn btn-primary" id="btnCanvasAnimate">▶ Chạy Mô Phỏng</button>
-                    <button type="button" class="btn btn-secondary" id="btn2DAnimDirection" title="Đổi chiều quay mô phỏng (Thuận ↻ / Nghịch ↺)">🔄 Chiều: ↻ Thuận</button>
-                    <button type="button" class="btn btn-secondary" id="btn2DStepBack" title="Nhích lùi 1 bước vi phân (quan sát ăn khớp)">⏮️ Lùi</button>
-                    <button type="button" class="btn btn-secondary" id="btn2DStepFwd" title="Nhích tiến 1 bước vi phân (quan sát ăn khớp)">⏭️ Tiến</button>
+                    <button type="button" class="btn btn-secondary" id="btn2DAnimDirection" title="Đổi chiều quay mô phỏng (Thuận ↻ / Nghịch ↺)" style="padding: 4px 10px; font-size: 0.9rem;">🔄 ↻</button>
+                    <button type="button" class="btn btn-secondary" id="btn2DStepBack" title="Nhích lùi 1 bước vi phân (quan sát ăn khớp)" style="padding: 4px 10px; font-size: 0.9rem;">⏮️</button>
+                    <button type="button" class="btn btn-secondary" id="btn2DStepFwd" title="Nhích tiến 1 bước vi phân (quan sát ăn khớp)" style="padding: 4px 10px; font-size: 0.9rem;">⏭️</button>
                 </div>
 
                 <!-- 3D Specific Action Toolbar -->

@@ -228,11 +228,13 @@ class BevelGearUI {
             btn2DDir.addEventListener('click', () => {
                 const dir = this.canvasController.toggleAnimDirection();
                 if (dir === 1) {
-                    btn2DDir.innerHTML = '🔄 Chiều: ↻ Thuận';
+                    btn2DDir.innerHTML = '🔄 ↻';
+                    btn2DDir.title = 'Đổi chiều quay mô phỏng (Hiện tại: ↻ Thuận)';
                     btn2DDir.style.color = '';
                     btn2DDir.style.borderColor = '';
                 } else {
-                    btn2DDir.innerHTML = '🔄 Chiều: ↺ Nghịch';
+                    btn2DDir.innerHTML = '🔄 ↺';
+                    btn2DDir.title = 'Đổi chiều quay mô phỏng (Hiện tại: ↺ Nghịch)';
                     btn2DDir.style.color = '#f59e0b';
                     btn2DDir.style.borderColor = '#d97706';
                 }

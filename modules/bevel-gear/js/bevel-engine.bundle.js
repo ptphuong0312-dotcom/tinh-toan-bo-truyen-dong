@@ -4934,12 +4934,8 @@ class BevelGearCanvas {
             return;
         }
 
-        // Split viewport layout:
-        // Left Viewport (0 .. 730): 2D Axial Cross-Section (with Extended Hub & Full Tooth Root)
-        // Right Viewport (736 .. w-14): 2D Conjugate Tooth Profile (Tredgold Virtual Gear with R chân)
-        const leftW = Math.round(w * 0.61);
-
-        // Compute bounding box of axial section including Extended Cylindrical Hubs for auto-centering
+        // Full-Width Technical Axial Cross-Section Viewport (ISO 23509)
+        // Auto-centered with Extended Cylindrical Hubs and Full Tooth Root
         const dae1 = g.dae1 || (2.0 * (bp.Re * bp.s1 + bp.hae1 * bp.c1));
         const dae2 = g.dae2 || (2.0 * (bp.Re * bp.s2 + bp.hae2 * bp.c2));
 
@@ -4973,23 +4969,20 @@ class BevelGearCanvas {
         const cxGeom = (xMin + xMax) / 2.0;
         const cyGeom = (yMin + yMax) / 2.0;
 
-        const scale = Math.min(((leftW - 20) * 0.84) / wGeom, (h * 0.80) / hGeom);
+        const scale = Math.min(((w - 40) * 0.88) / wGeom, (h * 0.82) / hGeom);
 
         ctx.save();
         ctx.beginPath();
-        ctx.rect(0, 0, leftW, h);
+        ctx.rect(0, 0, w, h);
         ctx.clip();
 
-        ctx.translate(leftW / 2.0 + 15 + this.panX, h / 2.0 + 25 + this.panY);
+        ctx.translate(w / 2.0 + this.panX, h / 2.0 + 10 + this.panY);
         ctx.scale(this.zoom * scale, this.zoom * scale);
         ctx.translate(-cxGeom, -cyGeom);
 
         this.drawAxialSection(ctx, bp);
 
         ctx.restore();
-
-        // Draw Right Panel: Live 2D Tredgold Conjugate Tooth Profile with Root Fillet R chân
-        this.draw2DToothProfileInset(ctx, bp, leftW + 8, 14, w - leftW - 22, h - 28);
 
         if (this.showDataCard) {
             this.drawDataCard(ctx, g, bp);
@@ -8457,11 +8450,13 @@ class BevelGearUI {
             btn2DDir.addEventListener('click', () => {
                 const dir = this.canvasController.toggleAnimDirection();
                 if (dir === 1) {
-                    btn2DDir.innerHTML = '🔄 Chiều: ↻ Thuận';
+                    btn2DDir.innerHTML = '🔄 ↻';
+                    btn2DDir.title = 'Đổi chiều quay mô phỏng (Hiện tại: ↻ Thuận)';
                     btn2DDir.style.color = '';
                     btn2DDir.style.borderColor = '';
                 } else {
-                    btn2DDir.innerHTML = '🔄 Chiều: ↺ Nghịch';
+                    btn2DDir.innerHTML = '🔄 ↺';
+                    btn2DDir.title = 'Đổi chiều quay mô phỏng (Hiện tại: ↺ Nghịch)';
                     btn2DDir.style.color = '#f59e0b';
                     btn2DDir.style.borderColor = '#d97706';
                 }
