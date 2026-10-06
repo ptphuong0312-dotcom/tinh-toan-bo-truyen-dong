@@ -94,12 +94,12 @@ class BevelGearCanvas {
     }
 
     setGeometry(geom) {
-        const newMmn = geom ? (parseFloat(geom.mmn) || 10.0) : 10.0;
-        if (this._lastMmn !== null && Math.abs(newMmn - this._lastMmn) > 1e-6) {
-            // Reset hub overrides when design module changes so hub scales proportionally with module first
+        const sig = geom ? `${geom.z1}_${geom.z2}_${geom.mmn}_${geom.met}_${geom.b}_${geom.Sigma_deg}` : '';
+        if (this._lastGeomSig && this._lastGeomSig !== sig) {
+            // Reset hub overrides when gear design parameters change so hub scales proportionally
             this.resetHubOverrides(false);
         }
-        this._lastMmn = newMmn;
+        this._lastGeomSig = sig;
         this.geom = geom;
         if (this.geom) {
             this.geom.hubOverrides = { ...this.hubOverrides };
@@ -255,10 +255,13 @@ class BevelGearCanvas {
         const z1 = parseInt(g.z1) || 18;
         const z2 = parseInt(g.z2) || 45;
         const mmn = parseFloat(g.mmn) || 10.0;
-        const b = parseFloat(g.b) || 117.0;
-        const Re = parseFloat(g.Re) || 338.0;
-        const Rm = parseFloat(g.Rm) || (Re - b / 2.0);
-        const Ri = parseFloat(g.Ri) || (Re - b);
+        const Re_raw = parseFloat(g.Re) || 338.0;
+        const Re = Math.max(5.0, Re_raw);
+        const b_raw = parseFloat(g.b) || 30.0;
+        // Face width b cannot exceed Re (ISO 23509: b <= 0.35 * Re, safe upper bound 0.45 * Re)
+        const b = Math.max(1.0, Math.min(b_raw, Re * 0.45));
+        const Ri = Math.max(2.0, parseFloat(g.Ri) || (Re - b));
+        const Rm = Math.max(Ri + 1.0, parseFloat(g.Rm) || (Re - b / 2.0));
 
         const Sigma_deg = parseFloat(g.Sigma_deg !== undefined ? g.Sigma_deg : g.Sigma) || 90.0;
         const sigmaRad = (Sigma_deg * Math.PI) / 180.0;
@@ -904,8 +907,10 @@ class BevelGearCanvas {
             const cosD = slice.cosD;
             const pPsi = isPinion ? pPsi1 : pPsi2;
             const rimDepth = Math.max(mmn * 2.2, (slice.rva - slice.rvf) * 1.15);
-            const rInnerRim = Math.max(2.0, rvf - rimDepth);
-            const kMin = -3, kMax = 3;
+            const rInnerRim = Math.max(rvf * 0.55, rvf - rimDepth);
+            const maxAllowedSpan = Math.PI * 0.65; // Safe maximum sector span (~117 degrees)
+            const kLimit = Math.min(2, Math.max(1, Math.floor(maxAllowedSpan / (2.0 * pPsi))));
+            const kMin = -kLimit, kMax = kLimit;
 
             const toPt = (r, psi) => {
                 if (isPinion) {
@@ -1264,8 +1269,10 @@ class BevelGearCanvas {
                 const cosD = slice.cosD;
                 const pPsi = isPinion ? pPsi1 : pPsi2;
                 const rimDepth = Math.max(mVal * 2.2, (slice.rva - slice.rvf) * 1.15);
-                const rInnerRim = Math.max(2.0, rvf - rimDepth);
-                const kMin = -3, kMax = 3;
+                const rInnerRim = Math.max(rvf * 0.55, rvf - rimDepth);
+                const maxAllowedSpan = Math.PI * 0.65;
+                const kLimit = Math.min(2, Math.max(1, Math.floor(maxAllowedSpan / (2.0 * pPsi))));
+                const kMin = -kLimit, kMax = kLimit;
 
                 const toPt = (r, psi) => {
                     if (isPinion) {

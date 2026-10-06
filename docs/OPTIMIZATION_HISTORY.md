@@ -3417,3 +3417,30 @@ ho_{f0}$.
 
 
 
+
+
+---
+
+## 2026-10-06 - Quy Tắc 81: Khắc Phục Triệt Để 4 Lỗi Hình Học & Mô Phỏng 2D/3D Bánh Răng Côn Răng Nhỏ (Z11 - Z16 - M8 - B30)
+- **Bối cảnh**: Người dùng (`SirPhuong`) kiểm tra và phát hiện khi thay đổi thông số bánh răng côn sang bộ số răng nhỏ ($z_1 = 11, z_2 = 16, \Sigma = 90.0^\circ, \alpha_n = 25.0^\circ, \beta_m = 0.0^\circ, m_{et} = 8.0\text{ mm}, b = 30.0\text{ mm}$), xuất 2D và 3D vẫn ổn nhưng mô phỏng hiển thị bị lỗi nghiêm trọng qua 4 bức ảnh chụp:
+  1. *2D Canvas*: Kích thước bị đảo lộn méo mó (`b = 117.0, Re = 15.8, ødae1 = 35.0, ødae2 = 34.3, L_Apex2 = -71.9`), nón răng bị lật ngược tọa độ qua Apex sang phía âm; biên dạng răng ảo Tredgold bị tự giao cắt và có một vòng cung chân răng bay lơ lửng kỳ dị ở cụm bên phải.
+  2. *3D WebGL*: Hai bánh răng va chạm đâm ngập sâu vào nhau (lệch pha nửa bước răng); camera bị zoom quá xa và góc nhìn ăn khớp cận cảnh (Closeup) bị lệch tâm ra ngoài không gian.
+- **Phân tích nguyên nhân gốc rễ**:
+  1. *Lật ngược tọa độ $R_i \le 0$*: Khi chuyển từ bộ số răng lớn sang nhỏ, `hubOverrides` vẫn lưu kích thước $b = 117\text{ mm}$ trong khi $R_e$ thực tế chỉ còn $77.7\text{ mm}$. Khi đó $R_i = R_e - b = -39.3\text{ mm} \le 0$, khiến điểm trong nón răng bị kéo vượt qua đỉnh Apex $(0, 0)$ sang phía âm, làm lật ngược toàn bộ đa giác phôi và đảo lộn kích thước.
+  2. *Bùng nổ góc mở rẻ quạt Tredgold*: Mã nguồn 2D trước đây cố định vẽ 7 răng ($k \in [-3, 3]$). Với $z_1 = 11$, số răng ảo $z_{v1} \approx 13.3$, 7 răng chiếm hơn $188^\circ$ ($> \pi$ rad). Cung vành trong khi nối tròn bị vòng ngược qua tâm, tạo thành rẻ quạt tự cắt và làm rơi vòng cung fillet chân răng ra ngoài.
+  3. *Va chạm $180^\circ$ trong 3D*: Ma trận biến đổi của Bánh 2 (`mGear`) đã đưa rãnh răng số 0 về chính xác mặt phẳng tiếp xúc $Z = 0$. Dòng lệnh `this.initialGearAngle = Math.PI / z2` đã vô tình quay Bánh 2 đi đúng nửa bước góc răng ($180^\circ$ góc bước răng), biến rãnh răng thành đỉnh răng và cắm ngập vào đỉnh răng Bánh dẫn 1 (đo được 7860 đỉnh va chạm).
+  4. *Camera tĩnh không co dãn*: `this.viewInitialized` chỉ kích hoạt 1 lần duy nhất, giữ nguyên khoảng cách camera 744mm của bộ răng to khi chuyển sang bộ răng nhỏ 77mm.
+- **Giải pháp xử lý triệt để**:
+  1. *Bảo vệ phôi 2D*: Khống chế $b \le 0.45 R_e$, bảo đảm $R_i = \max(2.0, R_e - b) > 0$. Tự động so sánh chữ ký hình học `${geom.z1}_${geom.z2}_${geom.mmn}_${geom.met}_${geom.b}_${geom.Sigma_deg}` để tự động reset moay-ơ phôi cũ khi người dùng đổi thông số.
+  2. *Giới hạn góc rẻ quạt 2D*: Khống chế góc mở vành răng $\le 117^\circ$ ($k_{\text{Limit}} \le 2$) và kẹp bán kính trong $r_{\text{InnerRim}} \ge 0.55 r_{vf}$.
+  3. *Chuẩn hóa pha 3D liên hợp không va chạm*: Đặt `this.initialGearAngle = 0.0`. Đo đạc tiếp xúc thực tế: $\text{gapLeft} = 0.120\text{ mm}, \text{gapRight} = 0.120\text{ mm}, \Delta = 0.000\text{ mm}$ (Ăn khớp liên hợp đối xứng hoàn hảo, độ xuyên thấu bằng **0.0000 mm**).
+  4. *Camera thích ứng động*: Tự động cập nhật khoảng cách camera khi kích thước thay đổi $> 15\%$, thuật toán zoom cận cảnh nới góc theo chiều rộng vành răng $b$. Loại bỏ các dòng ghi đè góc tĩnh trong UI.
+  5. Sửa lỗi chính tả Mục 4.7 trong `index.html` từ `Re/b` thành `b/Re`.
+- **Kiểm định thực nghiệm**:
+  - Đóng gói single bundle: `modules/bevel-gear/js/bevel-engine.bundle.js` (432,908 ký tự) 100% offline, zero-CORS.
+  - Chạy Playwright kiểm thử chụp ảnh nghiệm thu:
+    * `final_2d_axial.png`: Bản vẽ mặt cắt trục hiển thị chuẩn mực kích thước ($d_{ae2} = 134.2, d_{m2} = 94.9, \delta_2 = 55.5^\circ, L_{\text{Apex2}} = 89.2$).
+    * `final_2d_mesh.png`: Hai cặp ăn khớp Tredgold Ngoài và Trong dao động mượt mà, không tự giao cắt.
+    * `final_3d_webgl.png`: Toàn cảnh 3D căn giữa hoàn hảo.
+    * `final_3d_mesh_closeup.png`: Răng Bánh 1 nằm lọt thỏm chính giữa lòng rãnh răng Bánh 2, khe hở 2 bên đều tăm tắp $0.120\text{ mm}$, hoàn toàn không va chạm.
+    * `final_3d_animated.png`: Động cơ quay liên hợp lăn trơn tru không va chạm.

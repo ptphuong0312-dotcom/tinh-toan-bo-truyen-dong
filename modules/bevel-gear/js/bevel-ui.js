@@ -507,12 +507,7 @@ class BevelGearUI {
                 if (this.visualizer3D) {
                     this.visualizer3D.onResize();
                     if (this.lastGeom) {
-                        const curP = this.visualizer3D.pinionAngle;
-                        const curG = this.visualizer3D.gearAngle;
                         this.visualizer3D.setGeometry(this.lastGeom, this.canvasController ? this.canvasController.hubOverrides : null);
-                        this.visualizer3D.pinionAngle = curP;
-                        this.visualizer3D.gearAngle = curG;
-                        this.visualizer3D.updateGearRotations();
                     }
                 }
                 if (this.lastGeom) this.syncHubPanelUI(this.lastGeom);
@@ -522,12 +517,7 @@ class BevelGearUI {
         // 2D & 3D Synchronized Extended Hub Interactive Dimension Bindings
         const sync3DHubGeometry = () => {
             if (this.visualizer3D && this.lastGeom) {
-                const curP = this.visualizer3D.pinionAngle;
-                const curG = this.visualizer3D.gearAngle;
                 this.visualizer3D.setGeometry(this.lastGeom, this.canvasController ? this.canvasController.hubOverrides : null);
-                this.visualizer3D.pinionAngle = curP;
-                this.visualizer3D.gearAngle = curG;
-                this.visualizer3D.updateGearRotations();
             }
         };
 

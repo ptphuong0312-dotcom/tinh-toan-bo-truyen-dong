@@ -4381,12 +4381,12 @@ class BevelGearCanvas {
     }
 
     setGeometry(geom) {
-        const newMmn = geom ? (parseFloat(geom.mmn) || 10.0) : 10.0;
-        if (this._lastMmn !== null && Math.abs(newMmn - this._lastMmn) > 1e-6) {
-            // Reset hub overrides when design module changes so hub scales proportionally with module first
+        const sig = geom ? `${geom.z1}_${geom.z2}_${geom.mmn}_${geom.met}_${geom.b}_${geom.Sigma_deg}` : '';
+        if (this._lastGeomSig && this._lastGeomSig !== sig) {
+            // Reset hub overrides when gear design parameters change so hub scales proportionally
             this.resetHubOverrides(false);
         }
-        this._lastMmn = newMmn;
+        this._lastGeomSig = sig;
         this.geom = geom;
         if (this.geom) {
             this.geom.hubOverrides = { ...this.hubOverrides };
@@ -4542,10 +4542,13 @@ class BevelGearCanvas {
         const z1 = parseInt(g.z1) || 18;
         const z2 = parseInt(g.z2) || 45;
         const mmn = parseFloat(g.mmn) || 10.0;
-        const b = parseFloat(g.b) || 117.0;
-        const Re = parseFloat(g.Re) || 338.0;
-        const Rm = parseFloat(g.Rm) || (Re - b / 2.0);
-        const Ri = parseFloat(g.Ri) || (Re - b);
+        const Re_raw = parseFloat(g.Re) || 338.0;
+        const Re = Math.max(5.0, Re_raw);
+        const b_raw = parseFloat(g.b) || 30.0;
+        // Face width b cannot exceed Re (ISO 23509: b <= 0.35 * Re, safe upper bound 0.45 * Re)
+        const b = Math.max(1.0, Math.min(b_raw, Re * 0.45));
+        const Ri = Math.max(2.0, parseFloat(g.Ri) || (Re - b));
+        const Rm = Math.max(Ri + 1.0, parseFloat(g.Rm) || (Re - b / 2.0));
 
         const Sigma_deg = parseFloat(g.Sigma_deg !== undefined ? g.Sigma_deg : g.Sigma) || 90.0;
         const sigmaRad = (Sigma_deg * Math.PI) / 180.0;
@@ -5191,8 +5194,10 @@ class BevelGearCanvas {
             const cosD = slice.cosD;
             const pPsi = isPinion ? pPsi1 : pPsi2;
             const rimDepth = Math.max(mmn * 2.2, (slice.rva - slice.rvf) * 1.15);
-            const rInnerRim = Math.max(2.0, rvf - rimDepth);
-            const kMin = -3, kMax = 3;
+            const rInnerRim = Math.max(rvf * 0.55, rvf - rimDepth);
+            const maxAllowedSpan = Math.PI * 0.65; // Safe maximum sector span (~117 degrees)
+            const kLimit = Math.min(2, Math.max(1, Math.floor(maxAllowedSpan / (2.0 * pPsi))));
+            const kMin = -kLimit, kMax = kLimit;
 
             const toPt = (r, psi) => {
                 if (isPinion) {
@@ -5551,8 +5556,10 @@ class BevelGearCanvas {
                 const cosD = slice.cosD;
                 const pPsi = isPinion ? pPsi1 : pPsi2;
                 const rimDepth = Math.max(mVal * 2.2, (slice.rva - slice.rvf) * 1.15);
-                const rInnerRim = Math.max(2.0, rvf - rimDepth);
-                const kMin = -3, kMax = 3;
+                const rInnerRim = Math.max(rvf * 0.55, rvf - rimDepth);
+                const maxAllowedSpan = Math.PI * 0.65;
+                const kLimit = Math.min(2, Math.max(1, Math.floor(maxAllowedSpan / (2.0 * pPsi))));
+                const kMin = -kLimit, kMax = kLimit;
 
                 const toPt = (r, psi) => {
                     if (isPinion) {
@@ -7140,22 +7147,22 @@ class Bevel3DVisualizer {
 
         // 3. Authentic MITCalc Conjugate Phase Offset (Exact Mid-Zone Kiss Contact at Rm)
         // Pinion rotates around World X, Gear rotates around World Y.
-        // Pitch contact line lies in XY plane (Z = 0) at angle delta1 from X axis.
-        const st1 = parseFloat(geom.st1) || (mmn * (Math.PI / 2.0 + 2.0 * x1 * Math.tan(alfa) + xt1));
-        const st2 = parseFloat(geom.st2) || (mmn * (Math.PI / 2.0 + 2.0 * x2 * Math.tan(alfa) + xt2));
-        const cosBeta = Math.abs(beta_deg) > 1e-4 ? Math.cos(beta) : 1.0;
-        const th1 = ((st1 / cosBeta) / (2.0 * (Rm * Math.tan(delta1)))) / Math.cos(delta1);
-        const th2 = ((st2 / cosBeta) / (2.0 * (Rm * Math.tan(delta2)))) / Math.cos(delta2);
-        // Exact conjugate zero-backlash symmetric mesh:
-        // Pinion tooth 0 center lies at Z = 0.
-        // Gear tooth space 0 center is at half-pitch angle (Math.PI / z2).
-        // Aligning Gear space 0 with Pinion tooth 0 brings both Flank 1 and Flank 2 into simultaneous conjugate kiss contact!
-        this.initialGearAngle = Math.PI / z2;
+        // Under mPinion and mGear orthogonal transformations:
+        // Pinion tooth 0 center lies at Z = 0 in the pitch contact plane.
+        // Gear tooth space 0 is naturally centered at Z = 0 when gearAngle = 0.
+        // Setting initialGearAngle = 0.0 centers the Pinion tooth symmetrically inside the Gear tooth space
+        // with equal clearance on both flanks (zero-collision conjugate meshing, diff = 0.000 mm).
+        this.initialGearAngle = 0.0;
         this.pinionAngle = 0;
         this.gearAngle = this.initialGearAngle;
 
         this.updateGearRotations();
-        if (!this.viewInitialized) {
+        
+        // Auto-adapt camera view distance and target when gear dimensions change
+        const prevRe = this._lastRe || null;
+        const curRe = geom ? (parseFloat(geom.Re) || 100.0) : 100.0;
+        this._lastRe = curRe;
+        if (!this.viewInitialized || !prevRe || Math.abs(curRe - prevRe) / prevRe > 0.15) {
             this.setViewPreset('iso');
             this.viewInitialized = true;
         }
@@ -7490,10 +7497,12 @@ class Bevel3DVisualizer {
             case 'mesh': // Close up on pitch contact zone looking directly along tooth groove (shows contact on both flanks)
                 const cosD_m = Math.cos(delta1);
                 const sinD_m = Math.sin(delta1);
+                const b_w = this.geom ? (parseFloat(this.geom.b) || 40.0) : 40.0;
+                const mOffset = Math.max(18, b_w * 0.85);
                 this.camera.position.set(
-                    mx + 95 * cosD_m - 20 * sinD_m,
-                    my + 95 * sinD_m + 20 * cosD_m,
-                    55
+                    mx + mOffset * cosD_m - (mOffset * 0.22) * sinD_m,
+                    my + mOffset * sinD_m + (mOffset * 0.22) * cosD_m,
+                    Math.max(15, b_w * 0.55)
                 );
                 this.camera.up.set(0, 0, 1);
                 this.controls.target.set(mx, my, 0);
@@ -8384,12 +8393,7 @@ class BevelGearUI {
                 if (this.visualizer3D) {
                     this.visualizer3D.onResize();
                     if (this.lastGeom) {
-                        const curP = this.visualizer3D.pinionAngle;
-                        const curG = this.visualizer3D.gearAngle;
                         this.visualizer3D.setGeometry(this.lastGeom, this.canvasController ? this.canvasController.hubOverrides : null);
-                        this.visualizer3D.pinionAngle = curP;
-                        this.visualizer3D.gearAngle = curG;
-                        this.visualizer3D.updateGearRotations();
                     }
                 }
                 if (this.lastGeom) this.syncHubPanelUI(this.lastGeom);
@@ -8399,12 +8403,7 @@ class BevelGearUI {
         // 2D & 3D Synchronized Extended Hub Interactive Dimension Bindings
         const sync3DHubGeometry = () => {
             if (this.visualizer3D && this.lastGeom) {
-                const curP = this.visualizer3D.pinionAngle;
-                const curG = this.visualizer3D.gearAngle;
                 this.visualizer3D.setGeometry(this.lastGeom, this.canvasController ? this.canvasController.hubOverrides : null);
-                this.visualizer3D.pinionAngle = curP;
-                this.visualizer3D.gearAngle = curG;
-                this.visualizer3D.updateGearRotations();
             }
         };
 

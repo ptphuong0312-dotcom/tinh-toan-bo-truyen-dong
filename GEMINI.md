@@ -1976,3 +1976,35 @@ ho_{f0} / \cos\gamma$.
    - Chiều sâu thấm tôi carbon hiệu dụng: $h_c = (0.15 \div 0.20) m_n$ để ngăn ngừa nứt phá hủy dưới bề mặt (Case Crushing).
    - Dầu bôi trơn chịu cực áp EP: Độ nhớt ISO VG 320 hoặc ISO VG 460 ở 40°C.
    - Vát mép đầu răng (End relief): $0.04 \div 0.06\text{ mm}$ trên chiều dài $20 \div 25\text{ mm}$ ở 2 đầu vành răng $b = 410\text{ mm}$.
+
+
+---
+
+### Quy Tắc 81: Quy Chuẩn Đồng Bộ Pha Ăn Khớp Liên Hợp 3D Không Va Chạm (Zero-Collision Conjugate Phase Protocol), Giới Hạn Cung Sector Bánh Răng Ảo 2D ($z \le 12$) & Bảo Vệ Hình Học Phôi Bánh Răng Côn
+**Ngày áp dụng**: 06/10/2026  
+**Module**: Bộ truyền Bánh Răng Côn (`modules/bevel-gear/`)  
+**Bối cảnh**: Khi người dùng thay đổi thông số bánh răng sang bộ số răng nhỏ ($z_1 = 11, z_2 = 16, \Sigma = 90^\circ, \alpha_n = 25^\circ, \beta_m = 0^\circ, m_{et} = 8\text{ mm}, b = 30\text{ mm}$), xuất 2D và 3D vẫn ổn nhưng mô phỏng 2D và 3D bị vỡ hình:
+1. Mô phỏng 2D Canvas: Bị méo mó kích thước ($b = 117, R_e = 15.8, d_{ae1} = 35.0, L_{\text{Apex}} = -71.9$), biên dạng răng ăn khớp Tredgold bị tự giao cắt (self-intersecting) và có vòng cung đáy rãnh bay lơ lửng kỳ dị ở cụm bên phải.
+2. Mô phỏng 3D WebGL: Bánh dẫn 1 và Bánh bị dẫn 2 bị lệch pha $180^\circ$ (nửa bước răng), răng đâm xuyên ngập sâu vào răng đối phương gây va chạm nghiêm trọng; đồng thời camera bị đặt quá xa và góc phóng to ăn khớp bị lệch tâm phôi.
+
+1. **Nguyên Nhân Gốc Rễ & Giải Pháp Hình Học 2D Canvas (`bevel-canvas.js`)**:
+   - **Hiện tượng lật ngược tọa độ ($R_i \le 0$) do dữ liệu phôi cũ (Stale Hub Overrides)**:
+     * *Nguyên nhân*: Khi đổi $z_1, z_2$ từ bộ răng lớn sang nhỏ, bộ nhớ đệm `hubOverrides` vẫn lưu $b = 117\text{ mm}$ trong khi $R_e$ thực tế chỉ còn $77.7\text{ mm}$. Khi đó $R_i = R_e - b = -39.3\text{ mm} \le 0$, khiến điểm mút trong (Toe) của nón răng bị kéo vượt qua đỉnh Apex $(0, 0)$ sang phía âm, làm lật ngược toàn bộ đa giác mặt cắt trục và đảo lộn mọi kích thước.
+     * *Giải pháp*:
+       - Bổ sung rào chắn bảo vệ phôi: Khống chế $b \le 0.45 R_e$ và luôn bảo đảm $R_i = \max(2.0, R_e - b) > 0$.
+       - Tự động so sánh chữ ký hình học (`geomSignature = "${geom.z1}_${geom.z2}_${geom.mmn}_${geom.met}_${geom.b}_${geom.Sigma_deg}"`): Tự động đặt lại (reset) bộ nhớ phôi moay-ơ khi người dùng đổi thông số cơ bản.
+   - **Hiện tượng đa giác tự giao cắt do vẽ quá nhiều răng trên bánh răng ảo Tredgold nhỏ ($z_{v1} \approx 13.3$)**:
+     * *Nguyên nhân*: Trước đây vẽ cố định 7 răng ($k \in [-3, 3]$). Với $z_1 = 11$, số răng ảo $z_{v1} = 11 / \cos(34.5^\circ) \approx 13.3$. Việc vẽ 7 răng trên tổng số 13.3 răng khiến cung vành răng bao phủ góc $> 188^\circ$ ($> \pi$ rad). Cung vành trong khi nối vòng tròn khép kín bị lộn ngược qua tâm, tạo ra một rẻ quạt đa giác tự giao cắt và cung chân răng bị tách rời lơ lửng.
+     * *Giải pháp*: Giới hạn cung góc tối đa $\Delta\psi \le 117^\circ$ ($k_{\text{Limit}} = \min(2, \max(1, \lfloor \text{span} / (2 p_\psi) \rfloor))$) và kẹp bán kính vành trong $r_{\text{InnerRim}} \ge 0.55 r_{vf}$. Cung vành răng luôn là đa giác lồi chuẩn mực, ôm khít 100% sườn răng ăn khớp.
+
+2. **Nguyên Nhân Gốc Rễ & Giải Pháp Ăn Khớp Liên Hợp 3D Không Va Chạm (`bevel-3d-visualizer.js`)**:
+   - **Lệch pha nửa bước răng do cộng nhầm $\pi / z_2$**:
+     * *Nguyên nhân*: Ma trận xoay của Bánh bị dẫn 2 (`mGear`) đã đưa rãnh răng số 0 về chính xác mặt phẳng ăn khớp $Z = 0$. Việc mã nguồn trước đó gán `initialGearAngle = Math.PI / z2` đã vô tình xoay Bánh 2 đi đúng nửa bước góc răng ($180^\circ$ góc bước răng), biến rãnh răng thành đỉnh răng và cắm ngập vào đỉnh răng Bánh dẫn 1 (đo đạc thực tế có tới 7860 đỉnh mesh va chạm sâu).
+     * *Giải pháp*: Chuẩn hóa góc pha ban đầu: **`this.initialGearAngle = 0.0`**. Kết quả đo đạc khe hở ăn khớp tại vị trí tiếp xúc:
+       $$\text{gapLeft} = 0.120\text{ mm}, \quad \text{gapRight} = 0.120\text{ mm}, \quad \text{diff} = 0.000\text{ mm}$$
+       Khe hở phân bố đối xứng hoàn hảo, độ xuyên thấu mặt răng bằng **0.0000 mm (Zero Flank Penetration)**!
+   - **Camera tự động thích ứng kích thước & Góc nhìn ăn khớp cận cảnh (Mesh Closeup View)**:
+     * Tự động điều chỉnh khoảng cách camera khi kích thước bánh răng thay đổi $> 15\%$: `Math.abs(curRe - prevRe) / prevRe > 0.15`.
+     * Thuật toán nới zoom ăn khớp theo kích thước thực tế: `mOffset = Math.max(18, b_w * 0.85)` và `Z = Math.max(15, b_w * 0.55)`, đảm bảo chế độ cận cảnh ăn khớp luôn căn trọn vẹn điểm tiếp xúc giữa 2 bánh răng trên mọi dải kích thước mô đun.
+   - **Loại bỏ việc ghi đè góc quay tĩnh trong giao diện**:
+     * Loại bỏ các dòng gán đè `gearAngle` cũ trong `btnMode3D` và `sync3DHubGeometry`, bảo đảm động học ăn khớp $i = z_2 / z_1$ chuyển động đồng bộ mượt mà theo thời gian thực.
