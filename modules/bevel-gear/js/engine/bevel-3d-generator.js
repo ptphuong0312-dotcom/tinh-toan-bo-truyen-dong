@@ -737,14 +737,36 @@ export const Bevel3DGenerator = {
         const hf_e = parseFloat(opt.hf_e) || (mmn * (1.2 - (opt.x || 0.0)));
         const sn_e = parseFloat(opt.sn_e) || (mmn * Math.PI * 0.5);
 
-        const numSlices = opt.numSlices || (isSpiral ? 24 : 16);
-        const ptsPerFlank = opt.ptsPerFlank || 12;
-        const ptsFillet = opt.ptsFillet || 4;
-        const R_tool = 1.5 * b;
+        const lvl = Math.max(1, Math.min(11, parseInt(opt.resLevel) || 6));
+        const res = (typeof BEVEL_PROFILE_RESOLUTIONS !== 'undefined' && BEVEL_PROFILE_RESOLUTIONS[lvl])
+            ? BEVEL_PROFILE_RESOLUTIONS[lvl]
+            : (typeof BEVEL_PROFILE_RESOLUTIONS !== 'undefined' ? BEVEL_PROFILE_RESOLUTIONS[6] : null);
 
-        const ptsFlankCount = 16;
-        const ptsTipCount = 7;
-        const ptsRootCount = 9;
+        // 11-Level 2D-Linked Resolution Presets for IGES NURBS Surface Grid (U x V)
+        // Automatically scales longitudinal face width slices (V) and involute flank control points (U)
+        const igesGridPresets = {
+            1:  { slicesSpiral: 14, slicesStraight: 12, flankU: 16, tipU: 7,  rootU: 9  },
+            2:  { slicesSpiral: 18, slicesStraight: 14, flankU: 18, tipU: 7,  rootU: 9  },
+            3:  { slicesSpiral: 22, slicesStraight: 18, flankU: 20, tipU: 8,  rootU: 10 },
+            4:  { slicesSpiral: 26, slicesStraight: 20, flankU: 24, tipU: 9,  rootU: 11 },
+            5:  { slicesSpiral: 30, slicesStraight: 24, flankU: 28, tipU: 9,  rootU: 11 },
+            6:  { slicesSpiral: 36, slicesStraight: 28, flankU: 32, tipU: 10, rootU: 12 }, // Chuẩn gốc x3
+            7:  { slicesSpiral: 42, slicesStraight: 32, flankU: 36, tipU: 11, rootU: 13 },
+            8:  { slicesSpiral: 48, slicesStraight: 36, flankU: 40, tipU: 11, rootU: 13 },
+            9:  { slicesSpiral: 54, slicesStraight: 42, flankU: 48, tipU: 12, rootU: 15 },
+            10: { slicesSpiral: 60, slicesStraight: 48, flankU: 56, tipU: 13, rootU: 17 },
+            11: { slicesSpiral: 64, slicesStraight: 52, flankU: 64, tipU: 15, rootU: 19 }  // Siêu mịn Mastercam 5-Axis
+        };
+
+        const igesPreset = igesGridPresets[lvl] || igesGridPresets[6];
+        const defaultSlices = isSpiral ? igesPreset.slicesSpiral : igesPreset.slicesStraight;
+        const numSlices = opt.numSlices !== undefined ? Math.max(8, parseInt(opt.numSlices)) : defaultSlices;
+        const ptsFlankCount = opt.ptsFlankCount !== undefined ? Math.max(12, parseInt(opt.ptsFlankCount)) : igesPreset.flankU;
+        const ptsTipCount = opt.ptsTipCount !== undefined ? Math.max(5, parseInt(opt.ptsTipCount)) : igesPreset.tipU;
+        const ptsRootCount = opt.ptsRootCount !== undefined ? Math.max(7, parseInt(opt.ptsRootCount)) : igesPreset.rootU;
+        const ptsPerFlank = opt.ptsPerFlank !== undefined ? opt.ptsPerFlank : (res ? res.ptsPerFlank : 48);
+        const ptsFillet = opt.ptsFillet !== undefined ? opt.ptsFillet : Math.max(6, Math.round(ptsPerFlank * 0.35));
+        const R_tool = 1.5 * b;
 
         const activeTeeth = (opt.exportAllTeeth === false) ? Math.min(8, z) : z;
         const pitchAngle = (2.0 * Math.PI) / z;

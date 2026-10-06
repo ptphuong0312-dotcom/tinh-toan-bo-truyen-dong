@@ -1918,3 +1918,33 @@ ho_{f0}$.
    - **Đồng bộ thời gian thực khi chuyển Tab**:
      Gọi `this.canvasController.setGeometry(this.lastGeom)` ngay khi người dùng bấm chuyển sang Tab Mô Phỏng 2D hoặc bấm nút Chế độ 2D.
 
+
+---
+
+### Quy Tắc 84: Quy Chuẩn Tăng Gấp 3 Lần Độ Mịn 2D DXF & Trùng Khớp Sườn Răng Tuyệt Đối (Δ = 0.00000000 mm)
+**Ngày áp dụng**: 06/10/2026  
+**Module**: Bánh Răng Côn (`modules/bevel-gear/`)  
+1. **Nâng Cấp Độ Mịn 11 Mức (2D DXF Resolution Levels)**:
+   - Tăng gấp 3 lần số điểm vẽ sườn thân khai (`ptsPerFlank`) và số điểm răng hoàn chỉnh (`ptsPerTooth`) trên toàn bộ 11 mức độ phân giải (`BEVEL_PROFILE_RESOLUTIONS`).
+   - Mức 6 (Chuẩn gốc x3): `ptsPerFlank = 48`, `ptsPerTooth = 120`.
+   - Mức 11 (Siêu nét CNC/Wire EDM x3): `ptsPerFlank = 96`, `ptsPerTooth = 216`, cung lượn chân răng $R_f$ đạt 34 điểm.
+2. **Triệt Tiêu Hoàn Toàn Khe Hở 0.0026 mm Giữa Đường Rãnh `_R` & `_R0`**:
+   - Sử dụng chung hàm `evalSlotFlankData()`, trích xuất cùng một tập hợp điểm `commonFlank` từ bán kính đỉnh nón tương đương $r_{va}$ xuống điểm cuối sườn $r_{\text{flankEnd}} = \max(r_t, r_{\text{start}})$.
+   - Đảm bảo 100% tọa độ $(X, Y)$ của hai đường bao trùng khớp bit-for-bit, đạt sai số $\Delta = 0.00000000\text{ mm}$ trên AutoCAD ở mọi mức zoom.
+
+---
+
+### Quy Tắc 85: Quy Chuẩn Ma Trận Lựa Chọn Thiết Kế Côn Thực Tế & Đồng Bộ 100% Độ Mịn File Surface .igs Theo 2D
+**Ngày áp dụng**: 06/10/2026  
+**Module**: Bánh Răng Côn (`modules/bevel-gear/`)  
+1. **Cấu Trúc Ma Trận Lựa Chọn Thiết Kế (Mục 17.5)**:
+   - Tích hợp bảng ma trận 10 kịch bản công nghiệp thực tế kết hợp giữa **Mục 3.1** (Kiểu răng: Răng thẳng Gleason, Răng nghiêng, Côn xoắn Gleason, Côn xoắn Klingelnberg, Côn xoắn Côn cong tròn) và **Mục 5.1** (Kiểu dịch chỉnh: Chuẩn 0, Chiều cao $x_1$, Chiều dày tiếp tuyến $x_t$, Dịch chỉnh tổng hợp ISO 23509).
+   - 4 nguyên tắc vàng bất biến:
+     * Cặp răng không cân xứng ($z_1 \le 17$) $\rightarrow$ Dịch chỉnh chiều cao $x_1 > 0$ triệt tiêu cắt lẹm.
+     * Tỉ số truyền lớn ($i \ge 3.0$) $\rightarrow$ Dịch chỉnh tiếp tuyến $x_{t1} > 0$ cân bằng độ bền uốn 2 bánh.
+     * Chiều cao nón: Gleason thẳng $\rightarrow$ Hội tụ Apex; Gleason xoắn $\rightarrow$ Chiều cao tiêu chuẩn; Klingelnberg $\rightarrow$ Chiều cao không đổi ($h = \text{const}$).
+     * Cặp bánh răng tỉ số 1:1 (Miter gears) $\rightarrow$ Tuyệt đối giữ $x_1 = x_2 = 0, x_t = 0$.
+2. **Liên Kết Đồng Bộ 100% Độ Mịn File Surface .igs Theo 2D Slider**:
+   - Cả hai thanh trượt điều khiển độ mịn 11 mức (`#sliderProfileResolution` tại Mục 16 và `#sliderProfileResolutionCanvas` tại Tab Canvas) điều khiển đồng thời cả 2D profile DXF và lưới tham số NURBS B-Spline Surface 3D Mastercam (`.igs`).
+   - Bộ preset `igesGridPresets` tự động điều chỉnh số lát cắt dọc vành răng $V$ (12 đến 64 lát) và số điểm kiểm soát sườn thân khai $U$ (16 đến 64 điểm).
+   - Tên file xuất tự động thêm hậu tố `_muc{resLevel}_Surface.igs` để kỹ sư xưởng dễ dàng phân biệt cấp độ mịn khi nhập vào Mastercam / SolidWorks.

@@ -1882,8 +1882,8 @@
                                     <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.5rem;">Chuẩn Release 12 (AC1009) mở tốt từ AutoCAD 2004 đến 2026, SolidWorks, Inventor</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
-                                    <div style="display: flex; align-items: center; gap: 0.5rem; background: #ffffff; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1;">
-                                        <label for="sliderProfileResolution" style="font-size: 0.8rem; font-weight: 600; color: #334155; white-space: nowrap;">🎯 Độ mịn:</label>
+                                    <div style="display: flex; align-items: center; gap: 0.5rem; background: #ffffff; padding: 4px 10px; border-radius: 4px; border: 1px solid #cbd5e1;" title="Chỉnh độ mịn 11 mức: Điều khiển đồng thời độ mịn biên dạng 2D DXF và độ mịn lưới mặt cong Surface 3D IGES (.igs)">
+                                        <label for="sliderProfileResolution" style="font-size: 0.8rem; font-weight: 600; color: #334155; white-space: nowrap;">🎯 Độ mịn (2D &amp; .IGS):</label>
                                         <input type="range" id="sliderProfileResolution" min="1" max="11" value="6" step="1" style="width: 100px; cursor: pointer;">
                                         <span id="lblProfileResolution" style="font-size: 0.8rem; font-weight: 700; color: #0284c7; white-space: nowrap;">Mức 6 (Chuẩn Gốc)</span>
                                     </div>
@@ -2184,147 +2184,163 @@
                                 </table>
                             </div>
 
-                            <!-- 17.5: Bánh Răng Trụ Tương Đương Tredgold (Mục 7.0) -->
+                            <!-- 17.5: Ma Trận Lựa Chọn Thiết Kế Bánh Răng Côn Thực Tế -->
                             <div style="background: #1e293b; border-radius: 8px; padding: 1rem; border: 1px solid #334155;">
                                 <h4 style="color: #38bdf8; margin-top: 0; margin-bottom: 0.5rem; font-size: 1.05rem;">
-                                    📐 17.5 Bánh Răng Trụ Tương Đương - Tredgold (Virtual Spur Gear Toothing - Mục 7.0)
+                                    🧭 17.5 Ma Trận Lựa Chọn Thiết Kế Bánh Răng Côn Thực Tế (ISO 23509 / Gleason / Klingelnberg)
                                 </h4>
-                                <p style="margin-bottom: 0.5rem;">
-                                    <strong>Nguyên lý Tredgold (1822):</strong> Để áp dụng được lý thuyết ăn khớp và độ bền của bánh răng trụ cho bánh răng côn, Thomas Tredgold đã cắt bánh răng côn bằng <em>mặt nón phụ (Back cone)</em> vuông góc với nón chia tại mặt cắt trung bình. Trải mặt nón phụ này lên mặt phẳng tạo thành một <strong>bánh răng trụ ảo (Virtual spur gear)</strong> có bán kính <code>r<sub>v</sub> = r / cos &delta;</code>.
+                                <p style="margin-bottom: 0.75rem; font-size: 0.88rem; color: #cbd5e1;">
+                                    Hệ thống hóa kinh nghiệm thiết kế xưởng và quy chuẩn quốc tế cho 10 trường hợp chế tạo bánh răng côn phổ biến nhất trong thực tế công nghiệp:
                                 </p>
-                                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.5rem;">
-                                    <thead>
-                                        <tr style="background: #334155; color: #f8fafc;">
-                                            <th style="padding: 5px 8px; border: 1px solid #475569;">Dòng</th>
-                                            <th style="padding: 5px 8px; border: 1px solid #475569;">Ký hiệu</th>
-                                            <th style="padding: 5px 8px; border: 1px solid #475569;">Tên thông số bánh răng ảo</th>
-                                            <th style="padding: 5px 8px; border: 1px solid #475569;">Công thức tính toán</th>
-                                            <th style="padding: 5px 8px; border: 1px solid #475569;">Ý nghĩa kỹ thuật</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.1</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">z<sub>vn</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Số răng ảo pháp diện</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>z<sub>vn</sub> = z / (cos &delta; &middot; cos<sup>3</sup>&beta;<sub>m</sub>)</code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Dùng để tra hệ số dạng răng Y<sub>F</sub> và tính bền uốn, bền tiếp xúc.</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.2</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">z<sub>v</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Số răng ảo tiếp tuyến</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>z<sub>v</sub> = z / cos &delta;</code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Số răng bánh trụ ảo trực tiếp từ trải nón phụ Tredgold. Khi răng thẳng (&beta;<sub>m</sub> = 0°), <code>z<sub>vn</sub> = z<sub>v</sub></code>.</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.3</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">d<sub>vm</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Đường kính chia tương đương</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>d<sub>vm</sub> = d<sub>m</sub> / cos &delta; = z<sub>v</sub> &middot; m<sub>mt</sub></code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Đường kính vòng lăn chia của bánh răng trụ ảo ở mặt cắt trung bình.</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.4</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">d<sub>va</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Đường kính đỉnh tương đương</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>d<sub>va</sub> = d<sub>vm</sub> + 2 &middot; h<sub>a</sub></code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Vòng đỉnh của bánh răng ảo, dùng xác định chiều dài đoạn ăn khớp cung lượn.</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.5</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">d<sub>vb</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Đường kính cơ sở tương đương</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>d<sub>vb</sub> = d<sub>vm</sub> &middot; cos &alpha;<sub>t</sub></code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Vòng cơ sở ảo phát sinh đường thân khai (Involute curve) tương đương.</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.6</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">d<sub>vf</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Đường kính đáy tương đương</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>d<sub>vf</sub> = d<sub>vm</sub> - 2 &middot; h<sub>f</sub></code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Vòng tròn đáy chân răng ảo.</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.7</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">a<sub>v</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Khoảng cách trục tương đương</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>a<sub>v</sub> = (d<sub>vm1</sub> + d<sub>vm2</sub>) / 2</code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Khoảng cách trục danh nghĩa của cặp bánh răng trụ ảo ăn khớp.</td>
-                                        </tr>
-                                        <tr style="background: rgba(56, 189, 248, 0.1);">
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.8</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">i<sub>v</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">Tỉ số truyền ảo tương đương</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>i<sub>v</sub> = z<sub>v2</sub> / z<sub>v1</sub> = i<sup>2</sup> (khi &Sigma;=90°)</code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><strong>Định lý Tredgold kinh điển:</strong> Tỉ số truyền ảo bằng bình phương tỉ số truyền thực <code>i<sub>v</sub> = (2.5)<sup>2</sup> = 6.2500</code>!</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.9</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">s<sub>vm</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Chiều dày răng ảo TB</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>s<sub>vm</sub> = m<sub>mn</sub> &middot; (&pi;/2 + 2x&middot;tan&alpha; + x<sub>t</sub>)</code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Chiều dày răng trên vòng chia bánh trụ ảo (trùng khít 100% với cung nón chia bánh côn).</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.10</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">e<sub>vm</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Bề rộng rãnh răng ảo TB</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>e<sub>vm</sub> = &pi;&middot;m<sub>mn</sub> - s<sub>vm</sub></code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Khoảng hở rãnh răng trên vòng chia bánh trụ ảo, xác định góc mở rãnh răng khi vẽ CAD.</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.11</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">s<sub>vc</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Chiều dày dây cung đo mỏ kẹp TB</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>s<sub>vc</sub> = d<sub>vm</sub> &middot; sin(s<sub>vm</sub> / d<sub>vm</sub>)</code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Kích thước kiểm tra thực tế bằng thước cặp đo răng (trên mặt phẳng nón phụ).</td>
-                                        </tr>
-                                        <tr>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.12</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">h<sub>vc</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Chiều cao đo mỏ kẹp TB</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>h<sub>vc</sub> = h<sub>a</sub> + 0.5&middot;d<sub>vm</sub>&middot;(1 - cos(s<sub>vm</sub>/d<sub>vm</sub>))</code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;">Độ sâu đặt mỏ kẹp của thước cặp đo răng tính từ đỉnh răng.</td>
-                                        </tr>
-                                        <tr style="background: rgba(245, 158, 11, 0.1);">
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; text-align: center;">7.13</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #fbbf24;">x<sub>eq</sub></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569; font-weight: 700; color: #fbbf24;">Hệ số dịch chỉnh quy đổi CAD</td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><code>x<sub>eq</sub> = x + x<sub>t</sub> / (2 &middot; tan &alpha;)</code></td>
-                                            <td style="padding: 5px 8px; border: 1px solid #475569;"><strong>Quy đổi then chốt:</strong> Nhập vào phần mềm CAD bánh răng trụ tiêu chuẩn (SolidWorks/Inventor không có ô x<sub>t</sub>) để có đúng bề dày răng thực tế.</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; margin-bottom: 1rem;">
+                                    <table style="width: 100%; min-width: 950px; border-collapse: collapse; font-size: 0.82rem;">
+                                        <thead>
+                                            <tr style="background: #334155; color: #f8fafc;">
+                                                <th style="padding: 6px 8px; border: 1px solid #475569; width: 4%; text-align: center;">#</th>
+                                                <th style="padding: 6px 8px; border: 1px solid #475569; width: 18%;">Ứng Dụng &amp; Điều Kiện Tải</th>
+                                                <th style="padding: 6px 8px; border: 1px solid #475569; width: 14%;">Kiểu Răng (Mục 3.1)</th>
+                                                <th style="padding: 6px 8px; border: 1px solid #475569; width: 14%;">Dịch Chỉnh (Mục 5.1)</th>
+                                                <th style="padding: 6px 8px; border: 1px solid #475569; width: 13%;">Góc &beta;<sub>m</sub> &amp; Hướng Xoắn</th>
+                                                <th style="padding: 6px 8px; border: 1px solid #475569; width: 14%;">Yêu Cầu Ổ Đỡ &amp; Vỏ Hộp</th>
+                                                <th style="padding: 6px 8px; border: 1px solid #475569; width: 23%;">Lưu Ý Xưởng Sống Còn</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #94a3b8;">1</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">
+                                                    <strong>Băng tải chậm, máy nông nghiệp, tời tay</strong><br>
+                                                    <span style="color: #94a3b8; font-size: 0.78rem;">v &lt; 3 m/s &bull; Tải nhẹ &bull; z<sub>1</sub> &ge; 20</span>
+                                                </td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 600; color: #38bdf8;">1 - Bào Gleason (Thẳng I)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">DIN 870 / Tiêu chuẩn<br>(x<sub>1</sub>=0, x<sub>2</sub>=0)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">&beta;<sub>m</sub> = 0°<br>(Không xoắn)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Ổ bi đỡ sâu thông thường, vỏ hộp đúc đơn giản.</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #86efac;">Chi phí thấp nhất, dễ gia công đơn chiếc trên máy phay vạn năng.</td>
+                                            </tr>
+                                            <tr style="background: rgba(239, 68, 68, 0.08);">
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #f87171;">2</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">
+                                                    <strong>Bánh răng thẳng tỷ số lớn, bánh nhỏ ít răng</strong><br>
+                                                    <span style="color: #fca5a5; font-size: 0.78rem;">v &lt; 5 m/s &bull; z<sub>1</sub> = 12 &divide; 17 (Dễ cắt lẹm)</span>
+                                                </td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 600; color: #38bdf8;">1 - Bào Gleason (Thẳng I)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 700; color: #f87171;">Dịch chỉnh uốn VN<br>(x<sub>1</sub> = +0.3 &divide; +0.6)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">&beta;<sub>m</sub> = 0°</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Ổ bi đỡ chặn hoặc đũa côn chịu tải hướng tâm lớn.</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #fca5a5;"><strong>Bắt buộc x<sub>1</sub> &gt; 0</strong> để triệt tiêu cắt lẹm chân răng z<sub>1</sub>, tăng bền uốn 30-40%.</td>
+                                            </tr>
+                                            <tr style="background: rgba(56, 189, 248, 0.08);">
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #38bdf8;">3</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">
+                                                    <strong>Nâng cấp hộp số cũ ồn/rung (thay thế trực tiếp)</strong><br>
+                                                    <span style="color: #7dd3fc; font-size: 0.78rem;">v = 4 &divide; 10 m/s &bull; Cần êm &bull; Giữ vỏ hộp cũ</span>
+                                                </td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">3 - Cung tròn Zerol (II)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Curved teeth<br>hoặc Dịch chỉnh uốn VN</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">&beta;<sub>m</sub> = 0°<br>(Lực dọc F<sub>a</sub> &approx; 0)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #34d399;"><strong>Giữ nguyên ổ đỡ cũ</strong> của răng thẳng (không phải làm lại vỏ).</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #7dd3fc;">Êm hơn răng thẳng 6–8 dB nhưng không sinh lực dọc trục lớn, thay thế thẳng vào vỏ cũ.</td>
+                                            </tr>
+                                            <tr style="background: rgba(16, 185, 129, 0.08);">
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #34d399;">4 ⭐</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">
+                                                    <strong>Hộp giảm tốc công nghiệp tải nặng 1 chiều</strong><br>
+                                                    <span style="color: #86efac; font-size: 0.78rem;">Máy cán, nghiền, xi măng &bull; v = 6 &divide; 18 m/s</span>
+                                                </td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 700; color: #34d399;">2 - Cung tròn Gleason (Xoắn II)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Curved teeth (Gleason)<br>Chiều cao thuôn (Tapered)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">&beta;<sub>m</sub> = 35°<br>CW: chọn LH (Trái)<br>CCW: chọn RH (Phải)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Ổ đũa côn kép (chữ X hoặc O), gối đỡ cứng vững cao.</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #86efac;"><strong>Quy tắc khử lực dọc</strong>: Hướng xoắn phải sinh lực đẩy bánh ra xa Apex để chống kẹt khi nóng.</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #fbbf24;">5</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">
+                                                    <strong>Hộp số đảo chiều liên tục (Reversible drives)</strong><br>
+                                                    <span style="color: #fde68a; font-size: 0.78rem;">Tời tàu thủy, tời neo, hộp số tiến/lùi ca-nô</span>
+                                                </td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 600; color: #fbbf24;">2 - Cung tròn Gleason (II)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Dịch chỉnh tiếp xúc VN<br>hoặc ISO 23509</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">&beta;<sub>m</sub> = 25° &divide; 30°<br>(Hạn chế lực dọc)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Ổ đỡ chặn 2 chiều cố định chặt chẽ, vỏ hộp gân đối xứng.</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #fde68a;">Lực dọc trục đảo chiều 180° khi đổi chiều quay. Phải kiểm tra bền uốn cả sườn lồi và sườn lõm.</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #c084fc;">6</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">
+                                                    <strong>Cầu sau xe tải, xe buýt, xe khách (Vi sai)</strong><br>
+                                                    <span style="color: #e9d5ff; font-size: 0.78rem;">Tải cực nặng, chạy liên tục, sản xuất loạt lớn</span>
+                                                </td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 600; color: #c084fc;">4 - Epicycloid (Klingelnberg III)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Hệ Klingelnberg<br>Răng song song (h = const)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">&beta;<sub>m</sub> = 30° &divide; 38°<br>Theo bước dao xoắn</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Ổ đũa côn chịu tải cực cao, vỏ cầu gang dẻo có đai siết.</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #e9d5ff;"><strong>Cặp bất di bất dịch (Matched Set)</strong>: Hai bánh rà cát (Lapping) chung cặp, hỏng phải thay cả bộ.</td>
+                                            </tr>
+                                            <tr style="background: rgba(244, 63, 94, 0.08);">
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #fb7185;">7</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">
+                                                    <strong>Cầu xe du lịch, xe tải nhẹ (Sàn xe phẳng)</strong><br>
+                                                    <span style="color: #fecdd3; font-size: 0.78rem;">Trục lệch tâm E &ne; 0 &bull; v &gt; 20 m/s &bull; Rất êm</span>
+                                                </td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 700; color: #fb7185;">Truyền động HYPOID<br>(Trục chéo nhau)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Hệ Hypoid riêng biệt<br>(Bánh 1 phình to)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">&beta;<sub>1</sub> &approx; 45°&divide;50° (Pinion)<br>&beta;<sub>2</sub> &approx; 20° (Gear)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Ổ đỡ chặn chịu tải dọc cực đại, gối đỡ công-xôn cứng.</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #fecdd3;"><strong>Bắt buộc dùng dầu bôi trơn Hypoid cực áp (GL-5)</strong> do độ trượt dọc sườn răng rất lớn.</td>
+                                            </tr>
+                                            <tr style="background: rgba(14, 165, 233, 0.08);">
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #38bdf8;">8</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">
+                                                    <strong>Bàn xoay CNC, tay máy Robot, Radar</strong><br>
+                                                    <span style="color: #bae6fd; font-size: 0.78rem;">Độ chính xác cao &bull; Khe hở cực nhỏ Zero-Backlash</span>
+                                                </td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 600; color: #38bdf8;">2 - Cung tròn Gleason (II)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Dịch chỉnh uốn VN<br>Cắt răng vồng (Crowning)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">&beta;<sub>m</sub> = 35°</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;"><strong>Trục có cơ cấu căn đệm dọc (Shims)</strong> hoặc đai vi chỉnh.</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #bae6fd;"><strong>Chỉnh rơ bằng căn dọc trục</strong>: Nới/chêm căn &Delta;Z là triệt tiêu hoàn toàn khe hở mà không cần tiện lại.</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #e2e8f0;">9</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">
+                                                    <strong>Hàng không, trực thăng, tuabin tàu cao tốc</strong><br>
+                                                    <span style="color: #cbd5e1; font-size: 0.78rem;">v = 25 &divide; 50 m/s &bull; Siêu nhẹ &bull; An toàn tuyệt đối</span>
+                                                </td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 600; color: #38bdf8;">2 - Cung tròn Gleason (II)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Hệ Gleason tối ưu hóa<br>Vát mép &amp; Bo tròn mép</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">&beta;<sub>m</sub> = 35°</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Vỏ Titan/Magie, ổ lăn hàng không cấp ABEC 7/9.</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #cbd5e1;">Thép hợp kim 9310 &bull; Mài CNC &bull; <strong>Bắn bi nén (Shot Peening)</strong> triệt tiêu ứng suất dư ở chân răng.</td>
+                                            </tr>
+                                            <tr>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #a1a1aa;">10</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">
+                                                    <strong>Tay quay góc vuông, phụ kiện đồ gá, máy thô</strong><br>
+                                                    <span style="color: #a1a1aa; font-size: 0.78rem;">Tỉ số truyền i = 1:1 (Miter Gears) &bull; &delta; = 45°</span>
+                                                </td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 600; color: #38bdf8;">1 - Bào Gleason (Thẳng I)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Tiêu chuẩn đối xứng<br>(x<sub>1</sub>=0, x<sub>2</sub>=0)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">&beta;<sub>m</sub> = 0°</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569;">Hai gối trục đối xứng hoàn toàn, ổ bi tương đương.</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #a1a1aa;">Hai bánh giống hệt nhau 100%, có thể gia công cùng một mẻ phôi và lắp lẫn tự do.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                                <!-- 3 Cone Sections Comparison Guide -->
-                                <div style="margin-top: 1rem; background: #0f172a; border-radius: 6px; padding: 0.85rem; border-left: 3px solid #10b981;">
-                                    <div style="font-weight: 700; color: #34d399; margin-bottom: 0.5rem;">
-                                        🔍 Ý Nghĩa Kỹ Thuật &amp; Ứng Dụng Thực Tế Của 3 Mặt Cắt (Mục 7.0):
+                                <!-- 4 Nguyên Tắc Bất Biến Khi Thiết Kế Xưởng -->
+                                <div style="background: #0f172a; border-radius: 6px; padding: 0.85rem; border-left: 3px solid #f59e0b;">
+                                    <div style="font-weight: 700; color: #fbbf24; margin-bottom: 0.4rem;">
+                                        ⚡ 4 NGUYÊN TẮC BẤT BIẾN KHI LỰA CHỌN THIẾT KẾ XƯỞNG:
                                     </div>
-                                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem;">
-                                        <div style="background: #1e293b; padding: 0.6rem; border-radius: 4px; border: 1px solid #334155;">
-                                            <div style="color: #38bdf8; font-weight: 700; margin-bottom: 0.25rem;">1. Mặt Cắt Ngoài (Outer - e)</div>
-                                            <div style="font-size: 0.82rem; color: #94a3b8;">
-                                                Mô đun: <code>m<sub>et</sub>, m<sub>en</sub></code> &bull; Khoảng cách trục: <code>a<sub>ve</sub></code><br>
-                                                <strong>Ứng dụng xưởng:</strong> Dùng cho tiện phôi thô (Blank turning), đo kiểm đường kính bao đỉnh răng ngoài <code>d<sub>ae</sub></code> và bố trí khoang vỏ hộp giảm tốc.
-                                            </div>
-                                        </div>
-                                        <div style="background: #1e293b; padding: 0.6rem; border-radius: 4px; border: 1px solid #0284c7;">
-                                            <div style="color: #38bdf8; font-weight: 700; margin-bottom: 0.25rem;">2. Mặt Cắt Trung Bình (Mean - m) [ISO/DIN]</div>
-                                            <div style="font-size: 0.82rem; color: #94a3b8;">
-                                                Mô đun: <code>m<sub>mt</sub>, m<sub>mn</sub></code> &bull; Khoảng cách trục: <code>a<sub>v</sub></code><br>
-                                                <strong>Chuẩn thiết kế:</strong> Là mặt cắt đại diện cơ học danh nghĩa. Dùng để tính hệ số trùng khớp <code>&epsilon;<sub>&gamma;</sub></code> (Mục 8.0) và độ bền uốn/tiếp xúc theo ISO 23509.
-                                            </div>
-                                        </div>
-                                        <div style="background: #1e293b; padding: 0.6rem; border-radius: 4px; border: 1px solid #334155;">
-                                            <div style="color: #38bdf8; font-weight: 700; margin-bottom: 0.25rem;">3. Mặt Cắt Trong (Inner - i)</div>
-                                            <div style="font-size: 0.82rem; color: #94a3b8;">
-                                                Mô đun: <code>m<sub>it</sub>, m<sub>in</sub></code> &bull; Khoảng cách trục: <code>a<sub>vi</sub></code><br>
-                                                <strong>Kiểm tra an toàn:</strong> Là vị trí răng nhỏ nhất. Dùng kiểm tra nguy cơ nhọn đỉnh răng hoặc thắt đáy rãnh khi chọn vành răng quá rộng (<code>b/R<sub>e</sub> &gt; 0.35</code>).
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <ol style="margin: 0 0 0 1.25rem; padding: 0; font-size: 0.83rem; color: #cbd5e1; line-height: 1.5;">
+                                        <li><strong>Nguyên tắc số răng nhỏ:</strong> Khi <code>z<sub>1</sub> &le; 17</code>, <strong>bắt buộc phải có dịch chỉnh dương x<sub>1</sub> &gt; 0</strong> (chọn <em>VN Bending</em> trong Mục 5.1). Tuyệt đối không để x<sub>1</sub> = 0 vì chân răng sẽ bị cắt lẹm, rất dễ gãy ngầm khi khởi động có tải.</li>
+                                        <li><strong>Nguyên tắc hướng xoắn theo chiều quay chính:</strong> Bánh dẫn quay Thuận (CW) &rArr; Chọn Xoắn Trái (LH); Bánh dẫn quay Nghịch (CCW) &rArr; Chọn Xoắn Phải (RH). Đảm bảo lực dọc trục luôn đẩy bánh răng <strong>ra xa đỉnh Apex</strong>, chống kẹt răng do giãn nở nhiệt.</li>
+                                        <li><strong>Nguyên tắc tỷ lệ vành răng b/R<sub>e</sub>:</strong> Luôn khống chế <code>b &le; min(0.35 &middot; R<sub>e</sub>, 10 &middot; m<sub>mn</sub>)</code>. Vành răng quá dài sẽ làm đầu nhỏ trong (R<sub>i</sub>) quá mỏng, rất dễ sứt mép răng khi trục uốn võng.</li>
+                                        <li><strong>Nguyên tắc lắp lẫn:</strong> Bánh răng mài CNC (Grinding) thì thay rời từng bánh được; còn bánh răng rà cát (Lapping) thì <strong>bắt buộc phải thay cả cặp (Matched Set)</strong>.</li>
+                                    </ol>
                                 </div>
                             </div>
 
@@ -2385,8 +2401,8 @@
                         <button type="button" class="btn btn-secondary" id="btn2DStepBack" title="Nhích lùi 1 bước vi phân (quan sát ăn khớp)">⏮️ Lùi</button>
                         <button type="button" class="btn btn-secondary" id="btn2DStepFwd" title="Nhích tiến 1 bước vi phân (quan sát ăn khớp)">⏭️ Tiến</button>
                         <!-- Profile Resolution Slider (1-11 Levels) -->
-                        <div style="display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.25); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border-color);" title="Độ mịn biên dạng thân khai nón Tredgold (11 mức: mức 6 chuẩn gốc MITCalc, 5 mức thô, 5 mức mịn)">
-                            <label for="sliderProfileResolutionCanvas" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">🎯 Độ mịn:</label>
+                        <div style="display: flex; align-items: center; gap: 6px; background: rgba(0,0,0,0.25); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border-color);" title="Độ mịn biên dạng thân khai nón 2D DXF &amp; lưới tham số Surface 3D .IGS (11 mức: Mức 1 thô siêu nhẹ đến Mức 11 siêu mịn 3.328-4.096 điểm/răng)">
+                            <label for="sliderProfileResolutionCanvas" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">🎯 Độ mịn (2D &amp; .IGS):</label>
                             <input type="range" id="sliderProfileResolutionCanvas" min="1" max="11" value="6" step="1" style="width: 75px; cursor: pointer;">
                             <span id="lblProfileResolutionCanvas" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); white-space: nowrap;">Mức 6 (40 pts)</span>
                         </div>
@@ -2457,7 +2473,7 @@
                             </button>
                             <div id="export3DDropdown" style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); min-width: 350px; padding: 0.5rem 0; margin-top: 4px;">
                                 <div style="padding: 4px 12px; font-size: 0.75rem; color: #10b981; font-weight: 700; text-transform: uppercase;">
-                                    ⚡ Chuẩn Native Surface Mastercam (.igs) - Mở Tức Thì &amp; Chỉnh Sửa
+                                    ⚡ Chuẩn Native Surface Mastercam (.igs) - Theo Độ Mịn 11 Mức (2D &amp; 3D)
                                 </div>
                                 <a href="javascript:void(0)" id="expIgesPinion" style="display: block; padding: 6px 14px; color: #38bdf8; font-size: 0.85rem; font-weight: 600; text-decoration: none;">💎 Xuất Bánh Dẫn 1 Surface Mastercam (.igs)</a>
                                 <a href="javascript:void(0)" id="expIgesGear" style="display: block; padding: 6px 14px; color: #38bdf8; font-size: 0.85rem; font-weight: 600; text-decoration: none;">💎 Xuất Bánh Bị Dẫn 2 Surface Mastercam (.igs)</a>

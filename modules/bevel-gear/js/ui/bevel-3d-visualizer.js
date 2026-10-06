@@ -892,8 +892,9 @@ export class Bevel3DVisualizer {
     /**
      * Extracts true parametric B-Spline surfaces and wireframe profile curves for Mastercam IGES export (Bevel Gears).
      * @param {string} type - 'pinion', 'gear', 'assembly', or 'curves'
+     * @param {number} resLevel - 1 to 11 (linked 1-to-1 with 2D profile resolution slider)
      */
-    getParametricData(type = 'pinion') {
+    getParametricData(type = 'pinion', resLevel = 6) {
         if (!this.geom) return { surfaces: [], curves: [] };
 
         const z1 = parseInt(this.geom.z1) || 18;
@@ -925,11 +926,14 @@ export class Bevel3DVisualizer {
         const hf_e2 = parseFloat(this.geom.hfe2) || (hf2 * (Re / Rm));
         const sn_e2 = parseFloat(this.geom.sne2) || (mmn * 1.30);
 
+        const lvl = parseInt(resLevel) || 6;
+
         const base1 = {
             z: z1, mmn, b, Re, Rm, Ri,
             delta: delta1, alfa, beta, gearingType,
             ha_e: ha_e1, hf_e: hf_e1, sn_e: sn_e1,
             hand: 1, isPinion: true, level: 1,
+            resLevel: lvl,
             exportAllTeeth: true,
             includeCurves: (type === 'curves')
         };
@@ -939,6 +943,7 @@ export class Bevel3DVisualizer {
             delta: delta2, alfa, beta, gearingType,
             ha_e: ha_e2, hf_e: hf_e2, sn_e: sn_e2,
             hand: -1, isPinion: false, level: 2,
+            resLevel: lvl,
             exportAllTeeth: true,
             includeCurves: (type === 'curves')
         };

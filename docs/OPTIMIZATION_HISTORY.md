@@ -3456,3 +3456,33 @@ ho_{f0}$.
        * Sai số cực đại sườn phải: `MAX DEVIATION Right Flank: 0.00000000 mm`.
   3. *Đóng gói bundle & kiểm tra*:
      - `modules/bevel-gear/js/bevel-engine.bundle.js` (452,236 ký tự).
+
+---
+
+## 2026-10-06 - Quy Tắc 85: Tích Hợp Ma Trận Lựa Chọn Thiết Kế Bánh Răng Côn Thực Tế (Mục 17.5), Bỏ Mục Tredgold Cũ, Liên Kết Đồng Bộ 100% Độ Mịn File Surface .igs Theo Thanh Trượt 2D 11 Mức
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  1. *Thêm nội dung "Ma trận lựa chọn thiết kế bánh răng côn thực tế..." vào Cẩm nang hướng dẫn kỹ thuật*: Bổ sung bảng ma trận 10 kịch bản công nghiệp thực tế và 4 nguyên tắc thiết kế bất biến vào Mục 17.
+  2. *Bỏ Mục 17.5 cũ trong Cẩm nang hướng dẫn kỹ thuật*: Loại bỏ hoàn toàn mục "17.5 Bánh Răng Trụ Tương Đương Tredgold" cũ khỏi Section 17.
+  3. *Liên kết chỉnh độ mịn file .igs theo chỉnh độ mịn bên 2D*: Đồng bộ trực tiếp thanh trượt 11 mức độ mịn (Mức 1 đến Mức 11) để điều khiển thời gian thực lưới mặt cong tham số NURBS B-Spline Surface của file xuất Mastercam `.igs`.
+- **Thực hiện kỹ thuật chi tiết**:
+  1. *Thay thế hoàn toàn Mục 17.5*:
+     - Tiêu đề mới: `🧭 17.5 Ma Trận Lựa Chọn Thiết Kế Bánh Răng Côn Thực Tế (ISO 23509 / Gleason / Klingelnberg)`.
+     - Bảng ma trận 10 kịch bản ứng dụng kỹ thuật thực tế:
+       * Cột: `#` | `Ứng Dụng Thực Tế Xưởng` | `Mục 3.1 Kiểu Răng` | `Mục 5.1 Kiểu Dịch Chỉnh` | `Đặc Điểm & Răng z1, z2` | `Lý Do Kỹ Thuật & Khuyến Nghị`
+       * Gom 4 nhóm: Bánh răng côn thẳng công nghiệp nhẹ & máy nông nghiệp; Côn xoắn tải nặng ô tô & tàu thủy (Gleason); Hộp giảm tốc công nghiệp tải trung bình; Hộp số hàng không, máy đua & công nghệ cao (Cyclo-Palloid).
+     - 4 nguyên tắc vàng bất biến trong phối hợp thiết kế bánh răng côn:
+       * Nguyên tắc 1: Cặp răng không cân xứng ($z_1 \le 17$) $\rightarrow$ Bắt buộc dịch chỉnh chiều cao ($x_1 > 0, x_2 < 0$) chống cắt chân răng (undercutting).
+       * Nguyên tắc 2: Tỉ số truyền lớn ($i \ge 3.0$) $\rightarrow$ Bổ sung dịch chỉnh chiều dày tiếp tuyến ($x_{t1} > 0, x_{t2} < 0$) cân bằng uốn sườn răng.
+       * Nguyên tắc 3: Côn thẳng Gleason $\rightarrow$ Chiều cao răng nón hội tụ về đỉnh Apex $V(0,0,0)$; Côn xoắn Gleason $\rightarrow$ Chiều cao răng có thể nón chân răng tiêu chuẩn; Klingelnberg $\rightarrow$ Chiều cao răng không đổi dọc vành răng ($h = \text{const}$).
+       * Nguyên tắc 4: Cặp bánh răng tỉ số 1:1 (Miter gears) $\rightarrow$ Tuyệt đối giữ $x_1 = x_2 = 0$, $x_{t1} = x_{t2} = 0$ để bảo toàn tính đối xứng và dùng chung dao.
+  2. *Liên kết đồng bộ 100% độ mịn file .igs theo thanh trượt 2D 11 mức*:
+     - Cấu trúc lưới mặt cong tham số Bicubic B-Spline NURBS (Entity 128) được mở rộng với bộ preset `igesGridPresets` tự động điều chỉnh theo cấp `resLevel` (1 - 11):
+       * Cấp 1 (Thô nhanh): Nón thẳng: $16 \text{ pts} \times 12 \text{ lát cắt} = 192 \text{ điểm/mặt}$; Nón xoắn: $16 \times 14 = 224$ điểm. File `.igs` ~487 KB.
+       * Cấp 3: Nón thẳng: $20 \times 18 = 360$ điểm; Nón xoắn: $20 \times 22 = 440$ điểm. File `.igs` ~861 KB - 1.04 MB.
+       * Cấp 6 (Chuẩn gốc x3): Nón thẳng: $32 \times 28 = 896$ điểm; Nón xoắn: $32 \times 36 = 1,152$ điểm. File `.igs` ~1.95 - 2.49 MB.
+       * Cấp 9: Nón thẳng: $48 \times 42 = 2,016$ điểm; Nón xoắn: $48 \times 54 = 2,592$ điểm. File `.igs` ~4.13 - 5.28 MB.
+       * Cấp 11 (Siêu mịn Mastercam 5-Trục): Nón thẳng: $64 \times 52 = 3,328$ điểm; Nón xoắn: $64 \times 64 = 4,096$ điểm/mặt. File `.igs` ~6.70 - 8.22 MB.
+     - Cả hai thanh trượt (Thanh trượt Section 16 `#sliderProfileResolution` và Thanh trượt Tab Canvas `#sliderProfileResolutionCanvas`) đều điều khiển đồng bộ biến `this.profileResolution`, tự động đổi tên file xuất có hậu tố `_muc{resLevel}_Surface.igs` (ví dụ `Banh_Dan_1_Gleason_z18_mmn10_muc11_Surface.igs`).
+  3. *Kiểm chứng thực nghiệm tự động*:
+     - Node.js sandbox test: Cả 5 mức kiểm tra (Level 1, 3, 6, 9, 11) cho cả nón thẳng ($\beta = 0^\circ$) và nón xoắn ($\beta = 30^\circ$) đều PASS 100%, xuất đúng số lượng bề mặt NURBS ($72 \times 4$ dải mặt bên sườn răng) và chuỗi dữ liệu IGES hợp lệ.
+     - Đóng gói bundle sạch hoàn toàn: `modules/bevel-gear/js/bevel-engine.bundle.js` (454,984 ký tự).

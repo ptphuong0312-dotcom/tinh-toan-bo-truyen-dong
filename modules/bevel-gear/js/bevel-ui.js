@@ -2208,12 +2208,13 @@ class BevelGearUI {
         }
 
         if (format === 'iges') {
-            const igesData = this.visualizer3D.getParametricData(target);
+            const resLevel = this.profileResolution || (this.canvasController ? this.canvasController.profileResolution : 6);
+            const igesData = this.visualizer3D.getParametricData(target, resLevel);
             let igesFilename = '';
             if (target === 'curves') {
-                igesFilename = `Khung_Day_Loft_${typeStr}_z${g.z1}x${g.z2}.igs`;
+                igesFilename = `Khung_Day_Loft_${typeStr}_z${g.z1}x${g.z2}_muc${resLevel}.igs`;
             } else {
-                igesFilename = `${filenameBase}_Surface.igs`;
+                igesFilename = `${filenameBase}_muc${resLevel}_Surface.igs`;
             }
             return Bevel3DExporter.exportIGES(igesData, igesFilename, true);
         }

@@ -14,10 +14,13 @@ if "const MATERIALS_DB" not in mat_clean:
 with open(os.path.join(bevel_dir, "js", "bevel-calc-engine.js"), "r", encoding="utf-8") as f:
     engine_content = f.read()
 engine_clean = re.sub(r"if\s*\(\s*typeof\s*module.*?\n\}", "", engine_content, flags=re.DOTALL)
+engine_clean += "\nif (typeof window !== 'undefined') window.BevelCalcEngine = BevelCalcEngine;\n"
 
 with open(os.path.join(bevel_dir, "js", "bevel-canvas.js"), "r", encoding="utf-8") as f:
     canvas_content = f.read()
 canvas_clean = re.sub(r"if\s*\(\s*typeof\s*module.*?\n\}", "", canvas_content, flags=re.DOTALL)
+canvas_clean += "\nif (typeof window !== 'undefined') window.BevelGearCanvas = BevelGearCanvas;\n"
+
 
 with open(os.path.join(bevel_dir, "js", "engine", "bevel-3d-generator.js"), "r", encoding="utf-8") as f:
     lines = [l for l in f if not l.strip().startswith("import ")]
