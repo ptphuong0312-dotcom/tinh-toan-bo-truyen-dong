@@ -3426,6 +3426,33 @@ ho_{f0}$.
   - Tọa độ Apex $(0, 0, 0)$ và hướng ngửa Bánh 2 được kiểm chứng trực quan qua ảnh chụp thật `container3D_iso.png` và `container3D_front.png`.
   - STEP, STL, DXF PASS 100%.
 
+---
 
-
-
+## 2026-10-06 - Quy Tắc 84: Tăng Gấp 3 Lần Độ Mịn DXF 11 Mức, Đồng Bộ Tuyệt Đối Sườn Răng Rãnh `_R` & `_R0` (Δ = 0.00000000 mm), Giải Thích Mục 3.1 vs 5.1 & Độ Mịn Surface .igs
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  1. *Tạo bản backup dự án*: Đã hoàn tất và lưu tại `backups/BACKUP_MITCalc_Gear_20261006_165600.zip`.
+  2. *Tăng gấp 3 lần số điểm biên dạng răng 2D DXF*: Tăng số điểm vẽ sườn răng và răng lên 3x cho toàn bộ 11 mức độ phân giải (`BEVEL_PROFILE_RESOLUTIONS`).
+  3. *Khắc phục hiện tượng 2 đường profile răng rãnh không trùng nhau trong ảnh AutoCAD*: Giải thích bản chất vì sao lệch 0.0026 mm và đồng bộ hóa tuyệt đối.
+  4. *Giải thích mối liên hệ giữa Mục 3.1 & Mục 5.1*: Cách lựa chọn phối hợp kiểu đường cong răng và kiểu dịch chỉnh biên dạng trong thiết kế cơ khí thực tế.
+  5. *Độ mịn và khả năng chỉnh sửa của file surface .igs*: Cấu trúc toán học NURBS/B-Spline và cách ứng dụng trong SolidWorks / Mastercam.
+- **Thực hiện kỹ thuật chi tiết**:
+  1. *Tăng gấp 3 lần độ mịn DXF (11 Levels of Resolution)*:
+     - Mức 1: `ptsPerFlank: 18`, `ptsPerTooth: 60`
+     - Mức 2: `ptsPerFlank: 24`, `ptsPerTooth: 72`
+     - Mức 3: `ptsPerFlank: 30`, `ptsPerTooth: 84`
+     - Mức 4: `ptsPerFlank: 36`, `ptsPerTooth: 96`
+     - Mức 5: `ptsPerFlank: 42`, `ptsPerTooth: 108`
+     - Mức 6: `ptsPerFlank: 48`, `ptsPerTooth: 120` (Chuẩn gốc x3)
+     - Mức 7: `ptsPerFlank: 54`, `ptsPerTooth: 132`
+     - Mức 8: `ptsPerFlank: 60`, `ptsPerTooth: 144`
+     - Mức 9: `ptsPerFlank: 72`, `ptsPerTooth: 168`
+     - Mức 10: `ptsPerFlank: 84`, `ptsPerTooth: 192`
+     - Mức 11: `ptsPerFlank: 96`, `ptsPerTooth: 216` (Siêu mịn CNC/Wire EDM x3, cung lượn $R_f$ đạt 34 điểm)
+  2. *Triệt tiêu khe hở 0.0026 mm - Trùng khít tuyệt đối sườn răng rãnh `_R` & `_R0`*:
+     - Nguyên nhân gốc rễ: Trước đây `buildClosedSlotWithFillet` chia đều khoảng $[r_t, r_{va}]$ còn `buildClosedSlotR0` chia đều khoảng $[r_{\text{start}}, r_{va}]$. Do cận dưới khác nhau, bước chia $\Delta r$ lệch nhau làm các đỉnh nút polyline bị so le, độ võng dây cung (chord sagitta) lệch pha tạo ra khe hở đo được 0.0026 mm trên AutoCAD khi zoom cực đại.
+     - Khắc phục triệt để: Xây dựng hàm dùng chung `evalSlotFlankData()`, trích xuất đúng tập hợp đỉnh `commonFlank` từ $r_{va}$ xuống $r_{\text{flankEnd}} = \max(r_t, r_{\text{start}})$. Cả hai đường `_R` và `_R0` trên sườn thân khai chia sẻ 100% tọa độ $(X, Y)$ giống nhau từng bit.
+     - Kiểm chứng tự động qua Node.js:
+       * Sai số cực đại sườn trái: `MAX DEVIATION Left Flank: 0.00000000 mm`.
+       * Sai số cực đại sườn phải: `MAX DEVIATION Right Flank: 0.00000000 mm`.
+  3. *Đóng gói bundle & kiểm tra*:
+     - `modules/bevel-gear/js/bevel-engine.bundle.js` (452,236 ký tự).

@@ -2925,17 +2925,17 @@ if (typeof window !== 'undefined') window.Bevel3DGenerator = Bevel3DGenerator;
  */
 
 const BEVEL_PROFILE_RESOLUTIONS = {
-    1: { level: 1, name: 'Muc 1 (Tho)', ptsPerFlank: 6, ptsPerTooth: 20 },
-    2: { level: 2, name: 'Muc 2', ptsPerFlank: 8, ptsPerTooth: 24 },
-    3: { level: 3, name: 'Muc 3', ptsPerFlank: 10, ptsPerTooth: 28 },
-    4: { level: 4, name: 'Muc 4', ptsPerFlank: 12, ptsPerTooth: 32 },
-    5: { level: 5, name: 'Muc 5', ptsPerFlank: 14, ptsPerTooth: 36 },
-    6: { level: 6, name: 'Muc 6 (Chuan Goc MITCalc 1.74)', ptsPerFlank: 16, ptsPerTooth: 40 },
-    7: { level: 7, name: 'Muc 7', ptsPerFlank: 18, ptsPerTooth: 44 },
-    8: { level: 8, name: 'Muc 8', ptsPerFlank: 20, ptsPerTooth: 48 },
-    9: { level: 9, name: 'Muc 9', ptsPerFlank: 24, ptsPerTooth: 56 },
-    10: { level: 10, name: 'Muc 10', ptsPerFlank: 28, ptsPerTooth: 64 },
-    11: { level: 11, name: 'Muc 11 (Sieu Min CNC/EDM)', ptsPerFlank: 32, ptsPerTooth: 72 }
+    1: { level: 1, name: 'Muc 1 (Tho)', ptsPerFlank: 18, ptsPerTooth: 60 },
+    2: { level: 2, name: 'Muc 2', ptsPerFlank: 24, ptsPerTooth: 72 },
+    3: { level: 3, name: 'Muc 3', ptsPerFlank: 30, ptsPerTooth: 84 },
+    4: { level: 4, name: 'Muc 4', ptsPerFlank: 36, ptsPerTooth: 96 },
+    5: { level: 5, name: 'Muc 5', ptsPerFlank: 42, ptsPerTooth: 108 },
+    6: { level: 6, name: 'Muc 6 (Chuan Goc MITCalc 1.74 x3)', ptsPerFlank: 48, ptsPerTooth: 120 },
+    7: { level: 7, name: 'Muc 7', ptsPerFlank: 54, ptsPerTooth: 132 },
+    8: { level: 8, name: 'Muc 8', ptsPerFlank: 60, ptsPerTooth: 144 },
+    9: { level: 9, name: 'Muc 9', ptsPerFlank: 72, ptsPerTooth: 168 },
+    10: { level: 10, name: 'Muc 10', ptsPerFlank: 84, ptsPerTooth: 192 },
+    11: { level: 11, name: 'Muc 11 (Sieu Min CNC/EDM x3)', ptsPerFlank: 96, ptsPerTooth: 216 }
 };
 
 const BevelDxfExporter = {
@@ -3785,8 +3785,9 @@ const BevelDxfExporter = {
         const rvi1 = slice1_i.rv, rvai1 = slice1_i.rva, rvfi1 = slice1_i.rvf;
         const rvi2 = slice2_i.rv, rvai2 = slice2_i.rva, rvfi2 = slice2_i.rvf;
 
-        // Slot Generator: Closed Polyline Loop With Fillet R (0.38*m)
-        const buildClosedSlotWithFillet = (slice, cx, cy) => {
+        // Common Flank Generator for Slots: Guarantees 100% BIT-FOR-BIT IDENTICAL Flank Vertices
+        // between Layer *_R (filleted) and Layer *_R0 (sharp) from rva down to rFlankEnd = max(rt, rStart)
+        const evalSlotFlankData = (slice) => {
             const half_pitch = slice.half_pitch;
             const cosD = slice.cosD;
             const rv = slice.rv;
@@ -3813,6 +3814,31 @@ const BevelDxfExporter = {
             const psi_t = (fillet && fillet.psi_t !== undefined) ? fillet.psi_t : (psi_b - (Math.tan(alfa_f) - alfa_f));
             const psi_slot_t = psi_half_pitch - psi_t;
 
+            const rStart = Math.max(rvb, rvf);
+            const rFlankEnd = Math.max(rt, rStart);
+            const nFlank = Math.max(18, res.ptsPerFlank || 48);
+
+            // 1. Shared common involute flank radii and angles from rva down to rFlankEnd
+            const commonFlank = [];
+            for (let k = 0; k < nFlank; k++) {
+                const frac = k / (nFlank - 1);
+                const r = rva - frac * (rva - rFlankEnd);
+                const psi_slot = evalFlank(r);
+                commonFlank.push({ r, psi_slot });
+            }
+
+            return {
+                evalFlank, fillet, Rf, rt, alfa_f, psi_t, psi_slot_t,
+                rStart, rFlankEnd, nFlank, commonFlank,
+                rvf, rva, rvb
+            };
+        };
+
+        // Slot Generator: Closed Polyline Loop With Fillet R (0.38*m)
+        const buildClosedSlotWithFillet = (slice, cx, cy) => {
+            const fd = evalSlotFlankData(slice);
+            const { evalFlank, Rf, rt, alfa_f, psi_slot_t, rFlankEnd, nFlank, commonFlank, rvf, rva } = fd;
+
             const Ptx = rt * Math.sin(psi_slot_t);
             const Pty = rt * Math.cos(psi_slot_t);
             const Cfx = Ptx - Rf * Math.cos(psi_slot_t + alfa_f);
@@ -3827,16 +3853,24 @@ const BevelDxfExporter = {
             while (dGamma > Math.PI) dGamma -= 2.0 * Math.PI;
             while (dGamma < -Math.PI) dGamma += 2.0 * Math.PI;
 
-            const nFlank = Math.max(12, res.ptsPerFlank || 16);
-            const rightFlank = [];
-            for (let k = 0; k < nFlank; k++) {
-                const frac = k / (nFlank - 1);
-                const r = rva - frac * (rva - rt);
-                const psi_slot = evalFlank(r);
-                rightFlank.push({ x: cx + r * Math.sin(psi_slot), y: cy + r * Math.cos(psi_slot) });
+            // Right flank using the exact shared vertices
+            const rightFlank = commonFlank.map(pt => ({
+                x: cx + pt.r * Math.sin(pt.psi_slot),
+                y: cy + pt.r * Math.cos(pt.psi_slot)
+            }));
+
+            // In rare case where rFlankEnd > rt (i.e. rt < rStart), extend down to rt
+            if (rFlankEnd > rt + 1e-4) {
+                const nExtra = Math.max(4, Math.round(nFlank * (rFlankEnd - rt) / (rva - rFlankEnd)));
+                for (let k = 1; k <= nExtra; k++) {
+                    const frac = k / nExtra;
+                    const r = rFlankEnd - frac * (rFlankEnd - rt);
+                    const psi_slot = evalFlank(r);
+                    rightFlank.push({ x: cx + r * Math.sin(psi_slot), y: cy + r * Math.cos(psi_slot) });
+                }
             }
 
-            const nFillet = 8;
+            const nFillet = Math.max(12, Math.round(nFlank * 0.35));
             const rightFillet = [];
             for (let k = 1; k <= nFillet; k++) {
                 const frac = k / nFillet;
@@ -3856,7 +3890,7 @@ const BevelDxfExporter = {
                 poly.push({ x: cx - (rightFillet[i].x - cx), y: rightFillet[i].y });
             }
             // 3. Bottom root land arc along rvf from -psi_root to +psi_root
-            const nRoot = 8;
+            const nRoot = Math.max(12, Math.round(nFlank * 0.25));
             for (let s = 1; s < nRoot; s++) {
                 const psi = -psi_root + (s / nRoot) * (2.0 * psi_root);
                 poly.push({ x: cx + rvf * Math.sin(psi), y: cy + rvf * Math.cos(psi) });
@@ -3870,8 +3904,8 @@ const BevelDxfExporter = {
                 poly.push({ x: rightFlank[i].x, y: rightFlank[i].y });
             }
             // 6. Top tip land arc along rva from +psi_tip back to -psi_tip
-            const psi_tip = evalFlank(rva);
-            const nTip = 10;
+            const psi_tip = commonFlank[0].psi_slot;
+            const nTip = Math.max(12, Math.round(nFlank * 0.25));
             for (let s = 1; s < nTip; s++) {
                 const psi = psi_tip - (s / nTip) * (2.0 * psi_tip);
                 poly.push({ x: cx + rva * Math.sin(psi), y: cy + rva * Math.cos(psi) });
@@ -3882,34 +3916,24 @@ const BevelDxfExporter = {
 
         // Slot Generator: Closed Polyline Loop With R = 0 (Sharp Root Day Vuong Sac)
         const buildClosedSlotR0 = (slice, cx, cy) => {
-            const half_pitch = slice.half_pitch;
-            const cosD = slice.cosD;
-            const rv = slice.rv;
-            const rvb = slice.rvb;
-            const rvf = slice.rvf;
-            const rva = slice.rva;
-            const alfa_t = slice.alfa_t;
-            const inv_alfa_t = Math.tan(alfa_t) - alfa_t;
-            const psi_v = slice.psi_v || (1.57 / slice.z);
-            const psi_b = slice.psi_b || (psi_v + inv_alfa_t);
-            const psi_half_pitch = half_pitch * cosD;
+            const fd = evalSlotFlankData(slice);
+            const { evalFlank, rStart, rFlankEnd, nFlank, commonFlank, rvf, rva, rvb } = fd;
 
-            function evalFlank(r_c) {
-                const alpha_c = Math.acos(Math.min(1.0, rvb / r_c));
-                const inv_c = Math.tan(alpha_c) - alpha_c;
-                const psi_c = Math.max(0.0001, psi_b - inv_c);
-                return psi_half_pitch - psi_c;
-            }
+            // Right flank starts with the EXACT SAME points as buildClosedSlotWithFillet
+            const rightFlankR0 = commonFlank.map(pt => ({
+                x: cx + pt.r * Math.sin(pt.psi_slot),
+                y: cy + pt.r * Math.cos(pt.psi_slot)
+            }));
 
-            const rStart = Math.max(rvb, rvf);
-            const nFlank = Math.max(12, res.ptsPerFlank || 16);
-
-            const rightFlankR0 = [];
-            for (let k = 0; k < nFlank; k++) {
-                const frac = k / (nFlank - 1);
-                const r = rva - frac * (rva - rStart);
-                const psi_slot = evalFlank(r);
-                rightFlankR0.push({ x: cx + r * Math.sin(psi_slot), y: cy + r * Math.cos(psi_slot) });
+            // If rFlankEnd > rStart, add additional involute points from rFlankEnd down to rStart
+            if (rFlankEnd > rStart + 1e-4) {
+                const nExtra = Math.max(4, Math.round(nFlank * (rFlankEnd - rStart) / (rva - rFlankEnd)));
+                for (let k = 1; k <= nExtra; k++) {
+                    const frac = k / nExtra;
+                    const r = rFlankEnd - frac * (rFlankEnd - rStart);
+                    const psi_slot = evalFlank(r);
+                    rightFlankR0.push({ x: cx + r * Math.sin(psi_slot), y: cy + r * Math.cos(psi_slot) });
+                }
             }
 
             let psi_root_R0 = 0;
@@ -3931,7 +3955,7 @@ const BevelDxfExporter = {
                 poly.push({ x: cx - (stemR0[i].x - cx), y: stemR0[i].y });
             }
             // 3. Bottom root land arc along rvf from -psi_root_R0 to +psi_root_R0
-            const nRoot = 8;
+            const nRoot = Math.max(12, Math.round(nFlank * 0.25));
             for (let s = 1; s < nRoot; s++) {
                 const psi = -psi_root_R0 + (s / nRoot) * (2.0 * psi_root_R0);
                 poly.push({ x: cx + rvf * Math.sin(psi), y: cy + rvf * Math.cos(psi) });
@@ -3945,8 +3969,8 @@ const BevelDxfExporter = {
                 poly.push({ x: rightFlankR0[i].x, y: rightFlankR0[i].y });
             }
             // 6. Top tip land arc along rva from +psi_tip back to -psi_tip
-            const psi_tip = evalFlank(rva);
-            const nTip = 10;
+            const psi_tip = commonFlank[0].psi_slot;
+            const nTip = Math.max(12, Math.round(nFlank * 0.25));
             for (let s = 1; s < nTip; s++) {
                 const psi = psi_tip - (s / nTip) * (2.0 * psi_tip);
                 poly.push({ x: cx + rva * Math.sin(psi), y: cy + rva * Math.cos(psi) });
@@ -5629,9 +5653,9 @@ class BevelGearCanvas {
         const sni2 = parseFloat(g.sni2) || (sne2 * Ri / Re);
 
         const resTable = (typeof BEVEL_PROFILE_RESOLUTIONS !== 'undefined') ? BEVEL_PROFILE_RESOLUTIONS : {
-            1: { ptsPerFlank: 6 }, 2: { ptsPerFlank: 8 }, 3: { ptsPerFlank: 10 }, 4: { ptsPerFlank: 12 },
-            5: { ptsPerFlank: 14 }, 6: { ptsPerFlank: 16 }, 7: { ptsPerFlank: 18 }, 8: { ptsPerFlank: 20 },
-            9: { ptsPerFlank: 24 }, 10: { ptsPerFlank: 28 }, 11: { ptsPerFlank: 32 }
+            1: { ptsPerFlank: 18 }, 2: { ptsPerFlank: 24 }, 3: { ptsPerFlank: 30 }, 4: { ptsPerFlank: 36 },
+            5: { ptsPerFlank: 42 }, 6: { ptsPerFlank: 48 }, 7: { ptsPerFlank: 54 }, 8: { ptsPerFlank: 60 },
+            9: { ptsPerFlank: 72 }, 10: { ptsPerFlank: 84 }, 11: { ptsPerFlank: 96 }
         };
         const ptsPerFlank = (resTable[this.profileResolution] ? resTable[this.profileResolution].ptsPerFlank : 16);
         const ptsFillet = Math.max(6, Math.round(ptsPerFlank * 0.4));

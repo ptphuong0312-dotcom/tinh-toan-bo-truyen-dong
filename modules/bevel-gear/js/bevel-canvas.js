@@ -1142,9 +1142,9 @@ class BevelGearCanvas {
         const sni2 = parseFloat(g.sni2) || (sne2 * Ri / Re);
 
         const resTable = (typeof BEVEL_PROFILE_RESOLUTIONS !== 'undefined') ? BEVEL_PROFILE_RESOLUTIONS : {
-            1: { ptsPerFlank: 6 }, 2: { ptsPerFlank: 8 }, 3: { ptsPerFlank: 10 }, 4: { ptsPerFlank: 12 },
-            5: { ptsPerFlank: 14 }, 6: { ptsPerFlank: 16 }, 7: { ptsPerFlank: 18 }, 8: { ptsPerFlank: 20 },
-            9: { ptsPerFlank: 24 }, 10: { ptsPerFlank: 28 }, 11: { ptsPerFlank: 32 }
+            1: { ptsPerFlank: 18 }, 2: { ptsPerFlank: 24 }, 3: { ptsPerFlank: 30 }, 4: { ptsPerFlank: 36 },
+            5: { ptsPerFlank: 42 }, 6: { ptsPerFlank: 48 }, 7: { ptsPerFlank: 54 }, 8: { ptsPerFlank: 60 },
+            9: { ptsPerFlank: 72 }, 10: { ptsPerFlank: 84 }, 11: { ptsPerFlank: 96 }
         };
         const ptsPerFlank = (resTable[this.profileResolution] ? resTable[this.profileResolution].ptsPerFlank : 16);
         const ptsFillet = Math.max(6, Math.round(ptsPerFlank * 0.4));
