@@ -3383,64 +3383,34 @@ ho_{f0}$.
 
 ---
 
-## 2026-10-06 - Tính Toán & Thẩm Tra Độ Bền Tiếp Xúc Mặt Răng (Pitting Resistance) Bộ Truyền Bánh Răng Trụ Công Nghiệp Nặng (Z17 - Z69 - Mn14) Theo ISO 6336-2:2006 (Method B) & DIN 3990
-- **Dự án**: Tính toán bổ sung độ bền tiếp xúc cho bài toán tải trọng nặng `TINH_TOAN_UNG_SUAT_UON_BANH_RANG_Z17_69_M14` ($P = 250\text{ kW}, n_1 = 40.59\text{ rpm}, n_2 = 10.0\text{ rpm}, z_1 = 17, z_2 = 69, m_n = 14\text{ mm}, \beta = 12^\circ, b = 410\text{ mm}$, Thép hợp kim SCM420 / 16MnCr5 tôi thấm carbon $58 - 62\text{ HRC}$).
-- **Quy tắc tuyệt đối**: **Quy Tắc 79 (Zero-VN-Citation)** - Tuyệt đối không tham khảo, không trích dẫn tài liệu hay tác giả Việt Nam. 100% giải thuật, hệ số và công thức dựa trên ISO 6336-2:2006 (Method B), DIN 3990, AGMA 2001-D04 và MITCalc 1.74 (`Gear1_01.xlsb`).
-- **Triển khai kỹ thuật & Kết quả đối chuẩn**:
-  1. **Ứng suất tiếp xúc danh nghĩa tại điểm nút ($\sigma_{H0}$)**:
-     - Hệ số đàn hồi vật liệu: $Z_E = 189.812\text{ MPa}^{1/2}$ ($E_1 = E_2 = 206,000\text{ MPa}, \nu_1 = \nu_2 = 0.30$).
-     - Hệ số vùng ăn khớp: $Z_H = 2.4497$ ($\beta_b = 11.274^\circ, \alpha_t = \alpha_{wt} = 20.410^\circ$).
-     - Hệ số góc nghiêng răng: $Z_\beta = 1 / \sqrt{\cos\beta} = 1 / \sqrt{\cos(12^\circ)} = 1.0111$.
-     - Hệ số trùng khớp: Do $\varepsilon_\beta = 1.938 \ge 1.0 \Rightarrow Z_\varepsilon = \sqrt{1 / \varepsilon_\alpha} = \sqrt{1 / 1.6102} = 0.7880$.
-     - Hệ số tiếp xúc đơn đôi: $Z_B = Z_D = 1.000$ (do $\varepsilon_\beta \ge 1.0$).
-     - Lực vòng danh nghĩa: $F_t = 483,504.7\text{ N}$ (~48.35 tấn lực).
-     - $\sigma_{H0} = Z_B \cdot Z_H \cdot Z_E \cdot Z_\varepsilon \cdot Z_\beta \cdot \sqrt{\frac{F_t}{d_1 \cdot b} \cdot \frac{u + 1}{u}} = 910.624\text{ MPa}$ (Khớp 100% ô `_SigmaH0` MITCalc).
-  2. **Hệ số tải trọng tiếp xúc ($K_H$) & Ứng suất làm việc ($\sigma_H$)**:
-     - Hệ số tải ngoài $K_A = 1.50$ (Chế độ 2: tải công nghiệp va đập vừa).
-     - Hệ số tải động $K_v = 1.001$ ($v = 0.517\text{ m/s}$).
-     - Hệ số phân bố tải vành răng:
-       * Trường hợp 2A (Gối đỡ đối xứng chuẩn): $K_{H\beta} = 1.038 \Rightarrow K_H = 1.558 \Rightarrow \sigma_H = 1136.71\text{ MPa}$.
-       * Trường hợp 2B (Dự phòng lệch trục nhẹ): $K_{H\beta} = 1.138 \Rightarrow K_H = 1.708 \Rightarrow \sigma_H = 1190.20\text{ MPa}$.
-  3. **Giới hạn mỏi tiếp xúc thực tế ($\sigma_{HG}$) & Hệ số an toàn tiếp xúc ($S_H$)**:
-     - Vật liệu SCM420 / 16MnCr5: Cấp tiêu chuẩn $\sigma_{H\text{lim}} = 1270\text{ MPa}$; Cấp MQ cao cấp $\sigma_{H\text{lim}} = 1500\text{ MPa}$.
-     - Các hệ số ảnh hưởng: $Z_L = 1.2225$ (dầu ISO VG 320/460), $Z_v = 0.9477$, $Z_R = 0.9951$ ($R_a \le 1.6\ \mu\text{m}$), $Z_X = 1.000$, $Z_W = 0.9382$ (Bánh 1) / $1.000$ (Bánh 2).
-     - Hệ số tuổi thọ ($L_h = 20,000\text{ h}$): $Z_{NT1} = 1.0746$, $Z_{NT2} = 1.2362$.
-     - Giới hạn mỏi tiếp xúc thực tế:
-       * Cấp Standard: $\sigma_{HG1} = 1476.11\text{ MPa}, \sigma_{HG2} = 1809.85\text{ MPa}$.
-       * Cấp MQ cao cấp: $\sigma_{HG1} = 1743.43\text{ MPa}, \sigma_{HG2} = 2137.62\text{ MPa}$.
-     - Hệ số an toàn tiếp xúc $S_H = \sigma_{HG} / \sigma_H$:
-       * Trường hợp 2A: $S_{H1} = 1.30 \div 1.53 \ge [S_H] = 1.30$; $S_{H2} = 1.59 \div 1.88 \gg [S_H] = 1.30$ (**ĐẠT CHUẨN VÀNG AN TOÀN**).
-       * Trường hợp 2B: $S_{H1} = 1.24 \div 1.46$; $S_{H2} = 1.52 \div 1.80$.
-  4. **Xuất tài liệu kỹ thuật hoàn chỉnh**:
-     - Tạo công cụ tự động `tools/generate_contact_stress_word_report.py`.
-     - Xuất báo cáo chuyên nghiệp chuẩn quốc tế: `BAO_CAO_TINH_TOAN_UNG_SUAT_TIEP_XUC_BANH_RANG_Z17_69_M14.docx` (9 phân mục chi tiết, 5 bảng đối chiếu, khuyến nghị độ sâu thấm tôi $h_c = 2.1 - 2.8\text{ mm}$, bôi trơn ISO VG 320/460 EP, vát mép đầu răng relief $0.04 - 0.06\text{ mm}$, và khối chữ ký phê duyệt 3 bên).
+## 2026-10-06 - Quy Tắc 82: Khôi Phục Bản Backup, Khóa Tuyệt Đối 4 Hệ Thống Cốt Lõi & Tối Ưu Hóa Phản Ứng Biến Đổi Tức Thì Mô Phỏng 2D CAD Canvas
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  1. Khôi phục toàn bộ Web App về bản backup `BACKUP_MITCalc_Gear_20261006_000841.zip`.
+  2. Khóa bảo toàn tuyệt đối và không thay đổi bất kỳ thứ gì của 4 hệ thống cốt lõi:
+     - Tính toán hình học ISO 23509 (`bevel-calc-engine.js`).
+     - Xuất bản vẽ 2D CAD DXF (`bevel-dxf-exporter.js`).
+     - Xuất file 3D (`bevel-3d-exporter.js`).
+     - Mô hình và mô phỏng 3D WebGL Three.js (`bevel-3d-generator.js`, `bevel-3d-visualizer.js`).
+  3. Chỉ sửa duy nhất phần mô phỏng 2D CAD Canvas (`bevel-canvas.js`) do chưa biến đổi linh hoạt theo sự thay đổi của thông số mới nhập vào.
+- **Xác minh đối chuẩn bản backup (Byte-for-byte MD5 verification)**:
+  - `modules/bevel-gear/js/bevel-calc-engine.js`: **MATCH = True (Khớp 100% từng byte)**
+  - `modules/bevel-gear/js/engine/bevel-dxf-exporter.js`: **MATCH = True (Khớp 100% từng byte)**
+  - `modules/bevel-gear/js/engine/bevel-3d-exporter.js`: **MATCH = True (Khớp 100% từng byte)**
+  - `modules/bevel-gear/js/engine/bevel-3d-generator.js`: **MATCH = True (Khớp 100% từng byte)**
+  - `modules/bevel-gear/js/ui/bevel-3d-visualizer.js`: **MATCH = True (Khớp 100% từng byte)**
+- **Xử lý triệt để các rào chắn kỹ thuật của 2D CAD Canvas (`bevel-canvas.js`)**:
+  1. *Rào chắn chiều rộng vành răng và khoảng cách nón trong*: $b \le 0.45 R_e$ và $R_i = \max(2.0, R_e - b) > 0$. Triệt tiêu hiện tượng $R_i \le 0$ làm lật ngược đa giác nón qua đỉnh Apex $(0, 0)$ sang phía âm.
+  2. *Tự động xóa bộ nhớ phôi moay-ơ cũ theo chữ ký hình học*: So sánh `geomSignature = "${geom.z1}_${geom.z2}_${geom.mmn}_${geom.met}_${geom.b}_${geom.Sigma}"` trong `setGeometry()`. Khi phát hiện chữ ký thay đổi, tự động xóa sạch kích thước phôi cũ để moay-ơ co dãn tỷ lệ thuận chuẩn xác với thông số mới.
+  3. *Giới hạn cung góc rẻ quạt răng ảo Tredgold nhỏ ($z_1 \le 12$)*: Khống chế $\Delta\psi \le 117^\circ$ ($k_{\text{Limit}} \le 2$) và kẹp bán kính trong $r_{\text{InnerRim}} \ge 0.55 r_{vf}$. Triệt tiêu hoàn toàn hiện tượng rẻ quạt tự cắt và vòng cung đáy rãnh rơi lơ lửng.
+  4. *Bảo vệ an toàn tuyệt đối các lệnh `ctx.arc()`*: Bổ sung kiểm tra $r > 0$ và `Math.max(0.01, r)` trên toàn bộ vòng chia, vòng đỉnh, vòng đáy, vòng cơ sở và vòng bo dao $R_f$, triệt tiêu lỗi `IndexSizeError: The radius provided is negative`.
+  5. *Lọc giá trị nhập liệu trung gian trong UI (`bevel-ui.js`)*: Khi người dùng đang xóa trắng hoặc nhập $\le 0$ cho các thông số kích thước dương ($z_1, z_2, m_{mn}, b$), tạm ngưng tính toán trung gian, bảo vệ Canvas khỏi các trạng thái chia cho 0 hoặc NaN.
+  6. *Đồng bộ tức thì khi chuyển tab (`bevel-ui.js`)*: Tự động cập nhật `this.canvasController.setGeometry(this.lastGeom)` ngay khi nhấp vào Tab Mô Phỏng 2D Canvas hoặc bấm nút Chế độ 2D.
+- **Kết quả đo đạc & Kiểm thử tự động thực tế (`tools/test_2d_canvas_reactive.py`)**:
+  - Case 1: Mặc định $z_1 = 18, z_2 = 45, b = 117 \Rightarrow R_e = 242.33, R_i = 125.33 > 0$ (**PASS**).
+  - Case 2: Bộ số răng nhỏ $z_1 = 11, z_2 = 16, m_{et} = 8, b = 30 \Rightarrow R_e = 77.67, R_i = 47.67 > 0$ (**PASS**).
+  - Case 3: Bộ thông số mới $z_1 = 25, z_2 = 50, b = 45 \Rightarrow R_e = 223.61, R_i = 178.61 > 0$ (**PASS**).
+  - Tổng số lỗi console: **0 lỗi (100% Clean Run)**.
+  - Đóng gói single bundle: `modules/bevel-gear/js/bevel-engine.bundle.js` (434,404 ký tự) 100% offline, zero-CORS.
 
 
 
-
-
----
-
-## 2026-10-06 - Quy Tắc 81: Khắc Phục Triệt Để 4 Lỗi Hình Học & Mô Phỏng 2D/3D Bánh Răng Côn Răng Nhỏ (Z11 - Z16 - M8 - B30)
-- **Bối cảnh**: Người dùng (`SirPhuong`) kiểm tra và phát hiện khi thay đổi thông số bánh răng côn sang bộ số răng nhỏ ($z_1 = 11, z_2 = 16, \Sigma = 90.0^\circ, \alpha_n = 25.0^\circ, \beta_m = 0.0^\circ, m_{et} = 8.0\text{ mm}, b = 30.0\text{ mm}$), xuất 2D và 3D vẫn ổn nhưng mô phỏng hiển thị bị lỗi nghiêm trọng qua 4 bức ảnh chụp:
-  1. *2D Canvas*: Kích thước bị đảo lộn méo mó (`b = 117.0, Re = 15.8, ødae1 = 35.0, ødae2 = 34.3, L_Apex2 = -71.9`), nón răng bị lật ngược tọa độ qua Apex sang phía âm; biên dạng răng ảo Tredgold bị tự giao cắt và có một vòng cung chân răng bay lơ lửng kỳ dị ở cụm bên phải.
-  2. *3D WebGL*: Hai bánh răng va chạm đâm ngập sâu vào nhau (lệch pha nửa bước răng); camera bị zoom quá xa và góc nhìn ăn khớp cận cảnh (Closeup) bị lệch tâm ra ngoài không gian.
-- **Phân tích nguyên nhân gốc rễ**:
-  1. *Lật ngược tọa độ $R_i \le 0$*: Khi chuyển từ bộ số răng lớn sang nhỏ, `hubOverrides` vẫn lưu kích thước $b = 117\text{ mm}$ trong khi $R_e$ thực tế chỉ còn $77.7\text{ mm}$. Khi đó $R_i = R_e - b = -39.3\text{ mm} \le 0$, khiến điểm trong nón răng bị kéo vượt qua đỉnh Apex $(0, 0)$ sang phía âm, làm lật ngược toàn bộ đa giác phôi và đảo lộn kích thước.
-  2. *Bùng nổ góc mở rẻ quạt Tredgold*: Mã nguồn 2D trước đây cố định vẽ 7 răng ($k \in [-3, 3]$). Với $z_1 = 11$, số răng ảo $z_{v1} \approx 13.3$, 7 răng chiếm hơn $188^\circ$ ($> \pi$ rad). Cung vành trong khi nối tròn bị vòng ngược qua tâm, tạo thành rẻ quạt tự cắt và làm rơi vòng cung fillet chân răng ra ngoài.
-  3. *Va chạm $180^\circ$ trong 3D*: Ma trận biến đổi của Bánh 2 (`mGear`) đã đưa rãnh răng số 0 về chính xác mặt phẳng tiếp xúc $Z = 0$. Dòng lệnh `this.initialGearAngle = Math.PI / z2` đã vô tình quay Bánh 2 đi đúng nửa bước góc răng ($180^\circ$ góc bước răng), biến rãnh răng thành đỉnh răng và cắm ngập vào đỉnh răng Bánh dẫn 1 (đo được 7860 đỉnh va chạm).
-  4. *Camera tĩnh không co dãn*: `this.viewInitialized` chỉ kích hoạt 1 lần duy nhất, giữ nguyên khoảng cách camera 744mm của bộ răng to khi chuyển sang bộ răng nhỏ 77mm.
-- **Giải pháp xử lý triệt để**:
-  1. *Bảo vệ phôi 2D*: Khống chế $b \le 0.45 R_e$, bảo đảm $R_i = \max(2.0, R_e - b) > 0$. Tự động so sánh chữ ký hình học `${geom.z1}_${geom.z2}_${geom.mmn}_${geom.met}_${geom.b}_${geom.Sigma_deg}` để tự động reset moay-ơ phôi cũ khi người dùng đổi thông số.
-  2. *Giới hạn góc rẻ quạt 2D*: Khống chế góc mở vành răng $\le 117^\circ$ ($k_{\text{Limit}} \le 2$) và kẹp bán kính trong $r_{\text{InnerRim}} \ge 0.55 r_{vf}$.
-  3. *Chuẩn hóa pha 3D liên hợp không va chạm*: Đặt `this.initialGearAngle = 0.0`. Đo đạc tiếp xúc thực tế: $\text{gapLeft} = 0.120\text{ mm}, \text{gapRight} = 0.120\text{ mm}, \Delta = 0.000\text{ mm}$ (Ăn khớp liên hợp đối xứng hoàn hảo, độ xuyên thấu bằng **0.0000 mm**).
-  4. *Camera thích ứng động*: Tự động cập nhật khoảng cách camera khi kích thước thay đổi $> 15\%$, thuật toán zoom cận cảnh nới góc theo chiều rộng vành răng $b$. Loại bỏ các dòng ghi đè góc tĩnh trong UI.
-  5. Sửa lỗi chính tả Mục 4.7 trong `index.html` từ `Re/b` thành `b/Re`.
-- **Kiểm định thực nghiệm**:
-  - Đóng gói single bundle: `modules/bevel-gear/js/bevel-engine.bundle.js` (432,908 ký tự) 100% offline, zero-CORS.
-  - Chạy Playwright kiểm thử chụp ảnh nghiệm thu:
-    * `final_2d_axial.png`: Bản vẽ mặt cắt trục hiển thị chuẩn mực kích thước ($d_{ae2} = 134.2, d_{m2} = 94.9, \delta_2 = 55.5^\circ, L_{\text{Apex2}} = 89.2$).
-    * `final_2d_mesh.png`: Hai cặp ăn khớp Tredgold Ngoài và Trong dao động mượt mà, không tự giao cắt.
-    * `final_3d_webgl.png`: Toàn cảnh 3D căn giữa hoàn hảo.
-    * `final_3d_mesh_closeup.png`: Răng Bánh 1 nằm lọt thỏm chính giữa lòng rãnh răng Bánh 2, khe hở 2 bên đều tăm tắp $0.120\text{ mm}$, hoàn toàn không va chạm.
-    * `final_3d_animated.png`: Động cơ quay liên hợp lăn trơn tru không va chạm.

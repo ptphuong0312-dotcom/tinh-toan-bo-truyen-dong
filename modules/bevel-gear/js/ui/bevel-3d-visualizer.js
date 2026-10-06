@@ -267,22 +267,22 @@ export class Bevel3DVisualizer {
 
         // 3. Authentic MITCalc Conjugate Phase Offset (Exact Mid-Zone Kiss Contact at Rm)
         // Pinion rotates around World X, Gear rotates around World Y.
-        // Under mPinion and mGear orthogonal transformations:
-        // Pinion tooth 0 center lies at Z = 0 in the pitch contact plane.
-        // Gear tooth space 0 is naturally centered at Z = 0 when gearAngle = 0.
-        // Setting initialGearAngle = 0.0 centers the Pinion tooth symmetrically inside the Gear tooth space
-        // with equal clearance on both flanks (zero-collision conjugate meshing, diff = 0.000 mm).
-        this.initialGearAngle = 0.0;
+        // Pitch contact line lies in XY plane (Z = 0) at angle delta1 from X axis.
+        const st1 = parseFloat(geom.st1) || (mmn * (Math.PI / 2.0 + 2.0 * x1 * Math.tan(alfa) + xt1));
+        const st2 = parseFloat(geom.st2) || (mmn * (Math.PI / 2.0 + 2.0 * x2 * Math.tan(alfa) + xt2));
+        const cosBeta = Math.abs(beta_deg) > 1e-4 ? Math.cos(beta) : 1.0;
+        const th1 = ((st1 / cosBeta) / (2.0 * (Rm * Math.tan(delta1)))) / Math.cos(delta1);
+        const th2 = ((st2 / cosBeta) / (2.0 * (Rm * Math.tan(delta2)))) / Math.cos(delta2);
+        // Exact conjugate zero-backlash symmetric mesh:
+        // Pinion tooth 0 center lies at Z = 0.
+        // Gear tooth space 0 center is at half-pitch angle (Math.PI / z2).
+        // Aligning Gear space 0 with Pinion tooth 0 brings both Flank 1 and Flank 2 into simultaneous conjugate kiss contact!
+        this.initialGearAngle = Math.PI / z2;
         this.pinionAngle = 0;
         this.gearAngle = this.initialGearAngle;
 
         this.updateGearRotations();
-        
-        // Auto-adapt camera view distance and target when gear dimensions change
-        const prevRe = this._lastRe || null;
-        const curRe = geom ? (parseFloat(geom.Re) || 100.0) : 100.0;
-        this._lastRe = curRe;
-        if (!this.viewInitialized || !prevRe || Math.abs(curRe - prevRe) / prevRe > 0.15) {
+        if (!this.viewInitialized) {
             this.setViewPreset('iso');
             this.viewInitialized = true;
         }
@@ -617,12 +617,10 @@ export class Bevel3DVisualizer {
             case 'mesh': // Close up on pitch contact zone looking directly along tooth groove (shows contact on both flanks)
                 const cosD_m = Math.cos(delta1);
                 const sinD_m = Math.sin(delta1);
-                const b_w = this.geom ? (parseFloat(this.geom.b) || 40.0) : 40.0;
-                const mOffset = Math.max(18, b_w * 0.85);
                 this.camera.position.set(
-                    mx + mOffset * cosD_m - (mOffset * 0.22) * sinD_m,
-                    my + mOffset * sinD_m + (mOffset * 0.22) * cosD_m,
-                    Math.max(15, b_w * 0.55)
+                    mx + 95 * cosD_m - 20 * sinD_m,
+                    my + 95 * sinD_m + 20 * cosD_m,
+                    55
                 );
                 this.camera.up.set(0, 0, 1);
                 this.controls.target.set(mx, my, 0);

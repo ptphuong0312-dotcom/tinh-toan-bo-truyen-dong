@@ -119,6 +119,7 @@ class BevelGearUI {
                     target.style.display = 'block';
                     if (targetId === 'tabCanvas') {
                         if (this.activeMode === '2D' && this.canvasController) {
+                            if (this.lastGeom) this.canvasController.setGeometry(this.lastGeom);
                             this.canvasController.resetView();
                             if (this.lastGeom) this.syncHubPanelUI(this.lastGeom);
                         } else if (this.activeMode === '3D' && this.visualizer3D) {
@@ -487,7 +488,10 @@ class BevelGearUI {
                 if (hubPanel2D) hubPanel2D.style.display = 'flex';
                 if (visualizerTitle) visualizerTitle.textContent = '📐 Mô Hình 2D Nón Bánh Răng Ăn Khớp & Biên Dạng Răng Có R Chân (ISO 23509)';
                 if (visualizerDesc) visualizerDesc.textContent = 'Mặt cắt trục 2D khớp 1-to-1 phôi 3D, kết hợp Biên dạng răng ăn khớp 2D Tredgold có bán kính lượn chân răng R chân = 0.38·mmn.';
-                if (this.canvasController) this.canvasController.resetView();
+                if (this.canvasController) {
+                    if (this.lastGeom) this.canvasController.setGeometry(this.lastGeom);
+                    this.canvasController.resetView();
+                }
                 if (this.lastGeom) this.syncHubPanelUI(this.lastGeom);
             });
 
@@ -507,7 +511,12 @@ class BevelGearUI {
                 if (this.visualizer3D) {
                     this.visualizer3D.onResize();
                     if (this.lastGeom) {
+                        const curP = this.visualizer3D.pinionAngle;
+                        const curG = this.visualizer3D.gearAngle;
                         this.visualizer3D.setGeometry(this.lastGeom, this.canvasController ? this.canvasController.hubOverrides : null);
+                        this.visualizer3D.pinionAngle = curP;
+                        this.visualizer3D.gearAngle = curG;
+                        this.visualizer3D.updateGearRotations();
                     }
                 }
                 if (this.lastGeom) this.syncHubPanelUI(this.lastGeom);
@@ -517,7 +526,12 @@ class BevelGearUI {
         // 2D & 3D Synchronized Extended Hub Interactive Dimension Bindings
         const sync3DHubGeometry = () => {
             if (this.visualizer3D && this.lastGeom) {
+                const curP = this.visualizer3D.pinionAngle;
+                const curG = this.visualizer3D.gearAngle;
                 this.visualizer3D.setGeometry(this.lastGeom, this.canvasController ? this.canvasController.hubOverrides : null);
+                this.visualizer3D.pinionAngle = curP;
+                this.visualizer3D.gearAngle = curG;
+                this.visualizer3D.updateGearRotations();
             }
         };
 
@@ -835,7 +849,10 @@ class BevelGearUI {
                 const key = inp.getAttribute('data-key');
                 if (key) {
                     const rawVal = String(inp.value).trim().replace(',', '.');
-                    this.inputs[key] = (rawVal !== '' && !isNaN(parseFloat(rawVal))) ? parseFloat(rawVal) : 0;
+                    const parsed = parseFloat(rawVal);
+                    if (rawVal === '' || isNaN(parsed)) return;
+                    if (parsed <= 0 && ['z1', 'z2', 'mmn', 'b', 'P', 'n1', 'n2'].includes(key)) return;
+                    this.inputs[key] = parsed;
 
                     if (key === 'beta') {
                         if (Math.abs(this.inputs.beta) < 1e-4) {

@@ -94,12 +94,14 @@ class BevelGearCanvas {
     }
 
     setGeometry(geom) {
-        const sig = geom ? `${geom.z1}_${geom.z2}_${geom.mmn}_${geom.met}_${geom.b}_${geom.Sigma_deg}` : '';
-        if (this._lastGeomSig && this._lastGeomSig !== sig) {
-            // Reset hub overrides when gear design parameters change so hub scales proportionally
+        if (!geom) return;
+        const newSig = `${geom.z1}_${geom.z2}_${geom.mmn}_${geom.met}_${geom.b}_${geom.Sigma_deg !== undefined ? geom.Sigma_deg : geom.Sigma}`;
+        if (this._lastGeomSig && this._lastGeomSig !== newSig) {
+            // Reset hub overrides when geometry parameters change so new blank geometry is not corrupted by stale hub sizes
             this.resetHubOverrides(false);
         }
-        this._lastGeomSig = sig;
+        this._lastGeomSig = newSig;
+        this._lastMmn = parseFloat(geom.mmn) || 10.0;
         this.geom = geom;
         if (this.geom) {
             this.geom.hubOverrides = { ...this.hubOverrides };
@@ -255,13 +257,12 @@ class BevelGearCanvas {
         const z1 = parseInt(g.z1) || 18;
         const z2 = parseInt(g.z2) || 45;
         const mmn = parseFloat(g.mmn) || 10.0;
-        const Re_raw = parseFloat(g.Re) || 338.0;
-        const Re = Math.max(5.0, Re_raw);
-        const b_raw = parseFloat(g.b) || 30.0;
-        // Face width b cannot exceed Re (ISO 23509: b <= 0.35 * Re, safe upper bound 0.45 * Re)
-        const b = Math.max(1.0, Math.min(b_raw, Re * 0.45));
+        const Re = Math.max(10.0, parseFloat(g.Re) || 338.0);
+        // Face width guard: b must never exceed 0.45 * Re to guarantee positive inner cone distance Ri > 0
+        const b_raw = parseFloat(g.b) || 117.0;
+        const b = Math.min(b_raw, 0.45 * Re);
+        const Rm = parseFloat(g.Rm) || (Re - b / 2.0);
         const Ri = Math.max(2.0, parseFloat(g.Ri) || (Re - b));
-        const Rm = Math.max(Ri + 1.0, parseFloat(g.Rm) || (Re - b / 2.0));
 
         const Sigma_deg = parseFloat(g.Sigma_deg !== undefined ? g.Sigma_deg : g.Sigma) || 90.0;
         const sigmaRad = (Sigma_deg * Math.PI) / 180.0;
@@ -908,7 +909,10 @@ class BevelGearCanvas {
             const pPsi = isPinion ? pPsi1 : pPsi2;
             const rimDepth = Math.max(mmn * 2.2, (slice.rva - slice.rvf) * 1.15);
             const rInnerRim = Math.max(rvf * 0.55, rvf - rimDepth);
-            const maxAllowedSpan = Math.PI * 0.65; // Safe maximum sector span (~117 degrees)
+
+            // Bounded tooth count for small tooth numbers (e.g. z1 = 11, zv1 ~ 13.3)
+            // Limit total sector span to <= 117 deg (~2.04 rad) to prevent self-intersecting inner rim closure
+            const maxAllowedSpan = (117.0 * Math.PI) / 180.0;
             const kLimit = Math.min(2, Math.max(1, Math.floor(maxAllowedSpan / (2.0 * pPsi))));
             const kMin = -kLimit, kMax = kLimit;
 
@@ -997,12 +1001,12 @@ class BevelGearCanvas {
         ctx.lineWidth = 1.0 / toothScale;
         ctx.strokeStyle = 'rgba(56, 189, 248, 0.38)';
         ctx.beginPath();
-        ctx.arc(0, rv1, rva1, -Math.PI * 0.78, -Math.PI * 0.22);
+        if (rva1 > 0) ctx.arc(0, rv1, rva1, -Math.PI * 0.78, -Math.PI * 0.22);
         ctx.stroke();
 
         ctx.strokeStyle = 'rgba(251, 146, 60, 0.38)';
         ctx.beginPath();
-        ctx.arc(0, -rv2, rva2, Math.PI * 0.22, Math.PI * 0.78);
+        if (rva2 > 0) ctx.arc(0, -rv2, rva2, Math.PI * 0.22, Math.PI * 0.78);
         ctx.stroke();
 
         // Root circles (dotted)
@@ -1010,12 +1014,12 @@ class BevelGearCanvas {
         ctx.lineWidth = 1.0 / toothScale;
         ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
         ctx.beginPath();
-        ctx.arc(0, rv1, rvf1, -Math.PI * 0.78, -Math.PI * 0.22);
+        if (rvf1 > 0) ctx.arc(0, rv1, rvf1, -Math.PI * 0.78, -Math.PI * 0.22);
         ctx.stroke();
 
         ctx.strokeStyle = 'rgba(251, 146, 60, 0.45)';
         ctx.beginPath();
-        ctx.arc(0, -rv2, rvf2, Math.PI * 0.22, Math.PI * 0.78);
+        if (rvf2 > 0) ctx.arc(0, -rv2, rvf2, Math.PI * 0.22, Math.PI * 0.78);
         ctx.stroke();
 
         // Pitch circles (amber dash-dot)
@@ -1023,10 +1027,10 @@ class BevelGearCanvas {
         ctx.lineWidth = 1.4 / toothScale;
         ctx.strokeStyle = '#facc15';
         ctx.beginPath();
-        ctx.arc(0, rv1, rv1, -Math.PI * 0.78, -Math.PI * 0.22);
+        if (rv1 > 0) ctx.arc(0, rv1, rv1, -Math.PI * 0.78, -Math.PI * 0.22);
         ctx.stroke();
         ctx.beginPath();
-        ctx.arc(0, -rv2, rv2, Math.PI * 0.22, Math.PI * 0.78);
+        if (rv2 > 0) ctx.arc(0, -rv2, rv2, Math.PI * 0.22, Math.PI * 0.78);
         ctx.stroke();
 
         // Line of Action through Pitch Point P(0,0)
@@ -1044,7 +1048,7 @@ class BevelGearCanvas {
         // Pitch Point P(0,0) Marker
         ctx.fillStyle = '#facc15';
         ctx.beginPath();
-        ctx.arc(0, 0, 3.8 / toothScale, 0, Math.PI * 2);
+        ctx.arc(0, 0, Math.max(0.1, 3.8 / toothScale), 0, Math.PI * 2);
         ctx.fill();
         ctx.strokeStyle = '#0f172a';
         ctx.lineWidth = 1.2 / toothScale;
@@ -1053,7 +1057,7 @@ class BevelGearCanvas {
         // Callout annotation for Root Fillet Center & Radius Rf on Pinion 1 Tooth 0
         const centerPsi0 = phase * pPsi1;
         const fSol1 = slice1.fillet;
-        if (fSol1) {
+        if (fSol1 && fSol1.Rf > 0) {
             const rCf = Math.hypot(fSol1.Cfx, fSol1.Cfy);
             const psiCf = centerPsi0 + Math.atan2(fSol1.Cfx, fSol1.Cfy);
             const cfx = rCf * Math.sin(psiCf);
@@ -1065,13 +1069,13 @@ class BevelGearCanvas {
             ctx.strokeStyle = '#10b981';
             ctx.lineWidth = 1.2 / toothScale;
             ctx.beginPath();
-            ctx.arc(cfx, cfy, fSol1.Rf, 0, Math.PI * 2);
+            ctx.arc(cfx, cfy, Math.max(0.01, fSol1.Rf), 0, Math.PI * 2);
             ctx.stroke();
 
             // Center dot of Rf circle
             ctx.fillStyle = '#10b981';
             ctx.beginPath();
-            ctx.arc(cfx, cfy, 2.2 / toothScale, 0, Math.PI * 2);
+            ctx.arc(cfx, cfy, Math.max(0.1, 2.2 / toothScale), 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
         }
@@ -1270,7 +1274,8 @@ class BevelGearCanvas {
                 const pPsi = isPinion ? pPsi1 : pPsi2;
                 const rimDepth = Math.max(mVal * 2.2, (slice.rva - slice.rvf) * 1.15);
                 const rInnerRim = Math.max(rvf * 0.55, rvf - rimDepth);
-                const maxAllowedSpan = Math.PI * 0.65;
+
+                const maxAllowedSpan = (117.0 * Math.PI) / 180.0;
                 const kLimit = Math.min(2, Math.max(1, Math.floor(maxAllowedSpan / (2.0 * pPsi))));
                 const kMin = -kLimit, kMax = kLimit;
 
@@ -1350,11 +1355,11 @@ class BevelGearCanvas {
             ctx.lineWidth = 1.0 / toothScale;
             ctx.strokeStyle = 'rgba(56, 189, 248, 0.38)';
             ctx.beginPath();
-            ctx.arc(0, rv1, rva1, -Math.PI * 0.78, -Math.PI * 0.22);
+            if (rva1 > 0) ctx.arc(0, rv1, rva1, -Math.PI * 0.78, -Math.PI * 0.22);
             ctx.stroke();
             ctx.strokeStyle = 'rgba(251, 146, 60, 0.38)';
             ctx.beginPath();
-            ctx.arc(0, -rv2, rva2, Math.PI * 0.22, Math.PI * 0.78);
+            if (rva2 > 0) ctx.arc(0, -rv2, rva2, Math.PI * 0.22, Math.PI * 0.78);
             ctx.stroke();
 
             // Root circles
@@ -1362,11 +1367,11 @@ class BevelGearCanvas {
             ctx.lineWidth = 1.0 / toothScale;
             ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
             ctx.beginPath();
-            ctx.arc(0, rv1, rvf1, -Math.PI * 0.78, -Math.PI * 0.22);
+            if (rvf1 > 0) ctx.arc(0, rv1, rvf1, -Math.PI * 0.78, -Math.PI * 0.22);
             ctx.stroke();
             ctx.strokeStyle = 'rgba(251, 146, 60, 0.45)';
             ctx.beginPath();
-            ctx.arc(0, -rv2, rvf2, Math.PI * 0.22, Math.PI * 0.78);
+            if (rvf2 > 0) ctx.arc(0, -rv2, rvf2, Math.PI * 0.22, Math.PI * 0.78);
             ctx.stroke();
 
             // Pitch circles
@@ -1374,10 +1379,10 @@ class BevelGearCanvas {
             ctx.lineWidth = 1.4 / toothScale;
             ctx.strokeStyle = '#facc15';
             ctx.beginPath();
-            ctx.arc(0, rv1, rv1, -Math.PI * 0.78, -Math.PI * 0.22);
+            if (rv1 > 0) ctx.arc(0, rv1, rv1, -Math.PI * 0.78, -Math.PI * 0.22);
             ctx.stroke();
             ctx.beginPath();
-            ctx.arc(0, -rv2, rv2, Math.PI * 0.22, Math.PI * 0.78);
+            if (rv2 > 0) ctx.arc(0, -rv2, rv2, Math.PI * 0.22, Math.PI * 0.78);
             ctx.stroke();
 
             // Line of Action
@@ -1395,7 +1400,7 @@ class BevelGearCanvas {
             // Pitch Point P(0, 0)
             ctx.fillStyle = '#facc15';
             ctx.beginPath();
-            ctx.arc(0, 0, 3.6 / toothScale, 0, Math.PI * 2);
+            ctx.arc(0, 0, Math.max(0.1, 3.6 / toothScale), 0, Math.PI * 2);
             ctx.fill();
             ctx.strokeStyle = '#0f172a';
             ctx.lineWidth = 1.2 / toothScale;
@@ -1403,7 +1408,7 @@ class BevelGearCanvas {
 
             // Root Fillet Callout on Pinion 1 Tooth 0
             const fSol1 = slice1.fillet;
-            if (fSol1) {
+            if (fSol1 && fSol1.Rf > 0) {
                 const rCf = Math.hypot(fSol1.Cfx, fSol1.Cfy);
                 const psiCf = (phase1 * pPsi1) + Math.atan2(fSol1.Cfx, fSol1.Cfy);
                 const cfx = rCf * Math.sin(psiCf);
@@ -1414,11 +1419,11 @@ class BevelGearCanvas {
                 ctx.strokeStyle = '#10b981';
                 ctx.lineWidth = 1.2 / toothScale;
                 ctx.beginPath();
-                ctx.arc(cfx, cfy, fSol1.Rf, 0, Math.PI * 2);
+                ctx.arc(cfx, cfy, Math.max(0.01, fSol1.Rf), 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.fillStyle = '#10b981';
                 ctx.beginPath();
-                ctx.arc(cfx, cfy, 2.2 / toothScale, 0, Math.PI * 2);
+                ctx.arc(cfx, cfy, Math.max(0.1, 2.2 / toothScale), 0, Math.PI * 2);
                 ctx.fill();
                 ctx.restore();
             }
