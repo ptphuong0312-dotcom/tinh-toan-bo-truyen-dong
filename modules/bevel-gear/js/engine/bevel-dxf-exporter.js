@@ -640,7 +640,7 @@ export const BevelDxfExporter = {
             '0', 'SECTION', '2', 'HEADER',
             '9', '$ACADVER', '1', 'AC1009',
             '9', '$INSBASE', '10', '0.0', '20', '0.0', '30', '0.0',
-            '9', '$EXTMIN', '10', '-600.0', '20', '-600.0', '30', '0.0',
+            '9', '$EXTMIN', '10', '-1200.0', '20', '-600.0', '30', '0.0',
             '9', '$EXTMAX', '10', '1800.0', '20', '1000.0', '30', '0.0',
             '9', '$DWGCODEPAGE', '3', 'ANSI_1252',
             '0', 'ENDSEC'
@@ -666,8 +666,15 @@ export const BevelDxfExporter = {
             '0', 'LTYPE', '2', 'DASHED', '70', '0', '3', 'Dashed __ __ __ __', '72', '65', '73', '2', '40', '19.05',
             '49', '12.7', '49', '-6.35',
             '0', 'ENDTAB',
-            '0', 'TABLE', '2', 'LAYER', '70', '22',
+            '0', 'TABLE', '2', 'LAYER', '70', '29',
             '0', 'LAYER', '2', '0', '70', '0', '62', '7', '6', 'CONTINUOUS',
+            '0', 'LAYER', '2', 'GEAR1_PINION', '70', '0', '62', '4', '6', 'CONTINUOUS',     // Cyan
+            '0', 'LAYER', '2', 'GEAR2_WHEEL', '70', '0', '62', '30', '6', 'CONTINUOUS',     // Orange
+            '0', 'LAYER', '2', 'ROOT_CIRCLE', '70', '0', '62', '3', '6', 'DASHED',          // Green
+            '0', 'LAYER', '2', 'PITCH_CONES', '70', '0', '62', '2', '6', 'CENTER',          // Yellow
+            '0', 'LAYER', '2', 'CENTER_LINES', '70', '0', '62', '1', '6', 'CENTER',         // Red
+            '0', 'LAYER', '2', 'SHAFTS_BORE', '70', '0', '62', '7', '6', 'CONTINUOUS',      // White
+            '0', 'LAYER', '2', 'HATCH', '70', '0', '62', '8', '6', 'CONTINUOUS',            // Gray
             '0', 'LAYER', '2', 'MESH_OUTER_PINION', '70', '0', '62', '4', '6', 'CONTINUOUS', // Cyan
             '0', 'LAYER', '2', 'MESH_OUTER_GEAR', '70', '0', '62', '30', '6', 'CONTINUOUS',   // Orange
             '0', 'LAYER', '2', 'MESH_INNER_PINION', '70', '0', '62', '4', '6', 'CONTINUOUS', // Cyan
@@ -759,6 +766,45 @@ export const BevelDxfExporter = {
                 '40', height.toFixed(2),
                 '1', String(text)
             );
+        };
+
+        const addPolygonHatch = (poly, angleRad, step, layer = 'HATCH') => {
+            if (!poly || poly.length < 3) return;
+            const cosA = Math.cos(angleRad), sinA = Math.sin(angleRad);
+            const rot = poly.map(p => ({
+                u: p.x * cosA + p.y * sinA,
+                v: -p.x * sinA + p.y * cosA
+            }));
+            let vMin = Infinity, vMax = -Infinity;
+            for (const p of rot) {
+                if (p.v < vMin) vMin = p.v;
+                if (p.v > vMax) vMax = p.v;
+            }
+            for (let v = vMin + step * 0.5; v < vMax; v += step) {
+                const uInts = [];
+                for (let i = 0; i < rot.length; i++) {
+                    const a = rot[i], b = rot[(i + 1) % rot.length];
+                    if ((a.v <= v && b.v > v) || (b.v <= v && a.v > v)) {
+                        const t = (v - a.v) / (b.v - a.v);
+                        uInts.push(a.u + t * (b.u - a.u));
+                    }
+                }
+                uInts.sort((a, b) => a - b);
+                for (let k = 0; k + 1 < uInts.length; k += 2) {
+                    const u1 = uInts[k], u2 = uInts[k + 1];
+                    if (Math.abs(u2 - u1) > 1e-3) {
+                        const x1 = u1 * cosA - v * sinA, y1 = u1 * sinA + v * cosA;
+                        const x2 = u2 * cosA - v * sinA, y2 = u2 * sinA + v * cosA;
+                        addLine(x1, y1, x2, y2, layer);
+                    }
+                }
+            }
+        };
+
+        const addLinearDim = (x1, y1, x2, y2, label, textH = 3.5, layer = 'DIMENSIONS') => {
+            addLine(x1, y1, x2, y2, layer);
+            const mx = 0.5 * (x1 + x2), my = 0.5 * (y1 + y2);
+            addText(label, mx - label.length * textH * 0.25, my + textH * 0.4, textH, layer);
         };
 
         // Extract geometry
@@ -1064,7 +1110,56 @@ export const BevelDxfExporter = {
             return { fullPoly, minPsi, maxPsi, tipArcs, toPt };
         };
 
-        // Spacing
+        // Common parameters for 2D Axial Cross-Section Assembly (Block 0)
+        const bp = (typeof BevelGearCanvas !== 'undefined' && BevelGearCanvas.computeBlankAndHubParams)
+            ? BevelGearCanvas.computeBlankAndHubParams(g, g.hubOverrides)
+            : null;
+
+        const sigmaRad = bp ? bp.sigmaRad : (((parseFloat(g.Sigma_deg) || 90.0) * Math.PI) / 180.0);
+        const s1 = Math.sin(delta1), c1 = Math.cos(delta1);
+        const s2 = Math.sin(delta2), c2 = Math.cos(delta2);
+
+        const rBore1 = bp ? bp.rBore1 : (2.5 * mmn);
+        const rBore2 = bp ? bp.rBore2 : (5.0 * mmn);
+        const z_toe_hub1 = bp ? bp.z_toe_hub1 : (Ri * c1 + (hfi1 + 0.48 * mmn) * s1);
+        const r_toe_rim1 = bp ? bp.r_toe_rim1 : Math.max(rBore1 + 2.0, Ri * s1 - (hfi1 + 0.48 * mmn) * c1);
+        const z_heel_rim1 = bp ? bp.z_heel_rim1 : (Re * c1 + (hfe1 + 1.33 * mmn) * s1);
+        const r_heel_rim1 = bp ? bp.r_heel_rim1 : Math.max(rBore1 + 5.0, Re * s1 - (hfe1 + 1.33 * mmn) * c1);
+        const z_tip_max1 = bp ? bp.z_tip_max1 : (Re * c1 - hae1 * s1);
+        const rHub1 = bp ? bp.rHub1 : (5.75 * mmn);
+        const z_hub_end1 = bp ? bp.z_hub_end1 : (z_heel_rim1 + 4.5 * mmn);
+        const LApex1 = bp ? bp.LApex1 : z_hub_end1;
+        const LTip1 = bp ? bp.LTip1 : (z_hub_end1 - z_tip_max1);
+
+        const z_toe_hub2 = bp ? bp.z_toe_hub2 : (Ri * c2 + (hfi2 + 0.59 * mmn) * s2);
+        const r_toe_rim2 = bp ? bp.r_toe_rim2 : Math.max(rBore2 + 2.0, Ri * s2 - (hfi2 + 0.59 * mmn) * c2);
+        const z_heel_rim2 = bp ? bp.z_heel_rim2 : (Re * c2 + (hfe2 + 2.0 * mmn) * s2);
+        const r_heel_rim2 = bp ? bp.r_heel_rim2 : Math.max(rBore2 + 5.0, Re * s2 - (hfe2 + 2.0 * mmn) * c2);
+        const z_tip_max2 = bp ? bp.z_tip_max2 : (Re * c2 - hae2 * s2);
+        const rHub2 = bp ? bp.rHub2 : (9.0 * mmn);
+        const z_hub_end2 = bp ? bp.z_hub_end2 : (z_heel_rim2 + 4.0 * mmn);
+        const LApex2 = bp ? bp.LApex2 : z_hub_end2;
+        const LTip2 = bp ? bp.LTip2 : (z_hub_end2 - z_tip_max2);
+
+        const dae1 = g.dae1 || (2.0 * (Re * s1 + hae1 * c1));
+        const dae2 = g.dae2 || (2.0 * (Re * s2 + hae2 * c2));
+        const hatchStep = Math.max(2.5, 0.75 * mmn);
+
+        // 3D Spatial parameters for Concentric Slot Planes & Mastercam Loft Cut
+        const cosD1 = Math.cos(delta1);
+        const cosD2 = Math.cos(delta2);
+        const deltaZ_cut1 = b / cosD1;
+        const deltaZ_cut2 = b / cosD2;
+        const Ze1_star = -Re / cosD1;
+        const Zi1_star = -Ri / cosD1;
+        const Ze2_star = -Re / cosD2;
+        const Zi2_star = -Ri / cosD2;
+        const deltaZ_pitch1 = b * cosD1;
+        const deltaZ_pitch2 = b * cosD2;
+
+        // Spacing coordinates across all blocks
+        const cx_axial = -650;
+        const cy_axial = 0;
         const cx_mesh_out = 0;
         const cy_mesh_out = 0;
         const cx_mesh_in = cx_mesh_out + 350;
@@ -1073,6 +1168,118 @@ export const BevelDxfExporter = {
         const cy_slot1 = 0;
         const cx_slot2 = cx_slot1 + 220;
         const cy_slot2 = 0;
+
+        // =========================================================================
+        // BLOCK 0: BẢN VẼ MẶT CẮT TRỤC BỔ DỌC KỸ THUẬT LẮP GHÉP CẶP BÁNH RĂNG CÔN (ISO 23509)
+        // =========================================================================
+        const drawAxialPinion = (offX = 0, offY = 0) => {
+            const layer = 'GEAR1_PINION';
+            const buildHalf = (signY) => {
+                const toe_root     = { x: offX + Ri * c1 + hfi1 * s1, y: offY + signY * (Ri * s1 - hfi1 * c1) };
+                const toe_tip      = { x: offX + Ri * c1 - hai1 * s1, y: offY + signY * (Ri * s1 + hai1 * c1) };
+                const heel_tip     = { x: offX + Re * c1 - hae1 * s1, y: offY + signY * (Re * s1 + hae1 * c1) };
+                const heel_root    = { x: offX + Re * c1 + hfe1 * s1, y: offY + signY * (Re * s1 - hfe1 * c1) };
+                const heel_rim     = { x: offX + z_heel_rim1,         y: offY + signY * r_heel_rim1 };
+                const hub_step     = { x: offX + z_heel_rim1,         y: offY + signY * rHub1 };
+                const hub_end_out  = { x: offX + z_hub_end1,          y: offY + signY * rHub1 };
+                const hub_end_bore = { x: offX + z_hub_end1,          y: offY + signY * rBore1 };
+                const toe_bore     = { x: offX + z_toe_hub1,          y: offY + signY * rBore1 };
+                const toe_rim      = { x: offX + z_toe_hub1,          y: offY + signY * r_toe_rim1 };
+
+                const toothPoly = [toe_root, toe_tip, heel_tip, heel_root];
+                addPolyline(toothPoly, layer, true);
+                addLine(toe_root.x, toe_root.y, heel_root.x, heel_root.y, 'ROOT_CIRCLE');
+
+                const bodyPoly = [
+                    toe_root, heel_root, heel_rim, hub_step,
+                    hub_end_out, hub_end_bore, toe_bore, toe_rim
+                ];
+                addPolyline(bodyPoly, layer, true);
+                addPolygonHatch(bodyPoly, Math.PI / 4, hatchStep, 'HATCH');
+
+                return { toe_bore, hub_end_bore, hub_end_out, heel_tip };
+            };
+
+            const topH = buildHalf(+1);
+            const botH = buildHalf(-1);
+
+            addLine(topH.toe_bore.x, topH.toe_bore.y, botH.toe_bore.x, botH.toe_bore.y, 'SHAFTS_BORE');
+            addLine(topH.hub_end_bore.x, topH.hub_end_bore.y, botH.hub_end_bore.x, botH.hub_end_bore.y, 'SHAFTS_BORE');
+
+            addLine(offX, offY, offX + Re * c1 * 1.08, offY + Re * s1 * 1.08, 'PITCH_CONES');
+            addLine(offX, offY, offX + Re * c1 * 1.08, offY - Re * s1 * 1.08, 'PITCH_CONES');
+            addLine(offX - 25, offY, offX + z_hub_end1 + 35, offY, 'CENTER_LINES');
+
+            addLinearDim(offX + z_hub_end1 + 18, offY - rHub1, offX + z_hub_end1 + 18, offY + rHub1, `dm1=${(2 * rHub1).toFixed(1)}`, 3.2);
+            addLinearDim(offX + z_hub_end1 + 45, offY - dae1 / 2, offX + z_hub_end1 + 45, offY + dae1 / 2, `dae1=${dae1.toFixed(1)}`, 3.2);
+            addLinearDim(offX + z_tip_max1, offY - dae1 / 2 - 18, offX + z_hub_end1, offY - dae1 / 2 - 18, `L_Tip1=${LTip1.toFixed(1)}`, 3.2);
+            addLinearDim(offX, offY - dae1 / 2 - 34, offX + z_hub_end1, offY - dae1 / 2 - 34, `L_Apex1=${LApex1.toFixed(1)}`, 3.2);
+        };
+
+        const drawAxialGear = (offX = 0, offY = 0) => {
+            const layer = 'GEAR2_WHEEL';
+            const uAx2 = { x: Math.cos(sigmaRad), y: Math.sin(sigmaRad) };
+            const uRad2 = { x: Math.sin(sigmaRad), y: -Math.cos(sigmaRad) };
+            const toGW = (zL, rL) => ({
+                x: offX + zL * uAx2.x + rL * uRad2.x,
+                y: offY + zL * uAx2.y + rL * uRad2.y
+            });
+
+            const buildHalf = (signR) => {
+                const toe_root     = toGW(Ri * c2 + hfi2 * s2, signR * (Ri * s2 - hfi2 * c2));
+                const toe_tip      = toGW(Ri * c2 - hai2 * s2, signR * (Ri * s2 + hai2 * c2));
+                const heel_tip     = toGW(Re * c2 - hae2 * s2, signR * (Re * s2 + hae2 * c2));
+                const heel_root    = toGW(Re * c2 + hfe2 * s2, signR * (Re * s2 - hfe2 * c2));
+                const heel_rim     = toGW(z_heel_rim2,         signR * r_heel_rim2);
+                const hub_step     = toGW(z_heel_rim2,         signR * rHub2);
+                const hub_end_out  = toGW(z_hub_end2,          signR * rHub2);
+                const hub_end_bore = toGW(z_hub_end2,          signR * rBore2);
+                const toe_bore     = toGW(z_toe_hub2,          signR * rBore2);
+                const toe_rim      = toGW(z_toe_hub2,          signR * r_toe_rim2);
+
+                const toothPoly = [toe_root, toe_tip, heel_tip, heel_root];
+                addPolyline(toothPoly, layer, true);
+                addLine(toe_root.x, toe_root.y, heel_root.x, heel_root.y, 'ROOT_CIRCLE');
+
+                const bodyPoly = [
+                    toe_root, heel_root, heel_rim, hub_step,
+                    hub_end_out, hub_end_bore, toe_bore, toe_rim
+                ];
+                addPolyline(bodyPoly, layer, true);
+                addPolygonHatch(bodyPoly, -Math.PI / 4, hatchStep, 'HATCH');
+
+                return { toe_bore, hub_end_bore, hub_end_out, heel_tip };
+            };
+
+            const rightH = buildHalf(+1);
+            const leftH  = buildHalf(-1);
+
+            addLine(rightH.toe_bore.x, rightH.toe_bore.y, leftH.toe_bore.x, leftH.toe_bore.y, 'SHAFTS_BORE');
+            addLine(rightH.hub_end_bore.x, rightH.hub_end_bore.y, leftH.hub_end_bore.x, leftH.hub_end_bore.y, 'SHAFTS_BORE');
+
+            const pPitchR = toGW(Re * c2 * 1.08, +Re * s2 * 1.08);
+            const pPitchL = toGW(Re * c2 * 1.08, -Re * s2 * 1.08);
+            addLine(offX, offY, pPitchR.x, pPitchR.y, 'PITCH_CONES');
+            addLine(offX, offY, pPitchL.x, pPitchL.y, 'PITCH_CONES');
+            const pAxisStart = toGW(-25, 0);
+            const pAxisEnd   = toGW(z_hub_end2 + 35, 0);
+            addLine(pAxisStart.x, pAxisStart.y, pAxisEnd.x, pAxisEnd.y, 'CENTER_LINES');
+
+            const pDmL = toGW(z_hub_end2 + 16, -rHub2), pDmR = toGW(z_hub_end2 + 16, +rHub2);
+            addLinearDim(pDmL.x, pDmL.y, pDmR.x, pDmR.y, `dm2=${(2 * rHub2).toFixed(1)}`, 3.2);
+            const pDaeL = toGW(z_hub_end2 + 40, -dae2 / 2), pDaeR = toGW(z_hub_end2 + 40, +dae2 / 2);
+            addLinearDim(pDaeL.x, pDaeL.y, pDaeR.x, pDaeR.y, `dae2=${dae2.toFixed(1)}`, 3.2);
+            const pLTip1 = toGW(z_tip_max2, -dae2 / 2 - 18), pLTip2 = toGW(z_hub_end2, -dae2 / 2 - 18);
+            addLinearDim(pLTip1.x, pLTip1.y, pLTip2.x, pLTip2.y, `L_Tip2=${LTip2.toFixed(1)}`, 3.2);
+            const pLAp1 = toGW(0, -dae2 / 2 - 34), pLAp2 = toGW(z_hub_end2, -dae2 / 2 - 34);
+            addLinearDim(pLAp1.x, pLAp1.y, pLAp2.x, pLAp2.y, `L_Apex2=${LApex2.toFixed(1)}`, 3.2);
+        };
+
+        drawAxialPinion(cx_axial, cy_axial);
+        drawAxialGear(cx_axial, cy_axial);
+
+        addText('CUM 0: BAN VE MAT CAT TRUC BO DOC BO TRUYEN BANH RANG CON (ISO 23509 AXIAL ASSEMBLY)', cx_axial - 30, Math.max(rHub2 * 2, dae2 / 2) + 75, 4.2, 'MFG_TABLE');
+        addText(`Goc dinh non Apex V(${cx_axial}, 0) | Goc truc Sigma = ${(sigmaRad * 180 / Math.PI).toFixed(2)} deg | Hatching ISO 128`, cx_axial - 30, Math.max(rHub2 * 2, dae2 / 2) + 65, 3.2, 'MFG_TABLE');
 
         // =========================================================================
         // BLOCK 1: CẶP ĂN KHỚP 2D MẶT NGOÀI (Outer Cone Re, met)
@@ -1182,6 +1389,8 @@ export const BevelDxfExporter = {
         addText('CUM 3: CAP RANH RANG DONG TAM BANH DAN 1 (Pinion 1 Slots: R & R=0)', cx_slot1 - 95, rvae1 + 45, 4.0, 'MFG_TABLE');
         addText(`Goc non chia delta1 = ${(delta1 * 180 / Math.PI).toFixed(4)} deg`, cx_slot1 - 95, rvae1 + 35, 3.2, 'MFG_TABLE');
         addText(`Co 2 Layer: Layer *_R (bo cung R=0.38*m) & Layer *_R0 (day vuong R=0)`, cx_slot1 - 95, rvae1 + 25, 3.0, 'MFG_TABLE');
+        addText(`Khoang cach giua 2 diem cat cua 2 mat phang tren truc Z: delta_Z_cut1 = b / cos(delta1) = ${deltaZ_cut1.toFixed(3)} mm`, cx_slot1 - 95, rvae1 + 15, 3.2, 'DIMENSIONS');
+        addLinearDim(cx_slot1 + 75, cy_slot1 + rvae1, cx_slot1 + 75, cy_slot1 + rvae1 - deltaZ_cut1, `delta_Z_cut1=${deltaZ_cut1.toFixed(3)}`, 3.0, 'DIMENSIONS');
 
         // =========================================================================
         // BLOCK 4: CẶP RÃNH RĂNG ĐỒNG TÂM BÁNH BỊ DẪN 2 (Gear 2 Slots: R & R=0)
@@ -1218,21 +1427,12 @@ export const BevelDxfExporter = {
         addText('CUM 4: CAP RANH RANG DONG TAM BANH BI DAN 2 (Gear 2 Slots: R & R=0)', cx_slot2 - 95, rvae2 + 45, 4.0, 'MFG_TABLE');
         addText(`Goc non chia delta2 = ${(delta2 * 180 / Math.PI).toFixed(4)} deg`, cx_slot2 - 95, rvae2 + 35, 3.2, 'MFG_TABLE');
         addText(`Co 2 Layer: Layer *_R (bo cung R=0.38*m) & Layer *_R0 (day vuong R=0)`, cx_slot2 - 95, rvae2 + 25, 3.0, 'MFG_TABLE');
+        addText(`Khoang cach giua 2 diem cat cua 2 mat phang tren truc Z: delta_Z_cut2 = b / cos(delta2) = ${deltaZ_cut2.toFixed(3)} mm`, cx_slot2 - 95, rvae2 + 15, 3.2, 'DIMENSIONS');
+        addLinearDim(cx_slot2 + 75, cy_slot2 + rvae2, cx_slot2 + 75, cy_slot2 + rvae2 - deltaZ_cut2, `delta_Z_cut2=${deltaZ_cut2.toFixed(3)}`, 3.0, 'DIMENSIONS');
 
         // =========================================================================
         // BLOCK 5: BẢNG THÔNG SỐ CHẾ TẠO & HƯỚNG DẪN DỰNG HÌNH SOLIDWORKS / MASTERCAM
         // =========================================================================
-        const cosD1 = Math.cos(delta1);
-        const cosD2 = Math.cos(delta2);
-        const deltaZ_cut1 = b / cosD1;
-        const deltaZ_cut2 = b / cosD2;
-        const Ze1_star = -Re / cosD1;
-        const Zi1_star = -Ri / cosD1;
-        const Ze2_star = -Re / cosD2;
-        const Zi2_star = -Ri / cosD2;
-        const deltaZ_pitch1 = b * cosD1;
-        const deltaZ_pitch2 = b * cosD2;
-
         const tblX = -120;
         let tblY = -rve1 - 60;
         const rowH = 7.5;

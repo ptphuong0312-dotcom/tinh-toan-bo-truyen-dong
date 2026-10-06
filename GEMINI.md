@@ -1957,3 +1957,51 @@ ho_{f0} / \cos\gamma$.
    - **Đồng bộ thời gian thực khi chuyển Tab**:
      Gọi `this.canvasController.setGeometry(this.lastGeom)` ngay khi người dùng bấm chuyển sang Tab Mô Phỏng 2D hoặc bấm nút Chế độ 2D.
 
+---
+
+### Quy Tắc 83: Quy Chuẩn Tự Động Thích Ứng Chiều Rộng Vành Răng $b$, Xuất DXF Tổng Hợp Duy Nhất, Bổ Sung Kích Thước Cắt $\Delta Z$, Đảo Ngửa Bánh 2 & Tọa Độ Mastercam (0,0,0) (Unified Bevel Gear Automation & Mastercam Trihedron Protocol)
+**Ngày áp dụng**: 06/10/2026  
+**Module**: Bộ truyền Bánh Răng Côn (`modules/bevel-gear/`)  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+
+1. **Quy Chuẩn Thích Ứng Chiều Rộng Vành Răng $b$ (Harmonious Face Width Protocol)**:
+   - *Tự động khuyên dùng*: Khi người dùng thay đổi các thông số hình học ($z_1, z_2, m_{mn}, i, \Sigma, \beta$, kiểu răng), giá trị $b$ trong Mục 4.0 Dòng 4.9 tự động cập nhật theo giá trị khuyên dùng chuẩn MITCalc 1.74:
+     $$b_{\text{rec}} = \min(b_{\max}, \text{round}(0.3458 \cdot R_e \cdot 10) / 10)$$
+     với $b_{\max} = \min(0.35 \cdot R_e, 10 \cdot m_{et})$.
+   - *Bảo tồn quyền can thiệp của người thiết kế*: Khi người dùng chủ động gõ vào ô `#inp_b` hoặc kéo slider `#slider_b_Re`, cờ `this.isManualB = true` được kích hoạt. Thuật toán khóa bảo toàn tuyệt đối giá trị này, không bao giờ tự ý ghi đè.
+   - *Nút phục hồi khuyên dùng*: Cung cấp nút `[ ⚡ Khuyên dùng ]` (`#btn_rec_b`) đặt ngay cạnh ô `#inp_b` để người dùng có thể nhấp 1-Click đưa $b$ về lại giá trị khuyên dùng tối ưu bất kỳ lúc nào.
+
+2. **Quy Chuẩn Xuất Bản Vẽ 2D CAD DXF Tổng Hợp Duy Nhất (Single Unified DXF Protocol)**:
+   - Loại bỏ các menu dropdown xuất từng bánh riêng lẻ gây phân tán. Cung cấp đúng **1 nút xuất duy nhất**:
+     * `#btnExportDXFSec16Unified` (Mục 16.3 Bảng tính)
+     * `#expDxfUnifiedCanvas` (Thanh công cụ Canvas 2D)
+   - Tệp `.dxf` chuẩn Release 12 (AC1009) tích hợp đầy đủ 6 Block kỹ thuật:
+     * **BLOCK 0**: Bản vẽ mặt cắt trục bổ dọc kỹ thuật lắp ghép cơ khí ISO 23509 ($X = -650, Y = 0$).
+     * **BLOCK 1**: Cặp ăn khớp thân khai nón 2D nón ngoài $R_e, m_{et}$.
+     * **BLOCK 2**: Cặp ăn khớp thân khai nón 2D nón trong $R_i, m_{it}$.
+     * **BLOCK 3**: Cặp rãnh răng đồng tâm Bánh dẫn 1 (Pinion) có cả Layer bo góc dao cắt `_R` ($R_f = 0.38 \cdot m$) và Layer đáy vuông `_R0`.
+     * **BLOCK 4**: Cặp rãnh răng đồng tâm Bánh bị dẫn 2 (Gear) có cả Layer `_R` và `_R0`.
+     * **BLOCK 5**: Bảng thông số chế tạo gia công chi tiết & hướng dẫn CAM SolidWorks/Mastercam.
+   - **Kích thước khoảng cách giữa 2 điểm cắt của 2 mặt phẳng trên trục Z**:
+     Được bổ sung rõ ràng bằng Text kỹ thuật và kích thước thẳng (Linear Dimension `addLinearDim`) trực tiếp vào CỤM 3 & CỤM 4:
+     $$\Delta Z_{\text{cut}1} = \frac{b}{\cos\delta_1}, \quad \Delta Z_{\text{cut}2} = \frac{b}{\cos\delta_2}$$
+
+3. **Quy Chuẩn Mô Phỏng 3D WebGL & Xuất File 3D Cố Định Gốc Tọa Độ Mastercam (0,0,0)**:
+   - **Dọn sạch lưới grid**: Loại bỏ hoàn toàn `gridHelper` trong không gian 3D, giữ nền tối sang trọng kỹ thuật và bảo toàn 100% màu sắc thực tế của bánh răng.
+   - **Giao điểm đỉnh nón Apex cố định tuyệt đối tại $(0, 0, 0)$**: Gốc nón của cả Bánh 1 và Bánh 2 luôn gặp nhau tại $(0, 0, 0)$ trên cả mô phỏng 3D WebGL lẫn toàn bộ các file xuất 3D CAD (STEP Solid, STEP Surface, STL Solid, STL Surface, OBJ, IGES).
+   - **Hệ trục tọa độ Mastercam tại $(0, 0, 0)$**:
+     Vẽ hệ trục tọa độ sắc nét mô phỏng Mastercam tại gốc $(0, 0, 0)$:
+     * Trục $+X$: Mũi tên đỏ `#ef4444` kèm nhãn Canvas text sprite "X".
+     * Trục $+Y$: Mũi tên xanh lá `#22c55e` kèm nhãn Canvas text sprite "Y".
+     * Trục $+Z$: Mũi tên xanh cyan `#06b6d4` kèm nhãn Canvas text sprite "Z".
+     * Đường tâm chéo mảnh qua tâm màu nâu đất `#b45309`.
+     * Điểm mốc gốc tọa độ hình cầu màu vàng `#facc15` tại $(0, 0, 0)$.
+   - **Đảo ngửa Bánh răng 2 ("Ngửa lên")**:
+     Áp dụng ma trận biến đổi trực giao:
+     $$X_{\text{world}} = X_{\text{local}}, \quad Y_{\text{world}} = -Z_{\text{local}}, \quad Z_{\text{world}} = Y_{\text{local}} \quad (\det = +1)$$
+     Moay-ơ của Bánh 2 nằm ở phía âm $Y < 0$, các răng hướng lên trên về phía Apex $(0, 0, 0)$.
+     Bánh dẫn 1 nằm dọc trục $+X$, ăn khớp liên hợp hoàn hảo tại đường sinh nón chia trong mặt phẳng $XY$ ở vùng $Y < 0$.
+   - **Đồng bộ hóa động học ăn khớp 3D**:
+     $$\theta_{\text{gear}} = \theta_{\text{gear},0} + \frac{\theta_{\text{pinion}}}{i}$$
+
+

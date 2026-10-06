@@ -34,6 +34,7 @@ class BevelGearUI {
             isOuterModule: true
         };
 
+        this.isManualB = false;
         this.lastGeom = null;
         this.profileResolution = 6;
         this.activeMode = '2D';
@@ -328,75 +329,20 @@ class BevelGearUI {
             sliderResCanvas.addEventListener('input', (e) => updateResolutionUI(e.target.value));
         }
 
-        // Section 16 DXF Dropdown
-        const btnExportDXFSec16Menu = document.getElementById('btnExportDXFSec16Menu');
-        const exportDXFSec16Dropdown = document.getElementById('exportDXFSec16Dropdown');
-        if (btnExportDXFSec16Menu && exportDXFSec16Dropdown) {
-            btnExportDXFSec16Menu.addEventListener('click', (e) => {
-                e.stopPropagation();
-                exportDXFSec16Dropdown.style.display = (exportDXFSec16Dropdown.style.display === 'block') ? 'none' : 'block';
-            });
-            document.addEventListener('click', () => {
-                exportDXFSec16Dropdown.style.display = 'none';
-            });
-        }
-
-        const bindDXFSec16 = (id, target) => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (exportDXFSec16Dropdown) exportDXFSec16Dropdown.style.display = 'none';
-                    this.exportDXF(target);
-                });
-            }
-        };
-        bindDXFSec16('btnExportDXFSec16Pinion', 'pinion');
-        bindDXFSec16('btnExportDXFSec16Gear', 'gear');
-        bindDXFSec16('btnExportDXFSec16Assembly', 'assembly');
-
+        // Section 16 Unified DXF Export (1 single file containing all 2D drawings)
         const btnExportDXFSec16Unified = document.getElementById('btnExportDXFSec16Unified');
         if (btnExportDXFSec16Unified) {
             btnExportDXFSec16Unified.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (exportDXFSec16Dropdown) exportDXFSec16Dropdown.style.display = 'none';
                 this.exportUnifiedDXF();
             });
         }
 
-        // Canvas 2D DXF Dropdown
-        const btnExportDXFCanvasMenu = document.getElementById('btnExportDXFCanvasMenu');
-        const exportDXFCanvasDropdown = document.getElementById('exportDXFCanvasDropdown');
-        if (btnExportDXFCanvasMenu && exportDXFCanvasDropdown) {
-            btnExportDXFCanvasMenu.addEventListener('click', (e) => {
-                e.stopPropagation();
-                exportDXFCanvasDropdown.style.display = (exportDXFCanvasDropdown.style.display === 'block') ? 'none' : 'block';
-            });
-            document.addEventListener('click', () => {
-                exportDXFCanvasDropdown.style.display = 'none';
-            });
-        }
-
-        const bindDXFCanvas = (id, target) => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (exportDXFCanvasDropdown) exportDXFCanvasDropdown.style.display = 'none';
-                    this.exportDXF(target);
-                });
-            }
-        };
-        bindDXFCanvas('expDxfPinionCanvas', 'pinion');
-        bindDXFCanvas('expDxfGearCanvas', 'gear');
-        bindDXFCanvas('expDxfAssemblyCanvas', 'assembly');
-
-        // Unified DXF Export (Conjugate Mesh Pairs + Concentric CAM Slots + Technical Specs)
+        // Canvas 2D Unified DXF Export (1 single file containing all 2D drawings)
         const expDxfUnifiedCanvas = document.getElementById('expDxfUnifiedCanvas');
         if (expDxfUnifiedCanvas) {
             expDxfUnifiedCanvas.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (exportDXFCanvasDropdown) exportDXFCanvasDropdown.style.display = 'none';
                 this.exportUnifiedDXF();
             });
         }
@@ -854,6 +800,12 @@ class BevelGearUI {
                     if (parsed <= 0 && ['z1', 'z2', 'mmn', 'b', 'P', 'n1', 'n2'].includes(key)) return;
                     this.inputs[key] = parsed;
 
+                    if (key === 'b') {
+                        this.isManualB = true;
+                    } else if (['z1', 'z2', 'mmn', 'i_req', 'Sigma', 'gearingType', 'beta'].includes(key)) {
+                        this.isManualB = false;
+                    }
+
                     if (key === 'beta') {
                         if (Math.abs(this.inputs.beta) < 1e-4) {
                             const selGT = document.getElementById('selGearingType');
@@ -1093,12 +1045,22 @@ class BevelGearUI {
         const sliderBRe = document.getElementById('slider_b_Re');
         if (sliderBRe) {
             sliderBRe.addEventListener('input', () => {
+                this.isManualB = true;
                 const ratio = parseFloat(sliderBRe.value);
                 const Re = parseFloat(document.getElementById('out_Re') ? document.getElementById('out_Re').textContent : 338.32);
-                const b_calc = Math.round(ratio * Re);
+                const b_calc = Math.round(ratio * Re * 10) / 10;
                 this.inputs.b = b_calc;
                 const inp_b = document.getElementById('inp_b');
                 if (inp_b) inp_b.value = b_calc.toFixed(1);
+                this.calculate();
+            });
+        }
+
+        // Button: [ ⚡ Khuyên dùng ] b (Auto-recommend face width b)
+        const btn_rec_b = document.getElementById('btn_rec_b');
+        if (btn_rec_b) {
+            btn_rec_b.addEventListener('click', () => {
+                this.isManualB = false;
                 this.calculate();
             });
         }
@@ -1359,6 +1321,22 @@ class BevelGearUI {
 
     calculate() {
         if (typeof BevelCalcEngine === 'undefined') return;
+
+        // Auto-recommend b if user hasn't explicitly set it manually
+        if (!this.isManualB) {
+            const gPreB = BevelCalcEngine.calculate(this.inputs);
+            const Re = gPreB.Re || 338.32;
+            const met = gPreB.met || 10.0;
+            const b_max = Math.min(0.35 * Re, 10.0 * met);
+            // MITCalc standard recommendation: b = 0.3458 * Re rounded to 1 decimal place, clamped <= b_max
+            const b_rec = Math.min(b_max, Math.round(0.3458 * Re * 10) / 10);
+            if (b_rec > 0 && Math.abs((this.inputs.b || 0) - b_rec) > 0.05) {
+                this.inputs.b = b_rec;
+                const inp_b = document.getElementById('inp_b');
+                if (inp_b) inp_b.value = b_rec.toFixed(1);
+            }
+        }
+
         if (this.inputs.auto_Q) {
             const gPre = BevelCalcEngine.calculate(this.inputs);
             const isSpiralPre = Math.abs(gPre.beta_deg || 0.0) > 1e-4;
@@ -1431,6 +1409,10 @@ class BevelGearUI {
         // Section 4.0: Design of module and geometry
         const b_Re = (g.Re !== 0 ? g.b / g.Re : 0.3458);
         set4('out_sec4_b_Re', b_Re);
+        const sliderBReEl = document.getElementById('slider_b_Re');
+        if (sliderBReEl && document.activeElement !== sliderBReEl) {
+            sliderBReEl.value = b_Re.toFixed(4);
+        }
         set('out_sec4_bmax', '< ' + (g.Re * 0.35).toFixed(0));
         set('out_sec4_mass', '134.331');
 
@@ -2254,5 +2236,24 @@ class BevelGearUI {
         } else if (format === 'obj') {
             return Bevel3DExporter.exportOBJ(tris, `${filenameBase}.obj`);
         }
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.BevelGearUI = BevelGearUI;
+}
+
+function initBevelApp() {
+    if (!window.appUI && typeof BevelGearUI !== 'undefined') {
+        window.bevelApp = new BevelGearUI();
+        window.appUI = window.bevelApp;
+    }
+}
+
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBevelApp);
+    } else {
+        initBevelApp();
     }
 }

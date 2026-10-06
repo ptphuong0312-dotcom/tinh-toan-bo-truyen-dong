@@ -3383,34 +3383,49 @@ ho_{f0}$.
 
 ---
 
-## 2026-10-06 - Quy Tắc 82: Khôi Phục Bản Backup, Khóa Tuyệt Đối 4 Hệ Thống Cốt Lõi & Tối Ưu Hóa Phản Ứng Biến Đổi Tức Thì Mô Phỏng 2D CAD Canvas
+## 2026-10-06 - Quy Tắc 83: Tự Động Khuyên Dùng Chiều Rộng Vành Răng $b$, Xuất DXF Tổng Hợp Duy Nhất, Bổ Sung Kích Thước Cắt $\Delta Z$, Đảo Ngửa Bánh 2 & Tọa Độ Mastercam (0,0,0)
 - **Yêu cầu trực tiếp từ SirPhuong**:
-  1. Khôi phục toàn bộ Web App về bản backup `BACKUP_MITCalc_Gear_20261006_000841.zip`.
-  2. Khóa bảo toàn tuyệt đối và không thay đổi bất kỳ thứ gì của 4 hệ thống cốt lõi:
-     - Tính toán hình học ISO 23509 (`bevel-calc-engine.js`).
-     - Xuất bản vẽ 2D CAD DXF (`bevel-dxf-exporter.js`).
-     - Xuất file 3D (`bevel-3d-exporter.js`).
-     - Mô hình và mô phỏng 3D WebGL Three.js (`bevel-3d-generator.js`, `bevel-3d-visualizer.js`).
-  3. Chỉ sửa duy nhất phần mô phỏng 2D CAD Canvas (`bevel-canvas.js`) do chưa biến đổi linh hoạt theo sự thay đổi của thông số mới nhập vào.
-- **Xác minh đối chuẩn bản backup (Byte-for-byte MD5 verification)**:
-  - `modules/bevel-gear/js/bevel-calc-engine.js`: **MATCH = True (Khớp 100% từng byte)**
-  - `modules/bevel-gear/js/engine/bevel-dxf-exporter.js`: **MATCH = True (Khớp 100% từng byte)**
-  - `modules/bevel-gear/js/engine/bevel-3d-exporter.js`: **MATCH = True (Khớp 100% từng byte)**
-  - `modules/bevel-gear/js/engine/bevel-3d-generator.js`: **MATCH = True (Khớp 100% từng byte)**
-  - `modules/bevel-gear/js/ui/bevel-3d-visualizer.js`: **MATCH = True (Khớp 100% từng byte)**
-- **Xử lý triệt để các rào chắn kỹ thuật của 2D CAD Canvas (`bevel-canvas.js`)**:
-  1. *Rào chắn chiều rộng vành răng và khoảng cách nón trong*: $b \le 0.45 R_e$ và $R_i = \max(2.0, R_e - b) > 0$. Triệt tiêu hiện tượng $R_i \le 0$ làm lật ngược đa giác nón qua đỉnh Apex $(0, 0)$ sang phía âm.
-  2. *Tự động xóa bộ nhớ phôi moay-ơ cũ theo chữ ký hình học*: So sánh `geomSignature = "${geom.z1}_${geom.z2}_${geom.mmn}_${geom.met}_${geom.b}_${geom.Sigma}"` trong `setGeometry()`. Khi phát hiện chữ ký thay đổi, tự động xóa sạch kích thước phôi cũ để moay-ơ co dãn tỷ lệ thuận chuẩn xác với thông số mới.
-  3. *Giới hạn cung góc rẻ quạt răng ảo Tredgold nhỏ ($z_1 \le 12$)*: Khống chế $\Delta\psi \le 117^\circ$ ($k_{\text{Limit}} \le 2$) và kẹp bán kính trong $r_{\text{InnerRim}} \ge 0.55 r_{vf}$. Triệt tiêu hoàn toàn hiện tượng rẻ quạt tự cắt và vòng cung đáy rãnh rơi lơ lửng.
-  4. *Bảo vệ an toàn tuyệt đối các lệnh `ctx.arc()`*: Bổ sung kiểm tra $r > 0$ và `Math.max(0.01, r)` trên toàn bộ vòng chia, vòng đỉnh, vòng đáy, vòng cơ sở và vòng bo dao $R_f$, triệt tiêu lỗi `IndexSizeError: The radius provided is negative`.
-  5. *Lọc giá trị nhập liệu trung gian trong UI (`bevel-ui.js`)*: Khi người dùng đang xóa trắng hoặc nhập $\le 0$ cho các thông số kích thước dương ($z_1, z_2, m_{mn}, b$), tạm ngưng tính toán trung gian, bảo vệ Canvas khỏi các trạng thái chia cho 0 hoặc NaN.
-  6. *Đồng bộ tức thì khi chuyển tab (`bevel-ui.js`)*: Tự động cập nhật `this.canvasController.setGeometry(this.lastGeom)` ngay khi nhấp vào Tab Mô Phỏng 2D Canvas hoặc bấm nút Chế độ 2D.
-- **Kết quả đo đạc & Kiểm thử tự động thực tế (`tools/test_2d_canvas_reactive.py`)**:
-  - Case 1: Mặc định $z_1 = 18, z_2 = 45, b = 117 \Rightarrow R_e = 242.33, R_i = 125.33 > 0$ (**PASS**).
-  - Case 2: Bộ số răng nhỏ $z_1 = 11, z_2 = 16, m_{et} = 8, b = 30 \Rightarrow R_e = 77.67, R_i = 47.67 > 0$ (**PASS**).
-  - Case 3: Bộ thông số mới $z_1 = 25, z_2 = 50, b = 45 \Rightarrow R_e = 223.61, R_i = 178.61 > 0$ (**PASS**).
-  - Tổng số lỗi console: **0 lỗi (100% Clean Run)**.
-  - Đóng gói single bundle: `modules/bevel-gear/js/bevel-engine.bundle.js` (434,404 ký tự) 100% offline, zero-CORS.
+  1. *Tự động tính chiều rộng vành răng $b$*: Giá trị này tự động thay đổi theo giá trị khuyên dùng ($b_{\text{rec}} = \text{round}(0.3458 \cdot R_e) \le b_{\max}$), sau đó người thiết kế có thể tự do sửa lại để bánh răng hài hòa. Bổ sung nút `[ ⚡ Khuyên dùng ]` (`#btn_rec_b`).
+  2. *Xuất 2D DXF*: Chỉ xuất 1 file DXF duy nhất tích hợp toàn bộ các bản vẽ 2D hiện tại.
+  3. *Khoảng cách giữa 2 điểm cắt trên trục Z*: Bổ sung kích thước $\Delta Z_{\text{cut}} = b / \cos\delta$ vào vị trí "CẶP RÃNH RĂNG ĐỒNG TÂM" (Cụm 3 Bánh 1 & Cụm 4 Bánh 2).
+  4. *Mô phỏng & Xuất 3D WebGL*:
+     - Đảo lại bánh răng 2: Ngửa lên ("ngửa lên" với răng hướng lên phía đỉnh Apex $(0, 0, 0)$ và moay-ơ ở đáy $Y < 0$).
+     - Bỏ lưới grid trong 3D để không bị rối mắt.
+     - Giao điểm chóp nón Apex của 2 bánh răng luôn cố định tại $(0, 0, 0)$.
+     - Tại $(0, 0, 0)$ vẽ hệ trục tọa độ Mastercam $(X, Y, Z)$ sắc nét (mũi tên đỏ $+X$, xanh lá $+Y$, xanh cyan $+Z$, chữ cái X, Y, Z, đường tâm chéo nâu, điểm gốc vàng).
+     - Giữ nguyên màu nền và màu sắc bánh răng ban đầu.
+     - Xuất mọi file 3D CAD (STEP, STL, OBJ, IGES) đều cố định đỉnh chóp nón tại $(0, 0, 0)$ và bảo toàn hướng ngửa lên của Bánh 2.
+- **Thực hiện kỹ thuật chi tiết**:
+  1. *Cơ chế thích ứng chiều rộng vành răng $b$*:
+     - Tích hợp cờ `this.isManualB = false` trong `bevel-ui.js`.
+     - Trong `calculate()`: Khi `!this.isManualB`, tự động tính $b_{\text{rec}} = \min(b_{\max}, \text{round}(0.3458 \cdot R_e \cdot 10)/10)$ và cập nhật `#inp_b` cũng như slider `#slider_b_Re`.
+     - Khi người dùng gõ vào ô `#inp_b` hoặc kéo slider: `this.isManualB = true`, bảo toàn tuyệt đối giá trị người dùng nhập.
+     - Khi thay đổi thông số hình học ($z_1, z_2, m_{mn}, i, \Sigma, \beta$, kiểu răng) hoặc bấm nút `[ ⚡ Khuyên dùng ]`: reset `this.isManualB = false`, $b$ tự động cập nhật hài hòa.
+  2. *Xuất 1 File Bản Vẽ DXF Tổng Hợp Duy Nhất (Single Unified DXF Release 12 AC1009)*:
+     - Tích hợp trong `generateUnifiedTredgoldDXF()` 6 Block hoàn chỉnh:
+       * **BLOCK 0**: Bản vẽ mặt cắt trục bổ dọc lắp ghép ISO 23509 ($X = -650, Y = 0$).
+       * **BLOCK 1**: Cặp ăn khớp 2D mặt ngoài nón ($R_e, m_{et}$).
+       * **BLOCK 2**: Cặp ăn khớp 2D mặt trong nón ($R_i, m_{it}$).
+       * **BLOCK 3**: Cặp rãnh răng đồng tâm Bánh 1 kèm kích thước $\Delta Z_{\text{cut}1} = b / \cos\delta_1$.
+       * **BLOCK 4**: Cặp rãnh răng đồng tâm Bánh 2 kèm kích thước $\Delta Z_{\text{cut}2} = b / \cos\delta_2$.
+       * **BLOCK 5**: Bảng thông số chế tạo gia công & hướng dẫn CAM SolidWorks/Mastercam.
+     - Thay thế menu dropdown bằng nút xuất trực tiếp duy nhất: `#btnExportDXFSec16Unified` (Mục 16.3) và `#expDxfUnifiedCanvas` (Thanh công cụ Canvas 2D).
+  3. *Hệ thống 3D WebGL Three.js & Xuất 3D CAD chuẩn Mastercam*:
+     - Loại bỏ `gridHelper` khỏi scene.
+     - Thêm `setupMastercamTrihedron()` dựng bộ trục tọa độ Mastercam tại gốc $(0, 0, 0)$.
+     - Đảo ngửa Bánh 2: Ma trận trực giao $X_{\text{world}} = X_{\text{local}}, Y_{\text{world}} = -Z_{\text{local}}, Z_{\text{world}} = Y_{\text{local}}$ ($\det = +1$). Moay-ơ nằm ở phía âm $Y < 0$, mặt răng hướng lên Apex $(0, 0, 0)$.
+     - Đồng bộ động học: `this.gearAngle = this.initialGearAngle + this.pinionAngle / this.gearRatio`.
+     - Đồng bộ hóa 100% dữ liệu xuất STEP, STL, OBJ, IGES qua `getExportTriangles()` và `getParametricData()` cố định Apex tại $(0, 0, 0)$.
+  4. *Khởi tạo linh hoạt (Zero ReadyState Freeze)*:
+     - Bổ sung kiểm tra `document.readyState === 'loading' ? DOMContentLoaded : launchApp()` trong cả `bevel-ui.js` và `index.html`.
+     - Đóng gói single bundle: `modules/bevel-gear/js/bevel-engine.bundle.js` (450,653 ký tự).
+- **Kết quả kiểm thử tự động toàn diện (`test_bevel_3d.py`)**:
+  - Tải trang: 0 lỗi Console / JavaScript.
+  - Bán kính lượn chân răng $R_f = 0.38 \cdot m_{mn}$: Khớp 100%.
+  - Lưới 3D Bánh dẫn 1 (106,704 tam giác) & Bánh bị dẫn 2 (266,760 tam giác) hiển thị xuất sắc.
+  - Tọa độ Apex $(0, 0, 0)$ và hướng ngửa Bánh 2 được kiểm chứng trực quan qua ảnh chụp thật `container3D_iso.png` và `container3D_front.png`.
+  - STEP, STL, DXF PASS 100%.
+
 
 
 

@@ -107,16 +107,99 @@ export class Bevel3DVisualizer {
         this.scene.add(this.pinionGroup);
         this.scene.add(this.gearPivot);
 
-        // 7. Grid helper at apex
-        this.gridHelper = new THREE.GridHelper(1000, 50, 0x334155, 0x1e293b);
-        this.gridHelper.position.set(0, 0, -50);
-        this.scene.add(this.gridHelper);
+        // 7. Mastercam-style Coordinate Trihedron at common apex (0, 0, 0)
+        this.setupMastercamTrihedron();
 
         // 8. Resize listener
         window.addEventListener('resize', () => this.onResize());
 
         // 9. Animation loop
         this.animate();
+    }
+
+    setupMastercamTrihedron() {
+        if (this.mastercamTrihedron) {
+            this.scene.remove(this.mastercamTrihedron);
+            this.mastercamTrihedron = null;
+        }
+
+        const triGroup = new THREE.Group();
+        triGroup.name = 'MastercamTrihedron';
+
+        const axisLen = 50.0;
+        const arrowHeadLen = 9.0;
+        const arrowHeadWidth = 3.5;
+
+        // Helper to create sharp high-res 2D canvas text sprite
+        const createTextSprite = (text, colorStr) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 128, 128);
+            ctx.font = 'bold 84px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = colorStr;
+            ctx.fillText(text, 64, 64);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, depthTest: false, depthWrite: false });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(15, 15, 1);
+            return sprite;
+        };
+
+        // 1. Subtle Mastercam crossing centerlines through Apex (0, 0, 0)
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xb45309, transparent: true, opacity: 0.60 });
+        const crossExtent = 250.0;
+
+        const ptsX = [new THREE.Vector3(-crossExtent, 0, 0), new THREE.Vector3(crossExtent, 0, 0)];
+        const geoX = new THREE.BufferGeometry().setFromPoints(ptsX);
+        triGroup.add(new THREE.Line(geoX, lineMat));
+
+        const ptsY = [new THREE.Vector3(0, -crossExtent, 0), new THREE.Vector3(0, crossExtent, 0)];
+        const geoY = new THREE.BufferGeometry().setFromPoints(ptsY);
+        triGroup.add(new THREE.Line(geoY, lineMat));
+
+        const ptsZ = [new THREE.Vector3(0, 0, -crossExtent), new THREE.Vector3(0, 0, crossExtent)];
+        const geoZ = new THREE.BufferGeometry().setFromPoints(ptsZ);
+        triGroup.add(new THREE.Line(geoZ, lineMat));
+
+        // 2. Solid Directional Arrow Axes at (0, 0, 0)
+        // X Axis: Red (#ef4444)
+        const dirX = new THREE.Vector3(1, 0, 0);
+        const arrowX = new THREE.ArrowHelper(dirX, new THREE.Vector3(0, 0, 0), axisLen, 0xef4444, arrowHeadLen, arrowHeadWidth);
+        triGroup.add(arrowX);
+        const spriteX = createTextSprite('X', '#ef4444');
+        spriteX.position.set(axisLen + 9, 0, 0);
+        triGroup.add(spriteX);
+
+        // Y Axis: Green (#22c55e)
+        const dirY = new THREE.Vector3(0, 1, 0);
+        const arrowY = new THREE.ArrowHelper(dirY, new THREE.Vector3(0, 0, 0), axisLen, 0x22c55e, arrowHeadLen, arrowHeadWidth);
+        triGroup.add(arrowY);
+        const spriteY = createTextSprite('Y', '#22c55e');
+        spriteY.position.set(0, axisLen + 9, 0);
+        triGroup.add(spriteY);
+
+        // Z Axis: Cyan (#06b6d4)
+        const dirZ = new THREE.Vector3(0, 0, 1);
+        const arrowZ = new THREE.ArrowHelper(dirZ, new THREE.Vector3(0, 0, 0), axisLen, 0x06b6d4, arrowHeadLen, arrowHeadWidth);
+        triGroup.add(arrowZ);
+        const spriteZ = createTextSprite('Z', '#06b6d4');
+        spriteZ.position.set(0, 0, axisLen + 9);
+        triGroup.add(spriteZ);
+
+        // 3. Central Origin Marker Dot at (0, 0, 0)
+        const originGeo = new THREE.SphereGeometry(1.6, 16, 16);
+        const originMat = new THREE.MeshBasicMaterial({ color: 0xfacc15, depthTest: false }); // Yellow origin point
+        const originMesh = new THREE.Mesh(originGeo, originMat);
+        originMesh.position.set(0, 0, 0);
+        triGroup.add(originMesh);
+
+        this.mastercamTrihedron = triGroup;
+        this.scene.add(this.mastercamTrihedron);
     }
 
     setupLighting() {
@@ -367,13 +450,13 @@ export class Bevel3DVisualizer {
             geo1.setAttribute('aTcaParam', new THREE.BufferAttribute(this.mesh1Data.tcaParams, 3));
         }
         // Analytical proper orthogonal transformation matrix for Pinion 1:
-        // Maps local (x, y, z) -> world (z, x, y): local +Z (pinion axis) -> World +X
-        // Pitch generator in local XY plane -> World XY pitch contact line (Z = 0)
+        // Maps local (x, y, z) -> world (z, -x, -y): local +Z (pinion axis) -> World +X
+        // Pitch generator in local XY plane -> World XY pitch contact line (Z = 0, Y < 0)
         const mPinion = new THREE.Matrix4().set(
-            0, 0, 1, 0,
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 0, 1
+            0,  0, 1, 0,
+           -1,  0, 0, 0,
+            0, -1, 0, 0,
+            0,  0, 0, 1
         );
         geo1.applyMatrix4(mPinion);
 
@@ -399,13 +482,14 @@ export class Bevel3DVisualizer {
         }
 
         // Analytical proper orthogonal transformation matrix for Gear 2:
-        // Maps local (x, y, z) -> world (x, z, -y): local +Z (gear axis) -> World +Y
-        // Pitch generator in local XY plane -> World XY pitch contact line (Z = 0)
+        // Maps local (x, y, z) -> world (x, -z, y): local +Z (gear axis) -> World -Y
+        // Hub is at bottom (Y < 0), teeth face UP towards apex V(0,0,0) ("ngửa lên")
+        // Pitch generator in local XY plane -> World XY pitch contact line (Z = 0, Y < 0)
         const mGear = new THREE.Matrix4().set(
-            1,  0, 0, 0,
-            0,  0, 1, 0,
-            0, -1, 0, 0,
-            0,  0, 0, 1
+            1,  0,  0, 0,
+            0,  0, -1, 0,
+            0,  1,  0, 0,
+            0,  0,  0, 1
         );
 
         // 3. Gear Solid Mesh
@@ -441,7 +525,7 @@ export class Bevel3DVisualizer {
 
         // Rotate gearPivot for general shaft angle Sigma:
         const sigma = this.sigmaRad || (Math.PI / 2.0);
-        this.gearPivot.rotation.z = sigma - Math.PI / 2.0;
+        this.gearPivot.rotation.z = -(sigma - Math.PI / 2.0);
 
     }
 
@@ -464,7 +548,7 @@ export class Bevel3DVisualizer {
             const step = this.rotSpeedBase * this.animSpeed * (this.animDirection || 1);
             this.pinionAngle += step;
             // Kinematic conjugate synchronization:
-            this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
+            this.gearAngle = this.initialGearAngle + this.pinionAngle / this.gearRatio;
             this.updateGearRotations();
         }
 
@@ -571,12 +655,12 @@ export class Bevel3DVisualizer {
         const Rm = this.geom ? (parseFloat(this.geom.Rm) || (Re * 0.8)) : (Re * 0.8);
         const delta1 = this.geom ? (parseFloat(this.geom.delta1) || (Math.PI / 4)) : (Math.PI / 4);
         const mx = Rm * Math.cos(delta1);
-        const my = Rm * Math.sin(delta1);
+        const my = -Rm * Math.sin(delta1);
 
-        const cenX = mx * 0.6;
-        const cenY = my * 0.8;
+        const cenX = mx * 0.5;
+        const cenY = my * 0.5;
         const cenZ = 0;
-        const viewDist = Re * 2.2;
+        const viewDist = Re * 2.5;
 
         switch (preset) {
             case 'front': // Axial Section view (looking straight at XY plane from +Z)
@@ -589,9 +673,9 @@ export class Bevel3DVisualizer {
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
-            case 'gear': // Looking along Y axis from +Y towards Gear
-                this.camera.position.set(cenX, cenY + viewDist * 1.1, cenZ);
-                this.camera.up.set(0, 0, -1);
+            case 'gear': // Looking along Y axis from -Y towards Gear
+                this.camera.position.set(cenX, cenY - viewDist * 1.1, cenZ);
+                this.camera.up.set(0, 0, 1);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'top': // Top view (looking down Y axis)
@@ -619,7 +703,7 @@ export class Bevel3DVisualizer {
                 const sinD_m = Math.sin(delta1);
                 this.camera.position.set(
                     mx + 95 * cosD_m - 20 * sinD_m,
-                    my + 95 * sinD_m + 20 * cosD_m,
+                    my - 95 * sinD_m + 20 * cosD_m,
                     55
                 );
                 this.camera.up.set(0, 0, 1);
@@ -627,7 +711,7 @@ export class Bevel3DVisualizer {
                 break;
             case 'iso':
             default:
-                this.camera.position.set(cenX + viewDist * 0.65, cenY + viewDist * 0.45, cenZ + viewDist * 0.70);
+                this.camera.position.set(cenX + viewDist * 0.65, cenY + viewDist * 0.65, cenZ + viewDist * 0.70);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
@@ -749,23 +833,24 @@ export class Bevel3DVisualizer {
             hand: -1, gearingType, surfaceOnly
         }, resOpts));
 
-        // Pinion: Local (x, y, z) -> World (z, x, y)
+        // Pinion: Local (x, y, z) -> World (z, -x, -y)
         const tPinion = m1.rawTriangles.map(([p1, p2, p3, n]) => [
-            [p1[2], p1[0], p1[1]],
-            [p2[2], p2[0], p2[1]],
-            [p3[2], p3[0], p3[1]],
-            [n[2], n[0], n[1]]
+            [p1[2], -p1[0], -p1[1]],
+            [p2[2], -p2[0], -p2[1]],
+            [p3[2], -p3[0], -p3[1]],
+            [n[2], -n[0], -n[1]]
         ]);
 
-        // Gear: Local (x, y, z) -> (x, z, -y), then rotate Y by initialGearAngle, then rotate Z by (sigma - 90 deg)
+        // Gear: Local (x, y, z) -> (x, -z, y), then rotate Y by initialGearAngle, then rotate Z by -(sigma - 90 deg)
+        // Hub is at bottom (Y < 0), teeth face UP towards apex (0,0,0) ("ngửa lên")
         const phi = this.initialGearAngle;
         const cosP = Math.cos(phi), sinP = Math.sin(phi);
-        const rotZ = (this.sigmaRad || (Math.PI / 2.0)) - Math.PI / 2.0;
+        const rotZ = -((this.sigmaRad || (Math.PI / 2.0)) - Math.PI / 2.0);
         const cosZ = Math.cos(rotZ), sinZ = Math.sin(rotZ);
 
         function xformGear(p) {
-            // 1. Base orientation: local X -> X, local Z -> Y, local Y -> -Z
-            const bx = p[0], by = p[2], bz = -p[1];
+            // 1. Base orientation: local X -> X, local Z -> -Y, local Y -> Z
+            const bx = p[0], by = -p[2], bz = p[1];
             // 2. Rotate around Y by phi (initial conjugate phase)
             const rx = bx * cosP + bz * sinP;
             const ry = by;
@@ -935,11 +1020,11 @@ export class Bevel3DVisualizer {
         const data1 = Bevel3DGenerator.getBevelParametricData(base1);
         const data2 = Bevel3DGenerator.getBevelParametricData(base2);
 
-        // Pinion 1: Local (x, y, z) -> World (z, x, y)
+        // Pinion 1: Local (x, y, z) -> World (z, -x, -y)
         const trPinionSurfaces = [];
         data1.surfaces.forEach(s => {
             const trGrid = s.grid.map(row => row.map(pt => [
-                pt[2], pt[0], pt[1]
+                pt[2], -pt[0], -pt[1]
             ]));
             trPinionSurfaces.push({
                 label: `PINION_${s.label}`,
@@ -952,11 +1037,11 @@ export class Bevel3DVisualizer {
         // Gear 2: Local (x, y, z) -> xformGear(p)
         const phi = (this.initialGearAngle !== undefined) ? this.initialGearAngle : 0.0;
         const cosP = Math.cos(phi), sinP = Math.sin(phi);
-        const rotZ = (this.sigmaRad || (Math.PI / 2.0)) - Math.PI / 2.0;
+        const rotZ = -((this.sigmaRad || (Math.PI / 2.0)) - Math.PI / 2.0);
         const cosZ = Math.cos(rotZ), sinZ = Math.sin(rotZ);
 
         const xformGear = (p) => {
-            const bx = p[0], by = p[2], bz = -p[1];
+            const bx = p[0], by = -p[2], bz = p[1];
             const rx = bx * cosP + bz * sinP;
             const ry = by;
             const rz = -bx * sinP + bz * cosP;

@@ -3553,7 +3553,7 @@ const BevelDxfExporter = {
             '0', 'SECTION', '2', 'HEADER',
             '9', '$ACADVER', '1', 'AC1009',
             '9', '$INSBASE', '10', '0.0', '20', '0.0', '30', '0.0',
-            '9', '$EXTMIN', '10', '-600.0', '20', '-600.0', '30', '0.0',
+            '9', '$EXTMIN', '10', '-1200.0', '20', '-600.0', '30', '0.0',
             '9', '$EXTMAX', '10', '1800.0', '20', '1000.0', '30', '0.0',
             '9', '$DWGCODEPAGE', '3', 'ANSI_1252',
             '0', 'ENDSEC'
@@ -3579,8 +3579,15 @@ const BevelDxfExporter = {
             '0', 'LTYPE', '2', 'DASHED', '70', '0', '3', 'Dashed __ __ __ __', '72', '65', '73', '2', '40', '19.05',
             '49', '12.7', '49', '-6.35',
             '0', 'ENDTAB',
-            '0', 'TABLE', '2', 'LAYER', '70', '22',
+            '0', 'TABLE', '2', 'LAYER', '70', '29',
             '0', 'LAYER', '2', '0', '70', '0', '62', '7', '6', 'CONTINUOUS',
+            '0', 'LAYER', '2', 'GEAR1_PINION', '70', '0', '62', '4', '6', 'CONTINUOUS',     // Cyan
+            '0', 'LAYER', '2', 'GEAR2_WHEEL', '70', '0', '62', '30', '6', 'CONTINUOUS',     // Orange
+            '0', 'LAYER', '2', 'ROOT_CIRCLE', '70', '0', '62', '3', '6', 'DASHED',          // Green
+            '0', 'LAYER', '2', 'PITCH_CONES', '70', '0', '62', '2', '6', 'CENTER',          // Yellow
+            '0', 'LAYER', '2', 'CENTER_LINES', '70', '0', '62', '1', '6', 'CENTER',         // Red
+            '0', 'LAYER', '2', 'SHAFTS_BORE', '70', '0', '62', '7', '6', 'CONTINUOUS',      // White
+            '0', 'LAYER', '2', 'HATCH', '70', '0', '62', '8', '6', 'CONTINUOUS',            // Gray
             '0', 'LAYER', '2', 'MESH_OUTER_PINION', '70', '0', '62', '4', '6', 'CONTINUOUS', // Cyan
             '0', 'LAYER', '2', 'MESH_OUTER_GEAR', '70', '0', '62', '30', '6', 'CONTINUOUS',   // Orange
             '0', 'LAYER', '2', 'MESH_INNER_PINION', '70', '0', '62', '4', '6', 'CONTINUOUS', // Cyan
@@ -3672,6 +3679,45 @@ const BevelDxfExporter = {
                 '40', height.toFixed(2),
                 '1', String(text)
             );
+        };
+
+        const addPolygonHatch = (poly, angleRad, step, layer = 'HATCH') => {
+            if (!poly || poly.length < 3) return;
+            const cosA = Math.cos(angleRad), sinA = Math.sin(angleRad);
+            const rot = poly.map(p => ({
+                u: p.x * cosA + p.y * sinA,
+                v: -p.x * sinA + p.y * cosA
+            }));
+            let vMin = Infinity, vMax = -Infinity;
+            for (const p of rot) {
+                if (p.v < vMin) vMin = p.v;
+                if (p.v > vMax) vMax = p.v;
+            }
+            for (let v = vMin + step * 0.5; v < vMax; v += step) {
+                const uInts = [];
+                for (let i = 0; i < rot.length; i++) {
+                    const a = rot[i], b = rot[(i + 1) % rot.length];
+                    if ((a.v <= v && b.v > v) || (b.v <= v && a.v > v)) {
+                        const t = (v - a.v) / (b.v - a.v);
+                        uInts.push(a.u + t * (b.u - a.u));
+                    }
+                }
+                uInts.sort((a, b) => a - b);
+                for (let k = 0; k + 1 < uInts.length; k += 2) {
+                    const u1 = uInts[k], u2 = uInts[k + 1];
+                    if (Math.abs(u2 - u1) > 1e-3) {
+                        const x1 = u1 * cosA - v * sinA, y1 = u1 * sinA + v * cosA;
+                        const x2 = u2 * cosA - v * sinA, y2 = u2 * sinA + v * cosA;
+                        addLine(x1, y1, x2, y2, layer);
+                    }
+                }
+            }
+        };
+
+        const addLinearDim = (x1, y1, x2, y2, label, textH = 3.5, layer = 'DIMENSIONS') => {
+            addLine(x1, y1, x2, y2, layer);
+            const mx = 0.5 * (x1 + x2), my = 0.5 * (y1 + y2);
+            addText(label, mx - label.length * textH * 0.25, my + textH * 0.4, textH, layer);
         };
 
         // Extract geometry
@@ -3977,7 +4023,56 @@ const BevelDxfExporter = {
             return { fullPoly, minPsi, maxPsi, tipArcs, toPt };
         };
 
-        // Spacing
+        // Common parameters for 2D Axial Cross-Section Assembly (Block 0)
+        const bp = (typeof BevelGearCanvas !== 'undefined' && BevelGearCanvas.computeBlankAndHubParams)
+            ? BevelGearCanvas.computeBlankAndHubParams(g, g.hubOverrides)
+            : null;
+
+        const sigmaRad = bp ? bp.sigmaRad : (((parseFloat(g.Sigma_deg) || 90.0) * Math.PI) / 180.0);
+        const s1 = Math.sin(delta1), c1 = Math.cos(delta1);
+        const s2 = Math.sin(delta2), c2 = Math.cos(delta2);
+
+        const rBore1 = bp ? bp.rBore1 : (2.5 * mmn);
+        const rBore2 = bp ? bp.rBore2 : (5.0 * mmn);
+        const z_toe_hub1 = bp ? bp.z_toe_hub1 : (Ri * c1 + (hfi1 + 0.48 * mmn) * s1);
+        const r_toe_rim1 = bp ? bp.r_toe_rim1 : Math.max(rBore1 + 2.0, Ri * s1 - (hfi1 + 0.48 * mmn) * c1);
+        const z_heel_rim1 = bp ? bp.z_heel_rim1 : (Re * c1 + (hfe1 + 1.33 * mmn) * s1);
+        const r_heel_rim1 = bp ? bp.r_heel_rim1 : Math.max(rBore1 + 5.0, Re * s1 - (hfe1 + 1.33 * mmn) * c1);
+        const z_tip_max1 = bp ? bp.z_tip_max1 : (Re * c1 - hae1 * s1);
+        const rHub1 = bp ? bp.rHub1 : (5.75 * mmn);
+        const z_hub_end1 = bp ? bp.z_hub_end1 : (z_heel_rim1 + 4.5 * mmn);
+        const LApex1 = bp ? bp.LApex1 : z_hub_end1;
+        const LTip1 = bp ? bp.LTip1 : (z_hub_end1 - z_tip_max1);
+
+        const z_toe_hub2 = bp ? bp.z_toe_hub2 : (Ri * c2 + (hfi2 + 0.59 * mmn) * s2);
+        const r_toe_rim2 = bp ? bp.r_toe_rim2 : Math.max(rBore2 + 2.0, Ri * s2 - (hfi2 + 0.59 * mmn) * c2);
+        const z_heel_rim2 = bp ? bp.z_heel_rim2 : (Re * c2 + (hfe2 + 2.0 * mmn) * s2);
+        const r_heel_rim2 = bp ? bp.r_heel_rim2 : Math.max(rBore2 + 5.0, Re * s2 - (hfe2 + 2.0 * mmn) * c2);
+        const z_tip_max2 = bp ? bp.z_tip_max2 : (Re * c2 - hae2 * s2);
+        const rHub2 = bp ? bp.rHub2 : (9.0 * mmn);
+        const z_hub_end2 = bp ? bp.z_hub_end2 : (z_heel_rim2 + 4.0 * mmn);
+        const LApex2 = bp ? bp.LApex2 : z_hub_end2;
+        const LTip2 = bp ? bp.LTip2 : (z_hub_end2 - z_tip_max2);
+
+        const dae1 = g.dae1 || (2.0 * (Re * s1 + hae1 * c1));
+        const dae2 = g.dae2 || (2.0 * (Re * s2 + hae2 * c2));
+        const hatchStep = Math.max(2.5, 0.75 * mmn);
+
+        // 3D Spatial parameters for Concentric Slot Planes & Mastercam Loft Cut
+        const cosD1 = Math.cos(delta1);
+        const cosD2 = Math.cos(delta2);
+        const deltaZ_cut1 = b / cosD1;
+        const deltaZ_cut2 = b / cosD2;
+        const Ze1_star = -Re / cosD1;
+        const Zi1_star = -Ri / cosD1;
+        const Ze2_star = -Re / cosD2;
+        const Zi2_star = -Ri / cosD2;
+        const deltaZ_pitch1 = b * cosD1;
+        const deltaZ_pitch2 = b * cosD2;
+
+        // Spacing coordinates across all blocks
+        const cx_axial = -650;
+        const cy_axial = 0;
         const cx_mesh_out = 0;
         const cy_mesh_out = 0;
         const cx_mesh_in = cx_mesh_out + 350;
@@ -3986,6 +4081,118 @@ const BevelDxfExporter = {
         const cy_slot1 = 0;
         const cx_slot2 = cx_slot1 + 220;
         const cy_slot2 = 0;
+
+        // =========================================================================
+        // BLOCK 0: BẢN VẼ MẶT CẮT TRỤC BỔ DỌC KỸ THUẬT LẮP GHÉP CẶP BÁNH RĂNG CÔN (ISO 23509)
+        // =========================================================================
+        const drawAxialPinion = (offX = 0, offY = 0) => {
+            const layer = 'GEAR1_PINION';
+            const buildHalf = (signY) => {
+                const toe_root     = { x: offX + Ri * c1 + hfi1 * s1, y: offY + signY * (Ri * s1 - hfi1 * c1) };
+                const toe_tip      = { x: offX + Ri * c1 - hai1 * s1, y: offY + signY * (Ri * s1 + hai1 * c1) };
+                const heel_tip     = { x: offX + Re * c1 - hae1 * s1, y: offY + signY * (Re * s1 + hae1 * c1) };
+                const heel_root    = { x: offX + Re * c1 + hfe1 * s1, y: offY + signY * (Re * s1 - hfe1 * c1) };
+                const heel_rim     = { x: offX + z_heel_rim1,         y: offY + signY * r_heel_rim1 };
+                const hub_step     = { x: offX + z_heel_rim1,         y: offY + signY * rHub1 };
+                const hub_end_out  = { x: offX + z_hub_end1,          y: offY + signY * rHub1 };
+                const hub_end_bore = { x: offX + z_hub_end1,          y: offY + signY * rBore1 };
+                const toe_bore     = { x: offX + z_toe_hub1,          y: offY + signY * rBore1 };
+                const toe_rim      = { x: offX + z_toe_hub1,          y: offY + signY * r_toe_rim1 };
+
+                const toothPoly = [toe_root, toe_tip, heel_tip, heel_root];
+                addPolyline(toothPoly, layer, true);
+                addLine(toe_root.x, toe_root.y, heel_root.x, heel_root.y, 'ROOT_CIRCLE');
+
+                const bodyPoly = [
+                    toe_root, heel_root, heel_rim, hub_step,
+                    hub_end_out, hub_end_bore, toe_bore, toe_rim
+                ];
+                addPolyline(bodyPoly, layer, true);
+                addPolygonHatch(bodyPoly, Math.PI / 4, hatchStep, 'HATCH');
+
+                return { toe_bore, hub_end_bore, hub_end_out, heel_tip };
+            };
+
+            const topH = buildHalf(+1);
+            const botH = buildHalf(-1);
+
+            addLine(topH.toe_bore.x, topH.toe_bore.y, botH.toe_bore.x, botH.toe_bore.y, 'SHAFTS_BORE');
+            addLine(topH.hub_end_bore.x, topH.hub_end_bore.y, botH.hub_end_bore.x, botH.hub_end_bore.y, 'SHAFTS_BORE');
+
+            addLine(offX, offY, offX + Re * c1 * 1.08, offY + Re * s1 * 1.08, 'PITCH_CONES');
+            addLine(offX, offY, offX + Re * c1 * 1.08, offY - Re * s1 * 1.08, 'PITCH_CONES');
+            addLine(offX - 25, offY, offX + z_hub_end1 + 35, offY, 'CENTER_LINES');
+
+            addLinearDim(offX + z_hub_end1 + 18, offY - rHub1, offX + z_hub_end1 + 18, offY + rHub1, `dm1=${(2 * rHub1).toFixed(1)}`, 3.2);
+            addLinearDim(offX + z_hub_end1 + 45, offY - dae1 / 2, offX + z_hub_end1 + 45, offY + dae1 / 2, `dae1=${dae1.toFixed(1)}`, 3.2);
+            addLinearDim(offX + z_tip_max1, offY - dae1 / 2 - 18, offX + z_hub_end1, offY - dae1 / 2 - 18, `L_Tip1=${LTip1.toFixed(1)}`, 3.2);
+            addLinearDim(offX, offY - dae1 / 2 - 34, offX + z_hub_end1, offY - dae1 / 2 - 34, `L_Apex1=${LApex1.toFixed(1)}`, 3.2);
+        };
+
+        const drawAxialGear = (offX = 0, offY = 0) => {
+            const layer = 'GEAR2_WHEEL';
+            const uAx2 = { x: Math.cos(sigmaRad), y: Math.sin(sigmaRad) };
+            const uRad2 = { x: Math.sin(sigmaRad), y: -Math.cos(sigmaRad) };
+            const toGW = (zL, rL) => ({
+                x: offX + zL * uAx2.x + rL * uRad2.x,
+                y: offY + zL * uAx2.y + rL * uRad2.y
+            });
+
+            const buildHalf = (signR) => {
+                const toe_root     = toGW(Ri * c2 + hfi2 * s2, signR * (Ri * s2 - hfi2 * c2));
+                const toe_tip      = toGW(Ri * c2 - hai2 * s2, signR * (Ri * s2 + hai2 * c2));
+                const heel_tip     = toGW(Re * c2 - hae2 * s2, signR * (Re * s2 + hae2 * c2));
+                const heel_root    = toGW(Re * c2 + hfe2 * s2, signR * (Re * s2 - hfe2 * c2));
+                const heel_rim     = toGW(z_heel_rim2,         signR * r_heel_rim2);
+                const hub_step     = toGW(z_heel_rim2,         signR * rHub2);
+                const hub_end_out  = toGW(z_hub_end2,          signR * rHub2);
+                const hub_end_bore = toGW(z_hub_end2,          signR * rBore2);
+                const toe_bore     = toGW(z_toe_hub2,          signR * rBore2);
+                const toe_rim      = toGW(z_toe_hub2,          signR * r_toe_rim2);
+
+                const toothPoly = [toe_root, toe_tip, heel_tip, heel_root];
+                addPolyline(toothPoly, layer, true);
+                addLine(toe_root.x, toe_root.y, heel_root.x, heel_root.y, 'ROOT_CIRCLE');
+
+                const bodyPoly = [
+                    toe_root, heel_root, heel_rim, hub_step,
+                    hub_end_out, hub_end_bore, toe_bore, toe_rim
+                ];
+                addPolyline(bodyPoly, layer, true);
+                addPolygonHatch(bodyPoly, -Math.PI / 4, hatchStep, 'HATCH');
+
+                return { toe_bore, hub_end_bore, hub_end_out, heel_tip };
+            };
+
+            const rightH = buildHalf(+1);
+            const leftH  = buildHalf(-1);
+
+            addLine(rightH.toe_bore.x, rightH.toe_bore.y, leftH.toe_bore.x, leftH.toe_bore.y, 'SHAFTS_BORE');
+            addLine(rightH.hub_end_bore.x, rightH.hub_end_bore.y, leftH.hub_end_bore.x, leftH.hub_end_bore.y, 'SHAFTS_BORE');
+
+            const pPitchR = toGW(Re * c2 * 1.08, +Re * s2 * 1.08);
+            const pPitchL = toGW(Re * c2 * 1.08, -Re * s2 * 1.08);
+            addLine(offX, offY, pPitchR.x, pPitchR.y, 'PITCH_CONES');
+            addLine(offX, offY, pPitchL.x, pPitchL.y, 'PITCH_CONES');
+            const pAxisStart = toGW(-25, 0);
+            const pAxisEnd   = toGW(z_hub_end2 + 35, 0);
+            addLine(pAxisStart.x, pAxisStart.y, pAxisEnd.x, pAxisEnd.y, 'CENTER_LINES');
+
+            const pDmL = toGW(z_hub_end2 + 16, -rHub2), pDmR = toGW(z_hub_end2 + 16, +rHub2);
+            addLinearDim(pDmL.x, pDmL.y, pDmR.x, pDmR.y, `dm2=${(2 * rHub2).toFixed(1)}`, 3.2);
+            const pDaeL = toGW(z_hub_end2 + 40, -dae2 / 2), pDaeR = toGW(z_hub_end2 + 40, +dae2 / 2);
+            addLinearDim(pDaeL.x, pDaeL.y, pDaeR.x, pDaeR.y, `dae2=${dae2.toFixed(1)}`, 3.2);
+            const pLTip1 = toGW(z_tip_max2, -dae2 / 2 - 18), pLTip2 = toGW(z_hub_end2, -dae2 / 2 - 18);
+            addLinearDim(pLTip1.x, pLTip1.y, pLTip2.x, pLTip2.y, `L_Tip2=${LTip2.toFixed(1)}`, 3.2);
+            const pLAp1 = toGW(0, -dae2 / 2 - 34), pLAp2 = toGW(z_hub_end2, -dae2 / 2 - 34);
+            addLinearDim(pLAp1.x, pLAp1.y, pLAp2.x, pLAp2.y, `L_Apex2=${LApex2.toFixed(1)}`, 3.2);
+        };
+
+        drawAxialPinion(cx_axial, cy_axial);
+        drawAxialGear(cx_axial, cy_axial);
+
+        addText('CUM 0: BAN VE MAT CAT TRUC BO DOC BO TRUYEN BANH RANG CON (ISO 23509 AXIAL ASSEMBLY)', cx_axial - 30, Math.max(rHub2 * 2, dae2 / 2) + 75, 4.2, 'MFG_TABLE');
+        addText(`Goc dinh non Apex V(${cx_axial}, 0) | Goc truc Sigma = ${(sigmaRad * 180 / Math.PI).toFixed(2)} deg | Hatching ISO 128`, cx_axial - 30, Math.max(rHub2 * 2, dae2 / 2) + 65, 3.2, 'MFG_TABLE');
 
         // =========================================================================
         // BLOCK 1: CẶP ĂN KHỚP 2D MẶT NGOÀI (Outer Cone Re, met)
@@ -4095,6 +4302,8 @@ const BevelDxfExporter = {
         addText('CUM 3: CAP RANH RANG DONG TAM BANH DAN 1 (Pinion 1 Slots: R & R=0)', cx_slot1 - 95, rvae1 + 45, 4.0, 'MFG_TABLE');
         addText(`Goc non chia delta1 = ${(delta1 * 180 / Math.PI).toFixed(4)} deg`, cx_slot1 - 95, rvae1 + 35, 3.2, 'MFG_TABLE');
         addText(`Co 2 Layer: Layer *_R (bo cung R=0.38*m) & Layer *_R0 (day vuong R=0)`, cx_slot1 - 95, rvae1 + 25, 3.0, 'MFG_TABLE');
+        addText(`Khoang cach giua 2 diem cat cua 2 mat phang tren truc Z: delta_Z_cut1 = b / cos(delta1) = ${deltaZ_cut1.toFixed(3)} mm`, cx_slot1 - 95, rvae1 + 15, 3.2, 'DIMENSIONS');
+        addLinearDim(cx_slot1 + 75, cy_slot1 + rvae1, cx_slot1 + 75, cy_slot1 + rvae1 - deltaZ_cut1, `delta_Z_cut1=${deltaZ_cut1.toFixed(3)}`, 3.0, 'DIMENSIONS');
 
         // =========================================================================
         // BLOCK 4: CẶP RÃNH RĂNG ĐỒNG TÂM BÁNH BỊ DẪN 2 (Gear 2 Slots: R & R=0)
@@ -4131,21 +4340,12 @@ const BevelDxfExporter = {
         addText('CUM 4: CAP RANH RANG DONG TAM BANH BI DAN 2 (Gear 2 Slots: R & R=0)', cx_slot2 - 95, rvae2 + 45, 4.0, 'MFG_TABLE');
         addText(`Goc non chia delta2 = ${(delta2 * 180 / Math.PI).toFixed(4)} deg`, cx_slot2 - 95, rvae2 + 35, 3.2, 'MFG_TABLE');
         addText(`Co 2 Layer: Layer *_R (bo cung R=0.38*m) & Layer *_R0 (day vuong R=0)`, cx_slot2 - 95, rvae2 + 25, 3.0, 'MFG_TABLE');
+        addText(`Khoang cach giua 2 diem cat cua 2 mat phang tren truc Z: delta_Z_cut2 = b / cos(delta2) = ${deltaZ_cut2.toFixed(3)} mm`, cx_slot2 - 95, rvae2 + 15, 3.2, 'DIMENSIONS');
+        addLinearDim(cx_slot2 + 75, cy_slot2 + rvae2, cx_slot2 + 75, cy_slot2 + rvae2 - deltaZ_cut2, `delta_Z_cut2=${deltaZ_cut2.toFixed(3)}`, 3.0, 'DIMENSIONS');
 
         // =========================================================================
         // BLOCK 5: BẢNG THÔNG SỐ CHẾ TẠO & HƯỚNG DẪN DỰNG HÌNH SOLIDWORKS / MASTERCAM
         // =========================================================================
-        const cosD1 = Math.cos(delta1);
-        const cosD2 = Math.cos(delta2);
-        const deltaZ_cut1 = b / cosD1;
-        const deltaZ_cut2 = b / cosD2;
-        const Ze1_star = -Re / cosD1;
-        const Zi1_star = -Ri / cosD1;
-        const Ze2_star = -Re / cosD2;
-        const Zi2_star = -Ri / cosD2;
-        const deltaZ_pitch1 = b * cosD1;
-        const deltaZ_pitch2 = b * cosD2;
-
         const tblX = -120;
         let tblY = -rve1 - 60;
         const rowH = 7.5;
@@ -6992,16 +7192,99 @@ class Bevel3DVisualizer {
         this.scene.add(this.pinionGroup);
         this.scene.add(this.gearPivot);
 
-        // 7. Grid helper at apex
-        this.gridHelper = new THREE.GridHelper(1000, 50, 0x334155, 0x1e293b);
-        this.gridHelper.position.set(0, 0, -50);
-        this.scene.add(this.gridHelper);
+        // 7. Mastercam-style Coordinate Trihedron at common apex (0, 0, 0)
+        this.setupMastercamTrihedron();
 
         // 8. Resize listener
         window.addEventListener('resize', () => this.onResize());
 
         // 9. Animation loop
         this.animate();
+    }
+
+    setupMastercamTrihedron() {
+        if (this.mastercamTrihedron) {
+            this.scene.remove(this.mastercamTrihedron);
+            this.mastercamTrihedron = null;
+        }
+
+        const triGroup = new THREE.Group();
+        triGroup.name = 'MastercamTrihedron';
+
+        const axisLen = 50.0;
+        const arrowHeadLen = 9.0;
+        const arrowHeadWidth = 3.5;
+
+        // Helper to create sharp high-res 2D canvas text sprite
+        const createTextSprite = (text, colorStr) => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 128;
+            canvas.height = 128;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, 128, 128);
+            ctx.font = 'bold 84px Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = colorStr;
+            ctx.fillText(text, 64, 64);
+            const texture = new THREE.CanvasTexture(canvas);
+            texture.needsUpdate = true;
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, depthTest: false, depthWrite: false });
+            const sprite = new THREE.Sprite(spriteMaterial);
+            sprite.scale.set(15, 15, 1);
+            return sprite;
+        };
+
+        // 1. Subtle Mastercam crossing centerlines through Apex (0, 0, 0)
+        const lineMat = new THREE.LineBasicMaterial({ color: 0xb45309, transparent: true, opacity: 0.60 });
+        const crossExtent = 250.0;
+
+        const ptsX = [new THREE.Vector3(-crossExtent, 0, 0), new THREE.Vector3(crossExtent, 0, 0)];
+        const geoX = new THREE.BufferGeometry().setFromPoints(ptsX);
+        triGroup.add(new THREE.Line(geoX, lineMat));
+
+        const ptsY = [new THREE.Vector3(0, -crossExtent, 0), new THREE.Vector3(0, crossExtent, 0)];
+        const geoY = new THREE.BufferGeometry().setFromPoints(ptsY);
+        triGroup.add(new THREE.Line(geoY, lineMat));
+
+        const ptsZ = [new THREE.Vector3(0, 0, -crossExtent), new THREE.Vector3(0, 0, crossExtent)];
+        const geoZ = new THREE.BufferGeometry().setFromPoints(ptsZ);
+        triGroup.add(new THREE.Line(geoZ, lineMat));
+
+        // 2. Solid Directional Arrow Axes at (0, 0, 0)
+        // X Axis: Red (#ef4444)
+        const dirX = new THREE.Vector3(1, 0, 0);
+        const arrowX = new THREE.ArrowHelper(dirX, new THREE.Vector3(0, 0, 0), axisLen, 0xef4444, arrowHeadLen, arrowHeadWidth);
+        triGroup.add(arrowX);
+        const spriteX = createTextSprite('X', '#ef4444');
+        spriteX.position.set(axisLen + 9, 0, 0);
+        triGroup.add(spriteX);
+
+        // Y Axis: Green (#22c55e)
+        const dirY = new THREE.Vector3(0, 1, 0);
+        const arrowY = new THREE.ArrowHelper(dirY, new THREE.Vector3(0, 0, 0), axisLen, 0x22c55e, arrowHeadLen, arrowHeadWidth);
+        triGroup.add(arrowY);
+        const spriteY = createTextSprite('Y', '#22c55e');
+        spriteY.position.set(0, axisLen + 9, 0);
+        triGroup.add(spriteY);
+
+        // Z Axis: Cyan (#06b6d4)
+        const dirZ = new THREE.Vector3(0, 0, 1);
+        const arrowZ = new THREE.ArrowHelper(dirZ, new THREE.Vector3(0, 0, 0), axisLen, 0x06b6d4, arrowHeadLen, arrowHeadWidth);
+        triGroup.add(arrowZ);
+        const spriteZ = createTextSprite('Z', '#06b6d4');
+        spriteZ.position.set(0, 0, axisLen + 9);
+        triGroup.add(spriteZ);
+
+        // 3. Central Origin Marker Dot at (0, 0, 0)
+        const originGeo = new THREE.SphereGeometry(1.6, 16, 16);
+        const originMat = new THREE.MeshBasicMaterial({ color: 0xfacc15, depthTest: false }); // Yellow origin point
+        const originMesh = new THREE.Mesh(originGeo, originMat);
+        originMesh.position.set(0, 0, 0);
+        triGroup.add(originMesh);
+
+        this.mastercamTrihedron = triGroup;
+        this.scene.add(this.mastercamTrihedron);
     }
 
     setupLighting() {
@@ -7252,13 +7535,13 @@ class Bevel3DVisualizer {
             geo1.setAttribute('aTcaParam', new THREE.BufferAttribute(this.mesh1Data.tcaParams, 3));
         }
         // Analytical proper orthogonal transformation matrix for Pinion 1:
-        // Maps local (x, y, z) -> world (z, x, y): local +Z (pinion axis) -> World +X
-        // Pitch generator in local XY plane -> World XY pitch contact line (Z = 0)
+        // Maps local (x, y, z) -> world (z, -x, -y): local +Z (pinion axis) -> World +X
+        // Pitch generator in local XY plane -> World XY pitch contact line (Z = 0, Y < 0)
         const mPinion = new THREE.Matrix4().set(
-            0, 0, 1, 0,
-            1, 0, 0, 0,
-            0, 1, 0, 0,
-            0, 0, 0, 1
+            0,  0, 1, 0,
+           -1,  0, 0, 0,
+            0, -1, 0, 0,
+            0,  0, 0, 1
         );
         geo1.applyMatrix4(mPinion);
 
@@ -7284,13 +7567,14 @@ class Bevel3DVisualizer {
         }
 
         // Analytical proper orthogonal transformation matrix for Gear 2:
-        // Maps local (x, y, z) -> world (x, z, -y): local +Z (gear axis) -> World +Y
-        // Pitch generator in local XY plane -> World XY pitch contact line (Z = 0)
+        // Maps local (x, y, z) -> world (x, -z, y): local +Z (gear axis) -> World -Y
+        // Hub is at bottom (Y < 0), teeth face UP towards apex V(0,0,0) ("ngửa lên")
+        // Pitch generator in local XY plane -> World XY pitch contact line (Z = 0, Y < 0)
         const mGear = new THREE.Matrix4().set(
-            1,  0, 0, 0,
-            0,  0, 1, 0,
-            0, -1, 0, 0,
-            0,  0, 0, 1
+            1,  0,  0, 0,
+            0,  0, -1, 0,
+            0,  1,  0, 0,
+            0,  0,  0, 1
         );
 
         // 3. Gear Solid Mesh
@@ -7326,7 +7610,7 @@ class Bevel3DVisualizer {
 
         // Rotate gearPivot for general shaft angle Sigma:
         const sigma = this.sigmaRad || (Math.PI / 2.0);
-        this.gearPivot.rotation.z = sigma - Math.PI / 2.0;
+        this.gearPivot.rotation.z = -(sigma - Math.PI / 2.0);
 
     }
 
@@ -7349,7 +7633,7 @@ class Bevel3DVisualizer {
             const step = this.rotSpeedBase * this.animSpeed * (this.animDirection || 1);
             this.pinionAngle += step;
             // Kinematic conjugate synchronization:
-            this.gearAngle = this.initialGearAngle - this.pinionAngle / this.gearRatio;
+            this.gearAngle = this.initialGearAngle + this.pinionAngle / this.gearRatio;
             this.updateGearRotations();
         }
 
@@ -7456,12 +7740,12 @@ class Bevel3DVisualizer {
         const Rm = this.geom ? (parseFloat(this.geom.Rm) || (Re * 0.8)) : (Re * 0.8);
         const delta1 = this.geom ? (parseFloat(this.geom.delta1) || (Math.PI / 4)) : (Math.PI / 4);
         const mx = Rm * Math.cos(delta1);
-        const my = Rm * Math.sin(delta1);
+        const my = -Rm * Math.sin(delta1);
 
-        const cenX = mx * 0.6;
-        const cenY = my * 0.8;
+        const cenX = mx * 0.5;
+        const cenY = my * 0.5;
         const cenZ = 0;
-        const viewDist = Re * 2.2;
+        const viewDist = Re * 2.5;
 
         switch (preset) {
             case 'front': // Axial Section view (looking straight at XY plane from +Z)
@@ -7474,9 +7758,9 @@ class Bevel3DVisualizer {
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
-            case 'gear': // Looking along Y axis from +Y towards Gear
-                this.camera.position.set(cenX, cenY + viewDist * 1.1, cenZ);
-                this.camera.up.set(0, 0, -1);
+            case 'gear': // Looking along Y axis from -Y towards Gear
+                this.camera.position.set(cenX, cenY - viewDist * 1.1, cenZ);
+                this.camera.up.set(0, 0, 1);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
             case 'top': // Top view (looking down Y axis)
@@ -7504,7 +7788,7 @@ class Bevel3DVisualizer {
                 const sinD_m = Math.sin(delta1);
                 this.camera.position.set(
                     mx + 95 * cosD_m - 20 * sinD_m,
-                    my + 95 * sinD_m + 20 * cosD_m,
+                    my - 95 * sinD_m + 20 * cosD_m,
                     55
                 );
                 this.camera.up.set(0, 0, 1);
@@ -7512,7 +7796,7 @@ class Bevel3DVisualizer {
                 break;
             case 'iso':
             default:
-                this.camera.position.set(cenX + viewDist * 0.65, cenY + viewDist * 0.45, cenZ + viewDist * 0.70);
+                this.camera.position.set(cenX + viewDist * 0.65, cenY + viewDist * 0.65, cenZ + viewDist * 0.70);
                 this.camera.up.set(0, 1, 0);
                 this.controls.target.set(cenX, cenY, cenZ);
                 break;
@@ -7634,23 +7918,24 @@ class Bevel3DVisualizer {
             hand: -1, gearingType, surfaceOnly
         }, resOpts));
 
-        // Pinion: Local (x, y, z) -> World (z, x, y)
+        // Pinion: Local (x, y, z) -> World (z, -x, -y)
         const tPinion = m1.rawTriangles.map(([p1, p2, p3, n]) => [
-            [p1[2], p1[0], p1[1]],
-            [p2[2], p2[0], p2[1]],
-            [p3[2], p3[0], p3[1]],
-            [n[2], n[0], n[1]]
+            [p1[2], -p1[0], -p1[1]],
+            [p2[2], -p2[0], -p2[1]],
+            [p3[2], -p3[0], -p3[1]],
+            [n[2], -n[0], -n[1]]
         ]);
 
-        // Gear: Local (x, y, z) -> (x, z, -y), then rotate Y by initialGearAngle, then rotate Z by (sigma - 90 deg)
+        // Gear: Local (x, y, z) -> (x, -z, y), then rotate Y by initialGearAngle, then rotate Z by -(sigma - 90 deg)
+        // Hub is at bottom (Y < 0), teeth face UP towards apex (0,0,0) ("ngửa lên")
         const phi = this.initialGearAngle;
         const cosP = Math.cos(phi), sinP = Math.sin(phi);
-        const rotZ = (this.sigmaRad || (Math.PI / 2.0)) - Math.PI / 2.0;
+        const rotZ = -((this.sigmaRad || (Math.PI / 2.0)) - Math.PI / 2.0);
         const cosZ = Math.cos(rotZ), sinZ = Math.sin(rotZ);
 
         function xformGear(p) {
-            // 1. Base orientation: local X -> X, local Z -> Y, local Y -> -Z
-            const bx = p[0], by = p[2], bz = -p[1];
+            // 1. Base orientation: local X -> X, local Z -> -Y, local Y -> Z
+            const bx = p[0], by = -p[2], bz = p[1];
             // 2. Rotate around Y by phi (initial conjugate phase)
             const rx = bx * cosP + bz * sinP;
             const ry = by;
@@ -7820,11 +8105,11 @@ class Bevel3DVisualizer {
         const data1 = Bevel3DGenerator.getBevelParametricData(base1);
         const data2 = Bevel3DGenerator.getBevelParametricData(base2);
 
-        // Pinion 1: Local (x, y, z) -> World (z, x, y)
+        // Pinion 1: Local (x, y, z) -> World (z, -x, -y)
         const trPinionSurfaces = [];
         data1.surfaces.forEach(s => {
             const trGrid = s.grid.map(row => row.map(pt => [
-                pt[2], pt[0], pt[1]
+                pt[2], -pt[0], -pt[1]
             ]));
             trPinionSurfaces.push({
                 label: `PINION_${s.label}`,
@@ -7837,11 +8122,11 @@ class Bevel3DVisualizer {
         // Gear 2: Local (x, y, z) -> xformGear(p)
         const phi = (this.initialGearAngle !== undefined) ? this.initialGearAngle : 0.0;
         const cosP = Math.cos(phi), sinP = Math.sin(phi);
-        const rotZ = (this.sigmaRad || (Math.PI / 2.0)) - Math.PI / 2.0;
+        const rotZ = -((this.sigmaRad || (Math.PI / 2.0)) - Math.PI / 2.0);
         const cosZ = Math.cos(rotZ), sinZ = Math.sin(rotZ);
 
         const xformGear = (p) => {
-            const bx = p[0], by = p[2], bz = -p[1];
+            const bx = p[0], by = -p[2], bz = p[1];
             const rx = bx * cosP + bz * sinP;
             const ry = by;
             const rz = -bx * sinP + bz * cosP;
@@ -7923,6 +8208,7 @@ class BevelGearUI {
             isOuterModule: true
         };
 
+        this.isManualB = false;
         this.lastGeom = null;
         this.profileResolution = 6;
         this.activeMode = '2D';
@@ -8217,75 +8503,20 @@ class BevelGearUI {
             sliderResCanvas.addEventListener('input', (e) => updateResolutionUI(e.target.value));
         }
 
-        // Section 16 DXF Dropdown
-        const btnExportDXFSec16Menu = document.getElementById('btnExportDXFSec16Menu');
-        const exportDXFSec16Dropdown = document.getElementById('exportDXFSec16Dropdown');
-        if (btnExportDXFSec16Menu && exportDXFSec16Dropdown) {
-            btnExportDXFSec16Menu.addEventListener('click', (e) => {
-                e.stopPropagation();
-                exportDXFSec16Dropdown.style.display = (exportDXFSec16Dropdown.style.display === 'block') ? 'none' : 'block';
-            });
-            document.addEventListener('click', () => {
-                exportDXFSec16Dropdown.style.display = 'none';
-            });
-        }
-
-        const bindDXFSec16 = (id, target) => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (exportDXFSec16Dropdown) exportDXFSec16Dropdown.style.display = 'none';
-                    this.exportDXF(target);
-                });
-            }
-        };
-        bindDXFSec16('btnExportDXFSec16Pinion', 'pinion');
-        bindDXFSec16('btnExportDXFSec16Gear', 'gear');
-        bindDXFSec16('btnExportDXFSec16Assembly', 'assembly');
-
+        // Section 16 Unified DXF Export (1 single file containing all 2D drawings)
         const btnExportDXFSec16Unified = document.getElementById('btnExportDXFSec16Unified');
         if (btnExportDXFSec16Unified) {
             btnExportDXFSec16Unified.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (exportDXFSec16Dropdown) exportDXFSec16Dropdown.style.display = 'none';
                 this.exportUnifiedDXF();
             });
         }
 
-        // Canvas 2D DXF Dropdown
-        const btnExportDXFCanvasMenu = document.getElementById('btnExportDXFCanvasMenu');
-        const exportDXFCanvasDropdown = document.getElementById('exportDXFCanvasDropdown');
-        if (btnExportDXFCanvasMenu && exportDXFCanvasDropdown) {
-            btnExportDXFCanvasMenu.addEventListener('click', (e) => {
-                e.stopPropagation();
-                exportDXFCanvasDropdown.style.display = (exportDXFCanvasDropdown.style.display === 'block') ? 'none' : 'block';
-            });
-            document.addEventListener('click', () => {
-                exportDXFCanvasDropdown.style.display = 'none';
-            });
-        }
-
-        const bindDXFCanvas = (id, target) => {
-            const el = document.getElementById(id);
-            if (el) {
-                el.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if (exportDXFCanvasDropdown) exportDXFCanvasDropdown.style.display = 'none';
-                    this.exportDXF(target);
-                });
-            }
-        };
-        bindDXFCanvas('expDxfPinionCanvas', 'pinion');
-        bindDXFCanvas('expDxfGearCanvas', 'gear');
-        bindDXFCanvas('expDxfAssemblyCanvas', 'assembly');
-
-        // Unified DXF Export (Conjugate Mesh Pairs + Concentric CAM Slots + Technical Specs)
+        // Canvas 2D Unified DXF Export (1 single file containing all 2D drawings)
         const expDxfUnifiedCanvas = document.getElementById('expDxfUnifiedCanvas');
         if (expDxfUnifiedCanvas) {
             expDxfUnifiedCanvas.addEventListener('click', (e) => {
                 e.preventDefault();
-                if (exportDXFCanvasDropdown) exportDXFCanvasDropdown.style.display = 'none';
                 this.exportUnifiedDXF();
             });
         }
@@ -8743,6 +8974,12 @@ class BevelGearUI {
                     if (parsed <= 0 && ['z1', 'z2', 'mmn', 'b', 'P', 'n1', 'n2'].includes(key)) return;
                     this.inputs[key] = parsed;
 
+                    if (key === 'b') {
+                        this.isManualB = true;
+                    } else if (['z1', 'z2', 'mmn', 'i_req', 'Sigma', 'gearingType', 'beta'].includes(key)) {
+                        this.isManualB = false;
+                    }
+
                     if (key === 'beta') {
                         if (Math.abs(this.inputs.beta) < 1e-4) {
                             const selGT = document.getElementById('selGearingType');
@@ -8982,12 +9219,22 @@ class BevelGearUI {
         const sliderBRe = document.getElementById('slider_b_Re');
         if (sliderBRe) {
             sliderBRe.addEventListener('input', () => {
+                this.isManualB = true;
                 const ratio = parseFloat(sliderBRe.value);
                 const Re = parseFloat(document.getElementById('out_Re') ? document.getElementById('out_Re').textContent : 338.32);
-                const b_calc = Math.round(ratio * Re);
+                const b_calc = Math.round(ratio * Re * 10) / 10;
                 this.inputs.b = b_calc;
                 const inp_b = document.getElementById('inp_b');
                 if (inp_b) inp_b.value = b_calc.toFixed(1);
+                this.calculate();
+            });
+        }
+
+        // Button: [ ⚡ Khuyên dùng ] b (Auto-recommend face width b)
+        const btn_rec_b = document.getElementById('btn_rec_b');
+        if (btn_rec_b) {
+            btn_rec_b.addEventListener('click', () => {
+                this.isManualB = false;
                 this.calculate();
             });
         }
@@ -9248,6 +9495,22 @@ class BevelGearUI {
 
     calculate() {
         if (typeof BevelCalcEngine === 'undefined') return;
+
+        // Auto-recommend b if user hasn't explicitly set it manually
+        if (!this.isManualB) {
+            const gPreB = BevelCalcEngine.calculate(this.inputs);
+            const Re = gPreB.Re || 338.32;
+            const met = gPreB.met || 10.0;
+            const b_max = Math.min(0.35 * Re, 10.0 * met);
+            // MITCalc standard recommendation: b = 0.3458 * Re rounded to 1 decimal place, clamped <= b_max
+            const b_rec = Math.min(b_max, Math.round(0.3458 * Re * 10) / 10);
+            if (b_rec > 0 && Math.abs((this.inputs.b || 0) - b_rec) > 0.05) {
+                this.inputs.b = b_rec;
+                const inp_b = document.getElementById('inp_b');
+                if (inp_b) inp_b.value = b_rec.toFixed(1);
+            }
+        }
+
         if (this.inputs.auto_Q) {
             const gPre = BevelCalcEngine.calculate(this.inputs);
             const isSpiralPre = Math.abs(gPre.beta_deg || 0.0) > 1e-4;
@@ -9320,6 +9583,10 @@ class BevelGearUI {
         // Section 4.0: Design of module and geometry
         const b_Re = (g.Re !== 0 ? g.b / g.Re : 0.3458);
         set4('out_sec4_b_Re', b_Re);
+        const sliderBReEl = document.getElementById('slider_b_Re');
+        if (sliderBReEl && document.activeElement !== sliderBReEl) {
+            sliderBReEl.value = b_Re.toFixed(4);
+        }
         set('out_sec4_bmax', '< ' + (g.Re * 0.35).toFixed(0));
         set('out_sec4_mass', '134.331');
 
@@ -10143,6 +10410,25 @@ class BevelGearUI {
         } else if (format === 'obj') {
             return Bevel3DExporter.exportOBJ(tris, `${filenameBase}.obj`);
         }
+    }
+}
+
+if (typeof window !== 'undefined') {
+    window.BevelGearUI = BevelGearUI;
+}
+
+function initBevelApp() {
+    if (!window.appUI && typeof BevelGearUI !== 'undefined') {
+        window.bevelApp = new BevelGearUI();
+        window.appUI = window.bevelApp;
+    }
+}
+
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initBevelApp);
+    } else {
+        initBevelApp();
     }
 }
 
