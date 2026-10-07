@@ -383,8 +383,12 @@ const Worm3DGenerator = {
         if (uLow >= uHigh) return null;
 
         const a = mc.MC_a;
-        const ip = (mc.MC_z2 / mc.MC_z1) * (mc.MC_pxn / (2.0 * Math.PI));
-        const p = mc.MC_pxn / (2.0 * Math.PI);
+        let p = mc.MC_pxn / (2.0 * Math.PI);
+        if (mc.wormArch === 2) {
+            const pzLead = (flankSide > 0) ? (mc.pz_R || mc.MC_pxn) : (mc.pz_L || mc.MC_pxn);
+            p = pzLead / (2.0 * Math.PI);
+        }
+        const ip = (mc.MC_z2 / mc.MC_z1) * p;
         const toothType = mc.toothType || 1;
         const self = this;
 
@@ -404,14 +408,13 @@ const Worm3DGenerator = {
         const rAtLow = evalR(uLow);
         const rAtHigh = evalR(uHigh);
 
-        const isDecreasing = (rAtLow >= rAtHigh);
-        if (isDecreasing) {
-            if (rTarget >= rAtLow) return uLow;
-            if (rTarget <= rAtHigh) return uHigh;
-        } else {
-            if (rTarget <= rAtLow) return uLow;
-            if (rTarget >= rAtHigh) return uHigh;
+        const rMin = Math.min(rAtLow, rAtHigh);
+        const rMax = Math.max(rAtLow, rAtHigh);
+        if (rTarget < rMin || rTarget > rMax) {
+            return null;
         }
+
+        const isDecreasing = (rAtLow >= rAtHigh);
 
         // Monotonic bisection convergence (< 0.0001 mm precision)
         for (let iter = 0; iter < 18; iter++) {
@@ -444,8 +447,12 @@ const Worm3DGenerator = {
 
         const a = mc.MC_a;
         const i = mc.MC_z2 / mc.MC_z1;
-        const ip = i * (mc.MC_pxn / (2.0 * Math.PI));
-        const p = mc.MC_pxn / (2.0 * Math.PI);
+        let p = mc.MC_pxn / (2.0 * Math.PI);
+        if (mc.wormArch === 2) {
+            const pzLead = (flankSide > 0) ? (mc.pz_R || mc.MC_pxn) : (mc.pz_L || mc.MC_pxn);
+            p = pzLead / (2.0 * Math.PI);
+        }
+        const ip = i * p;
         const toothType = mc.toothType || 1;
 
         const ratio = Math.min(1.0, Math.max(-1.0, z / u));
@@ -960,19 +967,30 @@ const Worm3DGenerator = {
                     let thSpaceR = this.evalConjugateFlankTheta(r, z, +1, mc);
                     let thSpaceL = this.evalConjugateFlankTheta(r, z, -1, mc);
 
-                    if (thSpaceR === null) {
-                        thSpaceR = (s > 0 && slices[s - 1].teeth[j].rFlankL[m])
-                            ? (slices[s - 1].teeth[j].rFlankL[m].theta - j * pitchAngle)
-                            : (-Math.PI * 0.5 + (0.5 * mc.MC_sx1 / mc.r2));
-                    }
-                    if (thSpaceL === null) {
-                        thSpaceL = (s > 0 && slices[s - 1].teeth[j].rFlankR[m])
-                            ? (slices[s - 1].teeth[j].rFlankR[m].theta - (j + 1) * pitchAngle)
-                            : (-Math.PI * 0.5 - (0.5 * mc.MC_sx1 / mc.r2));
+                    const thZShift = (z * Math.tan(mc.gamma)) / Math.max(1e-6, mc.r2);
+                    const nomThCenter = -Math.PI * 0.5 + thZShift;
+                    const sx_r = Math.max(0.12 * mc.mn, (mc.MC_sx2 * 2.0) - 2.0 * (r - mc.r2) * Math.tan(mc.MC_alfa_rad));
+                    const halfThAng = Math.max(0.04 * pitchAngle, Math.min(0.46 * pitchAngle, (sx_r * 0.5) / Math.max(1e-6, r)));
+                    const nomToothL = nomThCenter - halfThAng;
+                    const nomToothR = nomThCenter + halfThAng;
+
+                    let thToothL, thToothR;
+                    if (thSpaceR === null || thSpaceL === null) {
+                        thToothL = nomToothL;
+                        thToothR = nomToothR;
+                    } else {
+                        const toothThick = (thSpaceL + pitchAngle) - thSpaceR;
+                        if (toothThick < 0.12 * pitchAngle || toothThick > 0.80 * pitchAngle) {
+                            thToothL = nomToothL;
+                            thToothR = nomToothR;
+                        } else {
+                            thToothL = thSpaceR;
+                            thToothR = thSpaceL + pitchAngle;
+                        }
                     }
 
-                    const thetaToothL = thSpaceR + j * pitchAngle;
-                    const thetaToothR = thSpaceL + (j + 1) * pitchAngle;
+                    const thetaToothL = thToothL + j * pitchAngle;
+                    const thetaToothR = thToothR + j * pitchAngle;
 
                     rFlankL.push({ x: r * Math.cos(thetaToothL), y: r * Math.sin(thetaToothL), z, r, theta: thetaToothL });
                     rFlankR.push({ x: r * Math.cos(thetaToothR), y: r * Math.sin(thetaToothR), z, r, theta: thetaToothR });
@@ -1022,7 +1040,7 @@ const Worm3DGenerator = {
                     const mPrev = Math.max(0, m - 1);
                     const mNext = Math.min(ptsR, m + 1);
 
-                    // Left Flank Normal (dz x dr)
+                    // Left Flank Normal (dr x dz points outward away from tooth into tooth space)
                     const dzL_x = flankL_next[m].x - flankL_prev[m].x;
                     const dzL_y = flankL_next[m].y - flankL_prev[m].y;
                     const dzL_z = flankL_next[m].z - flankL_prev[m].z;
@@ -1031,9 +1049,9 @@ const Worm3DGenerator = {
                     const drL_y = flankL[mNext].y - flankL[mPrev].y;
                     const drL_z = flankL[mNext].z - flankL[mPrev].z;
 
-                    let nLx = dzL_y * drL_z - dzL_z * drL_y;
-                    let nLy = dzL_z * drL_x - dzL_x * drL_z;
-                    let nLz = dzL_x * drL_y - dzL_y * drL_x;
+                    let nLx = drL_y * dzL_z - drL_z * dzL_y;
+                    let nLy = drL_z * dzL_x - drL_x * dzL_z;
+                    let nLz = drL_x * dzL_y - drL_y * dzL_x;
                     let lenL = Math.hypot(nLx, nLy, nLz);
                     if (lenL > 1e-10) {
                         nLx /= lenL; nLy /= lenL; nLz /= lenL;
@@ -1042,7 +1060,7 @@ const Worm3DGenerator = {
                     flankL[m].ny = nLy;
                     flankL[m].nz = nLz;
 
-                    // Right Flank Normal (dr x dz)
+                    // Right Flank Normal (dz x dr points outward away from tooth into tooth space)
                     const dzR_x = flankR_next[m].x - flankR_prev[m].x;
                     const dzR_y = flankR_next[m].y - flankR_prev[m].y;
                     const dzR_z = flankR_next[m].z - flankR_prev[m].z;
@@ -1051,9 +1069,9 @@ const Worm3DGenerator = {
                     const drR_y = flankR[mNext].y - flankR[mPrev].y;
                     const drR_z = flankR[mNext].z - flankR[mPrev].z;
 
-                    let nRx = drR_y * dzR_z - drR_z * dzR_y;
-                    let nRy = drR_z * dzR_x - drR_x * dzR_z;
-                    let nRz = drR_x * dzR_y - drR_y * dzR_x;
+                    let nRx = dzR_y * drR_z - dzR_z * drR_y;
+                    let nRy = dzR_z * drR_x - drR_x * dzR_z;
+                    let nRz = dzR_x * drR_y - drR_y * dzR_x;
                     let lenR = Math.hypot(nRx, nRy, nRz);
                     if (lenR > 1e-10) {
                         nRx /= lenR; nRy /= lenR; nRz /= lenR;
@@ -1074,7 +1092,7 @@ const Worm3DGenerator = {
                 const tA = sA.teeth[j];
                 const tB = sB.teeth[j];
 
-                // Left Flank (Adaptive Shortest-Diagonal Delaunay Triangulation)
+                // Left Flank (Outward-facing CCW Triangulation)
                 for (let m = 0; m < ptsR; m++) {
                     const p00 = tA.rFlankL[m];
                     const p01 = tA.rFlankL[m + 1];
@@ -1085,15 +1103,15 @@ const Worm3DGenerator = {
                     const d01_10_sq = (p01.x - p10.x) ** 2 + (p01.y - p10.y) ** 2 + (p01.z - p10.z) ** 2;
 
                     if (d00_11_sq <= d01_10_sq) {
-                        pushTri(p00, p10, p11);
-                        pushTri(p00, p11, p01);
+                        pushTri(p00, p11, p10);
+                        pushTri(p00, p01, p11);
                     } else {
-                        pushTri(p00, p10, p01);
-                        pushTri(p10, p11, p01);
+                        pushTri(p00, p01, p10);
+                        pushTri(p10, p01, p11);
                     }
                 }
 
-                // Right Flank (Adaptive Shortest-Diagonal Delaunay Triangulation)
+                // Right Flank (Outward-facing CCW Triangulation)
                 for (let m = 0; m < ptsR; m++) {
                     const p00 = tA.rFlankR[m];
                     const p01 = tA.rFlankR[m + 1];
@@ -1104,16 +1122,16 @@ const Worm3DGenerator = {
                     const d01_10_sq = (p01.x - p10.x) ** 2 + (p01.y - p10.y) ** 2 + (p01.z - p10.z) ** 2;
 
                     if (d00_11_sq <= d01_10_sq) {
-                        pushTri(p00, p01, p11);
-                        pushTri(p00, p11, p10);
+                        pushTri(p00, p10, p11);
+                        pushTri(p00, p11, p01);
                     } else {
-                        pushTri(p00, p01, p10);
-                        pushTri(p01, p11, p10);
+                        pushTri(p00, p10, p01);
+                        pushTri(p01, p10, p11);
                     }
                 }
 
                 if (!surfaceOnly) {
-                    // Tip Crest (subdivided circular arc - Adaptive Shortest-Diagonal Delaunay Triangulation)
+                    // Tip Crest (Outward-facing radial CCW Triangulation)
                     for (let t = 0; t < wheelTipPts; t++) {
                         const pA0 = tA.tipArc[t];
                         const pA1 = tA.tipArc[t + 1];
@@ -1124,11 +1142,11 @@ const Worm3DGenerator = {
                         const d01_10_sq = (pA1.x - pB0.x) ** 2 + (pA1.y - pB0.y) ** 2 + (pA1.z - pB0.z) ** 2;
 
                         if (d00_11_sq <= d01_10_sq) {
-                            pushTri(pA0, pB0, pB1);
-                            pushTri(pA0, pB1, pA1);
+                            pushTri(pA0, pA1, pB1);
+                            pushTri(pA0, pB1, pB0);
                         } else {
-                            pushTri(pA0, pB0, pA1);
-                            pushTri(pB0, pB1, pA1);
+                            pushTri(pA0, pA1, pB0);
+                            pushTri(pB0, pA1, pB1);
                         }
                     }
 
@@ -1139,8 +1157,11 @@ const Worm3DGenerator = {
                     const pRootL_A = sA.teeth[nextJ].rFlankL[0];
                     const pRootL_B = sB.teeth[nextJ].rFlankL[0];
 
-                    pushTri(pRootR_A, pRootL_B, pRootR_B);
-                    pushTri(pRootR_A, pRootL_A, pRootL_B);
+                    const thMid = (pRootR_A.theta + pRootL_A.theta) * 0.5;
+                    const nRoot = [Math.cos(thMid), Math.sin(thMid), 0];
+
+                    pushTri(pRootR_A, pRootL_B, pRootR_B, nRoot);
+                    pushTri(pRootR_A, pRootL_A, pRootL_B, nRoot);
                 }
             }
         }
@@ -1152,17 +1173,19 @@ const Worm3DGenerator = {
                 const sData = slices[sIdx];
                 const zVal = sData.z;
                 const normalZ = (side === 0) ? -1 : 1;
-                const rRimRoot = Math.min(sData.rRoot, sData.rTip);
+                const toothHeightOnFace = sData.rTip - sData.rRoot;
+                const hasTeethOnFace = toothHeightOnFace > 0.15;
+                const rRimOuter = hasTeethOnFace ? sData.rRoot : Math.max(sData.rTip, sData.rRoot);
 
-                // 1. Flat Annular Disk from rBore2 to rRimRoot
+                // 1. Flat Annular Disk from rBore2 to rRimOuter
                 for (let k = 0; k < boreSegs; k++) {
                     const psi1 = (k * 2.0 * Math.PI) / boreSegs;
                     const psi2 = ((k + 1) * 2.0 * Math.PI) / boreSegs;
 
                     const pBore1 = { x: rBore2 * Math.cos(psi1), y: rBore2 * Math.sin(psi1), z: zVal };
                     const pBore2 = { x: rBore2 * Math.cos(psi2), y: rBore2 * Math.sin(psi2), z: zVal };
-                    const pRim1  = { x: rRimRoot * Math.cos(psi1), y: rRimRoot * Math.sin(psi1), z: zVal };
-                    const pRim2  = { x: rRimRoot * Math.cos(psi2), y: rRimRoot * Math.sin(psi2), z: zVal };
+                    const pRim1  = { x: rRimOuter * Math.cos(psi1), y: rRimOuter * Math.sin(psi1), z: zVal };
+                    const pRim2  = { x: rRimOuter * Math.cos(psi2), y: rRimOuter * Math.sin(psi2), z: zVal };
 
                     if (side === 0) {
                         pushTri(pBore1, pRim2, pRim1, [0, 0, normalZ]);
@@ -1173,19 +1196,21 @@ const Worm3DGenerator = {
                     }
                 }
 
-                // 2. Teeth Front/Back End Faces
-                for (let j = 0; j < z2; j++) {
-                    const t = sData.teeth[j];
-                    for (let m = 0; m < ptsR; m++) {
-                        const pL0 = t.rFlankL[m], pL1 = t.rFlankL[m + 1];
-                        const pR0 = t.rFlankR[m], pR1 = t.rFlankR[m + 1];
+                // 2. Teeth Front/Back End Faces (Omitted when chamfer reduces tooth height to zero at face)
+                if (hasTeethOnFace) {
+                    for (let j = 0; j < z2; j++) {
+                        const t = sData.teeth[j];
+                        for (let m = 0; m < ptsR; m++) {
+                            const pL0 = t.rFlankL[m], pL1 = t.rFlankL[m + 1];
+                            const pR0 = t.rFlankR[m], pR1 = t.rFlankR[m + 1];
 
-                        if (side === 0) {
-                            pushTri(pL0, pR1, pR0, [0, 0, normalZ]);
-                            pushTri(pL0, pL1, pR1, [0, 0, normalZ]);
-                        } else {
-                            pushTri(pL0, pR0, pR1, [0, 0, normalZ]);
-                            pushTri(pL0, pR1, pL1, [0, 0, normalZ]);
+                            if (side === 0) {
+                                pushTri(pL0, pR1, pR0, [0, 0, normalZ]);
+                                pushTri(pL0, pL1, pR1, [0, 0, normalZ]);
+                            } else {
+                                pushTri(pL0, pR0, pR1, [0, 0, normalZ]);
+                                pushTri(pL0, pR1, pL1, [0, 0, normalZ]);
+                            }
                         }
                     }
                 }

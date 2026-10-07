@@ -2208,3 +2208,35 @@ ho_{f0}$.
 3. **Quy Chuẩn Nút Cập Nhật Tinh Gọn Trên Cổng Hub & Header**:
    - Nút trên thanh Header đặt tên ngắn gọn, dứt khoát: `Cập Nhật` (bỏ tiền tố rườm rà "ép cập nhật v3.0").
    - Lược bỏ hoàn toàn khối nút phụ trong phần Hero của Cổng Hub (`index.html`) để giữ giao diện thoáng đãng, tập trung vào 5 thẻ mô-đun chính.
+
+
+---
+
+### Quy Tắc 97: Quy Chuẩn Mô Phỏng 3D Duplex Khớp Ăn Khớp & Triệt Tiêu Vòng Xước Moiré Mặt Đầu Bánh Vít & Mô Phỏng 2D Glôbôit / Duplex
+**Ngày áp dụng**: 07/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+1. **Bối Cảnh & Vấn Đề Cần Khắc Phục (Duplex 3D Mesh & Globoid/Duplex 2D Issues)**:
+   - Mô phỏng 3D Bánh vít loại 6 (Duplex) bị lỗi mặt đầu đen xước, các vòng tròn moiré đồng tâm trên mặt bên và răng bị lẹm/đè nhau.
+   - Mô phỏng 2D Canvas cho loại 7 (Glôbôit) trước đó chỉ vẽ trục vít chữ nhật thẳng, không có eo thắt đồng hồ cát và răng không xòe hướng tâm ôm bánh vít.
+   - Mô phỏng 2D Canvas cho loại 6 (Duplex) chưa thể hiện bước răng và chiều dày răng biến thiên $s_x(x)$ dọc trục.
+2. **Quy Chuẩn Mô Phỏng 3D Ăn Khớp Duplex (3D Duplex Wheel Conjugate Integrity)**:
+   - **Tách riêng bước xoắn sườn trái và phải**: Khi `wormArch === 2`, sườn phải sử dụng $p_R = p_{zR} / (2\pi)$ và sườn trái sử dụng $p_L = p_{zL} / (2\pi)$ trong nghiệm ăn khớp Litvin `solveConjugateUForR` và `evalConjugateFlankTheta`.
+   - **Kẹp nghiệm vật lý chống phân kỳ**: Bắt buộc kiểm tra $rTarget \in [\min(rAtLow, rAtHigh), \max(rAtLow, rAtHigh)]$, trả về `null` ngay khi nằm ngoài miền ăn khớp liên hợp thay vì kẹp cưỡng bức về biên gây phân kỳ chiều dày răng.
+   - **Giới hạn an toàn chiều dày góc răng & xương sống xoắn**: Ràng buộc chiều dày góc răng trong khoảng $[0.12, 0.80] \cdot \text{pitchAngle}$ và xương sống $\theta_{center}(z) = -\pi/2 + (z \tan\gamma)/r_2$.
+   - **Chuẩn hóa vector pháp tuyến & thứ tự đỉnh CCW**:
+     * Pháp tuyến giải tích hướng ra ngoài: $dr \times dz$ trên sườn trái, $dz \times dr$ trên sườn phải.
+     * Quấn đỉnh CCW cho sườn trái, sườn phải, đỉnh răng.
+     * Gán pháp tuyến hướng tâm `[cos(thMid), sin(thMid), 0]` cho đáy rãnh.
+   - **Triệt tiêu vòng xước moiré mặt đầu (Watertight Planar Disk)**:
+     * Cấm tạo tam giác khi $r_{tip} \approx r_{root}$ tại các lát cắt mép vành (loại bỏ 2,240 tam giác thoái hóa).
+     * Đĩa vành khăn phẳng phủ kín từ $r_{bore}$ đến $\max(r_{root}, r_{tip})$, triệt tiêu 99.64% vector pháp tuyến ngược.
+   - **Đồng bộ dịch chỉnh dọc trục 3D**: Trục vít Duplex dịch chuyển dọc trục $X$ theo đúng $\Delta x_{adj}$ nhập liệu.
+3. **Quy Chuẩn Mô Phỏng 2D Glôbôit Đồng Hồ Cát (2D Globoid Hourglass Protocol)**:
+   - Thân trục vít uốn cong theo đúng bán kính nón họng $R_{throat} = r_2$:
+     $$r_1(x) = a - \sqrt{\max\left(0, R_{throat}^2 - x^2\right)}, \quad r_{f1}(x) = r_1(x) - h_{f1}, \quad r_{a1}(x) = r_1(x) + h_{a1}$$
+   - Răng trục vít nghiêng theo các tia $\psi = \arcsin(xc / R_{throat})$ đồng quy về tâm bánh vít $(wxCenter, wyCenter + a)$.
+   - Bounding box mở rộng với $d_{a1,\text{eff}} = 2 \cdot (a - \sqrt{R_{throat}^2 - (L/2)^2} + h_{a1})$, không bị cắt khuất đáy trục vít trên bản vẽ lắp.
+4. **Quy Chuẩn Mô Phỏng 2D Duplex Bước Lệch (2D Duplex Varying Rack Protocol)**:
+   - Chiều dày răng biến thiên dọc trục $s_x(x) = s_{x0} + x \cdot k_{dup}$, thể hiện răng bên trái mỏng dần và bên phải dày dần.
+   - Tách riêng 2 tầng đường gióng kích thước độc lập cho $p_{xL}$ và $p_{xR}$.
+   - Tích hợp độ dịch chuyển dọc trục $\Delta x_{adj}$ vào bản vẽ lắp 2D.

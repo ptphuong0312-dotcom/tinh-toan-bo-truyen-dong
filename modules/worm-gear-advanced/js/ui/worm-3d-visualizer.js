@@ -193,9 +193,10 @@ class Worm3DVisualizer {
 
         this.updateMeshes();
 
-        // Position Worm 1 at (0, -a, 0) and Worm Wheel 2 at (0, 0, 0)
+        // Position Worm 1 at (wormPosX, -a, 0) and Worm Wheel 2 at (0, 0, 0)
+        const wormPosX = (geom.wormArch === 2 ? (parseFloat(geom.delta_x_adj) || 0) : 0);
         if (this.wormGroup) {
-            this.wormGroup.position.set(0, -this.centerDistA, 0);
+            this.wormGroup.position.set(wormPosX, -this.centerDistA, 0);
             this.wormGroup.visible = this.wormVisible;
         }
         if (this.wheelGroup) {

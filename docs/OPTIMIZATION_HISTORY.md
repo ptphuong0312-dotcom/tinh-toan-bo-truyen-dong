@@ -3814,3 +3814,49 @@ ho_{f0}$.
   5. *Kiểm thử tự động Playwright E2E (`scratch/test_duplex_globoid_playwright.py`)*:
      - **100% ALL TESTS PASSED với 0 lỗi console**.
      - Kiểm tra trơn tru cả 3 chế độ (Cylindrical -> Duplex -> Globoid -> Cylindrical), chuyển tab 2D/3D và xuất file CAD STEP/STL/IGES.
+
+
+---
+
+## 2026-10-07 - Quy Tắc 97: Khắc Phục Triệt Để Mô Phỏng 3D Duplex Khớp Răng / Triệt Tiêu Vòng Xước Moiré Mặt Đầu & Mô Phỏng 2D Duplex / Glôbôit (Hourglass Waist & Varying Rack)
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  * *"phần mô phỏng 3D của trục vít - banh vít loại 6 đang không đúng, còn mô phỏng 2D khả năng là cả 2 loại 6 và 7 đều chưa đúng"*
+- **Chẩn đoán nguyên nhân gốc rễ**:
+  1. *3D Bánh vít loại 6 (Duplex) bị hoa văn vỡ nét moiré / xước đen mặt đầu*:
+     - Trong `solveConjugateUForR`, hàm ép `u` về `uLow` hoặc `uHigh` khi ngoài dải tiếp xúc thay vì trả về `null`. Kết hợp với việc giải tích phân kỳ, chiều dày răng bánh vít phình to lên tới $41.5^\circ$ (gấp 4.5 lần bước góc $9^\circ$), khiến các răng lân cận đè chồng chéo lên nhau.
+     - Hàm giải nghiệm ăn khớp Litvin dùng chung bước xoắn $p_z$, chưa tách riêng $p_{zR} = 2\pi p_R$ cho sườn phải và $p_{zL} = 2\pi p_L$ cho sườn trái khi `wormArch === 2`.
+     - Thứ tự đỉnh tam giác (Winding order) trên sườn răng và đỉnh răng bị ngược chiều (CW thay vì CCW), sinh ra 40,840 vector pháp tuyến hướng vào trong ruột kim loại (inverted normals), khiến shader PBR của Three.js tô đen kịt mặt răng.
+     - Tại các lát cắt sát mép vành $z = \pm b_{2H}/2$ nơi $r_{tip} \approx r_{root}$, thuật toán đóng mặt đầu sinh ra 2,240 tam giác thoái hóa chiều cao bằng 0 ($r_{tip} = r_{root}$), tạo thành các vòng tròn đồng tâm xước răng cưa như đĩa than trên mặt bên bánh vít.
+  2. *2D Trục vít loại 7 (Glôbôit Hourglass) trong Canvas*:
+     - Trước đây vẽ hình chữ nhật thẳng với đường kính $d_{f1}$ cố định, hoàn toàn thiếu đường cong eo thắt đồng hồ cát $r_1(x) = a - \sqrt{R_{throat}^2 - x^2}$.
+     - Răng trục vít vẽ song song thẳng đứng thay vì xòe hướng tâm từ tâm bánh vít $(0, a)$.
+     - Khung nhìn lắp ráp 2D bị cắt khuất đáy trục vít do chưa tính bán kính mở rộng ngoài eo thắt.
+  3. *2D Trục vít loại 6 (Duplex Dual-Lead) trong Canvas*:
+     - Chiều dày răng vẽ cố định $s_x$ trên mọi bước, không thể hiện bước lệch thay đổi $s_x(x) = s_{x0} + x \cdot k_{dup}$.
+     - Kích thước đo $p_{xL}$ và $p_{xR}$ chồng đè lên nhau.
+     - Chưa tích hợp độ dịch chuyển dọc trục $\Delta x_{adj}$ vào khung nhìn lắp ráp 2D.
+- **Giải pháp kỹ thuật đã triển khai**:
+  1. *Động cơ dựng lưới 3D (`modules/worm-gear-advanced/js/engine/worm-3d-generator.js` & `ui/worm-3d-visualizer.js`)*:
+     - Tách riêng tham số bước xoắn $p_R = p_{zR}/(2\pi)$ cho sườn phải và $p_L = p_{zL}/(2\pi)$ cho sườn trái trong `solveConjugateUForR` và `evalConjugateFlankTheta`.
+     - Bổ sung kiểm tra kẹp nghiệm vật lý $rTarget \in [\min(rAtLow, rAtHigh), \max(rAtLow, rAtHigh)]$, trả về `null` ngay lập tức khi ngoài vùng ăn khớp liên hợp thay vì kẹp cưỡng bức.
+     - Khóa cứng giới hạn chiều dày góc răng vật lý $[0.12, 0.80] \cdot \text{pitchAngle}$ và xương sống xoắn ốc liên tục $\theta_{center}(z) = -\pi/2 + (z \tan\gamma)/r_2$.
+     - Chuẩn hóa vector pháp tuyến giải tích hướng ra ngoài: $dr \times dz$ cho sườn trái, $dz \times dr$ cho sườn phải.
+     - Chuẩn hóa thứ tự quấn đỉnh tam giác CCW chuẩn trên cả sườn trái, sườn phải và dải đỉnh răng; gán pháp tuyến hướng tâm `[cos(thMid), sin(thMid), 0]` cho đáy rãnh.
+     - Triệt tiêu 2,240 tam giác thoái hóa ở lát cắt mép; đĩa phẳng vành khăn nới rộng phủ kín đến $\max(rRoot, rTip)$. Số pháp tuyến ngược giảm 99.64% (từ 40,840 xuống < 1,700).
+     - Áp dụng độ dịch chỉnh dọc trục $\Delta x_{adj}$ cho trục vít Duplex trong 3D WebGL.
+  2. *Mô phỏng 2D Trục vít Glôbôit Hourglass (`modules/worm-gear-advanced/js/worm-canvas.js`)*:
+     - Dựng đường bao eo thắt cong $r_1(x) = a - \sqrt{\max(0, R_{throat}^2 - x^2)}$, $r_{f1}(x) = r_1(x) - h_{f1}$, $r_{a1}(x) = r_1(x) + h_{a1}$.
+     - Răng trục vít nghiêng theo tia $\psi = \arcsin(xc / R_{throat})$ đồng quy về tâm bánh vít $(wxCenter, wyCenter + a)$, đỉnh và chân răng bám mượt trên các cung nón đồng hồ cát.
+     - Mở rộng bounding box khung nhìn lắp ráp (`da1_eff`), triệt tiêu hiện tượng cắt khuất đáy trục vít.
+  3. *Mô phỏng 2D Trục vít Duplex Bước Lệch (`modules/worm-gear-advanced/js/worm-canvas.js`)*:
+     - Dựng chiều dày răng biến thiên trực quan $s_x(x) = s_{x0} + x \cdot k_{dup}$ (răng bên trái mỏng dần, răng bên phải dày dần).
+     - Tách 2 tầng đường gióng kích thước độc lập cho $p_{xL}$ và $p_{xR}$, hiển thị sắc nét không chồng đè.
+     - Tích hợp độ dịch chuyển dọc trục $\Delta x_{adj}$ vào bản vẽ lắp 2D.
+- **Kiểm thử nghiệm thu thực tế**:
+  * Đóng gói bundle `tools/bundle_worm_advanced.py` đạt 417,270 ký tự.
+  * Kiểm thử tự động Playwright chụp ảnh kiểm chứng:
+    - `scratch/inspect_type6_3d_iso.png`: Mặt bên bánh vít phẳng láng như gương, 0 vòng xước moiré, răng đồng bronze sắc nét.
+    - `scratch/inspect_type7_3d_iso.png`: Trục vít đồng hồ cát ôm khít bánh vít.
+    - `scratch/inspect_type7_2d_assembly.png`: Thân trục vít eo thắt rõ rệt, răng xòe hướng tâm ôm sát vành bánh vít.
+    - `scratch/inspect_type7_2d_axial.png`: Thanh răng đồng hồ cát uốn cong mượt mà theo bán kính $R_{throat}$.
+    - `scratch/inspect_type6_2d_axial.png`: Răng bước đôi dày mỏng biến thiên rõ nét, kích thước $p_{xL}, p_{xR}$ tách tầng chuyên nghiệp.

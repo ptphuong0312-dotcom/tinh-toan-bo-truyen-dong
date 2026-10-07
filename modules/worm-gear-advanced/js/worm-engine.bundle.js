@@ -3417,11 +3417,14 @@ class WormCanvasRenderer {
 
     renderAssemblyView(ctx, W, H, g) {
         // Compute world bounding box of Dual View (Front View at x=0, Side Throat Section at x=C9)
-        const d1Chart = g.chartData1;
-        const minX = Math.min(-g.da2 * 0.6, -g.l1 - g.BeSi * 1.5);
-        const maxX = d1Chart.C9 + Math.max(g.b2H, g.da1) * 0.9;
-        const minY = -g.a - g.da1 * 0.85;
-        const maxY = g.de2 * 0.6;
+        const d1Chart = g.chartData1 || { C9: 180 };
+        const isGloboid = (g.wormArch === 3);
+        const isDuplex = (g.wormArch === 2);
+        const da1_eff = isGloboid ? (g.da1_max_globoid || (g.da1 * 1.35)) : g.da1;
+        const minX = Math.min(-g.da2 * 0.6, -g.l1 - (g.BeSi || 10) * 1.5 - 20);
+        const maxX = d1Chart.C9 + Math.max(g.b2H, da1_eff) * 0.95 + 20;
+        const minY = -g.a - da1_eff * 0.75 - 28;
+        const maxY = g.de2 * 0.6 + 18;
 
         const spanX = Math.max(20, maxX - minX);
         const spanY = Math.max(20, maxY - minY);
@@ -3464,8 +3467,9 @@ class WormCanvasRenderer {
         ctx.restore();
 
         // 2. Left View: Worm Wheel (with animated conjugate teeth) + Horizontal Worm Thread Rack
+        const wormShiftX = (isDuplex ? (parseFloat(g.delta_x_adj) || 0) : 0);
         if (this.showWheel) this.drawAnimatedWheelFront(ctx, toX(0), toY(0), scale, g);
-        if (this.showWorm) this.drawHorizontalWormFront(ctx, toX, toY, scale, 0, -g.a, g);
+        if (this.showWorm) this.drawHorizontalWormFront(ctx, toX, toY, scale, wormShiftX, -g.a, g);
 
         // 3. Right View: Worm Wheel Throat Section (exact DXF.bas WWheel) + Worm Cross Section at (C9, -a)
         if (this.showWheel) this.drawWheelThroatSection(ctx, toX, toY, scale, d1Chart.C9, 0, g);
@@ -3474,7 +3478,7 @@ class WormCanvasRenderer {
         // 4. Dimension Callouts
         if (this.showDims) {
             this.drawDimLine(ctx, toX(-g.da2 * 0.58), toY(0), toX(-g.da2 * 0.58), toY(-g.a), `a = ${g.a.toFixed(2)} mm`, -14);
-            this.drawDimLine(ctx, toX(-g.L / 2), toY(-g.a - g.da1 * 0.65), toX(g.L / 2), toY(-g.a - g.da1 * 0.65), `L = ${g.L.toFixed(2)} mm`, 16);
+            this.drawDimLine(ctx, toX(-g.L / 2), toY(-g.a - da1_eff * 0.65), toX(g.L / 2), toY(-g.a - da1_eff * 0.65), `L = ${g.L.toFixed(2)} mm`, 16);
             this.drawDimLine(ctx, toX(d1Chart.C9 - g.b2H / 2), toY(g.de2 * 0.54), toX(d1Chart.C9 + g.b2H / 2), toY(g.de2 * 0.54), `b2H = ${g.b2H.toFixed(2)}`, -12);
         }
     }
@@ -3983,18 +3987,40 @@ class WormCanvasRenderer {
             const numSteps = 12;
             for (let k = -nP; k <= nP; k++) {
                 const xc = k * px + shiftX;
+                if (Math.abs(xc) > L / 2.0 + px) continue;
                 const ptsL = [];
                 const ptsR = [];
 
-                for (let step = 0; step <= numSteps; step++) {
-                    const frac = step / numSteps;
-                    const rBase = isGloboid ? (evalR1Globoid(xc) - hf1) : (df1 / 2.0);
-                    const rTop = isGloboid ? (evalR1Globoid(xc) + ha1) : (da1 / 2.0);
-                    const R = rBase + frac * (rTop - rBase);
-                    const yWorld = signY * R;
-                    const w = evalToothW(R, xc);
-                    ptsL.push({ x: xc - w, y: yWorld });
-                    ptsR.push({ x: xc + w, y: yWorld });
+                if (isGloboid) {
+                    const R_thr = g.R_throat || (g.d2 / 2.0);
+                    const psi = Math.asin(Math.max(-0.95, Math.min(0.95, xc / R_thr)));
+                    const sinPsi = Math.sin(psi);
+                    const cosPsi = Math.cos(psi);
+
+                    for (let step = 0; step <= numSteps; step++) {
+                        const frac = step / numSteps;
+                        const rBase = evalR1Globoid(xc) - hf1;
+                        const rTop = evalR1Globoid(xc) + ha1;
+                        const R = rBase + frac * (rTop - rBase);
+                        const R_dist = g.a - R;
+                        const xRay = R_dist * sinPsi;
+                        const yRay = signY * (g.a - R_dist * cosPsi);
+                        const w = evalToothW(R, xc);
+
+                        ptsL.push({ x: xRay - w * cosPsi, y: yRay + signY * w * sinPsi });
+                        ptsR.push({ x: xRay + w * cosPsi, y: yRay - signY * w * sinPsi });
+                    }
+                } else {
+                    for (let step = 0; step <= numSteps; step++) {
+                        const frac = step / numSteps;
+                        const rBase = df1 / 2.0;
+                        const rTop = da1 / 2.0;
+                        const R = rBase + frac * (rTop - rBase);
+                        const yWorld = signY * R;
+                        const w = evalToothW(R, xc);
+                        ptsL.push({ x: xc - w, y: yWorld });
+                        ptsR.push({ x: xc + w, y: yWorld });
+                    }
                 }
 
                 ctx.beginPath();
@@ -4113,7 +4139,17 @@ class WormCanvasRenderer {
             this.drawDimLine(ctx, toX(-L / 2.0 - th - 12.0), toY(-da1 / 2.0), toX(-L / 2.0 - th - 12.0), toY(da1 / 2.0), `da1 = ${da1.toFixed(2)}`, -14);
             this.drawDimLine(ctx, toX(L / 2.0 + th + 12.0), toY(-d1 / 2.0), toX(L / 2.0 + th + 12.0), toY(d1 / 2.0), `d1 = ${d1.toFixed(2)}`, 14);
             this.drawDimLine(ctx, toX(L / 2.0 + th + 24.0), toY(-df1 / 2.0), toX(L / 2.0 + th + 24.0), toY(df1 / 2.0), `df1 = ${df1.toFixed(2)}`, 14);
-            this.drawDimLine(ctx, toX(0), toY(da1 / 2.0 + 3.0), toX(px), toY(da1 / 2.0 + 3.0), `px = ${px.toFixed(3)} mm`, -8);
+            if (isDuplex) {
+                const pxR = g.px_R || (px + (g.delta_mx || 0.08) * Math.PI / 2.0);
+                const pxL = g.px_L || (px - (g.delta_mx || 0.08) * Math.PI / 2.0);
+                this.drawDimLine(ctx, toX(0), toY(da1 / 2.0 + 3.0), toX(pxR), toY(da1 / 2.0 + 3.0), `pxR = ${pxR.toFixed(3)} mm (Drive)`, -8);
+                this.drawDimLine(ctx, toX(-pxL), toY(da1 / 2.0 + 18.0), toX(0), toY(da1 / 2.0 + 18.0), `pxL = ${pxL.toFixed(3)} mm (Coast)`, -8);
+            } else if (isGloboid) {
+                const R_thr = g.R_throat || (g.d2 / 2.0);
+                this.drawDimLine(ctx, toX(-L / 4.0), toY(evalR1Globoid(-L / 4.0) + ha1 + 3.0), toX(L / 4.0), toY(evalR1Globoid(L / 4.0) + ha1 + 3.0), `R_throat = ${R_thr.toFixed(2)} mm (Hourglass)`, -8);
+            } else {
+                this.drawDimLine(ctx, toX(0), toY(da1 / 2.0 + 3.0), toX(px), toY(da1 / 2.0 + 3.0), `px = ${px.toFixed(3)} mm`, -8);
+            }
             this.drawDimLine(ctx, toX(-sx / 2.0), toY(d1 / 2.0), toX(sx / 2.0), toY(d1 / 2.0), `sx = ${sx.toFixed(3)}`, -10);
 
             // Pressure angle callout arc on tooth +1
@@ -4440,8 +4476,19 @@ class WormCanvasRenderer {
         const th = g.Shaft_th;
         const px = g.px;
         const alfaxRad = (g.alfax * Math.PI) / 180.0;
+        const isGloboid = (g.wormArch === 3);
+        const isDuplex = (g.wormArch === 2);
+        const ha1 = g.ha1;
+        const hf1 = g.hf1;
+        const halfSx1 = g.sx1 / 2.0;
 
-        // Shaft extensions out to bearings (-l1 to +l2)
+        const evalR1Globoid = (dx) => {
+            const R_thr = g.R_throat || (g.d2 / 2.0);
+            const val = Math.max(0.0, R_thr * R_thr - dx * dx);
+            return g.a - Math.sqrt(val);
+        };
+
+        // 1. Shaft extensions out to bearings (-l1 to +l2)
         ctx.save();
         ctx.fillStyle = 'rgba(148, 163, 184, 0.16)';
         ctx.strokeStyle = '#94a3b8';
@@ -4457,86 +4504,216 @@ class WormCanvasRenderer {
         ctx.fill();
         ctx.stroke();
 
-        // Shoulders (ds x t) from DXF.bas Worm()
+        // Shoulders (ds x t)
         ctx.strokeStyle = '#cbd5e1';
-        ctx.strokeRect(toX(wxCenter - L / 2 - th), toY(wyCenter + ds / 2), th * scale, ds * scale);
-        ctx.strokeRect(toX(wxCenter + L / 2), toY(wyCenter + ds / 2), th * scale, ds * scale);
+        const hShoulder = isGloboid ? Math.max(ds * 1.2, 2.0 * (evalR1Globoid(L / 2) - hf1)) : df1;
+        ctx.strokeRect(toX(wxCenter - L / 2 - th), toY(wyCenter + hShoulder / 2), th * scale, (hShoulder - ds) * 0.5 * scale);
+        ctx.strokeRect(toX(wxCenter - L / 2 - th), toY(wyCenter - ds / 2), th * scale, (hShoulder - ds) * 0.5 * scale);
+        ctx.strokeRect(toX(wxCenter + L / 2), toY(wyCenter + hShoulder / 2), th * scale, (hShoulder - ds) * 0.5 * scale);
+        ctx.strokeRect(toX(wxCenter + L / 2), toY(wyCenter - ds / 2), th * scale, (hShoulder - ds) * 0.5 * scale);
 
-        // Root cylinder core (-L/2 to +L/2, -df1/2 to +df1/2)
+        // 2. Root core body (-L/2 to +L/2)
         ctx.fillStyle = 'rgba(56, 189, 248, 0.18)';
         ctx.strokeStyle = '#38bdf8';
         ctx.lineWidth = 1.6;
-        ctx.beginPath();
-        ctx.rect(toX(wxCenter - L / 2), toY(wyCenter + df1 / 2), L * scale, df1 * scale);
-        ctx.fill();
-        ctx.stroke();
 
-        // Trapezoidal worm thread rack along [-L/2, +L/2]
-        // Thread axial shift from animation:
+        if (isGloboid) {
+            ctx.beginPath();
+            const nCore = 36;
+            for (let s = 0; s <= nCore; s++) {
+                const dx = -L / 2.0 + s * (L / nCore);
+                const rf = evalR1Globoid(dx) - hf1;
+                const ptX = wxCenter + dx;
+                const ptY = wyCenter + rf;
+                if (s === 0) ctx.moveTo(toX(ptX), toY(ptY));
+                else ctx.lineTo(toX(ptX), toY(ptY));
+            }
+            for (let s = nCore; s >= 0; s--) {
+                const dx = -L / 2.0 + s * (L / nCore);
+                const rf = evalR1Globoid(dx) - hf1;
+                const ptX = wxCenter + dx;
+                const ptY = wyCenter - rf;
+                ctx.lineTo(toX(ptX), toY(ptY));
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        } else {
+            ctx.beginPath();
+            ctx.rect(toX(wxCenter - L / 2), toY(wyCenter + df1 / 2), L * scale, df1 * scale);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        // 3. Trapezoidal / Hourglass worm thread rack along [-L/2, +L/2]
         const handSign = (parseInt(g.teethOrientation) === 2) ? -1.0 : 1.0;
         const axialShift = (handSign * ((this.animPhase / (Math.PI * 2.0)) * g.z1 * px)) % px;
-        const ha1 = g.ha1;
-        const hf1 = g.hf1;
-        const halfSx1 = g.sx1 / 2.0;
-        const halfSa1 = Math.max(0.05 * px, halfSx1 - ha1 * Math.tan(alfaxRad));
-        const halfSf1 = Math.min(0.48 * px, halfSx1 + hf1 * Math.tan(alfaxRad));
 
-        const nPitches = Math.ceil(L / px) + 2;
+        const nPitches = Math.ceil(L / px) + 3;
         ctx.fillStyle = 'rgba(56, 189, 248, 0.30)';
         ctx.strokeStyle = '#38bdf8';
         ctx.lineWidth = 1.6;
 
-        // Clip to worm face width [-L/2, +L/2] with chamfer angle DXF_Beta
         ctx.save();
-        const ch = Math.tan((g.DXF_Beta * Math.PI) / 180.0) * ((da1 - df1) / 2.0);
-        ctx.beginPath();
-        ctx.moveTo(toX(wxCenter - L / 2), toY(wyCenter));
-        ctx.lineTo(toX(wxCenter - L / 2), toY(wyCenter + df1 / 2));
-        ctx.lineTo(toX(wxCenter - L / 2 + ch), toY(wyCenter + da1 / 2));
-        ctx.lineTo(toX(wxCenter + L / 2 - ch), toY(wyCenter + da1 / 2));
-        ctx.lineTo(toX(wxCenter + L / 2), toY(wyCenter + df1 / 2));
-        ctx.lineTo(toX(wxCenter + L / 2), toY(wyCenter - df1 / 2));
-        ctx.lineTo(toX(wxCenter + L / 2 - ch), toY(wyCenter - da1 / 2));
-        ctx.lineTo(toX(wxCenter - L / 2 + ch), toY(wyCenter - da1 / 2));
-        ctx.lineTo(toX(wxCenter - L / 2), toY(wyCenter - df1 / 2));
-        ctx.closePath();
-        ctx.clip();
-
-        for (let k = -nPitches; k <= nPitches; k++) {
-            // Top tooth centered at x = k * px + axialShift (at k=0, tooth crest is at x=0 meshing with wheel space)
-            const xcTop = wxCenter + k * px + axialShift;
+        // Clip to outer boundary
+        if (isGloboid) {
             ctx.beginPath();
-            ctx.moveTo(toX(xcTop - halfSf1), toY(wyCenter + df1 / 2));
-            ctx.lineTo(toX(xcTop - halfSa1), toY(wyCenter + da1 / 2));
-            ctx.lineTo(toX(xcTop + halfSa1), toY(wyCenter + da1 / 2));
-            ctx.lineTo(toX(xcTop + halfSf1), toY(wyCenter + df1 / 2));
+            const nClip = 36;
+            for (let s = 0; s <= nClip; s++) {
+                const dx = -L / 2.0 + s * (L / nClip);
+                const ra = evalR1Globoid(dx) + ha1;
+                if (s === 0) ctx.moveTo(toX(wxCenter + dx), toY(wyCenter + ra));
+                else ctx.lineTo(toX(wxCenter + dx), toY(wyCenter + ra));
+            }
+            for (let s = nClip; s >= 0; s--) {
+                const dx = -L / 2.0 + s * (L / nClip);
+                const ra = evalR1Globoid(dx) + ha1;
+                ctx.lineTo(toX(wxCenter + dx), toY(wyCenter - ra));
+            }
             ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-
-            // Bottom tooth (shifted by px/2 for odd z1)
-            const xcBot = xcTop + (g.z1 % 2 === 1 ? px / 2.0 : 0.0);
+            ctx.clip();
+        } else {
+            const ch = Math.tan((g.DXF_Beta * Math.PI) / 180.0) * ((da1 - df1) / 2.0);
             ctx.beginPath();
-            ctx.moveTo(toX(xcBot - halfSf1), toY(wyCenter - df1 / 2));
-            ctx.lineTo(toX(xcBot - halfSa1), toY(wyCenter - da1 / 2));
-            ctx.lineTo(toX(xcBot + halfSa1), toY(wyCenter - da1 / 2));
-            ctx.lineTo(toX(xcBot + halfSf1), toY(wyCenter - df1 / 2));
+            ctx.moveTo(toX(wxCenter - L / 2), toY(wyCenter));
+            ctx.lineTo(toX(wxCenter - L / 2), toY(wyCenter + df1 / 2));
+            ctx.lineTo(toX(wxCenter - L / 2 + ch), toY(wyCenter + da1 / 2));
+            ctx.lineTo(toX(wxCenter + L / 2 - ch), toY(wyCenter + da1 / 2));
+            ctx.lineTo(toX(wxCenter + L / 2), toY(wyCenter + df1 / 2));
+            ctx.lineTo(toX(wxCenter + L / 2), toY(wyCenter - df1 / 2));
+            ctx.lineTo(toX(wxCenter + L / 2 - ch), toY(wyCenter - da1 / 2));
+            ctx.lineTo(toX(wxCenter - L / 2 + ch), toY(wyCenter - da1 / 2));
+            ctx.lineTo(toX(wxCenter - L / 2), toY(wyCenter - df1 / 2));
             ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
+            ctx.clip();
         }
-        ctx.restore();
 
-        // Pitch lines y = wyCenter +- d1/2
+        if (isGloboid) {
+            // Globoid / Hourglass teeth radiating towards wheel center at (wxCenter, wyCenter + g.a)
+            const R_thr = g.R_throat || (g.d2 / 2.0);
+            const deltaPsi = px / R_thr;
+            const psiShift = (handSign * ((this.animPhase / (Math.PI * 2.0)) * g.z1 * deltaPsi)) % deltaPsi;
+            const halfThRad = (0.5 * g.sx1) / R_thr;
+            const dTipAngle = (ha1 * Math.tan(alfaxRad)) / R_thr;
+            const dRootAngle = (hf1 * Math.tan(alfaxRad)) / R_thr;
+            const halfSaAngle = Math.max(0.04 * deltaPsi, halfThRad - dTipAngle);
+            const halfSfAngle = Math.min(0.48 * deltaPsi, halfThRad + dRootAngle);
+
+            const Rw_root = R_thr + hf1;
+            const Rw_tip = R_thr - ha1;
+
+            for (let k = -nPitches; k <= nPitches; k++) {
+                const psiK = k * deltaPsi + psiShift;
+                const dxTop = R_thr * Math.sin(psiK);
+                if (Math.abs(dxTop) > L / 2.0 + px) continue;
+
+                // Top tooth (meshing with wheel)
+                const ang1 = psiK - halfSfAngle;
+                const ang2 = psiK - halfSaAngle;
+                const ang3 = psiK + halfSaAngle;
+                const ang4 = psiK + halfSfAngle;
+
+                const pt1 = { x: wxCenter + Rw_root * Math.sin(ang1), y: wyCenter + g.a - Rw_root * Math.cos(ang1) };
+                const pt2 = { x: wxCenter + Rw_tip * Math.sin(ang2), y: wyCenter + g.a - Rw_tip * Math.cos(ang2) };
+                const pt3 = { x: wxCenter + Rw_tip * Math.sin(ang3), y: wyCenter + g.a - Rw_tip * Math.cos(ang3) };
+                const pt4 = { x: wxCenter + Rw_root * Math.sin(ang4), y: wyCenter + g.a - Rw_root * Math.cos(ang4) };
+
+                ctx.beginPath();
+                ctx.moveTo(toX(pt1.x), toY(pt1.y));
+                ctx.lineTo(toX(pt2.x), toY(pt2.y));
+                ctx.lineTo(toX(pt3.x), toY(pt3.y));
+                ctx.lineTo(toX(pt4.x), toY(pt4.y));
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Bottom tooth (symmetrically positioned on bottom hourglass arc)
+                const botPsi = psiK + (g.z1 % 2 === 1 ? deltaPsi / 2.0 : 0.0);
+                const dxBot = R_thr * Math.sin(botPsi);
+                const rfBot = evalR1Globoid(dxBot) - hf1;
+                const raBot = evalR1Globoid(dxBot) + ha1;
+                const xcBot = wxCenter + dxBot;
+
+                const bHalfSa = Math.max(0.05 * px, halfSx1 - ha1 * Math.tan(alfaxRad));
+                const bHalfSf = Math.min(0.48 * px, halfSx1 + hf1 * Math.tan(alfaxRad));
+
+                ctx.beginPath();
+                ctx.moveTo(toX(xcBot - bHalfSf), toY(wyCenter - rfBot));
+                ctx.lineTo(toX(xcBot - bHalfSa), toY(wyCenter - raBot));
+                ctx.lineTo(toX(xcBot + bHalfSa), toY(wyCenter - raBot));
+                ctx.lineTo(toX(xcBot + bHalfSf), toY(wyCenter - rfBot));
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+        } else {
+            // Cylindrical / Duplex worm
+            const kDup = isDuplex ? (g.k_dup || ((g.delta_mx || 0.08) / g.mn)) : 0.0;
+
+            for (let k = -nPitches; k <= nPitches; k++) {
+                const xcTop = wxCenter + k * px + axialShift;
+                const dxRel = xcTop - wxCenter;
+                const sxLocal = isDuplex ? Math.max(0.12 * px, Math.min(0.88 * px, g.sx1 + dxRel * kDup)) : g.sx1;
+                const halfSxLocal = sxLocal / 2.0;
+                const halfSaLocal = Math.max(0.05 * px, halfSxLocal - ha1 * Math.tan(alfaxRad));
+                const halfSfLocal = Math.min(0.48 * px, halfSxLocal + hf1 * Math.tan(alfaxRad));
+
+                ctx.beginPath();
+                ctx.moveTo(toX(xcTop - halfSfLocal), toY(wyCenter + df1 / 2));
+                ctx.lineTo(toX(xcTop - halfSaLocal), toY(wyCenter + da1 / 2));
+                ctx.lineTo(toX(xcTop + halfSaLocal), toY(wyCenter + da1 / 2));
+                ctx.lineTo(toX(xcTop + halfSfLocal), toY(wyCenter + df1 / 2));
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Bottom tooth (shifted by px/2 for odd z1)
+                const xcBot = xcTop + (g.z1 % 2 === 1 ? px / 2.0 : 0.0);
+                const dxRelBot = xcBot - wxCenter;
+                const sxLocalBot = isDuplex ? Math.max(0.12 * px, Math.min(0.88 * px, g.sx1 + dxRelBot * kDup)) : g.sx1;
+                const halfSxBot = sxLocalBot / 2.0;
+                const halfSaBot = Math.max(0.05 * px, halfSxBot - ha1 * Math.tan(alfaxRad));
+                const halfSfBot = Math.min(0.48 * px, halfSxBot + hf1 * Math.tan(alfaxRad));
+
+                ctx.beginPath();
+                ctx.moveTo(toX(xcBot - halfSfBot), toY(wyCenter - df1 / 2));
+                ctx.lineTo(toX(xcBot - halfSaBot), toY(wyCenter - da1 / 2));
+                ctx.lineTo(toX(xcBot + halfSaBot), toY(wyCenter - da1 / 2));
+                ctx.lineTo(toX(xcBot + halfSfBot), toY(wyCenter - df1 / 2));
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+        ctx.restore(); // end clip
+
+        // 4. Pitch lines
         ctx.strokeStyle = '#fbbf24';
         ctx.lineWidth = 1.1;
         ctx.setLineDash([6, 4]);
         ctx.beginPath();
-        ctx.moveTo(toX(wxCenter - L / 2), toY(wyCenter + d1 / 2));
-        ctx.lineTo(toX(wxCenter + L / 2), toY(wyCenter + d1 / 2));
-        ctx.moveTo(toX(wxCenter - L / 2), toY(wyCenter - d1 / 2));
-        ctx.lineTo(toX(wxCenter + L / 2), toY(wyCenter - d1 / 2));
+        if (isGloboid) {
+            const nPLine = 36;
+            for (let s = 0; s <= nPLine; s++) {
+                const dx = -L / 2.0 + s * (L / nPLine);
+                const r1Val = evalR1Globoid(dx);
+                if (s === 0) ctx.moveTo(toX(wxCenter + dx), toY(wyCenter + r1Val));
+                else ctx.lineTo(toX(wxCenter + dx), toY(wyCenter + r1Val));
+            }
+            for (let s = 0; s <= nPLine; s++) {
+                const dx = -L / 2.0 + s * (L / nPLine);
+                const r1Val = evalR1Globoid(dx);
+                if (s === 0) ctx.moveTo(toX(wxCenter + dx), toY(wyCenter - r1Val));
+                else ctx.lineTo(toX(wxCenter + dx), toY(wyCenter - r1Val));
+            }
+        } else {
+            ctx.moveTo(toX(wxCenter - L / 2), toY(wyCenter + d1 / 2));
+            ctx.lineTo(toX(wxCenter + L / 2), toY(wyCenter + d1 / 2));
+            ctx.moveTo(toX(wxCenter - L / 2), toY(wyCenter - d1 / 2));
+            ctx.lineTo(toX(wxCenter + L / 2), toY(wyCenter - d1 / 2));
+        }
         ctx.stroke();
+        ctx.setLineDash([]);
         ctx.restore();
     }
 
@@ -5643,8 +5820,12 @@ const Worm3DGenerator = {
         if (uLow >= uHigh) return null;
 
         const a = mc.MC_a;
-        const ip = (mc.MC_z2 / mc.MC_z1) * (mc.MC_pxn / (2.0 * Math.PI));
-        const p = mc.MC_pxn / (2.0 * Math.PI);
+        let p = mc.MC_pxn / (2.0 * Math.PI);
+        if (mc.wormArch === 2) {
+            const pzLead = (flankSide > 0) ? (mc.pz_R || mc.MC_pxn) : (mc.pz_L || mc.MC_pxn);
+            p = pzLead / (2.0 * Math.PI);
+        }
+        const ip = (mc.MC_z2 / mc.MC_z1) * p;
         const toothType = mc.toothType || 1;
         const self = this;
 
@@ -5664,14 +5845,13 @@ const Worm3DGenerator = {
         const rAtLow = evalR(uLow);
         const rAtHigh = evalR(uHigh);
 
-        const isDecreasing = (rAtLow >= rAtHigh);
-        if (isDecreasing) {
-            if (rTarget >= rAtLow) return uLow;
-            if (rTarget <= rAtHigh) return uHigh;
-        } else {
-            if (rTarget <= rAtLow) return uLow;
-            if (rTarget >= rAtHigh) return uHigh;
+        const rMin = Math.min(rAtLow, rAtHigh);
+        const rMax = Math.max(rAtLow, rAtHigh);
+        if (rTarget < rMin || rTarget > rMax) {
+            return null;
         }
+
+        const isDecreasing = (rAtLow >= rAtHigh);
 
         // Monotonic bisection convergence (< 0.0001 mm precision)
         for (let iter = 0; iter < 18; iter++) {
@@ -5704,8 +5884,12 @@ const Worm3DGenerator = {
 
         const a = mc.MC_a;
         const i = mc.MC_z2 / mc.MC_z1;
-        const ip = i * (mc.MC_pxn / (2.0 * Math.PI));
-        const p = mc.MC_pxn / (2.0 * Math.PI);
+        let p = mc.MC_pxn / (2.0 * Math.PI);
+        if (mc.wormArch === 2) {
+            const pzLead = (flankSide > 0) ? (mc.pz_R || mc.MC_pxn) : (mc.pz_L || mc.MC_pxn);
+            p = pzLead / (2.0 * Math.PI);
+        }
+        const ip = i * p;
         const toothType = mc.toothType || 1;
 
         const ratio = Math.min(1.0, Math.max(-1.0, z / u));
@@ -6220,19 +6404,30 @@ const Worm3DGenerator = {
                     let thSpaceR = this.evalConjugateFlankTheta(r, z, +1, mc);
                     let thSpaceL = this.evalConjugateFlankTheta(r, z, -1, mc);
 
-                    if (thSpaceR === null) {
-                        thSpaceR = (s > 0 && slices[s - 1].teeth[j].rFlankL[m])
-                            ? (slices[s - 1].teeth[j].rFlankL[m].theta - j * pitchAngle)
-                            : (-Math.PI * 0.5 + (0.5 * mc.MC_sx1 / mc.r2));
-                    }
-                    if (thSpaceL === null) {
-                        thSpaceL = (s > 0 && slices[s - 1].teeth[j].rFlankR[m])
-                            ? (slices[s - 1].teeth[j].rFlankR[m].theta - (j + 1) * pitchAngle)
-                            : (-Math.PI * 0.5 - (0.5 * mc.MC_sx1 / mc.r2));
+                    const thZShift = (z * Math.tan(mc.gamma)) / Math.max(1e-6, mc.r2);
+                    const nomThCenter = -Math.PI * 0.5 + thZShift;
+                    const sx_r = Math.max(0.12 * mc.mn, (mc.MC_sx2 * 2.0) - 2.0 * (r - mc.r2) * Math.tan(mc.MC_alfa_rad));
+                    const halfThAng = Math.max(0.04 * pitchAngle, Math.min(0.46 * pitchAngle, (sx_r * 0.5) / Math.max(1e-6, r)));
+                    const nomToothL = nomThCenter - halfThAng;
+                    const nomToothR = nomThCenter + halfThAng;
+
+                    let thToothL, thToothR;
+                    if (thSpaceR === null || thSpaceL === null) {
+                        thToothL = nomToothL;
+                        thToothR = nomToothR;
+                    } else {
+                        const toothThick = (thSpaceL + pitchAngle) - thSpaceR;
+                        if (toothThick < 0.12 * pitchAngle || toothThick > 0.80 * pitchAngle) {
+                            thToothL = nomToothL;
+                            thToothR = nomToothR;
+                        } else {
+                            thToothL = thSpaceR;
+                            thToothR = thSpaceL + pitchAngle;
+                        }
                     }
 
-                    const thetaToothL = thSpaceR + j * pitchAngle;
-                    const thetaToothR = thSpaceL + (j + 1) * pitchAngle;
+                    const thetaToothL = thToothL + j * pitchAngle;
+                    const thetaToothR = thToothR + j * pitchAngle;
 
                     rFlankL.push({ x: r * Math.cos(thetaToothL), y: r * Math.sin(thetaToothL), z, r, theta: thetaToothL });
                     rFlankR.push({ x: r * Math.cos(thetaToothR), y: r * Math.sin(thetaToothR), z, r, theta: thetaToothR });
@@ -6282,7 +6477,7 @@ const Worm3DGenerator = {
                     const mPrev = Math.max(0, m - 1);
                     const mNext = Math.min(ptsR, m + 1);
 
-                    // Left Flank Normal (dz x dr)
+                    // Left Flank Normal (dr x dz points outward away from tooth into tooth space)
                     const dzL_x = flankL_next[m].x - flankL_prev[m].x;
                     const dzL_y = flankL_next[m].y - flankL_prev[m].y;
                     const dzL_z = flankL_next[m].z - flankL_prev[m].z;
@@ -6291,9 +6486,9 @@ const Worm3DGenerator = {
                     const drL_y = flankL[mNext].y - flankL[mPrev].y;
                     const drL_z = flankL[mNext].z - flankL[mPrev].z;
 
-                    let nLx = dzL_y * drL_z - dzL_z * drL_y;
-                    let nLy = dzL_z * drL_x - dzL_x * drL_z;
-                    let nLz = dzL_x * drL_y - dzL_y * drL_x;
+                    let nLx = drL_y * dzL_z - drL_z * dzL_y;
+                    let nLy = drL_z * dzL_x - drL_x * dzL_z;
+                    let nLz = drL_x * dzL_y - drL_y * dzL_x;
                     let lenL = Math.hypot(nLx, nLy, nLz);
                     if (lenL > 1e-10) {
                         nLx /= lenL; nLy /= lenL; nLz /= lenL;
@@ -6302,7 +6497,7 @@ const Worm3DGenerator = {
                     flankL[m].ny = nLy;
                     flankL[m].nz = nLz;
 
-                    // Right Flank Normal (dr x dz)
+                    // Right Flank Normal (dz x dr points outward away from tooth into tooth space)
                     const dzR_x = flankR_next[m].x - flankR_prev[m].x;
                     const dzR_y = flankR_next[m].y - flankR_prev[m].y;
                     const dzR_z = flankR_next[m].z - flankR_prev[m].z;
@@ -6311,9 +6506,9 @@ const Worm3DGenerator = {
                     const drR_y = flankR[mNext].y - flankR[mPrev].y;
                     const drR_z = flankR[mNext].z - flankR[mPrev].z;
 
-                    let nRx = drR_y * dzR_z - drR_z * dzR_y;
-                    let nRy = drR_z * dzR_x - drR_x * dzR_z;
-                    let nRz = drR_x * dzR_y - drR_y * dzR_x;
+                    let nRx = dzR_y * drR_z - dzR_z * drR_y;
+                    let nRy = dzR_z * drR_x - drR_x * dzR_z;
+                    let nRz = dzR_x * drR_y - drR_y * dzR_x;
                     let lenR = Math.hypot(nRx, nRy, nRz);
                     if (lenR > 1e-10) {
                         nRx /= lenR; nRy /= lenR; nRz /= lenR;
@@ -6334,7 +6529,7 @@ const Worm3DGenerator = {
                 const tA = sA.teeth[j];
                 const tB = sB.teeth[j];
 
-                // Left Flank (Adaptive Shortest-Diagonal Delaunay Triangulation)
+                // Left Flank (Outward-facing CCW Triangulation)
                 for (let m = 0; m < ptsR; m++) {
                     const p00 = tA.rFlankL[m];
                     const p01 = tA.rFlankL[m + 1];
@@ -6345,15 +6540,15 @@ const Worm3DGenerator = {
                     const d01_10_sq = (p01.x - p10.x) ** 2 + (p01.y - p10.y) ** 2 + (p01.z - p10.z) ** 2;
 
                     if (d00_11_sq <= d01_10_sq) {
-                        pushTri(p00, p10, p11);
-                        pushTri(p00, p11, p01);
+                        pushTri(p00, p11, p10);
+                        pushTri(p00, p01, p11);
                     } else {
-                        pushTri(p00, p10, p01);
-                        pushTri(p10, p11, p01);
+                        pushTri(p00, p01, p10);
+                        pushTri(p10, p01, p11);
                     }
                 }
 
-                // Right Flank (Adaptive Shortest-Diagonal Delaunay Triangulation)
+                // Right Flank (Outward-facing CCW Triangulation)
                 for (let m = 0; m < ptsR; m++) {
                     const p00 = tA.rFlankR[m];
                     const p01 = tA.rFlankR[m + 1];
@@ -6364,16 +6559,16 @@ const Worm3DGenerator = {
                     const d01_10_sq = (p01.x - p10.x) ** 2 + (p01.y - p10.y) ** 2 + (p01.z - p10.z) ** 2;
 
                     if (d00_11_sq <= d01_10_sq) {
-                        pushTri(p00, p01, p11);
-                        pushTri(p00, p11, p10);
+                        pushTri(p00, p10, p11);
+                        pushTri(p00, p11, p01);
                     } else {
-                        pushTri(p00, p01, p10);
-                        pushTri(p01, p11, p10);
+                        pushTri(p00, p10, p01);
+                        pushTri(p01, p10, p11);
                     }
                 }
 
                 if (!surfaceOnly) {
-                    // Tip Crest (subdivided circular arc - Adaptive Shortest-Diagonal Delaunay Triangulation)
+                    // Tip Crest (Outward-facing radial CCW Triangulation)
                     for (let t = 0; t < wheelTipPts; t++) {
                         const pA0 = tA.tipArc[t];
                         const pA1 = tA.tipArc[t + 1];
@@ -6384,11 +6579,11 @@ const Worm3DGenerator = {
                         const d01_10_sq = (pA1.x - pB0.x) ** 2 + (pA1.y - pB0.y) ** 2 + (pA1.z - pB0.z) ** 2;
 
                         if (d00_11_sq <= d01_10_sq) {
-                            pushTri(pA0, pB0, pB1);
-                            pushTri(pA0, pB1, pA1);
+                            pushTri(pA0, pA1, pB1);
+                            pushTri(pA0, pB1, pB0);
                         } else {
-                            pushTri(pA0, pB0, pA1);
-                            pushTri(pB0, pB1, pA1);
+                            pushTri(pA0, pA1, pB0);
+                            pushTri(pB0, pA1, pB1);
                         }
                     }
 
@@ -6399,8 +6594,11 @@ const Worm3DGenerator = {
                     const pRootL_A = sA.teeth[nextJ].rFlankL[0];
                     const pRootL_B = sB.teeth[nextJ].rFlankL[0];
 
-                    pushTri(pRootR_A, pRootL_B, pRootR_B);
-                    pushTri(pRootR_A, pRootL_A, pRootL_B);
+                    const thMid = (pRootR_A.theta + pRootL_A.theta) * 0.5;
+                    const nRoot = [Math.cos(thMid), Math.sin(thMid), 0];
+
+                    pushTri(pRootR_A, pRootL_B, pRootR_B, nRoot);
+                    pushTri(pRootR_A, pRootL_A, pRootL_B, nRoot);
                 }
             }
         }
@@ -6412,17 +6610,19 @@ const Worm3DGenerator = {
                 const sData = slices[sIdx];
                 const zVal = sData.z;
                 const normalZ = (side === 0) ? -1 : 1;
-                const rRimRoot = Math.min(sData.rRoot, sData.rTip);
+                const toothHeightOnFace = sData.rTip - sData.rRoot;
+                const hasTeethOnFace = toothHeightOnFace > 0.15;
+                const rRimOuter = hasTeethOnFace ? sData.rRoot : Math.max(sData.rTip, sData.rRoot);
 
-                // 1. Flat Annular Disk from rBore2 to rRimRoot
+                // 1. Flat Annular Disk from rBore2 to rRimOuter
                 for (let k = 0; k < boreSegs; k++) {
                     const psi1 = (k * 2.0 * Math.PI) / boreSegs;
                     const psi2 = ((k + 1) * 2.0 * Math.PI) / boreSegs;
 
                     const pBore1 = { x: rBore2 * Math.cos(psi1), y: rBore2 * Math.sin(psi1), z: zVal };
                     const pBore2 = { x: rBore2 * Math.cos(psi2), y: rBore2 * Math.sin(psi2), z: zVal };
-                    const pRim1  = { x: rRimRoot * Math.cos(psi1), y: rRimRoot * Math.sin(psi1), z: zVal };
-                    const pRim2  = { x: rRimRoot * Math.cos(psi2), y: rRimRoot * Math.sin(psi2), z: zVal };
+                    const pRim1  = { x: rRimOuter * Math.cos(psi1), y: rRimOuter * Math.sin(psi1), z: zVal };
+                    const pRim2  = { x: rRimOuter * Math.cos(psi2), y: rRimOuter * Math.sin(psi2), z: zVal };
 
                     if (side === 0) {
                         pushTri(pBore1, pRim2, pRim1, [0, 0, normalZ]);
@@ -6433,19 +6633,21 @@ const Worm3DGenerator = {
                     }
                 }
 
-                // 2. Teeth Front/Back End Faces
-                for (let j = 0; j < z2; j++) {
-                    const t = sData.teeth[j];
-                    for (let m = 0; m < ptsR; m++) {
-                        const pL0 = t.rFlankL[m], pL1 = t.rFlankL[m + 1];
-                        const pR0 = t.rFlankR[m], pR1 = t.rFlankR[m + 1];
+                // 2. Teeth Front/Back End Faces (Omitted when chamfer reduces tooth height to zero at face)
+                if (hasTeethOnFace) {
+                    for (let j = 0; j < z2; j++) {
+                        const t = sData.teeth[j];
+                        for (let m = 0; m < ptsR; m++) {
+                            const pL0 = t.rFlankL[m], pL1 = t.rFlankL[m + 1];
+                            const pR0 = t.rFlankR[m], pR1 = t.rFlankR[m + 1];
 
-                        if (side === 0) {
-                            pushTri(pL0, pR1, pR0, [0, 0, normalZ]);
-                            pushTri(pL0, pL1, pR1, [0, 0, normalZ]);
-                        } else {
-                            pushTri(pL0, pR0, pR1, [0, 0, normalZ]);
-                            pushTri(pL0, pR1, pL1, [0, 0, normalZ]);
+                            if (side === 0) {
+                                pushTri(pL0, pR1, pR0, [0, 0, normalZ]);
+                                pushTri(pL0, pL1, pR1, [0, 0, normalZ]);
+                            } else {
+                                pushTri(pL0, pR0, pR1, [0, 0, normalZ]);
+                                pushTri(pL0, pR1, pL1, [0, 0, normalZ]);
+                            }
                         }
                     }
                 }
@@ -7762,9 +7964,10 @@ class Worm3DVisualizer {
 
         this.updateMeshes();
 
-        // Position Worm 1 at (0, -a, 0) and Worm Wheel 2 at (0, 0, 0)
+        // Position Worm 1 at (wormPosX, -a, 0) and Worm Wheel 2 at (0, 0, 0)
+        const wormPosX = (geom.wormArch === 2 ? (parseFloat(geom.delta_x_adj) || 0) : 0);
         if (this.wormGroup) {
-            this.wormGroup.position.set(0, -this.centerDistA, 0);
+            this.wormGroup.position.set(wormPosX, -this.centerDistA, 0);
             this.wormGroup.visible = this.wormVisible;
         }
         if (this.wheelGroup) {
