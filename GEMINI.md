@@ -2160,3 +2160,23 @@ ho_{f0} / \cos\gamma$.
      * Phương pháp dịch chỉnh Mục 5.1 (`#selCorrectionType`), giá trị $x_1, x_{t1}$, và slider $x_1$.
      * Kích hoạt tự động tính toán lại toàn bộ thông số hình học, 2D và 3D.
    - Cơ chế đồng bộ 2 chiều (Bi-directional Sync): Nếu kỹ sư tự điều chỉnh bằng tay các ô 3.1, 5.1 hay slider $x_1$, bộ chọn 5.0* tự động chuyển về trạng thái `-- Tùy chọn tự do (Custom / Manual) --` để phản ánh đúng hiện trạng thiết kế.
+
+---
+
+### Quy Tắc 91: Quy Chuẩn Cảnh Báo Màu Cam (#f59e0b) Cho Các Trường Hợp Chỉ Tính Toán Số Học Chưa Dựng 3D (TH 3 Zerol & TH 6 Klingelnberg)
+**Ngày áp dụng**: 07/10/2026  
+**Module**: Bánh Răng Côn (`modules/bevel-gear/`)  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+1. **Bản Chất Kỹ Thuật Đồ Họa 3D vs Tính Toán Số Học**:
+   - Trường hợp 3 (Zerol - Cung tròn $\beta_m = 0$) và Trường hợp 6 (Klingelnberg - Răng song song $h = \text{const}$, Epicycloid): Hệ thống tính toán toán học chuẩn xác 100% theo ISO 23509 và MITCalc 1.74 (`Gear2_01.xlsb`).
+   - Tuy nhiên, về mặt mô hình hóa 3D WebGL và xuất file 3D CAD (.step, .stl, .obj, .igs), sườn răng Zerol và Klingelnberg hiện vẫn đang dựng dạng thẳng tương đương (chưa mô phỏng và xuất 3D đúng biên dạng không gian thực). Riêng Trường hợp 7 (Hypoid - Trục chéo nhau) là hoàn toàn chưa hỗ trợ cả tính toán lẫn 3D nên không đưa vào danh sách chọn nhanh.
+2. **Quy Chuẩn Cảnh Báo Màu Cam Nhất Quán (#f59e0b)**:
+   - **Bộ Chọn Nhanh Thiết Kế 5.0* (`#selDesignPreset175`)**:
+     * Option TH 3 và TH 6 được định dạng nổi bật với chữ màu cam hổ phách `#f59e0b`, font đậm 700, kèm nhãn cảnh báo rõ ràng: `⚠️ TH 3... [Chỉ tính toán, chưa dựng 3D]`, `⚠️ TH 6... [Chỉ tính toán, chưa dựng 3D]`.
+     * Khi người dùng chọn TH 3 hoặc TH 6, toàn bộ khung viền và chữ của thẻ `<select>` tự động chuyển sang màu cam `#f59e0b`, và nhãn thông báo `#presetNotice175` hiển thị `⚠️ Chỉ tính toán số học (Chưa dựng 3D)` màu cam `#f59e0b`.
+     * Khi chọn các phương án có 3D hoàn chỉnh (TH 1, TH 2, TH 2b, TH 4, TH 5, TH 8, TH 9, TH 10), màu sắc trở về xanh cyan `#38bdf8` / viền `#0284c7` và nhãn thông báo `⚡ Tự nhảy 3.1 & 5.1 (3D chuẩn 100%)` màu xanh lục `#10b981`.
+   - **Bảng Ma Trận Thiết Kế 17.5**:
+     * Hàng số 3 (TH 3) và Hàng số 6 (TH 6) được làm nổi bật với viền trái dày 3px màu cam `border-left: 3px solid #f59e0b;`, nền ửng cam `rgba(245, 158, 11, 0.12)`, tiêu đề và số thứ tự màu cam `3 ⚠️` và `6 ⚠️`.
+     * Bổ sung huy hiệu badge cảnh báo màu cam: `⚠️ Chỉ tính toán số học, chưa có 3D` ngay tại cột Kiểu Răng.
+   - **Mục 3.1 Kiểu Răng (`#selGearingType`)**:
+     * Option Zerol (`[D]`) và Klingelnberg (`[E,F]`) được gắn nhãn cảnh báo `⚠️ ... [Chỉ tính toán, chưa dựng 3D]` và hiển thị viền/chữ màu cam `#f59e0b` khi được kích hoạt.

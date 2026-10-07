@@ -206,8 +206,8 @@
                                             <select class="select-eng" id="selGearingType" style="width: 100%; max-width: 440px;">
                                                 <option value="straight_type1" selected>A,B. Đường thẳng, loại I (Thẳng &amp; nghiêng tiêu chuẩn)</option>
                                                 <option value="gleason">C. Cung tròn, loại II (Răng xoắn Gleason)</option>
-                                                <option value="zerol">D. Cung tròn, Beta=0, loại II (Răng Zerol)</option>
-                                                <option value="klingelnberg">E,F. Thân khai, Epicycloide, loại III (Klingelnberg, Oerlikon)</option>
+                                                <option value="zerol" style="color: #f59e0b; font-weight: 700; background: #1e293b;">⚠️ D. Cung tròn, Beta=0, loại II (Răng Zerol) [Chỉ tính toán, chưa dựng 3D]</option>
+                                                <option value="klingelnberg" style="color: #f59e0b; font-weight: 700; background: #1e293b;">⚠️ E,F. Thân khai, Epicycloide, loại III (Klingelnberg, Oerlikon) [Chỉ tính toán, chưa dựng 3D]</option>
                                             </select>
                                         </td>
                                         <td>-</td>
@@ -614,10 +614,10 @@
                                                 <option value="th1">TH 1: Băng tải chậm, nông nghiệp (Thẳng [A,B] + DIN 870 [C])</option>
                                                 <option value="th2">TH 2: Răng thẳng ít răng z1&le;17 (Thẳng [A,B] + VN Bền uốn [A])</option>
                                                 <option value="th2b">TH 2b: Răng thẳng tải nặng liên tục (Thẳng [A,B] + VN Tiếp xúc [B])</option>
-                                                <option value="th3">TH 3: Nâng cấp êm, giữ vỏ hộp cũ (Zerol [D] + Răng cong [E])</option>
+                                                <option value="th3" style="color: #f59e0b; font-weight: 700; background: #1e293b;">⚠️ TH 3: Nâng cấp êm, giữ vỏ cũ (Zerol [D]) - [Chỉ tính toán, chưa dựng 3D]</option>
                                                 <option value="th4">TH 4: Hộp giảm tốc tải nặng 1 chiều (Gleason [C] + Răng cong [E], &beta;m=35°)</option>
                                                 <option value="th5">TH 5: Hộp số đảo chiều liên tục (Gleason [C] + VN Tiếp xúc [B], &beta;m=25°)</option>
-                                                <option value="th6">TH 6: Cầu sau xe tải, xe buýt vi sai (Klingelnberg [E,F] + Răng cong [E], &beta;m=35°)</option>
+                                                <option value="th6" style="color: #f59e0b; font-weight: 700; background: #1e293b;">⚠️ TH 6: Cầu sau xe tải vi sai (Klingelnberg [E,F]) - [Chỉ tính toán, chưa dựng 3D]</option>
                                                 <option value="th8">TH 8: Bàn xoay CNC, Robot, Radar (Gleason [C] + VN Bền uốn [A], &beta;m=35°)</option>
                                                 <option value="th9">TH 9: Hàng không, tuabin cao tốc (Gleason [C] + Răng cong [E], &beta;m=35°)</option>
                                                 <option value="th10">TH 10: Tay quay góc vuông Miter 1:1 (Thẳng [A,B] + DIN 870 [C], i=1.0)</option>
@@ -625,7 +625,7 @@
                                         </td>
                                         <td>-</td>
                                         <td>
-                                            <span style="font-size: 0.75rem; color: #38bdf8; font-weight: 600;">⚡ Tự nhảy 3.1 &amp; 5.1</span>
+                                            <span id="presetNotice175" style="font-size: 0.75rem; color: #38bdf8; font-weight: 600;">⚡ Tự nhảy 3.1 &amp; 5.1</span>
                                         </td>
                                     </tr>
                                     <tr>
@@ -2232,17 +2232,20 @@
                                                 <td style="padding: 6px 8px; border: 1px solid #475569;">Ổ bi đỡ chặn hoặc đũa côn chịu tải tiếp xúc lớn.</td>
                                                 <td style="padding: 6px 8px; border: 1px solid #475569; color: #86efac;">Tăng bán kính cong tương đương &rho;<sub>w</sub>, cân bằng trượt riêng &vartheta;<sub>1</sub>=&vartheta;<sub>2</sub> chống tróc rỗ khi xưởng không có máy cắt xoắn.</td>
                                             </tr>
-                                            <tr style="background: rgba(56, 189, 248, 0.08);">
-                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #38bdf8;">3</td>
+                                            <tr style="background: rgba(245, 158, 11, 0.12); border-left: 3px solid #f59e0b;">
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 800; color: #f59e0b;">3 ⚠️</td>
                                                 <td style="padding: 6px 8px; border: 1px solid #475569;">
-                                                    <strong>Nâng cấp hộp số cũ ồn/rung (thay thế trực tiếp)</strong><br>
-                                                    <span style="color: #7dd3fc; font-size: 0.78rem;">v = 4 &divide; 10 m/s &bull; Cần êm &bull; Giữ vỏ hộp cũ</span>
+                                                    <strong style="color: #f59e0b;">Nâng cấp hộp số cũ ồn/rung (thay thế trực tiếp)</strong><br>
+                                                    <span style="color: #fde68a; font-size: 0.78rem;">v = 4 &divide; 10 m/s &bull; Cần êm &bull; Giữ vỏ hộp cũ</span>
                                                 </td>
-                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">[D] Cung tròn Zerol (II)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 700; color: #f59e0b;">
+                                                    [D] Cung tròn Zerol (II)<br>
+                                                    <span style="display: inline-block; font-size: 0.72rem; color: #f59e0b; background: rgba(245, 158, 11, 0.2); padding: 1px 6px; border-radius: 4px; border: 1px solid #f59e0b; margin-top: 3px;">⚠️ Chỉ tính toán số học, chưa có 3D</span>
+                                                </td>
                                                 <td style="padding: 6px 8px; border: 1px solid #475569;">[E] Răng cong (Curved)<br>hoặc [A] VN uốn</td>
-                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 700; color: #38bdf8;">&beta;<sub>m</sub> = 0°<br>(Lực dọc F<sub>a</sub> &approx; 0)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 700; color: #f59e0b;">&beta;<sub>m</sub> = 0°<br>(Lực dọc F<sub>a</sub> &approx; 0)</td>
                                                 <td style="padding: 6px 8px; border: 1px solid #475569; color: #34d399;"><strong>Giữ nguyên ổ đỡ cũ</strong> của răng thẳng (không phải làm lại vỏ).</td>
-                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #7dd3fc;">Êm hơn răng thẳng 6–8 dB nhưng không sinh lực dọc trục lớn, thay thế thẳng vào vỏ cũ.</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #fde68a;">Êm hơn răng thẳng 6–8 dB nhưng không sinh lực dọc trục lớn, thay thế thẳng vào vỏ cũ.</td>
                                             </tr>
                                             <tr style="background: rgba(16, 185, 129, 0.08);">
                                                 <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #34d399;">4 ⭐</td>
@@ -2268,17 +2271,20 @@
                                                 <td style="padding: 6px 8px; border: 1px solid #475569;">Ổ đỡ chặn 2 chiều cố định chặt chẽ, vỏ hộp gân đối xứng.</td>
                                                 <td style="padding: 6px 8px; border: 1px solid #475569; color: #fde68a;">Lực dọc trục đảo chiều 180° khi đổi chiều quay. Phải kiểm tra bền uốn cả sườn lồi và sườn lõm.</td>
                                             </tr>
-                                            <tr>
-                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #c084fc;">6</td>
+                                            <tr style="background: rgba(245, 158, 11, 0.12); border-left: 3px solid #f59e0b;">
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 800; color: #f59e0b;">6 ⚠️</td>
                                                 <td style="padding: 6px 8px; border: 1px solid #475569;">
-                                                    <strong>Cầu sau xe tải, xe buýt, xe khách (Vi sai)</strong><br>
-                                                    <span style="color: #e9d5ff; font-size: 0.78rem;">Tải cực nặng, chạy liên tục, sản xuất loạt lớn</span>
+                                                    <strong style="color: #f59e0b;">Cầu sau xe tải, xe buýt, xe khách (Vi sai)</strong><br>
+                                                    <span style="color: #fde68a; font-size: 0.78rem;">Tải cực nặng, chạy liên tục, sản xuất loạt lớn</span>
                                                 </td>
-                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 600; color: #c084fc;">[E,F] Epicycloid (Klingelnberg III)</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; font-weight: 700; color: #f59e0b;">
+                                                    [E,F] Epicycloid (Klingelnberg III)<br>
+                                                    <span style="display: inline-block; font-size: 0.72rem; color: #f59e0b; background: rgba(245, 158, 11, 0.2); padding: 1px 6px; border-radius: 4px; border: 1px solid #f59e0b; margin-top: 3px;">⚠️ Chỉ tính toán số học, chưa có 3D</span>
+                                                </td>
                                                 <td style="padding: 6px 8px; border: 1px solid #475569;">[E] Răng cong (Klingelnberg)<br>Răng song song (h = const)</td>
                                                 <td style="padding: 6px 8px; border: 1px solid #475569;">&beta;<sub>m</sub> = 30° &divide; 38°<br>Theo bước dao xoắn</td>
                                                 <td style="padding: 6px 8px; border: 1px solid #475569;">Ổ đũa côn chịu tải cực cao, vỏ cầu gang dẻo có đai siết.</td>
-                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #e9d5ff;"><strong>Cặp bất di bất dịch (Matched Set)</strong>: Hai bánh rà cát (Lapping) chung cặp, hỏng phải thay cả bộ.</td>
+                                                <td style="padding: 6px 8px; border: 1px solid #475569; color: #fde68a;"><strong>Cặp bất di bất dịch (Matched Set)</strong>: Hai bánh rà cát (Lapping) chung cặp, hỏng phải thay cả bộ.</td>
                                             </tr>
                                             <tr style="background: rgba(244, 63, 94, 0.08);">
                                                 <td style="padding: 6px 8px; border: 1px solid #475569; text-align: center; font-weight: 700; color: #fb7185;">7</td>

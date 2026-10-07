@@ -3643,3 +3643,25 @@ ho_{f0}$.
   4. *Đóng gói & Kiểm thử*:
      - Chạy `python tools/bundle_all.py` cập nhật bundle `modules/bevel-gear/js/bevel-engine.bundle.js`.
      - Kiểm thử Playwright tự động xác nhận 100% PASS, 0 lỗi Console, đồng bộ chính xác cả 2 chiều.
+
+---
+
+## 2026-10-07 - Quy Tắc 91: Quy Chuẩn Cảnh Báo Màu Cam (#f59e0b) Cho Các Trường Hợp Chỉ Tính Toán Số Học Chưa Dựng 3D (TH 3 & TH 6)
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  * "với TH3 và TH6 bạn để chữ mầu cam cho tôi để tôi dễ nhận biết là chỉ có tính toán chứ chưa có dựng hình và mô phỏng 3D".
+- **Bản chất kỹ thuật**:
+  * Trường hợp 3 (Zerol - Cung tròn $\beta_m = 0$) và Trường hợp 6 (Klingelnberg - Răng song song $h = \text{const}$, Epicycloid): Tính toán số học hình học chuẩn xác 100% theo ISO 23509 và MITCalc 1.74 (`Gear2_01.xlsb`).
+  * Tuy nhiên, phần mô hình 3D WebGL và file xuất 3D CAD (.step, .stl, .obj, .igs) hiện vẫn đang dựng dạng thẳng tương đương (chưa mô phỏng và xuất 3D đúng biên dạng không gian thực). Riêng TH 7 (Hypoid) chưa hỗ trợ cả tính toán lẫn 3D nên không đưa vào danh sách chọn nhanh.
+- **Thực hiện kỹ thuật**:
+  1. *Section 5.0* Bộ chọn nhanh thiết kế (`#selDesignPreset175`)*:
+     - Định dạng option TH 3 và TH 6 với màu cam `#f59e0b`, font đậm 700, kèm nhãn `⚠️ ... [Chỉ tính toán, chưa dựng 3D]`.
+     - Lập trình hàm `updatePresetStatus(val)` trong `bevel-ui.js`: Khi chọn TH 3 hoặc TH 6, toàn bộ khung viền và chữ thẻ select tự chuyển sang màu cam `#f59e0b`, và nhãn thông báo `#presetNotice175` hiển thị `⚠️ Chỉ tính toán số học (Chưa dựng 3D)` màu cam `#f59e0b`.
+     - Khi chọn các phương án có 3D hoàn chỉnh, màu sắc trở về xanh cyan `#38bdf8` / viền `#0284c7` và nhãn thông báo `⚡ Tự nhảy 3.1 & 5.1 (3D chuẩn 100%)` màu xanh lục `#10b981`.
+  2. *Section 17.5 Bảng Ma trận lựa chọn thiết kế*:
+     - Hàng số 3 (TH 3) và Hàng số 6 (TH 6) được gắn viền trái dày 3px màu cam `border-left: 3px solid #f59e0b;`, nền ửng cam `rgba(245, 158, 11, 0.12)`, tiêu đề và số thứ tự màu cam `3 ⚠️` và `6 ⚠️`.
+     - Bổ sung huy hiệu badge cảnh báo màu cam: `⚠️ Chỉ tính toán số học, chưa có 3D` ngay tại cột Kiểu Răng.
+  3. *Section 3.1 Kiểu răng (`#selGearingType`)*:
+     - Option Zerol (`[D]`) và Klingelnberg (`[E,F]`) được gắn nhãn `⚠️ ... [Chỉ tính toán, chưa dựng 3D]` và tự động chuyển viền/chữ màu cam `#f59e0b` khi kích hoạt.
+  4. *Đóng gói bundle & Kiểm thử*:
+     - Chạy `python tools/bundle_all.py` cập nhật bundle `modules/bevel-gear/js/bevel-engine.bundle.js` (463,080 ký tự).
+     - Kiểm thử tự động Playwright xác nhận: Màu select chuyển thành `rgb(245, 158, 11)` khi chọn `th3` và `th6`; chuyển lại `rgb(56, 189, 248)` khi chọn `th4`; và `rgb(148, 163, 184)` khi chọn `custom`. 0 lỗi Console, 0 lỗi JavaScript.

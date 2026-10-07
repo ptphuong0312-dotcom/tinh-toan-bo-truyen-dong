@@ -9247,6 +9247,38 @@ class BevelGearUI {
             });
         }
 
+        // Helper to update preset 17.5 warning colors and feedback
+        const updatePresetStatus = (presetVal) => {
+            const sp = document.getElementById('selDesignPreset175');
+            const notice = document.getElementById('presetNotice175');
+            if (!sp) return;
+            if (presetVal === 'th3' || presetVal === 'th6') {
+                sp.style.color = '#f59e0b';
+                sp.style.borderColor = '#f59e0b';
+                sp.style.backgroundColor = '#1e293b';
+                if (notice) {
+                    notice.textContent = '⚠️ Chỉ tính toán số học (Chưa dựng 3D)';
+                    notice.style.color = '#f59e0b';
+                }
+            } else if (presetVal === 'custom') {
+                sp.style.color = '#94a3b8';
+                sp.style.borderColor = '#475569';
+                sp.style.backgroundColor = '#0f172a';
+                if (notice) {
+                    notice.textContent = 'Tùy chọn thủ công';
+                    notice.style.color = '#94a3b8';
+                }
+            } else {
+                sp.style.color = '#38bdf8';
+                sp.style.borderColor = '#0284c7';
+                sp.style.backgroundColor = '#0f172a';
+                if (notice) {
+                    notice.textContent = '⚡ Tự nhảy 3.1 & 5.1 (3D chuẩn 100%)';
+                    notice.style.color = '#10b981';
+                }
+            }
+        };
+
         // Gearing Type (Section 3.1)
         const selGearType = document.getElementById('selGearingType');
         if (selGearType) {
@@ -9262,8 +9294,18 @@ class BevelGearUI {
                     const inpB = document.getElementById('inp_beta');
                     if (inpB) inpB.value = '30.0';
                 }
+                if (v === 'zerol' || v === 'klingelnberg') {
+                    selGearType.style.color = '#f59e0b';
+                    selGearType.style.borderColor = '#f59e0b';
+                } else {
+                    selGearType.style.color = '';
+                    selGearType.style.borderColor = '';
+                }
                 const selPreset175 = document.getElementById('selDesignPreset175');
-                if (selPreset175) selPreset175.value = 'custom';
+                if (selPreset175) {
+                    selPreset175.value = 'custom';
+                    updatePresetStatus('custom');
+                }
                 this.calculate();
             });
         }
@@ -9301,7 +9343,10 @@ class BevelGearUI {
                 const inp_x1 = document.getElementById('inp_x1');
                 if (inp_x1) inp_x1.value = x1.toFixed(2);
                 const selPreset175 = document.getElementById('selDesignPreset175');
-                if (selPreset175) selPreset175.value = 'custom';
+                if (selPreset175) {
+                    selPreset175.value = 'custom';
+                    updatePresetStatus('custom');
+                }
                 this.calculate();
             });
         }
@@ -9333,7 +9378,10 @@ class BevelGearUI {
                 if (inp_xt1) inp_xt1.value = this.inputs.xt1.toFixed(2);
                 if (sliderX1) sliderX1.value = this.inputs.x1;
                 const selPreset175 = document.getElementById('selDesignPreset175');
-                if (selPreset175) selPreset175.value = 'custom';
+                if (selPreset175) {
+                    selPreset175.value = 'custom';
+                    updatePresetStatus('custom');
+                }
                 this.calculate();
             });
         }
@@ -9341,8 +9389,10 @@ class BevelGearUI {
         // Design Preset from Table 17.5 (Section 5.0*)
         const selPreset175 = document.getElementById('selDesignPreset175');
         if (selPreset175) {
+            updatePresetStatus(selPreset175.value);
             selPreset175.addEventListener('change', () => {
                 const val = selPreset175.value;
+                updatePresetStatus(val);
                 if (val === 'custom') return;
 
                 const selGT = document.getElementById('selGearingType');
@@ -9449,6 +9499,16 @@ class BevelGearUI {
                         this.inputs.x1 = -0.93;
                         this.inputs.xt1 = 0.00;
                         break;
+                }
+
+                if (selGT) {
+                    if (this.inputs.gearingType === 'zerol' || this.inputs.gearingType === 'klingelnberg') {
+                        selGT.style.color = '#f59e0b';
+                        selGT.style.borderColor = '#f59e0b';
+                    } else {
+                        selGT.style.color = '';
+                        selGT.style.borderColor = '';
+                    }
                 }
 
                 const inp_x1 = document.getElementById('inp_x1');
