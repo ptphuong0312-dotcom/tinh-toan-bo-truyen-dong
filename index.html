@@ -167,6 +167,30 @@
             background: linear-gradient(135deg, #b45309 0%, #d97706 100%);
             box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
         }
+        .badge-bevel-adv {
+            background: rgba(168, 85, 247, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(168, 85, 247, 0.35);
+        }
+        .btn-bevel-adv {
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+        }
+        .btn-bevel-adv:hover {
+            background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 100%);
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+        }
+        .badge-worm-adv {
+            background: rgba(236, 72, 153, 0.15);
+            color: #f472b6;
+            border: 1px solid rgba(236, 72, 153, 0.35);
+        }
+        .btn-worm-adv {
+            background: linear-gradient(135deg, #db2777 0%, #f43f5e 100%);
+        }
+        .btn-worm-adv:hover {
+            background: linear-gradient(135deg, #be185d 0%, #db2777 100%);
+            box-shadow: 0 0 15px rgba(244, 63, 94, 0.4);
+        }
         .portal-footer {
             text-align: center;
             padding: 2rem 1rem;
@@ -225,7 +249,7 @@
 
             <div class="stats-bar">
                 <div class="stat-item">
-                    <div class="stat-val">3</div>
+                    <div class="stat-val">5</div>
                     <div class="stat-lbl">Mô-đun Độc Lập</div>
                 </div>
                 <div class="stat-item">
@@ -267,7 +291,7 @@
             <div class="module-card">
                 <div>
                     <span class="module-badge badge-bevel">MÔ-ĐUN 2 • HOÀN THIỆN 100%</span>
-                    <h2 class="module-title">📐 Bánh Răng Côn (Bevel Gear)</h2>
+                    <h2 class="module-title">📐 Bánh Răng Côn (Chuẩn)</h2>
                     <p class="module-desc">
                         Tính toán hình học nón bánh răng côn răng thẳng và răng xoắn Gleason / Klingelnberg theo chuẩn ISO 23509, DIN 3971 và AGMA 2005.
                     </p>
@@ -276,7 +300,7 @@
                     </ul>
                 </div>
                 <a href="modules/bevel-gear/index.html" class="module-btn btn-bevel">
-                    📐 Bánh Răng Côn
+                    📐 Bánh Răng Côn (Chuẩn)
                 </a>
             </div>
 
@@ -284,7 +308,7 @@
             <div class="module-card">
                 <div>
                     <span class="module-badge badge-worm">MÔ-ĐUN 3 • HOÀN THIỆN 100%</span>
-                    <h2 class="module-title">🌀 Trục Vít - Bánh Vít (Worm Gear)</h2>
+                    <h2 class="module-title">🌀 Trục Vít - Bánh Vít (Chuẩn)</h2>
                     <p class="module-desc">
                         Tính toán hình học bộ truyền trục vít trụ (ZA, ZN, ZI, ZK, ZH), hiệu suất ma sát trượt, góc tự hãm tĩnh và kích thước AGMA theo chuẩn DIN 3975, DIN 3996 và AGMA 6022-C93.
                     </p>
@@ -293,7 +317,41 @@
                     </ul>
                 </div>
                 <a href="modules/worm-gear/index.html" class="module-btn btn-worm">
-                    🌀 Trục Vít - Bánh Vít
+                    🌀 Trục Vít - Bánh Vít (Chuẩn)
+                </a>
+            </div>
+
+            <!-- MODULE 4: ADVANCED BEVEL GEAR -->
+            <div class="module-card">
+                <div>
+                    <span class="module-badge badge-bevel-adv">MÔ-ĐUN 4 • MỞ RỘNG ĐỘC LẬP</span>
+                    <h2 class="module-title">📐 Bánh Răng Côn Chuyên Sâu</h2>
+                    <p class="module-desc">
+                        Mô-đun phát triển mở rộng độc lập chuyên sâu về các biên dạng răng cong phức tạp: Gleason Zerol (Beta=0°), Klingelnberg Cyclo-Palloid (h=const) và truyền động Hypoid (trục lệch tâm).
+                    </p>
+                    <ul class="module-specs">
+                        <li><span class="check">✓</span> Mở rộng: Zerol (TH 3), Klingelnberg (TH 6), Hypoid (TH 7)</li>
+                    </ul>
+                </div>
+                <a href="modules/bevel-gear-advanced/index.html" class="module-btn btn-bevel-adv">
+                    🚀 Bánh Răng Côn Chuyên Sâu
+                </a>
+            </div>
+
+            <!-- MODULE 5: ADVANCED WORM GEAR -->
+            <div class="module-card">
+                <div>
+                    <span class="module-badge badge-worm-adv">MÔ-ĐUN 5 • MỞ RỘNG ĐỘC LẬP</span>
+                    <h2 class="module-title">🌀 Trục Vít - Bánh Vít Chuyên Sâu</h2>
+                    <p class="module-desc">
+                        Mô-đun phát triển mở rộng độc lập chuyên sâu về các biên dạng ren mài và tiếp xúc mặt cong 3D: Thân khai xoắn ốc (ZI), Mặt bao đá mài côn (ZK) và Cung tròn lõm Cavex (ZH).
+                    </p>
+                    <ul class="module-specs">
+                        <li><span class="check">✓</span> Mở rộng: Thân khai ZI, Đá mài côn ZK, Lõm Cavex ZH 3D</li>
+                    </ul>
+                </div>
+                <a href="modules/worm-gear-advanced/index.html" class="module-btn btn-worm-adv">
+                    🚀 Trục Vít - Bánh Vít Chuyên Sâu
                 </a>
             </div>
 

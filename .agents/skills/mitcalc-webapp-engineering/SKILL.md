@@ -2075,3 +2075,23 @@ ho_{f0}$.
      * Huy hiệu badge cảnh báo màu cam: `⚠️ Chỉ tính toán số học, chưa có 3D` ngay tại cột Kiểu Răng.
    - **Mục 3.1 Kiểu Răng (`#selGearingType`)**:
      * Option Zerol (`[D]`) và Klingelnberg (`[E,F]`) được gắn nhãn cảnh báo `⚠️ ... [Chỉ tính toán, chưa dựng 3D]` và hiển thị viền/chữ màu cam `#f59e0b` khi được kích hoạt.
+
+---
+
+### Quy Tắc 92: Quy Chuẩn Bảo Toàn 3 Mô-Đun Chuẩn & Phân Tách 2 Mô-Đun Mở Rộng Độc Lập Chuyên Sâu (5-Module Independent Architecture Protocol)
+**Ngày áp dụng**: 07/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - Khóa bảo toàn 100% 3 mô-đun chuẩn đã được kiểm định chéo $\Delta = 0.000000$ (Spur, Bevel, Worm).
+   - Tạo mới 2 mô-đun độc lập bằng cách copy nguyên bản từ 2 mô-đun côn và trục vít hiện tại (`modules/bevel-gear-advanced/`, `modules/worm-gear-advanced/`).
+   - Hai mô-đun mới độc lập hoàn toàn, không có liên hệ gì với 2 mô-đun cũ; toàn bộ tính năng khuyết thiếu (3D Zerol, Klingelnberg, Hypoid và 3D ZI, ZK, ZH Cavex) sẽ được phát triển chuyên sâu vào 2 mô-đun mới này.
+2. **Cấu Trúc Hệ Thống 5 Mô-Đun**:
+   - `modules/spur-gear/`: Bánh Răng Trụ & Nghiêng (Chuẩn).
+   - `modules/bevel-gear/`: Bánh Răng Côn (Chuẩn).
+   - `modules/worm-gear/`: Trục Vít - Bánh Vít (Chuẩn).
+   - `modules/bevel-gear-advanced/`: Bánh Răng Côn Chuyên Sâu (Mở rộng Zerol / Klingelnberg / Hypoid).
+   - `modules/worm-gear-advanced/`: Trục Vít - Bánh Vít Chuyên Sâu (Mở rộng 3D ZI / ZK / ZH Cavex).
+3. **Bộ Công Cụ Đóng Gói & Khởi Động Độc Lập**:
+   - Cập nhật `tools/bundle_all.py` (5/5 mô-đun), tạo `tools/bundle_bevel_advanced.py` và `tools/bundle_worm_advanced.py`.
+   - Cung cấp `CHAY_BANH_RANG_CON_CHUYEN_SAU.bat` và `CHAY_WEBAPP_TRUC_VIT_CHUYEN_SAU.bat`.
+   - Cập nhật Portal `index.html` với 5 card điều hướng và stats bar 5 mô-đun.

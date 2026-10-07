@@ -2180,3 +2180,23 @@ ho_{f0} / \cos\gamma$.
      * Bổ sung huy hiệu badge cảnh báo màu cam: `⚠️ Chỉ tính toán số học, chưa có 3D` ngay tại cột Kiểu Răng.
    - **Mục 3.1 Kiểu Răng (`#selGearingType`)**:
      * Option Zerol (`[D]`) và Klingelnberg (`[E,F]`) được gắn nhãn cảnh báo `⚠️ ... [Chỉ tính toán, chưa dựng 3D]` và hiển thị viền/chữ màu cam `#f59e0b` khi được kích hoạt.
+
+---
+
+### Quy Tắc 92: Quy Chuẩn Bảo Toàn 3 Mô-Đun Chuẩn & Phân Tách 2 Mô-Đun Mở Rộng Độc Lập Chuyên Sâu (5-Module Independent Architecture Protocol)
+**Ngày áp dụng**: 07/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+1. **Lệnh Trực Tiếp Từ Chủ Sở Hữu (`SirPhuong`)**:
+   - *"vì 3 modul trên web app đa chuẩn vì được kiểm tra kĩ lương nên tôi muốn bảo toàn 3 module hiện tại trên web app, bạn hay tạo mới cho tôi thêm 2 module (tổng cộng web app sẽ có 5 module) tính toán bánh răng côn và trục vit bánh vít bằng cách copy nguyên bản nội dung từ 2 module hiện tại có trên web app, 2 module mới này sẽ độc lập hoàn toàn không có liên hệ gì với 2 module tính toán bánh răng côn và trục vít bánh vít cũ trong quá trình phát triển, bạn hãy phát triển những gì khuyết thiếu vào 2 module vừa được tạo mới này"*.
+2. **Cấu Trúc 5 Mô-Đun Độc Lập Hoàn Toàn (Zero Cross-Interference)**:
+   - **Nhóm 3 Mô-Đun Chuẩn (Đã kiểm định chéo $\Delta = 0.000000$, KHÓA BẢO TOÀN TUYỆT ĐỐI)**:
+     * Mô-đun 1: `modules/spur-gear/` — Bánh Răng Trụ & Nghiêng (ISO 6336, DIN 3960).
+     * Mô-đun 2: `modules/bevel-gear/` — Bánh Răng Côn Chuẩn (ISO 23509, DIN 3971).
+     * Mô-đun 3: `modules/worm-gear/` — Trục Vít - Bánh Vít Chuẩn (DIN 3975, DIN 3996, AGMA 6022).
+   - **Nhóm 2 Mô-Đun Mở Rộng Chuyên Sâu (Phát triển các biên dạng khuyết thiếu)**:
+     * Mô-đun 4: `modules/bevel-gear-advanced/` — Bánh Răng Côn Chuyên Sâu: Nơi chuyên trách phát triển 3D chuẩn xác cho Zerol (TH 3), Klingelnberg Cyclo-Palloid (TH 6) và bộ truyền Hypoid lệch trục (TH 7).
+     * Mô-đun 5: `modules/worm-gear-advanced/` — Trục Vít - Bánh Vít Chuyên Sâu: Nơi chuyên trách phát triển 3D giải tích chuẩn xác cho Thân khai ZI, Mặt bao đá mài côn ZK, và Cung tròn lõm Cavex ZH (tiếp xúc conformal).
+3. **Cơ Chế Đóng Gói Bundle & Khởi Động Độc Lập**:
+   - Bộ đóng gói `tools/bundle_all.py` tự động đóng gói cả 5 file bundle riêng biệt (`mitcalc-engine.bundle.js`, `bevel-engine.bundle.js`, `worm-engine.bundle.js`, `modules/bevel-gear-advanced/js/bevel-engine.bundle.js`, `modules/worm-gear-advanced/js/worm-engine.bundle.js`).
+   - Cung cấp các launcher 1-Click độc lập tại thư mục gốc: `CHAY_BANH_RANG_CON_CHUYEN_SAU.bat`, `CHAY_WEBAPP_TRUC_VIT_CHUYEN_SAU.bat`.
+   - Cổng Hub Portal `index.html` tích hợp đầy đủ 5 thẻ điều hướng với nhãn trạng thái và phân định màu sắc rõ ràng.

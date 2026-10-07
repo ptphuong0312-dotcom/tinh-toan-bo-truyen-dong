@@ -3665,3 +3665,28 @@ ho_{f0}$.
   4. *Đóng gói bundle & Kiểm thử*:
      - Chạy `python tools/bundle_all.py` cập nhật bundle `modules/bevel-gear/js/bevel-engine.bundle.js` (463,080 ký tự).
      - Kiểm thử tự động Playwright xác nhận: Màu select chuyển thành `rgb(245, 158, 11)` khi chọn `th3` và `th6`; chuyển lại `rgb(56, 189, 248)` khi chọn `th4`; và `rgb(148, 163, 184)` khi chọn `custom`. 0 lỗi Console, 0 lỗi JavaScript.
+
+---
+
+## 2026-10-07 - Quy Tắc 92: Khóa Bảo Toàn 3 Mô-Đun Chuẩn & Khởi Tạo 2 Mô-Đun Mở Rộng Độc Lập (Kiến Trúc 5 Mô-Đun)
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  * Tạo bản sao lưu an toàn trước khi thực hiện.
+  * Bảo toàn tuyệt đối 100% 3 mô-đun hiện tại (Bánh răng trụ, Bánh răng côn, Trục vít - bánh vít) đã được kiểm định kỹ lưỡng.
+  * Tạo mới 2 mô-đun độc lập (tổng cộng 5 mô-đun) bằng cách copy nguyên bản nội dung từ 2 mô-đun côn và trục vít hiện tại.
+  * Hai mô-đun mới độc lập hoàn toàn, không liên hệ gì với 2 mô-đun cũ; toàn bộ phần khuyết thiếu sẽ được phát triển vào 2 mô-đun mới này.
+- **Thực hiện kỹ thuật**:
+  1. *Sao lưu dự án*:
+     - Tạo tệp sao lưu `backups/BACKUP_MITCalc_Gear_20261007_161031.zip` (354 files, 16.79 MB).
+  2. *Khởi tạo 2 mô-đun mở rộng độc lập*:
+     - `modules/bevel-gear-advanced/`: Sao chép nguyên bản từ `modules/bevel-gear/`.
+     - `modules/worm-gear-advanced/`: Sao chép nguyên bản từ `modules/worm-gear/`.
+     - Cập nhật header title và navigation bar nội bộ cho từng mô-đun để chuyển hướng mượt mà, phân định rõ phiên bản Chuẩn vs Chuyên Sâu.
+  3. *Tự động hóa đóng gói 5/5 mô-đun độc lập*:
+     - Tạo `tools/bundle_bevel_advanced.py` và `tools/bundle_worm_advanced.py`.
+     - Nâng cấp `tools/bundle_all.py` đóng gói tự động toàn bộ 5 mô-đun với zero-import / zero-CORS.
+  4. *Tích hợp Portal Hub (`index.html`) & Trình khởi động 1-Click*:
+     - Thêm Card 4 (`📐 Bánh Răng Côn Chuyên Sâu`) và Card 5 (`🌀 Trục Vít - Bánh Vít Chuyên Sâu`) vào lưới điều hướng trung tâm.
+     - Cập nhật chỉ số thống kê trên Portal thành 5 mô-đun độc lập.
+     - Tạo 2 launcher batch 1-Click: `CHAY_BANH_RANG_CON_CHUYEN_SAU.bat` và `CHAY_WEBAPP_TRUC_VIT_CHUYEN_SAU.bat`.
+  5. *Kiểm thử tự động Playwright*:
+     - Script `scratch/test_5_modules.py` kiểm tra tải đồng thời cả 6 trang (Portal + 5 Mô-Đun), xác nhận **100% PASS với 0 lỗi Console, 0 lỗi JavaScript**.

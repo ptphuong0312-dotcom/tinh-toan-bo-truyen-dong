@@ -1,0 +1,1612 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MITCalc Web - Tính Toán Trục Vít - Bánh Vít (Worm Gears DIN 3975 / DIN 3996 / AGMA 6022)</title>
+    <link rel="stylesheet" href="../../shared/css/engineering-theme.css">
+    <style>
+        .highlight-key-param {
+            border: 2px solid #f59e0b !important;
+            color: #38bdf8 !important;
+            font-weight: 800 !important;
+            background-color: rgba(245, 158, 11, 0.08) !important;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.25) !important;
+        }
+        .input-eng.user-input {
+            background-color: #ffffff !important;
+            color: #111827 !important;
+            border: 2px solid #60a5fa !important;
+            font-weight: 700;
+        }
+        .input-eng.user-input:focus {
+            border-color: #2563eb !important;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3) !important;
+        }
+        .input-eng.readonly-calc {
+            background-color: rgba(30, 41, 59, 0.85) !important;
+            color: #38bdf8 !important;
+            border: 1.5px solid #334155 !important;
+            font-weight: 700;
+        }
+        .q-radio-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.82rem;
+            color: #e2e8f0;
+            cursor: pointer;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid #334155;
+        }
+        .q-radio-label input[type="radio"] {
+            accent-color: #38bdf8;
+            cursor: pointer;
+        }
+        .cad-icon-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 10px;
+            background: #1e293b;
+            border: 1px solid #475569;
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .cad-icon-btn:hover {
+            border-color: #38bdf8;
+            background: #0f172a;
+            color: #38bdf8;
+        }
+        .cad-icon-btn img {
+            height: 24px;
+            width: auto;
+            border-radius: 3px;
+        }
+        .btn-secondary.active {
+            background-color: #0284c7 !important;
+            border-color: #38bdf8 !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.45) !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Main Application Header -->
+    <header class="app-header">
+        <div class="logo-area">
+            <div class="logo-icon">🌀</div>
+            <div class="logo-text">
+                <h1>MITCalc Web - Tính Toán Trục Vít - Bánh Vít Chuyên Sâu (Worm Gears Pro)</h1>
+                <p>Mô-đun Mở Rộng Độc Lập: Phát Triển Chuyên Sâu 3D Thân Khai (ZI), Đá Mài Côn (ZK) &amp; Cavex (ZH) | DIN 3975, DIN 3996</p>
+            </div>
+        </div>
+        <div class="header-controls">
+            <a href="../../index.html" class="btn btn-secondary">🏠 Cổng Hub</a>
+            <a href="../spur-gear/index.html" class="btn btn-secondary">⚙️ Bánh Răng Trụ</a>
+            <a href="../worm-gear/index.html" class="btn btn-secondary">🌀 Trục Vít (Chuẩn)</a>
+            <a href="index.html" class="btn btn-primary">🚀 Trục Vít (Chuyên Sâu)</a>
+            <a href="../bevel-gear-advanced/index.html" class="btn btn-secondary">📐 Bánh Răng Côn (Chuyên Sâu)</a>
+            <button type="button" class="btn btn-secondary" id="btnResetDefaults">🔄 Mặc Định</button>
+            <button type="button" class="btn btn-secondary" id="btnPrintReport">🖨️ In / Xuất PDF</button>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs (2-Tab Standard Protocol) -->
+    <nav class="tab-navigation">
+        <button type="button" class="tab-btn active" data-target="tabCalculator">Bảng tính toán</button>
+        <button type="button" class="tab-btn" data-target="tabCanvas">Mô phỏng 2D/3D CAD</button>
+    </nav>
+
+    <!-- Main Container -->
+    <main class="main-container">
+        <!-- ========================================================================= -->
+        <!-- TAB 1: CALCULATOR (STANDARDIZED ACCORDION)                                 -->
+        <!-- ========================================================================= -->
+        <div id="tabCalculator" class="tab-pane active">
+            <!-- Global Accordion Toolbar -->
+            <div class="global-accordion-toolbar" style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <button type="button" class="btn btn-secondary" id="btnExpandAll">📂 Mở Rộng Tất Cả</button>
+                <button type="button" class="btn btn-secondary" id="btnCollapseAll">📁 Thu Gọn Tất Cả</button>
+            </div>
+
+            <div class="accordion-group">
+
+                <!-- ################################################################# -->
+                <!-- MASTER BLOCK 1: INPUT SECTION (Thanh Xanh Lá Cây Chuẩn MITCalc)   -->
+                <!-- ################################################################# -->
+                <div class="master-block">
+                    <div class="master-header master-input">
+                        <span>📥 Phần Đầu Vào (Input Section)</span>
+                        <span style="font-size: 0.8rem; font-weight: normal; opacity: 0.85;">Mục 1.0 đến Mục 4.0 (Thông Số Truyền Động, Vật Liệu, Bôi Trơn, Biên Dạng & Thiết Kế Hình Học)</span>
+                    </div>
+
+                    <!-- SECTION 1.0: Options of basic input parameters -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>1.0 Nhập Các Thông Số Truyền Động Cơ Bản (Options of basic input parameters)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Tính Toán</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Trục Vít (Worm 1)</th>
+                                        <th class="col-val2">Bánh Vít (Worm Gear 2)</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                        <th style="width: 15%;">Công Cụ Tiện Ích</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>1.1</td>
+                                        <td>Hệ đơn vị tính toán (Calculation units)</td>
+                                        <td>Units</td>
+                                        <td colspan="2">
+                                            <select class="select-eng" id="sel_UnitPT" disabled>
+                                                <option value="2" selected>SI Units (N, mm, kW, °C)</option>
+                                            </select>
+                                        </td>
+                                        <td>SI</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>1.2</td>
+                                        <td>Chi tiết dẫn động chủ động (Driven worm / worm gear)</td>
+                                        <td>Drive</td>
+                                        <td colspan="2">
+                                            <select class="select-eng user-input" id="sel_poweredWoWh" data-key="poweredWoWh">
+                                                <option value="1" selected>1 - Trục vít dẫn động (Worm driving)</option>
+                                                <option value="2">2 - Bánh vít dẫn động (Worm gear driving)</option>
+                                            </select>
+                                        </td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>1.3</td>
+                                        <td>Công suất truyền động (Transferred power Pw1 / Pw2)</td>
+                                        <td>Pw</td>
+                                        <td><span class="output-eng" id="out_Pw1">3.9472</span></td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="Pw2" id="inp_Pw2" value="3.0"></td>
+                                        <td>kW</td>
+                                        <td><span class="cell-limit">Nhập Pw2 (Bánh vít)</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>1.4</td>
+                                        <td>Tốc độ quay (Speed Worm n1 / Worm gear n2)</td>
+                                        <td>n</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="n1" id="inp_n1" value="1500"></td>
+                                        <td><span class="output-eng" id="out_n2">37.50</span></td>
+                                        <td>vòng/phút</td>
+                                        <td><button type="button" class="btn-smart" id="btn_jump_n1n2" title="Chuyển tới Mục 18.2 tính tỉ số truyền từ tốc độ">i &lt;= n1,n2</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>1.5</td>
+                                        <td>Mô-men xoắn trên trục (Torsional moment Mk1 / Mk2)</td>
+                                        <td>Mk</td>
+                                        <td><span class="output-eng" id="out_Mk1">25.1285</span></td>
+                                        <td><span class="output-eng" id="out_Mk2">763.9437</span></td>
+                                        <td>N.m</td>
+                                        <td><button type="button" class="btn-smart" id="btn_jump_Pw2" title="Chuyển tới Mục 18.3 tính công suất Pw2 từ Mk2, n2">Pw2 &lt;= Mk2,n2</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>1.6</td>
+                                        <td>Tỉ số truyền yêu cầu / chọn từ bảng chuẩn (Transmission ratio)</td>
+                                        <td>i_in</td>
+                                        <td>
+                                            <div class="combo-box-group">
+                                                <input type="text" inputmode="decimal" class="input-eng user-input combo-input" data-key="iin" id="inp_iin" value="40">
+                                                <select class="select-eng combo-arrow-select" id="sel_std_i" title="Chọn tỉ số truyền tiêu chuẩn (T_i)"></select>
+                                            </div>
+                                        </td>
+                                        <td><span class="cell-limit">5.0 ÷ 200.0</span></td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>1.7</td>
+                                        <td>Tỉ số truyền thực tế / Sai lệch (Actual transmission ratio / deviation)</td>
+                                        <td>i</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_i">40.0000</span></td>
+                                        <td><span class="output-eng" id="out_i_dev">0.00%</span></td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+
+
+                    <!-- SECTION 3.0: Parameters of the tooth profile -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>3.0 Thông Số Biên Dạng Răng Cơ Bản (Parameters of the tooth profile)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Biên Dạng Răng</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Trục Vít (Worm 1)</th>
+                                        <th class="col-val2">Bánh Vít (Worm Gear 2)</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                        <th style="width: 15%;">Tùy Chọn</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>3.1</td>
+                                        <td>Hệ số chiều cao đầu răng (Addendum coefficient ha*)</td>
+                                        <td>ha*</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="haXP" id="inp_haXP" value="1.0"></td>
+                                        <td><span class="output-eng" id="out_haXG">1.0000</span></td>
+                                        <td>[modul]</td>
+                                        <td>Chuẩn DIN = 1.0</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.2</td>
+                                        <td>Hệ số khe hở hướng tâm (Unit head clearance c*)</td>
+                                        <td>c*</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="caXP" id="inp_caXP" value="0.25"></td>
+                                        <td><span class="output-eng" id="out_caXG">0.2500</span></td>
+                                        <td>[modul]</td>
+                                        <td>Chuẩn DIN = 0.25</td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.3</td>
+                                        <td>Hệ số bán kính lượn chân răng khuyến nghị (Recommended root radius)</td>
+                                        <td>rf* rec</td>
+                                        <td><span class="output-eng" id="out_rf1_rec">0.3800</span></td>
+                                        <td><span class="cell-limit">c* / (1 - sin α0)</span></td>
+                                        <td>[modul]</td>
+                                        <td>
+                                            <label class="q-radio-label">
+                                                <input type="checkbox" id="chk_rf1Flag" checked> Tự động
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>3.4</td>
+                                        <td>Hệ số bán kính lượn chân răng thiết kế (Coefficient of root radius)</td>
+                                        <td>rf*</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng readonly-calc" data-key="rf1" id="inp_rf1" value="0.379951" readonly></td>
+                                        <td><span class="output-eng" id="out_rf2">0.3800</span></td>
+                                        <td>[modul]</td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 4.0: Design of a geometry of toothing (OPEN BY DEFAULT) -->
+                    <div class="calc-section">
+                        <div class="section-header">
+                            <h3>4.0 Thiết Kế Hình Học Bộ Truyền Trục Vít - Bánh Vít (Design of a geometry of toothing)</h3>
+                            <span class="section-toggle">▼</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Hình Học Thiết Kế</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Trục Vít (Worm 1)</th>
+                                        <th class="col-val2">Bánh Vít / Giới Hạn</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                        <th style="width: 17%;">Chế Độ Tính / Tiện Ích</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>4.0</td>
+                                        <td>Kiểu biên dạng ren trục vít (Type of worm profile - DIN 3975)</td>
+                                        <td>Type</td>
+                                        <td colspan="2">
+                                            <select class="select-eng user-input" id="sel_toothType" data-key="toothType"></select>
+                                        </td>
+                                        <td>DIN 3975</td>
+                                        <td><span class="cell-limit">ZA: mx | ZN..ZH: mn</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.9</td>
+                                        <td>Số mối ren trục vít / Số răng bánh vít (Number of teeth Worm / Gear)</td>
+                                        <td>z1, z2</td>
+                                        <td><input type="text" inputmode="numeric" class="input-eng user-input" data-key="z1" id="inp_z1" value="1"></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_z2">40</span></td>
+                                        <td>răng</td>
+                                        <td><button type="button" class="btn-smart" id="btn_jump_z1z2" title="Chuyển tới Mục 18.1 tính tỉ số truyền từ z1, z2">i &lt;= z1,z2</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.10</td>
+                                        <td>Góc ăn khớp danh nghĩa (Pressure angle: ZA=αx, ZN/ZI/ZK/ZH=αn)</td>
+                                        <td>α</td>
+                                        <td>
+                                            <div class="combo-box-group">
+                                                <input type="text" inputmode="decimal" class="input-eng user-input combo-input" data-key="alfa_temp" id="inp_alfa_temp" value="20">
+                                                <select class="select-eng combo-arrow-select" id="sel_std_alfa0" title="Chọn góc ăn khớp tiêu chuẩn (T_Alfa0)"></select>
+                                            </div>
+                                        </td>
+                                        <td><span class="cell-limit" id="lbl_alfa_type">Góc dọc trục αx (Hệ ZA)</span></td>
+                                        <td>độ (°)</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.11</td>
+                                        <td>Hệ số đường kính trục vít (Diameter quotient q = d1 / mx)</td>
+                                        <td>q</td>
+                                        <td>
+                                            <div class="combo-box-group">
+                                                <input type="text" inputmode="decimal" class="input-eng user-input combo-input" data-key="q" id="inp_q" value="8.5">
+                                                <select class="select-eng combo-arrow-select" id="sel_std_q" title="Chọn hệ số đường kính tiêu chuẩn (T_Diam_q)"></select>
+                                            </div>
+                                        </td>
+                                        <td><span class="cell-limit">6.0 ÷ 25.0 (Khuyên: <span id="out_q_rec">6.80</span>)</span></td>
+                                        <td>-</td>
+                                        <td>
+                                            <label class="q-radio-label" title="Nhập q, tự động tính d1 và γ">
+                                                <input type="radio" name="rad_calc_q" value="1" checked> Nhập q
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.12</td>
+                                        <td>Đường kính vòng chia trục vít (Mean / reference diameter of worm)</td>
+                                        <td>d1</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng readonly-calc" data-key="d1_Input" id="inp_d1_Input" value="34.0" readonly></td>
+                                        <td><span class="cell-limit" id="out_d1_rec">~ 27.20 mm</span></td>
+                                        <td>mm</td>
+                                        <td>
+                                            <label class="q-radio-label" title="Nhập d1, tự động tính q và γ">
+                                                <input type="radio" name="rad_calc_q" value="2"> Nhập d1
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.13</td>
+                                        <td>Góc nâng đường xoắn vít (Pitch / lead angle γ)</td>
+                                        <td>γ</td>
+                                        <td>
+                                            <div class="combo-box-group">
+                                                <input type="text" inputmode="decimal" class="input-eng readonly-calc combo-input" data-key="gama" id="inp_gama" value="6.7098" readonly>
+                                                <select class="select-eng combo-arrow-select" id="sel_std_gama" title="Chọn góc nâng tiêu chuẩn (T_gamaProp)"></select>
+                                            </div>
+                                        </td>
+                                        <td><span class="cell-limit">2° ÷ 40° (Tự hãm ≤ <span id="out_gama_SL">6.98</span>°)</span></td>
+                                        <td>độ (°)</td>
+                                        <td>
+                                            <div style="display: flex; gap: 4px; align-items: center;">
+                                                <label class="q-radio-label" title="Nhập γ, tự động tính q và d1">
+                                                    <input type="radio" name="rad_calc_q" value="3"> Nhập γ
+                                                </label>
+                                                <button type="button" class="btn-smart" id="btn_gama_SL" title="Gán góc nâng tự hãm giới hạn γ = γ_SelfLock">&lt;=SL</button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.14</td>
+                                        <td>Hướng xoắn ren trục vít (Pitch direction)</td>
+                                        <td>Hand</td>
+                                        <td colspan="2">
+                                            <select class="select-eng user-input" id="sel_teethOrientation" data-key="teethOrientation">
+                                                <option value="1" selected>1 - Xoắn phải (Right-hand)</option>
+                                                <option value="2">2 - Xoắn trái (Left-hand)</option>
+                                            </select>
+                                        </td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.15</td>
+                                        <td>Mô đun thiết kế / Giá trị tiêu chuẩn (Module: ZA=mx, ZN..ZH=mn)</td>
+                                        <td id="sym_module_mode">mx</td>
+                                        <td>
+                                            <div class="combo-box-group">
+                                                <input type="text" inputmode="decimal" class="input-eng user-input combo-input" data-key="m_Input" id="inp_m_Input" value="4.0">
+                                                <select class="select-eng combo-arrow-select" id="sel_std_module" title="Chọn mô đun tiêu chuẩn (T_Module)"></select>
+                                            </div>
+                                        </td>
+                                        <td><span class="output-eng" id="out_module_conj">mn = 3.9726 mm</span></td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.16</td>
+                                        <td>Bước răng vòng (in) / Mô đun Anh (Circular Pitch CP / Diametral Pitch DP)</td>
+                                        <td>CP / DP</td>
+                                        <td><span class="output-eng" id="out_CP">0.4947</span></td>
+                                        <td><span class="output-eng" id="out_DP">6.3500</span></td>
+                                        <td>in / [1/in]</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.17</td>
+                                        <td>Khoảng cách ổ đỡ trái / phải theo % da2 (Distance of left/right bearing %)</td>
+                                        <td>l1%, l2%</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="l1_proc" id="inp_l1_proc" value="50"></td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="l2_proc" id="inp_l2_proc" value="50"></td>
+                                        <td>[% da2]</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.18</td>
+                                        <td>Khoảng cách từ tâm đến ổ đỡ trái / phải (Distance of left/right bearing)</td>
+                                        <td>l1, l2</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng readonly-calc" data-key="l1_input" id="inp_l1_input" value="84.0" readonly></td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng readonly-calc" data-key="l2_input" id="inp_l2_input" value="84.0" readonly></td>
+                                        <td>mm</td>
+                                        <td>
+                                            <label class="q-radio-label">
+                                                <input type="checkbox" id="chk_l1l2_flag" checked> Tự động
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.19</td>
+                                        <td>Chiều dài phần cắt ren trục vít (Worm face width L)</td>
+                                        <td>L</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng readonly-calc" data-key="L_Input" id="inp_L_Input" value="53.6" readonly></td>
+                                        <td><span class="cell-limit" id="out_L_Proposal">Khuyên dùng: 53.60</span></td>
+                                        <td>mm</td>
+                                        <td>
+                                            <label class="q-radio-label">
+                                                <input type="checkbox" id="chk_FlagL" checked> Tự động
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.20</td>
+                                        <td>Chiều rộng vành răng bánh vít (Wormgear face width b2H)</td>
+                                        <td>b2H</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng readonly-calc" data-key="b2H_Input" id="inp_b2H_Input" value="31.5" readonly></td>
+                                        <td><span class="cell-limit" id="out_b2H_Proposal">Khuyên dùng: 31.50</span></td>
+                                        <td>mm</td>
+                                        <td>
+                                            <label class="q-radio-label">
+                                                <input type="checkbox" id="chk_Flagb2H" checked> Tự động
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.21</td>
+                                        <td>Góc vát mép vành bánh vít (Wheel rim chamfer angle θ2)</td>
+                                        <td>θ2</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="DXF_WheelChamfer" id="inp_DXF_WheelChamfer" value="33.7"></td>
+                                        <td><span class="cell-limit" id="out_DXF_WheelChamfer_info">b4=10.0, Δb=6.8 mm</span></td>
+                                        <td>độ (°)</td>
+                                        <td>
+                                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                                <input type="range" id="slider_WheelChamfer" min="0" max="65" step="0.5" value="33.7" style="width: 100%; accent-color: #38bdf8;" title="Kéo thanh trượt để điều chỉnh góc vát mép vành bánh vít θ2">
+                                                <label class="q-radio-label" style="font-size: 0.75rem; justify-content: flex-end;">
+                                                    <input type="checkbox" id="chk_DXF_WheelChamferFlag" checked> Tự động
+                                                </label>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.22</td>
+                                        <td>Kích thước vai trục vít: Đường kính / Chiều rộng (Shaft shoulder ds, t)</td>
+                                        <td>ds, t</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng readonly-calc" data-key="Shaft_ds" id="inp_Shaft_ds" value="20.0" readonly></td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng readonly-calc" data-key="Shaft_th" id="inp_Shaft_th" value="1.0" readonly></td>
+                                        <td>mm</td>
+                                        <td>
+                                            <label class="q-radio-label">
+                                                <input type="checkbox" id="chk_dstFlag" checked> Tự động
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.23</td>
+                                        <td>Góc vát mép đầu ren trục vít (Angle of worm shrink β)</td>
+                                        <td>β</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="DXF_Beta" id="inp_DXF_Beta" value="10.0"></td>
+                                        <td><span class="cell-limit">5° ÷ 25° (chuẩn 10°)</span></td>
+                                        <td>độ (°)</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.24</td>
+                                        <td>Hệ số dịch chỉnh biên dạng bánh vít (Addendum modification x2)</td>
+                                        <td>x2</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="x2" id="inp_x2" value="0.0"></td>
+                                        <td><span class="cell-limit" id="out_xmin_limit">&gt; -1.000 (z2min = 22.2)</span></td>
+                                        <td>[modul]</td>
+                                        <td>
+                                            <input type="range" id="slider_x2" min="-0.5" max="1.0" step="0.05" value="0.0" style="width: 100%; accent-color: #38bdf8;" title="Kéo thanh trượt để điều chỉnh hệ số dịch chỉnh x2">
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.25</td>
+                                        <td>Đường kính vòng chia Trục vít / Bánh vít (Reference diameter d1, d2)</td>
+                                        <td>d1, d2</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_sec4_d1">34.0000</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_sec4_d2">160.0000</span></td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.26</td>
+                                        <td>Khoảng cách trục mục tiêu / hiện tại (Required centre distance / current)</td>
+                                        <td>a_req / a</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="a_req1_Input" id="inp_a_req1_Input" value="100.0"></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_sec4_a">97.0000</span></td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.27</td>
+                                        <td>Khớp chính xác khoảng cách trục a_req bằng cách thay đổi thông số</td>
+                                        <td>Fit a</td>
+                                        <td colspan="2">
+                                            <select class="select-eng user-input" id="sel_FitAxis">
+                                                <option value="1" id="opt_fit_m">1 - Thay đổi Mô đun m &lt;0.1; 100&gt;</option>
+                                                <option value="2" id="opt_fit_x">2 - Thay đổi Hệ số dịch chỉnh x2 &lt;-0.5; 1.0&gt;</option>
+                                                <option value="3" id="opt_fit_q" selected>3 - Thay đổi Hệ số đường kính q &lt;6; 25&gt;</option>
+                                            </select>
+                                        </td>
+                                        <td>-</td>
+                                        <td><button type="button" class="btn-smart" id="btn_SolveFitAxis" title="Giải ngược thông số để khoảng cách trục a đúng bằng a_req">🎯 Solve (Khớp a)</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.28</td>
+                                        <td>Khối lượng gần đúng: Toàn hộp giảm tốc / Bộ truyền (Approximate weight)</td>
+                                        <td>m</td>
+                                        <td><span class="output-eng" id="out_mass">18.3861</span></td>
+                                        <td><span class="output-eng" id="out_mass_gears">7.9485</span></td>
+                                        <td>kg</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>4.29</td>
+                                        <td>Hiệu suất tổng thực tế / Hiệu suất lý thuyết cực đại (Total / Max efficiency)</td>
+                                        <td>η_ges, η_max</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_sec4_etages">75.7967</span></td>
+                                        <td><span class="output-eng" id="out_sec4_etamax">88.2685</span></td>
+                                        <td>%</td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <!-- Dual Visual Panel: Picture 7575 (image9.png) + Dynamic Chart 1963 (Data1) -->
+                            <div style="display: grid; grid-template-columns: minmax(260px, 1fr) minmax(380px, 1.5fr); gap: 1rem; margin-top: 1rem; align-items: stretch;">
+                                <div style="background: #ffffff; border-radius: 8px; padding: 10px; border: 1px solid #334155; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                                    <div style="font-size: 0.78rem; font-weight: 700; color: #0f172a; margin-bottom: 6px; text-transform: uppercase;">Sơ Đồ Bố Trí Ổ Đỡ & Chiều Xoắn (MITCalc Fig. 4.0)</div>
+                                    <img src="images/image9.png" alt="MITCalc Worm Gear Bearing & Hand Diagram" style="max-width: 100%; max-height: 290px; object-fit: contain;">
+                                </div>
+                                <div style="background: #0f172a; border-radius: 8px; padding: 10px; border: 1px solid #334155; display: flex; flex-direction: column;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                        <span style="font-size: 0.78rem; font-weight: 700; color: #38bdf8; text-transform: uppercase;">📈 Đồ Thị Tọa Độ Tỷ Lệ Thực 2D Động (MITCalc Chart 1963 - Sheet Data1)</span>
+                                        <span style="font-size: 0.72rem; color: #94a3b8;">Tự động co giãn 1:1 theo da2, da1, a, l1, l2, L, b2H</span>
+                                    </div>
+                                    <canvas id="wormSec4ChartCanvas" width="560" height="300" style="width: 100%; height: auto; border-radius: 4px;"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ################################################################# -->
+                <!-- MASTER BLOCK 2: RESULTS SECTION (Thanh Vàng Cam Chuẩn MITCalc)    -->
+                <!-- ################################################################# -->
+                <div class="master-block">
+                    <div class="master-header master-results">
+                        <span>📊 Phần Kết Quả Tính Toán (Results Section)</span>
+                        <span style="font-size: 0.8rem; font-weight: normal; opacity: 0.85;">Mục 5.0 (Kích Thước DIN 3975), Mục 6.0 (Hiệu Suất & Tổn Thất DIN 3996) & Mục 12.0 (Kích Thước AGMA 6022-C93)</span>
+                    </div>
+
+                    <!-- SECTION 5.0: Basic dimensions of gearing (DIN 3975) (OPEN BY DEFAULT) -->
+                    <div class="calc-section">
+                        <div class="section-header">
+                            <h3>5.0 Kích Thước Hình Học Cơ Bản Bộ Truyền (Basic dimensions of gearing - DIN 3975)</h3>
+                            <span class="section-toggle">▼</span>
+                        </div>
+                        <div class="section-body">
+                            <!-- Original Vector Drawing Picture 10835 (image11.png) -->
+                            <div style="background: #ffffff; border-radius: 8px; padding: 10px; margin-bottom: 1rem; border: 1px solid #334155; text-align: center;">
+                                <div style="font-size: 0.78rem; font-weight: 700; color: #0f172a; margin-bottom: 6px; text-transform: uppercase;">Bản Vẽ Định Nghĩa Kích Thước Chuẩn DIN 3975 (MITCalc Original Vector Drawing)</div>
+                                <img src="images/image11.png" alt="DIN 3975 Worm Gear Dimensions" style="max-width: 100%; max-height: 240px; object-fit: contain;">
+                            </div>
+
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Kích Thước (DIN 3975)</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Trục Vít / Pháp Tuyến</th>
+                                        <th class="col-val2">Bánh Vít / Ngang / Dọc</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                        <th style="width: 15%;">Trạng Thái / Phụ Trợ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>5.1</td>
+                                        <td>Mô đun: Pháp tuyến / Mặt đầu (ngang) / Dọc trục (Module mn, mt, mx)</td>
+                                        <td>mn, mt, mx</td>
+                                        <td><span class="output-eng" id="out_mn">4.2333</span></td>
+                                        <td><span class="output-eng" id="out_mt">36.2315</span></td>
+                                        <td>mm</td>
+                                        <td>mx = <span class="output-eng" id="out_mx">4.2625</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.2</td>
+                                        <td>Bước răng: Pháp tuyến / Mặt đầu / Dọc trục (Pitch pn, pt, px)</td>
+                                        <td>pn, pt, px</td>
+                                        <td><span class="output-eng" id="out_pn">13.2994</span></td>
+                                        <td><span class="output-eng" id="out_pt">113.8246</span></td>
+                                        <td>mm</td>
+                                        <td>px = <span class="output-eng" id="out_px">13.3911</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.3</td>
+                                        <td>Góc ăn khớp: Pháp tuyến / Mặt đầu / Dọc trục (Pressure angle αn, αt, αx)</td>
+                                        <td>αn, αt, αx</td>
+                                        <td><span class="output-eng" id="out_alfan">20.0000</span></td>
+                                        <td><span class="output-eng" id="out_alfat">72.2024</span></td>
+                                        <td>độ (°)</td>
+                                        <td>αx = <span class="output-eng" id="out_alfax">20.1269</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.4</td>
+                                        <td>Số mối ren trục vít / Số răng bánh vít (Number of teeth z1, z2)</td>
+                                        <td>z1, z2</td>
+                                        <td><span class="output-eng" id="out_sec5_z1">1</span></td>
+                                        <td><span class="output-eng" id="out_sec5_z2">40</span></td>
+                                        <td>răng</td>
+                                        <td>OK</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.5</td>
+                                        <td>Đường kính vòng đỉnh (Tip / throat diameter da1, da2)</td>
+                                        <td>da1, da2</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_da1">44.6982</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_da2">178.9678</span></td>
+                                        <td>mm</td>
+                                        <td>OK</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.6</td>
+                                        <td>Đường kính vòng chia (Reference diameter d1, d2)</td>
+                                        <td>d1, d2</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_d1">36.2315</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_d2">170.5012</span></td>
+                                        <td>mm</td>
+                                        <td>OK</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.7</td>
+                                        <td>Đường kính vòng đáy (Root diameter df1, df2)</td>
+                                        <td>df1, df2</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_df1">25.6482</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_df2">159.9178</span></td>
+                                        <td>mm</td>
+                                        <td>OK</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.8</td>
+                                        <td>Đường kính vòng lăn (Pitch cylinder diameter dw1, dw2)</td>
+                                        <td>dw1, dw2</td>
+                                        <td><span class="output-eng" id="out_dw1">36.2315</span></td>
+                                        <td><span class="output-eng" id="out_dw2">170.5012</span></td>
+                                        <td>mm</td>
+                                        <td>OK</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.9</td>
+                                        <td>Đường kính trung bình (Mean diameter dm1, dm2)</td>
+                                        <td>dm1, dm2</td>
+                                        <td><span class="output-eng" id="out_dm1">36.2315</span></td>
+                                        <td><span class="output-eng" id="out_dm2">170.5012</span></td>
+                                        <td>mm</td>
+                                        <td>OK</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.10</td>
+                                        <td>Đường kính ngoài lớn nhất bánh vít (Outside diameter of wormgear de2)</td>
+                                        <td>de2</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng readonly-calc highlight-key-param" data-key="de2Input" id="inp_de2Input" value="183.23" readonly></td>
+                                        <td><span class="cell-limit" id="out_de2_range">174.2-187.3</span></td>
+                                        <td>mm</td>
+                                        <td>
+                                            <label class="q-radio-label">
+                                                <input type="checkbox" id="chk_de2Flag" checked> Tự động
+                                            </label>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.11</td>
+                                        <td>Chiều cao đầu răng (Addendum ha1, ha2)</td>
+                                        <td>ha1, ha2</td>
+                                        <td><span class="output-eng" id="out_ha1">4.2333</span></td>
+                                        <td><span class="output-eng" id="out_ha2">4.2333</span></td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.12</td>
+                                        <td>Chiều cao chân răng (Dedendum hf1, hf2)</td>
+                                        <td>hf1, hf2</td>
+                                        <td><span class="output-eng" id="out_hf1">5.2917</span></td>
+                                        <td><span class="output-eng" id="out_hf2">5.2917</span></td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.13</td>
+                                        <td>Khoảng cách trục thực tế (Center distance a)</td>
+                                        <td>a</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_a">103.3663</span></td>
+                                        <td>-</td>
+                                        <td>mm</td>
+                                        <td>OK</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.14</td>
+                                        <td>Chiều dài phần ren trục vít / Bề rộng bánh vít (Face widths L, b2H)</td>
+                                        <td>L / b2H</td>
+                                        <td><span class="output-eng" id="out_L">56.7267</span></td>
+                                        <td><span class="output-eng" id="out_b2H">33.5700</span></td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.15</td>
+                                        <td>Góc nâng vít trên: Vòng trung bình / Vòng lăn (Pitch angle γ, γw)</td>
+                                        <td>γ, γw</td>
+                                        <td><span class="output-eng" id="out_sec5_gama">6.7098</span></td>
+                                        <td><span class="output-eng" id="out_gamaw">6.7098</span></td>
+                                        <td>độ (°)</td>
+                                        <td>γb = <span class="output-eng" id="out_gamab">21.0518</span>°</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.16</td>
+                                        <td>Chiều dày răng trong mặt phẳng pháp tuyến (Normal tooth thickness sn1, sn2)</td>
+                                        <td>sn1, sn2</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_sn1">6.6497</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_sn2">6.6497</span></td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.17</td>
+                                        <td>Chiều dày răng trong mặt phẳng dọc trục (Axial tooth thickness sx1, sx2)</td>
+                                        <td>sx1, sx2</td>
+                                        <td><span class="output-eng" id="out_sx1">6.6956</span></td>
+                                        <td><span class="output-eng" id="out_sx2">6.6956</span></td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.18</td>
+                                        <td>Chiều rộng rãnh răng trong mặt phẳng pháp tuyến (Normal space width en1, en2)</td>
+                                        <td>en1, en2</td>
+                                        <td><span class="output-eng" id="out_en1">6.6497</span></td>
+                                        <td><span class="output-eng" id="out_en2">6.6497</span></td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>5.19</td>
+                                        <td>Chiều rộng rãnh răng trong mặt phẳng dọc trục (Axial space width ex1, ex2)</td>
+                                        <td>ex1, ex2</td>
+                                        <td><span class="output-eng" id="out_ex1">6.6956</span></td>
+                                        <td><span class="output-eng" id="out_ex2">6.6956</span></td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 6.0: Efficiency and losses (DIN 3996) (COLLAPSED BY DEFAULT) -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>6.0 Hiệu Suất, Vận Tốc Trượt & Tổn Thất Công Suất (Efficiency and losses - DIN 3996)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Chỉ Số Động Học, Ma Sát & Hiệu Suất (DIN 3996)</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Giá Trị Tính Toán</th>
+                                        <th class="col-val2">Thông Số Phụ / Lựa Chọn</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                        <th style="width: 15%;">Tham Chiếu DIN</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>6.1</td>
+                                        <td>Vận tốc trượt trên vòng trung bình (Sliding velocity vgm)</td>
+                                        <td>vgm</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_vgm">2.8653</span></td>
+                                        <td>v1 = <span class="output-eng" id="out_v1">2.8456</span> | v2 = <span class="output-eng" id="out_v2">0.3348</span></td>
+                                        <td>m/s</td>
+                                        <td>DIN (9)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.2</td>
+                                        <td>Hệ số kích thước (Size factor YS)</td>
+                                        <td>YS</td>
+                                        <td><span class="output-eng" id="out_YS">0.9836</span></td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>DIN (55)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.3</td>
+                                        <td>Hệ số hình học (Geometry factor YG)</td>
+                                        <td>YG</td>
+                                        <td><span class="output-eng" id="out_YG">1.0240</span></td>
+                                        <td>h* = <span class="output-eng" id="out_h_x">0.0668</span></td>
+                                        <td>-</td>
+                                        <td>DIN (57)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.4</td>
+                                        <td>Hệ số vật liệu (Material factor YW)</td>
+                                        <td>YW</td>
+                                        <td><span class="output-eng" id="out_sec6_YW">0.9500</span></td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>DIN (Tbl 5)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.5</td>
+                                        <td>Hệ số độ nhám mặt ren trục vít (Roughness factor YR)</td>
+                                        <td>YR</td>
+                                        <td><span class="output-eng" id="out_sec6_YR">1.0000</span></td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>DIN (59)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.6</td>
+                                        <td>Hệ số ma sát cơ bản (Basic coefficient of friction μ0T)</td>
+                                        <td>μ0T</td>
+                                        <td><span class="output-eng" id="out_eta0T">0.0245</span></td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>DIN (47-54)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.7</td>
+                                        <td>Hệ số ma sát trung bình trong vùng ăn khớp (Mean friction coeff. μzm)</td>
+                                        <td>μzm</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_etazm">0.0234</span></td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>DIN (46)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.8</td>
+                                        <td>Góc ma sát tương đương (Friction angle ρz = arctan μzm)</td>
+                                        <td>ρz</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_roz">1.3428</span></td>
+                                        <td>μ_static = <span class="output-eng" id="out_etaStatic">0.1225</span></td>
+                                        <td>độ (°)</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.9</td>
+                                        <td>Hiệu suất riêng phần của cặp ăn khớp (Efficiency of gearing ηz)</td>
+                                        <td>ηz</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_etaz">0.8316</span></td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>DIN (44)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.10</td>
+                                        <td>Tổn thất công suất không tải / khuấy dầu (No-load losses PV0)</td>
+                                        <td>PV0</td>
+                                        <td><span class="output-eng" id="out_PV0">0.1580</span></td>
+                                        <td><span class="output-eng" id="out_PV0_W">157.96 W</span></td>
+                                        <td>kW</td>
+                                        <td>DIN (36)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.11</td>
+                                        <td>Tổn thất công suất tại các ổ đỡ trục (Bearing losses PVLP)</td>
+                                        <td>PVLP</td>
+                                        <td><span class="output-eng" id="out_PVLP">0.1625</span></td>
+                                        <td>
+                                            <select class="select-eng user-input" id="sel_bearingType" data-key="bearingType"></select>
+                                        </td>
+                                        <td>kW</td>
+                                        <td>DIN (38, 39)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.12</td>
+                                        <td>Tổn thất công suất tại phớt chắn dầu (Sealing losses PVD)</td>
+                                        <td>PVD</td>
+                                        <td><span class="output-eng" id="out_PVD">0.0464</span></td>
+                                        <td><span class="output-eng" id="out_PVD_W">46.39 W</span></td>
+                                        <td>kW</td>
+                                        <td>DIN (42)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.13</td>
+                                        <td>Tổn thất công suất ăn khớp răng (Gearing losses PVz)</td>
+                                        <td>PVz</td>
+                                        <td><span class="output-eng" id="out_PVz">0.5803</span></td>
+                                        <td><span class="output-eng" id="out_PVz_W">580.31 W</span></td>
+                                        <td>kW</td>
+                                        <td>DIN (61)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.14</td>
+                                        <td>Tổng tổn thất công suất toàn hộp giảm tốc (Total power loss PV)</td>
+                                        <td>PV</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_PV">0.9472</span></td>
+                                        <td><span class="output-eng" id="out_PV_W">947.18 W</span></td>
+                                        <td>kW</td>
+                                        <td>DIN (35)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>6.15</td>
+                                        <td>Hiệu suất tổng cộng toàn bộ truyền (Total efficiency ηges)</td>
+                                        <td>ηges</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_etages">0.7600</span></td>
+                                        <td><span class="output-eng" id="out_etages_pct2">76.0036%</span></td>
+                                        <td>-</td>
+                                        <td>DIN (33, 34)</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 12.0: Dimensions of cylindrical wormgearing (AGMA 6022-C93) (COLLAPSED BY DEFAULT) -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>12.0 Kích Thước Bộ Truyền Trục Vít Theo Tiêu Chuẩn Mỹ (AGMA 6022-C93)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Kích Thước Theo AGMA 6022-C93</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Trục Vít / Thông Số 1</th>
+                                        <th class="col-val2">Bánh Vít / Thông Số 2</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                        <th style="width: 15%;">Quy Đổi Hệ Mét</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>12.1</td>
+                                        <td>Số mối ren trục vít / Số răng bánh vít (Number of teeth NW, NG)</td>
+                                        <td>NW, NG</td>
+                                        <td><span class="output-eng" id="out_NW">1</span></td>
+                                        <td><span class="output-eng" id="out_NG">40</span></td>
+                                        <td>răng</td>
+                                        <td>AGMA (1)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12.2</td>
+                                        <td>Tỉ số truyền (Transmission ratio mG)</td>
+                                        <td>mG</td>
+                                        <td><span class="output-eng" id="out_mG">40.0000</span></td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12.3</td>
+                                        <td>Khoảng cách trục / Bước răng dọc trục (Centre distance C, axial pitch px)</td>
+                                        <td>C, px</td>
+                                        <td><span class="output-eng" id="out_C_agma">4.0695</span></td>
+                                        <td><span class="output-eng" id="out_pitchx">0.5272</span></td>
+                                        <td>in</td>
+                                        <td>AGMA (5)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12.4</td>
+                                        <td>Đường kính chia trục vít khuyến nghị theo AGMA (Recommended dmin - dmax)</td>
+                                        <td>dmin - dmax</td>
+                                        <td colspan="2"><span class="cell-limit" id="out_d_rec_agma">1.138 - 2.134</span></td>
+                                        <td>in</td>
+                                        <td>AGMA (2, 3)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12.5</td>
+                                        <td>Đường kính chia Trục vít / Bánh vít (Worm / Wormgear pitch diameter d, D)</td>
+                                        <td>d, D</td>
+                                        <td><span class="output-eng" id="out_d_LC">1.4264</span></td>
+                                        <td><span class="output-eng" id="out_D_UC">6.7126</span></td>
+                                        <td>in</td>
+                                        <td>AGMA (4)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12.6</td>
+                                        <td>Bước xoắn vít / Góc nâng đường xoắn (Worm lead L, Lead angle λ)</td>
+                                        <td>L, λ</td>
+                                        <td><span class="output-eng" id="out_Lead_agma">0.5272</span></td>
+                                        <td><span class="output-eng" id="out_leadAngle_agma">6.7098</span></td>
+                                        <td>in, [°]</td>
+                                        <td>AGMA (6, 7)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12.7</td>
+                                        <td>Chiều cao đầu răng / Chiều cao chân răng (Addendum a, Dedendum b)</td>
+                                        <td>a, b</td>
+                                        <td><span class="output-eng" id="out_addendum_agma">0.1678</span></td>
+                                        <td><span class="output-eng" id="out_dedendum_agma">0.1942</span></td>
+                                        <td>in</td>
+                                        <td>AGMA (8-10)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12.8</td>
+                                        <td>Đường kính ngoài Trục vít / Bánh vít (Outside diameter do, Do)</td>
+                                        <td>do, Do</td>
+                                        <td><span class="output-eng" id="out_do1_agma">1.7621</span></td>
+                                        <td><span class="output-eng" id="out_Do2_agma">7.2161</span></td>
+                                        <td>in</td>
+                                        <td>AGMA (16, 20)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12.9</td>
+                                        <td>Đường kính đáy trục vít / Đường kính họng bánh vít (Root dr, Throat Dt)</td>
+                                        <td>dr, Dt</td>
+                                        <td><span class="output-eng" id="out_dr_agma">1.0381</span></td>
+                                        <td><span class="output-eng" id="out_Dt_agma">7.0483</span></td>
+                                        <td>in</td>
+                                        <td>AGMA (18)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12.10</td>
+                                        <td>Khe hở hướng tâm (Clearance c = b - a)</td>
+                                        <td>c</td>
+                                        <td><span class="output-eng" id="out_clearance_agma">0.0263</span></td>
+                                        <td>-</td>
+                                        <td>in</td>
+                                        <td>AGMA (21)</td>
+                                    </tr>
+                                    <tr>
+                                        <td>12.11</td>
+                                        <td>Chiều dài trục vít / Bề rộng bánh vít theo AGMA (Face widths FWmax, FG)</td>
+                                        <td>FWmax, FG</td>
+                                        <td><span class="output-eng" id="out_FWmax_agma">3.0020</span></td>
+                                        <td><span class="output-eng" id="out_FG_agma">1.6316</span></td>
+                                        <td>in</td>
+                                        <td><span class="output-eng" id="out_agma_mm">76.25 / 41.44 mm</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ################################################################# -->
+                <!-- MASTER BLOCK 3: ADDITIONS & MANUFACTURING (Thanh Xanh Dương)      -->
+                <!-- ################################################################# -->
+                <div class="master-block">
+                    <div class="master-header master-additions">
+                        <span>🛠️ Phần Bổ Sung & Bảng Chế Tạo (Additions & Manufacturing)</span>
+                        <span style="font-size: 0.8rem; font-weight: normal; opacity: 0.85;">Mục 16.0 (Bảng Khoảng Cách Trục), Mục 18.0 (Tính Toán Phụ Trợ) & Mục 19.0 (CAD 2D DXF & Bảng Chế Tạo DXFTables)</span>
+                    </div>
+
+                    <!-- SECTION 16.0: Calculation of gearing for the given axis distance -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>16.0 Tính Chọn Bộ Truyền Cho Khoảng Cách Trục Cho Trước (Gearing for given axis distance)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Tìm Kiếm Khoảng Cách Trục</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Giá Trị 1</th>
+                                        <th class="col-val2">Giá Trị 2</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                        <th style="width: 15%;">Thao Tác</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>16.1</td>
+                                        <td>Số mối ren trục vít / Số răng bánh vít dự kiến (Requested z1, z2)</td>
+                                        <td>z1, z2</td>
+                                        <td><input type="text" inputmode="numeric" class="input-eng user-input" data-key="z1_req" id="inp_z1_req" value="1"></td>
+                                        <td><input type="text" inputmode="numeric" class="input-eng user-input" data-key="z2_req" id="inp_z2_req" value="50"></td>
+                                        <td>răng</td>
+                                        <td><button type="button" class="btn-smart" id="btn_sync_z2req" title="Gán z2_req = z1_req * i_in">&lt;= z2=z1*i</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>16.2</td>
+                                        <td>Khoảng cách trục yêu cầu (Required centre distance a)</td>
+                                        <td>a_req</td>
+                                        <td>
+                                            <div class="combo-box-group">
+                                                <input type="text" inputmode="decimal" class="input-eng user-input combo-input" data-key="a_req" id="inp_a_req" value="180">
+                                                <select class="select-eng combo-arrow-select" id="sel_std_av" title="Chọn khoảng cách trục tiêu chuẩn (T_av)"></select>
+                                            </div>
+                                        </td>
+                                        <td>-</td>
+                                        <td>mm</td>
+                                        <td>-</td>
+                                    </tr>
+                                    <tr>
+                                        <td>16.4</td>
+                                        <td>Danh sách phương án thỏa mãn (-0.5 ≤ x2 ≤ 1.0) (AxisDistTbl)</td>
+                                        <td>Solutions</td>
+                                        <td colspan="2">
+                                            <select class="select-eng user-input" id="sel_AxisDist"></select>
+                                        </td>
+                                        <td><span class="output-eng" id="out_AxisDistCount">0 PA</span></td>
+                                        <td><button type="button" class="btn-smart" id="btn_ApplyAxisDist" title="Chuyển phương án đang chọn lên Mục 1.0 và Mục 4.0">✅ Áp Dụng</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 18.0: Auxiliary calculations -->
+                    <div class="calc-section collapsed" id="sec18Accordion">
+                        <div class="section-header">
+                            <h3>18.0 Tính Toán Phụ Trợ (Auxiliary calculations)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Công Thức Tính Toán Phụ Trợ</th>
+                                        <th class="col-sym">Quan Hệ</th>
+                                        <th class="col-val1">Thông Số 1</th>
+                                        <th class="col-val2">Thông Số 2</th>
+                                        <th class="col-unit">Kết Quả</th>
+                                        <th style="width: 15%;">Chuyển Vào Bảng</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>18.1</td>
+                                        <td>Tính tỉ số truyền từ số răng (Transmission ratio using number of teeth)</td>
+                                        <td>z1, z2 = i</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="XX_z1" id="inp_XX_z1" value="2"></td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="XX_z2" id="inp_XX_z2" value="41"></td>
+                                        <td><span class="output-eng" id="out_XXX_i">20.5000</span></td>
+                                        <td><button type="button" class="btn-smart" id="btn_Move_z1z2">OK (Chuyển z1, i)</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>18.2</td>
+                                        <td>Tính tỉ số truyền từ tốc độ quay (Transmission ratio using speed)</td>
+                                        <td>n1, n2 = i</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="XX_n1" id="inp_XX_n1" value="1600"></td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="XX_n2_ratio" id="inp_XX_n2_ratio" value="80"></td>
+                                        <td><span class="output-eng" id="out_XX_i">20.0000</span></td>
+                                        <td><button type="button" class="btn-smart" id="btn_Move_n1n2">OK (Chuyển n1, i)</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td>18.3</td>
+                                        <td>Tính công suất từ mô-men xoắn và tốc độ bánh vít (Power from Mk2, n2)</td>
+                                        <td>Mk2, n2 = Pw2</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="XX_Mk2" id="inp_XX_Mk2" value="300"></td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="XX_n2" id="inp_XX_n2" value="3.75"></td>
+                                        <td><span class="output-eng" id="out_XX_Pw2">0.1178 kW</span></td>
+                                        <td><button type="button" class="btn-smart" id="btn_Move_Pwn2">OK (Chuyển Pw2)</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- SECTION 19.0: Graphical output, CAD systems & DXFTables -->
+                    <div class="calc-section collapsed">
+                        <div class="section-header">
+                            <h3>19.0 Xuất Bản Vẽ 2D CAD (DXF) & Bảng Thông Số Chế Tạo Gia Công (DXFTables)</h3>
+                            <span class="section-toggle">▶</span>
+                        </div>
+                        <div class="section-body">
+                            <table class="calc-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-idx">#</th>
+                                        <th class="col-param">Thông Số Cấu Hình Bản Vẽ Chế Tạo (Section 19.0)</th>
+                                        <th class="col-sym">Ký Hiệu</th>
+                                        <th class="col-val1">Giá Trị 1</th>
+                                        <th class="col-val2">Giá Trị 2</th>
+                                        <th class="col-unit">Đơn Vị</th>
+                                        <th style="width: 15%;">Tùy Chọn</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>19.1</td>
+                                        <td>Tỷ lệ bản vẽ tự động (AutoScale = a / 100)</td>
+                                        <td>Scale</td>
+                                        <td><span class="output-eng" id="out_DXF_AutoScale">0.9700</span></td>
+                                        <td>DXF Release 12 (AC1009)</td>
+                                        <td>-</td>
+                                        <td>100% Offline</td>
+                                    </tr>
+                                    <tr>
+                                        <td>19.2</td>
+                                        <td>Thông tin khung tên BOM (Trục Vít / Bánh Vít)</td>
+                                        <td>BOM</td>
+                                        <td><span class="output-eng" id="out_ABOM" style="font-size: 0.78rem;">Worm gear - Worm | z1=1, mx=4.00 | Material: 16MnCr5</span></td>
+                                        <td><span class="output-eng" id="out_BBOM" style="font-size: 0.78rem;">Worm gear - Gear | z2=40, mx=4.00 | Material: CuSn12Ni2-C-GZ</span></td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <!-- 6 Original MITCalc CAD Export Buttons with Original Icons -->
+                            <div style="display: flex; flex-wrap: wrap; gap: 8px; margin: 1rem 0; padding: 10px; background: rgba(15, 23, 42, 0.7); border-radius: 8px; border: 1px solid #334155; align-items: center;">
+                                <span style="font-size: 0.82rem; font-weight: 700; color: #38bdf8; margin-right: 6px;">📐 Xuất File CAD (.DXF) Chuẩn MITCalc:</span>
+                                <button type="button" class="cad-icon-btn" data-dxf-mode="worm_left" title="Xuất hình chiếu cạnh Trục Vít (WormLeft)">
+                                    <img src="images/image4.png" alt="Worm Left"> Trục Vít (Cạnh)
+                                </button>
+                                <button type="button" class="cad-icon-btn" data-dxf-mode="worm_front" title="Xuất hình chiếu đứng Trục Vít (WormFront)">
+                                    <img src="images/image5.png" alt="Worm Front"> Trục Vít (Đứng)
+                                </button>
+                                <button type="button" class="cad-icon-btn" data-dxf-mode="gear_front" title="Xuất hình chiếu đứng Bánh Vít (GearFront)">
+                                    <img src="images/image7.png" alt="Gear Front"> Bánh Vít (Đứng)
+                                </button>
+                                <button type="button" class="cad-icon-btn" data-dxf-mode="gear_left" title="Xuất mặt cắt họng Bánh Vít (GearLeft)">
+                                    <img src="images/image6.png" alt="Gear Left"> Bánh Vít (Mặt Cắt Họng)
+                                </button>
+                                <button type="button" class="cad-icon-btn" data-dxf-mode="assembly_front" title="Xuất bản vẽ lắp đầy đủ 2 hình chiếu + Bảng thông số">
+                                    <img src="images/image8.png" alt="Assembly"> Bản Vẽ Lắp Tổng Thể + Bảng
+                                </button>
+                            </div>
+
+                            <!-- Dual Manufacturing Parameter Tables (DXFTables!B2:D29) -->
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; margin-top: 0.75rem;">
+                                <!-- Table 1: T_DXF_Pinion (Worm) -->
+                                <div>
+                                    <h4 style="color: #38bdf8; margin-bottom: 0.5rem; font-size: 0.9rem;">📋 Bảng 19.6A: Thông Số Chế Tạo Trục Vít (Table of worm parameters - T_DXF_Pinion)</h4>
+                                    <table class="calc-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Thông Số Chế Tạo (DIN 3975)</th>
+                                                <th>Ký Hiệu</th>
+                                                <th>Giá Trị Xuất Bản Vẽ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Mô đun (Gear module)</td>
+                                                <td id="dxf_worm_m_sym">mn</td>
+                                                <td><span class="output-eng" id="out_dxf_worm_m">4.2333</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Số mối ren trục vít (Number of teeth Worm)</td>
+                                                <td>z1</td>
+                                                <td><span class="output-eng" id="out_dxf_worm_z1">1</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Góc ăn khớp danh nghĩa (Pressure angle)</td>
+                                                <td>alfa</td>
+                                                <td><span class="output-eng" id="out_dxf_worm_alfa">20.0000</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Đường kính vòng chia (Reference diameter)</td>
+                                                <td>d1</td>
+                                                <td><span class="output-eng highlight-key-param" id="out_dxf_worm_d1">36.231</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Đường kính vòng đỉnh (Tip diameter)</td>
+                                                <td>da1</td>
+                                                <td><span class="output-eng highlight-key-param" id="out_dxf_worm_da1">44.698</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Chiều dài phần ren trục vít (Worm face width)</td>
+                                                <td>L</td>
+                                                <td><span class="output-eng" id="out_dxf_worm_L">56.727</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Vật liệu chế tạo (Material)</td>
+                                                <td>Mat</td>
+                                                <td><span class="output-eng" id="out_dxf_worm_mat">16MnCr5</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Khoảng cách trục (Center distance)</td>
+                                                <td>a</td>
+                                                <td><span class="output-eng highlight-key-param" id="out_dxf_worm_a">103.366</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Số răng bánh vít ăn khớp (Wheel teeth in mesh)</td>
+                                                <td>z2</td>
+                                                <td><span class="output-eng" id="out_dxf_worm_z2">40</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <!-- Table 2: T_DXF_Gear (Wheel) -->
+                                <div>
+                                    <h4 style="color: #f59e0b; margin-bottom: 0.5rem; font-size: 0.9rem;">📋 Bảng 19.6B: Thông Số Chế Tạo Bánh Vít (Table of wheel parameters - T_DXF_Gear)</h4>
+                                    <table class="calc-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Thông Số Chế Tạo (DIN 3975)</th>
+                                                <th>Ký Hiệu</th>
+                                                <th>Giá Trị Xuất Bản Vẽ</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>Mô đun (Gear module)</td>
+                                                <td id="dxf_wheel_m_sym">mn</td>
+                                                <td><span class="output-eng" id="out_dxf_wheel_m">4.2333</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Số răng bánh vít (Number of teeth Worm Gear)</td>
+                                                <td>z2</td>
+                                                <td><span class="output-eng" id="out_dxf_wheel_z2">40</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Góc ăn khớp danh nghĩa (Pressure angle)</td>
+                                                <td>alfa</td>
+                                                <td><span class="output-eng" id="out_dxf_wheel_alfa">20.0000</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Đường kính vòng chia (Reference diameter)</td>
+                                                <td>d2</td>
+                                                <td><span class="output-eng highlight-key-param" id="out_dxf_wheel_d2">170.501</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Đường kính vòng đỉnh họng (Tip diameter)</td>
+                                                <td>da2</td>
+                                                <td><span class="output-eng highlight-key-param" id="out_dxf_wheel_da2">178.968</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Chiều rộng vành răng bánh vít (Wormgear face width)</td>
+                                                <td>b2H</td>
+                                                <td><span class="output-eng" id="out_dxf_wheel_b2H">33.570</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Hệ số dịch chỉnh bánh vít (Addendum modification)</td>
+                                                <td>x2</td>
+                                                <td><span class="output-eng" id="out_dxf_wheel_x2">0.000</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Vật liệu chế tạo (Material)</td>
+                                                <td>Mat</td>
+                                                <td><span class="output-eng" id="out_dxf_wheel_mat">CuSn12Ni2-C-GZ (DIN EN 1982)</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Khoảng cách trục (Center distance)</td>
+                                                <td>a</td>
+                                                <td><span class="output-eng highlight-key-param" id="out_dxf_wheel_a">103.366</span></td>
+                                            </tr>
+                                            <tr>
+                                                <td>Số mối ren trục vít ăn khớp (Worm teeth in mesh)</td>
+                                                <td>z1</td>
+                                                <td><span class="output-eng" id="out_dxf_wheel_z1">1</span></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- TAB 2: 2D CAD & 3D WEBGL SIMULATION + STEP / STL / DXF EXPORT             -->
+        <!-- ========================================================================= -->
+        <div id="tabCanvas" class="tab-pane">
+            <div class="canvas-workspace">
+                <!-- Unified Master Navigation & Export Toolbar -->
+                <div id="masterVisualizerNav" style="display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 0.65rem; background: rgba(15, 23, 42, 0.9); padding: 0.6rem 0.9rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 0.75rem;">
+                    <!-- 1. 2D CAD Button -->
+                    <button type="button" id="btnMode2D" class="btn" style="background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: #ffffff; font-weight: 800; border: 1.5px solid #34d399; box-shadow: 0 0 12px rgba(16, 185, 129, 0.45); padding: 6px 16px; font-size: 0.88rem; border-radius: 6px; cursor: pointer; white-space: nowrap;">
+                        📐 2D CAD
+                    </button>
+
+                    <!-- 2. Xuất file 2D Dropdown Button -->
+                    <div class="dropdown" style="position: relative; display: inline-block;">
+                        <button type="button" class="btn" id="btnExport2DMenu" style="background-color: #107c41; border-color: #107c41; color: #fff; font-weight: 700; cursor: pointer; white-space: nowrap; padding: 6px 14px; font-size: 0.82rem;">
+                            📥 Xuất file 2D ▾
+                        </button>
+                        <div id="export2DDropdown" style="display: none; position: absolute; left: 0; top: 100%; z-index: 1000; background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); min-width: 330px; padding: 0.5rem 0; margin-top: 4px;">
+                            <div style="padding: 4px 12px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
+                                Xuất Theo Hình Chiếu Đang Chọn
+                            </div>
+                            <a href="javascript:void(0)" id="expDxfCurrent" style="display: block; padding: 6px 14px; color: #10b981; font-weight: 700; font-size: 0.85rem; text-decoration: none;">💾 Xuất Hình Đang Xem Hiện Tại (.dxf)</a>
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                            <div style="padding: 4px 12px; font-size: 0.75rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;">
+                                Mặt Cắt Biên Dạng Răng Chuyên Dụng
+                            </div>
+                            <a href="javascript:void(0)" id="expDxfNormalProfile" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">📐 Xuất MC Pháp Tuyến N-N (.dxf)</a>
+                            <a href="javascript:void(0)" id="expDxfAxialProfile" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">📏 Xuất MC Dọc Trục A-A (.dxf)</a>
+                            <a href="javascript:void(0)" id="expDxfTangentialProfile" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">📐 Xuất MC Tiếp Tuyến Mặt Trụ Chia T-T (.dxf)</a>
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                            <div style="padding: 4px 12px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
+                                Bản Vẽ Chi Tiết & Lắp Ráp
+                            </div>
+                            <a href="javascript:void(0)" id="expDxfAssembly" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🔗 Bản Vẽ Lắp Đầy Đủ 2 Hình + Bảng (.dxf)</a>
+                            <a href="javascript:void(0)" id="expDxfWormFront" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🔩 Chi Tiết Trục Vít (Đứng) (.dxf)</a>
+                            <a href="javascript:void(0)" id="expDxfWheelThroat" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">⚙️ Chi Tiết Bánh Vít (Cắt Họng) (.dxf)</a>
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div style="width: 1px; height: 26px; background: rgba(255,255,255,0.18); margin: 0 4px;" class="nav-divider"></div>
+
+                    <!-- 3. 3D CAD Button -->
+                    <button type="button" id="btnMode3D" class="btn" style="background: rgba(15, 23, 42, 0.7); color: #94a3b8; font-weight: 700; border: 1.5px solid #334155; padding: 6px 16px; font-size: 0.88rem; border-radius: 6px; cursor: pointer; white-space: nowrap;">
+                        🧊 3D CAD
+                    </button>
+
+                    <!-- 4. Độ mịn 3D Dropdown -->
+                    <div style="display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);" title="Cấp độ mịn lưới 3D (Cấp 1..10)">
+                        <label for="selMeshDensity" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">💎 Độ mịn 3D:</label>
+                        <select id="selMeshDensity" class="calc-select" style="padding: 4px 8px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #10b981; border: 1.5px solid #059669; cursor: pointer;">
+                            <option value="1">Cấp 1 (Nhanh)</option>
+                            <option value="2">Cấp 2</option>
+                            <option value="3">Cấp 3</option>
+                            <option value="4">Cấp 4 (Cân Bằng)</option>
+                            <option value="5">Cấp 5</option>
+                            <option value="6">Cấp 6 (CAM/CNC)</option>
+                            <option value="7">Cấp 7 (Độ Nét Cao)</option>
+                            <option value="8" selected>Cấp 8 (Tuyệt Đối)</option>
+                            <option value="9">Cấp 9 (Master CAD)</option>
+                            <option value="10">Cấp 10 (Tối Thượng)</option>
+                        </select>
+                    </div>
+
+                    <!-- 5. Xuất file 3D Dropdown Button -->
+                    <div class="dropdown" style="position: relative; display: inline-block;">
+                        <button type="button" class="btn" id="btnExport3DMenu" style="background:#059669; color:#ffffff; font-weight:700; cursor: pointer; white-space: nowrap; padding: 6px 14px; font-size: 0.82rem;">
+                            📥 Xuất file 3D ▾
+                        </button>
+                        <div id="export3DDropdown" style="display: none; position: absolute; right: 0; top: 100%; z-index: 1000; background: #0f172a; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 10px 25px rgba(0,0,0,0.7); min-width: 350px; padding: 0.5rem 0; margin-top: 4px;">
+                            <div style="padding: 4px 12px; font-size: 0.75rem; color: #10b981; font-weight: 700; text-transform: uppercase;">
+                                ⚡ Chuẩn Native Surface Mastercam (.igs) - Mở Tức Thì &amp; Chỉnh Sửa
+                            </div>
+                            <a href="javascript:void(0)" id="expIgesWorm" style="display: block; padding: 6px 14px; color: #38bdf8; font-size: 0.85rem; font-weight: 600; text-decoration: none;">💎 Xuất Trục Vít 1 Surface Mastercam (.igs)</a>
+                            <a href="javascript:void(0)" id="expIgesWheel" style="display: block; padding: 6px 14px; color: #38bdf8; font-size: 0.85rem; font-weight: 600; text-decoration: none;">💎 Xuất Bánh Vít 2 Surface Mastercam (.igs)</a>
+                            <a href="javascript:void(0)" id="expIgesAssembly" style="display: block; padding: 6px 14px; color: #34d399; font-size: 0.85rem; font-weight: 700; text-decoration: none;">💎 Xuất Cả Cặp Ăn Khớp Surface (.igs)</a>
+                            <a href="javascript:void(0)" id="expIgesCurvesWorm" style="display: block; padding: 6px 14px; color: #fbbf24; font-size: 0.85rem; text-decoration: none;">📐 Xuất Khung Dây Dựng Ruled / Lofted (.igs)</a>
+
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                            <div style="padding: 4px 12px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
+                                Định Dạng STEP AP214 (Khối Solid B-Rep)
+                            </div>
+                            <a href="javascript:void(0)" id="expStepWorm" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🔩 Xuất Trục Vít 1 Solid (.step)</a>
+                            <a href="javascript:void(0)" id="expStepWheel" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">⚙️ Xuất Bánh Vít 2 Solid (.step)</a>
+                            <a href="javascript:void(0)" id="expStepAssembly" style="display: block; padding: 6px 14px; color: #38bdf8; font-size: 0.85rem; font-weight: 700; text-decoration: none;">🔗 Xuất Cả Cặp Ăn Khớp Solid (.step)</a>
+
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                            <div style="padding: 4px 12px; font-size: 0.75rem; color: #38bdf8; font-weight: 700; text-transform: uppercase;">
+                                🌐 Flank Surface Rỗng (Mastercam Surface / 4-5 Trục)
+                            </div>
+                            <a href="javascript:void(0)" id="expStepSurfaceWorm" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🌐 Xuất Trục Vít 1 Surface (.step)</a>
+                            <a href="javascript:void(0)" id="expStepSurfaceWheel" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🌐 Xuất Bánh Vít 2 Surface (.step)</a>
+                            <a href="javascript:void(0)" id="expStepSurfaceAssembly" style="display: block; padding: 6px 14px; color: #38bdf8; font-size: 0.85rem; font-weight: 700; text-decoration: none;">🌐 Xuất Cả Cặp Surface (.step)</a>
+                            <a href="javascript:void(0)" id="expStlSurfaceWorm" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🌐 Xuất Trục Vít 1 Surface (.stl)</a>
+                            <a href="javascript:void(0)" id="expStlSurfaceWheel" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🌐 Xuất Bánh Vít 2 Surface (.stl)</a>
+
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                            <div style="padding: 4px 12px; font-size: 0.75rem; color: #94a3b8; font-weight: 700; text-transform: uppercase;">
+                                Định Dạng Binary STL (Lập Trình Mastercam)
+                            </div>
+                            <a href="javascript:void(0)" id="expStlWorm" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">🔩 Xuất Trục Vít 1 (.stl)</a>
+                            <a href="javascript:void(0)" id="expStlWheel" style="display: block; padding: 6px 14px; color: #e2e8f0; font-size: 0.85rem; text-decoration: none;">⚙️ Xuất Bánh Vít 2 (.stl)</a>
+                            <a href="javascript:void(0)" id="expStlAssembly" style="display: block; padding: 6px 14px; color: #10b981; font-size: 0.85rem; font-weight: 700; text-decoration: none;">🔗 Xuất Cả Cặp Ăn Khớp (.stl)</a>
+
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin: 6px 0;"></div>
+                            <a href="javascript:void(0)" id="expObjAssembly" style="display: block; padding: 6px 14px; color: #cbd5e1; font-size: 0.85rem; text-decoration: none;">📦 Xuất File OBJ (.obj)</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2D Action Toolbar -->
+                <div id="toolbar2D" style="display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.75rem;">
+                    <button type="button" class="btn btn-primary" id="btnViewAssembly">📐 Bản Vẽ Lắp 2 Hình Chiếu</button>
+                    <button type="button" class="btn btn-secondary" id="btnViewNormalProfile" title="Mặt cắt biên dạng răng theo phương pháp tuyến N-N (DIN 3975)">📐 MC Pháp Tuyến (N-N)</button>
+                    <button type="button" class="btn btn-secondary" id="btnViewAxialProfile" title="Mặt cắt biên dạng răng theo phương dọc trục A-A (DIN 3975)">📏 MC Dọc Trục (A-A)</button>
+                    <button type="button" class="btn btn-secondary" id="btnViewTangentialProfile" title="Mặt cắt tiếp tuyến mặt trụ chia T-T (Tangent Plane to Pitch Cylinder y = d1/2)">📐 MC Tiếp Tuyến (T-T)</button>
+                    <button type="button" class="btn btn-secondary" id="btnPlayAnim" title="Mô phỏng ăn khớp / Tạm dừng" style="padding: 4px 10px; font-size: 0.9rem;">▶️</button>
+                    <label style="font-size: 0.8rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; background: rgba(15, 23, 42, 0.6); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border-color);">
+                        Tốc độ:
+                        <input type="range" id="sliderAnimSpeed" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 75px; accent-color: #38bdf8; cursor: pointer;">
+                        <span id="lblAnimSpeed" style="color: #38bdf8; font-weight: 700;">1.0x</span>
+                    </label>
+                    <button type="button" class="btn btn-secondary" id="btnToggleDims" title="Hiện/Ẩn kích thước cơ khí" style="padding: 4px 10px; font-size: 0.9rem;">📏</button>
+                    <button type="button" class="btn btn-secondary" id="btnResetView" title="Căn giữa và đặt lại góc nhìn" style="padding: 4px 10px; font-size: 0.9rem;">🎯</button>
+                </div>
+
+                <!-- 3D Action Toolbar (Single-Row Icon-Only) -->
+                <div id="toolbar3D" style="display: none; gap: 0.5rem; align-items: center; flex-wrap: nowrap; overflow-x: auto; margin-bottom: 0.75rem;">
+                    <!-- 3D Visibility Toggles -->
+                    <button type="button" class="btn btn-secondary" id="btnToggleWorm" title="Ẩn/Hiện Trục Vít 1 trong không gian 3D" style="padding: 4px 10px; font-size: 0.9rem;">🔩</button>
+                    <button type="button" class="btn btn-secondary" id="btnToggleWheel" title="Ẩn/Hiện Bánh Vít 2 trong không gian 3D" style="padding: 4px 10px; font-size: 0.9rem;">⚙️</button>
+
+                    <!-- Speed & Play -->
+                    <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.25); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border-color);">
+                        <label for="slider3DAnimSpeed" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">⚡ Tốc độ:</label>
+                        <input type="range" id="slider3DAnimSpeed" min="0.05" max="2.5" step="0.05" value="1.0" style="width: 75px; cursor: pointer;">
+                        <span id="anim3DSpeedVal" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); width: 40px;">1.0x</span>
+                    </div>
+                    <button type="button" class="btn btn-primary" id="btnToggle3DAnim" title="Chạy mô phỏng / Tạm dừng" style="padding: 4px 10px; font-size: 0.9rem;">▶️</button>
+                    <button type="button" class="btn btn-secondary" id="btn3DAnimDirection" title="Đổi chiều quay mô phỏng (Thuận ↻ / Nghịch ↺)" style="padding: 4px 10px; font-size: 0.9rem;">🔄 ↻</button>
+                    <button type="button" class="btn btn-secondary" id="btn3DStepBack" title="Nhích lùi 1 bước vi phân" style="padding: 4px 10px; font-size: 0.9rem;">⏮️</button>
+                    <button type="button" class="btn btn-secondary" id="btn3DStepFwd" title="Nhích tiến 1 bước vi phân" style="padding: 4px 10px; font-size: 0.9rem;">⏭️</button>
+                    <button type="button" class="btn btn-secondary" id="btnToggleWireframe" title="Bật/tắt khung dây 3D" style="padding: 4px 10px; font-size: 0.9rem;">🕸️</button>
+                    <button type="button" class="btn btn-secondary" id="btnToggleFlankOnly" title="Ẩn khối phôi đặc, chỉ hiện bề mặt sườn ren và sườn răng để quan sát sự ăn khớp tiếp xúc" style="padding: 4px 10px; font-size: 0.9rem;">👁️</button>
+                    <button type="button" class="btn btn-secondary" id="btnReset3DView" title="Đặt lại góc nhìn 3D" style="padding: 4px 10px; font-size: 0.9rem;">🎯</button>
+                </div>
+
+                <!-- 2D Viewport Container -->
+                <div id="container2D" class="canvas-container" style="display: flex; justify-content: center; background: #0b1120; border-radius: 10px; border: 1px solid var(--border-color); overflow: hidden; position: relative;">
+                    <canvas id="wormCanvas" width="1200" height="650" style="width: 100%; height: auto; aspect-ratio: 1200 / 650; display: block; touch-action: none; cursor: grab;"></canvas>
+                </div>
+
+                <!-- 3D Viewport Container -->
+                <div id="container3D" style="display: none; position: relative; width: 100%; height: 650px; background-color: #0b1120; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-color);">
+                    <div id="worm3DContainer" style="width: 100%; height: 100%;"></div>
+
+                    <!-- 3D Camera View Preset Overlay (Góc trái trên cùng màn hình mô phỏng 3D) -->
+                    <div id="overlay3DViewPreset" style="position: absolute; top: 12px; left: 12px; z-index: 10; display: flex; align-items: center; gap: 6px; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);">
+                        <label for="sel3DViewPreset" style="font-size: 0.82rem; font-weight: 700; color: #38bdf8; white-space: nowrap;">📐 Hướng nhìn:</label>
+                        <select id="sel3DViewPreset" class="calc-select" style="padding: 4px 24px 4px 8px; font-size: 0.82rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #38bdf8; border: 1.5px solid #0284c7; cursor: pointer;">
+                            <option value="iso">🎥 Phối Cảnh 3D (Isometric)</option>
+                            <option value="front">⬆️ Hình Chiếu Đứng (Front XY)</option>
+                            <option value="worm">🔩 Mặt Cắt Họng Ôm Trục Vít (+X)</option>
+                            <option value="wheel">⚙️ Trực Diện Bánh Vít 2 (+Z)</option>
+                            <option value="top">➡️ Nhìn Từ Trên (Top XZ)</option>
+                            <option value="mesh">🔍 Vùng Tiếp Xúc Ăn Khớp (Mesh Zone)</option>
+                            <option value="rear">🔍 Soi Mặt Sau Sườn Răng (Vết In Tiếp Xúc)</option>
+                        </select>
+                    </div>
+
+                    <!-- 3D Overlay Badge Info -->
+                    <div id="badge3DInfo" style="position: absolute; bottom: 12px; left: 12px; background: rgba(15, 23, 42, 0.88); backdrop-filter: blur(4px); border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; padding: 8px 14px; font-size: 0.8rem; color: #cbd5e1; pointer-events: none;">
+                        <span id="badge3DType" style="color: #f59e0b; font-weight: 700;">🌀 Trục Vít - Bánh Vít Lõm (ZN)</span> |
+                        <span>Tỷ số i = <strong id="badge3DRatio" style="color: #38bdf8;">40.00 (z1=1, z2=40)</strong></span> |
+                        <span>Khoảng cách trục a = <strong id="badge3DA" style="color: #10b981;">103.366 mm</strong></span> |
+                        <span>Góc nâng γ = <strong id="badge3DGama" style="color: #38bdf8;">6.710°</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 3D Offline Libraries: Zero-CORS & 100% Offline -->
+    <script src="../../shared/js/three.min.js"></script>
+    <script src="../../shared/js/OrbitControls.js"></script>
+
+    <!-- Single Classic Script Bundle (Zero-CORS, 100% Offline) -->
+    <script src="js/worm-engine.bundle.js"></script>
+</body>
+</html>

@@ -10,18 +10,24 @@ print("          DONG GOI MA NGUON JAVASCRIPT THUAN (CORS-FREE BUNDLER)")
 print("===============================================================================")
 print()
 
-print("[1/3] Dang dong goi Mo-dun Banh Rang Tru (Spur & Helical Gear)...")
+print("[1/5] Dang dong goi Mo-dun Banh Rang Tru (Spur & Helical Gear)...")
 res1 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_spur.py")])
 
-print("[2/3] Dang dong goi Mo-dun Banh Rang Con (Bevel Gear)...")
+print("[2/5] Dang dong goi Mo-dun Banh Rang Con (Bevel Gear)...")
 res2 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_bevel.py")])
 
-print("[3/3] Dang dong goi Mo-dun Truc Vit - Banh Vit (Worm Gear)...")
+print("[3/5] Dang dong goi Mo-dun Truc Vit - Banh Vit (Worm Gear)...")
 res3 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_worm.py")])
 
-if res1.returncode == 0 and res2.returncode == 0 and res3.returncode == 0:
+print("[4/5] Dang dong goi Mo-dun Banh Rang Con Mo Rong (Advanced Bevel Gear)...")
+res4 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_bevel_advanced.py")])
+
+print("[5/5] Dang dong goi Mo-dun Truc Vit - Banh Vit Mo Rong (Advanced Worm Gear)...")
+res5 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_worm_advanced.py")])
+
+if res1.returncode == 0 and res2.returncode == 0 and res3.returncode == 0 and res4.returncode == 0 and res5.returncode == 0:
     print()
-    print(">>> DONG GOI HOAN TAT 100% THANH CONG (3/3 MO-DUN)!")
+    print(">>> DONG GOI HOAN TAT 100% THANH CONG (5/5 MO-DUN)!")
 else:
     print()
     print(">>> CO LOI XAY RA TRONG QUA TRINH DONG GOI!")
