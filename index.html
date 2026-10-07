@@ -2,8 +2,17 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>Tính Toán Bộ Truyền Động - MITCalc Web App</title>
+    <!-- iOS WebClip / PWA & Cache Control -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MITCalc Gears">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <link rel="stylesheet" href="shared/css/engineering-theme.css">
     <style>
         .portal-hero {
@@ -233,6 +242,7 @@
             </div>
         </div>
         <div class="header-controls">
+            <button type="button" class="btn btn-force-update" id="btnForceUpdate" title="Xóa toàn bộ bộ nhớ đệm (Cache) và ép iPhone cập nhật phiên bản mới nhất">⚡ Ép Cập Nhật (v3.0)</button>
             <span style="font-size:0.85rem; color:#10b981; font-weight:600;">● Phiên bản 3.0 (Modular Architecture)</span>
         </div>
     </header>
@@ -264,6 +274,13 @@
                     <div class="stat-val">100%</div>
                     <div class="stat-lbl">Offline Client-Side</div>
                 </div>
+            </div>
+
+            <!-- Mobile & iPhone Force Update Action -->
+            <div style="margin-top: 1.25rem; display: flex; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-force-update" onclick="forceAppUpdate()" style="padding: 0.65rem 1.4rem; font-size: 0.92rem; border-radius: 8px;">
+                    ⚡ Ép iPhone / Cốc Cốc Cập Nhật Bản Mới (Xóa Cache)
+                </button>
             </div>
         </section>
 
@@ -364,5 +381,7 @@
         <p style="margin-top:0.35rem; font-size:0.8rem; color:#475569;">Bản quyền công nghệ © 2026. Chạy độc lập hoàn toàn trong trình duyệt không cần cài đặt môi trường.</p>
     </footer>
 
+    <!-- Universal Cache Buster & Force Updater -->
+    <script src="shared/js/app-updater.js"></script>
 </body>
 </html>

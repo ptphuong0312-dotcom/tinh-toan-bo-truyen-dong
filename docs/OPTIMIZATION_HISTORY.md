@@ -3756,3 +3756,33 @@ ho_{f0}$.
      - Đo đạc thực tế: Duplex $k_{dup} = 0.0200$, $\Delta j_t = 20.0\,\mu\text{m/mm}$, $m_{xR} = 4.040\text{ mm}$, $m_{xL} = 3.960\text{ mm}$.
      - Đo đạc thực tế: Globoid $d_{1,\min} = 34.00\text{ mm}$, $R_{throat} = 80.00\text{ mm}$, $2\delta_1 = 39.1^\circ$, $z_c = 4.3\text{ răng}$, $K_{load} = 3.6\times$.
      - Kiểm tra xuất CAD 3D: STEP Worm 15,620 tam giác, STL Assembly 510,116 tam giác, IGES 4 Surfaces.
+
+---
+
+## 2026-10-07 - Quy Tắc 95: Tích Hợp Nút Ép Cập Nhật & Giải Thuật Triệt Tiêu Cache Cho iPhone / Cốc Cốc / WebClip
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  * *"Tôi cần 1 nút cập nhật để ép điện thoại iphone của tôi cập nhật phiên bản mới. Tôi dùng coccoc và để ở chế độ chia sẻ ra màn hình ứng dụng thành 1 icon để bật web app luôn"*
+  * Khắc phục triệt để tình trạng iPhone chạy ứng dụng dưới dạng WebClip độc lập từ Màn hình chính bị lưu cache tĩnh của WebKit, không chịu tải phiên bản mới từ Vercel khi không có nút reload trình duyệt.
+- **Thực hiện kỹ thuật**:
+  1. *Lớp Giao diện Người dùng (UI Layer)*:
+     - Thiết kế nút bấm `⚡ Cập Nhật` (và `⚡ Ép Cập Nhật (v3.0)`) mang tông màu gradient hổ phách cam-vàng `.btn-force-update` nổi bật, có hiệu ứng đổ bóng phát sáng.
+     - Đặt tại vị trí số 1 ngay đầu thanh `.header-controls` của Portal và toàn bộ 5 mô-đun, đảm bảo trên màn hình dọc iPhone nút luôn hiển thị trực diện ngay mép trên bên trái (`x=10.4px`), không bị che khuất và không cần cuộn ngang.
+     - Cổng Hub (`index.html`) được bổ sung thêm một nút kích thước lớn ngay dưới thanh thống kê.
+  2. *Bộ máy dọn dẹp Cache Client-Side (`shared/js/app-updater.js`)*:
+     - Tự động hiển thị màn hình mờ Toast Overlay với vòng xoay Spinner: `⚡ Đang Cập Nhật Ứng Dụng...`.
+     - Xóa toàn bộ `window.caches` (CacheStorage API).
+     - Hủy toàn bộ đăng ký `navigator.serviceWorker` (Service Worker unregister).
+     - Xóa dữ liệu `sessionStorage`.
+     - Thêm tham số timestamp ngẫu nhiên (`?v=${Date.now()}&updated=1`).
+     - Gửi pre-fetch với `cache: 'reload'` và các header `Cache-Control: no-cache, no-store, must-revalidate`, `Pragma: no-cache`.
+     - Thực hiện `window.location.replace()` để ép WebKit nạp lại 100% từ mạng.
+     - Sau khi nạp lại thành công, tự động hiển thị thông báo: `✅ Đã cập nhật phiên bản mới nhất thành công!` trong 3 giây và dọn dẹp URL bằng `history.replaceState()`.
+  3. *Khai báo Meta Headers trong mã HTML*:
+     - Bổ sung các thẻ khai báo PWA WebClip cho iOS: `apple-mobile-web-app-capable`, `apple-mobile-web-app-status-bar-style`, `mobile-web-app-capable`.
+     - Chỉ thị cấm lưu cache qua thẻ meta: `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">`, `<meta http-equiv="Pragma" content="no-cache">`, `<meta http-equiv="Expires" content="0">`.
+  4. *Cấu hình Vercel Edge CDN (`vercel.json`)*:
+     - Thêm header cấm cache cho HTML, JS bundles và CSS: `"Cache-Control": "no-cache, no-store, must-revalidate, max-age=0"`, `"Pragma": "no-cache"`, `"Expires": "0"`.
+  5. *Kiểm thử tự động Playwright trên môi trường mô phỏng iPhone 14 Pro (`scratch/test_force_update.py`)*:
+     - Kiểm tra đồng thời cả 6 trang (Portal + 5 Mô-đun) trên độ phân giải mobile iPhone (393x852).
+     - **100% PASS**: Nút `#btnForceUpdate` đều xuất hiện ngay góc trên màn hình (`x=10.4px, y=48.8px ~ 54.1px`), hàm `window.forceAppUpdate` sẵn sàng, 0 lỗi console.
+

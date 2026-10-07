@@ -2,8 +2,17 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
     <title>MITCalc Web - Tính Toán Bánh Răng Trụ & Bánh Răng Nghiêng (Spur & Helical Gears)</title>
+    <!-- iOS WebClip / PWA & Cache Control -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="MITCalc Gears">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <link rel="stylesheet" href="../../shared/css/engineering-theme.css">
     <style>
         .input-eng.user-input {
@@ -41,6 +50,7 @@
             </div>
         </div>
         <div class="header-controls">
+            <button type="button" class="btn btn-force-update" id="btnForceUpdate" title="Xóa toàn bộ bộ nhớ đệm (Cache) và ép iPhone cập nhật phiên bản mới nhất">⚡ Cập Nhật</button>
             <a href="../../index.html" class="btn btn-secondary" style="font-size: 0.85rem; text-decoration: none;">🏠 Cổng Hub</a>
             <span class="btn btn-primary" style="font-size: 0.85rem;">⚙️ Bánh Răng Trụ</span>
             <a href="../bevel-gear/index.html" class="btn btn-secondary" style="font-size: 0.85rem; text-decoration: none;">📐 Bánh Răng Côn</a>
@@ -2044,5 +2054,8 @@
 
     <!-- Classic Script: 100% Offline & CORS-Free -->
     <script src="js/mitcalc-engine.bundle.js"></script>
+
+    <!-- Universal Cache Buster & Force Updater -->
+    <script src="../../shared/js/app-updater.js"></script>
 </body>
 </html>

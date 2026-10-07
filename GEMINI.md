@@ -2264,3 +2264,35 @@ ho_{f0} / \cos\gamma$.
    - Mô-đun 3D Mesh Engine tính toán chính xác hai đường xoắn ốc bước lệch độc lập cho Duplex và mặt tròn xoay đồng hồ cát uốn lượn cho Globoid.
    - Tab 2D Canvas hiển thị chính xác mặt cắt dọc trục Globoid eo thắt cong mượt mà và thẻ HUD số liệu động hiển thị các tham số đặc thù.
    - Bộ xuất CAD 3D tham số hóa (`Worm3DExporter`) xuất đầy đủ file STEP Solid B-Rep, STL Binary, và IGES Surface B-Spline (Entity 128) mang định danh chuẩn `_Duplex` và `_Globoid` tương thích Mastercam và SolidWorks.
+
+---
+
+### Quy Tắc 95: Quy Chuẩn Nút Ép Cập Nhật & Giải Thuật Triệt Tiêu Bộ Nhớ Đệm (Force Update & Cache Buster) Cho Ứng Dụng Độc Lập iOS WebClip / PWA / Cốc Cốc / Safari
+**Ngày áp dụng**: 07/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+1. **Bối Cảnh Kỹ Thuật (iOS Standalone WebClip Cache Persistence)**:
+   - Khi người dùng thêm ứng dụng vào Màn hình chính trên iPhone ("Add to Home Screen" qua Cốc Cốc hoặc Safari), iOS khởi chạy Web App dưới chế độ WebClip độc lập (`display: standalone`).
+   - Trong chế độ này, trình duyệt ẩn hoàn toàn thanh URL và nút Reload; đồng thời WebKit lưu cache tĩnh (HTML, JS bundles, CSS) vào phân vùng riêng trên thiết bị vô cùng dai dẳng, dẫn đến việc ứng dụng vẫn tiếp tục tải phiên bản cũ kể cả khi bản mới đã triển khai trên Vercel.
+2. **Kiến Trúc Triệt Tiêu Cache 4 Lớp (4-Layer Cache Purge Architecture)**:
+   - **Lớp 1 - Giao diện trực diện (UI Placement)**:
+     * Tích hợp nút `⚡ Cập Nhật` (hoặc `⚡ Ép Cập Nhật (v3.0)`) mang tông màu vàng cam gradient hổ phách nổi bật (`.btn-force-update`).
+     * Đặt tại vị trí số 1 ngay đầu thanh `.header-controls` để trên màn hình điện thoại iPhone (dọc), nút luôn hiển thị trực diện ngay bên trái (`x=10.4px`), không bị che khuất hay phải cuộn ngang.
+     * Cung cấp nút bổ sung kích thước lớn trong phần Hero của Cổng Hub (`index.html`).
+   - **Lớp 2 - Bộ máy dọn dẹp bộ nhớ đệm máy khách (`shared/js/app-updater.js`)**:
+     * Hiển thị Toast thông báo tức thì: `⚡ Đang Cập Nhật Ứng Dụng...`.
+     * Xóa sạch toàn bộ `window.caches` (CacheStorage API).
+     * Hủy toàn bộ đăng ký `navigator.serviceWorker` (Service Worker unregister).
+     * Xóa `sessionStorage`.
+     * Thêm tham số timestamp ngẫu nhiên (`?v=${Date.now()}&updated=1`).
+     * Gửi pre-fetch với `cache: 'reload'` và các header `Cache-Control: no-cache, no-store, must-revalidate`, `Pragma: no-cache`.
+     * Thực hiện `window.location.replace()` để ép WebKit nạp lại 100% từ mạng.
+     * Sau khi nạp lại, tự động hiển thị thông báo: `✅ Đã cập nhật phiên bản mới nhất thành công!` trong 3 giây và dọn dẹp URL bằng `history.replaceState()`.
+   - **Lớp 3 - Khai báo cấu hình thẻ Meta (HTML Meta Protocol)**:
+     * Nhúng đầy đủ thẻ WebClip PWA: `apple-mobile-web-app-capable`, `mobile-web-app-capable`, và các chỉ thị cấm lưu cache:
+       `<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">`
+       `<meta http-equiv="Pragma" content="no-cache">`
+       `<meta http-equiv="Expires" content="0">`
+   - **Lớp 4 - Máy chủ CDN Vercel Edge (`vercel.json`)**:
+     * Cấu hình bắt buộc cho toàn bộ file HTML, JS, CSS:
+       `"Cache-Control": "no-cache, no-store, must-revalidate, max-age=0"`, `"Pragma": "no-cache"`, `"Expires": "0"`.
+     * Đảm bảo Vercel Edge CDN không phục vụ nội dung cũ khi người dùng truy cập.
