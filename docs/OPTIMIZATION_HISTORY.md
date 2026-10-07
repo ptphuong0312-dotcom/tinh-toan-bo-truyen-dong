@@ -3786,3 +3786,31 @@ ho_{f0}$.
      - Kiểm tra đồng thời cả 6 trang (Portal + 5 Mô-đun) trên độ phân giải mobile iPhone (393x852).
      - **100% PASS**: Nút `#btnForceUpdate` đều xuất hiện ngay góc trên màn hình (`x=10.4px, y=48.8px ~ 54.1px`), hàm `window.forceAppUpdate` sẵn sàng, 0 lỗi console.
 
+
+---
+
+## 2026-10-07 - Quy Tắc 96: Hợp Nhất Kiến Trúc & Biên Dạng Trục Vít Vào 1 Dropdown Duy Nhất Tại Mục 4.0 & Tinh Gọn Nút Cập Nhật
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  * *"tại sao lại để 2 mục lựa chọn loại trục vít như vậy, để nư vậy có bị sung đột không"*
+  * *"tôi đồng ý bạn hãy làm đi ngoài ra bạn bỏ ô 'ép iphone/coccoc...' đi, còn ô cập nhật phía trên bạn chỉ càn để là 'cập nhật' chứ đừng ghi ép cập nhật v3.0 như hiện tại"*
+- **Vấn đề nhận thức & giải pháp kỹ thuật**:
+  1. *Triệt tiêu hoàn toàn cảm giác xung đột*:
+     - Trước đây việc để riêng Mục 4.0a (Kiến trúc: Trụ / Duplex / Glôbôit) và Mục 4.0 (Biên dạng DIN 3975: ZA..ZH) làm người dùng băn khoăn về tính thống nhất.
+     - Đã loại bỏ hoàn toàn thẻ `#sel_wormArch`.
+     - Hợp nhất toàn bộ 7 kiểu phân loại vào **1 ô `<select id="sel_toothType">` DUY NHẤT** tại đầu Mục 4.0 chia thành 3 nhóm `<optgroup>` trực quan:
+       * Nhóm 1: Trục vít trụ tiêu chuẩn DIN 3975 (ZA, ZN, ZI, ZK, ZH).
+       * Nhóm 2: Trục vít Duplex bước thay đổi khử khe hở (Ott / Flender).
+       * Nhóm 3: Trục vít Glôbôit họng lõm bao hình (Hindley / Cone-Drive).
+  2. *Cơ chế hiển thị động thông minh (Adaptive Row Visibility)*:
+     - Khi chọn 1..5: Ẩn 100% các dòng phụ Duplex & Glôbôit, giữ nguyên chuẩn 1-to-1 MITCalc 1.74.
+     - Khi chọn 6 (Duplex): Tự động hiển thị 3 dòng thông số chuyên sâu 4.0a, 4.0b, 4.0c ngay dưới 4.0.
+     - Khi chọn 7 (Glôbôit): Tự động hiển thị 2 dòng thông số chuyên sâu 4.0d, 4.0e ngay dưới 4.0.
+  3. *Đồng bộ toán học & xuất CAD 3D*:
+     - `WormCalcEngine`: Tự động map lựa chọn 6 sang `wormArch = 2` và `toothType = 3` (Involute ZI), lựa chọn 7 sang `wormArch = 3` và `toothType = 1` (Axial ZA).
+     - 3D Badge & file export: Hiển thị đúng định danh `Duplex (ZI)` và `Glôbôit (ZA)`.
+  4. *Tinh gọn giao diện Cổng Hub & Header*:
+     - Đổi tên nút cập nhật trên Header thành `Cập Nhật` (bỏ tiền tố rườm rà).
+     - Lược bỏ hoàn toàn khối nút phụ ở phần Hero trên Cổng Hub (`index.html`) theo đúng chỉ đạo của người dùng.
+  5. *Kiểm thử tự động Playwright E2E (`scratch/test_duplex_globoid_playwright.py`)*:
+     - **100% ALL TESTS PASSED với 0 lỗi console**.
+     - Kiểm tra trơn tru cả 3 chế độ (Cylindrical -> Duplex -> Globoid -> Cylindrical), chuyển tab 2D/3D và xuất file CAD STEP/STL/IGES.

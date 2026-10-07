@@ -295,11 +295,13 @@ const WORM_WHEEL_MATERIALS = [
 const WORM_STD_TABLES = {
     // T_ToothType (Tables!B7:B11)
     T_ToothType: [
-        { id: 1, code: "ZA", name: "ZA (A) Wormgear — Trục vít Ác-si-mét (Archimedean)", label: "ZA (A) Wormgear — Trục vít Ác-si-mét (Archimedean)" },
-        { id: 2, code: "ZN", name: "ZN (N) Wormgear — Trục vít pháp tuyến (Normal Straight)", label: "ZN (N) Wormgear — Trục vít pháp tuyến (Normal Straight)" },
-        { id: 3, code: "ZI", name: "ZI (I) Wormgear — Trục vít Thân khai (Involute)", label: "ZI (I) Wormgear — Trục vít Thân khai (Involute)" },
-        { id: 4, code: "ZK", name: "ZK (K) Wormgear — Trục vít Gia công bằng đá mài/dao côn (Cone Milled)", label: "ZK (K) Wormgear — Trục vít Gia công bằng đá mài/dao côn (Cone Milled)" },
-        { id: 5, code: "ZH", name: "ZH (C) Wormgear — Trục vít Biên dạng lõm Cavex (Concave Profile)", label: "ZH (C) Wormgear — Trục vít Biên dạng lõm Cavex (Concave Profile)" }
+        { id: 1, group: "cylindrical", code: "ZA", name: "1. Trục vít trụ ZA — Ác-si-mét (Archimedean - DIN 3975)", label: "1. Trục vít trụ ZA — Ác-si-mét (Archimedean - DIN 3975)" },
+        { id: 2, group: "cylindrical", code: "ZN", name: "2. Trục vít trụ ZN — Pháp tuyến (Normal Straight - DIN 3975)", label: "2. Trục vít trụ ZN — Pháp tuyến (Normal Straight - DIN 3975)" },
+        { id: 3, group: "cylindrical", code: "ZI", name: "3. Trục vít trụ ZI — Thân khai xoắn ốc (Involute - DIN 3975)", label: "3. Trục vít trụ ZI — Thân khai xoắn ốc (Involute - DIN 3975)" },
+        { id: 4, group: "cylindrical", code: "ZK", name: "4. Trục vít trụ ZK — Mài đá côn (Cone Milled - DIN 3975)", label: "4. Trục vít trụ ZK — Mài đá côn (Cone Milled - DIN 3975)" },
+        { id: 5, group: "cylindrical", code: "ZH", name: "5. Trục vít trụ ZH — Cung tròn lõm Cavex (Concave Profile - DIN 3975)", label: "5. Trục vít trụ ZH — Cung tròn lõm Cavex (Concave Profile - DIN 3975)" },
+        { id: 6, group: "duplex", code: "DUPLEX", name: "6. Trục vít Duplex — Bước thay đổi khử khe hở (Ott / Flender Dual-Lead)", label: "6. Trục vít Duplex — Bước thay đổi khử khe hở (Ott / Flender Dual-Lead)" },
+        { id: 7, group: "globoid", code: "GLOBOID", name: "7. Trục vít Glôbôit — Họng lõm bao hình (Hindley / Cone-Drive Hourglass)", label: "7. Trục vít Glôbôit — Họng lõm bao hình (Hindley / Cone-Drive Hourglass)" }
     ],
 
     // T_DesignCooling (Tables!B31:G33)

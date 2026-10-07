@@ -2182,3 +2182,29 @@ ho_{f0}$.
      * Cấu hình bắt buộc cho toàn bộ file HTML, JS, CSS:
        `"Cache-Control": "no-cache, no-store, must-revalidate, max-age=0"`, `"Pragma": "no-cache"`, `"Expires": "0"`.
      * Đảm bảo Vercel Edge CDN không phục vụ nội dung cũ khi người dùng truy cập.
+
+---
+
+### Quy Tắc 96: Quy Chuẩn Hợp Nhất Kiến Trúc & Biên Dạng Trục Vít Vào Một Ô Dropdown Duy Nhất Tại Mục 4.0 (Unified Worm Architecture & Profile Single-Dropdown Protocol) & Tinh Gọn Nút Cập Nhật
+**Ngày áp dụng**: 07/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+1. **Bối Cảnh & Vấn Đề Triệt Tiêu Xung Đột Nhận Thức (Zero-Conflict Single Dropdown)**:
+   - Trước đây việc phân chia thành 2 mục chọn riêng biệt: Mục 4.0a (Kiến trúc: Trụ / Duplex / Globoid) và Mục 4.0 (Biên dạng DIN 3975: ZA, ZN, ZI, ZK, ZH) gây cảm giác trùng lặp và phân vân cho người dùng về khả năng xung đột thông số.
+   - **Giải pháp chuẩn hóa**: Hợp nhất toàn bộ 7 phân loại vào **1 ô `<select id="sel_toothType">` DUY NHẤT** tại đầu Mục 4.0, tổ chức theo cấu trúc 3 `<optgroup>` rõ ràng:
+     * `── 1. TRỤC VÍT TRỤ TIÊU CHUẨN (DIN 3975) ──`:
+       - 1: ZA (Ác-si-mét, $m_x, \alpha_x$)
+       - 2: ZN (Pháp tuyến, $m_n, \alpha_n$)
+       - 3: ZI (Thân khai xoắn ốc, $m_n, \alpha_n$)
+       - 4: ZK (Mài đá côn, $m_n, \alpha_n$)
+       - 5: ZH (Cung tròn lõm Cavex, $m_n, \alpha_n$)
+     * `── 2. TRỤC VÍT KHỬ KHE HỞ (DUAL-LEAD) ──`:
+       - 6: Duplex (Bước thay đổi khử khe hở Ott / Flender, $m_n, \alpha_n$)
+     * `── 3. TRỤC VÍT BAO HÌNH TẢI NẶNG (HOURGLASS) ──`:
+       - 7: Glôbôit (Họng lõm bao hình Hindley / Cone-Drive, $m_x, \alpha_x$)
+2. **Cơ Chế Phản Ứng Giao Diện Thông Minh (Adaptive Row Visibility)**:
+   - Khi chọn 1..5: Giao diện thuần túy 1-to-1 MITCalc 1.74 tiêu chuẩn, ẩn 100% các dòng phụ Duplex & Globoid.
+   - Khi chọn 6 (Duplex): Tự động hiển thị 3 dòng thông số chuyên sâu Duplex ngay dưới Mục 4.0 (4.0a: Chênh lệch mô-đun bước đôi $\Delta m_x$, 4.0b: Dịch chỉnh trục khử khe hở $\Delta x_{adj}$, 4.0c: Mô-đun ren phải / trái $m_{xR}, m_{xL}$).
+   - Khi chọn 7 (Glôbôit): Tự động hiển thị 2 dòng thông số chuyên sâu Glôbôit ngay dưới Mục 4.0 (4.0d: Đường kính họng thắt $d_{1,\min}$ & $R_{throat}$, 4.0e: Góc ôm $2\delta_1$ & số răng ăn khớp đồng thời $z_c$).
+3. **Quy Chuẩn Nút Cập Nhật Tinh Gọn Trên Cổng Hub & Header**:
+   - Nút trên thanh Header đặt tên ngắn gọn, dứt khoát: `Cập Nhật` (bỏ tiền tố rườm rà "ép cập nhật v3.0").
+   - Lược bỏ hoàn toàn khối nút phụ trong phần Hero của Cổng Hub (`index.html`) để giữ giao diện thoáng đãng, tập trung vào 5 thẻ mô-đun chính.

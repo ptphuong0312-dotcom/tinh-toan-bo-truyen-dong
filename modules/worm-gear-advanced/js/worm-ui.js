@@ -107,7 +107,28 @@ class WormUIController {
         };
 
         if (typeof WORM_STD_TABLES !== 'undefined') {
-            fillSelect('sel_toothType', WORM_STD_TABLES.T_ToothType, 1, item => item.label || item.name);
+            const selToothType = document.getElementById('sel_toothType');
+            if (selToothType && Array.isArray(WORM_STD_TABLES.T_ToothType)) {
+                selToothType.innerHTML = '';
+                const groups = [
+                    { key: 'cylindrical', label: '── 1. TRỤC VÍT TRỤ TIÊU CHUẨN (DIN 3975) ──' },
+                    { key: 'duplex', label: '── 2. TRỤC VÍT KHỬ KHE HỞ (DUAL-LEAD) ──' },
+                    { key: 'globoid', label: '── 3. TRỤC VÍT BAO HÌNH TẢI NẶNG (HOURGLASS) ──' }
+                ];
+                groups.forEach(g => {
+                    const grpEl = document.createElement('optgroup');
+                    grpEl.label = g.label;
+                    const items = WORM_STD_TABLES.T_ToothType.filter(x => x.group === g.key);
+                    items.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item.id;
+                        opt.textContent = item.label || item.name;
+                        if (item.id === 1) opt.selected = true;
+                        grpEl.appendChild(opt);
+                    });
+                    selToothType.appendChild(grpEl);
+                });
+            }
             fillSelect('sel_loadTypeA', WORM_STD_TABLES.T_LoadType, 1);
             fillSelect('sel_loadTypeB', WORM_STD_TABLES.T_LoadType, 1);
             fillSelect('sel_designCooling', WORM_STD_TABLES.T_DesignCooling, 1);
@@ -867,8 +888,9 @@ class WormUIController {
         if (!this.visualizer3D || !this.latestResult || typeof Worm3DExporter === 'undefined') return;
         this.visualizer3D.setGeometry(this.latestResult);
         const g = this.latestResult;
-        const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH' };
-        const typeCode = typeNames[g.toothType] || 'ZN';
+        const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH', 6: 'Duplex_ZI', 7: 'Globoid_ZA' };
+        const rawTT = g.rawToothType || (g.wormArch === 2 ? 6 : (g.wormArch === 3 ? 7 : g.toothType));
+        const typeCode = typeNames[rawTT] || typeNames[g.toothType] || 'ZN';
         const archNames = { 1: '', 2: '_Duplex', 3: '_Globoid' };
         const archSuffix = archNames[g.wormArch] || '';
 
@@ -937,7 +959,6 @@ class WormUIController {
             // Section 2.0
             matP: parseInt(document.getElementById('sel_matP')?.value || '41', 10),
             matW: parseInt(document.getElementById('sel_matW')?.value || '7', 10),
-            toothType: parseInt(document.getElementById('sel_toothType')?.value || '1', 10),
             loadTypeA: parseInt(document.getElementById('sel_loadTypeA')?.value || '1', 10),
             loadTypeB: parseInt(document.getElementById('sel_loadTypeB')?.value || '1', 10),
             designCooling: parseInt(document.getElementById('sel_designCooling')?.value || '1', 10),
@@ -957,7 +978,13 @@ class WormUIController {
             rf1: this.parseVal('inp_rf1', 0.3799508411451843),
 
             // Section 4.0
-            wormArch: parseInt(document.getElementById('sel_wormArch')?.value || '1', 10),
+            toothType: parseInt(document.getElementById('sel_toothType')?.value || '1', 10),
+            wormArch: (() => {
+                const tt = parseInt(document.getElementById('sel_toothType')?.value || '1', 10);
+                if (tt === 6) return 2;
+                if (tt === 7) return 3;
+                return 1;
+            })(),
             delta_mx: this.parseVal('inp_delta_mx', 0.08),
             delta_x_adj: this.parseVal('inp_delta_x_adj', 1.0),
             z1: Math.max(1, Math.round(this.parseVal('inp_z1', 1))),
@@ -1021,8 +1048,9 @@ class WormUIController {
         this.canvasRenderer.updateGeometry(res);
 
         // Update 3D Badge & 3D WebGL Geometry
-        const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH' };
-        const typeCode = typeNames[res.toothType] || 'ZN';
+        const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH', 6: 'Duplex (ZI)', 7: 'Glôbôit (ZA)' };
+        const rawTT = res.rawToothType || (res.wormArch === 2 ? 6 : (res.wormArch === 3 ? 7 : res.toothType));
+        const typeCode = typeNames[rawTT] || typeNames[res.toothType] || 'ZN';
         const orientStr = res.teethOrientation === 2 ? 'Ren Trái' : 'Ren Phải';
         let archTag = '';
         if (res.wormArch === 2) archTag = ' [Duplex Dual-Lead]';
@@ -1095,7 +1123,7 @@ class WormUIController {
         const rowDuplexFlanks = document.getElementById('row_duplex_flanks');
         const rowGloboidThroat = document.getElementById('row_globoid_throat');
         const rowGloboidContact = document.getElementById('row_globoid_contact');
-        const lblWormArchDesc = document.getElementById('lbl_wormArch_desc');
+        const lblToothTypeDesc = document.getElementById('lbl_toothType_desc') || document.getElementById('lbl_wormArch_desc');
 
         if (rowDuplexParams) rowDuplexParams.style.display = (wormArch === 2) ? 'table-row' : 'none';
         if (rowDuplexAdj) rowDuplexAdj.style.display = (wormArch === 2) ? 'table-row' : 'none';
@@ -1103,10 +1131,10 @@ class WormUIController {
         if (rowGloboidThroat) rowGloboidThroat.style.display = (wormArch === 3) ? 'table-row' : 'none';
         if (rowGloboidContact) rowGloboidContact.style.display = (wormArch === 3) ? 'table-row' : 'none';
 
-        if (lblWormArchDesc) {
-            if (wormArch === 2) lblWormArchDesc.textContent = 'Trục Duplex (Ott / Flender)';
-            else if (wormArch === 3) lblWormArchDesc.textContent = 'Trục Glôbôit (Hindley / Cone-Drive)';
-            else lblWormArchDesc.textContent = 'Tiêu chuẩn DIN 3975';
+        if (lblToothTypeDesc) {
+            if (wormArch === 2) lblToothTypeDesc.textContent = 'Trục Duplex (Ott / Flender)';
+            else if (wormArch === 3) lblToothTypeDesc.textContent = 'Trục Glôbôit (Hindley / Cone-Drive)';
+            else lblToothTypeDesc.textContent = (r.toothType === 1) ? 'ZA: mx' : 'ZN..ZH: mn';
         }
 
         if (wormArch === 2) {

@@ -95,8 +95,24 @@ const WormCalcEngine = {
         const wheelMat = this.getWheelMaterial(matW);
         const MatTypeW = wheelMat.matTypeW || 1; // X128: 1=Bronze, 2=Cast Iron, 3=Al Bronze
 
-        const wormArch = parseInt(p.wormArch !== undefined ? p.wormArch : 1, 10); // 1=Cylindrical (DIN 3975), 2=Duplex (Dual-lead), 3=Globoid (Hourglass / Hindley)
-        const toothType = parseInt(p.toothType !== undefined ? p.toothType : 1); // 1=ZA (Archimedean default), 2=ZN, 3=ZI, 4=ZK, 5=ZH
+        let rawToothType = parseInt(p.toothType !== undefined ? p.toothType : (p.wormType || 1), 10);
+        let wormArch = parseInt(p.wormArch !== undefined ? p.wormArch : 1, 10);
+
+        // Unified 1-Dropdown Mapping (DIN 3975: 1..5, Duplex: 6, Globoid: 7)
+        if (rawToothType === 6) {
+            wormArch = 2; // Duplex (Dual-lead)
+        } else if (rawToothType === 7) {
+            wormArch = 3; // Globoid (Hourglass / Hindley)
+        } else if (wormArch === 2) {
+            rawToothType = 6;
+        } else if (wormArch === 3) {
+            rawToothType = 7;
+        } else {
+            wormArch = 1;
+        }
+
+        // Effective toothType for DIN 3975 equations: Duplex uses Involute ZI (3), Globoid uses Axial ZA (1)
+        const toothType = (rawToothType === 6) ? 3 : ((rawToothType === 7) ? 1 : rawToothType);
         const loadTypeA = parseInt(p.loadTypeA !== undefined ? p.loadTypeA : 1); // 1..4
         const loadTypeB = parseInt(p.loadTypeB !== undefined ? p.loadTypeB : 1); // 1..4
         const designCooling = parseInt(p.designCooling !== undefined ? p.designCooling : 1); // 1=Worm bath, 2=Gear bath, 3=Oil-spray
@@ -696,7 +712,7 @@ const WormCalcEngine = {
             SFlim1: wormMat.sflim, SFlim2: wheelMat.sflim,
             VHV1: wormMat.vhv, VHV2: wheelMat.surfaceHardnessHV,
             JHV1: wormMat.jhv, JHV2: wheelMat.coreHardnessHV,
-            toothType, loadTypeA, loadTypeB, designCooling, oilType, lubricant,
+            toothType, rawToothType, loadTypeA, loadTypeB, designCooling, oilType, lubricant,
             ny40, ny100, rooil15, Ra1, kaFlag, KA, KA_Prop, Lh,
             // Section 3.0
             haXP, haXG, caXP, caXG, rf1Flag, rf1_rec, rf1, rf2,

@@ -1940,11 +1940,13 @@ const WORM_WHEEL_MATERIALS = [
 const WORM_STD_TABLES = {
     // T_ToothType (Tables!B7:B11)
     T_ToothType: [
-        { id: 1, code: "ZA", name: "ZA (A) Wormgear — Trục vít Ác-si-mét (Archimedean)", label: "ZA (A) Wormgear — Trục vít Ác-si-mét (Archimedean)" },
-        { id: 2, code: "ZN", name: "ZN (N) Wormgear — Trục vít pháp tuyến (Normal Straight)", label: "ZN (N) Wormgear — Trục vít pháp tuyến (Normal Straight)" },
-        { id: 3, code: "ZI", name: "ZI (I) Wormgear — Trục vít Thân khai (Involute)", label: "ZI (I) Wormgear — Trục vít Thân khai (Involute)" },
-        { id: 4, code: "ZK", name: "ZK (K) Wormgear — Trục vít Gia công bằng đá mài/dao côn (Cone Milled)", label: "ZK (K) Wormgear — Trục vít Gia công bằng đá mài/dao côn (Cone Milled)" },
-        { id: 5, code: "ZH", name: "ZH (C) Wormgear — Trục vít Biên dạng lõm Cavex (Concave Profile)", label: "ZH (C) Wormgear — Trục vít Biên dạng lõm Cavex (Concave Profile)" }
+        { id: 1, group: "cylindrical", code: "ZA", name: "1. Trục vít trụ ZA — Ác-si-mét (Archimedean - DIN 3975)", label: "1. Trục vít trụ ZA — Ác-si-mét (Archimedean - DIN 3975)" },
+        { id: 2, group: "cylindrical", code: "ZN", name: "2. Trục vít trụ ZN — Pháp tuyến (Normal Straight - DIN 3975)", label: "2. Trục vít trụ ZN — Pháp tuyến (Normal Straight - DIN 3975)" },
+        { id: 3, group: "cylindrical", code: "ZI", name: "3. Trục vít trụ ZI — Thân khai xoắn ốc (Involute - DIN 3975)", label: "3. Trục vít trụ ZI — Thân khai xoắn ốc (Involute - DIN 3975)" },
+        { id: 4, group: "cylindrical", code: "ZK", name: "4. Trục vít trụ ZK — Mài đá côn (Cone Milled - DIN 3975)", label: "4. Trục vít trụ ZK — Mài đá côn (Cone Milled - DIN 3975)" },
+        { id: 5, group: "cylindrical", code: "ZH", name: "5. Trục vít trụ ZH — Cung tròn lõm Cavex (Concave Profile - DIN 3975)", label: "5. Trục vít trụ ZH — Cung tròn lõm Cavex (Concave Profile - DIN 3975)" },
+        { id: 6, group: "duplex", code: "DUPLEX", name: "6. Trục vít Duplex — Bước thay đổi khử khe hở (Ott / Flender Dual-Lead)", label: "6. Trục vít Duplex — Bước thay đổi khử khe hở (Ott / Flender Dual-Lead)" },
+        { id: 7, group: "globoid", code: "GLOBOID", name: "7. Trục vít Glôbôit — Họng lõm bao hình (Hindley / Cone-Drive Hourglass)", label: "7. Trục vít Glôbôit — Họng lõm bao hình (Hindley / Cone-Drive Hourglass)" }
     ],
 
     // T_DesignCooling (Tables!B31:G33)
@@ -2206,8 +2208,24 @@ const WormCalcEngine = {
         const wheelMat = this.getWheelMaterial(matW);
         const MatTypeW = wheelMat.matTypeW || 1; // X128: 1=Bronze, 2=Cast Iron, 3=Al Bronze
 
-        const wormArch = parseInt(p.wormArch !== undefined ? p.wormArch : 1, 10); // 1=Cylindrical (DIN 3975), 2=Duplex (Dual-lead), 3=Globoid (Hourglass / Hindley)
-        const toothType = parseInt(p.toothType !== undefined ? p.toothType : 1); // 1=ZA (Archimedean default), 2=ZN, 3=ZI, 4=ZK, 5=ZH
+        let rawToothType = parseInt(p.toothType !== undefined ? p.toothType : (p.wormType || 1), 10);
+        let wormArch = parseInt(p.wormArch !== undefined ? p.wormArch : 1, 10);
+
+        // Unified 1-Dropdown Mapping (DIN 3975: 1..5, Duplex: 6, Globoid: 7)
+        if (rawToothType === 6) {
+            wormArch = 2; // Duplex (Dual-lead)
+        } else if (rawToothType === 7) {
+            wormArch = 3; // Globoid (Hourglass / Hindley)
+        } else if (wormArch === 2) {
+            rawToothType = 6;
+        } else if (wormArch === 3) {
+            rawToothType = 7;
+        } else {
+            wormArch = 1;
+        }
+
+        // Effective toothType for DIN 3975 equations: Duplex uses Involute ZI (3), Globoid uses Axial ZA (1)
+        const toothType = (rawToothType === 6) ? 3 : ((rawToothType === 7) ? 1 : rawToothType);
         const loadTypeA = parseInt(p.loadTypeA !== undefined ? p.loadTypeA : 1); // 1..4
         const loadTypeB = parseInt(p.loadTypeB !== undefined ? p.loadTypeB : 1); // 1..4
         const designCooling = parseInt(p.designCooling !== undefined ? p.designCooling : 1); // 1=Worm bath, 2=Gear bath, 3=Oil-spray
@@ -2807,7 +2825,7 @@ const WormCalcEngine = {
             SFlim1: wormMat.sflim, SFlim2: wheelMat.sflim,
             VHV1: wormMat.vhv, VHV2: wheelMat.surfaceHardnessHV,
             JHV1: wormMat.jhv, JHV2: wheelMat.coreHardnessHV,
-            toothType, loadTypeA, loadTypeB, designCooling, oilType, lubricant,
+            toothType, rawToothType, loadTypeA, loadTypeB, designCooling, oilType, lubricant,
             ny40, ny100, rooil15, Ra1, kaFlag, KA, KA_Prop, Lh,
             // Section 3.0
             haXP, haXG, caXP, caXG, rf1Flag, rf1_rec, rf1, rf2,
@@ -8364,7 +8382,28 @@ class WormUIController {
         };
 
         if (typeof WORM_STD_TABLES !== 'undefined') {
-            fillSelect('sel_toothType', WORM_STD_TABLES.T_ToothType, 1, item => item.label || item.name);
+            const selToothType = document.getElementById('sel_toothType');
+            if (selToothType && Array.isArray(WORM_STD_TABLES.T_ToothType)) {
+                selToothType.innerHTML = '';
+                const groups = [
+                    { key: 'cylindrical', label: '── 1. TRỤC VÍT TRỤ TIÊU CHUẨN (DIN 3975) ──' },
+                    { key: 'duplex', label: '── 2. TRỤC VÍT KHỬ KHE HỞ (DUAL-LEAD) ──' },
+                    { key: 'globoid', label: '── 3. TRỤC VÍT BAO HÌNH TẢI NẶNG (HOURGLASS) ──' }
+                ];
+                groups.forEach(g => {
+                    const grpEl = document.createElement('optgroup');
+                    grpEl.label = g.label;
+                    const items = WORM_STD_TABLES.T_ToothType.filter(x => x.group === g.key);
+                    items.forEach(item => {
+                        const opt = document.createElement('option');
+                        opt.value = item.id;
+                        opt.textContent = item.label || item.name;
+                        if (item.id === 1) opt.selected = true;
+                        grpEl.appendChild(opt);
+                    });
+                    selToothType.appendChild(grpEl);
+                });
+            }
             fillSelect('sel_loadTypeA', WORM_STD_TABLES.T_LoadType, 1);
             fillSelect('sel_loadTypeB', WORM_STD_TABLES.T_LoadType, 1);
             fillSelect('sel_designCooling', WORM_STD_TABLES.T_DesignCooling, 1);
@@ -9124,8 +9163,9 @@ class WormUIController {
         if (!this.visualizer3D || !this.latestResult || typeof Worm3DExporter === 'undefined') return;
         this.visualizer3D.setGeometry(this.latestResult);
         const g = this.latestResult;
-        const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH' };
-        const typeCode = typeNames[g.toothType] || 'ZN';
+        const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH', 6: 'Duplex_ZI', 7: 'Globoid_ZA' };
+        const rawTT = g.rawToothType || (g.wormArch === 2 ? 6 : (g.wormArch === 3 ? 7 : g.toothType));
+        const typeCode = typeNames[rawTT] || typeNames[g.toothType] || 'ZN';
         const archNames = { 1: '', 2: '_Duplex', 3: '_Globoid' };
         const archSuffix = archNames[g.wormArch] || '';
 
@@ -9194,7 +9234,6 @@ class WormUIController {
             // Section 2.0
             matP: parseInt(document.getElementById('sel_matP')?.value || '41', 10),
             matW: parseInt(document.getElementById('sel_matW')?.value || '7', 10),
-            toothType: parseInt(document.getElementById('sel_toothType')?.value || '1', 10),
             loadTypeA: parseInt(document.getElementById('sel_loadTypeA')?.value || '1', 10),
             loadTypeB: parseInt(document.getElementById('sel_loadTypeB')?.value || '1', 10),
             designCooling: parseInt(document.getElementById('sel_designCooling')?.value || '1', 10),
@@ -9214,7 +9253,13 @@ class WormUIController {
             rf1: this.parseVal('inp_rf1', 0.3799508411451843),
 
             // Section 4.0
-            wormArch: parseInt(document.getElementById('sel_wormArch')?.value || '1', 10),
+            toothType: parseInt(document.getElementById('sel_toothType')?.value || '1', 10),
+            wormArch: (() => {
+                const tt = parseInt(document.getElementById('sel_toothType')?.value || '1', 10);
+                if (tt === 6) return 2;
+                if (tt === 7) return 3;
+                return 1;
+            })(),
             delta_mx: this.parseVal('inp_delta_mx', 0.08),
             delta_x_adj: this.parseVal('inp_delta_x_adj', 1.0),
             z1: Math.max(1, Math.round(this.parseVal('inp_z1', 1))),
@@ -9278,8 +9323,9 @@ class WormUIController {
         this.canvasRenderer.updateGeometry(res);
 
         // Update 3D Badge & 3D WebGL Geometry
-        const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH' };
-        const typeCode = typeNames[res.toothType] || 'ZN';
+        const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH', 6: 'Duplex (ZI)', 7: 'Glôbôit (ZA)' };
+        const rawTT = res.rawToothType || (res.wormArch === 2 ? 6 : (res.wormArch === 3 ? 7 : res.toothType));
+        const typeCode = typeNames[rawTT] || typeNames[res.toothType] || 'ZN';
         const orientStr = res.teethOrientation === 2 ? 'Ren Trái' : 'Ren Phải';
         let archTag = '';
         if (res.wormArch === 2) archTag = ' [Duplex Dual-Lead]';
@@ -9352,7 +9398,7 @@ class WormUIController {
         const rowDuplexFlanks = document.getElementById('row_duplex_flanks');
         const rowGloboidThroat = document.getElementById('row_globoid_throat');
         const rowGloboidContact = document.getElementById('row_globoid_contact');
-        const lblWormArchDesc = document.getElementById('lbl_wormArch_desc');
+        const lblToothTypeDesc = document.getElementById('lbl_toothType_desc') || document.getElementById('lbl_wormArch_desc');
 
         if (rowDuplexParams) rowDuplexParams.style.display = (wormArch === 2) ? 'table-row' : 'none';
         if (rowDuplexAdj) rowDuplexAdj.style.display = (wormArch === 2) ? 'table-row' : 'none';
@@ -9360,10 +9406,10 @@ class WormUIController {
         if (rowGloboidThroat) rowGloboidThroat.style.display = (wormArch === 3) ? 'table-row' : 'none';
         if (rowGloboidContact) rowGloboidContact.style.display = (wormArch === 3) ? 'table-row' : 'none';
 
-        if (lblWormArchDesc) {
-            if (wormArch === 2) lblWormArchDesc.textContent = 'Trục Duplex (Ott / Flender)';
-            else if (wormArch === 3) lblWormArchDesc.textContent = 'Trục Glôbôit (Hindley / Cone-Drive)';
-            else lblWormArchDesc.textContent = 'Tiêu chuẩn DIN 3975';
+        if (lblToothTypeDesc) {
+            if (wormArch === 2) lblToothTypeDesc.textContent = 'Trục Duplex (Ott / Flender)';
+            else if (wormArch === 3) lblToothTypeDesc.textContent = 'Trục Glôbôit (Hindley / Cone-Drive)';
+            else lblToothTypeDesc.textContent = (r.toothType === 1) ? 'ZA: mx' : 'ZN..ZH: mn';
         }
 
         if (wormArch === 2) {
