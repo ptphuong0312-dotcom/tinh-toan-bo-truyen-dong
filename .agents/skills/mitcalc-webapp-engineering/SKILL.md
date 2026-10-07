@@ -2012,3 +2012,29 @@ ho_{f0}$.
 
 
 
+
+
+---
+
+### Quy Tắc 89: Quy Chuẩn Tối Giản Hóa Giao Diện Cổng Hub Portal & Chuẩn Hóa Rút Gọn Giao Diện 3 Mô-Đun Cơ Khí
+**Ngày áp dụng**: 07/10/2026  
+**Modules**: Cổng Hub Portal (`index.html`), Bánh Răng Trụ (`modules/spur-gear/`), Bánh Răng Côn (`modules/bevel-gear/`), Trục Vít - Bánh Vít (`modules/worm-gear/`)  
+1. **Cổng Hub Trung Tâm (`index.html`)**:
+   - Tiêu đề Hero tinh giản tuyệt đối: `"TÍNH TOÁN BỘ TRUYỀN ĐỘNG CƠ KHÍ"` (loại bỏ chữ "CHUYÊN SÂU").
+   - Nhãn nút mở mô-đun: `"⚙️ Bánh Răng Trụ & Nghiêng"`, `"📐 Bánh Răng Côn"`, `"🌀 Trục Vít - Bánh Vít"`.
+   - Danh sách thông số chú thích thu gọn tối đa còn đúng 1 dòng tiêu chuẩn quốc tế:
+     * Bánh răng trụ: `Tiêu chuẩn: ISO 6336:2006, DIN 3960, ISO 1328`
+     * Bánh răng côn: `Tiêu chuẩn: ISO 23509, DIN 3971, AGMA 2005, ISO 10300`
+     * Trục vít - bánh vít: `Tiêu chuẩn: DIN 3975, DIN 3996, AGMA 6022-C93`
+2. **Đồng Bộ Tên Tab Cả 3 Mô-Đun**:
+   - Tab 1: `"Bảng tính toán"`
+   - Tab 2: `"Mô phỏng 2D/3D CAD"`
+3. **Thanh Tiêu Đề Accordion Toàn Cục (Accordion Toolbar)**:
+   - Loại bỏ hoàn toàn khối thẻ tóm tắt nhanh `.summary-banner` và dòng chú thích phụ bên dưới.
+   - Duy trì tinh gọn đúng 2 nút chức năng toàn cục canh phải: `"📂 Mở Rộng Tất Cả"` (`#btnExpandAll`) và `"📁 Thu Gọn Tất Cả"` (`#btnCollapseAll`).
+4. **Thanh Công Cụ 3D Icon-Only 1 Hàng Ngang Duy Nhất (`#toolbar3D`)**:
+   - Chuyển toàn bộ các nút điều khiển 3D có chữ dài thành icon: `▶️` / `⏸️`, `🔄 ↻` / `🔄 ↺`, `⏮️`, `⏭️`, `🕸️`, `👁️`, `🎯`, `🔩`, `⚙️`.
+   - Thiết lập CSS `flex-wrap: nowrap; overflow-x: auto;` để luôn nằm trọn trên 1 dòng duy nhất.
+5. **Tinh Giản Thanh Công Cụ 2D Mô-Đun Trục Vít - Bánh Vít (`modules/worm-gear/`)**:
+   - Lược bỏ hoàn toàn: `"🔩 Chi Tiết Trục Vít"`, `"⚙️ Chi Tiết Bánh Vít (Mặt Cắt Họng)"`, và `"Trục vít / Bánh vít (Ẩn/Hiện)"`.
+   - Rút gọn các nút điều khiển 2D còn lại về dạng icon: `▶️` / `⏸️`, `📏`, `🎯`.

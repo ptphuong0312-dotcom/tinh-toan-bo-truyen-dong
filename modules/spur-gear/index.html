@@ -60,8 +60,8 @@
 
     <!-- Navigation Tabs -->
     <nav class="tab-navigation">
-        <button type="button" class="tab-btn active" data-target="tabCalculator">📐 Bảng Tính Toán (Chuẩn MITCalc 1.74)</button>
-        <button type="button" class="tab-btn" data-target="tabCanvas">🔄 Mô Phỏng Ăn Khớp 2D / 3D CAD</button>
+        <button type="button" class="tab-btn active" data-target="tabCalculator">Bảng tính toán</button>
+        <button type="button" class="tab-btn" data-target="tabCanvas">Mô phỏng 2D/3D CAD</button>
     </nav>
 
     <!-- Main Container -->
@@ -70,46 +70,10 @@
         <!-- TAB 1: CALCULATOR (STANDARDIZED ACCORDION)                                 -->
         <!-- ========================================================================= -->
         <div id="tabCalculator" class="tab-pane active">
-            <!-- Quick Summary Executive Banner -->
-            <section class="summary-banner">
-                <div class="summary-status-badge">
-                    <div class="status-indicator status-safe"></div>
-                    <div>
-                        <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase;">Tiêu chuẩn ăn khớp & hình học răng</div>
-                        <strong style="color: var(--accent-green);">ĐẠT TIÊU CHUẨN ISO 6336 / DIN 3960</strong>
-                    </div>
-                </div>
-                <div class="summary-metric">
-                    <div class="metric-title">Khoảng Cách Trục aw</div>
-                    <div class="metric-value val-blue highlight-key-param" id="summaryAw" style="padding: 2px 8px; border-radius: 4px;">201.000 mm</div>
-                </div>
-                <div class="summary-metric">
-                    <div class="metric-title">Tỉ Số Truyền Thực i</div>
-                    <div class="metric-value val-blue highlight-key-param" id="summaryRatio" style="padding: 2px 8px; border-radius: 4px;">2.526</div>
-                </div>
-                <div class="summary-metric">
-                    <div class="metric-title">Hệ Số Trùng Khớp εα</div>
-                    <div class="metric-value" id="summaryEa">1.646</div>
-                </div>
-                <div class="summary-metric">
-                    <div class="metric-title">Chiều Dày Đỉnh sa1*</div>
-                    <div class="metric-value" id="summarySa1">0.689</div>
-                </div>
-                <div class="summary-metric">
-                    <div class="metric-title">Tổng Khối Lượng m</div>
-                    <div class="metric-value val-blue" id="summaryWeight">68.75 kg</div>
-                </div>
-            </section>
-
             <!-- Global Accordion Toolbar -->
-            <div class="global-accordion-toolbar" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                <span style="font-size: 0.85rem; color: var(--text-secondary);">
-                    * Cấu trúc, màu sắc ô nhập/tính và các nút tính toán thuận nghịch đồng bộ 100% với bản gốc MITCalc 1.74.
-                </span>
-                <div class="btn-group" style="display: flex; gap: 0.5rem;">
-                    <button type="button" class="btn btn-secondary" id="btnExpandAll">📂 Mở Rộng Tất Cả</button>
-                    <button type="button" class="btn btn-secondary" id="btnCollapseAll">📁 Thu Gọn Tất Cả</button>
-                </div>
+            <div class="global-accordion-toolbar" style="display: flex; justify-content: flex-end; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <button type="button" class="btn btn-secondary" id="btnExpandAll">📂 Mở Rộng Tất Cả</button>
+                <button type="button" class="btn btn-secondary" id="btnCollapseAll">📁 Thu Gọn Tất Cả</button>
             </div>
 
             <div class="accordion-group">
@@ -2004,29 +1968,29 @@
                     </div>
                     <button type="button" class="btn btn-secondary" id="btnZoomIn" title="Phóng To (+)" style="padding: 4px 10px; font-size: 0.9rem;">🔍</button>
                     <button type="button" class="btn btn-secondary" id="btnZoomOut" title="Thu Nhỏ (-)" style="padding: 4px 10px; font-size: 0.9rem;">🔎</button>
-                    <button type="button" class="btn btn-secondary" id="btnResetView" title="Đặt lại góc nhìn và vị trí">🎯 Đặt Lại</button>
-                    <button type="button" class="btn btn-primary" id="btnToggleAnim">▶️ Chạy Mô Phỏng</button>
+                    <button type="button" class="btn btn-secondary" id="btnResetView" title="Đặt lại góc nhìn và vị trí" style="padding: 4px 10px; font-size: 0.9rem;">🎯</button>
+                    <button type="button" class="btn btn-primary" id="btnToggleAnim" title="Chạy mô phỏng / Tạm dừng" style="padding: 4px 10px; font-size: 0.9rem;">▶️</button>
                     <button type="button" class="btn btn-secondary" id="btn2DAnimDirection" title="Đổi chiều quay mô phỏng (Thuận ↻ / Nghịch ↺)" style="padding: 4px 10px; font-size: 0.9rem;">🔄 ↻</button>
                 </div>
 
-                <!-- 3D Action Toolbar -->
-                <div id="toolbar3D" style="display: none; gap: 0.5rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.75rem;">
+                <!-- 3D Action Toolbar (Single-Row Icon-Only) -->
+                <div id="toolbar3D" style="display: none; gap: 0.5rem; align-items: center; flex-wrap: nowrap; overflow-x: auto; margin-bottom: 0.75rem;">
                     <!-- Speed & Play -->
                     <div style="display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.25); padding: 4px 10px; border-radius: 4px; border: 1px solid var(--border-color);">
                         <label for="slider3DAnimSpeed" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">⚡ Tốc độ:</label>
                         <input type="range" id="slider3DAnimSpeed" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 80px; cursor: pointer;">
                         <span id="anim3DSpeedVal" style="font-size: 0.8rem; font-weight: 700; color: var(--accent-cyan); width: 35px;">1.0x</span>
                     </div>
-                    <button type="button" class="btn btn-primary" id="btnToggle3DAnim">▶️ Chạy Mô Phỏng</button>
-                    <button type="button" class="btn btn-secondary" id="btn3DAnimDirection" title="Đổi chiều quay mô phỏng (Thuận ↻ / Nghịch ↺)">🔄 Chiều: ↻ Thuận</button>
-                    <button type="button" class="btn btn-secondary" id="btn3DStepBack" title="Nhích lùi 1 bước vi phân (quan sát điểm ăn khớp)">⏮️ Nhích Lùi</button>
-                    <button type="button" class="btn btn-secondary" id="btn3DStepFwd" title="Nhích tiến 1 bước vi phân (quan sát điểm ăn khớp)">⏭️ Nhích Tiến</button>
-                    <button type="button" class="btn btn-secondary" id="btnToggleWireframe" title="Bật/tắt khung dây">🕸️ Khung Dây</button>
-                    <button type="button" class="btn btn-secondary" id="btnReset3DView">🎯 Đặt Lại</button>
+                    <button type="button" class="btn btn-primary" id="btnToggle3DAnim" title="Chạy mô phỏng / Tạm dừng" style="padding: 4px 10px; font-size: 0.9rem;">▶️</button>
+                    <button type="button" class="btn btn-secondary" id="btn3DAnimDirection" title="Đổi chiều quay mô phỏng (Thuận ↻ / Nghịch ↺)" style="padding: 4px 10px; font-size: 0.9rem;">🔄 ↻</button>
+                    <button type="button" class="btn btn-secondary" id="btn3DStepBack" title="Nhích lùi 1 bước vi phân (quan sát điểm ăn khớp)" style="padding: 4px 10px; font-size: 0.9rem;">⏮️</button>
+                    <button type="button" class="btn btn-secondary" id="btn3DStepFwd" title="Nhích tiến 1 bước vi phân (quan sát điểm ăn khớp)" style="padding: 4px 10px; font-size: 0.9rem;">⏭️</button>
+                    <button type="button" class="btn btn-secondary" id="btnToggleWireframe" title="Bật/tắt khung dây" style="padding: 4px 10px; font-size: 0.9rem;">🕸️</button>
+                    <button type="button" class="btn btn-secondary" id="btnReset3DView" title="Đặt lại góc nhìn mặc định" style="padding: 4px 10px; font-size: 0.9rem;">🎯</button>
 
                     <!-- Inspection Controls: Chỉ Mặt Bên & Kiểu Tiếp Xúc -->
                     <div style="display: flex; align-items: center; gap: 6px; border-left: 1px solid var(--border-color); padding-left: 6px;">
-                        <button type="button" class="btn btn-secondary" id="btnToggleFlankOnly" title="Ẩn khối phôi, chỉ hiện mặt sườn thân khai để quan sát vết ăn khớp tiếp xúc của cặp răng">👁️ Chỉ Mặt Bên</button>
+                        <button type="button" class="btn btn-secondary" id="btnToggleFlankOnly" title="Ẩn khối phôi, chỉ hiện mặt sườn thân khai để quan sát vết ăn khớp tiếp xúc của cặp răng" style="padding: 4px 10px; font-size: 0.9rem;">👁️</button>
                         <div style="display: flex; align-items: center; gap: 4px; background: rgba(0,0,0,0.25); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);" title="Chọn phương án tiếp xúc: Lý thuyết đường thẳng tiếp xúc (mặc định) hoặc Thực tế xưởng có độ vồng Crowning">
                             <label for="selContactTheoryMode" style="font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap;">📐 Tiếp xúc:</label>
                             <select id="selContactTheoryMode" class="calc-select" style="padding: 4px 8px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #38bdf8; border: 1.5px solid #0284c7; cursor: pointer;">

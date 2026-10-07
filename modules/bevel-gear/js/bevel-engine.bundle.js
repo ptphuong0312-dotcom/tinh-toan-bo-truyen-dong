@@ -8441,7 +8441,7 @@ class BevelGearUI {
         if (btnAnimate && this.canvasController) {
             btnAnimate.addEventListener('click', () => {
                 const running = this.canvasController.toggleAnimation();
-                btnAnimate.textContent = running ? '⏸ Tạm Dừng' : '▶ Chạy Mô Phỏng';
+                btnAnimate.textContent = running ? '⏸️' : '▶️';
             });
         }
 
@@ -8776,9 +8776,9 @@ class BevelGearUI {
         if (btnToggle3DAnim && this.visualizer3D) {
             btnToggle3DAnim.addEventListener('click', () => {
                 const isRunning = this.visualizer3D.toggleAnimation();
-                btnToggle3DAnim.textContent = isRunning ? '⏸️ Tạm Dừng' : '▶️ Chạy Mô Phỏng';
+                btnToggle3DAnim.textContent = isRunning ? '⏸️' : '▶️';
             });
-            btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
+            btnToggle3DAnim.textContent = '▶️';
         }
 
         const btn3DDir = document.getElementById('btn3DAnimDirection');
@@ -8786,11 +8786,11 @@ class BevelGearUI {
             btn3DDir.addEventListener('click', () => {
                 const dir = this.visualizer3D.toggleAnimDirection();
                 if (dir === 1) {
-                    btn3DDir.innerHTML = '🔄 Chiều: ↻ Thuận';
+                    btn3DDir.innerHTML = '🔄 ↻';
                     btn3DDir.style.color = '';
                     btn3DDir.style.borderColor = '';
                 } else {
-                    btn3DDir.innerHTML = '🔄 Chiều: ↺ Nghịch';
+                    btn3DDir.innerHTML = '🔄 ↺';
                     btn3DDir.style.color = '#f59e0b';
                     btn3DDir.style.borderColor = '#d97706';
                 }
@@ -8812,13 +8812,13 @@ class BevelGearUI {
         if (btn3DStepBack && this.visualizer3D) {
             btn3DStepBack.addEventListener('click', () => {
                 this.visualizer3D.stepAnimation(-1);
-                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️';
             });
         }
         if (btn3DStepFwd && this.visualizer3D) {
             btn3DStepFwd.addEventListener('click', () => {
                 this.visualizer3D.stepAnimation(1);
-                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️';
             });
         }
 
@@ -8838,16 +8838,16 @@ class BevelGearUI {
         if (btnToggleFlankOnly && this.visualizer3D) {
             btnToggleFlankOnly.addEventListener('click', () => {
                 const isFlankOnly = this.visualizer3D.toggleFlankOnly();
+                btnToggleFlankOnly.classList.toggle('active', isFlankOnly);
+                btnToggleFlankOnly.innerHTML = '👁️';
                 if (isFlankOnly) {
                     btnToggleFlankOnly.style.background = '#0284c7';
                     btnToggleFlankOnly.style.color = '#ffffff';
                     btnToggleFlankOnly.style.borderColor = '#38bdf8';
-                    btnToggleFlankOnly.innerHTML = '👁️ Đang Hiện Mặt Bên';
                 } else {
                     btnToggleFlankOnly.style.background = '';
                     btnToggleFlankOnly.style.color = '';
                     btnToggleFlankOnly.style.borderColor = '';
-                    btnToggleFlankOnly.innerHTML = '👁️ Chỉ Mặt Bên';
                 }
             });
         }

@@ -631,7 +631,7 @@ class WormUIController {
         if (btnPlay) {
             btnPlay.addEventListener('click', () => {
                 const running = this.canvasRenderer.toggleAnimation();
-                btnPlay.textContent = running ? '⏸ Dừng Quay' : '▶ Mô Phỏng Ăn Khớp';
+                btnPlay.textContent = running ? '⏸️' : '▶️';
             });
         }
 
@@ -720,8 +720,9 @@ class WormUIController {
         if (btnToggleWorm && this.visualizer3D) {
             btnToggleWorm.addEventListener('click', () => {
                 const vis = this.visualizer3D.toggleWormVisible();
-                btnToggleWorm.textContent = vis ? '🔩 Trục Vít: Hiện' : '🔩 Trục Vít: Ẩn';
-                btnToggleWorm.style.opacity = vis ? '1' : '0.6';
+                btnToggleWorm.textContent = '🔩';
+                btnToggleWorm.style.opacity = vis ? '1' : '0.4';
+                btnToggleWorm.title = vis ? 'Trục Vít 1: Đang Hiện' : 'Trục Vít 1: Đã Ẩn';
             });
         }
 
@@ -729,8 +730,9 @@ class WormUIController {
         if (btnToggleWheel && this.visualizer3D) {
             btnToggleWheel.addEventListener('click', () => {
                 const vis = this.visualizer3D.toggleWheelVisible();
-                btnToggleWheel.textContent = vis ? '⚙️ Bánh Vít: Hiện' : '⚙️ Bánh Vít: Ẩn';
-                btnToggleWheel.style.opacity = vis ? '1' : '0.6';
+                btnToggleWheel.textContent = '⚙️';
+                btnToggleWheel.style.opacity = vis ? '1' : '0.4';
+                btnToggleWheel.title = vis ? 'Bánh Vít 2: Đang Hiện' : 'Bánh Vít 2: Đã Ẩn';
             });
         }
 
@@ -747,7 +749,7 @@ class WormUIController {
             btnFlankOnly.addEventListener('click', () => {
                 const isFlankOnly = this.visualizer3D.toggleFlankOnly();
                 btnFlankOnly.classList.toggle('active', isFlankOnly);
-                btnFlankOnly.textContent = isFlankOnly ? '👁️ Đang Xem Mặt Bên' : '👁️ Chỉ Mặt Bên';
+                btnFlankOnly.textContent = '👁️';
             });
         }
 
@@ -755,9 +757,9 @@ class WormUIController {
         if (btnToggle3DAnim && this.visualizer3D) {
             btnToggle3DAnim.addEventListener('click', () => {
                 const isRunning = this.visualizer3D.toggleAnimation();
-                btnToggle3DAnim.textContent = isRunning ? '⏸️ Tạm Dừng' : '▶️ Chạy Mô Phỏng';
+                btnToggle3DAnim.textContent = isRunning ? '⏸️' : '▶️';
             });
-            btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
+            btnToggle3DAnim.textContent = '▶️';
         }
 
         const btn3DDir = document.getElementById('btn3DAnimDirection');
@@ -765,11 +767,11 @@ class WormUIController {
             btn3DDir.addEventListener('click', () => {
                 const dir = this.visualizer3D.toggleAnimDirection();
                 if (dir === 1) {
-                    btn3DDir.innerHTML = '🔄 Chiều: ↻ Thuận';
+                    btn3DDir.innerHTML = '🔄 ↻';
                     btn3DDir.style.color = '';
                     btn3DDir.style.borderColor = '';
                 } else {
-                    btn3DDir.innerHTML = '🔄 Chiều: ↺ Nghịch';
+                    btn3DDir.innerHTML = '🔄 ↺';
                     btn3DDir.style.color = '#f59e0b';
                     btn3DDir.style.borderColor = '#d97706';
                 }
@@ -791,13 +793,13 @@ class WormUIController {
         if (btn3DStepBack && this.visualizer3D) {
             btn3DStepBack.addEventListener('click', () => {
                 this.visualizer3D.stepAnimation(-1);
-                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️';
             });
         }
         if (btn3DStepFwd && this.visualizer3D) {
             btn3DStepFwd.addEventListener('click', () => {
                 this.visualizer3D.stepAnimation(1);
-                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️';
             });
         }
 

@@ -6485,14 +6485,14 @@ class SpurGearUI {
             btnToggleAnim.addEventListener('click', () => {
                 if (this.canvasController.isAnimating) {
                     this.canvasController.stopAnimation();
-                    btnToggleAnim.textContent = '▶️ Chạy Mô Phỏng';
+                    btnToggleAnim.textContent = '▶️';
                 } else {
                     this.canvasController.startAnimation();
-                    btnToggleAnim.textContent = '⏸️ Tạm Dừng';
+                    btnToggleAnim.textContent = '⏸️';
                 }
             });
             // Mặc định ban đầu đứng im (không gọi startAnimation cho đến khi người dùng bấm nút Chạy Mô Phỏng)
-            btnToggleAnim.textContent = '▶️ Chạy Mô Phỏng';
+            btnToggleAnim.textContent = '▶️';
         }
 
         const btn2DDir = document.getElementById('btn2DAnimDirection');
@@ -6698,9 +6698,9 @@ class SpurGearUI {
         if (btnToggle3DAnim && this.visualizer3D) {
             btnToggle3DAnim.addEventListener('click', () => {
                 const isRunning = this.visualizer3D.toggleAnimation();
-                btnToggle3DAnim.textContent = isRunning ? '⏸️ Tạm Dừng' : '▶️ Chạy Mô Phỏng';
+                btnToggle3DAnim.textContent = isRunning ? '⏸️' : '▶️';
             });
-            btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
+            btnToggle3DAnim.textContent = '▶️';
         }
 
         const btn3DDir = document.getElementById('btn3DAnimDirection');
@@ -6708,11 +6708,11 @@ class SpurGearUI {
             btn3DDir.addEventListener('click', () => {
                 const dir = this.visualizer3D.toggleAnimDirection();
                 if (dir === 1) {
-                    btn3DDir.innerHTML = '🔄 Chiều: ↻ Thuận';
+                    btn3DDir.innerHTML = '🔄 ↻';
                     btn3DDir.style.color = '';
                     btn3DDir.style.borderColor = '';
                 } else {
-                    btn3DDir.innerHTML = '🔄 Chiều: ↺ Nghịch';
+                    btn3DDir.innerHTML = '🔄 ↺';
                     btn3DDir.style.color = '#f59e0b';
                     btn3DDir.style.borderColor = '#d97706';
                 }
@@ -6734,16 +6734,16 @@ class SpurGearUI {
         if (btnToggleFlankOnly && this.visualizer3D) {
             btnToggleFlankOnly.addEventListener('click', () => {
                 const isFlankOnly = this.visualizer3D.toggleFlankOnly();
+                btnToggleFlankOnly.classList.toggle('active', isFlankOnly);
+                btnToggleFlankOnly.innerHTML = '👁️';
                 if (isFlankOnly) {
                     btnToggleFlankOnly.style.background = '#0284c7';
                     btnToggleFlankOnly.style.color = '#ffffff';
                     btnToggleFlankOnly.style.borderColor = '#38bdf8';
-                    btnToggleFlankOnly.innerHTML = '👁️ Đang Xem Mặt Bên';
                 } else {
                     btnToggleFlankOnly.style.background = '';
                     btnToggleFlankOnly.style.color = '';
                     btnToggleFlankOnly.style.borderColor = '';
-                    btnToggleFlankOnly.innerHTML = '👁️ Chỉ Mặt Bên';
                 }
             });
         }
@@ -6762,14 +6762,14 @@ class SpurGearUI {
             btn3DStepBack.addEventListener('click', () => {
                 this.visualizer3D.stepAngle(-1);
                 const btnToggle3DAnim = document.getElementById('btnToggle3DAnim');
-                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️';
             });
         }
         if (btn3DStepFwd && this.visualizer3D) {
             btn3DStepFwd.addEventListener('click', () => {
                 this.visualizer3D.stepAngle(1);
                 const btnToggle3DAnim = document.getElementById('btnToggle3DAnim');
-                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️ Chạy Mô Phỏng';
+                if (btnToggle3DAnim) btnToggle3DAnim.textContent = '▶️';
             });
         }
 

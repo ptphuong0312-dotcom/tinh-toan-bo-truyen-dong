@@ -3589,3 +3589,36 @@ ho_{f0}$.
        - Cấp 8: Lưới $95 \times 25$, Dung lượng 15.51 MB
        - Cấp 10: Lưới $115 \times 33$, Dung lượng 24.69 MB (tăng gấp 11.1 lần)
      * Xác nhận 100% các file IGES Entity 128 sinh ra hoàn toàn hợp lệ, không lỗi cú pháp, tương thích hoàn hảo với Mastercam & SolidWorks.
+
+
+---
+
+## 2026-10-07 - Quy Tắc 89: Tối Giản Hóa Giao Diện Cổng Hub Portal & Chuẩn Hóa Rút Gọn Giao Diện 3 Mô-Đun Cơ Khí
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  * Sửa tiêu đề cổng hub: "TÍNH TOÁN BỘ TRUYỀN ĐỘNG CƠ KHÍ CHUYÊN SÂU" $\rightarrow$ "TÍNH TOÁN BỘ TRUYỀN ĐỘNG CƠ KHÍ".
+  * Thẻ mô-đun: Rút gọn nút mở mô-đun thành `"⚙️ Bánh Răng Trụ & Nghiêng"`, `"📐 Bánh Răng Côn"`, `"🌀 Trục Vít - Bánh Vít"`. Giữ lại đúng 1 dòng chú thích tiêu chuẩn quốc tế.
+  * Tên tab điều hướng: Đồng bộ rút gọn về `"Bảng tính toán"` và `"Mô phỏng 2D/3D CAD"`.
+  * Accordion Toolbar: Loại bỏ hoàn toàn khối thẻ tóm tắt `.summary-banner` và ghi chú bên dưới, chỉ giữ lại 2 nút chức năng `"📂 Mở Rộng Tất Cả"` và `"📁 Thu Gọn Tất Cả"`.
+  * Thanh công cụ 3D: Rút gọn các nút có chữ thành icon để toàn bộ thanh công cụ nằm trên 1 hàng ngang duy nhất.
+  * Riêng 2D Trục Vít - Bánh Vít: Loại bỏ 3 nút `"🔩 Chi Tiết Trục Vít"`, `"⚙️ Chi Tiết Bánh Vít (Mặt Cắt Họng)"`, và `"Trục vít / Bánh vít (Ẩn/Hiện)"`.
+- **Thực hiện kỹ thuật**:
+  1. *Cổng Hub Portal (`index.html`)*:
+     - Đổi tiêu đề Hero thành "TÍNH TOÁN BỘ TRUYỀN ĐỘNG CƠ KHÍ".
+     - Rút gọn 3 thẻ mô-đun về đúng 1 dòng thông số tiêu chuẩn ISO/DIN/AGMA và nhãn nút bấm tinh giản.
+  2. *Mô-đun Bánh Răng Trụ (`modules/spur-gear/index.html` & `tools/bundle_spur.py`)*:
+     - Đổi tên 2 tab: `"Bảng tính toán"` & `"Mô phỏng 2D/3D CAD"`.
+     - Xóa bỏ `.summary-banner` và ghi chú dưới accordion, giữ lại `#btnExpandAll` và `#btnCollapseAll`.
+     - Chuyển toàn bộ nút 3D toolbar `#toolbar3D` thành icon (`▶️`, `🔄 ↻`, `⏮️`, `⏭️`, `🕸️`, `🎯`, `👁️`).
+  3. *Mô-đun Bánh Răng Côn (`modules/bevel-gear/index.html` & `modules/bevel-gear/js/bevel-ui.js`)*:
+     - Đổi tên 2 tab: `"Bảng tính toán"` & `"Mô phỏng 2D/3D CAD"`.
+     - Xóa bỏ `.summary-banner` và ghi chú phụ, giữ lại `#btnExpandAll` và `#btnCollapseAll`.
+     - Chuyển toàn bộ nút 3D toolbar `#toolbar3D` thành icon 1 hàng ngang.
+  4. *Mô-đun Trục Vít - Bánh Vít (`modules/worm-gear/index.html` & `modules/worm-gear/js/worm-ui.js`)*:
+     - Đổi tên 2 tab: `"Bảng tính toán"` & `"Mô phỏng 2D/3D CAD"`.
+     - Xóa bỏ `.summary-banner`, giữ lại `#btnExpandAll` và `#btnCollapseAll`.
+     - Xóa bỏ 4 button ID `#btnViewWorm`, `#btnViewWheel`, `#btnToggleWorm2D`, `#btnToggleWheel2D`.
+     - Rút gọn các nút 2D còn lại thành icon: `▶️` / `⏸️`, `📏`, `🎯`.
+     - Chuyển toàn bộ nút 3D toolbar `#toolbar3D` thành icon 1 hàng ngang (`🔩`, `⚙️`, `▶️`, `🔄 ↻`, `⏮️`, `⏭️`, `🕸️`, `👁️`, `🎯`).
+  5. *Đóng gói bundle & Kiểm thử xác thực*:
+     - Chạy `python tools/bundle_all.py` đóng gói cả 3 bundle đạt chuẩn CORS-Free Zero-Import.
+     - Kiểm thử tự động bằng Playwright Chromium xác thực 100% các tiêu chí: tiêu đề portal, số dòng chú thích card, tên tab, sự biến mất của summary banner, sự tồn tại của nút mở rộng/thu gọn, tính biến mất của các nút 2D sâu trục vít, và định dạng icon 1 hàng ngang của 3D toolbar. Tất cả kiểm thử đều đạt 0 lỗi Console, 0 lỗi WebGL.

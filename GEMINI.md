@@ -2106,3 +2106,38 @@ ho_{f0} / \cos\gamma$.
 4. **Hiệu Quả & Kiểm Thử Toàn Diện**:
    - Bộ kiểm thử tự động `scratch/test_igs_scaling.js` xác nhận 100% các file `.igs` sinh ra trên cả 3 mô-đun đều chứa đầy đủ thực thể Entity 128 hợp lệ, kích thước lưới $U \times V$ tăng tuyến tính, bảo toàn tính tương thích với Mastercam 2020-2026 và SolidWorks không lỗi nhập bề mặt.
 
+
+
+---
+
+### Quy Tắc 89: Quy Chuẩn Tối Giản Hóa Giao Diện Cổng Hub Portal & Chuẩn Hóa Rút Gọn Giao Diện 3 Mô-Đun Cơ Khí
+1. **Tiêu Chuẩn Cổng Hub Trung Tâm (`index.html`)**:
+   - Tiêu đề Hero tinh giản tuyệt đối: `"TÍNH TOÁN BỘ TRUYỀN ĐỘNG CƠ KHÍ"` (loại bỏ chữ "CHUYÊN SÂU").
+   - Nhãn nút mở mô-đun chuẩn hóa ngắn gọn và trực quan:
+     * Mô-đun 1: `"⚙️ Bánh Răng Trụ & Nghiêng"`
+     * Mô-đun 2: `"📐 Bánh Răng Côn"`
+     * Mô-đun 3: `"🌀 Trục Vít - Bánh Vít"`
+   - Danh sách thông số chú thích thu gọn tối đa còn đúng 1 dòng tiêu chuẩn quốc tế cho mỗi mô-đun:
+     * Mô-đun 1: `Tiêu chuẩn: ISO 6336:2006, DIN 3960, ISO 1328`
+     * Mô-đun 2: `Tiêu chuẩn: ISO 23509, DIN 3971, AGMA 2005, ISO 10300`
+     * Mô-đun 3: `Tiêu chuẩn: DIN 3975, DIN 3996, AGMA 6022-C93`
+2. **Quy Chuẩn Tên Tab Rút Gọn Đồng Bộ Toàn Bộ 3 Mô-Đun**:
+   - Tab 1: `"Bảng tính toán"` (thay cho các tên dài như "⚙️ Bảng Tính Cơ Khí (Calculator)", "⚙️ Bảng Tính Toán Kỹ Thuật (Calculator)").
+   - Tab 2: `"Mô phỏng 2D/3D CAD"` (thay cho "📐 Mô Phỏng 2D/3D CAD (Canvas & Three.js)").
+3. **Quy Chuẩn Thanh Tiêu Đề Accordion Toàn Cục (Accordion Toolbar)**:
+   - Loại bỏ hoàn toàn khối thẻ tóm tắt nhanh `.summary-banner` (tránh chiếm diện tích màn hình).
+   - Loại bỏ dòng chú thích phụ bên dưới thanh công cụ (`* Cấu trúc, màu sắc ô nhập...`).
+   - Duy trì tinh gọn đúng 2 nút chức năng toàn cục canh phải: `"📂 Mở Rộng Tất Cả"` (`#btnExpandAll`) và `"📁 Thu Gọn Tất Cả"` (`#btnCollapseAll`).
+4. **Quy Chuẩn Thanh Công Cụ 3D Icon-Only 1 Hàng Ngang Duy Nhất (`#toolbar3D`)**:
+   - Chuyển toàn bộ các nút điều khiển 3D có chữ dài thành biểu tượng icon thuần túy (Icon-Only):
+     * Play/Pause: `▶️` / `⏸️`
+     * Đổi chiều quay: `🔄 ↻` / `🔄 ↺`
+     * Bước lùi / Bước tới: `⏮️` / `⏭️`
+     * Khung dây (Wireframe): `🕸️`
+     * Chỉ bề mặt làm việc (Flank Only): `👁️`
+     * Đặt lại góc nhìn (Reset): `🎯`
+     * Ẩn/Hiện chi tiết (Trục vít `🔩`, Bánh vít `⚙️` đối với mô-đun trục vít).
+   - Thiết lập CSS `flex-wrap: nowrap; overflow-x: auto;` để toàn bộ thanh công cụ 3D luôn nằm trọn vẹn trên **1 dòng duy nhất**.
+5. **Quy Chuẩn Tinh Giản Thanh Công Cụ 2D Mô-Đun Trục Vít - Bánh Vít (`modules/worm-gear/`)**:
+   - Lược bỏ hoàn toàn các nút thừa: `"🔩 Chi Tiết Trục Vít"`, `"⚙️ Chi Tiết Bánh Vít (Mặt Cắt Họng)"`, và `"Trục vít / Bánh vít (Ẩn/Hiện)"` (`#btnViewWorm`, `#btnViewWheel`, `#btnToggleWorm2D`, `#btnToggleWheel2D`).
+   - Rút gọn các nút điều khiển 2D còn lại về dạng icon: Chạy mô phỏng `▶️` / `⏸️`, Bật/Tắt kích thước `📏`, Căn giữa `🎯`.
