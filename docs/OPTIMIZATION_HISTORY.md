@@ -3622,3 +3622,24 @@ ho_{f0}$.
   5. *Đóng gói bundle & Kiểm thử xác thực*:
      - Chạy `python tools/bundle_all.py` đóng gói cả 3 bundle đạt chuẩn CORS-Free Zero-Import.
      - Kiểm thử tự động bằng Playwright Chromium xác thực 100% các tiêu chí: tiêu đề portal, số dòng chú thích card, tên tab, sự biến mất của summary banner, sự tồn tại của nút mở rộng/thu gọn, tính biến mất của các nút 2D sâu trục vít, và định dạng icon 1 hàng ngang của 3D toolbar. Tất cả kiểm thử đều đạt 0 lỗi Console, 0 lỗi WebGL.
+
+
+---
+
+## 2026-10-07 - Quy Tắc 90: Đồng Bộ Ký Hiệu Ma Trận 17.5 & Bổ Sung Bộ Chọn Nhanh Thiết Kế Công Nghiệp 5.0*
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  * Mục 17.5 ghi thêm A B C D E cho giống với cách ghi của 3.1 và 5.1.
+  * Thêm 1 mục nằm trước mục 5.1 để lựa chọn các kiểu thiết kế trong bảng 17.5, khi chọn ở đây thì các mục 3.1 và 5.1 sẽ tự nhảy theo.
+  * Giải đáp kỹ thuật: Vì sao trong bảng 17.5 không thấy có combo Lựa chọn thứ 1 trong mục 3.1 (Răng thẳng) và Lựa chọn thứ 2 trong mục 5.1 (VN Tiếp xúc), kiểu này có ứng dụng thực tế không.
+- **Thực hiện kỹ thuật**:
+  1. *Chuẩn hóa ký hiệu Ma trận 17.5*:
+     - Bổ sung `[A,B]`, `[C]`, `[D]`, `[E,F]` vào cột Kiểu Răng (Mục 3.1) và `[A]`, `[B]`, `[C]`, `[D]`, `[E]` vào cột Dịch Chỉnh (Mục 5.1) trên toàn bộ 10 hàng của bảng.
+  2. *Bổ sung Trường hợp 2b vào Ma trận 17.5*:
+     - Tích hợp trường hợp: Bánh răng thẳng tải nặng liên tục chống tróc rỗ mặt răng ($z_1 \ge 25 \div 30$, xưởng chỉ có máy cắt/bào răng thẳng) kết hợp Kiểu răng `[A,B]` và Dịch chỉnh `[B] VN tiếp xúc`.
+  3. *Tích hợp Bộ chọn nhanh Item 5.0* (`#selDesignPreset175`)*:
+     - Đặt ngay trước Mục 5.1 trong Section 5.0 với giao diện dropdown nổi bật viền xanh neon.
+     - Tự động nhảy Mục 3.1 (`#selGearingType`), Góc xoắn $\beta_m$ (`#inp_beta`), Mục 5.1 (`#selCorrectionType`), giá trị $x_1, x_{t1}$, slider $x_1$, và kích hoạt `calculate()` vẽ lại 2D/3D tức thì.
+     - Đồng bộ 2 chiều: khi người dùng tinh chỉnh thủ công các ô thì preset tự động nhảy về `-- Tùy chọn tự do (Custom / Manual) --`.
+  4. *Đóng gói & Kiểm thử*:
+     - Chạy `python tools/bundle_all.py` cập nhật bundle `modules/bevel-gear/js/bevel-engine.bundle.js`.
+     - Kiểm thử Playwright tự động xác nhận 100% PASS, 0 lỗi Console, đồng bộ chính xác cả 2 chiều.

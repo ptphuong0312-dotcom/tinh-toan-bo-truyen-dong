@@ -2141,3 +2141,22 @@ ho_{f0} / \cos\gamma$.
 5. **Quy Chuẩn Tinh Giản Thanh Công Cụ 2D Mô-Đun Trục Vít - Bánh Vít (`modules/worm-gear/`)**:
    - Lược bỏ hoàn toàn các nút thừa: `"🔩 Chi Tiết Trục Vít"`, `"⚙️ Chi Tiết Bánh Vít (Mặt Cắt Họng)"`, và `"Trục vít / Bánh vít (Ẩn/Hiện)"` (`#btnViewWorm`, `#btnViewWheel`, `#btnToggleWorm2D`, `#btnToggleWheel2D`).
    - Rút gọn các nút điều khiển 2D còn lại về dạng icon: Chạy mô phỏng `▶️` / `⏸️`, Bật/Tắt kích thước `📏`, Căn giữa `🎯`.
+
+
+---
+
+### Quy Tắc 90: Quy Chuẩn Đồng Bộ Ma Trận Thiết Kế Bánh Răng Côn 17.5 & Bộ Chọn Nhanh Thiết Kế Công Nghiệp (Design Preset 5.0*)
+1. **Chuẩn Hóa Ký Hiệu Ma Trận 17.5 Đồng Nhất 1-to-1 với Mục 3.1 & 5.1**:
+   - Cột Kiểu Răng (Mục 3.1): Ghi rõ các ký tự định danh chuẩn `[A,B]` (Đường thẳng loại I), `[C]` (Cung tròn Gleason loại II), `[D]` (Cung tròn Zerol loại II), `[E,F]` (Epicycloid Klingelnberg loại III).
+   - Cột Dịch Chỉnh (Mục 5.1): Ghi rõ các ký tự định danh chuẩn `[A]` (VN tăng bền uốn), `[B]` (VN tăng bền tiếp xúc), `[C]` (DIN 870), `[D]` (BSI), `[E]` (Răng cong - Curved teeth).
+2. **Bổ Sung Trường Hợp 2b (Bánh Răng Thẳng Tải Nặng Liên Tục - Chống Tróc Rỗ)**:
+   - Kết hợp: Kiểu răng `[A,B] Đường thẳng loại I` + Dịch chỉnh `[B] VN tăng độ bền tiếp xúc` ($x_1 = +0.2 \div +0.4$).
+   - Cơ sở động học & công nghệ: Dùng khi bộ truyền làm việc ở tải trọng tiếp xúc cao, số răng bánh dẫn đủ lớn ($z_1 \ge 25 \div 30$ không lo cắt lẹm hay gãy uốn) và điều kiện xưởng chỉ có máy cắt/bào răng thẳng (không có máy cắt răng xoắn Gleason). Dịch chỉnh tiếp xúc giúp tăng bán kính cong tương đương $\rho_w$, cân bằng hệ số trượt riêng $\vartheta_1 = \vartheta_2$ để chống tróc rỗ mặt răng.
+3. **Bộ Chọn Nhanh Kiểu Thiết Kế Công Nghiệp (Item 5.0* `#selDesignPreset175`)**:
+   - Bố trí ngay trước Mục 5.1 trong Section 5.0.
+   - Khi người dùng chọn 1 phương án ứng dụng từ bảng 17.5, hệ thống tự động thiết lập đồng thời:
+     * Kiểu răng Mục 3.1 (`#selGearingType`).
+     * Góc xoắn $\beta_m$ Mục 4.5 (`#inp_beta`).
+     * Phương pháp dịch chỉnh Mục 5.1 (`#selCorrectionType`), giá trị $x_1, x_{t1}$, và slider $x_1$.
+     * Kích hoạt tự động tính toán lại toàn bộ thông số hình học, 2D và 3D.
+   - Cơ chế đồng bộ 2 chiều (Bi-directional Sync): Nếu kỹ sư tự điều chỉnh bằng tay các ô 3.1, 5.1 hay slider $x_1$, bộ chọn 5.0* tự động chuyển về trạng thái `-- Tùy chọn tự do (Custom / Manual) --` để phản ánh đúng hiện trạng thiết kế.

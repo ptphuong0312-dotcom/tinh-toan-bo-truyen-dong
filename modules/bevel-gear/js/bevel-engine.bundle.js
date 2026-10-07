@@ -9262,6 +9262,8 @@ class BevelGearUI {
                     const inpB = document.getElementById('inp_beta');
                     if (inpB) inpB.value = '30.0';
                 }
+                const selPreset175 = document.getElementById('selDesignPreset175');
+                if (selPreset175) selPreset175.value = 'custom';
                 this.calculate();
             });
         }
@@ -9298,6 +9300,8 @@ class BevelGearUI {
                 this.inputs.x1 = x1;
                 const inp_x1 = document.getElementById('inp_x1');
                 if (inp_x1) inp_x1.value = x1.toFixed(2);
+                const selPreset175 = document.getElementById('selDesignPreset175');
+                if (selPreset175) selPreset175.value = 'custom';
                 this.calculate();
             });
         }
@@ -9328,6 +9332,132 @@ class BevelGearUI {
                 const inp_xt1 = document.getElementById('inp_xt1');
                 if (inp_xt1) inp_xt1.value = this.inputs.xt1.toFixed(2);
                 if (sliderX1) sliderX1.value = this.inputs.x1;
+                const selPreset175 = document.getElementById('selDesignPreset175');
+                if (selPreset175) selPreset175.value = 'custom';
+                this.calculate();
+            });
+        }
+
+        // Design Preset from Table 17.5 (Section 5.0*)
+        const selPreset175 = document.getElementById('selDesignPreset175');
+        if (selPreset175) {
+            selPreset175.addEventListener('change', () => {
+                const val = selPreset175.value;
+                if (val === 'custom') return;
+
+                const selGT = document.getElementById('selGearingType');
+                const selC = document.getElementById('selCorrectionType');
+                const inpBeta = document.getElementById('inp_beta');
+
+                switch (val) {
+                    case 'th1': // Băng tải chậm, máy nông nghiệp: Thẳng [A,B] + DIN 870 [C]
+                        if (selGT) selGT.value = 'straight_type1';
+                        this.inputs.gearingType = 'straight_type1';
+                        this.inputs.beta = 0.0;
+                        if (inpBeta) inpBeta.value = '0.0';
+                        if (selC) selC.value = 'DIN870';
+                        this.inputs.x1 = -0.93;
+                        this.inputs.xt1 = 0.00;
+                        break;
+
+                    case 'th2': // Bánh răng thẳng tỷ số lớn, ít răng: Thẳng [A,B] + VN Bền uốn [A]
+                        if (selGT) selGT.value = 'straight_type1';
+                        this.inputs.gearingType = 'straight_type1';
+                        this.inputs.beta = 0.0;
+                        if (inpBeta) inpBeta.value = '0.0';
+                        if (selC) selC.value = 'VN_bending';
+                        this.inputs.x1 = 0.58;
+                        this.inputs.xt1 = 0.00;
+                        break;
+
+                    case 'th2b': // Bánh răng thẳng tải nặng, liên tục: Thẳng [A,B] + VN Tiếp xúc [B]
+                        if (selGT) selGT.value = 'straight_type1';
+                        this.inputs.gearingType = 'straight_type1';
+                        this.inputs.beta = 0.0;
+                        if (inpBeta) inpBeta.value = '0.0';
+                        if (selC) selC.value = 'VN_contact';
+                        this.inputs.x1 = 0.32;
+                        this.inputs.xt1 = 0.04;
+                        break;
+
+                    case 'th3': // Nâng cấp hộp số cũ ồn/rung: Zerol [D] + Răng cong [E]
+                        if (selGT) selGT.value = 'zerol';
+                        this.inputs.gearingType = 'zerol';
+                        this.inputs.beta = 0.0;
+                        if (inpBeta) inpBeta.value = '0.0';
+                        if (selC) selC.value = 'curved';
+                        this.inputs.x1 = 0.00;
+                        this.inputs.xt1 = 0.00;
+                        break;
+
+                    case 'th4': // Hộp giảm tốc tải nặng 1 chiều: Gleason [C] + Răng cong [E], beta=35
+                        if (selGT) selGT.value = 'gleason';
+                        this.inputs.gearingType = 'gleason';
+                        this.inputs.beta = 35.0;
+                        if (inpBeta) inpBeta.value = '35.0';
+                        if (selC) selC.value = 'curved';
+                        this.inputs.x1 = 0.00;
+                        this.inputs.xt1 = 0.00;
+                        break;
+
+                    case 'th5': // Hộp số đảo chiều: Gleason [C] + VN Tiếp xúc [B], beta=25
+                        if (selGT) selGT.value = 'gleason';
+                        this.inputs.gearingType = 'gleason';
+                        this.inputs.beta = 25.0;
+                        if (inpBeta) inpBeta.value = '25.0';
+                        if (selC) selC.value = 'VN_contact';
+                        this.inputs.x1 = 0.32;
+                        this.inputs.xt1 = 0.04;
+                        break;
+
+                    case 'th6': // Cầu sau xe tải, xe buýt vi sai: Klingelnberg [E,F] + Răng cong [E], beta=35
+                        if (selGT) selGT.value = 'klingelnberg';
+                        this.inputs.gearingType = 'klingelnberg';
+                        this.inputs.beta = 35.0;
+                        if (inpBeta) inpBeta.value = '35.0';
+                        if (selC) selC.value = 'curved';
+                        this.inputs.x1 = 0.00;
+                        this.inputs.xt1 = 0.00;
+                        break;
+
+                    case 'th8': // Bàn xoay CNC, Robot, Radar: Gleason [C] + VN Bền uốn [A], beta=35
+                        if (selGT) selGT.value = 'gleason';
+                        this.inputs.gearingType = 'gleason';
+                        this.inputs.beta = 35.0;
+                        if (inpBeta) inpBeta.value = '35.0';
+                        if (selC) selC.value = 'VN_bending';
+                        this.inputs.x1 = 0.58;
+                        this.inputs.xt1 = 0.00;
+                        break;
+
+                    case 'th9': // Hàng không, tuabin cao tốc: Gleason [C] + Răng cong [E], beta=35
+                        if (selGT) selGT.value = 'gleason';
+                        this.inputs.gearingType = 'gleason';
+                        this.inputs.beta = 35.0;
+                        if (inpBeta) inpBeta.value = '35.0';
+                        if (selC) selC.value = 'curved';
+                        this.inputs.x1 = 0.00;
+                        this.inputs.xt1 = 0.00;
+                        break;
+
+                    case 'th10': // Tay quay góc vuông Miter 1:1: Thẳng [A,B] + DIN 870 [C]
+                        if (selGT) selGT.value = 'straight_type1';
+                        this.inputs.gearingType = 'straight_type1';
+                        this.inputs.beta = 0.0;
+                        if (inpBeta) inpBeta.value = '0.0';
+                        if (selC) selC.value = 'DIN870';
+                        this.inputs.x1 = -0.93;
+                        this.inputs.xt1 = 0.00;
+                        break;
+                }
+
+                const inp_x1 = document.getElementById('inp_x1');
+                if (inp_x1) inp_x1.value = this.inputs.x1.toFixed(2);
+                const inp_xt1 = document.getElementById('inp_xt1');
+                if (inp_xt1) inp_xt1.value = this.inputs.xt1.toFixed(2);
+                const sliderX1 = document.getElementById('slider_x1');
+                if (sliderX1) sliderX1.value = this.inputs.x1;
+
                 this.calculate();
             });
         }

@@ -2038,3 +2038,20 @@ ho_{f0}$.
 5. **Tinh Giản Thanh Công Cụ 2D Mô-Đun Trục Vít - Bánh Vít (`modules/worm-gear/`)**:
    - Lược bỏ hoàn toàn: `"🔩 Chi Tiết Trục Vít"`, `"⚙️ Chi Tiết Bánh Vít (Mặt Cắt Họng)"`, và `"Trục vít / Bánh vít (Ẩn/Hiện)"`.
    - Rút gọn các nút điều khiển 2D còn lại về dạng icon: `▶️` / `⏸️`, `📏`, `🎯`.
+
+
+---
+
+### Quy Tắc 90: Quy Chuẩn Đồng Bộ Ma Trận Thiết Kế Bánh Răng Côn 17.5 & Bộ Chọn Nhanh Thiết Kế Công Nghiệp (Design Preset 5.0*)
+**Ngày áp dụng**: 07/10/2026  
+**Module**: Bánh Răng Côn (`modules/bevel-gear/`)  
+1. **Chuẩn Hóa Ký Hiệu Ma Trận 17.5 Đồng Nhất 1-to-1 với Mục 3.1 & 5.1**:
+   - Kiểu răng (Mục 3.1): `[A,B]` (Đường thẳng loại I), `[C]` (Cung tròn Gleason loại II), `[D]` (Cung tròn Zerol loại II), `[E,F]` (Epicycloid Klingelnberg loại III).
+   - Dịch chỉnh (Mục 5.1): `[A]` (VN tăng bền uốn), `[B]` (VN tăng bền tiếp xúc), `[C]` (DIN 870), `[D]` (BSI), `[E]` (Răng cong - Curved teeth).
+2. **Bổ Sung Trường Hợp 2b (Răng Thẳng Tải Nặng Liên Tục - Chống Tróc Rỗ)**:
+   - Kiểu răng `[A,B]` + Dịch chỉnh `[B] VN tiếp xúc` ($x_1 = +0.2 \div +0.4$).
+   - Cơ sở động học: Tối ưu bán kính cong tương đương $\rho_w$, cân bằng trượt riêng $\vartheta_1 = \vartheta_2$ cho ứng dụng tải nặng khi xưởng không có máy cắt răng xoắn.
+3. **Bộ Chọn Nhanh Thiết Kế Công Nghiệp (Item 5.0* `#selDesignPreset175`)**:
+   - Tích hợp ngay trước Mục 5.1 trong Section 5.0.
+   - Chọn nhanh 10 phương án thiết kế thực tế từ Ma trận 17.5, tự động đồng bộ Mục 3.1, Góc xoắn $\beta_m$, Mục 5.1, $x_1, x_{t1}$, và render lại 2D/3D.
+   - Hỗ trợ cơ chế đồng bộ 2 chiều (Bi-directional Sync): Khi kỹ sư chỉnh tay các ô thành phần, preset tự chuyển về `-- Tùy chọn tự do (Custom / Manual) --`.
