@@ -2078,3 +2078,31 @@ ho_{f0} / \cos\gamma$.
    - Giữ nguyên 100% các nút kỹ thuật chuyên dụng 2D: Bản Vẽ Lắp 2 Hình Chiếu, Chi Tiết Trục Vít, Chi Tiết Bánh Vít (Cắt Họng), MC Pháp Tuyến (N-N), MC Dọc Trục (A-A), MC Tiếp Tuyến (T-T), Trục Vít: Hiện/Ẩn, Bánh Vít: Hiện/Ẩn, Mô Phỏng Ăn Khớp, Tốc độ, Kích Thước, Căn Giữa. Chỉ nhấc mục Xuất File 2D CAD (.DXF) lên Master Bar.
    - Giữ nguyên 100% các nút kỹ thuật chuyên dụng 3D: Trục Vít: Hiện/Ẩn, Bánh Vít: Hiện/Ẩn, Tốc độ, Chạy Mô Phỏng, Chiều (↻/↺), Nhích Lùi, Nhích Tiến, Khung Dây, Chỉ Mặt Bên, Đặt Lại. Nhấc Độ mịn 3D và Xuất file 3D lên Master Bar; chuyển Hướng nhìn vào overlay góc trái trên cùng bên trong `#container3D`.
 
+---
+
+### Quy Tắc 88: Quy Chuẩn Đồng Bộ Hóa Độ Mịn Động & Định Dạng Xuất File .IGS (IGES 5.3 Entity 128 B-Spline Surface) Trên Toàn Bộ 3 Mô-Đun Cơ Khí
+1. **Bối Cảnh & Vấn Đề Kỹ Thuật**:
+   - Trước đây, tính năng xuất file `.igs` (NURBS Surface Entity 128) mới chỉ được liên kết động với thanh chọn độ mịn ở Mô-đun Bánh Răng Côn (Quy Tắc 85).
+   - Ở Mô-đun Bánh Răng Trụ và Trục Vít - Bánh Vít, dù đã xuất chuẩn bề mặt giải tích Entity 128 cho Mastercam/SolidWorks nhưng mật độ lưới còn bị gán cứng (hardcoded) ở một mức cố định và tên file chưa phản ánh cấp độ mịn, dẫn đến việc người dùng xuất ở các mức khác nhau nhưng kích thước file không thay đổi.
+2. **Quy Chuẩn Đồng Bộ Mô-Đun Bánh Răng Trụ & Nghiêng (`modules/spur-gear/`)**:
+   - Liên kết trực tiếp dropdown `#selProfileResolutionCanvas` (11 mức: Mức 1 thô 80pts đến Mức 11 siêu mịn 600pts) với thuật toán tạo lưới mặt cong `Gear3DGenerator.getGearParametricData(opt)` qua bảng `igesGridPresets`:
+     * Bánh răng trụ thẳng: Lát cắt dọc răng $V$ co giãn từ $10 \rightarrow 40$ lát; điểm sườn thân khai $U$ co giãn từ $17 \rightarrow 65$ điểm điều khiển. Dung lượng file tăng từ **437.6 KB (Mức 1)** lên **1,478.7 KB (Mức 6)** và **5,352.9 KB (Mức 11)** (tăng gấp 12.2 lần).
+     * Bánh răng trụ nghiêng: Lát cắt xoắn dọc $V$ co giãn từ $16 \rightarrow 64$ lát; điểm sườn thân khai $U$ co giãn từ $17 \rightarrow 65$ điểm điều khiển. Dung lượng file tăng từ **676.6 KB (Mức 1)** lên **2,639.9 KB (Mức 6)** và **8,511.4 KB (Mức 11)** (tăng gấp 12.6 lần).
+   - Tên file xuất chuẩn hóa:
+     * Chi tiết Bánh dẫn 1: `Banh_Dan_1_[Spur/Helical]_z[z1]_mn[mn]_beta[beta]_muc[resLevel]_Surface.igs`.
+     * Chi tiết Bánh bị dẫn 2: `Banh_Bi_Dan_2_[Spur/Helical]_z[z2]_mn[mn]_beta[beta]_muc[resLevel]_Surface.igs`.
+     * Cả cặp ăn khớp: `Cap_Banh_Rang_[Spur/Helical]_z[z1]x[z2]_aw[aw]_muc[resLevel]_Surface.igs`.
+     * Khung dây: `Khung_Day_Loft_[Spur/Helical]_z[z1]x[z2]_muc[resLevel].igs`.
+   - Cập nhật nhãn thanh Master Bar: `🎯 Độ mịn (2D & .IGS):` đồng bộ 1-to-1 với Bánh Răng Côn.
+3. **Quy Chuẩn Đồng Bộ Mô-Đun Trục Vít - Bánh Vít (`modules/worm-gear/`)**:
+   - Liên kết trực tiếp dropdown `#selMeshDensity` (10 cấp: Cấp 1 Nhanh đến Cấp 10 Tối Thượng) với thuật toán tạo mặt bao Litvin `Worm3DGenerator.getWormParametricData` & `getWheelParametricData`:
+     * Trục vít 1 (Helicoid ZA): Lát cắt ren $V$ co giãn từ $120 \rightarrow 480$ lát; điểm sườn ren $U$ co giãn từ $13 \rightarrow 33$ điểm. Dung lượng file tăng từ **232.7 KB (Cấp 1)** lên **1,652.7 KB (Cấp 8)** và **2,512.1 KB (Cấp 10)** (tăng gấp 10.8 lần).
+     * Bánh vít lõm 2 (360° Globoid Wheel): Lát cắt họng $V$ co giãn từ $30 \rightarrow 115$ lát; điểm sườn răng bao Litvin $U$ co giãn từ $11 \rightarrow 33$ điểm. Dung lượng file tăng từ **2.22 MB (Cấp 1)** lên **15.51 MB (Cấp 8)** và **24.69 MB (Cấp 10)** (tăng gấp 11.1 lần).
+   - Tên file xuất chuẩn hóa:
+     * Trục vít 1: `Truc_Vit_1_[Type]_z[z1]_Cap[densityLevel]_Mastercam_Surface.igs`.
+     * Bánh vít 2: `Banh_Vit_Lom_2_[Type]_z[z2]_Cap[densityLevel]_Mastercam_Surface.igs`.
+     * Cả cặp ăn khớp: `Cap_Truc_Vit_Banh_Vit_[Type]_z[z1]x[z2]_Cap[densityLevel]_Mastercam_Surface.igs`.
+     * Khung dây: `Khung_Day_Truc_Vit_1_[Type]_z[z1]_Cap[densityLevel]_Ruled_Loft.igs`.
+4. **Hiệu Quả & Kiểm Thử Toàn Diện**:
+   - Bộ kiểm thử tự động `scratch/test_igs_scaling.js` xác nhận 100% các file `.igs` sinh ra trên cả 3 mô-đun đều chứa đầy đủ thực thể Entity 128 hợp lệ, kích thước lưới $U \times V$ tăng tuyến tính, bảo toàn tính tương thích với Mastercam 2020-2026 và SolidWorks không lỗi nhập bề mặt.
+

@@ -4099,9 +4099,27 @@ const Gear3DGenerator = {
         const hand = opt.hand !== undefined ? opt.hand : 1;
         const twistRate = isHelical ? (hand * (2.0 * Math.tan(betaRad)) / d) : 0.0;
 
-        const noPtHead = opt.noPtHead || 8;
-        const noPtEv = opt.noPtEv || 20;
-        const numSlices = opt.numSlices || (isHelical ? 32 : 16);
+        const lvl = Math.max(1, Math.min(11, parseInt(opt.resLevel) || 6));
+        // 11-Level 2D-Linked Resolution Presets for IGES NURBS Surface Grid (U x V)
+        const igesGridPresets = {
+            1:  { slicesSpur: 10, slicesHelical: 16, noPtEv: 16, noPtHead: 6,  rootPts: 6  },
+            2:  { slicesSpur: 12, slicesHelical: 20, noPtEv: 18, noPtHead: 6,  rootPts: 6  },
+            3:  { slicesSpur: 14, slicesHelical: 24, noPtEv: 20, noPtHead: 7,  rootPts: 7  },
+            4:  { slicesSpur: 16, slicesHelical: 28, noPtEv: 24, noPtHead: 8,  rootPts: 8  },
+            5:  { slicesSpur: 18, slicesHelical: 32, noPtEv: 28, noPtHead: 8,  rootPts: 8  },
+            6:  { slicesSpur: 20, slicesHelical: 36, noPtEv: 32, noPtHead: 9,  rootPts: 9  }, // Chuẩn gốc x3
+            7:  { slicesSpur: 24, slicesHelical: 42, noPtEv: 36, noPtHead: 10, rootPts: 10 },
+            8:  { slicesSpur: 28, slicesHelical: 48, noPtEv: 42, noPtHead: 10, rootPts: 10 },
+            9:  { slicesSpur: 32, slicesHelical: 54, noPtEv: 48, noPtHead: 11, rootPts: 11 },
+            10: { slicesSpur: 36, slicesHelical: 60, noPtEv: 56, noPtHead: 12, rootPts: 12 },
+            11: { slicesSpur: 40, slicesHelical: 64, noPtEv: 64, noPtHead: 14, rootPts: 13 }
+        };
+        const igesPreset = igesGridPresets[lvl] || igesGridPresets[6];
+        const defaultSlices = isHelical ? igesPreset.slicesHelical : igesPreset.slicesSpur;
+        const numSlices = opt.numSlices !== undefined ? Math.max(6, parseInt(opt.numSlices)) : defaultSlices;
+        const noPtHead = opt.noPtHead !== undefined ? opt.noPtHead : igesPreset.noPtHead;
+        const noPtEv = opt.noPtEv !== undefined ? opt.noPtEv : igesPreset.noPtEv;
+        const rootPts = opt.rootPts !== undefined ? opt.rootPts : igesPreset.rootPts;
         const pitchAngle = (2.0 * Math.PI) / z;
 
         // Calculate exact tooth half profile via MitcalcToothSolver
@@ -4163,7 +4181,6 @@ const Gear3DGenerator = {
                 const thRootR = phi0 + Math.atan2(ptRoot.x, ptRoot.y);
                 const thRootNextL = (phi0 + pitchAngle) - Math.atan2(ptRoot.x, ptRoot.y);
                 const rf = df * 0.5;
-                const rootPts = 6;
                 for (let t = 0; t <= rootPts; t++) {
                     const frac = t / rootPts;
                     const th = thRootR + frac * (thRootNextL - thRootR);
@@ -5761,9 +5778,12 @@ class Gear3DVisualizer {
     /**
      * Extracts true parametric B-Spline surfaces and wireframe profile curves for Mastercam IGES export (Spur & Helical Gears).
      * @param {string} type - 'pinion', 'gear', 'assembly', or 'curves'
+     * @param {number} resLevel - 1 to 11 (linked 1-to-1 with 2D profile resolution selector)
      */
-    getParametricData(type = 'pinion') {
+    getParametricData(type = 'pinion', resLevel = 6) {
         if (!this.geom) return { surfaces: [], curves: [] };
+
+        const lvl = Math.max(1, Math.min(11, parseInt(resLevel) || 6));
 
         const base1 = {
             z: this.geom.z1,
@@ -5779,6 +5799,7 @@ class Gear3DVisualizer {
             hand: +1,
             isPinion: true,
             level: 1,
+            resLevel: lvl,
             exportAllTeeth: true,
             includeCurves: (type === 'curves')
         };
@@ -5797,6 +5818,7 @@ class Gear3DVisualizer {
             hand: -1,
             isPinion: false,
             level: 2,
+            resLevel: lvl,
             exportAllTeeth: true,
             includeCurves: (type === 'curves')
         };
@@ -8477,12 +8499,13 @@ class SpurGearUI {
         }
 
         if (format === 'iges') {
-            const igesData = this.visualizer3D.getParametricData(target);
+            const resLevel = this.profileResolution || (this.canvasController ? this.canvasController.profileResolution : 6);
+            const igesData = this.visualizer3D.getParametricData(target, resLevel);
             let igesFilename = '';
             if (target === 'curves') {
-                igesFilename = `Khung_Day_Loft_${typeStr}_z${g.z1}x${g.z2}.igs`;
+                igesFilename = `Khung_Day_Loft_${typeStr}_z${g.z1}x${g.z2}_muc${resLevel}.igs`;
             } else {
-                igesFilename = `${filenameBase}_Surface.igs`;
+                igesFilename = `${filenameBase}_muc${resLevel}_Surface.igs`;
             }
             return Gear3DExporter.exportIGES(igesData, igesFilename, true);
         }

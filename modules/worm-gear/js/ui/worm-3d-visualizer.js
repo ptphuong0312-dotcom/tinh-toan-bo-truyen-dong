@@ -610,16 +610,18 @@ class Worm3DVisualizer {
     /**
      * Extracts true parametric B-Spline surfaces and wireframe profile curves for Mastercam IGES export.
      * @param {string} type - 'worm', 'wheel', 'assembly', or 'curves_worm'
+     * @param {number} densityLevel - 1 to 10 (linked to #selMeshDensity)
      */
-    getParametricData(type = 'worm') {
+    getParametricData(type = 'worm', densityLevel = 8) {
         if (!this.geom || typeof Worm3DGenerator === 'undefined') return { surfaces: [], curves: [] };
 
+        const lvl = Math.max(1, Math.min(10, parseInt(densityLevel || this.meshDensityLevel) || 8));
         const a = this.centerDistA || parseFloat(this.geom.a) || 103.3663;
         const L = parseFloat(this.geom.L) || 56.0;
         const b2H = parseFloat(this.geom.b2H) || 33.57;
 
         if (type === 'worm' || type === 'pinion') {
-            const data = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { includeCurves: false }));
+            const data = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { densityLevel: lvl, includeCurves: false }));
             data.curves = [{
                 label: 'AXIS_W1',
                 points: [[-L * 0.5 - 15, 0, 0], [L * 0.5 + 15, 0, 0]],
@@ -630,7 +632,7 @@ class Worm3DVisualizer {
         }
 
         if (type === 'wheel' || type === 'gear') {
-            const data = Worm3DGenerator.getWheelParametricData(Object.assign({}, this.geom, { exportAllTeeth: true, includeCurves: false }));
+            const data = Worm3DGenerator.getWheelParametricData(Object.assign({}, this.geom, { densityLevel: lvl, exportAllTeeth: true, includeCurves: false }));
             data.curves = [{
                 label: 'AXIS_W2',
                 points: [[0, 0, -b2H * 0.5 - 15], [0, 0, b2H * 0.5 + 15]],
@@ -641,7 +643,7 @@ class Worm3DVisualizer {
         }
 
         if (type === 'curves_worm') {
-            const data = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { curvesOnly: true, includeCurves: true, ptsPerCurve: 60, numProfiles: 11 }));
+            const data = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { densityLevel: lvl, curvesOnly: true, includeCurves: true, ptsPerCurve: 60, numProfiles: 11 }));
             return {
                 surfaces: [],
                 curves: [
@@ -657,8 +659,8 @@ class Worm3DVisualizer {
         }
 
         // Assembly Pair: Worm 1 translated along Y by -a, Worm Wheel 2 at origin (full 360-deg)
-        const wormData = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { includeCurves: false }));
-        const wheelData = Worm3DGenerator.getWheelParametricData(Object.assign({}, this.geom, { exportAllTeeth: true, includeCurves: false }));
+        const wormData = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { densityLevel: lvl, includeCurves: false }));
+        const wheelData = Worm3DGenerator.getWheelParametricData(Object.assign({}, this.geom, { densityLevel: lvl, exportAllTeeth: true, includeCurves: false }));
 
         const shiftedSurfaces = wormData.surfaces.map(s => ({
             label: s.label,

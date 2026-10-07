@@ -1991,4 +1991,24 @@ ho_{f0}$.
    - Đóng gói đồng bộ: `python tools/bundle_all.py` cập nhật 3 bundle sạch sẽ.
    - Kiểm thử Playwright tự động: Xác thực hiển thị 2D & 3D trên cả 3 mô-đun, 0 lỗi Console, 0 lỗi WebGL.
 
+---
+
+### Quy Tắc 88: Quy Chuẩn Đồng Bộ Hóa Độ Mịn Động & Định Dạng Xuất File .IGS (IGES 5.3 Entity 128 B-Spline Surface) Trên Toàn Bộ 3 Mô-Đun Cơ Khí
+**Ngày áp dụng**: 07/10/2026  
+**Modules**: Bánh Răng Trụ (`modules/spur-gear/`), Bánh Răng Côn (`modules/bevel-gear/`), Trục Vít - Bánh Vít (`modules/worm-gear/`)  
+1. **Mô-đun Bánh Răng Trụ (`modules/spur-gear/`)**:
+   - Liên kết trực tiếp `#selProfileResolutionCanvas` (11 mức) với thuật toán dựng mặt sườn `Gear3DGenerator.getGearParametricData(opt)` qua `igesGridPresets`:
+     * Bánh răng trụ thẳng: Lát cắt $V$ co giãn từ $10 \rightarrow 40$; điểm $U$ co giãn từ $17 \rightarrow 65$. File size: 437.6 KB (Mức 1) $\rightarrow$ 1,478.7 KB (Mức 6) $\rightarrow$ 5,352.9 KB (Mức 11) (tăng gấp 12.2 lần).
+     * Bánh răng trụ nghiêng: Lát cắt $V$ co giãn từ $16 \rightarrow 64$; điểm $U$ co giãn từ $17 \rightarrow 65$. File size: 676.6 KB (Mức 1) $\rightarrow$ 2,639.9 KB (Mức 6) $\rightarrow$ 8,511.4 KB (Mức 11) (tăng gấp 12.6 lần).
+   - Tên file xuất tự động thêm hậu tố `_muc${resLevel}_Surface.igs`.
+   - Cập nhật nhãn thanh Master Bar: `🎯 Độ mịn (2D & .IGS):` đồng bộ 1-to-1 với Bánh Răng Côn.
+2. **Mô-đun Trục Vít - Bánh Vít (`modules/worm-gear/`)**:
+   - Liên kết trực tiếp `#selMeshDensity` (10 cấp) với `Worm3DGenerator.getWormParametricData` & `getWheelParametricData`:
+     * Trục vít 1 (Helicoid ZA): Lát cắt $V$ co giãn từ $120 \rightarrow 480$; điểm $U$ co giãn từ $13 \rightarrow 33$. File size: 232.7 KB (Cấp 1) $\rightarrow$ 1,652.7 KB (Cấp 8) $\rightarrow$ 2,512.1 KB (Cấp 10) (tăng gấp 10.8 lần).
+     * Bánh vít lõm 2 (Globoid Wheel 360°): Lát cắt $V$ co giãn từ $30 \rightarrow 115$; điểm $U$ co giãn từ $11 \rightarrow 33$. File size: 2.22 MB (Cấp 1) $\rightarrow$ 15.51 MB (Cấp 8) $\rightarrow$ 24.69 MB (Cấp 10) (tăng gấp 11.1 lần).
+   - Tên file xuất tự động thêm hậu tố `_Cap${densityLevel}_...igs`.
+3. **Kiểm Thử Toàn Diện**:
+   - Kiểm thử tự động `test_igs_scaling.js`: Xác thực kích thước lưới và dung lượng file tăng tuyến tính, 100% tệp IGES Entity 128 hợp lệ, mở mượt mà trong Mastercam & SolidWorks.
+
+
 

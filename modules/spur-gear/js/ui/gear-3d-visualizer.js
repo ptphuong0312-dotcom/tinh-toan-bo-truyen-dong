@@ -751,9 +751,12 @@ export class Gear3DVisualizer {
     /**
      * Extracts true parametric B-Spline surfaces and wireframe profile curves for Mastercam IGES export (Spur & Helical Gears).
      * @param {string} type - 'pinion', 'gear', 'assembly', or 'curves'
+     * @param {number} resLevel - 1 to 11 (linked 1-to-1 with 2D profile resolution selector)
      */
-    getParametricData(type = 'pinion') {
+    getParametricData(type = 'pinion', resLevel = 6) {
         if (!this.geom) return { surfaces: [], curves: [] };
+
+        const lvl = Math.max(1, Math.min(11, parseInt(resLevel) || 6));
 
         const base1 = {
             z: this.geom.z1,
@@ -769,6 +772,7 @@ export class Gear3DVisualizer {
             hand: +1,
             isPinion: true,
             level: 1,
+            resLevel: lvl,
             exportAllTeeth: true,
             includeCurves: (type === 'curves')
         };
@@ -787,6 +791,7 @@ export class Gear3DVisualizer {
             hand: -1,
             isPinion: false,
             level: 2,
+            resLevel: lvl,
             exportAllTeeth: true,
             includeCurves: (type === 'curves')
         };

@@ -6100,11 +6100,25 @@ const Worm3DGenerator = {
         const tanA = Math.tan(mc.MC_alfa_rad);
         const handSign = mc.handSign;
 
-        // Ultra-precision sampling: 360 slices along length L for sub-micron helix curvature
-        const numSlices = opt.numWormSlices || 360;
-        const ptsR = opt.ptsPerFlank || 20;
-        const wormTipPts = opt.wormTipPts || 24;
-        const wormRootPts = opt.wormRootPts || 24;
+        const lvl = Math.max(1, Math.min(10, parseInt(opt.densityLevel) || 8));
+        // 10-Level Resolution Presets for Worm 1 IGES Surface Grid (U x V)
+        const wormIgesPresets = {
+            1:  { numWormSlices: 120, ptsPerFlank: 12, wormTipPts: 10, wormRootPts: 10 },
+            2:  { numWormSlices: 160, ptsPerFlank: 14, wormTipPts: 12, wormRootPts: 12 },
+            3:  { numWormSlices: 200, ptsPerFlank: 16, wormTipPts: 14, wormRootPts: 14 },
+            4:  { numWormSlices: 240, ptsPerFlank: 18, wormTipPts: 16, wormRootPts: 16 },
+            5:  { numWormSlices: 280, ptsPerFlank: 20, wormTipPts: 18, wormRootPts: 18 },
+            6:  { numWormSlices: 320, ptsPerFlank: 22, wormTipPts: 20, wormRootPts: 20 },
+            7:  { numWormSlices: 360, ptsPerFlank: 24, wormTipPts: 22, wormRootPts: 22 },
+            8:  { numWormSlices: 400, ptsPerFlank: 26, wormTipPts: 24, wormRootPts: 24 }, // Chuẩn gốc mặc định
+            9:  { numWormSlices: 440, ptsPerFlank: 28, wormTipPts: 28, wormRootPts: 28 },
+            10: { numWormSlices: 480, ptsPerFlank: 32, wormTipPts: 32, wormRootPts: 32 }
+        };
+        const preset = wormIgesPresets[lvl] || wormIgesPresets[8];
+        const numSlices = opt.numWormSlices !== undefined ? Math.max(20, parseInt(opt.numWormSlices)) : preset.numWormSlices;
+        const ptsR = opt.ptsPerFlank !== undefined ? Math.max(6, parseInt(opt.ptsPerFlank)) : preset.ptsPerFlank;
+        const wormTipPts = opt.wormTipPts !== undefined ? Math.max(6, parseInt(opt.wormTipPts)) : preset.wormTipPts;
+        const wormRootPts = opt.wormRootPts !== undefined ? Math.max(6, parseInt(opt.wormRootPts)) : preset.wormRootPts;
 
         const surfaces = [];
         const curves = [];
@@ -6251,10 +6265,25 @@ const Worm3DGenerator = {
         mc.surfaceOnly = true;
         mc.contactMode = opt.contactMode || 'theory';
 
-        const numSlices = opt.numWheelSlices || 60;
-        const ptsR = opt.ptsPerFlank || 16;
-        const wheelTipPts = opt.wheelTipPts || 16;
-        const wheelRootPts = opt.wheelRootPts || 16;
+        const lvl = Math.max(1, Math.min(10, parseInt(opt.densityLevel) || 8));
+        // 10-Level Resolution Presets for Worm Wheel 2 IGES Surface Grid (U x V)
+        const wheelIgesPresets = {
+            1:  { numWheelSlices: 30,  ptsPerFlank: 10, wheelTipPts: 10, wheelRootPts: 10 },
+            2:  { numWheelSlices: 38,  ptsPerFlank: 12, wheelTipPts: 12, wheelRootPts: 12 },
+            3:  { numWheelSlices: 46,  ptsPerFlank: 14, wheelTipPts: 14, wheelRootPts: 14 },
+            4:  { numWheelSlices: 54,  ptsPerFlank: 16, wheelTipPts: 16, wheelRootPts: 16 },
+            5:  { numWheelSlices: 64,  ptsPerFlank: 18, wheelTipPts: 18, wheelRootPts: 18 },
+            6:  { numWheelSlices: 74,  ptsPerFlank: 20, wheelTipPts: 20, wheelRootPts: 20 },
+            7:  { numWheelSlices: 84,  ptsPerFlank: 22, wheelTipPts: 22, wheelRootPts: 22 },
+            8:  { numWheelSlices: 95,  ptsPerFlank: 24, wheelTipPts: 24, wheelRootPts: 24 }, // Chuẩn gốc mặc định
+            9:  { numWheelSlices: 105, ptsPerFlank: 28, wheelTipPts: 28, wheelRootPts: 28 },
+            10: { numWheelSlices: 115, ptsPerFlank: 32, wheelTipPts: 32, wheelRootPts: 32 }
+        };
+        const preset = wheelIgesPresets[lvl] || wheelIgesPresets[8];
+        const numSlices = opt.numWheelSlices !== undefined ? Math.max(10, parseInt(opt.numWheelSlices)) : preset.numWheelSlices;
+        const ptsR = opt.ptsPerFlank !== undefined ? Math.max(6, parseInt(opt.ptsPerFlank)) : preset.ptsPerFlank;
+        const wheelTipPts = opt.wheelTipPts !== undefined ? Math.max(6, parseInt(opt.wheelTipPts)) : preset.wheelTipPts;
+        const wheelRootPts = opt.wheelRootPts !== undefined ? Math.max(6, parseInt(opt.wheelRootPts)) : preset.wheelRootPts;
         const pitchAngle = (2.0 * Math.PI) / z2;
 
         const surfaces = [];
@@ -7695,16 +7724,18 @@ class Worm3DVisualizer {
     /**
      * Extracts true parametric B-Spline surfaces and wireframe profile curves for Mastercam IGES export.
      * @param {string} type - 'worm', 'wheel', 'assembly', or 'curves_worm'
+     * @param {number} densityLevel - 1 to 10 (linked to #selMeshDensity)
      */
-    getParametricData(type = 'worm') {
+    getParametricData(type = 'worm', densityLevel = 8) {
         if (!this.geom || typeof Worm3DGenerator === 'undefined') return { surfaces: [], curves: [] };
 
+        const lvl = Math.max(1, Math.min(10, parseInt(densityLevel || this.meshDensityLevel) || 8));
         const a = this.centerDistA || parseFloat(this.geom.a) || 103.3663;
         const L = parseFloat(this.geom.L) || 56.0;
         const b2H = parseFloat(this.geom.b2H) || 33.57;
 
         if (type === 'worm' || type === 'pinion') {
-            const data = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { includeCurves: false }));
+            const data = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { densityLevel: lvl, includeCurves: false }));
             data.curves = [{
                 label: 'AXIS_W1',
                 points: [[-L * 0.5 - 15, 0, 0], [L * 0.5 + 15, 0, 0]],
@@ -7715,7 +7746,7 @@ class Worm3DVisualizer {
         }
 
         if (type === 'wheel' || type === 'gear') {
-            const data = Worm3DGenerator.getWheelParametricData(Object.assign({}, this.geom, { exportAllTeeth: true, includeCurves: false }));
+            const data = Worm3DGenerator.getWheelParametricData(Object.assign({}, this.geom, { densityLevel: lvl, exportAllTeeth: true, includeCurves: false }));
             data.curves = [{
                 label: 'AXIS_W2',
                 points: [[0, 0, -b2H * 0.5 - 15], [0, 0, b2H * 0.5 + 15]],
@@ -7726,7 +7757,7 @@ class Worm3DVisualizer {
         }
 
         if (type === 'curves_worm') {
-            const data = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { curvesOnly: true, includeCurves: true, ptsPerCurve: 60, numProfiles: 11 }));
+            const data = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { densityLevel: lvl, curvesOnly: true, includeCurves: true, ptsPerCurve: 60, numProfiles: 11 }));
             return {
                 surfaces: [],
                 curves: [
@@ -7742,8 +7773,8 @@ class Worm3DVisualizer {
         }
 
         // Assembly Pair: Worm 1 translated along Y by -a, Worm Wheel 2 at origin (full 360-deg)
-        const wormData = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { includeCurves: false }));
-        const wheelData = Worm3DGenerator.getWheelParametricData(Object.assign({}, this.geom, { exportAllTeeth: true, includeCurves: false }));
+        const wormData = Worm3DGenerator.getWormParametricData(Object.assign({}, this.geom, { densityLevel: lvl, includeCurves: false }));
+        const wheelData = Worm3DGenerator.getWheelParametricData(Object.assign({}, this.geom, { densityLevel: lvl, exportAllTeeth: true, includeCurves: false }));
 
         const shiftedSurfaces = wormData.surfaces.map(s => ({
             label: s.label,
@@ -8659,16 +8690,18 @@ class WormUIController {
 
         // Native Mastercam IGES 5.3 Surface / Wireframe Export
         if (format === 'iges' || format === 'iges_curves') {
-            const pData = this.visualizer3D.getParametricData(format === 'iges_curves' ? 'curves_worm' : target);
+            const selDensity = document.getElementById('selMeshDensity');
+            const densityLevel = selDensity ? (parseInt(selDensity.value, 10) || 8) : 8;
+            const pData = this.visualizer3D.getParametricData(format === 'iges_curves' ? 'curves_worm' : target, densityLevel);
             let igsFilename = '';
             if (format === 'iges_curves') {
-                igsFilename = `Khung_Day_Truc_Vit_1_${typeCode}_z${g.z1}_Ruled_Loft.igs`;
+                igsFilename = `Khung_Day_Truc_Vit_1_${typeCode}_z${g.z1}_Cap${densityLevel}_Ruled_Loft.igs`;
             } else if (target === 'worm') {
-                igsFilename = `Truc_Vit_1_${typeCode}_z${g.z1}_Mastercam_Surface.igs`;
+                igsFilename = `Truc_Vit_1_${typeCode}_z${g.z1}_Cap${densityLevel}_Mastercam_Surface.igs`;
             } else if (target === 'wheel') {
-                igsFilename = `Banh_Vit_Lom_2_${typeCode}_z${g.z2}_Mastercam_Surface.igs`;
+                igsFilename = `Banh_Vit_Lom_2_${typeCode}_z${g.z2}_Cap${densityLevel}_Mastercam_Surface.igs`;
             } else {
-                igsFilename = `Cap_Truc_Vit_Banh_Vit_${typeCode}_z${g.z1}x${g.z2}_Mastercam_Surface.igs`;
+                igsFilename = `Cap_Truc_Vit_Banh_Vit_${typeCode}_z${g.z1}x${g.z2}_Cap${densityLevel}_Mastercam_Surface.igs`;
             }
             return Worm3DExporter.exportIGES(pData, igsFilename, true);
         }

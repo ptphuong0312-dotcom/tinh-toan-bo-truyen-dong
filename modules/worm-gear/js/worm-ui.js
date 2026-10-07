@@ -870,16 +870,18 @@ class WormUIController {
 
         // Native Mastercam IGES 5.3 Surface / Wireframe Export
         if (format === 'iges' || format === 'iges_curves') {
-            const pData = this.visualizer3D.getParametricData(format === 'iges_curves' ? 'curves_worm' : target);
+            const selDensity = document.getElementById('selMeshDensity');
+            const densityLevel = selDensity ? (parseInt(selDensity.value, 10) || 8) : 8;
+            const pData = this.visualizer3D.getParametricData(format === 'iges_curves' ? 'curves_worm' : target, densityLevel);
             let igsFilename = '';
             if (format === 'iges_curves') {
-                igsFilename = `Khung_Day_Truc_Vit_1_${typeCode}_z${g.z1}_Ruled_Loft.igs`;
+                igsFilename = `Khung_Day_Truc_Vit_1_${typeCode}_z${g.z1}_Cap${densityLevel}_Ruled_Loft.igs`;
             } else if (target === 'worm') {
-                igsFilename = `Truc_Vit_1_${typeCode}_z${g.z1}_Mastercam_Surface.igs`;
+                igsFilename = `Truc_Vit_1_${typeCode}_z${g.z1}_Cap${densityLevel}_Mastercam_Surface.igs`;
             } else if (target === 'wheel') {
-                igsFilename = `Banh_Vit_Lom_2_${typeCode}_z${g.z2}_Mastercam_Surface.igs`;
+                igsFilename = `Banh_Vit_Lom_2_${typeCode}_z${g.z2}_Cap${densityLevel}_Mastercam_Surface.igs`;
             } else {
-                igsFilename = `Cap_Truc_Vit_Banh_Vit_${typeCode}_z${g.z1}x${g.z2}_Mastercam_Surface.igs`;
+                igsFilename = `Cap_Truc_Vit_Banh_Vit_${typeCode}_z${g.z1}x${g.z2}_Cap${densityLevel}_Mastercam_Surface.igs`;
             }
             return Worm3DExporter.exportIGES(pData, igsFilename, true);
         }
