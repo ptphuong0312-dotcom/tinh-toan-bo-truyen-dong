@@ -869,6 +869,8 @@ class WormUIController {
         const g = this.latestResult;
         const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH' };
         const typeCode = typeNames[g.toothType] || 'ZN';
+        const archNames = { 1: '', 2: '_Duplex', 3: '_Globoid' };
+        const archSuffix = archNames[g.wormArch] || '';
 
         // Native Mastercam IGES 5.3 Surface / Wireframe Export
         if (format === 'iges' || format === 'iges_curves') {
@@ -877,13 +879,13 @@ class WormUIController {
             const pData = this.visualizer3D.getParametricData(format === 'iges_curves' ? 'curves_worm' : target, densityLevel);
             let igsFilename = '';
             if (format === 'iges_curves') {
-                igsFilename = `Khung_Day_Truc_Vit_1_${typeCode}_z${g.z1}_Cap${densityLevel}_Ruled_Loft.igs`;
+                igsFilename = `Khung_Day_Truc_Vit_1_${typeCode}${archSuffix}_z${g.z1}_Cap${densityLevel}_Ruled_Loft.igs`;
             } else if (target === 'worm') {
-                igsFilename = `Truc_Vit_1_${typeCode}_z${g.z1}_Cap${densityLevel}_Mastercam_Surface.igs`;
+                igsFilename = `Truc_Vit_1_${typeCode}${archSuffix}_z${g.z1}_Cap${densityLevel}_Mastercam_Surface.igs`;
             } else if (target === 'wheel') {
                 igsFilename = `Banh_Vit_Lom_2_${typeCode}_z${g.z2}_Cap${densityLevel}_Mastercam_Surface.igs`;
             } else {
-                igsFilename = `Cap_Truc_Vit_Banh_Vit_${typeCode}_z${g.z1}x${g.z2}_Cap${densityLevel}_Mastercam_Surface.igs`;
+                igsFilename = `Cap_Truc_Vit_Banh_Vit_${typeCode}${archSuffix}_z${g.z1}x${g.z2}_Cap${densityLevel}_Mastercam_Surface.igs`;
             }
             return Worm3DExporter.exportIGES(pData, igsFilename, true);
         }
@@ -895,14 +897,14 @@ class WormUIController {
         let filenameBase = '';
         let partName = '';
         if (target === 'worm') {
-            filenameBase = `Truc_Vit_1_${typeCode}_z${g.z1}_mn${g.mn.toFixed(2)}`;
-            partName = `WORM_1_${typeCode}_Z${g.z1}`;
+            filenameBase = `Truc_Vit_1_${typeCode}${archSuffix}_z${g.z1}_mn${g.mn.toFixed(2)}`;
+            partName = `WORM_1_${typeCode}${archSuffix.toUpperCase()}_Z${g.z1}`;
         } else if (target === 'wheel') {
             filenameBase = `Banh_Vit_Lom_2_${typeCode}_z${g.z2}_mn${g.mn.toFixed(2)}`;
             partName = `WORM_WHEEL_2_${typeCode}_Z${g.z2}`;
         } else {
-            filenameBase = `Cap_Truc_Vit_Banh_Vit_${typeCode}_z${g.z1}x${g.z2}_a${g.a.toFixed(1)}`;
-            partName = `WORM_GEAR_ASSEMBLY_${typeCode}_Z${g.z1}x${g.z2}`;
+            filenameBase = `Cap_Truc_Vit_Banh_Vit_${typeCode}${archSuffix}_z${g.z1}x${g.z2}_a${g.a.toFixed(1)}`;
+            partName = `WORM_GEAR_ASSEMBLY_${typeCode}${archSuffix.toUpperCase()}_Z${g.z1}x${g.z2}`;
         }
 
         if (isSurface) {
@@ -955,6 +957,9 @@ class WormUIController {
             rf1: this.parseVal('inp_rf1', 0.3799508411451843),
 
             // Section 4.0
+            wormArch: parseInt(document.getElementById('sel_wormArch')?.value || '1', 10),
+            delta_mx: this.parseVal('inp_delta_mx', 0.08),
+            delta_x_adj: this.parseVal('inp_delta_x_adj', 1.0),
             z1: Math.max(1, Math.round(this.parseVal('inp_z1', 1))),
             alfa_temp: this.parseVal('inp_alfa_temp', 20.0),
             calc_q: calc_q,
@@ -1019,7 +1024,10 @@ class WormUIController {
         const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH' };
         const typeCode = typeNames[res.toothType] || 'ZN';
         const orientStr = res.teethOrientation === 2 ? 'Ren Trái' : 'Ren Phải';
-        this.setVal('badge3DType', `🌀 Trục Vít - Bánh Vít Lõm (${typeCode} - ${orientStr})`);
+        let archTag = '';
+        if (res.wormArch === 2) archTag = ' [Duplex Dual-Lead]';
+        else if (res.wormArch === 3) archTag = ' [Globoid Hourglass]';
+        this.setVal('badge3DType', `🌀 Trục Vít - Bánh Vít Lõm (${typeCode} - ${orientStr}${archTag})`);
         this.setVal('badge3DRatio', `${res.i.toFixed(2)} (z1=${res.z1}, z2=${res.z2})`);
         this.setVal('badge3DA', `${res.a.toFixed(3)} mm`);
         this.setVal('badge3DGama', `${res.gama.toFixed(3)}°`);
@@ -1081,6 +1089,41 @@ class WormUIController {
         this.setVal('out_rf2', r.rf2, 4);
 
         // Section 4.0
+        const wormArch = r.wormArch || 1;
+        const rowDuplexParams = document.getElementById('row_duplex_params');
+        const rowDuplexAdj = document.getElementById('row_duplex_adj');
+        const rowDuplexFlanks = document.getElementById('row_duplex_flanks');
+        const rowGloboidThroat = document.getElementById('row_globoid_throat');
+        const rowGloboidContact = document.getElementById('row_globoid_contact');
+        const lblWormArchDesc = document.getElementById('lbl_wormArch_desc');
+
+        if (rowDuplexParams) rowDuplexParams.style.display = (wormArch === 2) ? 'table-row' : 'none';
+        if (rowDuplexAdj) rowDuplexAdj.style.display = (wormArch === 2) ? 'table-row' : 'none';
+        if (rowDuplexFlanks) rowDuplexFlanks.style.display = (wormArch === 2) ? 'table-row' : 'none';
+        if (rowGloboidThroat) rowGloboidThroat.style.display = (wormArch === 3) ? 'table-row' : 'none';
+        if (rowGloboidContact) rowGloboidContact.style.display = (wormArch === 3) ? 'table-row' : 'none';
+
+        if (lblWormArchDesc) {
+            if (wormArch === 2) lblWormArchDesc.textContent = 'Trục Duplex (Ott / Flender)';
+            else if (wormArch === 3) lblWormArchDesc.textContent = 'Trục Glôbôit (Hindley / Cone-Drive)';
+            else lblWormArchDesc.textContent = 'Tiêu chuẩn DIN 3975';
+        }
+
+        if (wormArch === 2) {
+            this.setVal('out_k_dup', (r.k_dup || 0.02).toFixed(4));
+            this.setVal('out_backlash_adj', `${(r.backlash_adj_microns || 20.0).toFixed(1)} μm`);
+            this.setVal('out_mx_R', `${(r.mx_R || 4.04).toFixed(3)} mm`);
+            this.setVal('out_gama_R', `${(r.gama_R || 6.776).toFixed(3)}°`);
+            this.setVal('out_mx_L', `${(r.mx_L || 3.96).toFixed(3)} mm`);
+            this.setVal('out_gama_L', `${(r.gama_L || 6.643).toFixed(3)}°`);
+        } else if (wormArch === 3) {
+            this.setVal('out_d1_min', `${(r.d1_min || r.d1).toFixed(2)} mm`);
+            this.setVal('out_R_throat', `${(r.R_throat || (r.d2 / 2.0)).toFixed(2)} mm`);
+            this.setVal('out_wrap_angle', `${(r.wrap_angle_deg || 37.9).toFixed(1)}°`);
+            this.setVal('out_teeth_contact', `${(r.teeth_contact || 4.2).toFixed(1)} răng`);
+            this.setVal('out_load_mult', `${(r.load_multiplier || 3.5).toFixed(1)}x`);
+        }
+
         this.setVal('out_z2', r.z2, 0);
         this.setVal('lbl_alfa_type', r.toothType === 1
             ? 'Góc ăn khớp dọc trục α₀ (4.10) — Hệ ZA'

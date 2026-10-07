@@ -3718,3 +3718,41 @@ ho_{f0}$.
   6. *Kiểm thử tự động Playwright*:
      - `scratch/test_worm_advanced_3d.py`: Kiểm thử chuyển đổi qua cả 5 kiểu ren (ZA, ZN, ZI, ZK, ZH) trên 3D WebGL với 41,508 tam giác trục vít và 462,720 tam giác bánh vít, đạt **PASS 100% với 0 lỗi console**.
      - `scratch/test_worm_cad_exports.py`: Xác nhận xuất thành công STL, STEP Solid (8,452 faces, 6.6 MB), IGES Surface (702 KB) cho cả ZI và ZH.
+
+---
+
+## 2026-10-07 - Quy Tắc 94: Phát Triển Toàn Diện Hệ Thống Trục Vít Bước Thay Đổi Duplex (Dual-Lead) & Trục Vít Lõm Globoid (Hourglass / Hindley / Cone-Drive) Cho Module 5 (Chuyên Sâu)
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  * *"Trục vít tôi nói tới chính là loại duplex và globoid. Bạn hãy xây dựng toàn diện cho tôi"*
+  * Phát triển toàn diện cả 2 hệ thống trục vít chuyên sâu: Trục vít bước thay đổi (Duplex / Dual-lead) và Trục vít lõm bao (Globoid / Hourglass / Hindley / Cone-Drive).
+  * Tuân thủ nghiêm ngặt nguyên tắc cách ly tuyệt đối (Rule 92): Chỉ phát triển trong `modules/worm-gear-advanced/`, bảo toàn 100% Module 3 cơ sở (`modules/worm-gear/`).
+- **Thực hiện kỹ thuật**:
+  1. *Hình học động học & Động lực học Duplex (Dual-Lead)*:
+     - Tích hợp tham số kiến trúc `wormArch` (1: Trụ, 2: Duplex, 3: Globoid) trong `worm-calc-engine.js`.
+     - Phân tách độc lập bước răng và mô-đun hai sườn: $m_{xR} = m_x + \Delta m_x/2$, $m_{xL} = m_x - \Delta m_x/2$.
+     - Tính toán chính xác $p_{xR}, p_{xL}, p_{zR}, p_{zL}, \gamma_R, \gamma_L$, hệ số bước lệch $k_{dup} = \Delta m_x / m_x$.
+     - Độ nhạy điều chỉnh khe hở cạnh răng: $\Delta j_t = \Delta x_{adj} \cdot k_{dup} \times 1000 \, (\mu\text{m/mm})$.
+     - Chiều dày răng biến thiên dọc trục: $s_x(x) = s_{x0} \pm x \cdot k_{dup}$.
+  2. *Hình học giải tích Trục vít Lõm Globoid (Hourglass / Hindley)*:
+     - Bán kính eo thắt danh nghĩa ôm vành bánh vít $R_{throat} = r_2 = d_2 / 2$.
+     - Bán kính chia mặt lõm biến thiên: $r_1(x) = a - \sqrt{\max(0, R_{throat}^2 - x^2)}$, cổ thắt tại $x = 0$ đạt $r_1(0) = a - r_2 = r_1$ ($d_{1,\min} = d_1$).
+     - Biên dạng đỉnh nón $r_{a1}(x) = r_1(x) + h_{a1}$, biên dạng đáy nón $r_{f1}(x) = r_1(x) - h_{f1}$.
+     - Góc ôm tiếp xúc: $2\delta_1 = 2 \arcsin((L/2)/R_{throat})$.
+     - Số răng đồng thời tiếp xúc: $z_c = 2\delta_1 / (360^\circ / z_2)$ (đạt 4.3 răng với $L=53.6\text{ mm}$, $z_2=40$).
+     - Hệ số nâng cao khả năng tải cơ học: $K_{load} \approx z_c / 1.2 \approx 3.6\times$.
+  3. *Mô hình hóa 3D Mesh & Parametric CAD Surface Engine*:
+     - Nâng cấp `worm-3d-generator.js` với `evalWormBlankRadius(x, mc)` và `evalWormRootRadius(x, mc)` ôm đường cong đồng hồ cát cho Globoid.
+     - Hàm `generateWormMesh`: Sinh hai đường xoắn ốc bước lệch $p_{zR} \ne p_{zL}$ cho Duplex; sinh mặt tròn xoay uốn lượn cổ thắt cho Globoid.
+     - Hàm `getWormParametricData`: Trích xuất lưới B-Spline surface đa chiều cho Mastercam IGES Entity 128 và STEP AP214 mang định danh `_Duplex` và `_Globoid`.
+  4. *Nâng cấp 2D Canvas & HUD Thẻ Thông Số Động*:
+     - `worm-canvas.js`: Vẽ chính xác mặt cắt dọc trục eo thắt uốn cong mượt mà cho Globoid, vẽ răng thuôn dày dần cho Duplex.
+     - Bổ sung thẻ HUD hiển thị các thông số động đặc thù (Backlash sensitivity, $m_{xR}/m_{xL}$, $\Delta j_t$, Góc ôm $2\delta_1$, Số răng tiếp xúc $z_c$, Bội số tải $K_{load}$).
+  5. *Giao diện người dùng & Điều khiển tương tác*:
+     - Thêm Row 4.0a `#sel_wormArch` dropdown (1: Trụ chuẩn, 2: Duplex bước lệch, 3: Globoid đồng hồ cát).
+     - Điều khiển hiển thị động các hàng 4.0b-4.0d cho Duplex và 4.0e-4.0f cho Globoid.
+     - Cập nhật 3D Badge phản ánh trung thực kiến trúc đang chọn.
+  6. *Kiểm thử tự động Playwright E2E (`scratch/test_duplex_globoid_playwright.py`)*:
+     - **100% ALL TESTS PASSED với 0 lỗi console / 0 cảnh báo JavaScript**.
+     - Đo đạc thực tế: Duplex $k_{dup} = 0.0200$, $\Delta j_t = 20.0\,\mu\text{m/mm}$, $m_{xR} = 4.040\text{ mm}$, $m_{xL} = 3.960\text{ mm}$.
+     - Đo đạc thực tế: Globoid $d_{1,\min} = 34.00\text{ mm}$, $R_{throat} = 80.00\text{ mm}$, $2\delta_1 = 39.1^\circ$, $z_c = 4.3\text{ răng}$, $K_{load} = 3.6\times$.
+     - Kiểm tra xuất CAD 3D: STEP Worm 15,620 tam giác, STL Assembly 510,116 tam giác, IGES 4 Surfaces.

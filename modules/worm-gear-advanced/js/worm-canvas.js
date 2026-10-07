@@ -800,12 +800,39 @@ class WormCanvasRenderer {
         ctx.strokeRect(toX(L / 2.0), toY(df1 / 2.0), th * scale, (df1 - ds) * 0.5 * scale);
         ctx.strokeRect(toX(L / 2.0), toY(-ds / 2.0), th * scale, (df1 - ds) * 0.5 * scale);
 
-        // Core cylinder (-L/2 to +L/2, -df1/2 to +df1/2)
+        const isGloboid = (g.wormArch === 3);
+        const isDuplex = (g.wormArch === 2);
+        const evalR1Globoid = (xVal) => {
+            const R_thr = g.R_throat || (g.d2 / 2.0);
+            const val = Math.max(0.0, R_thr * R_thr - xVal * xVal);
+            return g.a - Math.sqrt(val);
+        };
+
+        // Core cylinder (-L/2 to +L/2, -df1/2 to +df1/2 or hourglass body)
         ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
         ctx.strokeStyle = '#38bdf8';
         ctx.lineWidth = 1.6;
-        ctx.strokeRect(toX(-L / 2.0), toY(df1 / 2.0), L * scale, df1 * scale);
-        ctx.fillRect(toX(-L / 2.0), toY(df1 / 2.0), L * scale, df1 * scale);
+        if (isGloboid) {
+            ctx.beginPath();
+            const nCoreSteps = 24;
+            for (let s = 0; s <= nCoreSteps; s++) {
+                const xVal = -L / 2.0 + s * (L / nCoreSteps);
+                const rRoot = evalR1Globoid(xVal) - hf1;
+                if (s === 0) ctx.moveTo(toX(xVal), toY(rRoot));
+                else ctx.lineTo(toX(xVal), toY(rRoot));
+            }
+            for (let s = nCoreSteps; s >= 0; s--) {
+                const xVal = -L / 2.0 + s * (L / nCoreSteps);
+                const rRoot = -(evalR1Globoid(xVal) - hf1);
+                ctx.lineTo(toX(xVal), toY(rRoot));
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        } else {
+            ctx.strokeRect(toX(-L / 2.0), toY(df1 / 2.0), L * scale, df1 * scale);
+            ctx.fillRect(toX(-L / 2.0), toY(df1 / 2.0), L * scale, df1 * scale);
+        }
         ctx.restore();
 
         // 3. Teeth on Upper Flank (+y) and Lower Flank (-y)
@@ -816,15 +843,35 @@ class WormCanvasRenderer {
             ctx.save();
             ctx.beginPath();
             if (signY > 0) {
-                ctx.moveTo(toX(-L / 2.0), toY(df1 / 2.0));
-                ctx.lineTo(toX(-L / 2.0 + ch), toY(da1 / 2.0));
-                ctx.lineTo(toX(L / 2.0 - ch), toY(da1 / 2.0));
-                ctx.lineTo(toX(L / 2.0), toY(df1 / 2.0));
+                if (isGloboid) {
+                    ctx.moveTo(toX(-L / 2.0), toY(evalR1Globoid(-L / 2.0) - hf1));
+                    for (let s = 0; s <= 24; s++) {
+                        const xVal = -L / 2.0 + s * (L / 24.0);
+                        const rTip = evalR1Globoid(xVal) + ha1;
+                        ctx.lineTo(toX(xVal), toY(rTip));
+                    }
+                    ctx.lineTo(toX(L / 2.0), toY(evalR1Globoid(L / 2.0) - hf1));
+                } else {
+                    ctx.moveTo(toX(-L / 2.0), toY(df1 / 2.0));
+                    ctx.lineTo(toX(-L / 2.0 + ch), toY(da1 / 2.0));
+                    ctx.lineTo(toX(L / 2.0 - ch), toY(da1 / 2.0));
+                    ctx.lineTo(toX(L / 2.0), toY(df1 / 2.0));
+                }
             } else {
-                ctx.moveTo(toX(-L / 2.0), toY(-df1 / 2.0));
-                ctx.lineTo(toX(-L / 2.0 + ch), toY(-da1 / 2.0));
-                ctx.lineTo(toX(L / 2.0 - ch), toY(-da1 / 2.0));
-                ctx.lineTo(toX(L / 2.0), toY(-df1 / 2.0));
+                if (isGloboid) {
+                    ctx.moveTo(toX(-L / 2.0), toY(-(evalR1Globoid(-L / 2.0) - hf1)));
+                    for (let s = 0; s <= 24; s++) {
+                        const xVal = -L / 2.0 + s * (L / 24.0);
+                        const rTip = -(evalR1Globoid(xVal) + ha1);
+                        ctx.lineTo(toX(xVal), toY(rTip));
+                    }
+                    ctx.lineTo(toX(L / 2.0), toY(-(evalR1Globoid(L / 2.0) - hf1)));
+                } else {
+                    ctx.moveTo(toX(-L / 2.0), toY(-df1 / 2.0));
+                    ctx.lineTo(toX(-L / 2.0 + ch), toY(-da1 / 2.0));
+                    ctx.lineTo(toX(L / 2.0 - ch), toY(-da1 / 2.0));
+                    ctx.lineTo(toX(L / 2.0), toY(-df1 / 2.0));
+                }
             }
             ctx.closePath();
             ctx.clip();
@@ -834,7 +881,7 @@ class WormCanvasRenderer {
             ctx.lineWidth = 1.8;
 
             const tType = g.toothType || 1;
-            const evalToothW = (R) => {
+            const evalToothW = (R, xcVal) => {
                 let w = sx / 2.0 - (R - d1 / 2.0) * tanAx;
                 if (tType === 5) {
                     // ZH Cavex (Concave arc in axial section)
@@ -867,6 +914,10 @@ class WormCanvasRenderer {
                     const K_zk = (Math.sin(2.0 * gamaRadVal) * Math.tan(alfanRadVal)) / (4.0 * (2.5 + Math.cos(gamaRadVal)));
                     w = (sx / 2.0) - (R - d1 / 2.0) * tanAx + K_zk * ((R - d1 / 2.0) ** 2) / (d1 / 2.0);
                 }
+                if (isDuplex) {
+                    const kDup = g.k_dup || 0.02;
+                    w = w + (xcVal * kDup) * 0.5;
+                }
                 return Math.max(0.08 * mx, w);
             };
 
@@ -878,9 +929,11 @@ class WormCanvasRenderer {
 
                 for (let step = 0; step <= numSteps; step++) {
                     const frac = step / numSteps;
-                    const R = (df1 / 2.0) + frac * ((da1 - df1) / 2.0);
+                    const rBase = isGloboid ? (evalR1Globoid(xc) - hf1) : (df1 / 2.0);
+                    const rTop = isGloboid ? (evalR1Globoid(xc) + ha1) : (da1 / 2.0);
+                    const R = rBase + frac * (rTop - rBase);
                     const yWorld = signY * R;
-                    const w = evalToothW(R);
+                    const w = evalToothW(R, xc);
                     ptsL.push({ x: xc - w, y: yWorld });
                     ptsR.push({ x: xc + w, y: yWorld });
                 }
@@ -918,42 +971,84 @@ class WormCanvasRenderer {
         const botShift = (g.z1 % 2 === 1) ? px / 2.0 : 0.0;
         drawRackHalf(-1, botShift);
 
-        // 4. Reference lines: Pitch lines (d1/2), Tip lines (da1/2), Root lines (df1/2)
+        // 4. Reference lines: Pitch lines, Tip lines, Root lines
         ctx.save();
         ctx.lineWidth = 1.1;
 
-        // Pitch lines
-        ctx.strokeStyle = '#fbbf24';
-        ctx.setLineDash([6, 4]);
-        ctx.beginPath();
-        ctx.moveTo(toX(-L / 2.0), toY(d1 / 2.0));
-        ctx.lineTo(toX(L / 2.0), toY(d1 / 2.0));
-        ctx.moveTo(toX(-L / 2.0), toY(-d1 / 2.0));
-        ctx.lineTo(toX(L / 2.0), toY(-d1 / 2.0));
-        ctx.stroke();
+        if (isGloboid) {
+            // Curved pitch lines
+            ctx.strokeStyle = '#fbbf24';
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            for (let s = 0; s <= 30; s++) {
+                const xVal = -L / 2.0 + s * (L / 30.0);
+                const rPitch = evalR1Globoid(xVal);
+                if (s === 0) ctx.moveTo(toX(xVal), toY(rPitch));
+                else ctx.lineTo(toX(xVal), toY(rPitch));
+            }
+            ctx.stroke();
+            ctx.beginPath();
+            for (let s = 0; s <= 30; s++) {
+                const xVal = -L / 2.0 + s * (L / 30.0);
+                const rPitch = -evalR1Globoid(xVal);
+                if (s === 0) ctx.moveTo(toX(xVal), toY(rPitch));
+                else ctx.lineTo(toX(xVal), toY(rPitch));
+            }
+            ctx.stroke();
 
-        // Tip lines
-        ctx.strokeStyle = '#38bdf8';
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(toX(-L / 2.0 + ch), toY(da1 / 2.0));
-        ctx.lineTo(toX(L / 2.0 - ch), toY(da1 / 2.0));
-        ctx.moveTo(toX(-L / 2.0 + ch), toY(-da1 / 2.0));
-        ctx.lineTo(toX(L / 2.0 - ch), toY(-da1 / 2.0));
-        ctx.stroke();
+            // Curved tip lines
+            ctx.strokeStyle = '#38bdf8';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            for (let s = 0; s <= 30; s++) {
+                const xVal = -L / 2.0 + s * (L / 30.0);
+                const rTip = evalR1Globoid(xVal) + ha1;
+                if (s === 0) ctx.moveTo(toX(xVal), toY(rTip));
+                else ctx.lineTo(toX(xVal), toY(rTip));
+            }
+            ctx.stroke();
+            ctx.beginPath();
+            for (let s = 0; s <= 30; s++) {
+                const xVal = -L / 2.0 + s * (L / 30.0);
+                const rTip = -(evalR1Globoid(xVal) + ha1);
+                if (s === 0) ctx.moveTo(toX(xVal), toY(rTip));
+                else ctx.lineTo(toX(xVal), toY(rTip));
+            }
+            ctx.stroke();
+        } else {
+            // Cylindrical Pitch lines
+            ctx.strokeStyle = '#fbbf24';
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            ctx.moveTo(toX(-L / 2.0), toY(d1 / 2.0));
+            ctx.lineTo(toX(L / 2.0), toY(d1 / 2.0));
+            ctx.moveTo(toX(-L / 2.0), toY(-d1 / 2.0));
+            ctx.lineTo(toX(L / 2.0), toY(-d1 / 2.0));
+            ctx.stroke();
 
-        // Root lines
-        ctx.strokeStyle = '#94a3b8';
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(toX(-L / 2.0), toY(df1 / 2.0));
-        ctx.lineTo(toX(L / 2.0), toY(df1 / 2.0));
-        ctx.moveTo(toX(-L / 2.0), toY(-df1 / 2.0));
-        ctx.lineTo(toX(L / 2.0), toY(-df1 / 2.0));
-        ctx.stroke();
+            // Tip lines
+            ctx.strokeStyle = '#38bdf8';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(toX(-L / 2.0 + ch), toY(da1 / 2.0));
+            ctx.lineTo(toX(L / 2.0 - ch), toY(da1 / 2.0));
+            ctx.moveTo(toX(-L / 2.0 + ch), toY(-da1 / 2.0));
+            ctx.lineTo(toX(L / 2.0 - ch), toY(-da1 / 2.0));
+            ctx.stroke();
+
+            // Root lines
+            ctx.strokeStyle = '#94a3b8';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(toX(-L / 2.0), toY(df1 / 2.0));
+            ctx.lineTo(toX(L / 2.0), toY(df1 / 2.0));
+            ctx.moveTo(toX(-L / 2.0), toY(-df1 / 2.0));
+            ctx.lineTo(toX(L / 2.0), toY(-df1 / 2.0));
+            ctx.stroke();
+        }
         ctx.restore();
 
-        // 5. Dimension Callouts
+        // 5. Dimension Callouts & Specialized Architecture Banners
         if (this.showDims) {
             this.drawDimLine(ctx, toX(-L / 2.0), toY(da1 / 2.0 + 8.0), toX(L / 2.0), toY(da1 / 2.0 + 8.0), `L = ${L.toFixed(2)} mm`, -10);
             this.drawDimLine(ctx, toX(-L / 2.0 - th - 12.0), toY(-da1 / 2.0), toX(-L / 2.0 - th - 12.0), toY(da1 / 2.0), `da1 = ${da1.toFixed(2)}`, -14);
@@ -1542,11 +1637,11 @@ class WormCanvasRenderer {
 
     drawHUD(ctx, W, H, g) {
         ctx.save();
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.86)';
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 1;
-        ctx.fillRect(14, 14, 345, 96);
-        ctx.strokeRect(14, 14, 345, 96);
+        const isAdvancedArch = (this.viewMode === 'axial_profile' && (g.wormArch === 2 || g.wormArch === 3));
+        const hudW = isAdvancedArch ? 480 : 345;
+        const hudH = isAdvancedArch ? 134 : 96;
+        ctx.fillRect(14, 14, hudW, hudH);
+        ctx.strokeRect(14, 14, hudW, hudH);
 
         const typeNames = ["", "ZA (Archimedean)", "ZN (Normal Straight)", "ZI (Involute)", "ZK (Cone Milled)", "ZH (Cavex Concave)"];
         ctx.fillStyle = '#38bdf8';
@@ -1563,12 +1658,22 @@ class WormCanvasRenderer {
             ctx.fillText(`sn = ${(Math.PI * g.mn / 2).toFixed(3)} mm | ha1 = ${((g.da1 - g.d1)/2).toFixed(3)} | hf1 = ${((g.d1 - g.df1)/2).toFixed(3)} mm`, 24, 72);
             ctx.fillText(`ρf0 = ${(0.38 * g.mn).toFixed(3)} mm (0.38 mn) | Kiểu ren: ${typeNames[g.toothType] || 'ZN'}`, 24, 90);
         } else if (this.viewMode === 'axial_profile') {
-            ctx.fillText(`MẶT CẮT DỌC TRỤC TRỤC VÍT (A-A)`, 24, 34);
+            const archTitle = (g.wormArch === 2) ? ' - DUPLEX DUAL-LEAD' : ((g.wormArch === 3) ? ' - GLOBOID HOURGLASS' : '');
+            ctx.fillText(`MẶT CẮT DỌC TRỤC TRỤC VÍT (A-A)${archTitle}`, 24, 34);
             ctx.fillStyle = '#e2e8f0';
             ctx.font = '11px Inter, sans-serif';
             ctx.fillText(`mx = ${g.mx.toFixed(3)} mm | αx = ${g.alfax.toFixed(2)}° | γ = ${g.gama.toFixed(3)}°`, 24, 54);
             ctx.fillText(`px = ${g.px.toFixed(3)} mm | sx = ${g.sx1.toFixed(3)} mm | L = ${g.L.toFixed(2)} mm`, 24, 72);
             ctx.fillText(`d1 = ${g.d1.toFixed(2)} mm | da1 = ${g.da1.toFixed(2)} mm | df1 = ${g.df1.toFixed(2)} mm`, 24, 90);
+            if (g.wormArch === 2) {
+                ctx.fillStyle = '#34d399';
+                ctx.fillText(`Duplex: mx_R = ${(g.mx_R || g.mx).toFixed(3)} (Drive) | mx_L = ${(g.mx_L || g.mx).toFixed(3)} (Coast) | Δmx = ${(g.delta_mx || 0.08).toFixed(3)} mm`, 24, 108);
+                ctx.fillText(`Khử khe hở: ${(g.backlash_adj_microns || 20.0).toFixed(1)} μm / 1mm dịch trục | s(x): Đầu=${(g.sx_neg || g.sx1).toFixed(2)}mm, Đuôi=${(g.sx_pos || g.sx1).toFixed(2)}mm`, 24, 126);
+            } else if (g.wormArch === 3) {
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillText(`Globoid: Họng d1,min = ${(g.d1_min || g.d1).toFixed(2)} mm | Ôm R_throat = ${(g.R_throat || (g.d2/2)).toFixed(2)} mm`, 24, 108);
+                ctx.fillText(`Góc ôm 2δ1 = ${(g.wrap_angle_deg || 38.0).toFixed(1)}° | ${(g.teeth_contact || 4.2).toFixed(1)} răng ăn khớp (~${(g.load_multiplier || 3.5).toFixed(1)}x tải)`, 24, 126);
+            }
         } else if (this.viewMode === 'tangential_profile') {
             const wt = 0.5 * Math.sqrt(Math.max(0, g.da1 * g.da1 - g.d1 * g.d1));
             const bt = 2.0 * wt;

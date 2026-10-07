@@ -95,6 +95,7 @@ const WormCalcEngine = {
         const wheelMat = this.getWheelMaterial(matW);
         const MatTypeW = wheelMat.matTypeW || 1; // X128: 1=Bronze, 2=Cast Iron, 3=Al Bronze
 
+        const wormArch = parseInt(p.wormArch !== undefined ? p.wormArch : 1, 10); // 1=Cylindrical (DIN 3975), 2=Duplex (Dual-lead), 3=Globoid (Hourglass / Hindley)
         const toothType = parseInt(p.toothType !== undefined ? p.toothType : 1); // 1=ZA (Archimedean default), 2=ZN, 3=ZI, 4=ZK, 5=ZH
         const loadTypeA = parseInt(p.loadTypeA !== undefined ? p.loadTypeA : 1); // 1..4
         const loadTypeB = parseInt(p.loadTypeB !== undefined ? p.loadTypeB : 1); // 1..4
@@ -299,6 +300,51 @@ const WormCalcEngine = {
         }
         const en1 = sn1; // T237
         const ex1 = sx1; // T238
+
+        // =========================================================================
+        // ADVANCED ARCHITECTURE EXTENSIONS: DUPLEX & GLOBOID
+        // =========================================================================
+        // 1. DUPLEX WORM (Dual-Lead Variable Pitch - Ott / Flender Duplex)
+        const delta_mx = (p.delta_mx !== undefined && p.delta_mx !== null && String(p.delta_mx).trim() !== '') ? parseFloat(p.delta_mx) : 0.08;
+        const delta_x_adj = (p.delta_x_adj !== undefined && p.delta_x_adj !== null && String(p.delta_x_adj).trim() !== '') ? parseFloat(p.delta_x_adj) : 1.0;
+
+        const mx_R = mx + delta_mx / 2.0; // Drive flank axial module
+        const mx_L = mx - delta_mx / 2.0; // Coast flank axial module
+        const px_R = Math.PI * mx_R;
+        const px_L = Math.PI * mx_L;
+        const pz_R = px_R * z1;
+        const pz_L = px_L * z1;
+        const gama_R = (Math.atan((z1 * mx_R) / Math.max(1e-6, d1)) * 180.0) / Math.PI;
+        const gama_L = (Math.atan((z1 * mx_L) / Math.max(1e-6, d1)) * 180.0) / Math.PI;
+        const k_dup = delta_mx / Math.max(1e-6, mx); // Taper factor per unit axial length
+        const backlash_adj_microns = delta_x_adj * k_dup * 1000.0; // microns
+        const s0_dup = (Math.PI * mx) / 2.0;
+        const sx_neg = s0_dup - (L / 2.0) * k_dup;
+        const sx_pos = s0_dup + (L / 2.0) * k_dup;
+        const delta_sx_total = sx_pos - sx_neg;
+
+        // 2. GLOBOID WORM (Hourglass / Hindley / Cone-Drive Enveloping Worm)
+        const r1_min = d1 / 2.0;
+        const d1_min = d1;
+        const R_throat = d2 / 2.0; // Pitch radius of wheel hugging worm
+        const half_L_globoid = Math.min(L * 0.5, R_throat * 0.85);
+        const L_globoid = 2.0 * half_L_globoid;
+
+        // Wrap angle 2*delta_1
+        const sin_delta1 = Math.min(0.95, half_L_globoid / Math.max(1e-6, R_throat));
+        const delta1_rad = Math.asin(sin_delta1);
+        const wrap_angle_deg = 2.0 * ((delta1_rad * 180.0) / Math.PI);
+
+        // Outer diameter at ends x = +- half_L_globoid
+        const val_end = Math.max(0.0, R_throat * R_throat - half_L_globoid * half_L_globoid);
+        const r1_end = a - Math.sqrt(val_end);
+        const da1_max_globoid = 2.0 * (r1_end + ha1);
+        const df1_max_globoid = 2.0 * (r1_end - hf1);
+
+        // Multi-tooth simultaneous engagement & load capacity multiplier
+        const pitch_angle_wheel_deg = 360.0 / Math.max(1, z2);
+        const teeth_contact = Math.max(1.0, wrap_angle_deg / pitch_angle_wheel_deg);
+        const load_multiplier = teeth_contact / 1.2; // Compared to ~1.2 simultaneous teeth in standard cylindrical worm
 
         // Undercutting & Axis Distance Fitting Helpers (Rows 169-184)
         const z2minTh = (2.0 * haXP) / Math.pow(Math.sin((alfa_temp * Math.PI) / 180.0), 2); // X169
@@ -612,7 +658,12 @@ const WormCalcEngine = {
             MC_da1, MC_d1, MC_df1, MC_sn1, MC_sx1, MC_en1, MC_ex1, MC_ds1, MC_t1, MC_beta1,
             MC_z2, MC_b2H, MC_da2, MC_d2, MC_df2, MC_de2, MC_sn2, MC_sx2, MC_en2, MC_ex2,
             MC_d1cutmin, MC_d1cut, MC_d1cutmax, MC_pxnhalf,
-            MC_b4: b4_actual, MC_rEdge: rEdge_actual, MC_chamferAngle: DXF_WheelChamfer
+            MC_b4: b4_actual, MC_rEdge: rEdge_actual, MC_chamferAngle: DXF_WheelChamfer,
+            // Advanced Worm Architecture (Duplex & Globoid)
+            wormArch, delta_mx, delta_x_adj, mx_R, mx_L, px_R, px_L, pz_R, pz_L,
+            gama_R, gama_L, k_dup, backlash_adj_microns, sx_neg, sx_pos, delta_sx_total,
+            r1_min, d1_min, R_throat, half_L_globoid, L_globoid, wrap_angle_deg,
+            da1_max_globoid, df1_max_globoid, teeth_contact, load_multiplier
         };
 
         // Data1 coordinates for Section 4.0 Dynamic Plot (Chart 1963)
@@ -694,6 +745,11 @@ const WormCalcEngine = {
             MC_da1, MC_d1, MC_df1, MC_sn1, MC_sx1, MC_en1, MC_ex1, MC_ds1, MC_t1, MC_beta1,
             MC_z2, MC_b2H, MC_da2, MC_d2, MC_df2, MC_de2, MC_sn2, MC_sx2, MC_en2, MC_ex2,
             MC_d1cutmin, MC_d1cut, MC_d1cutmax, MC_pxnhalf, MC_3D,
+            // Advanced Worm Architecture (Duplex & Globoid)
+            wormArch, delta_mx, delta_x_adj, mx_R, mx_L, px_R, px_L, pz_R, pz_L,
+            gama_R, gama_L, k_dup, backlash_adj_microns, sx_neg, sx_pos, delta_sx_total,
+            r1_min, d1_min, R_throat, half_L_globoid, L_globoid, wrap_angle_deg,
+            da1_max_globoid, df1_max_globoid, teeth_contact, load_multiplier,
             // Chart 1963 Data1
             BeSi, chartData1
         };

@@ -2116,3 +2116,37 @@ ho_{f0}$.
 4. **Hiển Thị 2D Canvas & Xuất File CAD 3D**:
    - Tab 2D Canvas hiển thị trực quan các đường cong biên dạng sườn răng của ZH (cung tròn lõm) và ZI (thân khai) trên cả mặt cắt pháp tuyến (N-N) và mặt cắt dọc trục (A-A).
    - `Worm3DExporter`: Hỗ trợ đầy đủ STEP Solid B-Rep, STL Binary, và IGES Surface B-Spline (Entity 128) mang trọn vẹn bề mặt thực thể của ZI và ZH sang Mastercam và SolidWorks.
+
+---
+
+### Quy Tắc 94: Quy Chuẩn Kiến Trúc Trục Vít Bước Thay Đổi Duplex (Dual-Lead) & Trục Vít Lõm Globoid (Hourglass / Hindley / Cone-Drive) Cho Module 5 (Chuyên Sâu)
+**Ngày áp dụng**: 07/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+1. **Phạm Vi Độc Lập Tuyệt Đối (Rule 92 & User Isolation Protocol)**:
+   - Kiến trúc Duplex và Globoid được phát triển hoàn toàn biệt lập bên trong Module 5 (`modules/worm-gear-advanced/`).
+   - Tuyệt đối KHÔNG sửa đổi, can thiệp hoặc làm ảnh hưởng đến Module 3 cơ sở (`modules/worm-gear/`) đã kiểm chứng chuẩn xác với MITCalc.
+2. **Hệ Thống Trục Vít Bước Thay Đổi Duplex (Dual-Lead / Variable Tooth Thickness)**:
+   - **Mô-đun & Bước răng hai sườn riêng biệt**: Sườn phải ($R$) và sườn trái ($L$) sở hữu bước răng khác nhau theo độ chênh lệch mô-đun $\Delta m_x$:
+     $$m_{xR} = m_x + \frac{\Delta m_x}{2}, \quad m_{xL} = m_x - \frac{\Delta m_x}{2}$$
+     $$p_{xR} = \pi \cdot m_{xR}, \quad p_{xL} = \pi \cdot m_{xL}$$
+     $$p_{zR} = z_1 \cdot p_{xR}, \quad p_{zL} = z_1 \cdot p_{xL}$$
+     $$\tan\gamma_R = \frac{p_{zR}}{\pi d_1}, \quad \tan\gamma_L = \frac{p_{zL}}{\pi d_1}$$
+   - **Hệ số bước lệch & Bề dày răng biến thiên**:
+     $$k_{dup} = \frac{p_{xR} - p_{xL}}{p_x} = \frac{\Delta m_x}{m_x}$$
+     $$s_x(x) = s_{x0} \pm x \cdot k_{dup}$$
+   - **Độ nhạy khử khe hở cạnh răng (Backlash Sensitivity)**:
+     $$\Delta j_t = \Delta x_{adj} \cdot k_{dup} \times 1000 \, (\mu\text{m/mm})$$
+     Cho phép tinh chỉnh và triệt tiêu hoàn toàn khe hở ăn khớp trong bàn xoay CNC, trục phân độ 4/5 trục chỉ bằng việc dịch chuyển trục vít dọc trục mà không làm biến đổi khoảng cách trục danh nghĩa $a$.
+3. **Hệ Thống Trục Vít Lõm Globoid (Hourglass / Hindley / Enveloping Worm / Cone-Drive)**:
+   - **Biên dạng lõm đồng hồ cát ôm bánh vít**: Thân trục vít uốn lượn ôm trọn vành răng bánh vít với bán kính eo thắt danh nghĩa $R_{throat} = r_2 = d_2 / 2$:
+     $$r_1(x) = a - \sqrt{\max\left(0, R_{throat}^2 - x^2\right)}$$
+     với tâm eo thắt tại $x = 0$: $r_1(0) = a - r_2 = r_1$ ($d_{1,\min} = d_1$).
+   - **Đường sinh đỉnh răng và đáy răng lõm**:
+     $$r_{a1}(x) = r_1(x) + h_{a1}, \quad r_{f1}(x) = r_1(x) - h_{f1}$$
+   - **Góc ôm trục vít & Số răng đồng thời tiếp xúc**:
+     $$2\delta_1 = 2 \arcsin\left(\frac{L/2}{R_{throat}}\right), \quad z_c = \frac{2\delta_1}{360^\circ / z_2}$$
+   - **Hệ số tăng tải trọng cơ học**: $K_{load} \approx \frac{z_c}{1.2}$ (đạt mức chịu tải từ $2.5\times$ đến $4.0\times$ so với trục vít trụ thông thường cùng kích thước lắp ráp).
+4. **Mô Hình 3D Mesh, 2D Canvas & Xuất CAD Parametric**:
+   - Mô-đun 3D Mesh Engine tính toán chính xác hai đường xoắn ốc bước lệch độc lập cho Duplex và mặt tròn xoay đồng hồ cát uốn lượn cho Globoid.
+   - Tab 2D Canvas hiển thị chính xác mặt cắt dọc trục Globoid eo thắt cong mượt mà và thẻ HUD số liệu động hiển thị các tham số đặc thù.
+   - Bộ xuất CAD 3D tham số hóa (`Worm3DExporter`) xuất đầy đủ file STEP Solid B-Rep, STL Binary, và IGES Surface B-Spline (Entity 128) mang định danh chuẩn `_Duplex` và `_Globoid` tương thích Mastercam và SolidWorks.

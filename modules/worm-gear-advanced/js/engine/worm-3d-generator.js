@@ -139,6 +139,29 @@ const Worm3DGenerator = {
         const xc_zh = MC_sx1 + rho_zh * Math.cos(alfax_rad);
         const Rc_zh = r1 + rho_zh * Math.sin(alfax_rad);
 
+        // Advanced Worm Architecture (Duplex & Globoid)
+        const wormArch = parseInt(opt.wormArch !== undefined ? opt.wormArch : (opt.MC_3D?.wormArch || 1), 10);
+        const delta_mx = parseFloat(opt.delta_mx ?? opt.MC_3D?.delta_mx ?? 0.08);
+        const delta_x_adj = parseFloat(opt.delta_x_adj ?? opt.MC_3D?.delta_x_adj ?? 1.0);
+        const mx_R = parseFloat(opt.mx_R ?? opt.MC_3D?.mx_R ?? (mn + delta_mx / 2.0));
+        const mx_L = parseFloat(opt.mx_L ?? opt.MC_3D?.mx_L ?? (mn - delta_mx / 2.0));
+        const px_R = parseFloat(opt.px_R ?? opt.MC_3D?.px_R ?? (Math.PI * mx_R));
+        const px_L = parseFloat(opt.px_L ?? opt.MC_3D?.px_L ?? (Math.PI * mx_L));
+        const pz_R = parseFloat(opt.pz_R ?? opt.MC_3D?.pz_R ?? (px_R * z1));
+        const pz_L = parseFloat(opt.pz_L ?? opt.MC_3D?.pz_L ?? (px_L * z1));
+        const k_dup = parseFloat(opt.k_dup ?? opt.MC_3D?.k_dup ?? (delta_mx / mn));
+        const gama_R = parseFloat(opt.gama_R ?? opt.MC_3D?.gama_R ?? 0);
+        const gama_L = parseFloat(opt.gama_L ?? opt.MC_3D?.gama_L ?? 0);
+
+        const r1_min = parseFloat(opt.r1_min ?? opt.MC_3D?.r1_min ?? r1);
+        const d1_min = parseFloat(opt.d1_min ?? opt.MC_3D?.d1_min ?? d1);
+        const R_throat = parseFloat(opt.R_throat ?? opt.MC_3D?.R_throat ?? r2);
+        const half_L_globoid = parseFloat(opt.half_L_globoid ?? opt.MC_3D?.half_L_globoid ?? (L * 0.5));
+        const L_globoid = parseFloat(opt.L_globoid ?? opt.MC_3D?.L_globoid ?? L);
+        const wrap_angle_deg = parseFloat(opt.wrap_angle_deg ?? opt.MC_3D?.wrap_angle_deg ?? 0);
+        const teeth_contact = parseFloat(opt.teeth_contact ?? opt.MC_3D?.teeth_contact ?? 1.2);
+        const load_multiplier = parseFloat(opt.load_multiplier ?? opt.MC_3D?.load_multiplier ?? 1.0);
+
         return {
             MC_a: a, MC_px: px, MC_pxn, MC_pxnhalf,
             MC_alfa: alfax_deg, MC_alfa_rad: alfax_rad,
@@ -155,7 +178,11 @@ const Worm3DGenerator = {
             MC_chamferAngle, MC_rEdge,
             ShaftDB2: parseFloat(opt.ShaftDB2) || 0,
             toothType, alfan_deg, alfan_rad, alfat_zi, rb1, db1,
-            rho_zh, xc_zh, Rc_zh
+            rho_zh, xc_zh, Rc_zh,
+            // Duplex & Globoid
+            wormArch, delta_mx, delta_x_adj, mx_R, mx_L, px_R, px_L, pz_R, pz_L,
+            k_dup, gama_R, gama_L, r1_min, d1_min, R_throat, half_L_globoid, L_globoid,
+            wrap_angle_deg, teeth_contact, load_multiplier
         };
     },
 
@@ -237,6 +264,29 @@ const Worm3DGenerator = {
     },
 
     evalWormBlankRadius(x, mc) {
+        if (mc.wormArch === 3) {
+            // Globoid / Hourglass envelope hugging the worm wheel radius R_throat
+            const a = mc.MC_a;
+            const R_throat = mc.R_throat || mc.r2;
+            const absX = Math.abs(x);
+            const val = Math.max(0.0, R_throat * R_throat - absX * absX);
+            const r1_x = a - Math.sqrt(val);
+            const ha1 = (mc.MC_da1 - mc.MC_d1) * 0.5;
+            const ra1_x = r1_x + ha1;
+            const rf1_x = Math.max(2.0, r1_x - (mc.MC_d1 - mc.MC_df1) * 0.5);
+
+            const halfL = mc.MC_L * 0.5;
+            const chamferLen = Math.tan((mc.MC_beta1 * Math.PI) / 180.0) * ha1;
+            if (absX <= halfL - chamferLen) {
+                return ra1_x;
+            } else if (absX <= halfL) {
+                if (chamferLen <= 1e-6) return rf1_x;
+                const t = (halfL - absX) / chamferLen;
+                return rf1_x + t * (ra1_x - rf1_x);
+            } else {
+                return rf1_x;
+            }
+        }
         const ra1 = mc.MC_da1 * 0.5;
         const rf1 = mc.MC_df1 * 0.5;
         const halfL = mc.MC_L * 0.5;
@@ -251,6 +301,19 @@ const Worm3DGenerator = {
         } else {
             return rf1;
         }
+    },
+
+    evalWormRootRadius(x, mc) {
+        if (mc.wormArch === 3) {
+            const a = mc.MC_a;
+            const R_throat = mc.R_throat || mc.r2;
+            const absX = Math.abs(x);
+            const val = Math.max(0.0, R_throat * R_throat - absX * absX);
+            const r1_x = a - Math.sqrt(val);
+            const hf1 = (mc.MC_d1 - mc.MC_df1) * 0.5;
+            return Math.max(2.0, r1_x - hf1);
+        }
+        return mc.rf1;
     },
 
     evalWheelBlank(z, mc) {
@@ -491,30 +554,38 @@ const Worm3DGenerator = {
         for (let s = 0; s < numSlices; s++) {
             const x = -L * 0.5 + s * xStep;
             const rBlank = this.evalWormBlankRadius(x, mc);
+            const rf1_s = (mc.wormArch === 3) ? this.evalWormRootRadius(x, mc) : rf1;
             const starts = [];
 
             for (let k = 0; k < z1; k++) {
                 const startPhase = (k * 2.0 * Math.PI) / z1;
                 // Pure conjugate engagement: at x=0, thread 0 is centered at phi0 = 0 (pointing towards wheel at Y=-a+R)
-                const phi0 = handSign * (2.0 * Math.PI / pz) * x + startPhase;
+                let phi0_R = handSign * (2.0 * Math.PI / pz) * x + startPhase;
+                let phi0_L = phi0_R;
+                if (mc.wormArch === 2) {
+                    const pzR = mc.pz_R || pz;
+                    const pzL = mc.pz_L || pz;
+                    phi0_R = handSign * (2.0 * Math.PI / pzR) * x + startPhase;
+                    phi0_L = handSign * (2.0 * Math.PI / pzL) * x + startPhase;
+                }
 
                 const rFlankR = [];
                 const rFlankL = [];
 
                 for (let m = 0; m <= ptsR; m++) {
                     const frac = m / ptsR;
-                    const R = rf1 + frac * (rBlank - rf1);
+                    const R = rf1_s + frac * (rBlank - rf1_s);
                     const prof = this.evalWormFlankProfile(R, +1, mc.toothType, mc);
                     const dPhi = prof.dPhi;
 
-                    const phiR = phi0 - dPhi;
-                    const phiL = phi0 + dPhi;
+                    const phiR = phi0_R - dPhi;
+                    const phiL = phi0_L + dPhi;
 
                     rFlankR.push({ x, y: R * Math.cos(phiR), z: R * Math.sin(phiR), R, phi: phiR, slope: prof.slope });
                     rFlankL.push({ x, y: R * Math.cos(phiL), z: R * Math.sin(phiL), R, phi: phiL, slope: prof.slope });
                 }
 
-                // Cylindrical Tip Crest Arc (Analytical radial normals eliminate all kinks and bumps)
+                // Cylindrical / Hourglass Tip Crest Arc (Analytical radial normals eliminate all kinks and bumps)
                 const tipArc = [];
                 const pTipR = rFlankR[ptsR];
                 const pTipL = rFlankL[ptsR];
@@ -706,8 +777,30 @@ const Worm3DGenerator = {
                 }
             }
 
-            // Continuous cylindrical root core underneath threads
-            pushCylinder(xL_thread, xR_thread, rf1);
+            // Continuous root core underneath threads (cylindrical or hourglass)
+            if (mc.wormArch === 3) {
+                const nRootSlices = 24;
+                for (let rs = 0; rs < nRootSlices; rs++) {
+                    const x0 = xL_thread + rs * (L / nRootSlices);
+                    const x1 = xL_thread + (rs + 1) * (L / nRootSlices);
+                    const r0 = this.evalWormRootRadius(x0, mc);
+                    const r1 = this.evalWormRootRadius(x1, mc);
+                    for (let i = 0; i < nCirc; i++) {
+                        const a1 = (i * 2.0 * Math.PI) / nCirc;
+                        const a2 = ((i + 1) * 2.0 * Math.PI) / nCirc;
+                        const cos1 = Math.cos(a1), sin1 = Math.sin(a1);
+                        const cos2 = Math.cos(a2), sin2 = Math.sin(a2);
+                        const p00 = { x: x0, y: r0 * cos1, z: r0 * sin1 };
+                        const p01 = { x: x0, y: r0 * cos2, z: r0 * sin2 };
+                        const p10 = { x: x1, y: r1 * cos1, z: r1 * sin1 };
+                        const p11 = { x: x1, y: r1 * cos2, z: r1 * sin2 };
+                        pushTri(p00, p01, p11);
+                        pushTri(p00, p11, p10);
+                    }
+                }
+            } else {
+                pushCylinder(xL_thread, xR_thread, rf1);
+            }
 
             // Shoulder Step Rings
             for (let i = 0; i < nCirc; i++) {
@@ -1232,50 +1325,59 @@ const Worm3DGenerator = {
 
             for (let s = 0; s < numSlices; s++) {
                 const x = -L * 0.5 + s * dx;
-                const phi0 = handSign * (2.0 * Math.PI / pz) * x + startPhase;
+                let phi0_R = handSign * (2.0 * Math.PI / pz) * x + startPhase;
+                let phi0_L = phi0_R;
+                if (mc.wormArch === 2) {
+                    const pzR = mc.pz_R || pz;
+                    const pzL = mc.pz_L || pz;
+                    phi0_R = handSign * (2.0 * Math.PI / pzR) * x + startPhase;
+                    phi0_L = handSign * (2.0 * Math.PI / pzL) * x + startPhase;
+                }
+                const ra1_s = (mc.wormArch === 3) ? this.evalWormBlankRadius(x, mc) : ra1;
+                const rf1_s = (mc.wormArch === 3) ? this.evalWormRootRadius(x, mc) : rf1;
 
                 const sliceR = [];
                 const sliceL = [];
 
                 for (let m = 0; m <= ptsR; m++) {
                     const frac = m / ptsR;
-                    const R = rf1 + frac * (ra1 - rf1);
+                    const R = rf1_s + frac * (ra1_s - rf1_s);
                     const prof = this.evalWormFlankProfile(R, +1, mc.toothType, mc);
                     const dPhi = prof.dPhi;
 
-                    const phiR = phi0 - dPhi;
-                    const phiL = phi0 + dPhi;
+                    const phiR = phi0_R - dPhi;
+                    const phiL = phi0_L + dPhi;
 
                     sliceR.push([x, R * scale_u * Math.cos(phiR), R * scale_u * Math.sin(phiR)]);
                     sliceL.push([x, R * scale_u * Math.cos(phiL), R * scale_u * Math.sin(phiL)]);
                 }
 
-                // 1. Tip Crest Arc: sample directly on exact cylinder, then solve exact B-spline control points
-                const profTip = this.evalWormFlankProfile(ra1, +1, mc.toothType, mc);
+                // 1. Tip Crest Arc: sample directly on exact cylinder/hourglass, then solve exact B-spline control points
+                const profTip = this.evalWormFlankProfile(ra1_s, +1, mc.toothType, mc);
                 const dPhi_tip = profTip.dPhi;
-                const phiTipR = phi0 - dPhi_tip;
-                const phiTipL = phi0 + dPhi_tip;
+                const phiTipR = phi0_R - dPhi_tip;
+                const phiTipL = phi0_L + dPhi_tip;
                 const dphi_tip = phiTipL - phiTipR;
 
                 const rawSliceTip = [];
                 for (let t = 0; t <= wormTipPts; t++) {
                     const fracTip = t / wormTipPts;
                     const phi = phiTipR + fracTip * dphi_tip;
-                    rawSliceTip.push([x, ra1 * scale_u * Math.cos(phi), ra1 * scale_u * Math.sin(phi)]);
+                    rawSliceTip.push([x, ra1_s * scale_u * Math.cos(phi), ra1_s * scale_u * Math.sin(phi)]);
                 }
                 const sliceTip = this.fitCubicBSplineCtrlPts(rawSliceTip);
 
-                // 2. Root Flute / Shaft Core: sample directly on exact root cylinder, then solve exact B-spline control points
-                const profRoot = this.evalWormFlankProfile(rf1, +1, mc.toothType, mc);
+                // 2. Root Flute / Shaft Core: sample directly on exact root cylinder/hourglass, then solve exact B-spline control points
+                const profRoot = this.evalWormFlankProfile(rf1_s, +1, mc.toothType, mc);
                 const dPhi_root = profRoot.dPhi;
-                const phiRootL = phi0 + dPhi_root;
+                const phiRootL = phi0_L + dPhi_root;
                 const dphi_root = (2.0 * Math.PI / z1) - 2.0 * dPhi_root;
 
                 const rawSliceRoot = [];
                 for (let t = 0; t <= wormRootPts; t++) {
                     const fracRoot = t / wormRootPts;
                     const phi = phiRootL + fracRoot * dphi_root;
-                    rawSliceRoot.push([x, rf1 * scale_u * Math.cos(phi), rf1 * scale_u * Math.sin(phi)]);
+                    rawSliceRoot.push([x, rf1_s * scale_u * Math.cos(phi), rf1_s * scale_u * Math.sin(phi)]);
                 }
                 const sliceRoot = this.fitCubicBSplineCtrlPts(rawSliceRoot);
 

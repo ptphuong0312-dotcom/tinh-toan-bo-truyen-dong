@@ -315,6 +315,67 @@
                                 </thead>
                                 <tbody>
                                     <tr>
+                                        <td>4.0a</td>
+                                        <td>Kiến trúc hình học trục vít (Worm Gearing Architecture)</td>
+                                        <td>Arch</td>
+                                        <td colspan="2">
+                                            <select class="select-eng user-input" id="sel_wormArch" data-key="wormArch" style="font-weight: 700; color: #38bdf8;">
+                                                <option value="1">1. Trục vít trụ tiêu chuẩn (Standard Cylindrical Worm - DIN 3975: ZA, ZN, ZI, ZK, ZH)</option>
+                                                <option value="2">2. Trục vít Duplex bước thay đổi khử khe hở (Dual-Lead Duplex Worm - Ott / Flender)</option>
+                                                <option value="3">3. Trục vít Glôbôit họng lõm bao hình (Globoid / Hourglass / Hindley Worm)</option>
+                                            </select>
+                                        </td>
+                                        <td>ISO / DIN</td>
+                                        <td><span class="cell-limit" id="lbl_wormArch_desc">Tiêu chuẩn DIN 3975</span></td>
+                                    </tr>
+                                    <!-- Duplex Controls (Conditional) -->
+                                    <tr id="row_duplex_params" style="display: none; background: rgba(16, 185, 129, 0.08);">
+                                        <td>4.0b</td>
+                                        <td>Chênh lệch mô-đun bước đôi (Dual-lead Module Difference Δmx)</td>
+                                        <td>Δmx</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="delta_mx" id="inp_delta_mx" value="0.080"></td>
+                                        <td><span class="cell-limit">k_dup = <span id="out_k_dup">0.0200</span></span></td>
+                                        <td>mm</td>
+                                        <td>Chuẩn 0.02 ÷ 0.20 mm</td>
+                                    </tr>
+                                    <tr id="row_duplex_adj" style="display: none; background: rgba(16, 185, 129, 0.08);">
+                                        <td>4.0c</td>
+                                        <td>Dịch chỉnh trục khử khe hở (Axial adjustment displacement Δx_adj)</td>
+                                        <td>Δx adj</td>
+                                        <td><input type="text" inputmode="decimal" class="input-eng user-input" data-key="delta_x_adj" id="inp_delta_x_adj" value="1.000"></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_backlash_adj">20.0 μm</span></td>
+                                        <td>mm / μm</td>
+                                        <td>Độ nhạy triệt tiêu backlash</td>
+                                    </tr>
+                                    <tr id="row_duplex_flanks" style="display: none; background: rgba(16, 185, 129, 0.08);">
+                                        <td>4.0d</td>
+                                        <td>Mô-đun ren phải / trái (Drive mx_R / Coast mx_L)</td>
+                                        <td>mx_R, mx_L</td>
+                                        <td><span class="output-eng" id="out_mx_R">4.040 mm</span> (γ_R = <span id="out_gama_R">6.776°</span>)</td>
+                                        <td><span class="output-eng" id="out_mx_L">3.960 mm</span> (γ_L = <span id="out_gama_L">6.643°</span>)</td>
+                                        <td>mm (°)</td>
+                                        <td>Bước pz_R ≠ pz_L</td>
+                                    </tr>
+                                    <!-- Globoid Controls (Conditional) -->
+                                    <tr id="row_globoid_throat" style="display: none; background: rgba(56, 189, 248, 0.08);">
+                                        <td>4.0e</td>
+                                        <td>Đường kính họng thắt / Bán kính cong ôm bánh vít (Throat d1,min &amp; R_throat)</td>
+                                        <td>d1 min, R</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_d1_min">34.00 mm</span></td>
+                                        <td><span class="output-eng" id="out_R_throat">80.00 mm</span></td>
+                                        <td>mm</td>
+                                        <td>Bao hình bánh vít r2</td>
+                                    </tr>
+                                    <tr id="row_globoid_contact" style="display: none; background: rgba(56, 189, 248, 0.08);">
+                                        <td>4.0f</td>
+                                        <td>Góc ôm trục vít &amp; Số răng đồng thời ăn khớp (Wrap angle 2δ1 &amp; Contact teeth)</td>
+                                        <td>2δ1, z_c</td>
+                                        <td><span class="output-eng highlight-key-param" id="out_wrap_angle">37.9°</span></td>
+                                        <td><span class="output-eng highlight-key-param" id="out_teeth_contact">4.2 răng</span> (<span id="out_load_mult">3.5x</span> tải)</td>
+                                        <td>độ (răng)</td>
+                                        <td>Multi-tooth Contact (Hindley)</td>
+                                    </tr>
+                                    <tr>
                                         <td>4.0</td>
                                         <td>Kiểu biên dạng ren trục vít (Type of worm profile - DIN 3975)</td>
                                         <td>Type</td>

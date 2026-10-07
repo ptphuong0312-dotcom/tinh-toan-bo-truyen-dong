@@ -2206,6 +2206,7 @@ const WormCalcEngine = {
         const wheelMat = this.getWheelMaterial(matW);
         const MatTypeW = wheelMat.matTypeW || 1; // X128: 1=Bronze, 2=Cast Iron, 3=Al Bronze
 
+        const wormArch = parseInt(p.wormArch !== undefined ? p.wormArch : 1, 10); // 1=Cylindrical (DIN 3975), 2=Duplex (Dual-lead), 3=Globoid (Hourglass / Hindley)
         const toothType = parseInt(p.toothType !== undefined ? p.toothType : 1); // 1=ZA (Archimedean default), 2=ZN, 3=ZI, 4=ZK, 5=ZH
         const loadTypeA = parseInt(p.loadTypeA !== undefined ? p.loadTypeA : 1); // 1..4
         const loadTypeB = parseInt(p.loadTypeB !== undefined ? p.loadTypeB : 1); // 1..4
@@ -2410,6 +2411,51 @@ const WormCalcEngine = {
         }
         const en1 = sn1; // T237
         const ex1 = sx1; // T238
+
+        // =========================================================================
+        // ADVANCED ARCHITECTURE EXTENSIONS: DUPLEX & GLOBOID
+        // =========================================================================
+        // 1. DUPLEX WORM (Dual-Lead Variable Pitch - Ott / Flender Duplex)
+        const delta_mx = (p.delta_mx !== undefined && p.delta_mx !== null && String(p.delta_mx).trim() !== '') ? parseFloat(p.delta_mx) : 0.08;
+        const delta_x_adj = (p.delta_x_adj !== undefined && p.delta_x_adj !== null && String(p.delta_x_adj).trim() !== '') ? parseFloat(p.delta_x_adj) : 1.0;
+
+        const mx_R = mx + delta_mx / 2.0; // Drive flank axial module
+        const mx_L = mx - delta_mx / 2.0; // Coast flank axial module
+        const px_R = Math.PI * mx_R;
+        const px_L = Math.PI * mx_L;
+        const pz_R = px_R * z1;
+        const pz_L = px_L * z1;
+        const gama_R = (Math.atan((z1 * mx_R) / Math.max(1e-6, d1)) * 180.0) / Math.PI;
+        const gama_L = (Math.atan((z1 * mx_L) / Math.max(1e-6, d1)) * 180.0) / Math.PI;
+        const k_dup = delta_mx / Math.max(1e-6, mx); // Taper factor per unit axial length
+        const backlash_adj_microns = delta_x_adj * k_dup * 1000.0; // microns
+        const s0_dup = (Math.PI * mx) / 2.0;
+        const sx_neg = s0_dup - (L / 2.0) * k_dup;
+        const sx_pos = s0_dup + (L / 2.0) * k_dup;
+        const delta_sx_total = sx_pos - sx_neg;
+
+        // 2. GLOBOID WORM (Hourglass / Hindley / Cone-Drive Enveloping Worm)
+        const r1_min = d1 / 2.0;
+        const d1_min = d1;
+        const R_throat = d2 / 2.0; // Pitch radius of wheel hugging worm
+        const half_L_globoid = Math.min(L * 0.5, R_throat * 0.85);
+        const L_globoid = 2.0 * half_L_globoid;
+
+        // Wrap angle 2*delta_1
+        const sin_delta1 = Math.min(0.95, half_L_globoid / Math.max(1e-6, R_throat));
+        const delta1_rad = Math.asin(sin_delta1);
+        const wrap_angle_deg = 2.0 * ((delta1_rad * 180.0) / Math.PI);
+
+        // Outer diameter at ends x = +- half_L_globoid
+        const val_end = Math.max(0.0, R_throat * R_throat - half_L_globoid * half_L_globoid);
+        const r1_end = a - Math.sqrt(val_end);
+        const da1_max_globoid = 2.0 * (r1_end + ha1);
+        const df1_max_globoid = 2.0 * (r1_end - hf1);
+
+        // Multi-tooth simultaneous engagement & load capacity multiplier
+        const pitch_angle_wheel_deg = 360.0 / Math.max(1, z2);
+        const teeth_contact = Math.max(1.0, wrap_angle_deg / pitch_angle_wheel_deg);
+        const load_multiplier = teeth_contact / 1.2; // Compared to ~1.2 simultaneous teeth in standard cylindrical worm
 
         // Undercutting & Axis Distance Fitting Helpers (Rows 169-184)
         const z2minTh = (2.0 * haXP) / Math.pow(Math.sin((alfa_temp * Math.PI) / 180.0), 2); // X169
@@ -2723,7 +2769,12 @@ const WormCalcEngine = {
             MC_da1, MC_d1, MC_df1, MC_sn1, MC_sx1, MC_en1, MC_ex1, MC_ds1, MC_t1, MC_beta1,
             MC_z2, MC_b2H, MC_da2, MC_d2, MC_df2, MC_de2, MC_sn2, MC_sx2, MC_en2, MC_ex2,
             MC_d1cutmin, MC_d1cut, MC_d1cutmax, MC_pxnhalf,
-            MC_b4: b4_actual, MC_rEdge: rEdge_actual, MC_chamferAngle: DXF_WheelChamfer
+            MC_b4: b4_actual, MC_rEdge: rEdge_actual, MC_chamferAngle: DXF_WheelChamfer,
+            // Advanced Worm Architecture (Duplex & Globoid)
+            wormArch, delta_mx, delta_x_adj, mx_R, mx_L, px_R, px_L, pz_R, pz_L,
+            gama_R, gama_L, k_dup, backlash_adj_microns, sx_neg, sx_pos, delta_sx_total,
+            r1_min, d1_min, R_throat, half_L_globoid, L_globoid, wrap_angle_deg,
+            da1_max_globoid, df1_max_globoid, teeth_contact, load_multiplier
         };
 
         // Data1 coordinates for Section 4.0 Dynamic Plot (Chart 1963)
@@ -2805,6 +2856,11 @@ const WormCalcEngine = {
             MC_da1, MC_d1, MC_df1, MC_sn1, MC_sx1, MC_en1, MC_ex1, MC_ds1, MC_t1, MC_beta1,
             MC_z2, MC_b2H, MC_da2, MC_d2, MC_df2, MC_de2, MC_sn2, MC_sx2, MC_en2, MC_ex2,
             MC_d1cutmin, MC_d1cut, MC_d1cutmax, MC_pxnhalf, MC_3D,
+            // Advanced Worm Architecture (Duplex & Globoid)
+            wormArch, delta_mx, delta_x_adj, mx_R, mx_L, px_R, px_L, pz_R, pz_L,
+            gama_R, gama_L, k_dup, backlash_adj_microns, sx_neg, sx_pos, delta_sx_total,
+            r1_min, d1_min, R_throat, half_L_globoid, L_globoid, wrap_angle_deg,
+            da1_max_globoid, df1_max_globoid, teeth_contact, load_multiplier,
             // Chart 1963 Data1
             BeSi, chartData1
         };
@@ -3785,12 +3841,39 @@ class WormCanvasRenderer {
         ctx.strokeRect(toX(L / 2.0), toY(df1 / 2.0), th * scale, (df1 - ds) * 0.5 * scale);
         ctx.strokeRect(toX(L / 2.0), toY(-ds / 2.0), th * scale, (df1 - ds) * 0.5 * scale);
 
-        // Core cylinder (-L/2 to +L/2, -df1/2 to +df1/2)
+        const isGloboid = (g.wormArch === 3);
+        const isDuplex = (g.wormArch === 2);
+        const evalR1Globoid = (xVal) => {
+            const R_thr = g.R_throat || (g.d2 / 2.0);
+            const val = Math.max(0.0, R_thr * R_thr - xVal * xVal);
+            return g.a - Math.sqrt(val);
+        };
+
+        // Core cylinder (-L/2 to +L/2, -df1/2 to +df1/2 or hourglass body)
         ctx.fillStyle = 'rgba(56, 189, 248, 0.15)';
         ctx.strokeStyle = '#38bdf8';
         ctx.lineWidth = 1.6;
-        ctx.strokeRect(toX(-L / 2.0), toY(df1 / 2.0), L * scale, df1 * scale);
-        ctx.fillRect(toX(-L / 2.0), toY(df1 / 2.0), L * scale, df1 * scale);
+        if (isGloboid) {
+            ctx.beginPath();
+            const nCoreSteps = 24;
+            for (let s = 0; s <= nCoreSteps; s++) {
+                const xVal = -L / 2.0 + s * (L / nCoreSteps);
+                const rRoot = evalR1Globoid(xVal) - hf1;
+                if (s === 0) ctx.moveTo(toX(xVal), toY(rRoot));
+                else ctx.lineTo(toX(xVal), toY(rRoot));
+            }
+            for (let s = nCoreSteps; s >= 0; s--) {
+                const xVal = -L / 2.0 + s * (L / nCoreSteps);
+                const rRoot = -(evalR1Globoid(xVal) - hf1);
+                ctx.lineTo(toX(xVal), toY(rRoot));
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        } else {
+            ctx.strokeRect(toX(-L / 2.0), toY(df1 / 2.0), L * scale, df1 * scale);
+            ctx.fillRect(toX(-L / 2.0), toY(df1 / 2.0), L * scale, df1 * scale);
+        }
         ctx.restore();
 
         // 3. Teeth on Upper Flank (+y) and Lower Flank (-y)
@@ -3801,15 +3884,35 @@ class WormCanvasRenderer {
             ctx.save();
             ctx.beginPath();
             if (signY > 0) {
-                ctx.moveTo(toX(-L / 2.0), toY(df1 / 2.0));
-                ctx.lineTo(toX(-L / 2.0 + ch), toY(da1 / 2.0));
-                ctx.lineTo(toX(L / 2.0 - ch), toY(da1 / 2.0));
-                ctx.lineTo(toX(L / 2.0), toY(df1 / 2.0));
+                if (isGloboid) {
+                    ctx.moveTo(toX(-L / 2.0), toY(evalR1Globoid(-L / 2.0) - hf1));
+                    for (let s = 0; s <= 24; s++) {
+                        const xVal = -L / 2.0 + s * (L / 24.0);
+                        const rTip = evalR1Globoid(xVal) + ha1;
+                        ctx.lineTo(toX(xVal), toY(rTip));
+                    }
+                    ctx.lineTo(toX(L / 2.0), toY(evalR1Globoid(L / 2.0) - hf1));
+                } else {
+                    ctx.moveTo(toX(-L / 2.0), toY(df1 / 2.0));
+                    ctx.lineTo(toX(-L / 2.0 + ch), toY(da1 / 2.0));
+                    ctx.lineTo(toX(L / 2.0 - ch), toY(da1 / 2.0));
+                    ctx.lineTo(toX(L / 2.0), toY(df1 / 2.0));
+                }
             } else {
-                ctx.moveTo(toX(-L / 2.0), toY(-df1 / 2.0));
-                ctx.lineTo(toX(-L / 2.0 + ch), toY(-da1 / 2.0));
-                ctx.lineTo(toX(L / 2.0 - ch), toY(-da1 / 2.0));
-                ctx.lineTo(toX(L / 2.0), toY(-df1 / 2.0));
+                if (isGloboid) {
+                    ctx.moveTo(toX(-L / 2.0), toY(-(evalR1Globoid(-L / 2.0) - hf1)));
+                    for (let s = 0; s <= 24; s++) {
+                        const xVal = -L / 2.0 + s * (L / 24.0);
+                        const rTip = -(evalR1Globoid(xVal) + ha1);
+                        ctx.lineTo(toX(xVal), toY(rTip));
+                    }
+                    ctx.lineTo(toX(L / 2.0), toY(-(evalR1Globoid(L / 2.0) - hf1)));
+                } else {
+                    ctx.moveTo(toX(-L / 2.0), toY(-df1 / 2.0));
+                    ctx.lineTo(toX(-L / 2.0 + ch), toY(-da1 / 2.0));
+                    ctx.lineTo(toX(L / 2.0 - ch), toY(-da1 / 2.0));
+                    ctx.lineTo(toX(L / 2.0), toY(-df1 / 2.0));
+                }
             }
             ctx.closePath();
             ctx.clip();
@@ -3819,7 +3922,7 @@ class WormCanvasRenderer {
             ctx.lineWidth = 1.8;
 
             const tType = g.toothType || 1;
-            const evalToothW = (R) => {
+            const evalToothW = (R, xcVal) => {
                 let w = sx / 2.0 - (R - d1 / 2.0) * tanAx;
                 if (tType === 5) {
                     // ZH Cavex (Concave arc in axial section)
@@ -3852,6 +3955,10 @@ class WormCanvasRenderer {
                     const K_zk = (Math.sin(2.0 * gamaRadVal) * Math.tan(alfanRadVal)) / (4.0 * (2.5 + Math.cos(gamaRadVal)));
                     w = (sx / 2.0) - (R - d1 / 2.0) * tanAx + K_zk * ((R - d1 / 2.0) ** 2) / (d1 / 2.0);
                 }
+                if (isDuplex) {
+                    const kDup = g.k_dup || 0.02;
+                    w = w + (xcVal * kDup) * 0.5;
+                }
                 return Math.max(0.08 * mx, w);
             };
 
@@ -3863,9 +3970,11 @@ class WormCanvasRenderer {
 
                 for (let step = 0; step <= numSteps; step++) {
                     const frac = step / numSteps;
-                    const R = (df1 / 2.0) + frac * ((da1 - df1) / 2.0);
+                    const rBase = isGloboid ? (evalR1Globoid(xc) - hf1) : (df1 / 2.0);
+                    const rTop = isGloboid ? (evalR1Globoid(xc) + ha1) : (da1 / 2.0);
+                    const R = rBase + frac * (rTop - rBase);
                     const yWorld = signY * R;
-                    const w = evalToothW(R);
+                    const w = evalToothW(R, xc);
                     ptsL.push({ x: xc - w, y: yWorld });
                     ptsR.push({ x: xc + w, y: yWorld });
                 }
@@ -3903,42 +4012,84 @@ class WormCanvasRenderer {
         const botShift = (g.z1 % 2 === 1) ? px / 2.0 : 0.0;
         drawRackHalf(-1, botShift);
 
-        // 4. Reference lines: Pitch lines (d1/2), Tip lines (da1/2), Root lines (df1/2)
+        // 4. Reference lines: Pitch lines, Tip lines, Root lines
         ctx.save();
         ctx.lineWidth = 1.1;
 
-        // Pitch lines
-        ctx.strokeStyle = '#fbbf24';
-        ctx.setLineDash([6, 4]);
-        ctx.beginPath();
-        ctx.moveTo(toX(-L / 2.0), toY(d1 / 2.0));
-        ctx.lineTo(toX(L / 2.0), toY(d1 / 2.0));
-        ctx.moveTo(toX(-L / 2.0), toY(-d1 / 2.0));
-        ctx.lineTo(toX(L / 2.0), toY(-d1 / 2.0));
-        ctx.stroke();
+        if (isGloboid) {
+            // Curved pitch lines
+            ctx.strokeStyle = '#fbbf24';
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            for (let s = 0; s <= 30; s++) {
+                const xVal = -L / 2.0 + s * (L / 30.0);
+                const rPitch = evalR1Globoid(xVal);
+                if (s === 0) ctx.moveTo(toX(xVal), toY(rPitch));
+                else ctx.lineTo(toX(xVal), toY(rPitch));
+            }
+            ctx.stroke();
+            ctx.beginPath();
+            for (let s = 0; s <= 30; s++) {
+                const xVal = -L / 2.0 + s * (L / 30.0);
+                const rPitch = -evalR1Globoid(xVal);
+                if (s === 0) ctx.moveTo(toX(xVal), toY(rPitch));
+                else ctx.lineTo(toX(xVal), toY(rPitch));
+            }
+            ctx.stroke();
 
-        // Tip lines
-        ctx.strokeStyle = '#38bdf8';
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(toX(-L / 2.0 + ch), toY(da1 / 2.0));
-        ctx.lineTo(toX(L / 2.0 - ch), toY(da1 / 2.0));
-        ctx.moveTo(toX(-L / 2.0 + ch), toY(-da1 / 2.0));
-        ctx.lineTo(toX(L / 2.0 - ch), toY(-da1 / 2.0));
-        ctx.stroke();
+            // Curved tip lines
+            ctx.strokeStyle = '#38bdf8';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            for (let s = 0; s <= 30; s++) {
+                const xVal = -L / 2.0 + s * (L / 30.0);
+                const rTip = evalR1Globoid(xVal) + ha1;
+                if (s === 0) ctx.moveTo(toX(xVal), toY(rTip));
+                else ctx.lineTo(toX(xVal), toY(rTip));
+            }
+            ctx.stroke();
+            ctx.beginPath();
+            for (let s = 0; s <= 30; s++) {
+                const xVal = -L / 2.0 + s * (L / 30.0);
+                const rTip = -(evalR1Globoid(xVal) + ha1);
+                if (s === 0) ctx.moveTo(toX(xVal), toY(rTip));
+                else ctx.lineTo(toX(xVal), toY(rTip));
+            }
+            ctx.stroke();
+        } else {
+            // Cylindrical Pitch lines
+            ctx.strokeStyle = '#fbbf24';
+            ctx.setLineDash([6, 4]);
+            ctx.beginPath();
+            ctx.moveTo(toX(-L / 2.0), toY(d1 / 2.0));
+            ctx.lineTo(toX(L / 2.0), toY(d1 / 2.0));
+            ctx.moveTo(toX(-L / 2.0), toY(-d1 / 2.0));
+            ctx.lineTo(toX(L / 2.0), toY(-d1 / 2.0));
+            ctx.stroke();
 
-        // Root lines
-        ctx.strokeStyle = '#94a3b8';
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(toX(-L / 2.0), toY(df1 / 2.0));
-        ctx.lineTo(toX(L / 2.0), toY(df1 / 2.0));
-        ctx.moveTo(toX(-L / 2.0), toY(-df1 / 2.0));
-        ctx.lineTo(toX(L / 2.0), toY(-df1 / 2.0));
-        ctx.stroke();
+            // Tip lines
+            ctx.strokeStyle = '#38bdf8';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(toX(-L / 2.0 + ch), toY(da1 / 2.0));
+            ctx.lineTo(toX(L / 2.0 - ch), toY(da1 / 2.0));
+            ctx.moveTo(toX(-L / 2.0 + ch), toY(-da1 / 2.0));
+            ctx.lineTo(toX(L / 2.0 - ch), toY(-da1 / 2.0));
+            ctx.stroke();
+
+            // Root lines
+            ctx.strokeStyle = '#94a3b8';
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(toX(-L / 2.0), toY(df1 / 2.0));
+            ctx.lineTo(toX(L / 2.0), toY(df1 / 2.0));
+            ctx.moveTo(toX(-L / 2.0), toY(-df1 / 2.0));
+            ctx.lineTo(toX(L / 2.0), toY(-df1 / 2.0));
+            ctx.stroke();
+        }
         ctx.restore();
 
-        // 5. Dimension Callouts
+        // 5. Dimension Callouts & Specialized Architecture Banners
         if (this.showDims) {
             this.drawDimLine(ctx, toX(-L / 2.0), toY(da1 / 2.0 + 8.0), toX(L / 2.0), toY(da1 / 2.0 + 8.0), `L = ${L.toFixed(2)} mm`, -10);
             this.drawDimLine(ctx, toX(-L / 2.0 - th - 12.0), toY(-da1 / 2.0), toX(-L / 2.0 - th - 12.0), toY(da1 / 2.0), `da1 = ${da1.toFixed(2)}`, -14);
@@ -4527,11 +4678,11 @@ class WormCanvasRenderer {
 
     drawHUD(ctx, W, H, g) {
         ctx.save();
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.86)';
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 1;
-        ctx.fillRect(14, 14, 345, 96);
-        ctx.strokeRect(14, 14, 345, 96);
+        const isAdvancedArch = (this.viewMode === 'axial_profile' && (g.wormArch === 2 || g.wormArch === 3));
+        const hudW = isAdvancedArch ? 480 : 345;
+        const hudH = isAdvancedArch ? 134 : 96;
+        ctx.fillRect(14, 14, hudW, hudH);
+        ctx.strokeRect(14, 14, hudW, hudH);
 
         const typeNames = ["", "ZA (Archimedean)", "ZN (Normal Straight)", "ZI (Involute)", "ZK (Cone Milled)", "ZH (Cavex Concave)"];
         ctx.fillStyle = '#38bdf8';
@@ -4548,12 +4699,22 @@ class WormCanvasRenderer {
             ctx.fillText(`sn = ${(Math.PI * g.mn / 2).toFixed(3)} mm | ha1 = ${((g.da1 - g.d1)/2).toFixed(3)} | hf1 = ${((g.d1 - g.df1)/2).toFixed(3)} mm`, 24, 72);
             ctx.fillText(`ρf0 = ${(0.38 * g.mn).toFixed(3)} mm (0.38 mn) | Kiểu ren: ${typeNames[g.toothType] || 'ZN'}`, 24, 90);
         } else if (this.viewMode === 'axial_profile') {
-            ctx.fillText(`MẶT CẮT DỌC TRỤC TRỤC VÍT (A-A)`, 24, 34);
+            const archTitle = (g.wormArch === 2) ? ' - DUPLEX DUAL-LEAD' : ((g.wormArch === 3) ? ' - GLOBOID HOURGLASS' : '');
+            ctx.fillText(`MẶT CẮT DỌC TRỤC TRỤC VÍT (A-A)${archTitle}`, 24, 34);
             ctx.fillStyle = '#e2e8f0';
             ctx.font = '11px Inter, sans-serif';
             ctx.fillText(`mx = ${g.mx.toFixed(3)} mm | αx = ${g.alfax.toFixed(2)}° | γ = ${g.gama.toFixed(3)}°`, 24, 54);
             ctx.fillText(`px = ${g.px.toFixed(3)} mm | sx = ${g.sx1.toFixed(3)} mm | L = ${g.L.toFixed(2)} mm`, 24, 72);
             ctx.fillText(`d1 = ${g.d1.toFixed(2)} mm | da1 = ${g.da1.toFixed(2)} mm | df1 = ${g.df1.toFixed(2)} mm`, 24, 90);
+            if (g.wormArch === 2) {
+                ctx.fillStyle = '#34d399';
+                ctx.fillText(`Duplex: mx_R = ${(g.mx_R || g.mx).toFixed(3)} (Drive) | mx_L = ${(g.mx_L || g.mx).toFixed(3)} (Coast) | Δmx = ${(g.delta_mx || 0.08).toFixed(3)} mm`, 24, 108);
+                ctx.fillText(`Khử khe hở: ${(g.backlash_adj_microns || 20.0).toFixed(1)} μm / 1mm dịch trục | s(x): Đầu=${(g.sx_neg || g.sx1).toFixed(2)}mm, Đuôi=${(g.sx_pos || g.sx1).toFixed(2)}mm`, 24, 126);
+            } else if (g.wormArch === 3) {
+                ctx.fillStyle = '#38bdf8';
+                ctx.fillText(`Globoid: Họng d1,min = ${(g.d1_min || g.d1).toFixed(2)} mm | Ôm R_throat = ${(g.R_throat || (g.d2/2)).toFixed(2)} mm`, 24, 108);
+                ctx.fillText(`Góc ôm 2δ1 = ${(g.wrap_angle_deg || 38.0).toFixed(1)}° | ${(g.teeth_contact || 4.2).toFixed(1)} răng ăn khớp (~${(g.load_multiplier || 3.5).toFixed(1)}x tải)`, 24, 126);
+            }
         } else if (this.viewMode === 'tangential_profile') {
             const wt = 0.5 * Math.sqrt(Math.max(0, g.da1 * g.da1 - g.d1 * g.d1));
             const bt = 2.0 * wt;
@@ -5220,6 +5381,29 @@ const Worm3DGenerator = {
         const xc_zh = MC_sx1 + rho_zh * Math.cos(alfax_rad);
         const Rc_zh = r1 + rho_zh * Math.sin(alfax_rad);
 
+        // Advanced Worm Architecture (Duplex & Globoid)
+        const wormArch = parseInt(opt.wormArch !== undefined ? opt.wormArch : (opt.MC_3D?.wormArch || 1), 10);
+        const delta_mx = parseFloat(opt.delta_mx ?? opt.MC_3D?.delta_mx ?? 0.08);
+        const delta_x_adj = parseFloat(opt.delta_x_adj ?? opt.MC_3D?.delta_x_adj ?? 1.0);
+        const mx_R = parseFloat(opt.mx_R ?? opt.MC_3D?.mx_R ?? (mn + delta_mx / 2.0));
+        const mx_L = parseFloat(opt.mx_L ?? opt.MC_3D?.mx_L ?? (mn - delta_mx / 2.0));
+        const px_R = parseFloat(opt.px_R ?? opt.MC_3D?.px_R ?? (Math.PI * mx_R));
+        const px_L = parseFloat(opt.px_L ?? opt.MC_3D?.px_L ?? (Math.PI * mx_L));
+        const pz_R = parseFloat(opt.pz_R ?? opt.MC_3D?.pz_R ?? (px_R * z1));
+        const pz_L = parseFloat(opt.pz_L ?? opt.MC_3D?.pz_L ?? (px_L * z1));
+        const k_dup = parseFloat(opt.k_dup ?? opt.MC_3D?.k_dup ?? (delta_mx / mn));
+        const gama_R = parseFloat(opt.gama_R ?? opt.MC_3D?.gama_R ?? 0);
+        const gama_L = parseFloat(opt.gama_L ?? opt.MC_3D?.gama_L ?? 0);
+
+        const r1_min = parseFloat(opt.r1_min ?? opt.MC_3D?.r1_min ?? r1);
+        const d1_min = parseFloat(opt.d1_min ?? opt.MC_3D?.d1_min ?? d1);
+        const R_throat = parseFloat(opt.R_throat ?? opt.MC_3D?.R_throat ?? r2);
+        const half_L_globoid = parseFloat(opt.half_L_globoid ?? opt.MC_3D?.half_L_globoid ?? (L * 0.5));
+        const L_globoid = parseFloat(opt.L_globoid ?? opt.MC_3D?.L_globoid ?? L);
+        const wrap_angle_deg = parseFloat(opt.wrap_angle_deg ?? opt.MC_3D?.wrap_angle_deg ?? 0);
+        const teeth_contact = parseFloat(opt.teeth_contact ?? opt.MC_3D?.teeth_contact ?? 1.2);
+        const load_multiplier = parseFloat(opt.load_multiplier ?? opt.MC_3D?.load_multiplier ?? 1.0);
+
         return {
             MC_a: a, MC_px: px, MC_pxn, MC_pxnhalf,
             MC_alfa: alfax_deg, MC_alfa_rad: alfax_rad,
@@ -5236,7 +5420,11 @@ const Worm3DGenerator = {
             MC_chamferAngle, MC_rEdge,
             ShaftDB2: parseFloat(opt.ShaftDB2) || 0,
             toothType, alfan_deg, alfan_rad, alfat_zi, rb1, db1,
-            rho_zh, xc_zh, Rc_zh
+            rho_zh, xc_zh, Rc_zh,
+            // Duplex & Globoid
+            wormArch, delta_mx, delta_x_adj, mx_R, mx_L, px_R, px_L, pz_R, pz_L,
+            k_dup, gama_R, gama_L, r1_min, d1_min, R_throat, half_L_globoid, L_globoid,
+            wrap_angle_deg, teeth_contact, load_multiplier
         };
     },
 
@@ -5318,6 +5506,29 @@ const Worm3DGenerator = {
     },
 
     evalWormBlankRadius(x, mc) {
+        if (mc.wormArch === 3) {
+            // Globoid / Hourglass envelope hugging the worm wheel radius R_throat
+            const a = mc.MC_a;
+            const R_throat = mc.R_throat || mc.r2;
+            const absX = Math.abs(x);
+            const val = Math.max(0.0, R_throat * R_throat - absX * absX);
+            const r1_x = a - Math.sqrt(val);
+            const ha1 = (mc.MC_da1 - mc.MC_d1) * 0.5;
+            const ra1_x = r1_x + ha1;
+            const rf1_x = Math.max(2.0, r1_x - (mc.MC_d1 - mc.MC_df1) * 0.5);
+
+            const halfL = mc.MC_L * 0.5;
+            const chamferLen = Math.tan((mc.MC_beta1 * Math.PI) / 180.0) * ha1;
+            if (absX <= halfL - chamferLen) {
+                return ra1_x;
+            } else if (absX <= halfL) {
+                if (chamferLen <= 1e-6) return rf1_x;
+                const t = (halfL - absX) / chamferLen;
+                return rf1_x + t * (ra1_x - rf1_x);
+            } else {
+                return rf1_x;
+            }
+        }
         const ra1 = mc.MC_da1 * 0.5;
         const rf1 = mc.MC_df1 * 0.5;
         const halfL = mc.MC_L * 0.5;
@@ -5332,6 +5543,19 @@ const Worm3DGenerator = {
         } else {
             return rf1;
         }
+    },
+
+    evalWormRootRadius(x, mc) {
+        if (mc.wormArch === 3) {
+            const a = mc.MC_a;
+            const R_throat = mc.R_throat || mc.r2;
+            const absX = Math.abs(x);
+            const val = Math.max(0.0, R_throat * R_throat - absX * absX);
+            const r1_x = a - Math.sqrt(val);
+            const hf1 = (mc.MC_d1 - mc.MC_df1) * 0.5;
+            return Math.max(2.0, r1_x - hf1);
+        }
+        return mc.rf1;
     },
 
     evalWheelBlank(z, mc) {
@@ -5572,30 +5796,38 @@ const Worm3DGenerator = {
         for (let s = 0; s < numSlices; s++) {
             const x = -L * 0.5 + s * xStep;
             const rBlank = this.evalWormBlankRadius(x, mc);
+            const rf1_s = (mc.wormArch === 3) ? this.evalWormRootRadius(x, mc) : rf1;
             const starts = [];
 
             for (let k = 0; k < z1; k++) {
                 const startPhase = (k * 2.0 * Math.PI) / z1;
                 // Pure conjugate engagement: at x=0, thread 0 is centered at phi0 = 0 (pointing towards wheel at Y=-a+R)
-                const phi0 = handSign * (2.0 * Math.PI / pz) * x + startPhase;
+                let phi0_R = handSign * (2.0 * Math.PI / pz) * x + startPhase;
+                let phi0_L = phi0_R;
+                if (mc.wormArch === 2) {
+                    const pzR = mc.pz_R || pz;
+                    const pzL = mc.pz_L || pz;
+                    phi0_R = handSign * (2.0 * Math.PI / pzR) * x + startPhase;
+                    phi0_L = handSign * (2.0 * Math.PI / pzL) * x + startPhase;
+                }
 
                 const rFlankR = [];
                 const rFlankL = [];
 
                 for (let m = 0; m <= ptsR; m++) {
                     const frac = m / ptsR;
-                    const R = rf1 + frac * (rBlank - rf1);
+                    const R = rf1_s + frac * (rBlank - rf1_s);
                     const prof = this.evalWormFlankProfile(R, +1, mc.toothType, mc);
                     const dPhi = prof.dPhi;
 
-                    const phiR = phi0 - dPhi;
-                    const phiL = phi0 + dPhi;
+                    const phiR = phi0_R - dPhi;
+                    const phiL = phi0_L + dPhi;
 
                     rFlankR.push({ x, y: R * Math.cos(phiR), z: R * Math.sin(phiR), R, phi: phiR, slope: prof.slope });
                     rFlankL.push({ x, y: R * Math.cos(phiL), z: R * Math.sin(phiL), R, phi: phiL, slope: prof.slope });
                 }
 
-                // Cylindrical Tip Crest Arc (Analytical radial normals eliminate all kinks and bumps)
+                // Cylindrical / Hourglass Tip Crest Arc (Analytical radial normals eliminate all kinks and bumps)
                 const tipArc = [];
                 const pTipR = rFlankR[ptsR];
                 const pTipL = rFlankL[ptsR];
@@ -5787,8 +6019,30 @@ const Worm3DGenerator = {
                 }
             }
 
-            // Continuous cylindrical root core underneath threads
-            pushCylinder(xL_thread, xR_thread, rf1);
+            // Continuous root core underneath threads (cylindrical or hourglass)
+            if (mc.wormArch === 3) {
+                const nRootSlices = 24;
+                for (let rs = 0; rs < nRootSlices; rs++) {
+                    const x0 = xL_thread + rs * (L / nRootSlices);
+                    const x1 = xL_thread + (rs + 1) * (L / nRootSlices);
+                    const r0 = this.evalWormRootRadius(x0, mc);
+                    const r1 = this.evalWormRootRadius(x1, mc);
+                    for (let i = 0; i < nCirc; i++) {
+                        const a1 = (i * 2.0 * Math.PI) / nCirc;
+                        const a2 = ((i + 1) * 2.0 * Math.PI) / nCirc;
+                        const cos1 = Math.cos(a1), sin1 = Math.sin(a1);
+                        const cos2 = Math.cos(a2), sin2 = Math.sin(a2);
+                        const p00 = { x: x0, y: r0 * cos1, z: r0 * sin1 };
+                        const p01 = { x: x0, y: r0 * cos2, z: r0 * sin2 };
+                        const p10 = { x: x1, y: r1 * cos1, z: r1 * sin1 };
+                        const p11 = { x: x1, y: r1 * cos2, z: r1 * sin2 };
+                        pushTri(p00, p01, p11);
+                        pushTri(p00, p11, p10);
+                    }
+                }
+            } else {
+                pushCylinder(xL_thread, xR_thread, rf1);
+            }
 
             // Shoulder Step Rings
             for (let i = 0; i < nCirc; i++) {
@@ -6313,50 +6567,59 @@ const Worm3DGenerator = {
 
             for (let s = 0; s < numSlices; s++) {
                 const x = -L * 0.5 + s * dx;
-                const phi0 = handSign * (2.0 * Math.PI / pz) * x + startPhase;
+                let phi0_R = handSign * (2.0 * Math.PI / pz) * x + startPhase;
+                let phi0_L = phi0_R;
+                if (mc.wormArch === 2) {
+                    const pzR = mc.pz_R || pz;
+                    const pzL = mc.pz_L || pz;
+                    phi0_R = handSign * (2.0 * Math.PI / pzR) * x + startPhase;
+                    phi0_L = handSign * (2.0 * Math.PI / pzL) * x + startPhase;
+                }
+                const ra1_s = (mc.wormArch === 3) ? this.evalWormBlankRadius(x, mc) : ra1;
+                const rf1_s = (mc.wormArch === 3) ? this.evalWormRootRadius(x, mc) : rf1;
 
                 const sliceR = [];
                 const sliceL = [];
 
                 for (let m = 0; m <= ptsR; m++) {
                     const frac = m / ptsR;
-                    const R = rf1 + frac * (ra1 - rf1);
+                    const R = rf1_s + frac * (ra1_s - rf1_s);
                     const prof = this.evalWormFlankProfile(R, +1, mc.toothType, mc);
                     const dPhi = prof.dPhi;
 
-                    const phiR = phi0 - dPhi;
-                    const phiL = phi0 + dPhi;
+                    const phiR = phi0_R - dPhi;
+                    const phiL = phi0_L + dPhi;
 
                     sliceR.push([x, R * scale_u * Math.cos(phiR), R * scale_u * Math.sin(phiR)]);
                     sliceL.push([x, R * scale_u * Math.cos(phiL), R * scale_u * Math.sin(phiL)]);
                 }
 
-                // 1. Tip Crest Arc: sample directly on exact cylinder, then solve exact B-spline control points
-                const profTip = this.evalWormFlankProfile(ra1, +1, mc.toothType, mc);
+                // 1. Tip Crest Arc: sample directly on exact cylinder/hourglass, then solve exact B-spline control points
+                const profTip = this.evalWormFlankProfile(ra1_s, +1, mc.toothType, mc);
                 const dPhi_tip = profTip.dPhi;
-                const phiTipR = phi0 - dPhi_tip;
-                const phiTipL = phi0 + dPhi_tip;
+                const phiTipR = phi0_R - dPhi_tip;
+                const phiTipL = phi0_L + dPhi_tip;
                 const dphi_tip = phiTipL - phiTipR;
 
                 const rawSliceTip = [];
                 for (let t = 0; t <= wormTipPts; t++) {
                     const fracTip = t / wormTipPts;
                     const phi = phiTipR + fracTip * dphi_tip;
-                    rawSliceTip.push([x, ra1 * scale_u * Math.cos(phi), ra1 * scale_u * Math.sin(phi)]);
+                    rawSliceTip.push([x, ra1_s * scale_u * Math.cos(phi), ra1_s * scale_u * Math.sin(phi)]);
                 }
                 const sliceTip = this.fitCubicBSplineCtrlPts(rawSliceTip);
 
-                // 2. Root Flute / Shaft Core: sample directly on exact root cylinder, then solve exact B-spline control points
-                const profRoot = this.evalWormFlankProfile(rf1, +1, mc.toothType, mc);
+                // 2. Root Flute / Shaft Core: sample directly on exact root cylinder/hourglass, then solve exact B-spline control points
+                const profRoot = this.evalWormFlankProfile(rf1_s, +1, mc.toothType, mc);
                 const dPhi_root = profRoot.dPhi;
-                const phiRootL = phi0 + dPhi_root;
+                const phiRootL = phi0_L + dPhi_root;
                 const dphi_root = (2.0 * Math.PI / z1) - 2.0 * dPhi_root;
 
                 const rawSliceRoot = [];
                 for (let t = 0; t <= wormRootPts; t++) {
                     const fracRoot = t / wormRootPts;
                     const phi = phiRootL + fracRoot * dphi_root;
-                    rawSliceRoot.push([x, rf1 * scale_u * Math.cos(phi), rf1 * scale_u * Math.sin(phi)]);
+                    rawSliceRoot.push([x, rf1_s * scale_u * Math.cos(phi), rf1_s * scale_u * Math.sin(phi)]);
                 }
                 const sliceRoot = this.fitCubicBSplineCtrlPts(rawSliceRoot);
 
@@ -8863,6 +9126,8 @@ class WormUIController {
         const g = this.latestResult;
         const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH' };
         const typeCode = typeNames[g.toothType] || 'ZN';
+        const archNames = { 1: '', 2: '_Duplex', 3: '_Globoid' };
+        const archSuffix = archNames[g.wormArch] || '';
 
         // Native Mastercam IGES 5.3 Surface / Wireframe Export
         if (format === 'iges' || format === 'iges_curves') {
@@ -8871,13 +9136,13 @@ class WormUIController {
             const pData = this.visualizer3D.getParametricData(format === 'iges_curves' ? 'curves_worm' : target, densityLevel);
             let igsFilename = '';
             if (format === 'iges_curves') {
-                igsFilename = `Khung_Day_Truc_Vit_1_${typeCode}_z${g.z1}_Cap${densityLevel}_Ruled_Loft.igs`;
+                igsFilename = `Khung_Day_Truc_Vit_1_${typeCode}${archSuffix}_z${g.z1}_Cap${densityLevel}_Ruled_Loft.igs`;
             } else if (target === 'worm') {
-                igsFilename = `Truc_Vit_1_${typeCode}_z${g.z1}_Cap${densityLevel}_Mastercam_Surface.igs`;
+                igsFilename = `Truc_Vit_1_${typeCode}${archSuffix}_z${g.z1}_Cap${densityLevel}_Mastercam_Surface.igs`;
             } else if (target === 'wheel') {
                 igsFilename = `Banh_Vit_Lom_2_${typeCode}_z${g.z2}_Cap${densityLevel}_Mastercam_Surface.igs`;
             } else {
-                igsFilename = `Cap_Truc_Vit_Banh_Vit_${typeCode}_z${g.z1}x${g.z2}_Cap${densityLevel}_Mastercam_Surface.igs`;
+                igsFilename = `Cap_Truc_Vit_Banh_Vit_${typeCode}${archSuffix}_z${g.z1}x${g.z2}_Cap${densityLevel}_Mastercam_Surface.igs`;
             }
             return Worm3DExporter.exportIGES(pData, igsFilename, true);
         }
@@ -8889,14 +9154,14 @@ class WormUIController {
         let filenameBase = '';
         let partName = '';
         if (target === 'worm') {
-            filenameBase = `Truc_Vit_1_${typeCode}_z${g.z1}_mn${g.mn.toFixed(2)}`;
-            partName = `WORM_1_${typeCode}_Z${g.z1}`;
+            filenameBase = `Truc_Vit_1_${typeCode}${archSuffix}_z${g.z1}_mn${g.mn.toFixed(2)}`;
+            partName = `WORM_1_${typeCode}${archSuffix.toUpperCase()}_Z${g.z1}`;
         } else if (target === 'wheel') {
             filenameBase = `Banh_Vit_Lom_2_${typeCode}_z${g.z2}_mn${g.mn.toFixed(2)}`;
             partName = `WORM_WHEEL_2_${typeCode}_Z${g.z2}`;
         } else {
-            filenameBase = `Cap_Truc_Vit_Banh_Vit_${typeCode}_z${g.z1}x${g.z2}_a${g.a.toFixed(1)}`;
-            partName = `WORM_GEAR_ASSEMBLY_${typeCode}_Z${g.z1}x${g.z2}`;
+            filenameBase = `Cap_Truc_Vit_Banh_Vit_${typeCode}${archSuffix}_z${g.z1}x${g.z2}_a${g.a.toFixed(1)}`;
+            partName = `WORM_GEAR_ASSEMBLY_${typeCode}${archSuffix.toUpperCase()}_Z${g.z1}x${g.z2}`;
         }
 
         if (isSurface) {
@@ -8949,6 +9214,9 @@ class WormUIController {
             rf1: this.parseVal('inp_rf1', 0.3799508411451843),
 
             // Section 4.0
+            wormArch: parseInt(document.getElementById('sel_wormArch')?.value || '1', 10),
+            delta_mx: this.parseVal('inp_delta_mx', 0.08),
+            delta_x_adj: this.parseVal('inp_delta_x_adj', 1.0),
             z1: Math.max(1, Math.round(this.parseVal('inp_z1', 1))),
             alfa_temp: this.parseVal('inp_alfa_temp', 20.0),
             calc_q: calc_q,
@@ -9013,7 +9281,10 @@ class WormUIController {
         const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH' };
         const typeCode = typeNames[res.toothType] || 'ZN';
         const orientStr = res.teethOrientation === 2 ? 'Ren Trái' : 'Ren Phải';
-        this.setVal('badge3DType', `🌀 Trục Vít - Bánh Vít Lõm (${typeCode} - ${orientStr})`);
+        let archTag = '';
+        if (res.wormArch === 2) archTag = ' [Duplex Dual-Lead]';
+        else if (res.wormArch === 3) archTag = ' [Globoid Hourglass]';
+        this.setVal('badge3DType', `🌀 Trục Vít - Bánh Vít Lõm (${typeCode} - ${orientStr}${archTag})`);
         this.setVal('badge3DRatio', `${res.i.toFixed(2)} (z1=${res.z1}, z2=${res.z2})`);
         this.setVal('badge3DA', `${res.a.toFixed(3)} mm`);
         this.setVal('badge3DGama', `${res.gama.toFixed(3)}°`);
@@ -9075,6 +9346,41 @@ class WormUIController {
         this.setVal('out_rf2', r.rf2, 4);
 
         // Section 4.0
+        const wormArch = r.wormArch || 1;
+        const rowDuplexParams = document.getElementById('row_duplex_params');
+        const rowDuplexAdj = document.getElementById('row_duplex_adj');
+        const rowDuplexFlanks = document.getElementById('row_duplex_flanks');
+        const rowGloboidThroat = document.getElementById('row_globoid_throat');
+        const rowGloboidContact = document.getElementById('row_globoid_contact');
+        const lblWormArchDesc = document.getElementById('lbl_wormArch_desc');
+
+        if (rowDuplexParams) rowDuplexParams.style.display = (wormArch === 2) ? 'table-row' : 'none';
+        if (rowDuplexAdj) rowDuplexAdj.style.display = (wormArch === 2) ? 'table-row' : 'none';
+        if (rowDuplexFlanks) rowDuplexFlanks.style.display = (wormArch === 2) ? 'table-row' : 'none';
+        if (rowGloboidThroat) rowGloboidThroat.style.display = (wormArch === 3) ? 'table-row' : 'none';
+        if (rowGloboidContact) rowGloboidContact.style.display = (wormArch === 3) ? 'table-row' : 'none';
+
+        if (lblWormArchDesc) {
+            if (wormArch === 2) lblWormArchDesc.textContent = 'Trục Duplex (Ott / Flender)';
+            else if (wormArch === 3) lblWormArchDesc.textContent = 'Trục Glôbôit (Hindley / Cone-Drive)';
+            else lblWormArchDesc.textContent = 'Tiêu chuẩn DIN 3975';
+        }
+
+        if (wormArch === 2) {
+            this.setVal('out_k_dup', (r.k_dup || 0.02).toFixed(4));
+            this.setVal('out_backlash_adj', `${(r.backlash_adj_microns || 20.0).toFixed(1)} μm`);
+            this.setVal('out_mx_R', `${(r.mx_R || 4.04).toFixed(3)} mm`);
+            this.setVal('out_gama_R', `${(r.gama_R || 6.776).toFixed(3)}°`);
+            this.setVal('out_mx_L', `${(r.mx_L || 3.96).toFixed(3)} mm`);
+            this.setVal('out_gama_L', `${(r.gama_L || 6.643).toFixed(3)}°`);
+        } else if (wormArch === 3) {
+            this.setVal('out_d1_min', `${(r.d1_min || r.d1).toFixed(2)} mm`);
+            this.setVal('out_R_throat', `${(r.R_throat || (r.d2 / 2.0)).toFixed(2)} mm`);
+            this.setVal('out_wrap_angle', `${(r.wrap_angle_deg || 37.9).toFixed(1)}°`);
+            this.setVal('out_teeth_contact', `${(r.teeth_contact || 4.2).toFixed(1)} răng`);
+            this.setVal('out_load_mult', `${(r.load_multiplier || 3.5).toFixed(1)}x`);
+        }
+
         this.setVal('out_z2', r.z2, 0);
         this.setVal('lbl_alfa_type', r.toothType === 1
             ? 'Góc ăn khớp dọc trục α₀ (4.10) — Hệ ZA'
