@@ -123,6 +123,22 @@ const Worm3DGenerator = {
                 ? parseFloat(opt.DXF_WheelChamfer_rEdge)
                 : null);
 
+        const toothType = Math.max(1, Math.min(5, parseInt(opt.toothType ?? opt.type4) || 1));
+        const alfan_deg = (opt.alfan !== undefined) ? parseFloat(opt.alfan) : ((alfax_deg * 180.0 / Math.PI));
+        const alfan_rad = (alfan_deg * Math.PI) / 180.0;
+
+        // ZI (Involute Helicoid) base cylinder & transverse parameters
+        const tan_alfat_zi = Math.tan(alfan_rad) / Math.max(1e-6, Math.sin(gamma));
+        const alfat_zi = Math.atan(tan_alfat_zi);
+        const rb1 = r1 * Math.cos(alfat_zi);
+        const db1 = 2.0 * rb1;
+
+        // ZH (Cavex Concave) arc parameters (DIN 3975 / Flender Cavex)
+        // Concave arc radius rho = 0.5 * d1 = r1
+        const rho_zh = r1;
+        const xc_zh = MC_sx1 + rho_zh * Math.cos(alfax_rad);
+        const Rc_zh = r1 + rho_zh * Math.sin(alfax_rad);
+
         return {
             MC_a: a, MC_px: px, MC_pxn, MC_pxnhalf,
             MC_alfa: alfax_deg, MC_alfa_rad: alfax_rad,
@@ -137,8 +153,87 @@ const Worm3DGenerator = {
             r1, r2, rf1, ra1, rf2, ra2, gamma,
             r_throat_tip, r_throat_root, r_outer, b1, MC_b4,
             MC_chamferAngle, MC_rEdge,
-            ShaftDB2: parseFloat(opt.ShaftDB2) || 0
+            ShaftDB2: parseFloat(opt.ShaftDB2) || 0,
+            toothType, alfan_deg, alfan_rad, alfat_zi, rb1, db1,
+            rho_zh, xc_zh, Rc_zh
         };
+    },
+
+    /**
+     * Evaluates exact analytical tooth flank profile across DIN 3975 types:
+     * 1=ZA (Archimedean Straight Axial)
+     * 2=ZN (Normal Straight Trapezoid)
+     * 3=ZI (Involute Helicoid developable surface)
+     * 4=ZK (Cone Milled / Cone Ground envelope)
+     * 5=ZH (Cavex Concave circular arc)
+     */
+    evalWormFlankProfile(R, flankSide, toothType, mc) {
+        const r1 = mc.r1;
+        const rf1 = mc.rf1;
+        const ra1 = mc.ra1;
+        const halfSx1 = mc.MC_sx1;
+        const tanA = Math.tan(mc.MC_alfa_rad);
+        const gamma = mc.gamma;
+        const pz = mc.MC_pxn;
+        const p = pz / (2.0 * Math.PI);
+
+        let w = halfSx1;
+        let slope = tanA;
+
+        if (toothType === 1) {
+            // ZA (Archimedean): Pure straight trapezoid in axial section
+            w = halfSx1 - (R - r1) * tanA;
+            slope = tanA;
+        } else if (toothType === 2) {
+            // ZN (Normal Straight): Straight trapezoid in normal section
+            const del_w = (R - r1) * tanA * (1.0 - r1 / Math.max(1e-6, R)) * (Math.sin(gamma) ** 2);
+            w = halfSx1 - (R - r1) * tanA + del_w;
+            slope = tanA * (1.0 - (Math.sin(gamma) ** 2) * (1.0 - (r1 ** 2) / Math.max(1e-6, R ** 2)));
+        } else if (toothType === 3) {
+            // ZI (Involute Helicoid): Exact circle involute of base cylinder rb1
+            const rb1 = mc.rb1;
+            const alfat_zi = mc.alfat_zi;
+            const inv = (a) => Math.tan(a) - a;
+            const inv_ref = inv(alfat_zi);
+
+            if (R >= rb1) {
+                const alfa_R = Math.acos(Math.min(1.0, rb1 / R));
+                const inv_R = inv(alfa_R);
+                const d_theta = inv_ref - inv_R;
+                const theta_trans = (halfSx1 / p) + d_theta;
+                w = p * theta_trans;
+                slope = p * Math.sqrt(Math.max(0.0, R * R - rb1 * rb1)) / (R * R);
+            } else {
+                // Smooth transition below base circle to root
+                const theta_base = (halfSx1 / p) + inv_ref;
+                w = p * theta_base;
+                slope = 0.08;
+            }
+        } else if (toothType === 4) {
+            // ZK (Cone Ground / Milled): Parabolic envelope from biconical wheel
+            const K_zk = (Math.sin(2.0 * gamma) * Math.tan(mc.alfan_rad)) / (4.0 * (2.5 + Math.cos(gamma)));
+            w = halfSx1 - (R - r1) * tanA + K_zk * ((R - r1) ** 2) / r1;
+            slope = tanA - 2.0 * K_zk * (R - r1) / r1;
+        } else if (toothType === 5) {
+            // ZH (Cavex Concave): Concave circular arc in axial section
+            const rho = mc.rho_zh;
+            const xc = mc.xc_zh;
+            const Rc = mc.Rc_zh;
+            const val = rho * rho - (R - Rc) * (R - Rc);
+            if (val >= 0) {
+                w = xc - Math.sqrt(val);
+                slope = (Rc - R) / Math.sqrt(val);
+            } else {
+                w = halfSx1 - (R - r1) * tanA;
+                slope = tanA;
+            }
+        }
+
+        // Limit minimum tooth thickness at tip to avoid negative width
+        w = Math.max(0.05 * mc.mn, w);
+        const dPhi = (2.0 * Math.PI / pz) * w;
+
+        return { w, dPhi, slope };
     },
 
     evalWormBlankRadius(x, mc) {
@@ -216,7 +311,7 @@ const Worm3DGenerator = {
 
     /**
      * Solves for generating worm radius u for target wheel radius r and axial position z,
-     * based on Litvin's analytical meshing equation for Archimedean (ZA) worm gearing:
+     * based on Litvin's analytical meshing equation across all DIN 3975 profiles (ZA, ZN, ZI, ZK, ZH):
      * n1 . v^(12) = 0 => x1 = u * (u*cos(Phi) - a + i*p) / N0y.
      */
     solveConjugateUForR(rTarget, z, flankSide, mc) {
@@ -226,14 +321,16 @@ const Worm3DGenerator = {
 
         const a = mc.MC_a;
         const ip = (mc.MC_z2 / mc.MC_z1) * (mc.MC_pxn / (2.0 * Math.PI));
-        const tanA = Math.tan(mc.MC_alfa_rad);
         const p = mc.MC_pxn / (2.0 * Math.PI);
+        const toothType = mc.toothType || 1;
+        const self = this;
 
         function evalR(u) {
             const ratio = z / u;
             const cosPhi = Math.sqrt(Math.max(0.0, 1.0 - ratio * ratio));
             const sinPhi = ratio;
-            const N0y = p * sinPhi + flankSide * tanA * u * cosPhi;
+            const prof = self.evalWormFlankProfile(u, flankSide, toothType, mc);
+            const N0y = p * sinPhi + flankSide * prof.slope * u * cosPhi;
             if (Math.abs(N0y) < 1e-7) return 1e9;
             const x1 = u * (u * cosPhi - a + ip) / N0y;
             const y0 = -a + u * cosPhi;
@@ -285,17 +382,16 @@ const Worm3DGenerator = {
         const a = mc.MC_a;
         const i = mc.MC_z2 / mc.MC_z1;
         const ip = i * (mc.MC_pxn / (2.0 * Math.PI));
-        const tanA = Math.tan(mc.MC_alfa_rad);
         const p = mc.MC_pxn / (2.0 * Math.PI);
-        const halfSx1 = mc.MC_sx1;
-        const r1 = mc.r1;
+        const toothType = mc.toothType || 1;
 
         const ratio = Math.min(1.0, Math.max(-1.0, z / u));
         const cosPhi = Math.sqrt(Math.max(0.0, 1.0 - ratio * ratio));
         const sinPhi = ratio;
         const Phi = Math.asin(ratio);
 
-        const N0y = p * sinPhi + flankSide * tanA * u * cosPhi;
+        const prof = this.evalWormFlankProfile(u, flankSide, toothType, mc);
+        const N0y = p * sinPhi + flankSide * prof.slope * u * cosPhi;
         if (Math.abs(N0y) < 1e-7) return null;
 
         const isSurface = Boolean(mc.surfaceOnly);
@@ -318,8 +414,8 @@ const Worm3DGenerator = {
         }
 
         const x1 = u * (u * cosPhi - a + ip) / N0y;
-        // Tool half-thickness with conjugate kiss / backlash
-        const x1_prof = flankSide * (halfSx1 - kissAllowance - (u - r1) * tanA);
+        // Tool half-thickness with conjugate kiss / backlash across all profiles
+        const x1_prof = flankSide * (prof.w - kissAllowance);
         const phi1 = Phi - (x1 - x1_prof) / p;
         const phi2 = -phi1 / i;
 
@@ -408,14 +504,14 @@ const Worm3DGenerator = {
                 for (let m = 0; m <= ptsR; m++) {
                     const frac = m / ptsR;
                     const R = rf1 + frac * (rBlank - rf1);
-                    const w = halfSx1 - (R - r1) * tanA;
-                    const dPhi = (2.0 * Math.PI / pz) * w;
+                    const prof = this.evalWormFlankProfile(R, +1, mc.toothType, mc);
+                    const dPhi = prof.dPhi;
 
                     const phiR = phi0 - dPhi;
                     const phiL = phi0 + dPhi;
 
-                    rFlankR.push({ x, y: R * Math.cos(phiR), z: R * Math.sin(phiR), R, phi: phiR });
-                    rFlankL.push({ x, y: R * Math.cos(phiL), z: R * Math.sin(phiL), R, phi: phiL });
+                    rFlankR.push({ x, y: R * Math.cos(phiR), z: R * Math.sin(phiR), R, phi: phiR, slope: prof.slope });
+                    rFlankL.push({ x, y: R * Math.cos(phiL), z: R * Math.sin(phiL), R, phi: phiL, slope: prof.slope });
                 }
 
                 // Cylindrical Tip Crest Arc (Analytical radial normals eliminate all kinks and bumps)
@@ -1144,8 +1240,8 @@ const Worm3DGenerator = {
                 for (let m = 0; m <= ptsR; m++) {
                     const frac = m / ptsR;
                     const R = rf1 + frac * (ra1 - rf1);
-                    const w = halfSx1 - (R - r1) * tanA;
-                    const dPhi = (2.0 * Math.PI / pz) * w;
+                    const prof = this.evalWormFlankProfile(R, +1, mc.toothType, mc);
+                    const dPhi = prof.dPhi;
 
                     const phiR = phi0 - dPhi;
                     const phiL = phi0 + dPhi;
@@ -1155,8 +1251,8 @@ const Worm3DGenerator = {
                 }
 
                 // 1. Tip Crest Arc: sample directly on exact cylinder, then solve exact B-spline control points
-                const w_tip = halfSx1 - (ra1 - r1) * tanA;
-                const dPhi_tip = (2.0 * Math.PI / pz) * w_tip;
+                const profTip = this.evalWormFlankProfile(ra1, +1, mc.toothType, mc);
+                const dPhi_tip = profTip.dPhi;
                 const phiTipR = phi0 - dPhi_tip;
                 const phiTipL = phi0 + dPhi_tip;
                 const dphi_tip = phiTipL - phiTipR;
@@ -1170,8 +1266,8 @@ const Worm3DGenerator = {
                 const sliceTip = this.fitCubicBSplineCtrlPts(rawSliceTip);
 
                 // 2. Root Flute / Shaft Core: sample directly on exact root cylinder, then solve exact B-spline control points
-                const w_root = halfSx1 - (rf1 - r1) * tanA;
-                const dPhi_root = (2.0 * Math.PI / pz) * w_root;
+                const profRoot = this.evalWormFlankProfile(rf1, +1, mc.toothType, mc);
+                const dPhi_root = profRoot.dPhi;
                 const phiRootL = phi0 + dPhi_root;
                 const dphi_root = (2.0 * Math.PI / z1) - 2.0 * dPhi_root;
 
@@ -1219,14 +1315,14 @@ const Worm3DGenerator = {
                     // Flank R from root to tip
                     for (let m = 0; m <= ptsPerCurve; m++) {
                         const R = rf1 + (m / ptsPerCurve) * (ra1 - rf1);
-                        const w = halfSx1 - (R - r1) * tanA;
-                        const phi = phi0_p - (2.0 * Math.PI / pz) * w;
+                        const profM = this.evalWormFlankProfile(R, +1, mc.toothType, mc);
+                        const phi = phi0_p - profM.dPhi;
                         prof.push([x_prof, R * Math.cos(phi), R * Math.sin(phi)]);
                     }
                     // Tip arc
-                    const w_t = halfSx1 - (ra1 - r1) * tanA;
-                    const phiTR = phi0_p - (2.0 * Math.PI / pz) * w_t;
-                    const phiTL = phi0_p + (2.0 * Math.PI / pz) * w_t;
+                    const profTR = this.evalWormFlankProfile(ra1, +1, mc.toothType, mc);
+                    const phiTR = phi0_p - profTR.dPhi;
+                    const phiTL = phi0_p + profTR.dPhi;
                     for (let t = 1; t <= ptsPerCurve; t++) {
                         const phi = phiTR + (t / ptsPerCurve) * (phiTL - phiTR);
                         prof.push([x_prof, ra1 * Math.cos(phi), ra1 * Math.sin(phi)]);
@@ -1234,14 +1330,14 @@ const Worm3DGenerator = {
                     // Flank L from tip to root
                     for (let m = ptsPerCurve - 1; m >= 0; m--) {
                         const R = rf1 + (m / ptsPerCurve) * (ra1 - rf1);
-                        const w = halfSx1 - (R - r1) * tanA;
-                        const phi = phi0_p + (2.0 * Math.PI / pz) * w;
+                        const profM = this.evalWormFlankProfile(R, +1, mc.toothType, mc);
+                        const phi = phi0_p + profM.dPhi;
                         prof.push([x_prof, R * Math.cos(phi), R * Math.sin(phi)]);
                     }
                     // Root arc
-                    const w_rt = halfSx1 - (rf1 - r1) * tanA;
-                    const phiRL = phi0_p + (2.0 * Math.PI / pz) * w_rt;
-                    const dphi_rt = (2.0 * Math.PI / z1) - 2.0 * (2.0 * Math.PI / pz) * w_rt;
+                    const profRt = this.evalWormFlankProfile(rf1, +1, mc.toothType, mc);
+                    const phiRL = phi0_p + profRt.dPhi;
+                    const dphi_rt = (2.0 * Math.PI / z1) - 2.0 * profRt.dPhi;
                     for (let t = 1; t <= ptsPerCurve; t++) {
                         const phi = phiRL + (t / ptsPerCurve) * dphi_rt;
                         prof.push([x_prof, rf1 * Math.cos(phi), rf1 * Math.sin(phi)]);

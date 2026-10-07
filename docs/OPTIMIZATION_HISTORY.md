@@ -3690,3 +3690,31 @@ ho_{f0}$.
      - Tạo 2 launcher batch 1-Click: `CHAY_BANH_RANG_CON_CHUYEN_SAU.bat` và `CHAY_WEBAPP_TRUC_VIT_CHUYEN_SAU.bat`.
   5. *Kiểm thử tự động Playwright*:
      - Script `scratch/test_5_modules.py` kiểm tra tải đồng thời cả 6 trang (Portal + 5 Mô-Đun), xác nhận **100% PASS với 0 lỗi Console, 0 lỗi JavaScript**.
+
+
+---
+
+## 2026-10-07 - Quy Tắc 93: Phát Triển 3D Thực Thể & Xuất CAD Chuẩn Mặt Xoắn Thân Khai (ZI) & Biên Dạng Lõm Cavex (ZH) Trục Vít - Bánh Vít Theo DIN 3975
+- **Yêu cầu trực tiếp từ SirPhuong**:
+  * Phát triển các tính năng còn khuyết thiếu vào Module 5 (`modules/worm-gear-advanced/`).
+  * Thực hiện Lựa chọn 1: Dựng 3D thực thể và xuất CAD chuẩn xác cho răng ZI (Thân khai) và ZH (Cavex lõm).
+- **Thực hiện kỹ thuật**:
+  1. *Hình học giải tích Trục vít Thân khai ZI (Involute Helicoid - DIN 3975)*:
+     - Tính toán mặt trụ cơ sở $d_{b1} = d_1 \cos\alpha_t$ với $\tan\alpha_t = \frac{\tan\alpha_n}{\sin\gamma}$.
+     - Thiết lập phương trình thân khai giải tích trên mặt cắt ngang (transverse):
+       $\theta_{trans}(R) = \frac{s_{x1}}{2 p} + \text{inv}(\alpha_t) - \text{inv}(\alpha_R)$ cho mọi bán kính $R \ge r_{b1}$.
+     - Bề rộng sườn răng dọc trục $w(R) = p \cdot \theta_{trans}(R)$, đạo hàm độ dốc sườn $S(R) = p \frac{\sqrt{R^2 - r_{b1}^2}}{R^2}$, tiếp tuyến tại vòng chia trùng khớp chuẩn xác $\tan\alpha_x$.
+  2. *Hình học giải tích Trục vít Lõm Cavex ZH (Concave Profile - DIN 3975)*:
+     - Dựng cung tròn lõm trên mặt cắt dọc trục với bán kính $\rho = 0.5 \cdot d_1 = r_1$.
+     - Tâm cung tròn đặt tại $x_c = \frac{s_{x1}}{2} + \rho \cos\alpha_x$, $R_c = r_1 + \rho \sin\alpha_x$.
+     - Phương trình sườn răng lõm: $w(R) = x_c - \sqrt{\rho^2 - (R - R_c)^2}$, đạo hàm dốc $S(R) = \frac{R_c - R}{\sqrt{\rho^2 - (R - R_c)^2}}$.
+  3. *Mặt bao bánh vít liên hợp Litvin (Conjugate Wheel Flank Envelope)*:
+     - Nâng cấp bộ giải Litvin $\vec{n}_1 \cdot \vec{v}^{(12)} = 0$ tích hợp hàm dốc $S(u)$ cho cả 5 kiểu ren.
+     - Với ren lõm Cavex (ZH), mặt răng bánh vít tự động sinh ra biên dạng **LỒI (Convex)** liên hợp chuẩn xác, tạo cặp tiếp xúc lồi - lõm ăn khớp khít khao không cọ kẹt.
+  4. *Nâng cấp 2D Canvas & Hiển thị trực quan*:
+     - Cập nhật `renderAxialProfileView` và `renderNormalProfileView` vẽ đường cong biên dạng sườn răng chân thực (cung tròn lõm cho ZH, thân khai cho ZI).
+  5. *Xuất file CAD 3D đa định dạng*:
+     - Cập nhật `Worm3DExporter`: Hỗ trợ đầy đủ STEP Solid B-Rep, STL Binary, và IGES Surface B-Spline (Entity 128) mang trọn vẹn bề mặt thực thể của ZI và ZH sang Mastercam và SolidWorks.
+  6. *Kiểm thử tự động Playwright*:
+     - `scratch/test_worm_advanced_3d.py`: Kiểm thử chuyển đổi qua cả 5 kiểu ren (ZA, ZN, ZI, ZK, ZH) trên 3D WebGL với 41,508 tam giác trục vít và 462,720 tam giác bánh vít, đạt **PASS 100% với 0 lỗi console**.
+     - `scratch/test_worm_cad_exports.py`: Xác nhận xuất thành công STL, STEP Solid (8,452 faces, 6.6 MB), IGES Surface (702 KB) cho cả ZI và ZH.

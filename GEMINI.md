@@ -2200,3 +2200,33 @@ ho_{f0} / \cos\gamma$.
    - Bộ đóng gói `tools/bundle_all.py` tự động đóng gói cả 5 file bundle riêng biệt (`mitcalc-engine.bundle.js`, `bevel-engine.bundle.js`, `worm-engine.bundle.js`, `modules/bevel-gear-advanced/js/bevel-engine.bundle.js`, `modules/worm-gear-advanced/js/worm-engine.bundle.js`).
    - Cung cấp các launcher 1-Click độc lập tại thư mục gốc: `CHAY_BANH_RANG_CON_CHUYEN_SAU.bat`, `CHAY_WEBAPP_TRUC_VIT_CHUYEN_SAU.bat`.
    - Cổng Hub Portal `index.html` tích hợp đầy đủ 5 thẻ điều hướng với nhãn trạng thái và phân định màu sắc rõ ràng.
+
+
+---
+
+### Quy Tắc 93: Quy Chuẩn Hình Học 3D & Dựng Hình Mặt Xoắn Thân Khai (ZI) & Biên Dạng Lõm Cavex (ZH) Bộ Truyền Trục Vít - Bánh Vít Theo DIN 3975
+**Ngày áp dụng**: 07/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+1. **Trục Vít Thân Khai ZI (Involute Helicoid - DIN 3975)**:
+   - **Mặt trụ cơ sở**: $d_{b1} = d_1 \cos\alpha_t$, với góc ăn khớp mặt mút $\tan\alpha_t = \frac{\tan\alpha_n}{\sin\gamma}$.
+   - **Biên dạng mặt cắt ngang (Transverse Section)**: Là đường thân khai chuẩn xác của vòng tròn cơ sở $r_{b1}$:
+     $$\theta_{trans}(R) = \frac{s_{t1}}{2 r_1} + \text{inv}(\alpha_t) - \text{inv}(\alpha_R) = \frac{s_{x1}}{2 p} + \text{inv}(\alpha_t) - \text{inv}(\alpha_R)$$
+     cho mọi bán kính $R \ge r_{b1}$, với $\alpha_R = \arccos(r_{b1} / R)$ và $\text{inv}(\alpha) = \tan\alpha - \alpha$.
+   - **Tọa độ sườn răng 3D**:
+     $\phi_R(x, R) = \phi_0(x) - \theta_{trans}(R)$, $\phi_L(x, R) = \phi_0(x) + \theta_{trans}(R)$
+     với $\phi_0(x) = \text{handSign} \cdot \frac{x}{p} + \text{startPhase}$, $p = \frac{p_z}{2\pi}$.
+   - **Biên dạng mặt cắt dọc trục**: $w_{axial}(R) = p \cdot \theta_{trans}(R)$, bảo toàn 100% độ dốc tiếp tuyến $-\frac{dw}{dR} = \tan\alpha_x$ tại vòng chia và độ lồi thân khai giải tích.
+2. **Trục Vít Lõm Cavex ZH (Concave Profile - DIN 3975)**:
+   - **Cung tròn lõm dọc trục**: Bán kính cung tròn $\rho \approx 0.5 \cdot d_1 = r_1$.
+   - **Tâm cung tròn giải tích**: Đặt tại $x_c = \frac{s_{x1}}{2} + \rho \cos\alpha_x$, $R_c = r_1 + \rho \sin\alpha_x$.
+   - **Bề rộng nửa răng sườn lõm**:
+     $$w(R) = x_c - \sqrt{\rho^2 - (R - R_c)^2}$$
+     Đạo hàm độ dốc sườn: $S(R) = -\frac{dw}{dR} = \frac{R_c - R}{\sqrt{\rho^2 - (R - R_c)^2}}$.
+   - Biên dạng sườn răng lõm vào thân trục vít giúp tăng mạnh độ dày chân răng, nâng cao khả năng tạo màng bôi trơn thủy động và giảm tới 30-40% ứng suất tiếp xúc Hertz $\sigma_H$.
+3. **Mặt Bao Răng Bánh Vít Liên Hợp Litvin (Conjugate Wheel Flank Envelope)**:
+   - Tích hợp hàm dốc động học $S(u) = -\frac{dw}{du}$ vào phương trình ăn khớp kinh điển Litvin:
+     $$\vec{n}_1 \cdot \vec{v}^{(12)} = 0 \implies x_1 = \frac{u (u \cos\Phi - a + i p)}{p \sin\Phi \pm S(u) u \cos\Phi}$$
+   - Khi chọn ren lõm Cavex (ZH), mặt răng bánh vít tự động sinh ra biên dạng **LỒI (Convex)** liên hợp chuẩn xác, tạo cặp tiếp xúc lồi - lõm ăn khớp khít khao với khe hở cạnh răng chuẩn xưởng $0.04\text{ mm}$.
+4. **Hiển Thị 2D Canvas & Xuất File CAD 3D (STEP / STL / IGES Entity 128)**:
+   - Tab 2D Canvas hiển thị trực quan các đường cong biên dạng sườn răng của ZH (cung tròn lõm) và ZI (thân khai) trên cả mặt cắt pháp tuyến (N-N) và mặt cắt dọc trục (A-A).
+   - Bộ xuất CAD 3D (`Worm3DExporter`) xuất đầy đủ file STEP Solid B-Rep, STL Binary, và IGES Surface B-Spline (Entity 128) mang trọn vẹn bề mặt thực thể của ZI và ZH sang Mastercam và SolidWorks.

@@ -2095,3 +2095,24 @@ ho_{f0}$.
    - Cập nhật `tools/bundle_all.py` (5/5 mô-đun), tạo `tools/bundle_bevel_advanced.py` và `tools/bundle_worm_advanced.py`.
    - Cung cấp `CHAY_BANH_RANG_CON_CHUYEN_SAU.bat` và `CHAY_WEBAPP_TRUC_VIT_CHUYEN_SAU.bat`.
    - Cập nhật Portal `index.html` với 5 card điều hướng và stats bar 5 mô-đun.
+
+
+---
+
+### Quy Tắc 93: Quy Chuẩn Hình Học 3D & Dựng Hình Mặt Xoắn Thân Khai (ZI) & Biên Dạng Lõm Cavex (ZH) Bộ Truyền Trục Vít - Bánh Vít Theo DIN 3975
+**Ngày áp dụng**: 07/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+1. **Trục Vít Thân Khai ZI (Involute Helicoid - DIN 3975)**:
+   - Mặt trụ cơ sở: $d_{b1} = d_1 \cos\alpha_t$, với $\tan\alpha_t = \frac{\tan\alpha_n}{\sin\gamma}$.
+   - Phương trình thân khai mặt cắt ngang (transverse): $\theta_{trans}(R) = \frac{s_{x1}}{2 p} + \text{inv}(\alpha_t) - \text{inv}(\alpha_R)$ cho mọi bán kính $R \ge r_{b1}$.
+   - Bề rộng sườn răng dọc trục $w(R) = p \cdot \theta_{trans}(R)$ với $p = p_z / (2\pi)$, đạo hàm độ dốc sườn $S(R) = p \frac{\sqrt{R^2 - r_{b1}^2}}{R^2}$, tiếp tuyến tại vòng chia trùng khớp chuẩn xác $\tan\alpha_x$.
+2. **Trục Vít Lõm Cavex ZH (Concave Profile - DIN 3975)**:
+   - Dựng cung tròn lõm trên mặt cắt dọc trục với bán kính $\rho = 0.5 \cdot d_1 = r_1$.
+   - Tâm cung tròn đặt tại $x_c = \frac{s_{x1}}{2} + \rho \cos\alpha_x$, $R_c = r_1 + \rho \sin\alpha_x$.
+   - Phương trình sườn răng lõm: $w(R) = x_c - \sqrt{\rho^2 - (R - R_c)^2}$, đạo hàm dốc $S(R) = \frac{R_c - R}{\sqrt{\rho^2 - (R - R_c)^2}}$.
+3. **Mặt Bao Bánh Vít Liên Hợp Litvin (Conjugate Wheel Flank Envelope)**:
+   - Nâng cấp bộ giải Litvin $\vec{n}_1 \cdot \vec{v}^{(12)} = 0$ tích hợp hàm dốc $S(u)$ cho cả 5 kiểu ren.
+   - Với ren lõm Cavex (ZH), mặt răng bánh vít tự động sinh ra biên dạng **LỒI (Convex)** liên hợp chuẩn xác, tạo cặp tiếp xúc lồi - lõm ăn khớp khít khao không cọ kẹt.
+4. **Hiển Thị 2D Canvas & Xuất File CAD 3D**:
+   - Tab 2D Canvas hiển thị trực quan các đường cong biên dạng sườn răng của ZH (cung tròn lõm) và ZI (thân khai) trên cả mặt cắt pháp tuyến (N-N) và mặt cắt dọc trục (A-A).
+   - `Worm3DExporter`: Hỗ trợ đầy đủ STEP Solid B-Rep, STL Binary, và IGES Surface B-Spline (Entity 128) mang trọn vẹn bề mặt thực thể của ZI và ZH sang Mastercam và SolidWorks.

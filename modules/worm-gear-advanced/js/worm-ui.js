@@ -867,7 +867,7 @@ class WormUIController {
         if (!this.visualizer3D || !this.latestResult || typeof Worm3DExporter === 'undefined') return;
         this.visualizer3D.setGeometry(this.latestResult);
         const g = this.latestResult;
-        const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK' };
+        const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH' };
         const typeCode = typeNames[g.toothType] || 'ZN';
 
         // Native Mastercam IGES 5.3 Surface / Wireframe Export
@@ -1016,7 +1016,7 @@ class WormUIController {
         this.canvasRenderer.updateGeometry(res);
 
         // Update 3D Badge & 3D WebGL Geometry
-        const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK' };
+        const typeNames = { 1: 'ZA', 2: 'ZN', 3: 'ZI', 4: 'ZK', 5: 'ZH' };
         const typeCode = typeNames[res.toothType] || 'ZN';
         const orientStr = res.teethOrientation === 2 ? 'Ren Trái' : 'Ren Phải';
         this.setVal('badge3DType', `🌀 Trục Vít - Bánh Vít Lõm (${typeCode} - ${orientStr})`);

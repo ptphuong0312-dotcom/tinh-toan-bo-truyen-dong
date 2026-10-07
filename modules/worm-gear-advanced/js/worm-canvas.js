@@ -567,20 +567,56 @@ class WormCanvasRenderer {
         ctx.moveTo(toX(xMinWorld), toY(yStock));
         ctx.lineTo(toX(xMinWorld), toY(-hf1));
 
+        const isZH = (g.toothType === 5);
+        const evalNormalW = (y) => {
+            if (isZH) {
+                const R = (g.d1 / 2.0) + y;
+                const rho = g.d1 / 2.0;
+                const cosG = Math.cos((g.gama || 0) * Math.PI / 180.0);
+                const xc_zh = (g.sx1 / 2.0) + rho * Math.cos((g.alfax || 20) * Math.PI / 180.0);
+                const Rc_zh = (g.d1 / 2.0) + rho * Math.sin((g.alfax || 20) * Math.PI / 180.0);
+                const val = rho * rho - (R - Rc_zh) * (R - Rc_zh);
+                if (val >= 0) {
+                    const wx = xc_zh - Math.sqrt(val);
+                    return Math.max(0.08 * mn, wx * cosG);
+                }
+            }
+            return Math.max(0.08 * mn, sn / 2.0 - y * tanA);
+        };
+
         teeth.forEach(k => {
             const xk = k * pn;
-            const xRootL = xk - sn / 2.0 - hf1 * tanA;
-            const xRootR = xk + sn / 2.0 + hf1 * tanA;
-            const xTipL = xk - san / 2.0;
-            const xTipR = xk + san / 2.0;
-            const nextRootL = (k + 1) * pn - sn / 2.0 - hf1 * tanA;
+            const wRoot = evalNormalW(-hf1);
+            const wTip = evalNormalW(ha1);
+            const xRootL = xk - wRoot;
+            const xRootR = xk + wRoot;
+            const xTipL = xk - wTip;
+            const xTipR = xk + wTip;
+            const nextRootL = (k + 1) * pn - wRoot;
 
-            ctx.lineTo(toX(xRootL - rhof0), toY(-hf1));
-            ctx.arcTo(toX(xRootL), toY(-hf1), toX(xTipL), toY(ha1), rhof0 * scale);
-            ctx.lineTo(toX(xTipL), toY(ha1));
-            ctx.lineTo(toX(xTipR), toY(ha1));
-            ctx.arcTo(toX(xRootR), toY(-hf1), toX(nextRootL), toY(-hf1), rhof0 * scale);
-            ctx.lineTo(toX(nextRootL - rhof0), toY(-hf1));
+            if (isZH) {
+                ctx.lineTo(toX(xRootL), toY(-hf1));
+                const nSub = 8;
+                for (let sub = 0; sub <= nSub; sub++) {
+                    const ySub = -hf1 + (sub / nSub) * (ha1 + hf1);
+                    const wSub = evalNormalW(ySub);
+                    ctx.lineTo(toX(xk - wSub), toY(ySub));
+                }
+                ctx.lineTo(toX(xTipR), toY(ha1));
+                for (let sub = nSub; sub >= 0; sub--) {
+                    const ySub = -hf1 + (sub / nSub) * (ha1 + hf1);
+                    const wSub = evalNormalW(ySub);
+                    ctx.lineTo(toX(xk + wSub), toY(ySub));
+                }
+                ctx.lineTo(toX(nextRootL), toY(-hf1));
+            } else {
+                ctx.lineTo(toX(xRootL - rhof0), toY(-hf1));
+                ctx.arcTo(toX(xRootL), toY(-hf1), toX(xTipL), toY(ha1), rhof0 * scale);
+                ctx.lineTo(toX(xTipL), toY(ha1));
+                ctx.lineTo(toX(xTipR), toY(ha1));
+                ctx.arcTo(toX(xRootR), toY(-hf1), toX(nextRootL), toY(-hf1), rhof0 * scale);
+                ctx.lineTo(toX(nextRootL - rhof0), toY(-hf1));
+            }
         });
 
         ctx.lineTo(toX(xMaxWorld), toY(-hf1));
@@ -797,24 +833,66 @@ class WormCanvasRenderer {
             ctx.strokeStyle = '#38bdf8';
             ctx.lineWidth = 1.8;
 
+            const tType = g.toothType || 1;
+            const evalToothW = (R) => {
+                let w = sx / 2.0 - (R - d1 / 2.0) * tanAx;
+                if (tType === 5) {
+                    // ZH Cavex (Concave arc in axial section)
+                    const rho = d1 / 2.0;
+                    const xc_zh = (sx / 2.0) + rho * Math.cos(alfaxRad);
+                    const Rc_zh = (d1 / 2.0) + rho * Math.sin(alfaxRad);
+                    const val = rho * rho - (R - Rc_zh) * (R - Rc_zh);
+                    if (val >= 0) w = xc_zh - Math.sqrt(val);
+                } else if (tType === 3) {
+                    // ZI Involute
+                    const alfanRadVal = (g.alfan !== undefined ? g.alfan : 20.0) * Math.PI / 180.0;
+                    const tanAtZi = Math.tan(alfanRadVal) / Math.max(1e-6, Math.sin(gama * Math.PI / 180.0));
+                    const atZi = Math.atan(tanAtZi);
+                    const rb1 = (d1 / 2.0) * Math.cos(atZi);
+                    const p = (px * (g.z1 || 1)) / (2.0 * Math.PI);
+                    if (R >= rb1) {
+                        const aR = Math.acos(Math.min(1.0, rb1 / R));
+                        const invR = Math.tan(aR) - aR;
+                        const invRef = Math.tan(atZi) - atZi;
+                        w = (sx / 2.0) + p * (invRef - invR);
+                    }
+                } else if (tType === 2) {
+                    // ZN Normal Straight
+                    const del_w = (R - d1 / 2.0) * tanAx * (1.0 - (d1 / 2.0) / Math.max(1e-6, R)) * (Math.sin(gama * Math.PI / 180.0) ** 2);
+                    w = (sx / 2.0) - (R - d1 / 2.0) * tanAx + del_w;
+                } else if (tType === 4) {
+                    // ZK Cone Milled
+                    const alfanRadVal = (g.alfan !== undefined ? g.alfan : 20.0) * Math.PI / 180.0;
+                    const gamaRadVal = gama * Math.PI / 180.0;
+                    const K_zk = (Math.sin(2.0 * gamaRadVal) * Math.tan(alfanRadVal)) / (4.0 * (2.5 + Math.cos(gamaRadVal)));
+                    w = (sx / 2.0) - (R - d1 / 2.0) * tanAx + K_zk * ((R - d1 / 2.0) ** 2) / (d1 / 2.0);
+                }
+                return Math.max(0.08 * mx, w);
+            };
+
+            const numSteps = 12;
             for (let k = -nP; k <= nP; k++) {
                 const xc = k * px + shiftX;
-                const xL_flank = xc - sa1 / 2.0;
-                const xR_flank = xc + sa1 / 2.0;
-                const xL_root = xc - sx / 2.0 - hf1 * tanAx;
-                const xR_root = xc + sx / 2.0 + hf1 * tanAx;
+                const ptsL = [];
+                const ptsR = [];
+
+                for (let step = 0; step <= numSteps; step++) {
+                    const frac = step / numSteps;
+                    const R = (df1 / 2.0) + frac * ((da1 - df1) / 2.0);
+                    const yWorld = signY * R;
+                    const w = evalToothW(R);
+                    ptsL.push({ x: xc - w, y: yWorld });
+                    ptsR.push({ x: xc + w, y: yWorld });
+                }
 
                 ctx.beginPath();
-                if (signY > 0) {
-                    ctx.moveTo(toX(xL_root), toY(df1 / 2.0));
-                    ctx.lineTo(toX(xL_flank), toY(da1 / 2.0));
-                    ctx.lineTo(toX(xR_flank), toY(da1 / 2.0));
-                    ctx.lineTo(toX(xR_root), toY(df1 / 2.0));
-                } else {
-                    ctx.moveTo(toX(xL_root), toY(-df1 / 2.0));
-                    ctx.lineTo(toX(xL_flank), toY(-da1 / 2.0));
-                    ctx.lineTo(toX(xR_flank), toY(-da1 / 2.0));
-                    ctx.lineTo(toX(xR_root), toY(-df1 / 2.0));
+                ctx.moveTo(toX(ptsL[0].x), toY(ptsL[0].y));
+                for (let i = 1; i <= numSteps; i++) {
+                    ctx.lineTo(toX(ptsL[i].x), toY(ptsL[i].y));
+                }
+                ctx.lineTo(toX(ptsR[numSteps].x), toY(ptsR[numSteps].y));
+                for (let i = numSteps - 1; i >= 0; i--) {
+                    ctx.lineTo(toX(ptsR[i].x), toY(ptsR[i].y));
                 }
                 ctx.closePath();
                 ctx.fill();
