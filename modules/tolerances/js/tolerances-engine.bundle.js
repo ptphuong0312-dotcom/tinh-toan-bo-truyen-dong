@@ -6,11 +6,9 @@
 
 /* === BEGIN tolerances-data.js === */
 /**
- * TOLERANCES & FITS MASTER DATABASE (ISO 286:1988, ANSI B4.1, ISO 2768-1)
- * Trích xuất từ MITCalc 1.74 Tolerances_01.xlsb
- * Đạt chuẩn Zero-Tolerance (Δ = 0.000000)
+ * DATABASE DUNG SAI & LẮP GHÉP MASTER (ISO 286 / ANSI B4.1 / ISO 2768-1)
+ * Trích xuất 100% nguyên bản từ MITCalc 1.74 Tolerances_01.xlsb
  */
-
 window.TOLERANCES_DB = {
   "it_headers": [
     "IT01",
@@ -6746,117 +6744,292 @@ window.TOLERANCES_DB = {
   "processes": [
     {
       "name": "Lapping",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "min_grade": 2,
+      "max_grade": 5,
+      "extra": [],
+      "ra_min": 0.012,
+      "ra_max": 0.16,
+      "name_vi": "Mài nghiền / Mài rà (Lapping)"
     },
     {
       "name": "Honing",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        3,
+        4,
+        5
+      ],
+      "min_grade": 3,
+      "max_grade": 5,
+      "extra": [],
+      "ra_min": 0.025,
+      "ra_max": 0.4,
+      "name_vi": "Mài khôn (Honing)"
     },
     {
       "name": "Superfinishing",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        4,
+        5,
+        6
+      ],
+      "min_grade": 4,
+      "max_grade": 6,
+      "extra": [],
+      "ra_min": 0.012,
+      "ra_max": 0.2,
+      "name_vi": "Gia công siêu tinh (Superfinishing)"
     },
     {
       "name": "Cylindrical/centrelees grinding",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "min_grade": 4,
+      "max_grade": 7,
+      "extra": [],
+      "ra_min": 0.1,
+      "ra_max": 1.6,
+      "name_vi": "Mài tròn ngoài / Mài vô tâm"
     },
     {
       "name": "Diamond turning",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "min_grade": 4,
+      "max_grade": 7,
+      "extra": [],
+      "ra_min": 0.05,
+      "ra_max": 0.8,
+      "name_vi": "Tiện kim cương (Diamond turning)"
     },
     {
       "name": "Plan grinding",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "min_grade": 5,
+      "max_grade": 9,
+      "extra": [],
+      "ra_min": 0.1,
+      "ra_max": 1.6,
+      "name_vi": "Mài phẳng (Surface grinding)"
     },
     {
       "name": "Broaching",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "min_grade": 5,
+      "max_grade": 9,
+      "extra": [],
+      "ra_min": 0.4,
+      "ra_max": 3.2,
+      "name_vi": "Chuốt (Broaching)"
     },
     {
       "name": "Reaming",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "min_grade": 5,
+      "max_grade": 9,
+      "extra": [],
+      "ra_min": 0.4,
+      "ra_max": 3.2,
+      "name_vi": "Doa (Reaming)"
     },
     {
       "name": "Boring, Turning",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "min_grade": 6,
+      "max_grade": 12,
+      "extra": [],
+      "ra_min": 0.8,
+      "ra_max": 6.3,
+      "name_vi": "Tiện, Tiện lỗ (Turning, Boring)"
     },
     {
       "name": "Sawing",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        9,
+        10,
+        11
+      ],
+      "min_grade": 9,
+      "max_grade": 11,
+      "extra": [],
+      "ra_min": 3.2,
+      "ra_max": 25.0,
+      "name_vi": "Cắt cưa (Sawing)"
     },
     {
       "name": "Milling",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "min_grade": 9,
+      "max_grade": 13,
+      "extra": [],
+      "ra_min": 1.6,
+      "ra_max": 12.5,
+      "name_vi": "Phay (Milling)"
     },
     {
       "name": "Planing, Shaping",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "min_grade": 10,
+      "max_grade": 14,
+      "extra": [],
+      "ra_min": 1.6,
+      "ra_max": 12.5,
+      "name_vi": "Bào, Xọc (Planing, Shaping)"
     },
     {
       "name": "Extruding",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        10,
+        11,
+        12,
+        13
+      ],
+      "min_grade": 10,
+      "max_grade": 13,
+      "extra": [],
+      "ra_min": 1.6,
+      "ra_max": 12.5,
+      "name_vi": "Ép đùn (Extruding)"
     },
     {
       "name": "Cold Rolling, Drawing",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "min_grade": 10,
+      "max_grade": 14,
+      "extra": [],
+      "ra_min": 0.8,
+      "ra_max": 6.3,
+      "name_vi": "Cán nguội, Kéo vuốt (Cold rolling)"
     },
     {
       "name": "Drilling",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        11,
+        12,
+        13,
+        14
+      ],
+      "min_grade": 11,
+      "max_grade": 14,
+      "extra": [],
+      "ra_min": 3.2,
+      "ra_max": 25.0,
+      "name_vi": "Khoan (Drilling)"
     },
     {
       "name": "Die Casting",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "min_grade": 12,
+      "max_grade": 15,
+      "extra": [],
+      "ra_min": 0.8,
+      "ra_max": 6.3,
+      "name_vi": "Đúc áp lực (Die casting)"
     },
     {
       "name": "Forging",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "min_grade": 13,
+      "max_grade": 16,
+      "extra": [],
+      "ra_min": 3.2,
+      "ra_max": 25.0,
+      "name_vi": "Rèn dập (Forging)"
     },
     {
       "name": "Sand Casting",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        14,
+        15,
+        16
+      ],
+      "min_grade": 14,
+      "max_grade": 16,
+      "extra": [],
+      "ra_min": 6.3,
+      "ra_max": 50.0,
+      "name_vi": "Đúc khuôn cát (Sand casting)"
     },
     {
       "name": "Hot rolling, Flame cutting",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        14,
+        15,
+        16
+      ],
+      "min_grade": 14,
+      "max_grade": 16,
+      "extra": [],
+      "ra_min": 12.5,
+      "ra_max": 100.0,
+      "name_vi": "Cán nóng, Cắt hơi (Hot rolling)"
     }
   ]
 };
@@ -7535,6 +7708,25 @@ window.TOLERANCES_DB = {
             this.render();
         }
 
+        zoomIn() {
+            this.scale = Math.min(5.0, this.scale * 1.25);
+            this.render();
+        }
+
+        zoomOut() {
+            this.scale = Math.max(0.3, this.scale / 1.25);
+            this.render();
+        }
+
+        downloadPNG() {
+            if (!this.canvas) return;
+            const link = document.createElement('a');
+            const fitName = this.fitData && this.fitData.fit ? this.fitData.fit.name.replace('/', '_') : 'Fit';
+            link.download = `Bieu_do_dung_sai_${fitName}.png`;
+            link.href = this.canvas.toDataURL('image/png');
+            link.click();
+        }
+
         updateData(fitData) {
             this.fitData = fitData;
             this.render();
@@ -7607,9 +7799,10 @@ window.TOLERANCES_DB = {
 
             // Label Zero Line
             ctx.fillStyle = '#38bdf8';
-            ctx.font = 'bold 13px Segoe UI, sans-serif';
+            ctx.font = 'bold 12px Segoe UI, sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(`Đường không (Zero Line 0) — Kích thước danh nghĩa d = D = ${this.fitData.D} mm`, 80, zeroY - 8);
+            ctx.fillText('Đường 0', 70, zeroY - 6);
+            ctx.fillText(`Kích thước danh nghĩa d = D = ${this.fitData.D} mm`, w - 380, zeroY - 8);
 
             // 3. Ruler Ticks on the left
             ctx.strokeStyle = '#475569';
@@ -7628,7 +7821,9 @@ window.TOLERANCES_DB = {
                     ctx.moveTo(110, y);
                     ctx.lineTo(130, y);
                     ctx.stroke();
-                    ctx.fillText(`${val > 0 ? '+' : ''}${val} µm`, 105, y + 4);
+                    if (val !== 0) {
+                        ctx.fillText(`${val > 0 ? '+' : ''}${val} µm`, 105, y + 4);
+                    }
                 }
             }
 
@@ -7743,12 +7938,25 @@ window.TOLERANCES_DB = {
             ctx.stroke();
 
             // 6. Draw Fit Dimensions (Arrows for S_max, S_min or N_max, N_min)
-            const dimX = w * 0.78 + this.offsetX;
             const fit = this.fitData.fit;
+            const arrow1X = shaftX + blockWidth + 105;
+            const arrow2X = shaftX + blockWidth + 195;
 
-            ctx.strokeStyle = '#10b981';
-            ctx.fillStyle = '#10b981';
-            ctx.lineWidth = 1.5;
+            if (fit.type === 'Clearance') {
+                // S_max = ES - ei
+                this.drawDimArrow(ctx, arrow1X, holeTopY, shaftBottomY, `S_max = ${fit.S_max} µm`, '#34d399');
+                // S_min = EI - es
+                this.drawDimArrow(ctx, arrow2X, holeBottomY, shaftTopY, `S_min = ${fit.S_min} µm`, '#38bdf8');
+            } else if (fit.type === 'Interference') {
+                // N_max = es - EI
+                this.drawDimArrow(ctx, arrow1X, shaftTopY, holeBottomY, `N_max = ${fit.N_max} µm`, '#f87171');
+                // N_min = ei - ES
+                this.drawDimArrow(ctx, arrow2X, shaftBottomY, holeTopY, `N_min = ${fit.N_min} µm`, '#fbbf24');
+            } else {
+                // Transition: S_max and N_max
+                this.drawDimArrow(ctx, arrow1X, holeTopY, shaftBottomY, `S_max = ${fit.S_max} µm`, '#34d399');
+                this.drawDimArrow(ctx, arrow2X, shaftTopY, holeBottomY, `N_max = ${fit.N_max} µm`, '#f87171');
+            }
 
             // Header info box
             ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
@@ -7777,6 +7985,54 @@ window.TOLERANCES_DB = {
                 ctx.fillText(`Dung sai ghép T_fit = ${fit.T_fit} µm`, w - 275, 110);
             }
 
+            ctx.restore();
+        }
+
+        drawDimArrow(ctx, x, y1, y2, text, color) {
+            if (Math.abs(y1 - y2) < 2) return;
+            const topY = Math.min(y1, y2);
+            const bottomY = Math.max(y1, y2);
+
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 1.5;
+
+            // Leader lines
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(x - 20, topY);
+            ctx.lineTo(x + 5, topY);
+            ctx.moveTo(x - 20, bottomY);
+            ctx.lineTo(x + 5, bottomY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Main vertical line
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x, bottomY);
+            ctx.stroke();
+
+            // Arrows
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x - 4, topY + 8);
+            ctx.lineTo(x + 4, topY + 8);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(x, bottomY);
+            ctx.lineTo(x - 4, bottomY - 8);
+            ctx.lineTo(x + 4, bottomY - 8);
+            ctx.closePath();
+            ctx.fill();
+
+            // Label
+            ctx.font = 'bold 11px Segoe UI, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(text, x + 8, (topY + bottomY) / 2 + 4);
             ctx.restore();
         }
     }
@@ -7815,25 +8071,8 @@ window.TOLERANCES_DB = {
         calculateAll();
     }
 
-    // 1. Tab Navigation
+    // 1. Unified Toolbar & Canvas Controls
     function initTabs() {
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                tabBtns.forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-                btn.classList.add('active');
-                const target = document.getElementById(btn.dataset.target);
-                if (target) {
-                    target.classList.add('active');
-                    if (btn.dataset.target === 'tabCanvas' && visualizer) {
-                        setTimeout(() => visualizer.render(), 50);
-                    }
-                }
-            });
-        });
-
         // Global accordion buttons
         const btnExpandAll = document.getElementById('btnExpandAll');
         const btnCollapseAll = document.getElementById('btnCollapseAll');
@@ -7854,6 +8093,32 @@ window.TOLERANCES_DB = {
             btnResetView.addEventListener('click', () => {
                 if (visualizer) visualizer.resetView();
             });
+        }
+
+        const btnZoomIn = document.getElementById('btnZoomInCanvas');
+        if (btnZoomIn) {
+            btnZoomIn.addEventListener('click', () => {
+                if (visualizer) visualizer.zoomIn();
+            });
+        }
+
+        const btnZoomOut = document.getElementById('btnZoomOutCanvas');
+        if (btnZoomOut) {
+            btnZoomOut.addEventListener('click', () => {
+                if (visualizer) visualizer.zoomOut();
+            });
+        }
+
+        const btnDownload = document.getElementById('btnDownloadCanvas');
+        if (btnDownload) {
+            btnDownload.addEventListener('click', () => {
+                if (visualizer) visualizer.downloadPNG();
+            });
+        }
+
+        const btnCopy = document.getElementById('btnCopyFitData');
+        if (btnCopy) {
+            btnCopy.addEventListener('click', copyFitDataToClipboard);
         }
     }
 
@@ -8031,6 +8296,9 @@ window.TOLERANCES_DB = {
         if (visualizer) {
             visualizer.updateData(res);
         }
+
+        // Cập nhật highlight phương pháp gia công khả thi (Mục 5.0)
+        updateSurfaceFinishHighlights(hGrade, sGrade);
     }
 
     // 4. ANSI B4.1 Controls
@@ -8220,9 +8488,11 @@ window.TOLERANCES_DB = {
 
                         calculateISO();
 
-                        // Chuyển tab sang canvas để xem biểu đồ
-                        const tabCanvasBtn = document.querySelector('[data-target="tabCanvas"]');
-                        if (tabCanvasBtn) tabCanvasBtn.click();
+                        // Cuộn mượt mà đến biểu đồ Canvas để xem trực quan
+                        const canvasContainer = document.getElementById('toleranceCanvasContainer');
+                        if (canvasContainer) {
+                            canvasContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
                     }
                 });
             });
@@ -8235,15 +8505,121 @@ window.TOLERANCES_DB = {
         if (!tbody || !window.TOLERANCES_DB || !window.TOLERANCES_DB.processes) return;
 
         tbody.innerHTML = '';
-        window.TOLERANCES_DB.processes.forEach(proc => {
+        window.TOLERANCES_DB.processes.forEach((proc, idx) => {
             const tr = document.createElement('tr');
-            let gradeBadges = proc.grades.map(g => `<span style="display:inline-block; padding:1px 5px; margin:1px; background:#1e3a8a; border-radius:3px; font-size:0.75rem; color:#93c5fd;">IT${g}</span>`).join(' ');
+            tr.dataset.grades = JSON.stringify(proc.grades || []);
+
+            // Thanh ma trận IT2 đến IT16
+            let barHtml = '';
+            for (let g = 2; g <= 16; g++) {
+                if (proc.grades && proc.grades.includes(g)) {
+                    barHtml += `<span class="it-cell-active" data-grade="${g}" title="${proc.name}: IT${g}">IT${g}</span>`;
+                } else {
+                    barHtml += `<span class="it-cell-inactive" data-grade="${g}">·</span>`;
+                }
+            }
+
             tr.innerHTML = `
-                <td style="font-weight:600; color:#f8fafc;">${proc.name}</td>
-                <td style="color:#38bdf8;">IT${proc.min_grade} ~ IT${proc.max_grade}</td>
-                <td>${gradeBadges}</td>
+                <td style="text-align:center; color:#94a3b8; font-weight:600;">${idx + 1}</td>
+                <td>
+                    <div style="font-weight:700; color:#f8fafc; font-size:0.92rem;">${proc.name_vi || proc.name}</div>
+                    <div style="font-size:0.78rem; color:#64748b;">${proc.name}</div>
+                </td>
+                <td style="color:#38bdf8; font-weight:700; white-space:nowrap;">IT${proc.min_grade} ~ IT${proc.max_grade}</td>
+                <td style="color:#34d399; font-weight:600; white-space:nowrap;">${proc.ra_min} ~ ${proc.ra_max} µm</td>
+                <td>
+                    <div class="it-bar-container">${barHtml}</div>
+                </td>
             `;
             tbody.appendChild(tr);
+        });
+    }
+
+    // Dynamic highlight cho Section 5.0 khi chọn Lỗ / Trục ở Mục 1.0
+    function updateSurfaceFinishHighlights(holeIT, shaftIT) {
+        const tbody = document.getElementById('surface_processes_tbody');
+        if (!tbody) return;
+
+        tbody.querySelectorAll('tr').forEach(tr => {
+            try {
+                const grades = JSON.parse(tr.dataset.grades || '[]');
+                const canMakeHole = grades.includes(holeIT);
+                const canMakeShaft = grades.includes(shaftIT);
+
+                if (canMakeHole && canMakeShaft) {
+                    tr.className = 'row-proc-feasible';
+                } else {
+                    tr.className = '';
+                }
+
+                // Highlight active IT cells
+                tr.querySelectorAll('.it-cell-active').forEach(cell => {
+                    const g = parseInt(cell.dataset.grade);
+                    if (g === holeIT || g === shaftIT) {
+                        cell.classList.add('it-cell-highlight');
+                    } else {
+                        cell.classList.remove('it-cell-highlight');
+                    }
+                });
+            } catch (e) {}
+        });
+    }
+
+    // Sao chép thông số kỹ thuật mối lắp ghép vào Clipboard
+    function copyFitDataToClipboard() {
+        if (!currentISOResult) return;
+        const res = currentISOResult;
+        const D = res.D;
+        const fit = res.fit;
+        const hole = res.hole;
+        const shaft = res.shaft;
+
+        let clearInfo = '';
+        if (fit.type === 'Clearance') {
+            clearInfo = `  + Khe hở lớn nhất (S_max): ${fit.S_max} µm (${fit.S_max_mm.toFixed(4)} mm)\n  + Khe hở nhỏ nhất (S_min): ${fit.S_min} µm (${fit.S_min_mm.toFixed(4)} mm)`;
+        } else if (fit.type === 'Interference') {
+            clearInfo = `  + Độ dôi lớn nhất (N_max): ${fit.N_max} µm (${fit.N_max_mm.toFixed(4)} mm)\n  + Độ dôi nhỏ nhất (N_min): ${fit.N_min} µm (${fit.N_min_mm.toFixed(4)} mm)`;
+        } else {
+            clearInfo = `  + Khe hở lớn nhất (S_max): ${fit.S_max} µm (${fit.S_max_mm.toFixed(4)} mm)\n  + Độ dôi lớn nhất (N_max): ${fit.N_max} µm (${fit.N_max_mm.toFixed(4)} mm)`;
+        }
+
+        const text = 
+`======================================================================
+KẾT QUẢ TÍNH TOÁN DUNG SAI & LẮP GHÉP THEO ISO 286:1988
+- Kích thước danh nghĩa: D = ${D} mm
+- Kiểu lắp ghép: ${fit.name} (${fit.typeName})
+----------------------------------------------------------------------
+1. CHI TIẾT LỖ (HOLE): ${hole.symbol}
+   - Sai lệch trên ES: ${formatSigned(hole.ES)} µm
+   - Sai lệch dưới EI: ${formatSigned(hole.EI)} µm
+   - Dung sai lỗ T_D: ${hole.IT} µm (${hole.T_D.toFixed(4)} mm)
+   - Kích thước giới hạn: D_max = ${hole.D_max.toFixed(4)} mm, D_min = ${hole.D_min.toFixed(4)} mm
+
+2. CHI TIẾT TRỤC (SHAFT): ${shaft.symbol}
+   - Sai lệch trên es: ${formatSigned(shaft.es)} µm
+   - Sai lệch dưới ei: ${formatSigned(shaft.ei)} µm
+   - Dung sai trục T_d: ${shaft.IT} µm (${shaft.T_d.toFixed(4)} mm)
+   - Kích thước giới hạn: d_max = ${shaft.d_max.toFixed(4)} mm, d_min = ${shaft.d_min.toFixed(4)} mm
+
+3. ĐẶC TÍNH MỐI GHÉP:
+${clearInfo}
+   - Độ hở/dôi trung bình: ${fit.meanClearance.toFixed(1)} µm
+   - Dung sai ghép tổng (T_fit): ${fit.T_fit} µm (${fit.T_fit_mm.toFixed(4)} mm)
+======================================================================`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.getElementById('btnCopyFitData');
+            if (btn) {
+                const oldText = btn.textContent;
+                btn.textContent = 'Đã Sao Chép! ✓';
+                btn.style.background = '#059669';
+                setTimeout(() => {
+                    btn.textContent = oldText;
+                    btn.style.background = '#10b981';
+                }, 2000);
+            }
+        }).catch(() => {
+            alert('Không thể truy cập Clipboard trình duyệt.');
         });
     }
 

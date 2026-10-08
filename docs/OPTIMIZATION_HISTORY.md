@@ -3928,3 +3928,8 @@ ho_{f0}$.
      - Script kiểm thử đối chiếu Excel COM: 	ools/test_tolerances_qc.py và batch file RA_SOAT_SONG_SONG_DUNG_SAI.bat.
      - **Kết quả Live Audit: 24/24 kịch bản kiểm thử (16 ISO + 8 ANSI) đạt PASS tuyệt đối với $\Delta = 0.000000$**.
 
+- **Cập nhật ngày 08/10/2026 (Theo lệnh trực tiếp từ SirPhuong)**:
+  * *Khắc phục triệt để lỗi hiển thị Mục 5.0*: Trước đó do đọc thuộc tính `.Value` (vốn là `None` trong Excel vì MITCalc dùng tô màu ô nền xanh lá `ColorIndex = 4` để biểu diễn dải cấp IT khả thi), dẫn đến hiển thị `ITnull -- ITnull`. Đã số hóa và trích xuất 100% dữ liệu gốc từ Excel COM cho 19 phương pháp gia công cơ khí, bổ sung dải độ nhám $Ra$ (um) chuẩn quốc tế, tên song ngữ Việt - Anh, và thanh ma trận 15 ô IT2..IT16 có đèn sáng xanh và highlight vàng hổ phách động theo cấp IT Lỗ/Trục đang chọn ở Mục 1.0.
+  * *Hợp nhất giao diện sang trang đơn (Unified Single-Page)*: Loại bỏ thanh chuyển Tab 2 tách rời theo lệnh của người dùng, đưa khung vẽ biểu đồ Canvas 2D vào trực tiếp Master Block 2 ngay dưới bảng kết quả và 4 thẻ chỉ số của ISO 286.
+  * *Nâng cấp đồ họa Canvas 2D*: Bổ sung đường gióng và mũi tên kích thước kỹ thuật cho khe hở $S_{max}, S_{min}$ và độ dôi $N_{max}, N_{min}$; tối ưu tọa độ nhãn 'Đường 0' để triệt tiêu hiện tượng đè chữ khi $EI = 0$; tích hợp bộ điều khiển Zoom In/Out, Đặt lại góc nhìn, Tải ảnh PNG và Sao chép thông số kỹ thuật mối ghép vào Clipboard.
+

@@ -25,25 +25,8 @@
         calculateAll();
     }
 
-    // 1. Tab Navigation
+    // 1. Unified Toolbar & Canvas Controls
     function initTabs() {
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                tabBtns.forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-
-                btn.classList.add('active');
-                const target = document.getElementById(btn.dataset.target);
-                if (target) {
-                    target.classList.add('active');
-                    if (btn.dataset.target === 'tabCanvas' && visualizer) {
-                        setTimeout(() => visualizer.render(), 50);
-                    }
-                }
-            });
-        });
-
         // Global accordion buttons
         const btnExpandAll = document.getElementById('btnExpandAll');
         const btnCollapseAll = document.getElementById('btnCollapseAll');
@@ -64,6 +47,32 @@
             btnResetView.addEventListener('click', () => {
                 if (visualizer) visualizer.resetView();
             });
+        }
+
+        const btnZoomIn = document.getElementById('btnZoomInCanvas');
+        if (btnZoomIn) {
+            btnZoomIn.addEventListener('click', () => {
+                if (visualizer) visualizer.zoomIn();
+            });
+        }
+
+        const btnZoomOut = document.getElementById('btnZoomOutCanvas');
+        if (btnZoomOut) {
+            btnZoomOut.addEventListener('click', () => {
+                if (visualizer) visualizer.zoomOut();
+            });
+        }
+
+        const btnDownload = document.getElementById('btnDownloadCanvas');
+        if (btnDownload) {
+            btnDownload.addEventListener('click', () => {
+                if (visualizer) visualizer.downloadPNG();
+            });
+        }
+
+        const btnCopy = document.getElementById('btnCopyFitData');
+        if (btnCopy) {
+            btnCopy.addEventListener('click', copyFitDataToClipboard);
         }
     }
 
@@ -241,6 +250,9 @@
         if (visualizer) {
             visualizer.updateData(res);
         }
+
+        // Cập nhật highlight phương pháp gia công khả thi (Mục 5.0)
+        updateSurfaceFinishHighlights(hGrade, sGrade);
     }
 
     // 4. ANSI B4.1 Controls
@@ -430,9 +442,11 @@
 
                         calculateISO();
 
-                        // Chuyển tab sang canvas để xem biểu đồ
-                        const tabCanvasBtn = document.querySelector('[data-target="tabCanvas"]');
-                        if (tabCanvasBtn) tabCanvasBtn.click();
+                        // Cuộn mượt mà đến biểu đồ Canvas để xem trực quan
+                        const canvasContainer = document.getElementById('toleranceCanvasContainer');
+                        if (canvasContainer) {
+                            canvasContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
                     }
                 });
             });
@@ -445,15 +459,121 @@
         if (!tbody || !window.TOLERANCES_DB || !window.TOLERANCES_DB.processes) return;
 
         tbody.innerHTML = '';
-        window.TOLERANCES_DB.processes.forEach(proc => {
+        window.TOLERANCES_DB.processes.forEach((proc, idx) => {
             const tr = document.createElement('tr');
-            let gradeBadges = proc.grades.map(g => `<span style="display:inline-block; padding:1px 5px; margin:1px; background:#1e3a8a; border-radius:3px; font-size:0.75rem; color:#93c5fd;">IT${g}</span>`).join(' ');
+            tr.dataset.grades = JSON.stringify(proc.grades || []);
+
+            // Thanh ma trận IT2 đến IT16
+            let barHtml = '';
+            for (let g = 2; g <= 16; g++) {
+                if (proc.grades && proc.grades.includes(g)) {
+                    barHtml += `<span class="it-cell-active" data-grade="${g}" title="${proc.name}: IT${g}">IT${g}</span>`;
+                } else {
+                    barHtml += `<span class="it-cell-inactive" data-grade="${g}">·</span>`;
+                }
+            }
+
             tr.innerHTML = `
-                <td style="font-weight:600; color:#f8fafc;">${proc.name}</td>
-                <td style="color:#38bdf8;">IT${proc.min_grade} ~ IT${proc.max_grade}</td>
-                <td>${gradeBadges}</td>
+                <td style="text-align:center; color:#94a3b8; font-weight:600;">${idx + 1}</td>
+                <td>
+                    <div style="font-weight:700; color:#f8fafc; font-size:0.92rem;">${proc.name_vi || proc.name}</div>
+                    <div style="font-size:0.78rem; color:#64748b;">${proc.name}</div>
+                </td>
+                <td style="color:#38bdf8; font-weight:700; white-space:nowrap;">IT${proc.min_grade} ~ IT${proc.max_grade}</td>
+                <td style="color:#34d399; font-weight:600; white-space:nowrap;">${proc.ra_min} ~ ${proc.ra_max} µm</td>
+                <td>
+                    <div class="it-bar-container">${barHtml}</div>
+                </td>
             `;
             tbody.appendChild(tr);
+        });
+    }
+
+    // Dynamic highlight cho Section 5.0 khi chọn Lỗ / Trục ở Mục 1.0
+    function updateSurfaceFinishHighlights(holeIT, shaftIT) {
+        const tbody = document.getElementById('surface_processes_tbody');
+        if (!tbody) return;
+
+        tbody.querySelectorAll('tr').forEach(tr => {
+            try {
+                const grades = JSON.parse(tr.dataset.grades || '[]');
+                const canMakeHole = grades.includes(holeIT);
+                const canMakeShaft = grades.includes(shaftIT);
+
+                if (canMakeHole && canMakeShaft) {
+                    tr.className = 'row-proc-feasible';
+                } else {
+                    tr.className = '';
+                }
+
+                // Highlight active IT cells
+                tr.querySelectorAll('.it-cell-active').forEach(cell => {
+                    const g = parseInt(cell.dataset.grade);
+                    if (g === holeIT || g === shaftIT) {
+                        cell.classList.add('it-cell-highlight');
+                    } else {
+                        cell.classList.remove('it-cell-highlight');
+                    }
+                });
+            } catch (e) {}
+        });
+    }
+
+    // Sao chép thông số kỹ thuật mối lắp ghép vào Clipboard
+    function copyFitDataToClipboard() {
+        if (!currentISOResult) return;
+        const res = currentISOResult;
+        const D = res.D;
+        const fit = res.fit;
+        const hole = res.hole;
+        const shaft = res.shaft;
+
+        let clearInfo = '';
+        if (fit.type === 'Clearance') {
+            clearInfo = `  + Khe hở lớn nhất (S_max): ${fit.S_max} µm (${fit.S_max_mm.toFixed(4)} mm)\n  + Khe hở nhỏ nhất (S_min): ${fit.S_min} µm (${fit.S_min_mm.toFixed(4)} mm)`;
+        } else if (fit.type === 'Interference') {
+            clearInfo = `  + Độ dôi lớn nhất (N_max): ${fit.N_max} µm (${fit.N_max_mm.toFixed(4)} mm)\n  + Độ dôi nhỏ nhất (N_min): ${fit.N_min} µm (${fit.N_min_mm.toFixed(4)} mm)`;
+        } else {
+            clearInfo = `  + Khe hở lớn nhất (S_max): ${fit.S_max} µm (${fit.S_max_mm.toFixed(4)} mm)\n  + Độ dôi lớn nhất (N_max): ${fit.N_max} µm (${fit.N_max_mm.toFixed(4)} mm)`;
+        }
+
+        const text = 
+`======================================================================
+KẾT QUẢ TÍNH TOÁN DUNG SAI & LẮP GHÉP THEO ISO 286:1988
+- Kích thước danh nghĩa: D = ${D} mm
+- Kiểu lắp ghép: ${fit.name} (${fit.typeName})
+----------------------------------------------------------------------
+1. CHI TIẾT LỖ (HOLE): ${hole.symbol}
+   - Sai lệch trên ES: ${formatSigned(hole.ES)} µm
+   - Sai lệch dưới EI: ${formatSigned(hole.EI)} µm
+   - Dung sai lỗ T_D: ${hole.IT} µm (${hole.T_D.toFixed(4)} mm)
+   - Kích thước giới hạn: D_max = ${hole.D_max.toFixed(4)} mm, D_min = ${hole.D_min.toFixed(4)} mm
+
+2. CHI TIẾT TRỤC (SHAFT): ${shaft.symbol}
+   - Sai lệch trên es: ${formatSigned(shaft.es)} µm
+   - Sai lệch dưới ei: ${formatSigned(shaft.ei)} µm
+   - Dung sai trục T_d: ${shaft.IT} µm (${shaft.T_d.toFixed(4)} mm)
+   - Kích thước giới hạn: d_max = ${shaft.d_max.toFixed(4)} mm, d_min = ${shaft.d_min.toFixed(4)} mm
+
+3. ĐẶC TÍNH MỐI GHÉP:
+${clearInfo}
+   - Độ hở/dôi trung bình: ${fit.meanClearance.toFixed(1)} µm
+   - Dung sai ghép tổng (T_fit): ${fit.T_fit} µm (${fit.T_fit_mm.toFixed(4)} mm)
+======================================================================`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.getElementById('btnCopyFitData');
+            if (btn) {
+                const oldText = btn.textContent;
+                btn.textContent = 'Đã Sao Chép! ✓';
+                btn.style.background = '#059669';
+                setTimeout(() => {
+                    btn.textContent = oldText;
+                    btn.style.background = '#10b981';
+                }, 2000);
+            }
+        }).catch(() => {
+            alert('Không thể truy cập Clipboard trình duyệt.');
         });
     }
 

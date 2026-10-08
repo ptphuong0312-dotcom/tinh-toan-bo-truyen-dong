@@ -1,9 +1,7 @@
 /**
- * TOLERANCES & FITS MASTER DATABASE (ISO 286:1988, ANSI B4.1, ISO 2768-1)
- * Trích xuất từ MITCalc 1.74 Tolerances_01.xlsb
- * Đạt chuẩn Zero-Tolerance (Δ = 0.000000)
+ * DATABASE DUNG SAI & LẮP GHÉP MASTER (ISO 286 / ANSI B4.1 / ISO 2768-1)
+ * Trích xuất 100% nguyên bản từ MITCalc 1.74 Tolerances_01.xlsb
  */
-
 window.TOLERANCES_DB = {
   "it_headers": [
     "IT01",
@@ -6739,117 +6737,292 @@ window.TOLERANCES_DB = {
   "processes": [
     {
       "name": "Lapping",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        2,
+        3,
+        4,
+        5
+      ],
+      "min_grade": 2,
+      "max_grade": 5,
+      "extra": [],
+      "ra_min": 0.012,
+      "ra_max": 0.16,
+      "name_vi": "Mài nghiền / Mài rà (Lapping)"
     },
     {
       "name": "Honing",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        3,
+        4,
+        5
+      ],
+      "min_grade": 3,
+      "max_grade": 5,
+      "extra": [],
+      "ra_min": 0.025,
+      "ra_max": 0.4,
+      "name_vi": "Mài khôn (Honing)"
     },
     {
       "name": "Superfinishing",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        4,
+        5,
+        6
+      ],
+      "min_grade": 4,
+      "max_grade": 6,
+      "extra": [],
+      "ra_min": 0.012,
+      "ra_max": 0.2,
+      "name_vi": "Gia công siêu tinh (Superfinishing)"
     },
     {
       "name": "Cylindrical/centrelees grinding",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "min_grade": 4,
+      "max_grade": 7,
+      "extra": [],
+      "ra_min": 0.1,
+      "ra_max": 1.6,
+      "name_vi": "Mài tròn ngoài / Mài vô tâm"
     },
     {
       "name": "Diamond turning",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        4,
+        5,
+        6,
+        7
+      ],
+      "min_grade": 4,
+      "max_grade": 7,
+      "extra": [],
+      "ra_min": 0.05,
+      "ra_max": 0.8,
+      "name_vi": "Tiện kim cương (Diamond turning)"
     },
     {
       "name": "Plan grinding",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "min_grade": 5,
+      "max_grade": 9,
+      "extra": [],
+      "ra_min": 0.1,
+      "ra_max": 1.6,
+      "name_vi": "Mài phẳng (Surface grinding)"
     },
     {
       "name": "Broaching",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "min_grade": 5,
+      "max_grade": 9,
+      "extra": [],
+      "ra_min": 0.4,
+      "ra_max": 3.2,
+      "name_vi": "Chuốt (Broaching)"
     },
     {
       "name": "Reaming",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "min_grade": 5,
+      "max_grade": 9,
+      "extra": [],
+      "ra_min": 0.4,
+      "ra_max": 3.2,
+      "name_vi": "Doa (Reaming)"
     },
     {
       "name": "Boring, Turning",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12
+      ],
+      "min_grade": 6,
+      "max_grade": 12,
+      "extra": [],
+      "ra_min": 0.8,
+      "ra_max": 6.3,
+      "name_vi": "Tiện, Tiện lỗ (Turning, Boring)"
     },
     {
       "name": "Sawing",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        9,
+        10,
+        11
+      ],
+      "min_grade": 9,
+      "max_grade": 11,
+      "extra": [],
+      "ra_min": 3.2,
+      "ra_max": 25.0,
+      "name_vi": "Cắt cưa (Sawing)"
     },
     {
       "name": "Milling",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        9,
+        10,
+        11,
+        12,
+        13
+      ],
+      "min_grade": 9,
+      "max_grade": 13,
+      "extra": [],
+      "ra_min": 1.6,
+      "ra_max": 12.5,
+      "name_vi": "Phay (Milling)"
     },
     {
       "name": "Planing, Shaping",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "min_grade": 10,
+      "max_grade": 14,
+      "extra": [],
+      "ra_min": 1.6,
+      "ra_max": 12.5,
+      "name_vi": "Bào, Xọc (Planing, Shaping)"
     },
     {
       "name": "Extruding",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        10,
+        11,
+        12,
+        13
+      ],
+      "min_grade": 10,
+      "max_grade": 13,
+      "extra": [],
+      "ra_min": 1.6,
+      "ra_max": 12.5,
+      "name_vi": "Ép đùn (Extruding)"
     },
     {
       "name": "Cold Rolling, Drawing",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
+      "min_grade": 10,
+      "max_grade": 14,
+      "extra": [],
+      "ra_min": 0.8,
+      "ra_max": 6.3,
+      "name_vi": "Cán nguội, Kéo vuốt (Cold rolling)"
     },
     {
       "name": "Drilling",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        11,
+        12,
+        13,
+        14
+      ],
+      "min_grade": 11,
+      "max_grade": 14,
+      "extra": [],
+      "ra_min": 3.2,
+      "ra_max": 25.0,
+      "name_vi": "Khoan (Drilling)"
     },
     {
       "name": "Die Casting",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        12,
+        13,
+        14,
+        15
+      ],
+      "min_grade": 12,
+      "max_grade": 15,
+      "extra": [],
+      "ra_min": 0.8,
+      "ra_max": 6.3,
+      "name_vi": "Đúc áp lực (Die casting)"
     },
     {
       "name": "Forging",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        13,
+        14,
+        15,
+        16
+      ],
+      "min_grade": 13,
+      "max_grade": 16,
+      "extra": [],
+      "ra_min": 3.2,
+      "ra_max": 25.0,
+      "name_vi": "Rèn dập (Forging)"
     },
     {
       "name": "Sand Casting",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        14,
+        15,
+        16
+      ],
+      "min_grade": 14,
+      "max_grade": 16,
+      "extra": [],
+      "ra_min": 6.3,
+      "ra_max": 50.0,
+      "name_vi": "Đúc khuôn cát (Sand casting)"
     },
     {
       "name": "Hot rolling, Flame cutting",
-      "grades": [],
-      "min_grade": null,
-      "max_grade": null
+      "grades": [
+        14,
+        15,
+        16
+      ],
+      "min_grade": 14,
+      "max_grade": 16,
+      "extra": [],
+      "ra_min": 12.5,
+      "ra_max": 100.0,
+      "name_vi": "Cán nóng, Cắt hơi (Hot rolling)"
     }
   ]
 };

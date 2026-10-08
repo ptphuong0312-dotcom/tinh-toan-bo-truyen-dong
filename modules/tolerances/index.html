@@ -33,24 +33,19 @@
 
     <div class="app-container">
 
-        <!-- Thanh điều hướng Tab chính -->
-        <nav class="tab-navigation">
-            <button class="tab-btn active" data-target="tabCalculator">
-                ⚙️ Bảng Tra Tính Toán (Calculator)
-            </button>
-            <button class="tab-btn" data-target="tabCanvas">
-                📐 Biểu Đồ Miền Dung Sai 2D (Visualizer)
-            </button>
-        </nav>
-
-        <!-- TAB 1: BẢNG TÍNH TOÁN TOÀN DIỆN -->
-        <div id="tabCalculator" class="tab-content active">
-
-            <!-- Thanh công cụ mở rộng / thu gọn Accordion -->
-            <div style="display:flex; justify-content:flex-end; gap:0.5rem; margin-bottom:1rem;">
+        <!-- Thanh công cụ mở rộng / thu gọn Accordion -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; flex-wrap:wrap; gap:0.5rem;">
+            <div style="font-size:0.95rem; color:#38bdf8; font-weight:700;">
+                ⚙️ BẢNG TRA TÍNH TOÁN & BIỂU ĐỒ MIỀN DUNG SAI TRỰC QUAN (TOLERANCES & FITS)
+            </div>
+            <div style="display:flex; gap:0.5rem;">
                 <button type="button" class="btn" id="btnExpandAll" style="font-size:0.85rem; padding:0.35rem 0.75rem; background:#1e293b; color:#cbd5e1; border:1px solid #475569; border-radius:4px; cursor:pointer;">📂 Mở Rộng Tất Cả</button>
                 <button type="button" class="btn" id="btnCollapseAll" style="font-size:0.85rem; padding:0.35rem 0.75rem; background:#1e293b; color:#cbd5e1; border:1px solid #475569; border-radius:4px; cursor:pointer;">📁 Thu Gọn Tất Cả</button>
             </div>
+        </div>
+
+        <!-- BẢNG TÍNH TOÁN TOÀN DIỆN VÀ BIỂU ĐỒ TRỰC QUAN -->
+        <div id="mainCalculatorView">
 
             <!-- ========================================== -->
             <!-- MASTER BLOCK 1: INPUT & SELECTION SECTION  -->
@@ -339,6 +334,30 @@
                                 <div id="res_iso_tfit" style="font-size:1.3rem; font-weight:800; color:#a855f7;">41 µm (0.0410 mm)</div>
                             </div>
                         </div>
+
+                        <!-- KHỐI BIỂU ĐỒ 2D CANVAS ĐỒ HỌA TRỰC QUAN TÍCH HỢP -->
+                        <div class="canvas-wrapper" id="toleranceCanvasContainer" style="margin-top:1.5rem;">
+                            <div class="canvas-toolbar">
+                                <div style="display:flex; align-items:center; gap:0.75rem;">
+                                    <span style="font-weight:700; color:#38bdf8; font-size:1.05rem;">📐 BIỂU ĐỒ TRỰC QUAN MIỀN DUNG SAI LỖ & TRỤC (TOLERANCE ZONES)</span>
+                                </div>
+                                <div class="canvas-controls">
+                                    <button type="button" class="canvas-btn" id="btnZoomInCanvas" title="Phóng to">🔍 +</button>
+                                    <button type="button" class="canvas-btn" id="btnZoomOutCanvas" title="Thu nhỏ">🔍 -</button>
+                                    <button type="button" class="canvas-btn" id="btnResetCanvas" title="Đặt lại góc nhìn">🔄 Đặt Lại</button>
+                                    <button type="button" class="canvas-btn" id="btnDownloadCanvas" title="Tải ảnh PNG" style="background:#0284c7; border-color:#0ea5e9;">📷 Tải Ảnh</button>
+                                    <button type="button" class="canvas-btn" id="btnCopyFitData" title="Sao chép thông số" style="background:#10b981; border-color:#059669;">📋 Sao Chép</button>
+                                </div>
+                            </div>
+
+                            <canvas id="toleranceCanvas" width="1200" height="520"></canvas>
+
+                            <div style="margin-top:0.75rem; font-size:0.85rem; color:#94a3b8; display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+                                <div>💡 <b>Thao tác:</b> Kéo chuột (hoặc 1 ngón tay) để di chuyển (Pan) • Cuộn chuột (hoặc 2 ngón tay) để Thu phóng (Zoom).</div>
+                                <div>🟢 <b>Màu sắc:</b> <span style="color:#22d3ee; font-weight:600;">Xanh Cyan</span> = Miền Lỗ • <span style="color:#fbbf24; font-weight:600;">Vàng Cam</span> = Miền Trục • <span style="color:#38bdf8; font-weight:600;">Xanh Dương</span> = Đường không 0.</div>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
@@ -556,9 +575,11 @@
                         <table class="calc-table">
                             <thead>
                                 <tr>
+                                    <th style="width: 40px; text-align:center;">#</th>
                                     <th>Phương pháp gia công (Machining Process)</th>
-                                    <th>Dải cấp dung sai khả thi</th>
-                                    <th>Các cấp chính xác IT áp dụng</th>
+                                    <th style="width: 140px;">Dải cấp IT</th>
+                                    <th style="width: 160px;">Độ nhám bề mặt Ra</th>
+                                    <th>Biểu đồ dải cấp chính xác IT áp dụng (IT2 ~ IT16)</th>
                                 </tr>
                             </thead>
                             <tbody id="surface_processes_tbody">
@@ -570,27 +591,6 @@
 
             </div>
 
-        </div>
-
-        <!-- TAB 2: BIỂU ĐỒ MIỀN DUNG SAI 2D CAD -->
-        <div id="tabCanvas" class="tab-content">
-            <div class="canvas-wrapper">
-                <div class="canvas-toolbar">
-                    <div style="display:flex; align-items:center; gap:0.75rem;">
-                        <span style="font-weight:700; color:#38bdf8; font-size:1.05rem;">📐 BIỂU ĐỒ TRỰC QUAN MIỀN DUNG SAI LỖ & TRỤC (TOLERANCE ZONES)</span>
-                    </div>
-                    <div class="canvas-controls">
-                        <button type="button" class="canvas-btn" id="btnResetCanvas">🔄 Đặt Lại Góc Nhìn</button>
-                    </div>
-                </div>
-
-                <canvas id="toleranceCanvas" width="1200" height="650"></canvas>
-
-                <div style="margin-top:0.75rem; font-size:0.85rem; color:#94a3b8; display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
-                    <div>💡 <b>Thao tác:</b> Kéo chuột (hoặc 1 ngón tay) để di chuyển (Pan) • Cuộn chuột (hoặc 2 ngón tay) để Thu phóng (Zoom).</div>
-                    <div>🟢 <b>Màu sắc:</b> <span style="color:#22d3ee;">Xanh Cyan</span> = Miền Lỗ • <span style="color:#fbbf24;">Vàng Cam</span> = Miền Trục • <span style="color:#38bdf8;">Xanh Dương</span> = Đường không 0.</div>
-                </div>
-            </div>
         </div>
 
     </div>

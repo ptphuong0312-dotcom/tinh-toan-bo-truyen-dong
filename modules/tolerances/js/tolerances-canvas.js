@@ -114,6 +114,25 @@
             this.render();
         }
 
+        zoomIn() {
+            this.scale = Math.min(5.0, this.scale * 1.25);
+            this.render();
+        }
+
+        zoomOut() {
+            this.scale = Math.max(0.3, this.scale / 1.25);
+            this.render();
+        }
+
+        downloadPNG() {
+            if (!this.canvas) return;
+            const link = document.createElement('a');
+            const fitName = this.fitData && this.fitData.fit ? this.fitData.fit.name.replace('/', '_') : 'Fit';
+            link.download = `Bieu_do_dung_sai_${fitName}.png`;
+            link.href = this.canvas.toDataURL('image/png');
+            link.click();
+        }
+
         updateData(fitData) {
             this.fitData = fitData;
             this.render();
@@ -186,9 +205,10 @@
 
             // Label Zero Line
             ctx.fillStyle = '#38bdf8';
-            ctx.font = 'bold 13px Segoe UI, sans-serif';
+            ctx.font = 'bold 12px Segoe UI, sans-serif';
             ctx.textAlign = 'left';
-            ctx.fillText(`Đường không (Zero Line 0) — Kích thước danh nghĩa d = D = ${this.fitData.D} mm`, 80, zeroY - 8);
+            ctx.fillText('Đường 0', 70, zeroY - 6);
+            ctx.fillText(`Kích thước danh nghĩa d = D = ${this.fitData.D} mm`, w - 380, zeroY - 8);
 
             // 3. Ruler Ticks on the left
             ctx.strokeStyle = '#475569';
@@ -207,7 +227,9 @@
                     ctx.moveTo(110, y);
                     ctx.lineTo(130, y);
                     ctx.stroke();
-                    ctx.fillText(`${val > 0 ? '+' : ''}${val} µm`, 105, y + 4);
+                    if (val !== 0) {
+                        ctx.fillText(`${val > 0 ? '+' : ''}${val} µm`, 105, y + 4);
+                    }
                 }
             }
 
@@ -322,12 +344,25 @@
             ctx.stroke();
 
             // 6. Draw Fit Dimensions (Arrows for S_max, S_min or N_max, N_min)
-            const dimX = w * 0.78 + this.offsetX;
             const fit = this.fitData.fit;
+            const arrow1X = shaftX + blockWidth + 105;
+            const arrow2X = shaftX + blockWidth + 195;
 
-            ctx.strokeStyle = '#10b981';
-            ctx.fillStyle = '#10b981';
-            ctx.lineWidth = 1.5;
+            if (fit.type === 'Clearance') {
+                // S_max = ES - ei
+                this.drawDimArrow(ctx, arrow1X, holeTopY, shaftBottomY, `S_max = ${fit.S_max} µm`, '#34d399');
+                // S_min = EI - es
+                this.drawDimArrow(ctx, arrow2X, holeBottomY, shaftTopY, `S_min = ${fit.S_min} µm`, '#38bdf8');
+            } else if (fit.type === 'Interference') {
+                // N_max = es - EI
+                this.drawDimArrow(ctx, arrow1X, shaftTopY, holeBottomY, `N_max = ${fit.N_max} µm`, '#f87171');
+                // N_min = ei - ES
+                this.drawDimArrow(ctx, arrow2X, shaftBottomY, holeTopY, `N_min = ${fit.N_min} µm`, '#fbbf24');
+            } else {
+                // Transition: S_max and N_max
+                this.drawDimArrow(ctx, arrow1X, holeTopY, shaftBottomY, `S_max = ${fit.S_max} µm`, '#34d399');
+                this.drawDimArrow(ctx, arrow2X, shaftTopY, holeBottomY, `N_max = ${fit.N_max} µm`, '#f87171');
+            }
 
             // Header info box
             ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
@@ -356,6 +391,54 @@
                 ctx.fillText(`Dung sai ghép T_fit = ${fit.T_fit} µm`, w - 275, 110);
             }
 
+            ctx.restore();
+        }
+
+        drawDimArrow(ctx, x, y1, y2, text, color) {
+            if (Math.abs(y1 - y2) < 2) return;
+            const topY = Math.min(y1, y2);
+            const bottomY = Math.max(y1, y2);
+
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.fillStyle = color;
+            ctx.lineWidth = 1.5;
+
+            // Leader lines
+            ctx.setLineDash([3, 3]);
+            ctx.beginPath();
+            ctx.moveTo(x - 20, topY);
+            ctx.lineTo(x + 5, topY);
+            ctx.moveTo(x - 20, bottomY);
+            ctx.lineTo(x + 5, bottomY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Main vertical line
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x, bottomY);
+            ctx.stroke();
+
+            // Arrows
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x - 4, topY + 8);
+            ctx.lineTo(x + 4, topY + 8);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(x, bottomY);
+            ctx.lineTo(x - 4, bottomY - 8);
+            ctx.lineTo(x + 4, bottomY - 8);
+            ctx.closePath();
+            ctx.fill();
+
+            // Label
+            ctx.font = 'bold 11px Segoe UI, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(text, x + 8, (topY + bottomY) / 2 + 4);
             ctx.restore();
         }
     }

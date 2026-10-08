@@ -274,11 +274,59 @@
 #toleranceCanvas {
     width: 100%;
     height: auto;
-    aspect-ratio: 1200 / 650;
+    aspect-ratio: 1200 / 520;
     display: block;
     background: #0b1329;
     border-radius: var(--radius-md);
     touch-action: none;
+}
+
+/* IT Bar Matrix in Section 5.0 */
+.it-bar-container {
+    display: flex;
+    gap: 3px;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.it-cell-active {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 26px;
+    height: 22px;
+    padding: 0 4px;
+    background: #059669;
+    color: #ffffff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.it-cell-inactive {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 22px;
+    background: rgba(30, 41, 59, 0.6);
+    color: #475569;
+    font-size: 0.75rem;
+    border-radius: 3px;
+}
+
+.it-cell-highlight {
+    background: #f59e0b !important;
+    color: #000000 !important;
+    font-weight: 800 !important;
+    box-shadow: 0 0 10px #f59e0b !important;
+    transform: scale(1.15);
+    z-index: 2;
+}
+
+.row-proc-feasible {
+    background: rgba(16, 185, 129, 0.08);
 }
 
 /* Badge & Indicators */
