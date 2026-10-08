@@ -598,78 +598,151 @@ class SplinesCanvas {
     }
 
     /**
-     * Compute analytical profile points for one spline tooth
+     * Compute analytical profile points for shaft teeth sector (External Spline)
+     * Returns array of points with local polar coordinates (r, theta) centered at tooth angle 0
      */
-    generateToothPoints(isShaft, z, m, alfaDeg, d, db, da, df, s, numFlankPts = 25) {
-        const pi = Math.PI;
-        const alfa = (alfaDeg * pi) / 180.0;
-        const invAlfa = Math.tan(alfa) - alfa;
+    generateShaftSectorPoints(g, numFlankPts = 16) {
+        const z = g.z0;
+        const alfaRad = (g.alfa * Math.PI) / 180.0;
+        const invAlfa = Math.tan(alfaRad) - alfaRad;
+        const d = g.d0;
+        const db = g.db0;
+        const da = g.da0;
+        const df = g.df0;
+        const s = g.s0;
 
-        const r_pitch = d / 2.0;
         const r_base = db / 2.0;
         const r_tip = da / 2.0;
         const r_root = df / 2.0;
+        const tau = Math.PI / z; // Half-pitch
+        const psi = s / d;       // Half-tooth angle on pitch circle
 
-        const psi = s / d; // tooth half-angle on pitch circle
-
-        // Involute starts at max(r_base, r_root)
         const r_start = Math.max(r_base, r_root);
         const r_end = r_tip;
 
-        const rightFlank = [];
-        const leftFlank = [];
+        const pts = [];
 
-        // Generate flank points
+        // 1. Root bottom arc on left: from -tau to -phi_start
+        let alfa_start = 0;
+        if (r_start > r_base) alfa_start = Math.acos(r_base / r_start);
+        const inv_start = Math.tan(alfa_start) - alfa_start;
+        const phi_start = psi + invAlfa - inv_start;
+
+        pts.push({ r: r_root, theta: -tau });
+        if (phi_start < tau) {
+            pts.push({ r: r_root, theta: -phi_start });
+        }
+
+        // 2. Left flank upwards: from r_start to r_tip
         for (let i = 0; i <= numFlankPts; i++) {
             const frac = i / numFlankPts;
             const r = r_start + (r_end - r_start) * frac;
-
             let alfa_r = 0;
-            if (r > r_base) {
-                alfa_r = Math.acos(r_base / r);
-            }
-            const invAlfa_r = Math.tan(alfa_r) - alfa_r;
-
-            // Angle of flank point from tooth centerline
-            const phi = psi + invAlfa - invAlfa_r;
-
-            // Right flank point (x, y) with tooth centerline pointing along +Y
-            rightFlank.push({
-                x: r * Math.sin(phi),
-                y: r * Math.cos(phi)
-            });
-
-            // Left flank point (symmetrical)
-            leftFlank.push({
-                x: -r * Math.sin(phi),
-                y: r * Math.cos(phi)
-            });
+            if (r > r_base) alfa_r = Math.acos(r_base / r);
+            const inv_r = Math.tan(alfa_r) - alfa_r;
+            const phi = psi + invAlfa - inv_r;
+            pts.push({ r, theta: -phi });
         }
 
-        // Connect root if r_root < r_base (root extension / fillet)
-        let rightRoot = [];
-        let leftRoot = [];
-        if (r_root < r_base) {
-            // Radial extension to root
-            rightRoot.push({
-                x: r_root * Math.sin(psi),
-                y: r_root * Math.cos(psi)
-            });
-            leftRoot.push({
-                x: -r_root * Math.sin(psi),
-                y: r_root * Math.cos(psi)
-            });
+        // 3. Tip crest arc: from -phi_tip to +phi_tip at r_tip
+        let alfa_tip = Math.acos(r_base / r_tip);
+        const inv_tip = Math.tan(alfa_tip) - alfa_tip;
+        const phi_tip = psi + invAlfa - inv_tip;
+        pts.push({ r: r_tip, theta: phi_tip });
+
+        // 4. Right flank downwards: from r_tip down to r_start
+        for (let i = numFlankPts; i >= 0; i--) {
+            const frac = i / numFlankPts;
+            const r = r_start + (r_end - r_start) * frac;
+            let alfa_r = 0;
+            if (r > r_base) alfa_r = Math.acos(r_base / r);
+            const inv_r = Math.tan(alfa_r) - alfa_r;
+            const phi = psi + invAlfa - inv_r;
+            pts.push({ r, theta: phi });
         }
 
-        return {
-            r_tip,
-            r_root,
-            rightFlank,
-            leftFlank,
-            rightRoot,
-            leftRoot,
-            psi
-        };
+        // 5. Root bottom arc on right: from phi_start to +tau
+        if (phi_start < tau) {
+            pts.push({ r: r_root, theta: phi_start });
+        }
+        pts.push({ r: r_root, theta: tau });
+
+        return pts;
+    }
+
+    /**
+     * Compute analytical profile points for internal hub tooth space (Internal Spline Groove)
+     * Returns array of points with local polar coordinates (r, theta) centered at groove angle 0
+     */
+    generateHubSpacePoints(g, numFlankPts = 16) {
+        const z = g.z0;
+        const m = g.m;
+        const alfaRad = (g.alfa * Math.PI) / 180.0;
+        const invAlfa = Math.tan(alfaRad) - alfaRad;
+        const d = g.d2 || g.d0;
+        const db = g.db2 || g.db0;
+        const dri = g.dri2; // Hub root diameter (outer groove bottom)
+        const di = g.di2;   // Hub tip diameter (inner tooth crest)
+        const s2 = g.s2;
+        const e2 = Math.PI * m - s2; // Groove width on pitch circle
+
+        const r_base = db / 2.0;
+        const r_root = dri / 2.0; // Outer groove bottom
+        const r_tip = di / 2.0;   // Inner tooth crest
+        const tau = Math.PI / z;
+        const psi_space = e2 / d; // Half-groove angle on pitch circle
+
+        const r_start = Math.max(r_base, r_tip);
+        const r_end = r_root;
+
+        const pts = [];
+
+        // 1. Inner tooth crest arc on left: from -tau to -phi_start at r_tip
+        let alfa_start = 0;
+        if (r_start > r_base) alfa_start = Math.acos(r_base / r_start);
+        const inv_start = Math.tan(alfa_start) - alfa_start;
+        const phi_start = psi_space + invAlfa - inv_start;
+
+        pts.push({ r: r_tip, theta: -tau });
+        if (phi_start < tau) {
+            pts.push({ r: r_tip, theta: -phi_start });
+        }
+
+        // 2. Left flank of groove outwards: from r_start (inner) to r_root (outer)
+        for (let i = 0; i <= numFlankPts; i++) {
+            const frac = i / numFlankPts;
+            const r = r_start + (r_end - r_start) * frac;
+            let alfa_r = 0;
+            if (r > r_base) alfa_r = Math.acos(r_base / r);
+            const inv_r = Math.tan(alfa_r) - alfa_r;
+            const phi = psi_space + invAlfa - inv_r;
+            pts.push({ r, theta: -phi });
+        }
+
+        // 3. Groove bottom arc (at outer radius r_root): from -phi_root to +phi_root
+        let alfa_root = Math.acos(r_base / r_root);
+        const inv_root = Math.tan(alfa_root) - alfa_root;
+        const phi_root = psi_space + invAlfa - inv_root;
+        pts.push({ r: r_root, theta: phi_root });
+
+        // 4. Right flank of groove inwards: from r_root down to r_start
+        for (let i = numFlankPts; i >= 0; i--) {
+            const frac = i / numFlankPts;
+            const r = r_start + (r_end - r_start) * frac;
+            let alfa_r = 0;
+            if (r > r_base) alfa_r = Math.acos(r_base / r);
+            const inv_r = Math.tan(alfa_r) - alfa_r;
+            const phi = psi_space + invAlfa - inv_r;
+            pts.push({ r, theta: phi });
+        }
+
+        // 5. Inner tooth crest arc on right: from phi_start to +tau at r_tip
+        if (phi_start < tau) {
+            pts.push({ r: r_tip, theta: phi_start });
+        }
+        pts.push({ r: r_tip, theta: tau });
+
+        return pts;
     }
 
     render() {
@@ -812,30 +885,40 @@ class SplinesCanvas {
     drawShaft(ctx) {
         const g = this.geom;
         const z = g.z0;
-        const tooth = this.generateToothPoints(true, z, g.m, g.alfa, g.d0, g.db0, g.da0, g.df0, g.s0);
+        const pts = this.generateShaftSectorPoints(g);
 
         ctx.save();
         ctx.fillStyle = 'rgba(2, 132, 199, 0.28)';   // Sky blue translucent fill
         ctx.strokeStyle = '#38bdf8';                 // Cyan neon contour
         ctx.lineWidth = 1.8 / this.scale;
 
-        const numTeethToDraw = this.toothScope === 'full' ? z : (this.toothScope === 'detail' ? 3 : 1);
         const startIdx = this.toothScope === 'full' ? 0 : (this.toothScope === 'detail' ? -1 : 0);
         const endIdx = this.toothScope === 'full' ? z - 1 : (this.toothScope === 'detail' ? 1 : 0);
 
         ctx.beginPath();
+        let isFirstPt = true;
+
+        for (let j = startIdx; j <= endIdx; j++) {
+            const rotAngle = (j * 2 * Math.PI) / z;
+            for (let i = 0; i < pts.length; i++) {
+                const totalTheta = rotAngle + pts[i].theta;
+                const px = pts[i].r * Math.sin(totalTheta);
+                const py = pts[i].r * Math.cos(totalTheta);
+                if (isFirstPt) {
+                    ctx.moveTo(px, py);
+                    isFirstPt = false;
+                } else {
+                    ctx.lineTo(px, py);
+                }
+            }
+        }
 
         if (this.toothScope === 'full') {
-            // Draw continuous closed 360° toothing
-            for (let j = 0; j < z; j++) {
-                const angle = (j * 2 * Math.PI) / z;
-                this.traceTooth(ctx, tooth, angle);
-            }
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
 
-            // Shaft inner bore
+            // Inner shaft bore
             const r_bore = (g.df0 / 2) * 0.5;
             ctx.beginPath();
             ctx.arc(0, 0, r_bore, 0, Math.PI * 2);
@@ -843,11 +926,6 @@ class SplinesCanvas {
             ctx.fill();
             ctx.stroke();
         } else {
-            // Draw selected teeth
-            for (let j = startIdx; j <= endIdx; j++) {
-                const angle = (j * 2 * Math.PI) / z;
-                this.traceTooth(ctx, tooth, angle);
-            }
             ctx.stroke();
         }
 
@@ -856,82 +934,92 @@ class SplinesCanvas {
 
     drawHub(ctx) {
         const g = this.geom;
-        const z = g.z2;
-        // Hub space width corresponds to tooth space
-        const tooth = this.generateToothPoints(false, z, g.m, g.alfa, g.d2, g.db2, g.dri2, g.di2, g.s2);
+        const z = g.z0;
+        const pts = this.generateHubSpacePoints(g);
 
         ctx.save();
         ctx.fillStyle = 'rgba(249, 115, 22, 0.18)'; // Orange translucent fill
         ctx.strokeStyle = '#fb923c';                // Amber neon contour
         ctx.lineWidth = 1.8 / this.scale;
 
-        const numTeethToDraw = this.toothScope === 'full' ? z : (this.toothScope === 'detail' ? 3 : 1);
         const startIdx = this.toothScope === 'full' ? 0 : (this.toothScope === 'detail' ? -1 : 0);
         const endIdx = this.toothScope === 'full' ? z - 1 : (this.toothScope === 'detail' ? 1 : 0);
 
-        // Hub teeth are shifted by half pitch to mesh with shaft teeth
-        const halfPitch = Math.PI / z;
-
-        ctx.beginPath();
-
         if (this.toothScope === 'full') {
+            const r_hub_outer = (g.dri2 / 2) * 1.35;
+
+            // 1. Fill solid metal between outer collar and internal teeth using evenodd
+            ctx.beginPath();
+            // Outer collar subpath (clockwise)
+            ctx.arc(0, 0, r_hub_outer, 0, Math.PI * 2, false);
+
+            // Inner teeth subpath
             for (let j = 0; j < z; j++) {
-                const angle = (j * 2 * Math.PI) / z + halfPitch;
-                this.traceTooth(ctx, tooth, angle);
+                const rotAngle = (j * 2 * Math.PI) / z;
+                for (let i = 0; i < pts.length; i++) {
+                    const totalTheta = rotAngle + pts[i].theta;
+                    const px = pts[i].r * Math.sin(totalTheta);
+                    const py = pts[i].r * Math.cos(totalTheta);
+                    if (j === 0 && i === 0) {
+                        ctx.moveTo(px, py);
+                    } else {
+                        ctx.lineTo(px, py);
+                    }
+                }
             }
             ctx.closePath();
+            ctx.fill('evenodd');
+
+            // 2. Stroke internal teeth ONLY
+            ctx.beginPath();
+            for (let j = 0; j < z; j++) {
+                const rotAngle = (j * 2 * Math.PI) / z;
+                for (let i = 0; i < pts.length; i++) {
+                    const totalTheta = rotAngle + pts[i].theta;
+                    const px = pts[i].r * Math.sin(totalTheta);
+                    const py = pts[i].r * Math.cos(totalTheta);
+                    if (j === 0 && i === 0) {
+                        ctx.moveTo(px, py);
+                    } else {
+                        ctx.lineTo(px, py);
+                    }
+                }
+            }
+            ctx.closePath();
+            ctx.strokeStyle = '#fb923c';
+            ctx.lineWidth = 1.8 / this.scale;
             ctx.stroke();
 
-            // Outer hub collar
-            const r_hub_outer = (g.dri2 / 2) * 1.35;
+            // 3. Stroke outer collar contour ONLY
             ctx.beginPath();
             ctx.arc(0, 0, r_hub_outer, 0, Math.PI * 2);
             ctx.strokeStyle = '#f97316';
+            ctx.lineWidth = 1.5 / this.scale;
             ctx.stroke();
         } else {
+            // Detail / Single tooth view
+            ctx.beginPath();
+            let isFirstPt = true;
             for (let j = startIdx; j <= endIdx; j++) {
-                const angle = (j * 2 * Math.PI) / z + halfPitch;
-                this.traceTooth(ctx, tooth, angle);
+                const rotAngle = (j * 2 * Math.PI) / z;
+                for (let i = 0; i < pts.length; i++) {
+                    const totalTheta = rotAngle + pts[i].theta;
+                    const px = pts[i].r * Math.sin(totalTheta);
+                    const py = pts[i].r * Math.cos(totalTheta);
+                    if (isFirstPt) {
+                        ctx.moveTo(px, py);
+                        isFirstPt = false;
+                    } else {
+                        ctx.lineTo(px, py);
+                    }
+                }
             }
+            ctx.strokeStyle = '#fb923c';
+            ctx.lineWidth = 1.8 / this.scale;
             ctx.stroke();
         }
 
         ctx.restore();
-    }
-
-    traceTooth(ctx, tooth, rotAngle) {
-        const cosA = Math.cos(rotAngle);
-        const sinA = Math.sin(rotAngle);
-
-        const rot = (pt) => ({
-            x: pt.x * cosA - pt.y * sinA,
-            y: pt.x * sinA + pt.y * cosA
-        });
-
-        const pts = [];
-
-        // 1. Left root / flank (from root up to tip)
-        if (tooth.leftRoot.length > 0) {
-            tooth.leftRoot.forEach(p => pts.push(rot(p)));
-        }
-        tooth.leftFlank.forEach(p => pts.push(rot(p)));
-
-        // 2. Tip crest (left tip to right tip)
-        // (Tip is circular arc r_tip)
-        for (let i = tooth.rightFlank.length - 1; i >= 0; i--) {
-            pts.push(rot(tooth.rightFlank[i]));
-        }
-
-        // 3. Right root
-        if (tooth.rightRoot.length > 0) {
-            tooth.rightRoot.forEach(p => pts.push(rot(p)));
-        }
-
-        // Draw polyline
-        pts.forEach((p, idx) => {
-            if (idx === 0) ctx.moveTo(p.x, p.y);
-            else ctx.lineTo(p.x, p.y);
-        });
     }
 
     drawInspection(ctx) {
@@ -940,18 +1028,11 @@ class SplinesCanvas {
 
         ctx.save();
 
-        // 1. Inspection Pins / Balls (M)
+        // 1. Inspection Pins / Balls for Shaft (placed in tooth space at angle pi / z)
         if (this.viewMode === 'shaft' || this.viewMode === 'assembly') {
             const dt = g.dt0;
             const r_pin = dt / 2;
-
-            // Pin center radius on shaft
-            // Pin center is at angle of tooth space (half pitch from top tooth: pi / z)
-            const alfaRad = (g.alfa * pi) / 180;
-            const invAlfa = Math.tan(alfaRad) - alfaRad;
-            const invAlfaM = invAlfa + (2 * g.x0 * Math.tan(alfaRad) + dt / (g.m * Math.cos(alfaRad)) - 0.5 * pi) / g.z0;
-            const alfaM_deg = Math.abs(invAlfaM);
-            const r_center = (g.db0 / 2) / Math.cos(alfaRad); // approx center for visual
+            const r_center = (g.M0 - dt) / 2.0;
 
             const angles = [pi / g.z0, pi / g.z0 + pi]; // opposite tooth spaces
             ctx.fillStyle = 'rgba(250, 204, 21, 0.45)';  // yellow pin
@@ -977,6 +1058,44 @@ class SplinesCanvas {
             });
 
             // Dimension line M0
+            ctx.strokeStyle = '#facc15';
+            ctx.setLineDash([5 / this.scale, 3 / this.scale]);
+            ctx.beginPath();
+            const p1 = { x: r_center * Math.sin(angles[0]), y: r_center * Math.cos(angles[0]) };
+            const p2 = { x: r_center * Math.sin(angles[1]), y: r_center * Math.cos(angles[1]) };
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.stroke();
+        }
+
+        // 2. Inspection Pins / Balls for Hub (placed in hub space at angle 0)
+        if (this.viewMode === 'hub') {
+            const dt = g.dt2 || g.dt0;
+            const r_pin = dt / 2;
+            const r_center = (g.M2 + dt) / 2.0;
+
+            const angles = [0, pi]; // opposite hub spaces
+            ctx.fillStyle = 'rgba(250, 204, 21, 0.45)';
+            ctx.strokeStyle = '#facc15';
+            ctx.lineWidth = 1.5 / this.scale;
+
+            angles.forEach(ang => {
+                const cx = r_center * Math.sin(ang);
+                const cy = r_center * Math.cos(ang);
+                ctx.beginPath();
+                ctx.arc(cx, cy, r_pin, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                const s = 4 / this.scale;
+                ctx.beginPath();
+                ctx.moveTo(cx - s, cy);
+                ctx.lineTo(cx + s, cy);
+                ctx.moveTo(cx, cy - s);
+                ctx.lineTo(cx, cy + s);
+                ctx.stroke();
+            });
+
             ctx.strokeStyle = '#facc15';
             ctx.setLineDash([5 / this.scale, 3 / this.scale]);
             ctx.beginPath();

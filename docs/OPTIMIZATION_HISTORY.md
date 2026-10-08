@@ -4046,3 +4046,47 @@ ho_{f0}$.
        - Đầy đủ kích thước kỹ thuật CAD: Đường kính ngoài D, Đường kính trong d, Bề rộng then b, số then/rãnh n.
     4. **Badge tiêu đề động**: Tự động chuyển đổi badge toolbar theo đúng tiêu chuẩn tương ứng (ISO 773 / DIN 6885, DIN 6888 / ANSI B17.2, ISO 14 / DIN 5464 / SAE).
     5. **Đóng gói Bundle & Kiểm thử E2E**: Bundle keys-engine.bundle.js (187,469 bytes), kiểm thử tự động Playwright trên cả 3 tab PASS 100% với 0 lỗi.
+
+---
+
+## Giai Đoạn 11: Nâng Cấp Toàn Diện Bộ 3 Bản Vẽ Then Bán Nguyệt, Tái Cấu Trúc Dung Sai ISO/ANSI, Thống Nhất Trang Chủ & Khắc Phục Ăn Khớp Then Hoa Thân Khai
+* **Thời gian**: 08/10/2026
+* **Các hạng mục hoàn thành theo chỉ đạo trực tiếp từ SirPhuong**:
+
+### 1. Module Then Bán Nguyệt (Woodruff Keys - DIN 6888 / ANSI B17.2): Bổ Sung Bản Vẽ Chi Tiết Then Độc Lập (3 Bản Vẽ)
+- **Yêu cầu**: Thêm bản vẽ chi tiết Then Bán Nguyệt cùng kích thước của nó vào giữa hai hình cắt Moay-ơ và Trục (tổng cộng 3 bản vẽ kỹ thuật).
+- **Giải pháp & Triển khai**:
+  * Bố trí cân đối 3 khung bản vẽ trên Canvas 1200x520:
+    1. Bên trái ($cx = -380$): `1. HÌNH CẮT LỖ MOAY-Ơ (HUB CROSS-SECTION)` - khoét rãnh sâu $t_2$, đường kính lỗ $d$, đường kính đỉnh rãnh $d_2 = d + t_2$, gạch mặt cắt $45^\circ$.
+    2. Ở giữa ($cx = 0$): `2. BẢN VẼ CHI TIẾT THEN BÁN NGUYỆT (WOODRUFF KEY DETAIL)` - gồm hình chiếu chính mặt đĩa cung tròn đường kính $D_k$, chiều cao then $h$, chiều dài phẳng đỉnh $L$, và hình chiếu cạnh mặt cắt chữ nhật bề rộng $b \times h$ gạch mặt cắt kim loại chéo $45^\circ$, đầy đủ đường gióng và mũi tên kích thước CAD ($b, h, D_k, L$).
+    3. Bên phải ($cx = +380$): `3. HÌNH CẮT TRỤC (SHAFT CROSS-SECTION)` - rãnh then sâu $t_1$, đường kính trục $d$, đường kính đáy rãnh $d_1 = d - t_1$, gạch mặt cắt kim loại $45^\circ$.
+  * Tự động căn chỉnh tỷ lệ hiển thị $scale = 135 / \max(d, D_k, 25)$ sắc nét, cân đối.
+  * Đóng gói bundle `modules/shaft-keys/js/keys-engine.bundle.js` và kiểm thử Playwright chụp ảnh nghiệm thu thành công 100%.
+
+### 2. Module Dung Sai & Lắp Ghép (Tolerances & Fits - ISO 286 / ANSI B4.1): Khắc Phục Accordion & Tái Sắp Xếp Trực Quan
+- **Khắc phục lỗi Accordion**:
+  * Phát hiện xung đột CSS: `shared/css/engineering-theme.css` sử dụng quy tắc `.calc-section.collapsed .section-body { display: none !important; }`. Code cũ của module Tolerances lại dùng class `.open` thay vì `.collapsed`, khiến việc toggle không tác dụng.
+  * Chuẩn hóa 100% về cơ chế class `.calc-section.collapsed`, sửa CSS và script UI cho các nút "Mở Rộng Tất Cả" / "Thu Gọn Tất Cả" và click tiêu đề section.
+- **Tái cấu trúc bố cục hiển thị trực quan**:
+  * **Master Block 1 - ISO 286**: Ngay dưới Khối Nhập Liệu ISO 286 là Khối Kết Quả ISO 286 (Kích thước giới hạn, dung sai ES, EI, es, ei, độ hở/độ dôi tối đa/tối thiểu, khuyến nghị bôi trơn/gia công) VÀ Biểu đồ Canvas miền dung sai trực quan hiển thị ngay lập tức.
+  * **Master Block 2 - ANSI B4.1**: Ngay dưới Khối Nhập Liệu ANSI B4.1 là Khối Kết Quả ANSI B4.1 hiển thị ngay lập tức.
+  * **Master Block 3 - Bổ Sung & Tiêu Chuẩn Quốc Tế**: Mặc định đặt ở trạng thái ẩn (`collapsed`), gom gọn Mục 3.0 (Cấp dung sai tiêu chuẩn IT1 - IT18), Mục 4.0 (Sai lệch cơ bản Lỗ), Mục 5.0 (Sai lệch cơ bản Trục) để màn hình tập trung và thanh thoát.
+  * Đóng gói bundle `modules/tolerances/js/tolerances-engine.bundle.js` và kiểm thử tự động Playwright E2E xác nhận toggle mở/đóng và sắp xếp đạt chuẩn 100%.
+
+### 3. Thống Nhất Biểu Tượng & Vị Trí Nút "🏠 Trang Chủ" Trên Toàn Bộ Hệ Thống
+- **Quy chuẩn**: Thống nhất 100% giao diện nút điều hướng về trang chủ trên toàn bộ 8 module Web App:
+  * Biểu tượng và tên nút: `🏠 Trang Chủ` (thay thế mọi tên gọi cũ như "Cổng Trung Tâm", "Danh mục Module", v.v.).
+  * Vị trí cố định: Luôn nằm ở góc trên bên phải thanh Header (`.header-actions` / `.header-controls`), đồng bộ với nút "Chế độ xem Báo cáo".
+  * Đồng bộ hoàn tất trên 8 module: `modules/spur-gear`, `modules/bevel-gear`, `modules/bevel-gear-advanced`, `modules/worm-gear`, `modules/worm-gear-advanced`, `modules/shaft-keys`, `modules/involute-splines`, `modules/tolerances`.
+
+### 4. Module Then Hoa Thân Khai (Involute Splines - ISO 4156 / ANSI B92.1): Sửa Triệt Để Bản Vẽ Ăn Khớp
+- **Phân tích bản chất lỗi**: Code cũ áp dụng cùng một hàm sinh răng ngoài cho cả Trục và Lỗ rồi đảo bán kính và xoay góc $\pi/z$, dẫn đến răng moay-ơ bị biến dạng thành răng ngoài đè chéo lên răng trục.
+- **Giải thuật hình học chuẩn xác**:
+  * Tái thiết kế giải thuật tọa độ cực liên hợp:
+    - Răng Trục (External Shaft Spline): Đỉnh răng tại $r_{a0} = d_{a0}/2$, góc nửa răng tại đỉnh $\tau_{tip}$, sườn thân khai ngoài cong mở dần từ góc pháp $\alpha_n$, chân răng tại $r_{f0} = d_{f0}/2$, tâm răng tại $\theta = 0$.
+    - Rãnh Lỗ (Internal Hub Spline): Khoang rãnh trong đỉnh nhô vào tâm tại $r_{i2} = d_{i2}/2$, đáy rãnh khoét ra ngoài tại $r_{ri2} = d_{ri2}/2$, sườn thân khai trong tiếp xúc mượt mà với sườn răng trục, tâm rãnh tại $\theta = 0$ ăn khớp lọt khít với răng trục tại $\theta = 0$.
+    - Khe hở đỉnh răng trục với đáy rãnh lỗ ($c_0 = r_{ri2} - r_{a0} > 0$) và khe hở đỉnh răng lỗ với đáy rãnh trục ($c_2 = r_{i2} - r_{f0} > 0$) thể hiện trực quan rõ ràng.
+  * Khắc phục hiện tượng đường gạch nối stroke từ răng trong ra vành ngoài moay-ơ: Tách biệt hoàn toàn path tô màu kim loại (`evenodd`) giữa vòng ngoài $r_{hub\_outer}$ và răng trong với path stroke đường viền riêng biệt.
+  * Bi/đũa đo kiểm tra $M_0$ và $M_2$: Tự động định vị tiếp xúc đúng bề mặt sườn rãnh răng trục tại góc $\pi/z$ và rãnh lỗ tại góc $0$.
+  * Kiểm thử toàn diện 3 chế độ: Toàn bộ 360°, Cụm 3 răng, và 1 răng chi tiết bằng Playwright E2E đều đạt chuẩn kỹ thuật cơ khí 100%.
+

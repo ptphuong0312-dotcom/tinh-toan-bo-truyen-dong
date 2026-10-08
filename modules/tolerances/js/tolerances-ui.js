@@ -32,12 +32,12 @@
         const btnCollapseAll = document.getElementById('btnCollapseAll');
         if (btnExpandAll) {
             btnExpandAll.addEventListener('click', () => {
-                document.querySelectorAll('.calc-section').forEach(s => s.classList.add('open'));
+                document.querySelectorAll('.calc-section').forEach(s => s.classList.remove('collapsed'));
             });
         }
         if (btnCollapseAll) {
             btnCollapseAll.addEventListener('click', () => {
-                document.querySelectorAll('.calc-section').forEach(s => s.classList.remove('open'));
+                document.querySelectorAll('.calc-section').forEach(s => s.classList.add('collapsed'));
             });
         }
 
@@ -82,7 +82,7 @@
             header.addEventListener('click', () => {
                 const section = header.closest('.calc-section');
                 if (section) {
-                    section.classList.toggle('open');
+                    section.classList.toggle('collapsed');
                 }
             });
         });

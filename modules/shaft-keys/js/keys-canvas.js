@@ -460,7 +460,7 @@ class KeysCanvas {
   }
 
   // 2. VẼ MẶT CẮT TRỤC (SHAFT CROSS-SECTION)
-  drawSingleShaftView(ctx, cx, cy, r_shaft, w_key, depth1, angles, data) {
+  drawSingleShaftView(ctx, cx, cy, r_shaft, w_key, depth1, angles, data, viewIndex) {
     ctx.save();
     const r_bound = r_shaft * 1.8;
     this.drawAxes(ctx, cx, cy, r_bound);
@@ -495,10 +495,11 @@ class KeysCanvas {
     this.drawShaftDimensions(ctx, cx, cy, r_shaft, w_key, depth1, data);
 
     // 4. Tiêu đề hình
+    const titleIndex = (viewIndex !== undefined) ? viewIndex : (data.Dk ? 3 : 2);
     ctx.fillStyle = '#10b981';
     ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('2. HÌNH CẮT TRỤC (SHAFT CROSS-SECTION)', cx, cy + r_bound + 45);
+    ctx.fillText(`${titleIndex}. HÌNH CẮT TRỤC (SHAFT CROSS-SECTION)`, cx, cy + r_bound + 45);
 
     ctx.restore();
   }
@@ -637,6 +638,9 @@ class KeysCanvas {
   // =========================================================================
   // 2. BỘ 2 HÌNH CẮT THEN BÁN NGUYỆT (WOODRUFF KEYS)
   // =========================================================================
+  // =========================================================================
+  // 2. BỘ 3 HÌNH CẮT THEN BÁN NGUYỆT (WOODRUFF KEYS: HUB, KEY, SHAFT)
+  // =========================================================================
   renderWoodruffKeys(ctx) {
     const data = this.currentData;
     const d = data.d;
@@ -646,8 +650,8 @@ class KeysCanvas {
     const numKeys = data.numKeys || 1;
     const angles = this.getKeyAngles(numKeys);
 
-    // 2 Hình cắt chuẩn cơ khí: Hub bên trái (-290), Shaft bên phải (+290)
-    const spacing = 290;
+    // 3 Hình vẽ kỹ thuật chuẩn cơ khí: Hub bên trái (-380), Then ở giữa (0), Shaft bên phải (+380)
+    const spacing = 380;
     const pxPerUnit = 160 / d;
     const r_shaft = (d / 2) * pxPerUnit;
     const r_hub = r_shaft * 1.8;
@@ -655,9 +659,201 @@ class KeysCanvas {
     const depth1 = t1 * pxPerUnit;
     const depth2 = t2 * pxPerUnit;
 
+    // 1. Bên trái: Hình cắt lỗ moay-ơ (Hub)
     this.drawSingleHubView(ctx, -spacing, 0, r_shaft, r_hub, w_key, depth2, angles, data);
+
+    // 2. Ở giữa: Bản vẽ chi tiết Then Bán Nguyệt (Woodruff Key) với đầy đủ kích thước b, h, Dk, L
+    this.drawSingleWoodruffKey(ctx, 0, 0, data, pxPerUnit);
+
+    // 3. Bên phải: Hình cắt trục (Shaft)
     this.drawSingleShaftView(ctx, spacing, 0, r_shaft, w_key, depth1, angles, data);
   }
+
+  /**
+   * Bản vẽ kỹ thuật Then Bán Nguyệt độc lập (Woodruff Key Technical Drawing)
+   * Hiển thị Hình chiếu chính (mặt đĩa cung tròn) và Hình chiếu cạnh (tiết diện b x h) kèm đầy đủ kích thước CAD
+   */
+  drawSingleWoodruffKey(ctx, cx, cy, data, pxPerUnit) {
+    ctx.save();
+    const unitStr = data.isMetric ? ' mm' : ' in';
+    const b = data.b;
+    const h = data.h;
+    const Dk = data.Dk || (h * 2.5);
+    const Rk_val = Dk / 2.0;
+    const L_val = data.L || (2 * Math.sqrt(Math.max(0, h * (Dk - h))));
+
+    // Hệ số tỷ lệ vẽ then bán nguyệt cân đối (tối thiểu 110px đường kính để các đường gióng rõ nét)
+    const keyScale = Math.max(pxPerUnit, 120 / Dk);
+
+    const H = h * keyScale;
+    const Rk = Rk_val * keyScale;
+    const W_b = b * keyScale;
+    const L = L_val * keyScale;
+    const halfL = L / 2;
+
+    // Vị trí hình chiếu chính đĩa then (dịch sang trái nhẹ để dành chỗ cho hình chiếu cạnh)
+    const frontCx = cx - 45;
+    const sideCx = cx + 65;
+
+    const yTop = cy - H / 2;
+    const yBot = cy + H / 2;
+    const cyCenter = yBot - Rk; // Tâm hình học cung tròn bán kính Rk
+
+    // 1. Trục tâm hình chiếu chính
+    ctx.save();
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 0.8;
+    ctx.setLineDash([8, 4, 2, 4]);
+    ctx.beginPath();
+    ctx.moveTo(frontCx, yTop - 25);
+    ctx.lineTo(frontCx, yBot + 25);
+    ctx.moveTo(frontCx - halfL - 25, cyCenter);
+    ctx.lineTo(frontCx + halfL + 25, cyCenter);
+    ctx.stroke();
+    ctx.restore();
+
+    // 2. Tạo đường bao biên dạng đĩa Then Bán Nguyệt (Front View)
+    const ang1 = Math.atan2(yTop - cyCenter, halfL);
+    const ang2 = Math.atan2(yTop - cyCenter, -halfL);
+
+    // Hatching mặt cắt kim loại đĩa then
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(frontCx - halfL, yTop);
+    ctx.lineTo(frontCx + halfL, yTop);
+    ctx.arc(frontCx, cyCenter, Rk, ang1, ang2, false);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.18)';
+    ctx.fill();
+
+    ctx.clip();
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 0.9;
+    ctx.beginPath();
+    const ext = Rk * 1.5;
+    for (let x = -ext * 2; x <= ext * 2; x += 10) {
+      ctx.moveTo(frontCx + x, cy - ext);
+      ctx.lineTo(frontCx + x + ext * 2, cy + ext);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // Viền biên dạng đĩa then chính
+    ctx.beginPath();
+    ctx.moveTo(frontCx - halfL, yTop);
+    ctx.lineTo(frontCx + halfL, yTop);
+    ctx.arc(frontCx, cyCenter, Rk, ang1, ang2, false);
+    ctx.closePath();
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+
+    // 3. Hình chiếu cạnh (Side View) - Tiết diện chữ nhật b x h
+    ctx.save();
+    // Đường gióng dóng ngang từ hình chính sang hình cạnh
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 0.7;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(frontCx + halfL + 5, yTop);
+    ctx.lineTo(sideCx - W_b / 2 - 5, yTop);
+    ctx.moveTo(frontCx + 5, yBot);
+    ctx.lineTo(sideCx - W_b / 2 - 5, yBot);
+    ctx.stroke();
+    ctx.restore();
+
+    // Thân hình chiếu cạnh
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(sideCx - W_b / 2, yTop, W_b, H);
+    ctx.fillStyle = 'rgba(245, 158, 11, 0.18)';
+    ctx.fill();
+
+    ctx.clip();
+    ctx.strokeStyle = '#d97706';
+    ctx.lineWidth = 0.9;
+    ctx.beginPath();
+    for (let x = -ext * 2; x <= ext * 2; x += 10) {
+      ctx.moveTo(sideCx + x, cy - ext);
+      ctx.lineTo(sideCx + x + ext * 2, cy + ext);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.beginPath();
+    ctx.rect(sideCx - W_b / 2, yTop, W_b, H);
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 2.0;
+    ctx.stroke();
+
+    // Trục đối xứng hình chiếu cạnh
+    ctx.save();
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 0.8;
+    ctx.setLineDash([8, 4, 2, 4]);
+    ctx.beginPath();
+    ctx.moveTo(sideCx, yTop - 15);
+    ctx.lineTo(sideCx, yBot + 15);
+    ctx.stroke();
+    ctx.restore();
+
+    // 4. KÍCH THƯỚC BẢN VẼ THEN BÁN NGUYỆT: L, h, Dk, b
+    // 4.1. Chiều dài mặt đỉnh L (trên đỉnh hình chính)
+    const dimY_L = yTop - 25;
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(frontCx - halfL, yTop);
+    ctx.lineTo(frontCx - halfL, dimY_L - 5);
+    ctx.moveTo(frontCx + halfL, yTop);
+    ctx.lineTo(frontCx + halfL, dimY_L - 5);
+    ctx.stroke();
+    this.drawLinearDimension(ctx, frontCx - halfL, dimY_L, frontCx + halfL, dimY_L, `L = ${L_val.toFixed(2)}${unitStr}`, '#38bdf8');
+
+    // 4.2. Chiều cao then h (bên trái hình chính)
+    const dimX_h = frontCx - halfL - 25;
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(frontCx - halfL, yTop);
+    ctx.lineTo(dimX_h - 5, yTop);
+    ctx.moveTo(frontCx, yBot);
+    ctx.lineTo(dimX_h - 5, yBot);
+    ctx.stroke();
+    this.drawLinearDimension(ctx, dimX_h, yTop, dimX_h, yBot, `h = ${h.toFixed(2)}${unitStr}`, '#10b981', -28);
+
+    // 4.3. Đường kính đĩa bán nguyệt Dk (dưới đáy hình chính)
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = 'bold 11.5px "JetBrains Mono", Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Ø Đĩa Dk = ${Dk.toFixed(1)}${unitStr} (R = ${Rk_val.toFixed(2)})`, frontCx, yBot + 25);
+
+    // 4.4. Chiều dày / bề rộng b (trên đỉnh hình chiếu cạnh)
+    const dimY_b = yTop - 25;
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(sideCx - W_b / 2, yTop);
+    ctx.lineTo(sideCx - W_b / 2, dimY_b - 5);
+    ctx.moveTo(sideCx + W_b / 2, yTop);
+    ctx.lineTo(sideCx + W_b / 2, dimY_b - 5);
+    ctx.stroke();
+    this.drawLinearDimension(ctx, sideCx - W_b / 2, dimY_b, sideCx + W_b / 2, dimY_b, `b = ${b.toFixed(2)}`, '#06b6d4');
+
+    // 5. Tiêu đề khối bản vẽ
+    ctx.fillStyle = '#f59e0b';
+    ctx.font = 'bold 13px "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('2. THEN BÁN NGUYỆT (WOODRUFF KEY)', cx, yBot + 48);
+
+    // Nhãn quy cách then
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '11px "Segoe UI", Roboto, sans-serif';
+    ctx.fillText(`Quy cách: ${data.keyName || `${b} x ${h}`} • Vật liệu: C45 / Thép hợp kim`, cx, yBot + 65);
+
+    ctx.restore();
+  }
+
 
   // =========================================================================
   // 3. BỘ 2 HÌNH CẮT THEN HOA RĂNG CHỮ NHẬT (STRAIGHT-SIDED SPLINES)

@@ -2388,6 +2388,64 @@ ho_{f0}$.
   * *Tối ưu hóa bố cục tinh gọn*: Chỉ còn 2 Master Blocks sạch sẽ (Input & Results), Canvas tỉ lệ 1200x520, mở rộng độ rộng combobox tránh tràn chữ.
   * *Kiểm thử tự động Playwright E2E (`tools/test_shaft_keys_view.py`)*: Chạy thành công 100% không có lỗi Console/JavaScript.
 
+---
+
+### Quy Tắc 103: Quy Chuẩn Bản Vẽ Kỹ Thuật 3 Chi Tiết Cho Then Bán Nguyệt (Woodruff Keys 3-View Drawing Protocol - DIN 6888 / ANSI B17.2)
+**Ngày áp dụng**: 08/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+- **Bố cục 3 hình vẽ kỹ thuật trên Canvas 1200x520**:
+  1. **Hình Cắt Lỗ Moay-ơ ($cx = -380$)**: Rãnh khoét thẳng sâu $t_2$, đường kính lỗ $\varnothing d$, đường kính đỉnh rãnh moay-ơ $d_2 = d + t_2$ (hoặc $d + 2t_2$), gạch mặt cắt kim loại moay-ơ chéo $45^\circ$.
+  2. **Bản Vẽ Chi Tiết Then Bán Nguyệt ($cx = 0$)**:
+     - Hình chiếu chính: Đĩa bán nguyệt cung tròn đường kính $D_k$, chiều cao $h$, chiều dài đỉnh phẳng $L = 2 \sqrt{h(D_k - h)}$.
+     - Hình chiếu cạnh: Mặt cắt tiết diện then hình chữ nhật $b \times h$, gạch mặt cắt kim loại chéo $45^\circ$.
+     - Đầy đủ đường gióng kích thước và mũi tên CAD chuẩn kỹ thuật cho 4 thông số: bề rộng $b$, chiều cao $h$, đường kính đĩa $D_k$, chiều dài $L$.
+  3. **Hình Cắt Trục ($cx = +380$)**: Rãnh then tròn sâu $t_1$, đường kính trục $\varnothing d$, đường kính đáy rãnh trục $d_1 = d - t_1$ (hoặc $d - 2t_1$), gạch mặt cắt kim loại trục $45^\circ$.
+- **Cân chỉnh tỷ lệ tự động**: $scale = 135 / \max(d, D_k, 25)$ giúp các chi tiết luôn hiển thị rõ ràng, không bị tràn màn hình trên mọi dải đường kính từ nhỏ ($d = 6\text{ mm}$) đến lớn ($d = 100\text{ mm}$).
+
+---
+
+### Quy Tắc 104: Quy Chuẩn Tái Cấu Trúc Giao Diện Dung Sai & Lắp Ghép (Tolerances & Fits - ISO 286 / ANSI B4.1 Accordion Protocol)
+**Ngày áp dụng**: 08/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+- **Quy chuẩn CSS Accordion đồng bộ**:
+  * `shared/css/engineering-theme.css` quy định nguyên tắc cốt lõi:
+    ```css
+    .calc-section:not(.collapsed) .section-body { display: block !important; }
+    .calc-section.collapsed .section-body { display: none !important; }
+    ```
+  * Mọi module phải sử dụng class `.calc-section.collapsed` để ẩn section, tuyệt đối không dùng các class tự phát như `.open` gây xung đột với `!important` của CSS shared.
+- **Bố cục trực quan Master Blocks**:
+  * **Master Block 1 - ISO 286**: Input ISO 286 $\rightarrow$ Ngay bên dưới là Kết Quả ISO 286 (kích thước giới hạn, sai lệch trên/dưới $ES, EI, es, ei$, dung sai, kiểu lắp ghép) VÀ Biểu đồ Canvas miền dung sai trực quan hiển thị trực tiếp.
+  * **Master Block 2 - ANSI B4.1**: Input ANSI B4.1 $\rightarrow$ Ngay bên dưới là Kết Quả ANSI B4.1 (giới hạn Lỗ/Trục, độ hở/dôi cực đại/cực tiểu) hiển thị trực tiếp.
+  * **Master Block 3 - Bổ Sung & Tiêu Chuẩn Quốc Tế**: Mặc định đặt ở trạng thái ẩn (`collapsed`), chứa Mục 3.0 (Cấp dung sai tiêu chuẩn IT), Mục 4.0 (Sai lệch cơ bản Lỗ), Mục 5.0 (Sai lệch cơ bản Trục) để giữ giao diện thoáng đãng.
+
+---
+
+### Quy Tắc 105: Quy Chuẩn Thống Nhất Biểu Tượng & Vị Trí Nút Điều Hướng "🏠 Trang Chủ" (Global Home Navigation Protocol)
+**Ngày áp dụng**: 08/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+- **Định dạng thống nhất 100%**: Biểu tượng ngôi nhà kèm văn bản `🏠 Trang Chủ`.
+- **Vị trí cố định**: Đặt tại góc trên bên phải thanh Header của mọi module (`.header-actions` hoặc `.header-controls`), đồng vị với nút chuyển chế độ báo cáo.
+- **Áp dụng đồng bộ trên tất cả 8 module**: Spur Gear, Bevel Gear, Bevel Gear Advanced, Worm Gear, Worm Gear Advanced, Shaft Keys, Involute Splines, Tolerances.
+
+---
+
+### Quy Tắc 106: Quy Chuẩn Giải Thuật Hình Học Tọa Độ Cực Ăn Khớp Then Hoa Thân Khai (Involute Splines Polar Conjugate Meshing Protocol - ISO 4156 / ANSI B92.1)
+**Ngày áp dụng**: 08/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+- **Bản chất hình học cơ khí**:
+  * Trục then hoa (External Shaft Spline): Tại $\theta = 0$, trục có **RĂNG** (Crest). Đỉnh răng nằm ở bán kính ngoài $r_{a0} = d_{a0}/2$, hai bên sườn là đường thân khai ngoài cong nở ra theo hàm $\text{inv}(\alpha)$, chân răng lượn vào bán kính đáy $r_{f0} = d_{f0}/2$.
+  * Moay-ơ then hoa (Internal Hub Spline): Tại $\theta = 0$, moay-ơ có **RÃNH** (Space) ăn khớp lọt khít với răng trục. Đáy rãnh khoét ra ngoài ở bán kính $r_{ri2} = d_{ri2}/2$, hai bên sườn là đường thân khai trong tiếp xúc mượt mà với sườn răng trục, đỉnh răng moay-ơ nhô vào tâm ở bán kính $r_{i2} = d_{i2}/2$.
+  * Khe hở cơ khí chuẩn: Khe hở đỉnh răng trục với đáy rãnh moay-ơ $c_0 = r_{ri2} - r_{a0} > 0$; khe hở đỉnh răng moay-ơ với đáy rãnh trục $c_2 = r_{i2} - r_{f0} > 0$.
+- **Kỹ thuật Canvas 2D triệt tiêu đường nối thừa (Artifact Line Elimination)**:
+  * Khi vẽ moay-ơ ở chế độ toàn vành 360°, tô màu kim loại moay-ơ giữa vành ngoài $r_{hub\_outer}$ và răng trong bằng quy tắc `ctx.fill('evenodd')`.
+  * Không bao giờ dùng chung path vẽ giữa lệnh `fill` và lệnh `stroke`. Luôn tách biệt:
+    1. Path 1: `ctx.arc(0, 0, r_hub_outer, ...)` + `moveTo(teeth_pt0)` + loop inner teeth + `ctx.fill('evenodd')`.
+    2. Path 2: `beginPath()` + loop inner teeth + `ctx.stroke()` (viền răng trong).
+    3. Path 3: `beginPath()` + `ctx.arc(0, 0, r_hub_outer, ...)` + `ctx.stroke()` (viền vành ngoài).
+  * Đảm bảo bản vẽ 2D Canvas CAD không bao giờ có đường stroke nối chéo xuyên qua kim loại moay-ơ.
+
+
 
 
 

@@ -79,21 +79,29 @@
     font-size: 0.85rem;
     color: #9ca3af;
     transition: transform 0.2s ease;
+    display: inline-block;
 }
 
-.calc-section.open .section-toggle-icon {
+.calc-section:not(.collapsed) .section-toggle-icon {
     transform: rotate(90deg);
+}
+
+.calc-section.collapsed .section-toggle-icon {
+    transform: rotate(0deg);
 }
 
 .section-body {
     padding: 1rem 1.5rem;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    display: none;
 }
 
-.calc-section.open .section-body {
-    display: block;
+.calc-section.collapsed .section-body {
+    display: none !important;
+}
+
+.calc-section:not(.collapsed) .section-body {
+    display: block !important;
 }
 
 /* Tables */

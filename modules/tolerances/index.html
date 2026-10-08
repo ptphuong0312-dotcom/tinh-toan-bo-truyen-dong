@@ -19,7 +19,6 @@
     <!-- Header ứng dụng -->
     <header class="app-header">
         <div class="logo-area">
-            <a href="../../index.html" class="btn" style="text-decoration:none; color:#94a3b8; font-size:0.9rem; margin-right:1rem; border:1px solid #334155; padding:0.4rem 0.8rem; border-radius:6px;">← Trang Chủ</a>
             <div class="logo-icon">📏</div>
             <div class="logo-text">
                 <h1>BẢNG TRA DUNG SAI & LẮP GHÉP TIÊU CHUẨN QUỐC TẾ</h1>
@@ -27,7 +26,8 @@
             </div>
         </div>
         <div class="header-controls">
-            <span style="font-size:0.85rem; color:#10b981; font-weight:600;">● Mô-đun 6 (Tolerances & Fits)</span>
+            <a href="../../index.html" class="btn btn-secondary" style="font-size:0.85rem; text-decoration:none;">🏠 Trang Chủ</a>
+            <span style="font-size:0.85rem; color:#10b981; font-weight:600; padding:0.35rem 0.6rem; background:rgba(16,185,129,0.1); border:1px solid #10b981; border-radius:4px;">● Mô-đun 6 (Tolerances & Fits)</span>
         </div>
     </header>
 
@@ -47,19 +47,19 @@
         <!-- BẢNG TÍNH TOÁN TOÀN DIỆN VÀ BIỂU ĐỒ TRỰC QUAN -->
         <div id="mainCalculatorView">
 
-            <!-- ========================================== -->
-            <!-- MASTER BLOCK 1: INPUT & SELECTION SECTION  -->
-            <!-- ========================================== -->
+            <!-- ============================================================== -->
+            <!-- MASTER BLOCK 1: HỆ THỐNG DUNG SAI & LẮP GHÉP ISO 286 (HỆ MÉT) -->
+            <!-- ============================================================== -->
             <div class="master-block">
                 <div class="master-header master-input">
-                    <span>📥 PHẦN ĐẦU VÀO & THIẾT KẾ LỰA CHỌN MỐI GHÉP (INPUT & SELECTION SECTION)</span>
+                    <span>📥 HỆ THỐNG DUNG SAI & LẮP GHÉP ISO 286 (HỆ MÉT)</span>
                 </div>
 
-                <!-- Phân mục 1.0: ISO 286 -->
-                <div class="calc-section open">
+                <!-- Phân mục 1.0: Đầu vào thông số ISO 286 -->
+                <div class="calc-section">
                     <div class="section-header">
                         <div class="section-title">
-                            <span>1.0</span> HỆ THỐNG DUNG SAI & LẮP GHÉP ISO 286 (HỆ MÉT)
+                            <span>1.0</span> THÔNG SỐ ĐẦU VÀO & LỰA CHỌN MỐI LẮP GHÉP ISO 286
                         </div>
                         <span class="section-toggle-icon">▶</span>
                     </div>
@@ -182,98 +182,11 @@
                     </div>
                 </div>
 
-                <!-- Phân mục 2.0: ANSI B4.1 -->
+                <!-- Phân mục Kết quả ISO 286 & Biểu đồ miền dung sai trực quan ngay bên dưới -->
                 <div class="calc-section">
                     <div class="section-header">
                         <div class="section-title">
-                            <span>2.0</span> HỆ THỐNG LẮP GHÉP TIÊU CHUẨN ANSI B4.1 (HỆ INCH & MÉT)
-                        </div>
-                        <span class="section-toggle-icon">▶</span>
-                    </div>
-                    <div class="section-body">
-                        <table class="calc-table">
-                            <thead>
-                                <tr>
-                                    <th style="width: 50px;">#</th>
-                                    <th>Thông số thiết kế</th>
-                                    <th>Ký hiệu</th>
-                                    <th>Giá trị nhập / Lựa chọn</th>
-                                    <th>Đơn vị</th>
-                                    <th>Mô tả / Ghi chú</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>2.1</td>
-                                    <td><b>Kích thước danh nghĩa</b></td>
-                                    <td><i>d = D</i></td>
-                                    <td>
-                                        <input type="text" id="ansi_nominal_size" class="user-input highlight-key-param" value="2.0">
-                                    </td>
-                                    <td>in</td>
-                                    <td>Phạm vi tiêu chuẩn: lên đến 200 in (5000 mm)</td>
-                                </tr>
-                                <tr>
-                                    <td>2.4</td>
-                                    <td>Hệ thống lắp ghép</td>
-                                    <td><i>Basis</i></td>
-                                    <td>
-                                        <select id="ansi_system" class="combo-select" style="width: 100%; max-width: 250px;">
-                                            <option value="1" selected>Hệ Lỗ cơ bản (Hole basis)</option>
-                                            <option value="2">Hệ Trục cơ bản (Shaft basis)</option>
-                                        </select>
-                                    </td>
-                                    <td>—</td>
-                                    <td>Hệ Lỗ hoặc Hệ Trục theo ANSI B4.1</td>
-                                </tr>
-                                <tr>
-                                    <td>2.5</td>
-                                    <td>Nhóm chức năng lắp ghép</td>
-                                    <td><i>Class</i></td>
-                                    <td>
-                                        <select id="ansi_type" class="combo-select" style="width: 100%; max-width: 250px;">
-                                            <option value="rc" selected>RC - Running & Sliding (Lắp trượt, quay êm)</option>
-                                            <option value="lc">LC - Locational Clearance (Lắp định vị có khe hở)</option>
-                                            <option value="lt">LT - Locational Transition (Lắp định vị trung gian)</option>
-                                            <option value="ln">LN - Locational Interference (Lắp định vị có độ dôi)</option>
-                                            <option value="fn">FN - Force & Shrink (Lắp ép lực, co ngót)</option>
-                                        </select>
-                                    </td>
-                                    <td>—</td>
-                                    <td>5 nhóm phân loại cơ năng công nghiệp Mỹ</td>
-                                </tr>
-                                <tr>
-                                    <td>2.6</td>
-                                    <td><b>Kiểu lắp ghép ANSI</b></td>
-                                    <td><i>Fit</i></td>
-                                    <td>
-                                        <select id="ansi_preferred_fit" class="combo-select" style="width: 100%; max-width: 250px; font-weight:700; color:#38bdf8;">
-                                            <!-- Tự động nạp qua JS -->
-                                        </select>
-                                    </td>
-                                    <td>—</td>
-                                    <td>Các kiểu lắp ghép tiêu chuẩn ANSI B4.1</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-            </div>
-
-            <!-- ========================================== -->
-            <!-- MASTER BLOCK 2: RESULTS SECTION            -->
-            <!-- ========================================== -->
-            <div class="master-block">
-                <div class="master-header master-results">
-                    <span>📊 KẾT QUẢ TÍNH TOÁN KỸ THUẬT CHI TIẾT (RESULTS SECTION)</span>
-                </div>
-
-                <!-- Bảng kết quả ISO 286 -->
-                <div class="calc-section open">
-                    <div class="section-header">
-                        <div class="section-title">
-                            <span>KẾT QUẢ 1:</span> THÔNG SỐ CHI TIẾT MỐI LẮP GHÉP ISO 286
+                            <span>📊 KẾT QUẢ:</span> THÔNG SỐ CHI TIẾT & BIỂU ĐỒ MIỀN DUNG SAI ISO 286
                         </div>
                         <span id="badge_iso_fit_type" class="badge-type badge-clearance">Lắp lỏng</span>
                     </div>
@@ -361,11 +274,98 @@
                     </div>
                 </div>
 
-                <!-- Bảng kết quả ANSI B4.1 -->
+            </div>
+
+            <!-- ================================================================= -->
+            <!-- MASTER BLOCK 2: HỆ THỐNG LẮP GHÉP TIÊU CHUẨN ANSI B4.1 (HỆ INCH)  -->
+            <!-- ================================================================= -->
+            <div class="master-block">
+                <div class="master-header master-results">
+                    <span>📊 HỆ THỐNG LẮP GHÉP TIÊU CHUẨN ANSI B4.1 (HỆ INCH & MÉT)</span>
+                </div>
+
+                <!-- Phân mục 2.0: Đầu vào thông số ANSI B4.1 -->
                 <div class="calc-section">
                     <div class="section-header">
                         <div class="section-title">
-                            <span>KẾT QUẢ 2:</span> THÔNG SỐ CHI TIẾT MỐI LẮP GHÉP ANSI B4.1
+                            <span>2.0</span> THÔNG SỐ ĐẦU VÀO & LỰA CHỌN MỐI LẮP GHÉP ANSI B4.1
+                        </div>
+                        <span class="section-toggle-icon">▶</span>
+                    </div>
+                    <div class="section-body">
+                        <table class="calc-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th>Thông số thiết kế</th>
+                                    <th>Ký hiệu</th>
+                                    <th>Giá trị nhập / Lựa chọn</th>
+                                    <th>Đơn vị</th>
+                                    <th>Mô tả / Ghi chú</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>2.1</td>
+                                    <td><b>Kích thước danh nghĩa</b></td>
+                                    <td><i>d = D</i></td>
+                                    <td>
+                                        <input type="text" id="ansi_nominal_size" class="user-input highlight-key-param" value="2.0">
+                                    </td>
+                                    <td>in</td>
+                                    <td>Phạm vi tiêu chuẩn: lên đến 200 in (5000 mm)</td>
+                                </tr>
+                                <tr>
+                                    <td>2.4</td>
+                                    <td>Hệ thống lắp ghép</td>
+                                    <td><i>Basis</i></td>
+                                    <td>
+                                        <select id="ansi_system" class="combo-select" style="width: 100%; max-width: 250px;">
+                                            <option value="1" selected>Hệ Lỗ cơ bản (Hole basis)</option>
+                                            <option value="2">Hệ Trục cơ bản (Shaft basis)</option>
+                                        </select>
+                                    </td>
+                                    <td>—</td>
+                                    <td>Hệ Lỗ hoặc Hệ Trục theo ANSI B4.1</td>
+                                </tr>
+                                <tr>
+                                    <td>2.5</td>
+                                    <td>Nhóm chức năng lắp ghép</td>
+                                    <td><i>Class</i></td>
+                                    <td>
+                                        <select id="ansi_type" class="combo-select" style="width: 100%; max-width: 250px;">
+                                            <option value="rc" selected>RC - Running & Sliding (Lắp trượt, quay êm)</option>
+                                            <option value="lc">LC - Locational Clearance (Lắp định vị có khe hở)</option>
+                                            <option value="lt">LT - Locational Transition (Lắp định vị trung gian)</option>
+                                            <option value="ln">LN - Locational Interference (Lắp định vị có độ dôi)</option>
+                                            <option value="fn">FN - Force & Shrink (Lắp ép lực, co ngót)</option>
+                                        </select>
+                                    </td>
+                                    <td>—</td>
+                                    <td>5 nhóm phân loại cơ năng công nghiệp Mỹ</td>
+                                </tr>
+                                <tr>
+                                    <td>2.6</td>
+                                    <td><b>Kiểu lắp ghép ANSI</b></td>
+                                    <td><i>Fit</i></td>
+                                    <td>
+                                        <select id="ansi_preferred_fit" class="combo-select" style="width: 100%; max-width: 250px; font-weight:700; color:#38bdf8;">
+                                            <!-- Tự động nạp qua JS -->
+                                        </select>
+                                    </td>
+                                    <td>—</td>
+                                    <td>Các kiểu lắp ghép tiêu chuẩn ANSI B4.1</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Phân mục Kết quả ANSI B4.1 ngay bên dưới -->
+                <div class="calc-section">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span>📊 KẾT QUẢ:</span> THÔNG SỐ CHI TIẾT MỐI LẮP GHÉP ANSI B4.1
                         </div>
                         <span class="section-toggle-icon">▶</span>
                     </div>
@@ -417,16 +417,83 @@
 
             </div>
 
-            <!-- ================================================== -->
-            <!-- MASTER BLOCK 3: SUPPLEMENTS & WORKSHOP STANDARDS   -->
-            <!-- ================================================== -->
+            <!-- ================================================================== -->
+            <!-- MASTER BLOCK 3: BỔ SUNG & TIÊU CHUẨN XƯỞNG CHẾ TẠO (MẶC ĐỊNH ẨN)   -->
+            <!-- ================================================================== -->
             <div class="master-block">
                 <div class="master-header master-supplements">
                     <span>🛠️ BỔ SUNG & TIÊU CHUẨN XƯỞNG CHẾ TẠO (SUPPLEMENTS & WORKSHOP)</span>
                 </div>
 
-                <!-- Phân mục 4.0: Tự động thiết kế kiểu lắp -->
-                <div class="calc-section open">
+                <!-- Phân mục 3.0: Dung sai chung ISO 2768-1 (Mặc định ẩn) -->
+                <div class="calc-section collapsed">
+                    <div class="section-header">
+                        <div class="section-title">
+                            <span>3.0</span> DUNG SAI KHÔNG CHỈ DẪN RIÊNG TRÊN BẢN VẼ (ISO 2768-1)
+                        </div>
+                        <span class="section-toggle-icon">▶</span>
+                    </div>
+                    <div class="section-body">
+                        <p style="font-size:0.9rem; color:#94a3b8; margin-bottom:1rem;">
+                            Quy chuẩn sai lệch giới hạn tự động cho các kích thước gia công cơ khí không ghi dung sai riêng theo ISO 2768-1:
+                        </p>
+
+                        <table class="calc-table">
+                            <thead>
+                                <tr>
+                                    <th>Hạng mục kích thước</th>
+                                    <th>Giá trị kích thước</th>
+                                    <th>Cấp chính xác</th>
+                                    <th>Sai lệch giới hạn cho phép</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><b>Kích thước dài thẳng (Linear)</b></td>
+                                    <td><input type="text" id="iso2768_linear_val" class="user-input" value="25.0" style="max-width:100px;"> mm</td>
+                                    <td>
+                                        <select id="iso2768_linear_class" class="combo-select">
+                                            <option value="f">f - Tinh (Fine)</option>
+                                            <option value="m" selected>m - Trung bình (Medium)</option>
+                                            <option value="c">c - Thô (Coarse)</option>
+                                            <option value="v">v - Rất thô (Very coarse)</option>
+                                        </select>
+                                    </td>
+                                    <td><span id="res_iso2768_linear_dev" class="output-eng">± 0.2 mm</span></td>
+                                </tr>
+                                <tr>
+                                    <td><b>Bán kính lượn & Cạnh vát (Radii / Chamfers)</b></td>
+                                    <td><input type="text" id="iso2768_radius_val" class="user-input" value="2.0" style="max-width:100px;"> mm</td>
+                                    <td>
+                                        <select id="iso2768_radius_class" class="combo-select">
+                                            <option value="f">f - Tinh (Fine)</option>
+                                            <option value="m" selected>m - Trung bình (Medium)</option>
+                                            <option value="c">c - Thô (Coarse)</option>
+                                            <option value="v">v - Rất thô (Very coarse)</option>
+                                        </select>
+                                    </td>
+                                    <td><span id="res_iso2768_radius_dev" class="output-eng">± 0.2 mm</span></td>
+                                </tr>
+                                <tr>
+                                    <td><b>Kích thước góc (Angular dimensions)</b></td>
+                                    <td><input type="text" id="iso2768_angle_val" class="user-input" value="30.0" style="max-width:100px;"> mm (Cạnh ngắn)</td>
+                                    <td>
+                                        <select id="iso2768_angle_class" class="combo-select">
+                                            <option value="f">f - Tinh (Fine)</option>
+                                            <option value="m" selected>m - Trung bình (Medium)</option>
+                                            <option value="c">c - Thô (Coarse)</option>
+                                            <option value="v">v - Rất thô (Very coarse)</option>
+                                        </select>
+                                    </td>
+                                    <td><span id="res_iso2768_angle_dev" class="output-eng">± 30'</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Phân mục 4.0: Tự động thiết kế kiểu lắp (Mặc định ẩn) -->
+                <div class="calc-section collapsed">
                     <div class="section-header">
                         <div class="section-title">
                             <span>4.0</span> BỘ CÔNG CỤ TỰ ĐỘNG THIẾT KẾ KIỂU LẮP GHÉP (FIT DESIGN ENGINE)
@@ -493,75 +560,8 @@
                     </div>
                 </div>
 
-                <!-- Phân mục 3.0: Dung sai chung ISO 2768-1 -->
-                <div class="calc-section">
-                    <div class="section-header">
-                        <div class="section-title">
-                            <span>3.0</span> DUNG SAI KHÔNG CHỈ DẪN RIÊNG TRÊN BẢN VẼ (ISO 2768-1)
-                        </div>
-                        <span class="section-toggle-icon">▶</span>
-                    </div>
-                    <div class="section-body">
-                        <p style="font-size:0.9rem; color:#94a3b8; margin-bottom:1rem;">
-                            Quy chuẩn sai lệch giới hạn tự động cho các kích thước gia công cơ khí không ghi dung sai riêng theo ISO 2768-1:
-                        </p>
-
-                        <table class="calc-table">
-                            <thead>
-                                <tr>
-                                    <th>Hạng mục kích thước</th>
-                                    <th>Giá trị kích thước</th>
-                                    <th>Cấp chính xác</th>
-                                    <th>Sai lệch giới hạn cho phép</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><b>Kích thước dài thẳng (Linear)</b></td>
-                                    <td><input type="text" id="iso2768_linear_val" class="user-input" value="25.0" style="max-width:100px;"> mm</td>
-                                    <td>
-                                        <select id="iso2768_linear_class" class="combo-select">
-                                            <option value="f">f - Tinh (Fine)</option>
-                                            <option value="m" selected>m - Trung bình (Medium)</option>
-                                            <option value="c">c - Thô (Coarse)</option>
-                                            <option value="v">v - Rất thô (Very coarse)</option>
-                                        </select>
-                                    </td>
-                                    <td><span id="res_iso2768_linear_dev" class="output-eng">± 0.2 mm</span></td>
-                                </tr>
-                                <tr>
-                                    <td><b>Bán kính lượn & Cạnh vát (Radii / Chamfers)</b></td>
-                                    <td><input type="text" id="iso2768_radius_val" class="user-input" value="2.0" style="max-width:100px;"> mm</td>
-                                    <td>
-                                        <select id="iso2768_radius_class" class="combo-select">
-                                            <option value="f">f - Tinh (Fine)</option>
-                                            <option value="m" selected>m - Trung bình (Medium)</option>
-                                            <option value="c">c - Thô (Coarse)</option>
-                                            <option value="v">v - Rất thô (Very coarse)</option>
-                                        </select>
-                                    </td>
-                                    <td><span id="res_iso2768_radius_dev" class="output-eng">± 0.2 mm</span></td>
-                                </tr>
-                                <tr>
-                                    <td><b>Kích thước góc (Angular dimensions)</b></td>
-                                    <td><input type="text" id="iso2768_angle_val" class="user-input" value="30.0" style="max-width:100px;"> mm (Cạnh ngắn)</td>
-                                    <td>
-                                        <select id="iso2768_angle_class" class="combo-select">
-                                            <option value="f">f - Tinh (Fine)</option>
-                                            <option value="m" selected>m - Trung bình (Medium)</option>
-                                            <option value="c">c - Thô (Coarse)</option>
-                                            <option value="v">v - Rất thô (Very coarse)</option>
-                                        </select>
-                                    </td>
-                                    <td><span id="res_iso2768_angle_dev" class="output-eng">± 30'</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Phân mục 5.0: Cấp IT và Độ nhám bề mặt -->
-                <div class="calc-section">
+                <!-- Phân mục 5.0: Cấp IT và Độ nhám bề mặt (Mặc định ẩn) -->
+                <div class="calc-section collapsed">
                     <div class="section-header">
                         <div class="section-title">
                             <span>5.0</span> MỐI QUAN HỆ CẤP CHÍNH XÁC IT & PHƯƠNG PHÁP GIA CÔNG CƠ KHÍ

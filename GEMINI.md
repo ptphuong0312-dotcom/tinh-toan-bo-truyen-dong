@@ -2557,3 +2557,40 @@ ho_{f0} / \cos\gamma$.
    - **Loại bỏ hoàn toàn Master Block 3**: Xóa sạch phần Bổ sung & Chế tạo (Mục 10.0 bảng so sánh, Mục 11.0 xuất DXF và ảnh tĩnh bên dưới).
    - **Tối ưu hóa bố cục tinh gọn**: Chỉ còn 2 Master Blocks sạch sẽ (Input & Results), Canvas tỉ lệ 1200x520, giải phóng tối đa chiều cao màn hình.
 
+
+---
+
+### Quy Tắc 103: Quy Chuẩn Bản Vẽ Kỹ Thuật 3 Chi Tiết Cho Then Bán Nguyệt (Woodruff Keys 3-View Drawing Protocol - DIN 6888 / ANSI B17.2)
+1. **Bố cục 3 khung bản vẽ cơ khí trên Canvas 1200x520**:
+   - Bên trái ($cx = -380$): `1. HÌNH CẮT LỖ MOAY-Ơ (HUB CROSS-SECTION)` - khoét rãnh sâu $t_2$, đường kính lỗ $\varnothing d$, đường kính đỉnh rãnh moay-ơ $d_2 = d + t_2$ (hoặc $d + 2t_2$), gạch mặt cắt kim loại moay-ơ chéo $45^\circ$.
+   - Ở giữa ($cx = 0$): `2. BẢN VẼ CHI TIẾT THEN BÁN NGUYỆT (WOODRUFF KEY DETAIL)` - gồm hình chiếu chính đĩa bán nguyệt cung tròn đường kính $D_k$, chiều cao $h$, chiều dài đỉnh phẳng $L = 2 \sqrt{h(D_k - h)}$, và hình chiếu cạnh mặt cắt tiết diện then hình chữ nhật $b \times h$ gạch mặt cắt kim loại chéo $45^\circ$. Đầy đủ đường gióng kích thước và mũi tên CAD chuẩn kỹ thuật cho 4 thông số: bề rộng $b$, chiều cao $h$, đường kính đĩa $D_k$, chiều dài $L$.
+   - Bên phải ($cx = +380$): `3. HÌNH CẮT TRỤC (SHAFT CROSS-SECTION)` - rãnh then tròn sâu $t_1$, đường kính trục $\varnothing d$, đường kính đáy rãnh trục $d_1 = d - t_1$ (hoặc $d - 2t_1$), gạch mặt cắt kim loại trục $45^\circ$.
+2. **Cân chỉnh tỷ lệ tự động**: $scale = 135 / \max(d, D_k, 25)$ giúp các chi tiết luôn hiển thị rõ nét, cân đối trên mọi dải kích thước.
+
+---
+
+### Quy Tắc 104: Quy Chuẩn Tái Cấu Trúc Giao Diện Dung Sai & Lắp Ghép (Tolerances & Fits - ISO 286 / ANSI B4.1 Accordion Protocol)
+1. **Khắc phục triệt để lỗi Accordion**:
+   - Tuân thủ nghiêm ngặt quy tắc CSS lõi của `shared/css/engineering-theme.css`: sử dụng class `.calc-section.collapsed` để ẩn thân mục (`display: none !important`), loại bỏ hoàn toàn các class tự phát khác.
+2. **Tái sắp xếp trực quan**:
+   - Master Block 1 (ISO 286): Khối Nhập Liệu ISO 286 $\rightarrow$ Ngay bên dưới là Khối Kết Quả ISO 286 VÀ Biểu đồ Canvas miền dung sai trực quan hiển thị trực tiếp.
+   - Master Block 2 (ANSI B4.1): Khối Nhập Liệu ANSI B4.1 $\rightarrow$ Ngay bên dưới là Khối Kết Quả ANSI B4.1 hiển thị trực tiếp.
+   - Master Block 3 (Bổ Sung & Tiêu Chuẩn Quốc Tế): Mặc định ở trạng thái ẩn (`collapsed`), gom Mục 3.0, Mục 4.0, Mục 5.0 để giao diện thoáng đãng và tập trung.
+
+---
+
+### Quy Tắc 105: Quy Chuẩn Thống Nhất Biểu Tượng & Vị Trí Nút Điều Hướng "🏠 Trang Chủ" (Global Home Navigation Protocol)
+1. **Định dạng thống nhất**: Biểu tượng ngôi nhà kèm chữ `🏠 Trang Chủ`.
+2. **Vị trí cố định**: Góc trên bên phải thanh Header của mọi module (`.header-actions` hoặc `.header-controls`).
+3. **Áp dụng đồng bộ 100% trên cả 8 module**: Spur Gear, Bevel Gear, Bevel Gear Advanced, Worm Gear, Worm Gear Advanced, Shaft Keys, Involute Splines, Tolerances.
+
+---
+
+### Quy Tắc 106: Quy Chuẩn Giải Thuật Hình Học Tọa Độ Cực Ăn Khớp Then Hoa Thân Khai (Involute Splines Polar Conjugate Meshing Protocol - ISO 4156 / ANSI B92.1)
+1. **Bản chất hình học cơ khí**:
+   - Răng Trục (External Shaft Spline): Tại $\theta = 0$ có đỉnh răng tại bán kính ngoài $r_{a0} = d_{a0}/2$, hai sườn thân khai ngoài cong nở ra theo hàm $\text{inv}(\alpha)$, chân răng lượn vào bán kính đáy $r_{f0} = d_{f0}/2$.
+   - Rãnh Moay-ơ (Internal Hub Spline): Tại $\theta = 0$ có khoang rãnh trong ăn khớp với răng trục, đáy rãnh khoét ra ngoài tại bán kính $r_{ri2} = d_{ri2}/2$, hai sườn thân khai trong tiếp xúc mượt mà với sườn răng trục, đỉnh răng moay-ơ nhô vào tâm tại bán kính $r_{i2} = d_{i2}/2$.
+   - Khe hở cơ khí chuẩn: Khe hở đỉnh răng trục với đáy rãnh moay-ơ $c_0 = r_{ri2} - r_{a0} > 0$; khe hở đỉnh răng moay-ơ với đáy rãnh trục $c_2 = r_{i2} - r_{f0} > 0$.
+2. **Triệt tiêu đường stroke nối thừa (Artifact Line Elimination)**:
+   - Ở chế độ toàn vành 360°, tô màu kim loại moay-ơ giữa vành ngoài $r_{hub\_outer}$ và răng trong bằng quy tắc `ctx.fill('evenodd')`.
+   - Tách biệt hoàn toàn path tô màu `fill` và path kẻ viền `stroke` (stroke viền răng trong và stroke viền vành ngoài bằng 2 `beginPath()` riêng biệt), triệt tiêu hoàn toàn đường nối stroke cắt qua kim loại moay-ơ.
