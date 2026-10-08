@@ -1,9 +1,8 @@
 /**
  * 2D CANVAS CAD RENDERING ENGINE: MODULE 8 KEYS & STRAIGHT-SIDED SPLINES
- * Hiển thị 3 HÌNH CẮT KỸ THUẬT:
- * 1. Hình Cắt Lỗ Moay-ơ (Hub Cross-Section)
- * 2. Hình Cắt Lắp Ghép (Assembly Cross-Section)
- * 3. Hình Cắt Trục (Shaft Cross-Section)
+ * Hiển thị 2 BẢN VẼ MẶT CẮT KỸ THUẬT CHUẨN CƠ KHÍ (ISO 773 / DIN 6885):
+ * 1. Bên Trái: Hình Cắt Lỗ Moay-ơ (Hub Cross-Section) - Kèm kích thước b, t2, Ø Lỗ, và d2
+ * 2. Bên Phải: Hình Cắt Trục (Shaft Cross-Section) - Kèm kích thước b, t1, Ø Trục, và d1
  * Hỗ trợ 1, 2, 3, 4 then và cử chỉ cảm ứng chuột & Multi-touch trên Mobile
  */
 
@@ -13,7 +12,6 @@ class KeysCanvas {
     if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
 
-    this.displayView = 'triple'; // 'triple' (Bộ ba 3 hình), 'assembly', 'shaft', 'hub'
     this.jointType = 'parallel'; // 'parallel', 'woodruff', 'spline'
 
     this.scale = 1.0;
@@ -120,11 +118,6 @@ class KeysCanvas {
     this.render();
   }
 
-  setDisplayView(view) {
-    this.displayView = view;
-    this.render();
-  }
-
   render() {
     if (!this.canvas || !this.ctx) return;
     const ctx = this.ctx;
@@ -209,57 +202,205 @@ class KeysCanvas {
     return [-Math.PI / 2];
   }
 
+  /**
+   * Vẽ mũi tên chuẩn CAD
+   */
+  drawCadArrow(ctx, fromX, fromY, toX, toY, headLength = 7, headWidth = 2.8) {
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const len = Math.hypot(dx, dy);
+    if (len === 0) return;
+    const ux = dx / len;
+    const uy = dy / len;
+
+    ctx.save();
+    ctx.fillStyle = ctx.strokeStyle;
+    ctx.beginPath();
+    ctx.moveTo(toX, toY);
+    ctx.lineTo(toX - headLength * ux + headWidth * uy, toY - headLength * uy - headWidth * ux);
+    ctx.lineTo(toX - headLength * 0.75 * ux, toY - headLength * 0.75 * uy);
+    ctx.lineTo(toX - headLength * ux - headWidth * uy, toY - headLength * uy + headWidth * ux);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  /**
+   * Đường kích thước kỹ thuật với 2 mũi tên CAD và nhãn giá trị
+   */
+  drawLinearDimension(ctx, x1, y1, x2, y2, text, color = '#94a3b8', textOffset = 0) {
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.lineWidth = 1.2;
+
+    // Dimension line
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+
+    // Arrows pointing outwards to dimension endpoints
+    this.drawCadArrow(ctx, (x1 + x2) / 2, (y1 + y2) / 2, x1, y1, 7, 2.8);
+    this.drawCadArrow(ctx, (x1 + x2) / 2, (y1 + y2) / 2, x2, y2, 7, 2.8);
+
+    // Dimension text with dark background badge
+    const midX = (x1 + x2) / 2;
+    const midY = (y1 + y2) / 2;
+    ctx.font = 'bold 11px "JetBrains Mono", Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    const metrics = ctx.measureText(text);
+    const pad = 4;
+    ctx.fillStyle = '#0b1120';
+    ctx.fillRect(midX - metrics.width / 2 - pad + textOffset, midY - 7, metrics.width + pad * 2, 14);
+
+    ctx.fillStyle = color;
+    ctx.fillText(text, midX + textOffset, midY);
+    ctx.restore();
+  }
+
   // =========================================================================
-  // BỘ 3 HÌNH CẮT THEN BẰNG (PARALLEL KEYS: HUB, ASSEMBLY, SHAFT)
+  // BỘ 2 HÌNH CẮT THEN BẰNG (PARALLEL KEYS: 1. HUB & 2. SHAFT)
   // =========================================================================
   renderParallelKeys(ctx) {
     const data = this.currentData;
     const d = data.d;
     const b = data.b;
-    const h = data.h;
     const t1 = data.t1;
     const t2 = data.t2;
     const numKeys = data.numKeys || 1;
     const angles = this.getKeyAngles(numKeys);
 
-    if (this.displayView === 'triple') {
-      // BỘ BA 3 HÌNH NẰM CẠNH NHAU
-      const spacing = 380;
-      const pxPerUnit = 135 / d; // Căn chỉnh tỷ lệ vừa vặn 3 hình
-      const r_shaft = (d / 2) * pxPerUnit;
-      const r_hub = r_shaft * 1.8;
-      const w_key = b * pxPerUnit;
-      const h_key = h * pxPerUnit;
-      const depth1 = t1 * pxPerUnit;
-      const depth2 = t2 * pxPerUnit;
+    // 2 Hình cắt cân đối: Hub bên trái (-290), Shaft bên phải (+290)
+    const spacing = 290;
+    const pxPerUnit = 160 / d; // Kích thước to rõ, sắc nét
+    const r_shaft = (d / 2) * pxPerUnit;
+    const r_hub = r_shaft * 1.8;
+    const w_key = b * pxPerUnit;
+    const depth1 = t1 * pxPerUnit;
+    const depth2 = t2 * pxPerUnit;
 
-      // 1. Bên trái: Hình cắt lỗ Moay-ơ (Hub)
-      this.drawSingleHubView(ctx, -spacing, 0, r_shaft, r_hub, w_key, depth2, angles, data);
+    // 1. Bên trái: Hình cắt lỗ Moay-ơ (Hub)
+    this.drawSingleHubView(ctx, -spacing, 0, r_shaft, r_hub, w_key, depth2, angles, data);
 
-      // 2. Ở giữa: Hình cắt Lắp ghép (Assembly)
-      this.drawSingleAssemblyView(ctx, 0, 0, r_shaft, r_hub, w_key, h_key, depth1, depth2, angles, data);
+    // 2. Bên phải: Hình cắt Trục (Shaft)
+    this.drawSingleShaftView(ctx, spacing, 0, r_shaft, w_key, depth1, angles, data);
+  }
 
-      // 3. Bên phải: Hình cắt Trục (Shaft)
-      this.drawSingleShaftView(ctx, spacing, 0, r_shaft, w_key, depth1, angles, data);
+  /**
+   * Tạo đường bao lỗ Moay-ơ khép kín với các rãnh khoét ra ngoài (Hole Contour with Open Notches)
+   * Tuyệt đối không có cung tròn chắn ngang miệng rãnh!
+   */
+  traceHubHoleContour(ctx, cx, cy, r_shaft, w_key, depth2, angles) {
+    const halfW = w_key / 2;
+    const ratio = Math.min(0.999, halfW / r_shaft);
+    const deltaTheta = Math.asin(ratio);
 
-    } else {
-      // PHÓNG TO 1 HÌNH RIÊNG LẺ
-      const pxPerUnit = 220 / d;
-      const r_shaft = (d / 2) * pxPerUnit;
-      const r_hub = r_shaft * 1.8;
-      const w_key = b * pxPerUnit;
-      const h_key = h * pxPerUnit;
-      const depth1 = t1 * pxPerUnit;
-      const depth2 = t2 * pxPerUnit;
+    for (let i = 0; i < angles.length; i++) {
+      const ang = angles[i];
+      const cosA = Math.cos(ang);
+      const sinA = Math.sin(ang);
+      const tanX = -sinA;
+      const tanY = cosA;
+      const radX = cosA;
+      const radY = sinA;
 
-      if (this.displayView === 'hub') {
-        this.drawSingleHubView(ctx, 0, 0, r_shaft, r_hub, w_key, depth2, angles, data);
-      } else if (this.displayView === 'shaft') {
-        this.drawSingleShaftView(ctx, 0, 0, r_shaft, w_key, depth1, angles, data);
+      const angM1 = ang - deltaTheta;
+      const pm1x = cx + r_shaft * Math.cos(angM1);
+      const pm1y = cy + r_shaft * Math.sin(angM1);
+
+      // Điểm đỉnh nóc rãnh trong thân moay-ơ
+      const pt1x = cx + (r_shaft + depth2) * radX - halfW * tanX;
+      const pt1y = cy + (r_shaft + depth2) * radY - halfW * tanY;
+
+      const pt2x = cx + (r_shaft + depth2) * radX + halfW * tanX;
+      const pt2y = cy + (r_shaft + depth2) * radY + halfW * tanY;
+
+      const angM2 = ang + deltaTheta;
+      const pm2x = cx + r_shaft * Math.cos(angM2);
+      const pm2y = cy + r_shaft * Math.sin(angM2);
+
+      if (i === 0) {
+        ctx.moveTo(pm1x, pm1y);
       } else {
-        this.drawSingleAssemblyView(ctx, 0, 0, r_shaft, r_hub, w_key, h_key, depth1, depth2, angles, data);
+        ctx.lineTo(pm1x, pm1y);
+      }
+      ctx.lineTo(pt1x, pt1y);
+      ctx.lineTo(pt2x, pt2y);
+      ctx.lineTo(pm2x, pm2y);
+
+      // Cung tròn nối sang then tiếp theo theo chiều kim đồng hồ
+      if (angles.length === 1) {
+        ctx.arc(cx, cy, r_shaft, angM2, angM1 + Math.PI * 2, false);
+      } else {
+        const nextAng = angles[(i + 1) % angles.length];
+        let nextAngM1 = nextAng - deltaTheta;
+        while (nextAngM1 <= angM2) {
+          nextAngM1 += Math.PI * 2;
+        }
+        ctx.arc(cx, cy, r_shaft, angM2, nextAngM1, false);
       }
     }
+    ctx.closePath();
+  }
+
+  /**
+   * Tạo đường bao thân trục khép kín với các rãnh khoét vào trong (Shaft Contour with Open Notches)
+   * Miệng rãnh mở thông ra ngoài không khí, tuyệt đối không có cung tròn chắn ngang!
+   */
+  traceShaftContour(ctx, cx, cy, r_shaft, w_key, depth1, angles) {
+    const halfW = w_key / 2;
+    const ratio = Math.min(0.999, halfW / r_shaft);
+    const deltaTheta = Math.asin(ratio);
+
+    for (let i = 0; i < angles.length; i++) {
+      const ang = angles[i];
+      const cosA = Math.cos(ang);
+      const sinA = Math.sin(ang);
+      const tanX = -sinA;
+      const tanY = cosA;
+      const radX = cosA;
+      const radY = sinA;
+
+      const angM1 = ang - deltaTheta;
+      const pm1x = cx + r_shaft * Math.cos(angM1);
+      const pm1y = cy + r_shaft * Math.sin(angM1);
+
+      // Điểm đáy rãnh khoét lõm vào trong thân trục
+      const pb1x = cx + (r_shaft - depth1) * radX - halfW * tanX;
+      const pb1y = cy + (r_shaft - depth1) * radY - halfW * tanY;
+
+      const pb2x = cx + (r_shaft - depth1) * radX + halfW * tanX;
+      const pb2y = cy + (r_shaft - depth1) * radY + halfW * tanY;
+
+      const angM2 = ang + deltaTheta;
+      const pm2x = cx + r_shaft * Math.cos(angM2);
+      const pm2y = cy + r_shaft * Math.sin(angM2);
+
+      if (i === 0) {
+        ctx.moveTo(pm1x, pm1y);
+      } else {
+        ctx.lineTo(pm1x, pm1y);
+      }
+      ctx.lineTo(pb1x, pb1y);
+      ctx.lineTo(pb2x, pb2y);
+      ctx.lineTo(pm2x, pm2y);
+
+      // Cung tròn bề mặt trụ nối sang then tiếp theo theo chiều kim đồng hồ
+      if (angles.length === 1) {
+        ctx.arc(cx, cy, r_shaft, angM2, angM1 + Math.PI * 2, false);
+      } else {
+        const nextAng = angles[(i + 1) % angles.length];
+        let nextAngM1 = nextAng - deltaTheta;
+        while (nextAngM1 <= angM2) {
+          nextAngM1 += Math.PI * 2;
+        }
+        ctx.arc(cx, cy, r_shaft, angM2, nextAngM1, false);
+      }
+    }
+    ctx.closePath();
   }
 
   // 1. VẼ MẶT CẮT LỖ MOAY-Ơ (HUB CROSS-SECTION)
@@ -267,297 +408,216 @@ class KeysCanvas {
     ctx.save();
     this.drawAxes(ctx, cx, cy, r_hub);
 
-    // Hub ring body
+    // 1. Thân kim loại Moay-ơ kèm gạch mặt cắt (Chỉ gạch trong vùng kim loại)
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, r_hub, 0, Math.PI * 2, false);
+    this.traceHubHoleContour(ctx, cx, cy, r_shaft, w_key, depth2, angles);
     ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 2;
+    ctx.fill('evenodd');
 
+    ctx.clip('evenodd');
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    const ext = r_hub * 1.5;
+    for (let x = -ext * 2; x <= ext * 2; x += 12) {
+      ctx.moveTo(cx + x, cy - ext);
+      ctx.lineTo(cx + x + ext * 2, cy + ext);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // 2. Đường bao ngoài Moay-ơ
     ctx.beginPath();
     ctx.arc(cx, cy, r_hub, 0, Math.PI * 2);
-    ctx.arc(cx, cy, r_shaft, 0, Math.PI * 2, true);
-    ctx.fill();
-    ctx.stroke();
-
-    // Metallic Hatching for Hub
-    this.drawHatchingRing(ctx, cx, cy, r_shaft, r_hub, '#334155');
-
-    // Hub keyways (khoét rãnh ra ngoài)
-    angles.forEach(ang => {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(ang + Math.PI / 2);
-      ctx.fillStyle = '#0b1120';
-      ctx.fillRect(-w_key / 2, -r_shaft - depth2, w_key, depth2);
-      ctx.strokeStyle = '#f59e0b';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(-w_key / 2, -r_shaft - depth2, w_key, depth2);
-      ctx.restore();
-    });
-
-    // Outer and Inner Hub contours
     ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r_hub, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.strokeStyle = '#38bdf8';
-    ctx.beginPath();
-    ctx.arc(cx, cy, r_shaft, 0, Math.PI * 2);
+    ctx.lineWidth = 2.0;
     ctx.stroke();
 
-    // Kích thước kỹ thuật cho Lỗ
+    // 3. Đường bao trong lỗ Moay-ơ (Miệng rãnh mở thông suốt, không có nét tròn chắn ngang)
+    ctx.beginPath();
+    this.traceHubHoleContour(ctx, cx, cy, r_shaft, w_key, depth2, angles);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+
+    // 4. Kích thước kỹ thuật cho Lỗ (b, t2, Ø d, và d2)
     this.drawHubDimensions(ctx, cx, cy, r_shaft, r_hub, w_key, depth2, data);
 
-    // Tiêu đề hình
+    // 5. Tiêu đề hình
     ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('1. HÌNH CẮT LỖ MOAY-Ơ (HUB)', cx, cy + r_hub + 45);
+    ctx.fillText('1. HÌNH CẮT LỖ MOAY-Ơ (HUB CROSS-SECTION)', cx, cy + r_hub + 45);
 
     ctx.restore();
   }
 
-  // 2. VẼ MẶT CẮT LẮP GHÉP (ASSEMBLY CROSS-SECTION)
-  drawSingleAssemblyView(ctx, cx, cy, r_shaft, r_hub, w_key, h_key, depth1, depth2, angles, data) {
-    ctx.save();
-    this.drawAxes(ctx, cx, cy, r_hub);
-
-    // 1. Hub outer ring
-    ctx.fillStyle = 'rgba(30, 41, 59, 0.85)';
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r_hub, 0, Math.PI * 2);
-    ctx.arc(cx, cy, r_shaft, 0, Math.PI * 2, true);
-    ctx.fill();
-    ctx.stroke();
-    this.drawHatchingRing(ctx, cx, cy, r_shaft, r_hub, '#334155');
-
-    // 2. Shaft body inside
-    ctx.fillStyle = 'rgba(6, 182, 212, 0.15)';
-    ctx.strokeStyle = '#06b6d4';
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.arc(cx, cy, r_shaft, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-
-    // 3. Keys and Keyways
-    angles.forEach(ang => {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(ang + Math.PI / 2);
-
-      // Hub notch
-      ctx.strokeStyle = '#64748b';
-      ctx.strokeRect(-w_key / 2, -r_shaft - depth2, w_key, depth2);
-
-      // Shaft notch
-      ctx.fillStyle = '#0b1120';
-      ctx.fillRect(-w_key / 2, -r_shaft, w_key, depth1);
-      ctx.strokeStyle = '#06b6d4';
-      ctx.strokeRect(-w_key / 2, -r_shaft, w_key, depth1);
-
-      // Key body (Solid amber with cross hatch)
-      const keyTopY = -r_shaft + depth1 - h_key;
-      ctx.fillStyle = 'rgba(245, 158, 11, 0.9)';
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 2;
-      ctx.fillRect(-w_key / 2, keyTopY, w_key, h_key);
-      ctx.strokeRect(-w_key / 2, keyTopY, w_key, h_key);
-
-      // Key hatch
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      for (let x = -w_key / 2; x <= w_key / 2 + h_key; x += 6) {
-        ctx.moveTo(x, keyTopY);
-        ctx.lineTo(x - h_key, keyTopY + h_key);
-      }
-      ctx.stroke();
-
-      ctx.restore();
-    });
-
-    // Assembly Dimensions
-    this.drawAssemblyDimensions(ctx, cx, cy, r_shaft, w_key, h_key, depth1, depth2, data);
-
-    // Tiêu đề hình
-    ctx.fillStyle = '#f59e0b';
-    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('2. HÌNH CẮT LẮP GHÉP (ASSEMBLY)', cx, cy + r_hub + 45);
-
-    ctx.restore();
-  }
-
-  // 3. VẼ MẶT CẮT TRỤC (SHAFT CROSS-SECTION)
+  // 2. VẼ MẶT CẮT TRỤC (SHAFT CROSS-SECTION)
   drawSingleShaftView(ctx, cx, cy, r_shaft, w_key, depth1, angles, data) {
     ctx.save();
-    this.drawAxes(ctx, cx, cy, r_shaft);
+    const r_bound = r_shaft * 1.8;
+    this.drawAxes(ctx, cx, cy, r_bound);
 
-    // Solid Shaft circle
-    ctx.fillStyle = 'rgba(6, 182, 212, 0.2)';
-    ctx.strokeStyle = '#06b6d4';
-    ctx.lineWidth = 2.5;
-
+    // 1. Thân kim loại Trục kèm gạch mặt cắt (Chỉ gạch trong thân trục, rãnh khuyết để rỗng)
+    ctx.save();
     ctx.beginPath();
-    ctx.arc(cx, cy, r_shaft, 0, Math.PI * 2);
+    this.traceShaftContour(ctx, cx, cy, r_shaft, w_key, depth1, angles);
+    ctx.fillStyle = 'rgba(6, 182, 212, 0.15)';
     ctx.fill();
+
+    ctx.clip();
+    ctx.strokeStyle = '#0e7490';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    const ext = r_shaft * 1.5;
+    for (let x = -ext * 2; x <= ext * 2; x += 12) {
+      ctx.moveTo(cx + x, cy - ext);
+      ctx.lineTo(cx + x + ext * 2, cy + ext);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // 2. Đường bao thân Trục (Miệng rãnh mở thông ra ngoài, không có cung tròn chắn ngang)
+    ctx.beginPath();
+    this.traceShaftContour(ctx, cx, cy, r_shaft, w_key, depth1, angles);
+    ctx.strokeStyle = '#06b6d4';
+    ctx.lineWidth = 2.2;
     ctx.stroke();
 
-    // Metallic Hatching for Shaft
-    this.drawHatchingCircle(ctx, cx, cy, r_shaft, '#0e7490');
-
-    // Shaft keyways (khoét rãnh vào trong)
-    angles.forEach(ang => {
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(ang + Math.PI / 2);
-      ctx.fillStyle = '#0b1120';
-      ctx.fillRect(-w_key / 2, -r_shaft, w_key, depth1);
-      ctx.strokeStyle = '#06b6d4';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(-w_key / 2, -r_shaft, w_key, depth1);
-      ctx.restore();
-    });
-
-    // Shaft Dimensions
+    // 3. Kích thước kỹ thuật cho Trục (b, t1, Ø d, và d1)
     this.drawShaftDimensions(ctx, cx, cy, r_shaft, w_key, depth1, data);
 
-    // Tiêu đề hình
+    // 4. Tiêu đề hình
     ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 13px -apple-system, BlinkMacSystemFont, sans-serif';
+    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('3. HÌNH CẮT TRỤC (SHAFT)', cx, cy + r_shaft * 1.8 + 45);
+    ctx.fillText('2. HÌNH CẮT TRỤC (SHAFT CROSS-SECTION)', cx, cy + r_bound + 45);
 
     ctx.restore();
   }
 
-  // Đường gióng kích thước Lỗ Moay-ơ
+  // Đường gióng & Kích thước Lỗ Moay-ơ
   drawHubDimensions(ctx, cx, cy, r_shaft, r_hub, w_key, depth2, data) {
     ctx.save();
-    ctx.strokeStyle = '#94a3b8';
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = '11px "JetBrains Mono", Consolas, monospace';
-    ctx.lineWidth = 1;
+    const unitStr = data.isMetric ? ' mm' : ' in';
 
-    // Kích thước b trên đỉnh
-    const dimY = cy - r_shaft - depth2 - 20;
+    // 1. Kích thước bề rộng b trên đỉnh
+    const dimY_b = cy - r_shaft - depth2 - 25;
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 0.8;
     ctx.beginPath();
     ctx.moveTo(cx - w_key / 2, cy - r_shaft - depth2);
-    ctx.lineTo(cx - w_key / 2, dimY);
+    ctx.lineTo(cx - w_key / 2, dimY_b - 5);
     ctx.moveTo(cx + w_key / 2, cy - r_shaft - depth2);
-    ctx.lineTo(cx + w_key / 2, dimY);
-    ctx.moveTo(cx - w_key / 2, dimY + 4);
-    ctx.lineTo(cx + w_key / 2, dimY + 4);
+    ctx.lineTo(cx + w_key / 2, dimY_b - 5);
     ctx.stroke();
+
+    this.drawLinearDimension(ctx, cx - w_key / 2, dimY_b, cx + w_key / 2, dimY_b, `b = ${data.b.toFixed(2)}`, '#38bdf8');
+
+    // 2. Kích thước chiều sâu rãnh t2 bên phải
+    const dimX_t2 = cx + w_key / 2 + 25;
+    const yTop_t2 = cy - r_shaft - depth2;
+    const yBot_t2 = cy - Math.sqrt(Math.max(0, r_shaft * r_shaft - (w_key / 2) * (w_key / 2)));
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(cx + w_key / 2, yTop_t2);
+    ctx.lineTo(dimX_t2 + 5, yTop_t2);
+    ctx.moveTo(cx + w_key / 2, yBot_t2);
+    ctx.lineTo(dimX_t2 + 5, yBot_t2);
+    ctx.stroke();
+
+    this.drawLinearDimension(ctx, dimX_t2, yTop_t2, dimX_t2, yBot_t2, `t2 = ${data.t2.toFixed(2)}`, '#f59e0b', 24);
+
+    // 3. Đường kính lỗ Ø d ở tâm
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 12px "JetBrains Mono", Consolas, monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(`b = ${data.b.toFixed(2)}`, cx, dimY - 2);
+    ctx.fillText(`Ø Lỗ = ${data.d.toFixed(1)}${unitStr}`, cx, cy + 22);
 
-    // Kích thước t2 bên phải
-    ctx.textAlign = 'left';
-    ctx.fillText(`t2 = ${data.t2.toFixed(2)}`, cx + w_key / 2 + 8, cy - r_shaft - depth2 / 2 + 4);
+    // 4. KÍCH THƯỚC ĐỈNH RÃNH LỖ d2 (BÊN TRÁI)
+    const dimX_d2 = cx - r_shaft - 35;
+    let yD2_top = cy - r_shaft - depth2;
+    let yD2_bot = cy + r_shaft;
+    if (data.numKeys === 2) {
+      yD2_bot = cy + r_shaft + depth2;
+    }
 
-    // Đường kính lỗ Ø d
-    ctx.textAlign = 'center';
-    ctx.fillText(`Ø Lỗ = ${data.d.toFixed(1)}${data.isMetric ? ' mm' : ' in'}`, cx, cy + 18);
-
-    ctx.restore();
-  }
-
-  // Đường gióng kích thước Lắp Ghép
-  drawAssemblyDimensions(ctx, cx, cy, r_shaft, w_key, h_key, depth1, depth2, data) {
-    ctx.save();
     ctx.strokeStyle = '#f59e0b';
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = '11px "JetBrains Mono", Consolas, monospace';
-    ctx.lineWidth = 1;
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(cx - w_key / 2, yD2_top);
+    ctx.lineTo(dimX_d2 - 5, yD2_top);
+    ctx.moveTo(cx, yD2_bot);
+    ctx.lineTo(dimX_d2 - 5, yD2_bot);
+    ctx.stroke();
 
-    // Then b x h
-    const dimY = cy - r_shaft + depth1 - h_key - 22;
-    ctx.textAlign = 'center';
-    ctx.fillText(`Then: ${data.b.toFixed(1)} x ${data.h.toFixed(1)}`, cx, dimY);
-
-    // Đường kính tiếp xúc d
-    ctx.fillText(`Ø d = ${data.d.toFixed(1)}`, cx, cy + 18);
-
-    // Thông số t1 và t2
-    ctx.textAlign = 'left';
-    ctx.fillStyle = '#06b6d4';
-    ctx.fillText(`t1 = ${data.t1.toFixed(2)}`, cx + w_key / 2 + 8, cy - r_shaft + depth1 / 2 + 4);
-    ctx.fillStyle = '#f59e0b';
-    ctx.fillText(`t2 = ${data.t2.toFixed(2)}`, cx + w_key / 2 + 8, cy - r_shaft - depth2 / 2 + 4);
+    this.drawLinearDimension(ctx, dimX_d2, yD2_top, dimX_d2, yD2_bot, `d2 = ${data.d2.toFixed(2)}${unitStr}`, '#fbbf24', -36);
 
     ctx.restore();
   }
 
-  // Đường gióng kích thước Trục
+  // Đường gióng & Kích thước Trục
   drawShaftDimensions(ctx, cx, cy, r_shaft, w_key, depth1, data) {
     ctx.save();
-    ctx.strokeStyle = '#94a3b8';
-    ctx.fillStyle = '#f8fafc';
-    ctx.font = '11px "JetBrains Mono", Consolas, monospace';
-    ctx.lineWidth = 1;
+    const unitStr = data.isMetric ? ' mm' : ' in';
 
-    // Kích thước b trên đỉnh
-    const dimY = cy - r_shaft - 20;
-    ctx.beginPath();
-    ctx.moveTo(cx - w_key / 2, cy - r_shaft);
-    ctx.lineTo(cx - w_key / 2, dimY);
-    ctx.moveTo(cx + w_key / 2, cy - r_shaft);
-    ctx.lineTo(cx + w_key / 2, dimY);
-    ctx.moveTo(cx - w_key / 2, dimY + 4);
-    ctx.lineTo(cx + w_key / 2, dimY + 4);
-    ctx.stroke();
-    ctx.textAlign = 'center';
-    ctx.fillText(`b = ${data.b.toFixed(2)}`, cx, dimY - 2);
-
-    // Kích thước t1 bên phải
-    ctx.textAlign = 'left';
-    ctx.fillText(`t1 = ${data.t1.toFixed(2)}`, cx + w_key / 2 + 8, cy - r_shaft + depth1 / 2 + 4);
-
-    // Đường kính trục và đáy rãnh d1
-    ctx.textAlign = 'center';
-    ctx.fillText(`Ø d = ${data.d.toFixed(1)}${data.isMetric ? ' mm' : ' in'}`, cx, cy + 16);
-    ctx.fillStyle = '#10b981';
-    ctx.fillText(`d1 = ${data.d1.toFixed(2)}`, cx, cy + 34);
-
-    ctx.restore();
-  }
-
-  // Hatching utilities
-  drawHatchingRing(ctx, cx, cy, rInner, rOuter, color) {
-    ctx.save();
-    ctx.strokeStyle = color;
+    // 1. Kích thước bề rộng b trên đỉnh
+    const dimY_b = cy - r_shaft - 25;
+    const yMouth = cy - Math.sqrt(Math.max(0, r_shaft * r_shaft - (w_key / 2) * (w_key / 2)));
+    ctx.strokeStyle = '#64748b';
     ctx.lineWidth = 0.8;
     ctx.beginPath();
-    ctx.rect(cx - rOuter, cy - rOuter, rOuter * 2, rOuter * 2);
-    ctx.clip();
-
-    ctx.beginPath();
-    for (let x = cx - rOuter * 2; x <= cx + rOuter * 2; x += 12) {
-      ctx.moveTo(x, cy - rOuter);
-      ctx.lineTo(x + rOuter * 2, cy + rOuter);
-    }
+    ctx.moveTo(cx - w_key / 2, yMouth);
+    ctx.lineTo(cx - w_key / 2, dimY_b - 5);
+    ctx.moveTo(cx + w_key / 2, yMouth);
+    ctx.lineTo(cx + w_key / 2, dimY_b - 5);
     ctx.stroke();
-    ctx.restore();
-  }
 
-  drawHatchingCircle(ctx, cx, cy, radius, color) {
-    ctx.save();
-    ctx.strokeStyle = color;
+    this.drawLinearDimension(ctx, cx - w_key / 2, dimY_b, cx + w_key / 2, dimY_b, `b = ${data.b.toFixed(2)}`, '#06b6d4');
+
+    // 2. Kích thước chiều sâu rãnh t1 bên phải
+    const dimX_t1 = cx + w_key / 2 + 25;
+    const yTop_t1 = yMouth;
+    const yBot_t1 = cy - r_shaft + depth1;
+    ctx.strokeStyle = '#64748b';
     ctx.lineWidth = 0.8;
     ctx.beginPath();
-    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.clip();
-
-    ctx.beginPath();
-    for (let x = cx - radius * 2; x <= cx + radius * 2; x += 12) {
-      ctx.moveTo(x, cy - radius);
-      ctx.lineTo(x + radius * 2, cy + radius);
-    }
+    ctx.moveTo(cx + w_key / 2, yTop_t1);
+    ctx.lineTo(dimX_t1 + 5, yTop_t1);
+    ctx.moveTo(cx + w_key / 2, yBot_t1);
+    ctx.lineTo(dimX_t1 + 5, yBot_t1);
     ctx.stroke();
+
+    this.drawLinearDimension(ctx, dimX_t1, yTop_t1, dimX_t1, yBot_t1, `t1 = ${data.t1.toFixed(2)}`, '#10b981', 24);
+
+    // 3. Đường kính trục Ø d ở tâm
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 12px "JetBrains Mono", Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Ø Trục = ${data.d.toFixed(1)}${unitStr}`, cx, cy + 22);
+
+    // 4. KÍCH THƯỚC ĐÁY RÃNH TRỤC d1 (BÊN TRÁI)
+    const dimX_d1 = cx - r_shaft - 35;
+    let yD1_top = cy - r_shaft + depth1;
+    let yD1_bot = cy + r_shaft;
+    if (data.numKeys === 2) {
+      yD1_bot = cy + r_shaft - depth1;
+    }
+
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(cx - w_key / 2, yD1_top);
+    ctx.lineTo(dimX_d1 - 5, yD1_top);
+    ctx.moveTo(cx, yD1_bot);
+    ctx.lineTo(dimX_d1 - 5, yD1_bot);
+    ctx.stroke();
+
+    this.drawLinearDimension(ctx, dimX_d1, yD1_top, dimX_d1, yD1_bot, `d1 = ${data.d1.toFixed(2)}${unitStr}`, '#10b981', -36);
+
     ctx.restore();
   }
 
@@ -568,23 +628,20 @@ class KeysCanvas {
     const data = this.currentData;
     const d = data.d;
     const b = data.b;
-    const h = data.h;
     const t1 = data.t1;
     const t2 = data.t2;
     const numKeys = data.numKeys || 1;
     const angles = this.getKeyAngles(numKeys);
 
-    const spacing = 380;
-    const pxPerUnit = 135 / d;
+    const spacing = 290;
+    const pxPerUnit = 160 / d;
     const r_shaft = (d / 2) * pxPerUnit;
     const r_hub = r_shaft * 1.8;
     const w_key = b * pxPerUnit;
-    const h_key = h * pxPerUnit;
     const depth1 = t1 * pxPerUnit;
     const depth2 = t2 * pxPerUnit;
 
     this.drawSingleHubView(ctx, -spacing, 0, r_shaft, r_hub, w_key, depth2, angles, data);
-    this.drawSingleAssemblyView(ctx, 0, 0, r_shaft, r_hub, w_key, h_key, depth1, depth2, angles, data);
     this.drawSingleShaftView(ctx, spacing, 0, r_shaft, w_key, depth1, angles, data);
   }
 
@@ -595,8 +652,8 @@ class KeysCanvas {
     const D = data.D; // major
     const b = data.b;
 
-    const spacing = 380;
-    const pxPerUnit = 120 / D;
+    const spacing = 290;
+    const pxPerUnit = 140 / D;
     const r_minor = (d / 2) * pxPerUnit;
     const r_major = (D / 2) * pxPerUnit;
     const r_hub = r_major * 1.6;
@@ -604,9 +661,7 @@ class KeysCanvas {
 
     // 1. Hub spline
     this.drawSplineHub(ctx, -spacing, 0, r_minor, r_major, r_hub, n, halfB, data);
-    // 2. Assembly spline
-    this.drawSplineAssembly(ctx, 0, 0, r_minor, r_major, r_hub, n, halfB, data);
-    // 3. Shaft spline
+    // 2. Shaft spline
     this.drawSplineShaft(ctx, spacing, 0, r_minor, r_major, n, halfB, data);
   }
 
@@ -623,21 +678,9 @@ class KeysCanvas {
     ctx.stroke();
 
     ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 13px sans-serif';
+    ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
     ctx.fillText('1. HÌNH CẮT LỖ THEN HOA (HUB)', cx, cy + rHub + 45);
-    ctx.restore();
-  }
-
-  drawSplineAssembly(ctx, cx, cy, rMinor, rMajor, rHub, n, halfB, data) {
-    ctx.save();
-    this.drawAxes(ctx, cx, cy, rHub);
-    this.drawSplineToothLoop(ctx, cx, cy, rMinor, rMajor, n, halfB, 'rgba(6, 182, 212, 0.25)', '#06b6d4');
-
-    ctx.fillStyle = '#f59e0b';
-    ctx.font = 'bold 13px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('2. HÌNH CẮT LẮP GHÉP (ASSEMBLY)', cx, cy + rHub + 45);
     ctx.restore();
   }
 
@@ -647,9 +690,9 @@ class KeysCanvas {
     this.drawSplineToothLoop(ctx, cx, cy, rMinor, rMajor, n, halfB, 'rgba(16, 185, 129, 0.25)', '#10b981');
 
     ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 13px sans-serif';
+    ctx.font = 'bold 14px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText('3. HÌNH CẮT TRỤC THEN HOA (SHAFT)', cx, cy + rMajor * 1.6 + 45);
+    ctx.fillText('2. HÌNH CẮT TRỤC THEN HOA (SHAFT)', cx, cy + rMajor * 1.6 + 45);
     ctx.restore();
   }
 
@@ -705,7 +748,7 @@ class KeysCanvas {
   downloadImage() {
     if (!this.canvas) return;
     const link = document.createElement('a');
-    link.download = `Keys_3Views_${this.jointType}_CAD.png`;
+    link.download = `Keys_2Views_${this.jointType}_CAD.png`;
     link.href = this.canvas.toDataURL('image/png');
     link.click();
   }

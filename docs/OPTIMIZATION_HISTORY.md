@@ -4010,6 +4010,25 @@ ho_{f0}$.
   * *Bỏ hoàn toàn Master Block 3*: Xóa sạch phần Bổ sung & Chế tạo (Mục 10.0 bảng so sánh, Mục 11.0 xuất DXF và ảnh tĩnh bên dưới).
   * *Tối ưu hóa bố cục gọn gàng*: Chỉ còn 2 Master Blocks (Input & Results), tối ưu chiều cao Canvas (520px), mở rộng độ rộng combobox (`max-width: 320px`, `min-width: 240px`) tránh tràn chữ tên tiêu chuẩn.
   * *Kiểm thử tự động Playwright E2E (`tools/test_shaft_keys_view.py`)*: Chạy thành công 100% không có lỗi Console/JavaScript, ảnh chụp nghiệm thu lưu tại brain artifacts directory.
+  * *Tinh chỉnh chuẩn hóa 2 Bản Vẽ Mặt Cắt Cơ Khí Hub & Shaft, làm rõ thông số d1/d2 (Lệnh trực tiếp từ SirPhuong)*:
+    1. **Mặc định ẩn Mục 1.0**: `sec1Inputs` mặc định `collapsed` kèm icon `▶`, giúp giao diện mở ra tập trung 100% vào Mục 2.0 và Results.
+    2. **Màu chữ nhập liệu đen đậm rõ ràng**: Áp dụng `color: #000000 !important; font-weight: 700 !important;` cho `.user-input` của `txtParallelDiam` và `txtParallelLength`.
+    3. **Rút gọn nhãn thông số kỹ thuật**: Rút gọn văn bản mô tả ngắn gọn, súc tích (Std, z_key, d, L, Fit, Name, b / h, t1 / t2, d1 / d2, L_range, Lf, Tol).
+    4. **Khoanh viền vàng hổ phách đúng vị trí then chốt**: Bỏ viền highlight ở Lf, chuyển `highlight-key-param` sang Mục 2.18b `Đáy trục (d1) / Đỉnh lỗ (d2)` (`outParallelD1` và `outParallelD2`).
+    5. **Tái thiết kế Bản vẽ 2D Canvas CAD chuẩn cơ khí 1-to-1**:
+       - Bỏ hoàn toàn hình 2 (Hình cắt lắp ghép) và các nút chuyển view đơn lẻ, thay bằng badge tiêu đề kỹ thuật `📐 BẢN VẼ MẶT CẮT KỸ THUẬT: LỖ MOAY-Ơ & TRỤC (ISO 773 / DIN 6885)`.
+       - Chỉ hiển thị 2 bản vẽ mặt cắt kỹ thuật cơ khí đặt cạnh nhau cân đối (Hub tại $cx = -290$, Shaft tại $cx = +290$, tỷ lệ $160/d$):
+         * Bên trái: `1. HÌNH CẮT LỖ MOAY-Ơ (HUB CROSS-SECTION)`
+         * Bên phải: `2. HÌNH CẮT TRỤC (SHAFT CROSS-SECTION)`
+       - Khắc phục triệt để lỗi vẽ chưa chuẩn cơ khí:
+         * Áp dụng thuật toán `traceHubHoleContour` và `traceShaftContour`: Miệng rãnh then trên cả trục và moay-ơ mở thông suốt (Open Notches), hoàn toàn triệt tiêu đường tròn chắn ngang miệng rãnh.
+         * Gạch mặt cắt kim loại ($45^\circ$) chỉ nằm trọn vẹn trong phần kim loại thực thể bằng quy tắc `evenodd` và `clip()`.
+       - Bổ sung đầy đủ kích thước $d_1$ và $d_2$ với đường gióng đứng và mũi tên CAD chuẩn kỹ thuật:
+         * Hình Lỗ Moay-ơ: Đường kích thước đứng $d_2$ ($d + t_2$ hoặc $d + 2t_2$) màu vàng hổ phách (`#fbbf24`).
+         * Hình Trục: Đường kích thước đứng $d_1$ ($d - t_1$ hoặc $d - 2t_1$) màu xanh lục bảo (`#10b981`).
+       - Đóng gói bundle: `modules/shaft-keys/js/keys-engine.bundle.js` (180,308 bytes).
+       - Kiểm thử nghiệm thu Playwright E2E: Tất cả các trường hợp 1 then, 2 then, 3 then, 4 then đều PASS 100% không lỗi.
+
 
 
 

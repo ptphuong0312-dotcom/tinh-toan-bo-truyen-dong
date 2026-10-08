@@ -61,10 +61,10 @@
       </div>
 
       <!-- Mục 1.0: Thông số chung & Đơn vị -->
-      <div class="calc-section">
+      <div class="calc-section collapsed" id="sec1Inputs">
         <div class="section-header">
-          <span class="section-title">▼ 1.0 Thông Số Truyền Động Cơ Bản & Hệ Đơn Vị</span>
-          <span class="section-toggle-icon">▼</span>
+          <span class="section-title">▶ 1.0 Thông Số Cơ Bản & Hệ Đơn Vị</span>
+          <span class="section-toggle-icon">▶</span>
         </div>
         <div class="section-body">
           <table class="calc-table">
@@ -98,7 +98,7 @@
       <!-- Mục 2.0: Đầu vào Then Bằng (Parallel Key) -->
       <div class="calc-section" id="secParallelInputs">
         <div class="section-header">
-          <span class="section-title">▼ 2.0 Thông Số Thiết Kế Then Bằng (Parallel Side Key)</span>
+          <span class="section-title">▼ 2.0 Thông Số Thiết Kế Then Bằng (Parallel Key)</span>
           <span class="section-toggle-icon">▼</span>
         </div>
         <div class="section-body">
@@ -115,7 +115,7 @@
             <tbody>
               <tr>
                 <td class="col-num">2.2</td>
-                <td class="col-param">Tiêu chuẩn then bằng</td>
+                <td class="col-param">Tiêu chuẩn then</td>
                 <td class="col-symbol">Std</td>
                 <td>
                   <select class="user-select" id="selParallelType"></select>
@@ -124,7 +124,7 @@
               </tr>
               <tr>
                 <td class="col-num">2.3</td>
-                <td class="col-param">Số lượng then trên trục</td>
+                <td class="col-param">Số lượng then</td>
                 <td class="col-symbol">z_key</td>
                 <td>
                   <select class="user-select" id="selParallelNumKeys">
@@ -138,7 +138,7 @@
               </tr>
               <tr>
                 <td class="col-num">2.14</td>
-                <td class="col-param">Đường kính trục danh nghĩa</td>
+                <td class="col-param">Đường kính trục (d)</td>
                 <td class="col-symbol">d</td>
                 <td>
                   <input type="number" class="user-input highlight-key-param" id="txtParallelDiam" value="40" step="1" min="1">
@@ -147,7 +147,7 @@
               </tr>
               <tr>
                 <td class="col-num">2.22</td>
-                <td class="col-param">Chiều dài then được chọn</td>
+                <td class="col-param">Chiều dài then (L)</td>
                 <td class="col-symbol">L</td>
                 <td>
                   <input type="number" class="user-input highlight-key-param" id="txtParallelLength" value="56" step="1" min="1">
@@ -156,13 +156,13 @@
               </tr>
               <tr>
                 <td class="col-num">2.23</td>
-                <td class="col-param">Kiểu lắp rãnh then (Cấp dung sai)</td>
+                <td class="col-param">Kiểu lắp ghép</td>
                 <td class="col-symbol">Fit</td>
                 <td>
                   <select class="user-select" id="selFitClass">
-                    <option value="normal" selected>Lắp thông thường (Trục N9 / Moay-ơ JS9)</option>
-                    <option value="tight">Lắp chặt / Cố định (Trục P9 / Moay-ơ JS9)</option>
-                    <option value="sliding">Lắp trượt / Lỏng (Trục JS9 / Moay-ơ D10)</option>
+                    <option value="normal" selected>Thông thường (Trục N9 / Lỗ JS9)</option>
+                    <option value="tight">Chặt / Cố định (Trục P9 / Lỗ JS9)</option>
+                    <option value="sliding">Trượt / Lỏng (Trục JS9 / Lỗ D10)</option>
                   </select>
                 </td>
                 <td class="col-unit">--</td>
@@ -309,14 +309,14 @@
             <tbody>
               <tr>
                 <td class="col-num">2.15</td>
-                <td class="col-param">Tên quy cách then tiêu chuẩn</td>
+                <td class="col-param">Quy cách then</td>
                 <td class="col-symbol">Name</td>
                 <td><span class="output-eng highlight-key-param" id="outParallelKeyName">--</span></td>
                 <td class="col-unit">--</td>
               </tr>
               <tr>
                 <td class="col-num">2.16</td>
-                <td class="col-param">Chiều rộng then / Chiều cao then</td>
+                <td class="col-param">Rộng / Cao then (b × h)</td>
                 <td class="col-symbol">b / h</td>
                 <td>
                   <span class="output-eng highlight-key-param" id="outParallelB">--</span> /
@@ -326,7 +326,7 @@
               </tr>
               <tr>
                 <td class="col-num">2.18</td>
-                <td class="col-param">Chiều sâu rãnh trên trục (t1) / trên moay-ơ (t2)</td>
+                <td class="col-param">Sâu rãnh trục (t1) / Lỗ (t2)</td>
                 <td class="col-symbol">t1 / t2</td>
                 <td>
                   <span class="output-eng highlight-key-param" id="outParallelT1">--</span> /
@@ -336,53 +336,53 @@
               </tr>
               <tr>
                 <td class="col-num">2.18b</td>
-                <td class="col-param">Đường kính trục tại đáy rãnh (d1) / Đỉnh rãnh lỗ (d2)</td>
+                <td class="col-param">Đáy trục (d1) / Đỉnh lỗ (d2)</td>
                 <td class="col-symbol">d1 / d2</td>
                 <td>
-                  <span class="output-eng" id="outParallelD1">--</span> /
-                  <span class="output-eng" id="outParallelD2">--</span>
+                  <span class="output-eng highlight-key-param" id="outParallelD1">--</span> /
+                  <span class="output-eng highlight-key-param" id="outParallelD2">--</span>
                 </td>
                 <td class="col-unit unit-dim">mm</td>
               </tr>
               <tr>
                 <td class="col-num">2.21</td>
-                <td class="col-param">Dải chiều dài then tiêu chuẩn cho phép</td>
+                <td class="col-param">Dải chiều dài chuẩn</td>
                 <td class="col-symbol">L_range</td>
                 <td><span class="output-eng" id="outParallelRange">--</span></td>
                 <td class="col-unit unit-dim">mm</td>
               </tr>
               <tr>
                 <td class="col-num">2.19</td>
-                <td class="col-param">Chiều dài tiếp xúc làm việc (Form A)</td>
+                <td class="col-param">Chiều dài làm việc (Lf)</td>
                 <td class="col-symbol">Lf</td>
-                <td><span class="output-eng highlight-key-param" id="outParallelLf">--</span></td>
+                <td><span class="output-eng" id="outParallelLf">--</span></td>
                 <td class="col-unit unit-dim">mm</td>
               </tr>
               <!-- Dung sai -->
               <tr>
                 <td class="col-num">T.1</td>
-                <td class="col-param">Dung sai chiều rộng then</td>
+                <td class="col-param">Dung sai rộng then</td>
                 <td class="col-symbol">Tol b</td>
                 <td><span class="output-eng" id="outTolWidth" style="text-align: left; min-width: 140px;">--</span></td>
                 <td class="col-unit">--</td>
               </tr>
               <tr>
                 <td class="col-num">T.2</td>
-                <td class="col-param">Dung sai chiều cao then</td>
+                <td class="col-param">Dung sai cao then</td>
                 <td class="col-symbol">Tol h</td>
                 <td><span class="output-eng" id="outTolHeight" style="text-align: left; min-width: 140px;">--</span></td>
                 <td class="col-unit">--</td>
               </tr>
               <tr>
                 <td class="col-num">T.3</td>
-                <td class="col-param">Dung sai rãnh then trên trục</td>
+                <td class="col-param">Dung sai rãnh trục</td>
                 <td class="col-symbol">Tol Shaft</td>
                 <td><span class="output-eng" id="outTolShaft" style="text-align: left; min-width: 140px;">--</span></td>
                 <td class="col-unit">--</td>
               </tr>
               <tr>
                 <td class="col-num">T.4</td>
-                <td class="col-param">Dung sai rãnh then trên moay-ơ</td>
+                <td class="col-param">Dung sai rãnh moay-ơ</td>
                 <td class="col-symbol">Tol Hub</td>
                 <td><span class="output-eng" id="outTolHub" style="text-align: left; min-width: 140px;">--</span></td>
                 <td class="col-unit">--</td>
@@ -569,10 +569,7 @@
       <div class="canvas-container-box">
         <div class="canvas-toolbar">
           <div class="canvas-btn-group">
-            <button class="btn-canvas active" id="btnTripleView">📐 Bộ Ba 3 Hình (Bộ Bản Vẽ)</button>
-            <button class="btn-canvas" id="btnHubView">⚙️ Cắt Lỗ Moay-ơ</button>
-            <button class="btn-canvas" id="btnAssemblyView">🔗 Cắt Lắp Ghép</button>
-            <button class="btn-canvas" id="btnShaftView">🔩 Cắt Trục</button>
+            <span class="canvas-title-badge">📐 BẢN VẼ MẶT CẮT KỸ THUẬT: LỖ MOAY-Ơ & TRỤC (ISO 773 / DIN 6885)</span>
           </div>
           <div class="canvas-btn-group">
             <button class="btn-canvas" id="btnZoomIn">🔍+</button>

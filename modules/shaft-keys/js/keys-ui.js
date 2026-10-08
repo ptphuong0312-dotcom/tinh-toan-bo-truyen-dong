@@ -241,27 +241,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // 3-View Toolbar Buttons
-    const viewButtons = [
-      { id: 'btnTripleView', view: 'triple' },
-      { id: 'btnAssemblyView', view: 'assembly' },
-      { id: 'btnShaftView', view: 'shaft' },
-      { id: 'btnHubView', view: 'hub' }
-    ];
 
-    viewButtons.forEach(btnInfo => {
-      const el = document.getElementById(btnInfo.id);
-      if (el) {
-        el.addEventListener('click', () => {
-          viewButtons.forEach(b => {
-            const btnEl = document.getElementById(b.id);
-            if (btnEl) btnEl.classList.remove('active');
-          });
-          el.classList.add('active');
-          canvas.setDisplayView(btnInfo.view);
-        });
-      }
-    });
 
     document.getElementById('btnZoomIn').addEventListener('click', () => canvas.zoom(1.2));
     document.getElementById('btnZoomOut').addEventListener('click', () => canvas.zoom(0.8));
