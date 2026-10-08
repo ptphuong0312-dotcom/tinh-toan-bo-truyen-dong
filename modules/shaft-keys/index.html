@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mô-đun 8: Mối Ghép Then & Then Hoa Răng Chữ Nhật | MITCalc Web App</title>
+  <link rel="stylesheet" href="css/keys.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-title-box">
+        <h1>🔑 Mối Ghép Then & Then Hoa Răng Chữ Nhật</h1>
+        <div class="header-subtitle">Tiêu chuẩn: ISO 2491, DIN 6885, ANSI B17.1, DIN 6888, ISO 3912, ANSI B17.2, ISO 14, DIN 5464, SAE | MITCalc 1.74 Independent Port</div>
+      </div>
+      <div class="header-actions">
+        <a href="../../index.html" class="btn-header">🏠 Cổng Trung Tâm</a>
+      </div>
+    </header>
+
+    <!-- Summary Banner -->
+    <div class="summary-banner">
+      <div class="sum-card">
+        <span class="sum-label">Loại Mối Ghép</span>
+        <span class="sum-value" id="sumJointType">Then Bằng (Parallel Key)</span>
+      </div>
+      <div class="sum-card">
+        <span class="sum-label">Tiêu Chuẩn Thiết Kế</span>
+        <span class="sum-value" id="sumStandard">DIN 6885 Blatt 1</span>
+      </div>
+      <div class="sum-card">
+        <span class="sum-label">Quy Cách Then (b x h x L)</span>
+        <span class="sum-value" id="sumDimensions">12.0 x 8.0 x 56.0</span>
+      </div>
+      <div class="sum-card">
+        <span class="sum-label">Đường Kính Trục (d)</span>
+        <span class="sum-value" id="sumShaftDiam">40.0 mm</span>
+      </div>
+    </div>
+
+    <!-- Subsystem Selector -->
+    <div class="subsystem-nav">
+      <button class="joint-type-btn active" data-type="parallel">🔑 Then Bằng (Parallel Side Keys)</button>
+      <button class="joint-type-btn" data-type="woodruff">🌙 Then Bán Nguyệt (Woodruff Keys)</button>
+      <button class="joint-type-btn" data-type="spline">⚙️ Then Hoa Răng Chữ Nhật (Straight-Sided Splines)</button>
+    </div>
+
+    <!-- Accordion Global Toolbar -->
+    <div class="global-accordion-toolbar">
+      <button class="btn-tool" id="btnExpandAll">📂 Mở Rộng Tất Cả</button>
+      <button class="btn-tool" id="btnCollapseAll">📁 Thu Gọn Tất Cả</button>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MASTER BLOCK 1: INPUT SECTION (#107c41)   -->
+    <!-- ========================================== -->
+    <div class="master-block">
+      <div class="master-header input-header">
+        <span>🟢 PHẦN ĐẦU VÀO (INPUT SECTION) - THÔNG SỐ TRUYỀN ĐỘNG & QUY CÁCH</span>
+      </div>
+
+      <!-- Mục 1.0: Thông số chung & Đơn vị -->
+      <div class="calc-section">
+        <div class="section-header">
+          <span class="section-title">▼ 1.0 Thông Số Truyền Động Cơ Bản & Hệ Đơn Vị</span>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-body">
+          <table class="calc-table">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-param">Thông Số</th>
+                <th class="col-symbol">Ký Hiệu</th>
+                <th class="col-val">Giá Trị</th>
+                <th class="col-unit">Đơn Vị</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col-num">1.1</td>
+                <td class="col-param">Hệ đơn vị tính toán</td>
+                <td class="col-symbol">Units</td>
+                <td>
+                  <select class="user-select" id="selUnits">
+                    <option value="metric" selected>Hệ Mét (SI: mm, kW, MPa)</option>
+                    <option value="imperial">Hệ Inch (Imperial: in, HP, ksi)</option>
+                  </select>
+                </td>
+                <td class="col-unit">--</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Mục 2.0: Đầu vào Then Bằng (Parallel Key) -->
+      <div class="calc-section" id="secParallelInputs">
+        <div class="section-header">
+          <span class="section-title">▼ 2.0 Thông Số Thiết Kế Then Bằng (Parallel Side Key)</span>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-body">
+          <table class="calc-table">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-param">Thông Số</th>
+                <th class="col-symbol">Ký Hiệu</th>
+                <th class="col-val">Giá Trị</th>
+                <th class="col-unit">Đơn Vị</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col-num">2.2</td>
+                <td class="col-param">Tiêu chuẩn then bằng</td>
+                <td class="col-symbol">Std</td>
+                <td>
+                  <select class="user-select" id="selParallelType"></select>
+                </td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">2.3</td>
+                <td class="col-param">Số lượng then trên trục</td>
+                <td class="col-symbol">z_key</td>
+                <td>
+                  <select class="user-select" id="selParallelNumKeys">
+                    <option value="1" selected>1 Then (Tiêu chuẩn)</option>
+                    <option value="2">2 Then (Đối xứng 180°)</option>
+                  </select>
+                </td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">2.14</td>
+                <td class="col-param">Đường kính trục danh nghĩa</td>
+                <td class="col-symbol">d</td>
+                <td>
+                  <input type="number" class="user-input highlight-key-param" id="txtParallelDiam" value="40" step="1" min="1">
+                </td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">2.22</td>
+                <td class="col-param">Chiều dài then được chọn</td>
+                <td class="col-symbol">L</td>
+                <td>
+                  <input type="number" class="user-input highlight-key-param" id="txtParallelLength" value="56" step="1" min="1">
+                </td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">2.23</td>
+                <td class="col-param">Kiểu lắp rãnh then (Cấp dung sai)</td>
+                <td class="col-symbol">Fit</td>
+                <td>
+                  <select class="user-select" id="selFitClass">
+                    <option value="normal" selected>Lắp thông thường (Trục N9 / Moay-ơ JS9)</option>
+                    <option value="tight">Lắp chặt / Cố định (Trục P9 / Moay-ơ JS9)</option>
+                    <option value="sliding">Lắp trượt / Lỏng (Trục JS9 / Moay-ơ D10)</option>
+                  </select>
+                </td>
+                <td class="col-unit">--</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="tech-img-box">
+            <img src="img/keys_parallel_dimensions.png" alt="Kích thước Then Bằng DIN 6885">
+          </div>
+        </div>
+      </div>
+
+      <!-- Mục 4.0: Đầu vào Then Bán Nguyệt (Woodruff Key) -->
+      <div class="calc-section" id="secWoodruffInputs" style="display: none;">
+        <div class="section-header">
+          <span class="section-title">▼ 4.0 Thông Số Thiết Kế Then Bán Nguyệt (Woodruff Key)</span>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-body">
+          <table class="calc-table">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-param">Thông Số</th>
+                <th class="col-symbol">Ký Hiệu</th>
+                <th class="col-val">Giá Trị</th>
+                <th class="col-unit">Đơn Vị</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col-num">4.2</td>
+                <td class="col-param">Tiêu chuẩn then bán nguyệt</td>
+                <td class="col-symbol">Std</td>
+                <td>
+                  <select class="user-select" id="selWoodruffType"></select>
+                </td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">4.18</td>
+                <td class="col-param">Đường kính trục</td>
+                <td class="col-symbol">d</td>
+                <td>
+                  <input type="number" class="user-input highlight-key-param" id="txtWoodruffDiam" value="25" step="1" min="1">
+                </td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">4.19</td>
+                <td class="col-param">Chọn quy cách then đĩa</td>
+                <td class="col-symbol">Key</td>
+                <td>
+                  <select class="user-select" id="selWoodruffKey"></select>
+                </td>
+                <td class="col-unit">--</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="tech-img-box">
+            <img src="img/keys_woodruff_dimensions.png" alt="Kích thước Then Bán Nguyệt DIN 6888">
+          </div>
+        </div>
+      </div>
+
+      <!-- Mục 6.0: Đầu vào Then Hoa Răng Chữ Nhật (Straight Splines) -->
+      <div class="calc-section" id="secSplineInputs" style="display: none;">
+        <div class="section-header">
+          <span class="section-title">▼ 6.0 Thông Số Thiết Kế Then Hoa Răng Chữ Nhật (Straight Spline)</span>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-body">
+          <table class="calc-table">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-param">Thông Số</th>
+                <th class="col-symbol">Ký Hiệu</th>
+                <th class="col-val">Giá Trị</th>
+                <th class="col-unit">Đơn Vị</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col-num">6.2</td>
+                <td class="col-param">Dòng tiêu chuẩn then hoa</td>
+                <td class="col-symbol">Std</td>
+                <td>
+                  <select class="user-select" id="selSplineType"></select>
+                </td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">6.8</td>
+                <td class="col-param">Chọn quy cách then hoa</td>
+                <td class="col-symbol">Spline</td>
+                <td>
+                  <select class="user-select" id="selSplineSize"></select>
+                </td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">6.15</td>
+                <td class="col-param">Chiều dài then hoa làm việc</td>
+                <td class="col-symbol">L</td>
+                <td>
+                  <input type="number" class="user-input highlight-key-param" id="txtSplineLength" value="60" step="1" min="1">
+                </td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div class="tech-img-box">
+            <img src="img/keys_splines_dimensions.png" alt="Kích thước Then Hoa Răng Chữ Nhật ISO 14">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MASTER BLOCK 2: RESULTS SECTION (#c55a11) -->
+    <!-- ========================================== -->
+    <div class="master-block">
+      <div class="master-header results-header">
+        <span>🟠 PHẦN KẾT QUẢ (RESULTS SECTION) - KÍCH THƯỚC CHẾ TẠO & MÔ PHỎNG 2D CAD</span>
+      </div>
+
+      <!-- Kết quả Then Bằng -->
+      <div class="calc-section" id="secParallelResults">
+        <div class="section-header">
+          <span class="section-title">▼ Kích Thước Hình Học & Dung Sai Chế Tạo Then Bằng (DIN 6885 / ISO 2491)</span>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-body">
+          <table class="calc-table">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-param">Thông Số Hình Học</th>
+                <th class="col-symbol">Ký Hiệu</th>
+                <th class="col-val">Giá Trị</th>
+                <th class="col-unit">Đơn Vị</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col-num">2.15</td>
+                <td class="col-param">Tên quy cách then tiêu chuẩn</td>
+                <td class="col-symbol">Name</td>
+                <td><span class="output-eng highlight-key-param" id="outParallelKeyName">--</span></td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">2.16</td>
+                <td class="col-param">Chiều rộng then / Chiều cao then</td>
+                <td class="col-symbol">b / h</td>
+                <td>
+                  <span class="output-eng highlight-key-param" id="outParallelB">--</span> /
+                  <span class="output-eng highlight-key-param" id="outParallelH">--</span>
+                </td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">2.18</td>
+                <td class="col-param">Chiều sâu rãnh trên trục (t1) / trên moay-ơ (t2)</td>
+                <td class="col-symbol">t1 / t2</td>
+                <td>
+                  <span class="output-eng highlight-key-param" id="outParallelT1">--</span> /
+                  <span class="output-eng highlight-key-param" id="outParallelT2">--</span>
+                </td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">2.18b</td>
+                <td class="col-param">Đường kính trục tại đáy rãnh (d1) / Đỉnh rãnh lỗ (d2)</td>
+                <td class="col-symbol">d1 / d2</td>
+                <td>
+                  <span class="output-eng" id="outParallelD1">--</span> /
+                  <span class="output-eng" id="outParallelD2">--</span>
+                </td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">2.21</td>
+                <td class="col-param">Dải chiều dài then tiêu chuẩn cho phép</td>
+                <td class="col-symbol">L_range</td>
+                <td><span class="output-eng" id="outParallelRange">--</span></td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">2.19</td>
+                <td class="col-param">Chiều dài tiếp xúc làm việc (Form A)</td>
+                <td class="col-symbol">Lf</td>
+                <td><span class="output-eng highlight-key-param" id="outParallelLf">--</span></td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <!-- Dung sai -->
+              <tr>
+                <td class="col-num">T.1</td>
+                <td class="col-param">Dung sai chiều rộng then</td>
+                <td class="col-symbol">Tol b</td>
+                <td><span class="output-eng" id="outTolWidth" style="text-align: left; min-width: 140px;">--</span></td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">T.2</td>
+                <td class="col-param">Dung sai chiều cao then</td>
+                <td class="col-symbol">Tol h</td>
+                <td><span class="output-eng" id="outTolHeight" style="text-align: left; min-width: 140px;">--</span></td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">T.3</td>
+                <td class="col-param">Dung sai rãnh then trên trục</td>
+                <td class="col-symbol">Tol Shaft</td>
+                <td><span class="output-eng" id="outTolShaft" style="text-align: left; min-width: 140px;">--</span></td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">T.4</td>
+                <td class="col-param">Dung sai rãnh then trên moay-ơ</td>
+                <td class="col-symbol">Tol Hub</td>
+                <td><span class="output-eng" id="outTolHub" style="text-align: left; min-width: 140px;">--</span></td>
+                <td class="col-unit">--</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Kết quả Then Bán Nguyệt -->
+      <div class="calc-section" id="secWoodruffResults" style="display: none;">
+        <div class="section-header">
+          <span class="section-title">▼ Kích Thước Hình Học Then Bán Nguyệt (DIN 6888 / ANSI B17.2)</span>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-body">
+          <table class="calc-table">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-param">Thông Số Hình Học</th>
+                <th class="col-symbol">Ký Hiệu</th>
+                <th class="col-val">Giá Trị</th>
+                <th class="col-unit">Đơn Vị</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col-num">4.19</td>
+                <td class="col-param">Tên quy cách then đĩa</td>
+                <td class="col-symbol">Name</td>
+                <td><span class="output-eng highlight-key-param" id="outWoodruffKeyName">--</span></td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">4.20</td>
+                <td class="col-param">Chiều rộng then / Chiều cao then</td>
+                <td class="col-symbol">b / h</td>
+                <td>
+                  <span class="output-eng highlight-key-param" id="outWoodruffB">--</span> /
+                  <span class="output-eng highlight-key-param" id="outWoodruffH">--</span>
+                </td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">4.21</td>
+                <td class="col-param">Đường kính đĩa / Chiều dài danh nghĩa</td>
+                <td class="col-symbol">Dk / L</td>
+                <td>
+                  <span class="output-eng highlight-key-param" id="outWoodruffDk">--</span> /
+                  <span class="output-eng" id="outWoodruffL">--</span>
+                </td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">4.22</td>
+                <td class="col-param">Chiều sâu rãnh trục / Đáy rãnh còn lại</td>
+                <td class="col-symbol">t / d1</td>
+                <td>
+                  <span class="output-eng highlight-key-param" id="outWoodruffT1">--</span> /
+                  <span class="output-eng" id="outWoodruffD1">--</span>
+                </td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">4.24</td>
+                <td class="col-param">Diện tích tiếp xúc trục / moay-ơ</td>
+                <td class="col-symbol">As / Ah</td>
+                <td>
+                  <span class="output-eng" id="outWoodruffAreaS">--</span> /
+                  <span class="output-eng" id="outWoodruffAreaH">--</span>
+                </td>
+                <td class="col-unit">mm²</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Kết quả Then Hoa Răng Chữ Nhật -->
+      <div class="calc-section" id="secSplineResults" style="display: none;">
+        <div class="section-header">
+          <span class="section-title">▼ Kích Thước Hình Học Then Hoa Răng Chữ Nhật (ISO 14 / DIN 5464 / SAE)</span>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-body">
+          <table class="calc-table">
+            <thead>
+              <tr>
+                <th class="col-num">#</th>
+                <th class="col-param">Thông Số Hình Học</th>
+                <th class="col-symbol">Ký Hiệu</th>
+                <th class="col-val">Giá Trị</th>
+                <th class="col-unit">Đơn Vị</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="col-num">6.8</td>
+                <td class="col-param">Tên quy cách then hoa</td>
+                <td class="col-symbol">Name</td>
+                <td><span class="output-eng highlight-key-param" id="outSplineName">--</span></td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">6.11</td>
+                <td class="col-param">Số then (số răng)</td>
+                <td class="col-symbol">n</td>
+                <td><span class="output-eng highlight-key-param" id="outSplineN">--</span></td>
+                <td class="col-unit">răng</td>
+              </tr>
+              <tr>
+                <td class="col-num">6.9</td>
+                <td class="col-param">Đường kính ngoài (Major diameter)</td>
+                <td class="col-symbol">D</td>
+                <td><span class="output-eng highlight-key-param" id="outSplineD">--</span></td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">6.10</td>
+                <td class="col-param">Đường kính trong (Minor diameter)</td>
+                <td class="col-symbol">d</td>
+                <td><span class="output-eng highlight-key-param" id="outSplined">--</span></td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">6.12</td>
+                <td class="col-param">Chiều rộng then (Tooth width)</td>
+                <td class="col-symbol">b</td>
+                <td><span class="output-eng highlight-key-param" id="outSplineB">--</span></td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">6.13</td>
+                <td class="col-param">Vát mép góc răng</td>
+                <td class="col-symbol">s</td>
+                <td><span class="output-eng" id="outSplineS">--</span></td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">6.14</td>
+                <td class="col-param">Chiều cao răng / Bán kính trung bình</td>
+                <td class="col-symbol">h / dm</td>
+                <td>
+                  <span class="output-eng" id="outSplineH">--</span> /
+                  <span class="output-eng" id="outSplineDm">--</span>
+                </td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">6.16</td>
+                <td class="col-param">Bề rộng rãnh răng trên trục</td>
+                <td class="col-symbol">w_slot</td>
+                <td><span class="output-eng" id="outSplineSlot">--</span></td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">T.1</td>
+                <td class="col-param">Hình thức định tâm (Centering)</td>
+                <td class="col-symbol">Type</td>
+                <td><span class="output-eng" id="outSplineCentering" style="text-align: left; min-width: 200px;">--</span></td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">T.2</td>
+                <td class="col-param">Lắp ghép đường kính trong (d)</td>
+                <td class="col-symbol">Fit d</td>
+                <td><span class="output-eng" id="outSplineMinorFit" style="text-align: left; min-width: 200px;">--</span></td>
+                <td class="col-unit">--</td>
+              </tr>
+              <tr>
+                <td class="col-num">T.3</td>
+                <td class="col-param">Lắp ghép cạnh răng (b)</td>
+                <td class="col-symbol">Fit b</td>
+                <td><span class="output-eng" id="outSplineWidthFit" style="text-align: left; min-width: 200px;">--</span></td>
+                <td class="col-unit">--</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Khung vẽ 2D Canvas CAD Tương Tác -->
+      <div class="canvas-container-box">
+        <div class="canvas-toolbar">
+          <div class="canvas-btn-group">
+            <button class="btn-canvas active" id="btnCrossSection">⏺️ Mặt Cắt Ngang (Cross-Section)</button>
+            <button class="btn-canvas" id="btnLongSection">↔️ Mặt Cắt Dọc (Longitudinal)</button>
+          </div>
+          <div class="canvas-btn-group">
+            <button class="btn-canvas" id="btnZoomIn">🔍+</button>
+            <button class="btn-canvas" id="btnZoomOut">🔍-</button>
+            <button class="btn-canvas" id="btnResetView">🎯 Đặt Lại</button>
+            <button class="btn-canvas" id="btnDownloadPNG">📷 Tải Ảnh PNG</button>
+          </div>
+        </div>
+        <canvas id="keysCanvas" width="1200" height="650"></canvas>
+      </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MASTER BLOCK 3: ADDITIONS SECTION (#1e3a8a)-->
+    <!-- ========================================== -->
+    <div class="master-block">
+      <div class="master-header additions-header">
+        <span>🔵 PHẦN BỔ SUNG & CHẾ TẠO (ADDITIONS & MANUFACTURING)</span>
+      </div>
+
+      <!-- Mục 10.0: Bảng So Sánh Các Giải Pháp Mối Ghép -->
+      <div class="calc-section">
+        <div class="section-header">
+          <span class="section-title">▼ 10.0 Bảng So Sánh Các Phương Án Mối Ghép (Comparative Table)</span>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-body">
+          <table class="calc-table">
+            <thead>
+              <tr>
+                <th>Loại Mối Ghép</th>
+                <th>Quy Cách / Tiêu Chuẩn</th>
+                <th>Kích Thước Then (b, h, t)</th>
+                <th>Đường Kính Còn Lại (d1)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. Then Bằng</strong></td>
+                <td><span id="compPKName">--</span></td>
+                <td><span id="compPKDim">--</span></td>
+                <td><span id="compPKD1" class="output-eng">--</span></td>
+              </tr>
+              <tr>
+                <td><strong>2. Then Bán Nguyệt</strong></td>
+                <td><span id="compWKName">--</span></td>
+                <td><span id="compWKDim">--</span></td>
+                <td><span id="compWKD1" class="output-eng">--</span></td>
+              </tr>
+              <tr>
+                <td><strong>3. Then Hoa Chữ Nhật</strong></td>
+                <td><span id="compSSName">--</span></td>
+                <td><span id="compSSDim">--</span></td>
+                <td><span id="compSSD1" class="output-eng">--</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Mục 11.0: Xuất CAD 2D DXF -->
+      <div class="calc-section">
+        <div class="section-header">
+          <span class="section-title">▼ 11.0 Hệ Thống CAD & Xuất Bản Vẽ 2D (DXF Release 12 AC1009)</span>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-body">
+          <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 12px;">
+            Xuất file bản vẽ kỹ thuật 2D độc lập 100% offline (CORS-free), tương thích tuyệt đối với AutoCAD, SolidWorks, Autodesk Inventor, LibreCAD, BricsCAD, ZWCAD.
+          </p>
+          <div class="cad-export-bar">
+            <button class="btn-cad-export" id="btnExportDXF">
+              <span>💾</span> Xuất Bản Vẽ CAD 2D (DXF Release 12)
+            </button>
+          </div>
+          <div class="tech-img-box" style="margin-top: 10px;">
+            <img src="img/keys_cad_output.png" alt="Xuất CAD MITCalc">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bundle Scripts (CORS-Free Single Bundle) -->
+  <script src="js/keys-engine.bundle.js"></script>
+</body>
+</html>

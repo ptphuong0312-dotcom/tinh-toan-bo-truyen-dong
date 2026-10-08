@@ -2338,4 +2338,32 @@ ho_{f0}$.
   * Script `tools/test_splines_qc.py` và batch launcher `RA_SOAT_SONG_SONG_THEN_HOA_THAN_KHAI.bat` đạt **62/62 phép tính PASS 100.0% với $\Delta = 0.000000$** so với MITCalc `SplinesI_01.xlsb`.
   * Batch khởi động trực tiếp `CHAY_THEN_HOA_THAN_KHAI.bat` chạy 100% offline qua `file:///` không phụ thuộc Node.js hay web server.
 
+---
+
+### Quy Tắc 102: Quy Chuẩn Xây Dựng Mô-Đun 8 Mối Ghép Then & Then Hoa Răng Chữ Nhật (Keys & Straight-Sided Splines: DIN 6885, DIN 6888, ISO 14, ANSI B17.1, ANSI B17.2, SAE J499) Chuẩn Zero-Force Scope & Zero-Tolerance (Δ = 0.000000)
+**Ngày áp dụng**: 08/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+- **Kiến trúc mô-đun**: Độc lập 100% offline, zero-CORS không phụ thuộc Node.js hay Web Server, bundle tại `modules/shaft-keys/js/keys-engine.bundle.js` (179.5 KB).
+- **Quy chuẩn lược bỏ lực tuyệt đối (Zero-Force Scope Protocol)**:
+  * Tập trung chuyên sâu 100% vào hình học then và then hoa, kích thước rãnh then trên trục ($t_1$) và moay-ơ ($t_2$), đường kính đáy rãnh còn lại ($d_1 = d - t_1$ hoặc $d - 2t_1$), dung sai gia công rãnh then ($P9, N9, JS9, D10$), bảng so sánh phương án Section 10.0, và xuất bản vẽ 2D CAD DXF Release 12 AC1009.
+  * Lược bỏ 100% các phép tính lực, mô-men xoắn, ứng suất dập/uốn để giữ giao diện và giải thuật thanh thoát, chuẩn xác tuyệt đối.
+- **Cơ sở dữ liệu 36 bảng tiêu chuẩn quốc tế từ `ShaftCon_01.xlsb`**:
+  * **Then bằng (Parallel Side Keys)**: 11 tiêu chuẩn (ANSI B17.1 Preferred, Square, Rectangular; ISO R773, ISO 2491, DIN 6885 Blatt 1, BS 46 Square, BS 46 Rectangular, BS 4235, JIS B 1301, CSN 022562).
+  * **Then bán nguyệt (Woodruff Keys)**: 10 tiêu chuẩn (ANSI B17.2 A, ANSI B17.2 B, DIN 6888 A, DIN 6888 B, BS 6 A, BS 6 B, JIS B 1301 WA, WB, CSN 30 1385.1, .2).
+  * **Then hoa răng chữ nhật (Straight-Sided Splines)**: 9 tiêu chuẩn (SAE Series A, B, C; ISO 14 Light, Medium; DIN 5464 Heavy; DIN 5471; DIN 5472; CSN 01 4942).
+  * Bảng chiều dài then và then hoa chuẩn: `T_KeyLen_mm`, `T_KeyLen_in`, `T_SplineLen_mm`, `T_SplineLen_in`.
+- **Giải thuật hình học chính xác tuyệt đối (Δ = 0.000000)**:
+  * Chiều sâu rãnh then hệ Inch / ANSI B17.1: $t_1 = (d - \sqrt{d^2 - b^2} + h) / 2$.
+  * Chiều sâu rãnh then hệ Mét / ISO / DIN: tra bảng chính xác kèm chiều sâu rãnh moay-ơ $t_2$.
+  * Hỗ trợ số lượng then $z_{\text{key}} = 1$ ($d_1 = d - t_1$) và $z_{\text{key}} = 2$ ($d_1 = d - 2 t_1$).
+  * Then hoa răng chữ nhật: tính chính xác số then $n$, đường kính ngoài $D$, đường kính trong $d$, bề rộng then $b$, vát mép $s$, chiều cao răng $h = (D - d)/2$, và bề rộng rãnh trên trục $w_{\text{slot}} = \pi d_m / n - b$.
+- **Giao diện Accordion 3 Master Blocks trang đơn tích hợp Canvas 2D CAD**:
+  * Master Block 1 (Input `#107c41`), Master Block 2 (Results `#c55a11` + Canvas 2D), Master Block 3 (Additions `#1e3a8a`).
+  * Canvas 2D CAD vẽ mặt cắt ngang (Cross-section) và mặt cắt dọc (Longitudinal section), hỗ trợ cử chỉ chuột & cảm ứng đa điểm Pan/Zoom trên Mobile.
+  * Xuất bản vẽ 2D CAD DXF Release 12 AC1009 với đầy đủ layers (`CONTOUR_SHAFT`, `CONTOUR_HUB`, `CONTOUR_KEY`, `CENTER`) và bảng gia công `MFG_TABLE`.
+- **Kiểm thử đối chiếu Live Audit 1-Click**:
+  * Script `tools/test_shaft_keys_qc.py` và batch launcher `RA_SOAT_SONG_SONG_THEN_VA_THEN_HOA.bat` đạt **43/43 phép tính PASS 100.0% với $\Delta = 0.000000$** so với MITCalc `ShaftCon_01.xlsb`.
+  * Batch khởi động trực tiếp `CHAY_THEN_VA_THEN_HOA.bat` chạy 100% offline qua `file:///` không phụ thuộc Node.js hay web server.
+
+
 
