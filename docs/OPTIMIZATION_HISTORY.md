@@ -3933,3 +3933,33 @@ ho_{f0}$.
   * *Hợp nhất giao diện sang trang đơn (Unified Single-Page)*: Loại bỏ thanh chuyển Tab 2 tách rời theo lệnh của người dùng, đưa khung vẽ biểu đồ Canvas 2D vào trực tiếp Master Block 2 ngay dưới bảng kết quả và 4 thẻ chỉ số của ISO 286.
   * *Nâng cấp đồ họa Canvas 2D*: Bổ sung đường gióng và mũi tên kích thước kỹ thuật cho khe hở $S_{max}, S_{min}$ và độ dôi $N_{max}, N_{min}$; tối ưu tọa độ nhãn 'Đường 0' để triệt tiêu hiện tượng đè chữ khi $EI = 0$; tích hợp bộ điều khiển Zoom In/Out, Đặt lại góc nhìn, Tải ảnh PNG và Sao chép thông số kỹ thuật mối ghép vào Clipboard.
 
+---
+
+### Quy Tắc 101: Quy Chuẩn Xây Dựng Mô-Đun 7 Then Hoa Thân Khai (Involute Splines: DIN 5480, ISO 4156, ANSI B92.1, ANSI B92.2M, CSN 4950) Chuẩn Zero-Force Scope & Zero-Tolerance (Δ = 0.000000)
+- **Ngày hoàn thành**: 08/10/2026.
+- **Tiêu chuẩn chất lượng**: Zero-Tolerance Policy ($\Delta = 0.000000$) đối chiếu trực tiếp với phần mềm MITCalc 1.74 gốc trên nền Microsoft Excel (`SplinesI_01.xlsb`).
+- **Quy chuẩn lược bỏ lực tuyệt đối (Zero-Force Scope Protocol)**:
+  * Tập trung 100% vào hình học then hoa thân khai, kích thước tiêu chuẩn Trục (Shaft) và Lỗ moay-ơ (Hub), khe hở ăn khớp / backlash $j_n$, kích thước đo kiểm tra ($W, M$), tính toán ngược mô đun Mục 5.0 và xuất bản vẽ 2D CAD DXF Release 12 AC1009.
+  * Lược bỏ 100% các phép tính lực, mô-men xoắn, ứng suất dập/uốn để giữ giao diện và thuật toán thanh thoát, tập trung và chính xác tuyệt đối.
+- **Cơ sở dữ liệu 7,341 tổ hợp tiêu chuẩn quốc tế**:
+  * DIN 5480 - 30° (721 tổ hợp, module $m = 0.5 \dots 10$, số răng $z = 6 \dots 100$, đường kính danh nghĩa $d_B = 6 \dots 500\text{ mm}$).
+  * ISO 4156 & ANSI B92.2M: 30° Flat root, 30° Fillet root, 37.5° Fillet root, 45° Fillet root (3,440 tổ hợp).
+  * ANSI B92.1 hệ Inch: 30° Flat root side fit, 30° Flat root major fit, 30° & 37.5° Fillet root, 45° Fillet root (2,681 tổ hợp).
+  * CSN 4950: 30° Flat root side fit, major fit và fillet root (499 tổ hợp).
+  * Dropdown Quick Presets tra nhanh toàn bộ các quy cách tiêu chuẩn 1-click.
+- **Giải thuật toán học & Kích thước đo kiểm tra chính xác tuyệt đối**:
+  * Tái tạo giải thuật bisection `invol` ngược chuẩn VBA MITCalc (dòng 770 `SplinesI_01.xlsb`).
+  * Chiều dài pháp tuyến chung qua $k$ răng: $W_0, W_2$.
+  * Kích thước qua bi/đũa đo $M_0, M_2$ xử lý chính xác cho cả số răng chẵn ($M = d_s + d_p$) và số răng lẻ ($M = d_s \cos(\pi / 2z) + d_p$).
+  * Thuật toán Mục 5.0 tính ngược mô-đun $m$ từ then hoa có sẵn.
+- **Giao diện Accordion 3 Master Blocks trang đơn tích hợp Canvas 2D CAD**:
+  * Master Block 1 (Input `#107c41`), Master Block 2 (Results `#c55a11` + Canvas 2D), Master Block 3 (Additions `#1e3a8a`).
+  * Canvas 2D CAD vẽ biên dạng thân khai thực thể, ăn khớp trục và lỗ, 2 con lăn đo $d_p$ đặt chuẩn xác trong rãnh răng với đường kích thước $M$.
+  * Hỗ trợ cảm ứng đa điểm Pan/Zoom, chuyển đổi linh hoạt chế độ xem (Cả hai, Trục, Lỗ; Toàn vành 360°, 3 răng, 1 răng).
+  * Xuất bản vẽ 2D CAD DXF Release 12 AC1009 với đầy đủ layers, contours, pitch circles và bảng gia công `MFG_TABLE`.
+- **Kiểm thử nghiệm thu thực tế**:
+  * Đóng gói bundle: `modules/involute-splines/js/splines-engine.bundle.js` (457.3 KB) 100% offline CORS-free.
+  * Live Audit Excel COM (`tools/test_splines_qc.py` & `RA_SOAT_SONG_SONG_THEN_HOA_THAN_KHAI.bat`): **62 / 62 phép tính PASS 100.0% với $\Delta = 0.000000$**.
+  * Batch 1-click `CHAY_THEN_HOA_THAN_KHAI.bat` khởi động tức thì qua giao thức `file:///`.
+
+

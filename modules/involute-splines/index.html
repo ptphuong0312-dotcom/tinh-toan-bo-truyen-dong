@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Tính Toán Then Hoa Thân Khai - MITCalc 1.74 Web App</title>
+    <link rel="stylesheet" href="css/splines.css">
+</head>
+<body>
+    <div class="splines-container">
+        <!-- App Header -->
+        <header class="app-header">
+            <div class="app-title-group">
+                <h1>⚙️ TÍNH TOÁN THEN HOA THÂN KHAI (INVOLUTE SPLINES)</h1>
+                <p>Tiêu chuẩn: DIN 5480, ISO 4156, ANSI B92.1, ANSI B92.2M, CSN 4950 | Chuẩn MITCalc 1.74 (Δ = 0.000000)</p>
+            </div>
+            <div class="header-actions">
+                <a href="../../index.html" class="btn-secondary">🏠 Trang Chủ Portal</a>
+                <button type="button" class="btn-primary" id="btnExportDxfAssembly">📐 Xuất Bản Vẽ CAD (DXF)</button>
+            </div>
+        </header>
+
+        <!-- Summary Ribbon -->
+        <div class="summary-ribbon">
+            <div class="summary-card">
+                <span class="summary-label">Đường Kính Chia (d)</span>
+                <span class="summary-val" id="ribbonPitchD">200.000 <span class="summary-unit">mm</span></span>
+            </div>
+            <div class="summary-card highlight">
+                <span class="summary-label">Đỉnh Răng Trục (da0)</span>
+                <span class="summary-val" id="ribbonShaftTip">210.000 <span class="summary-unit">mm</span></span>
+            </div>
+            <div class="summary-card highlight">
+                <span class="summary-label">Đỉnh Răng Lỗ (Di)</span>
+                <span class="summary-val" id="ribbonHubTip">191.145 <span class="summary-unit">mm</span></span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-label">Pháp Tuyến Chung (W0)</span>
+                <span class="summary-val" id="ribbonW0">104.5345 <span class="summary-unit">mm</span></span>
+            </div>
+            <div class="summary-card">
+                <span class="summary-label">Kích Thước Qua Bi (M0)</span>
+                <span class="summary-val" id="ribbonM0">224.9091 <span class="summary-unit">mm</span></span>
+            </div>
+        </div>
+
+        <!-- Accordion Global Toolbar -->
+        <div class="accordion-toolbar">
+            <button type="button" class="btn-secondary" id="btnExpandAll">📂 Mở Rộng Tất Cả</button>
+            <button type="button" class="btn-secondary" id="btnCollapseAll">📁 Thu Gọn Tất Cả</button>
+        </div>
+
+        <!-- =========================================================================
+             MASTER BLOCK 1: INPUT SECTION (PHẦN ĐẦU VÀO)
+             ========================================================================= -->
+        <section class="master-block">
+            <div class="block-header block-header-input">
+                <span>PHẦN 1: THIẾT KẾ ĐẦU VÀO (INPUT SECTION - MỤC 1.0 & 2.0)</span>
+                <span class="block-header-toggle">▼</span>
+            </div>
+            <div class="block-content">
+                <!-- Mục 1.0: Thiết kế hình học then hoa thân khai -->
+                <div class="calc-section open" id="sec10">
+                    <div class="section-header">
+                        <span>1.0 THIẾT KẾ HÌNH HỌC THEN HOA THÂN KHAI (DESIGN OF GEOMETRY OF SPLINES)</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="section-body">
+                        <!-- Chọn quy cách tiêu chuẩn nhanh -->
+                        <div style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center; background: #0f172a; padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                            <label style="font-weight: 600; font-size: 0.88rem; color: #38bdf8; min-width: 220px;">⚡ Tra Cứu Quy Cách Tiêu Chuẩn Nhanh:</label>
+                            <select id="standardPresetSelect" class="combo-select" style="flex: 1; height: 36px; font-weight: 600;">
+                                <option value="">-- Đang nạp danh mục tiêu chuẩn --</option>
+                            </select>
+                        </div>
+
+                        <table class="calc-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-idx">#</th>
+                                    <th class="col-param">Thông Số Kỹ Thuật</th>
+                                    <th class="col-sym">Ký Hiệu</th>
+                                    <th class="col-val1">Trục (Shaft)</th>
+                                    <th class="col-val2">Lỗ (Hub)</th>
+                                    <th class="col-unit">Đơn Vị</th>
+                                    <th class="col-action">Thao Tác / Ghi Chú</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="col-idx">1.1</td>
+                                    <td class="col-param">Hệ đơn vị tính toán</td>
+                                    <td class="col-sym">Units</td>
+                                    <td class="col-val1" colspan="2">
+                                        <select id="unitsSelect" class="combo-select" style="width: 100%;">
+                                            <option value="1">Hệ Mét (SI) [mm, kW, Nm]</option>
+                                            <option value="2">Hệ Inch (Imperial) [in, HP, lb-in]</option>
+                                        </select>
+                                    </td>
+                                    <td class="col-unit">-</td>
+                                    <td class="col-action">Tiêu chuẩn</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">1.2</td>
+                                    <td class="col-param">Tiêu chuẩn then hoa & Kiểu ăn khớp</td>
+                                    <td class="col-sym">Standard</td>
+                                    <td class="col-val1" colspan="2">
+                                        <select id="stdTypeSelect" class="combo-select" style="width: 100%;">
+                                            <!-- Dynamically populated from splines-data.js -->
+                                        </select>
+                                    </td>
+                                    <td class="col-unit">-</td>
+                                    <td class="col-action">17 Hệ tiêu chuẩn</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">1.3</td>
+                                    <td class="col-param">Góc ăn khớp danh nghĩa</td>
+                                    <td class="col-sym">&alpha;</td>
+                                    <td class="col-val1">
+                                        <select id="alfaSelect" class="combo-select" style="width: 100%;">
+                                            <option value="30">30.00&deg; (DIN 5480, ISO 4156, ANSI B92.1)</option>
+                                            <option value="37.5">37.50&deg; (ISO 4156, ANSI B92.1)</option>
+                                            <option value="45">45.00&deg; (ISO 4156, ANSI B92.1)</option>
+                                        </select>
+                                    </td>
+                                    <td class="col-val2"><div class="output-eng" id="outAlfaHub">30.00</div></td>
+                                    <td class="col-unit">[&deg;]</td>
+                                    <td class="col-action">Góc sườn răng</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">1.4</td>
+                                    <td class="col-param">Mô-đun tiêu chuẩn (Hệ Mét)</td>
+                                    <td class="col-sym">m</td>
+                                    <td class="col-val1">
+                                        <div class="combo-group">
+                                            <input type="number" id="moduleInput" class="user-input" value="10.0" step="0.25">
+                                            <select id="moduleSelect" class="combo-select" style="width: 75px;" title="Dãy mô-đun tiêu chuẩn"></select>
+                                        </div>
+                                    </td>
+                                    <td class="col-val2"><div class="output-eng" id="outModuleHub">10.000</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Dãy 0.5 &divide; 10</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">1.5</td>
+                                    <td class="col-param">Diametral Pitch (Hệ Inch ANSI)</td>
+                                    <td class="col-sym">P</td>
+                                    <td class="col-val1">
+                                        <div class="combo-group">
+                                            <input type="number" id="dpInput" class="user-input" value="2.54" step="0.1">
+                                            <select id="dpSelect" class="combo-select" style="width: 75px;" title="Dãy bước răng inch tiêu chuẩn"></select>
+                                        </div>
+                                    </td>
+                                    <td class="col-val2"><div class="output-eng" id="outDPHub">2.540</div></td>
+                                    <td class="col-unit">[1/in]</td>
+                                    <td class="col-action">ANSI B92.1</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">1.6</td>
+                                    <td class="col-param">Số răng then hoa</td>
+                                    <td class="col-sym">z</td>
+                                    <td class="col-val1"><input type="number" id="zInput" class="user-input" value="20" min="6" max="100"></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outZHub">20</div></td>
+                                    <td class="col-unit">-</td>
+                                    <td class="col-action">Đồng bộ z1 = z2</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">1.7</td>
+                                    <td class="col-param">Đường kính chia / cơ sở</td>
+                                    <td class="col-sym">d / d<sub>b</sub></td>
+                                    <td class="col-val1"><div class="output-eng highlight-key-param" id="outD0">200.0000</div></td>
+                                    <td class="col-val2"><div class="output-eng" id="outDb0">173.2051</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">d = z&middot;m, d<sub>b</sub> = d&middot;cos&alpha;</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">1.8</td>
+                                    <td class="col-param">Đường kính đỉnh &amp; chân răng Trục</td>
+                                    <td class="col-sym">d<sub>a0</sub> / d<sub>f0</sub></td>
+                                    <td class="col-val1"><input type="number" id="da0Input" class="user-input highlight-key-param" value="210.0000" step="0.1"></td>
+                                    <td class="col-val2"><input type="number" id="df0Input" class="user-input highlight-key-param" value="185.0000" step="0.1"></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">
+                                        <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer;">
+                                            <input type="checkbox" id="autoFillCheck" checked> Tự động
+                                        </label>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">1.9</td>
+                                    <td class="col-param">Đường kính đỉnh &amp; chân răng Lỗ</td>
+                                    <td class="col-sym">D<sub>i</sub> / D<sub>ri</sub></td>
+                                    <td class="col-val1"><input type="number" id="di2Input" class="user-input highlight-key-param" value="191.1454" step="0.1"></td>
+                                    <td class="col-val2"><input type="number" id="dri2Input" class="user-input highlight-key-param" value="215.0000" step="0.1"></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Chuẩn DIN/ISO</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">1.10</td>
+                                    <td class="col-param">Hệ số dịch chỉnh biên dạng răng</td>
+                                    <td class="col-sym">x<sub>0</sub> / x<sub>2</sub></td>
+                                    <td class="col-val1"><input type="number" id="x0Input" class="user-input" value="0.0000" step="0.01"></td>
+                                    <td class="col-val2"><input type="number" id="x2Input" class="user-input" value="0.0000" step="0.01"></td>
+                                    <td class="col-unit">[m]</td>
+                                    <td class="col-action">Profile shift</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">1.11</td>
+                                    <td class="col-param">Chiều dày răng trên vòng chia</td>
+                                    <td class="col-sym">s</td>
+                                    <td class="col-val1"><div class="output-eng" id="outS0_pitch">15.7080</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outS2_pitch">15.7080</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">&pi;&middot;m/2 + 2x&middot;m&middot;tan&alpha;</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">1.12</td>
+                                    <td class="col-param">Bề rộng rãnh răng trên vòng chia</td>
+                                    <td class="col-sym">e</td>
+                                    <td class="col-val1"><div class="output-eng" id="outE0_groove">15.7080</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outE2_groove">15.7080</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">&pi;&middot;m - s</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">1.13</td>
+                                    <td class="col-param">Khe hở cạnh răng danh nghĩa (Backlash)</td>
+                                    <td class="col-sym">j<sub>n</sub></td>
+                                    <td class="col-val1" colspan="2"><div class="output-eng" id="outBacklash">0.0000</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">(e2 - s0)/2 &middot; cos&alpha;</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Mục 2.0: Thông số biên dạng dao cắt -->
+                <div class="calc-section" id="sec20">
+                    <div class="section-header">
+                        <span>2.0 THÔNG SỐ BIÊN DẠNG RĂNG &amp; DỤNG CỤ CẮT (TOOL PROFILE PARAMETERS)</span>
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="section-body">
+                        <div class="section-image-box">
+                            <img src="img/splines_tool_profile.png" alt="Sơ đồ biên dạng dao cắt then hoa thân khai" style="max-height: 220px;">
+                        </div>
+                        <table class="calc-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-idx">#</th>
+                                    <th class="col-param">Thông Số Dụng Cụ Cắt</th>
+                                    <th class="col-sym">Ký Hiệu</th>
+                                    <th class="col-val1">Trục (Shaft)</th>
+                                    <th class="col-val2">Lỗ (Hub)</th>
+                                    <th class="col-unit">Đơn Vị</th>
+                                    <th class="col-action">Ghi Chú</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="col-idx">2.1</td>
+                                    <td class="col-param">Chiều cao đầu răng của dao</td>
+                                    <td class="col-sym">h<sub>a0</sub><sup>*</sup></td>
+                                    <td class="col-val1"><div class="output-eng">0.7500</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub">0.7500</div></td>
+                                    <td class="col-unit">[m]</td>
+                                    <td class="col-action">Tiêu chuẩn</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">2.2</td>
+                                    <td class="col-param">Chiều cao chân răng của dao</td>
+                                    <td class="col-sym">h<sub>f0</sub><sup>*</sup></td>
+                                    <td class="col-val1"><div class="output-eng">0.7500</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub">0.7500</div></td>
+                                    <td class="col-unit">[m]</td>
+                                    <td class="col-action">Tiêu chuẩn</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">2.3</td>
+                                    <td class="col-param">Bán kính lượn đỉnh dao</td>
+                                    <td class="col-sym">r<sub>a0</sub><sup>*</sup></td>
+                                    <td class="col-val1"><div class="output-eng">0.0000</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub">0.2000</div></td>
+                                    <td class="col-unit">[m]</td>
+                                    <td class="col-action">DIN / ISO</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">2.4</td>
+                                    <td class="col-param">Bán kính lượn chân dao</td>
+                                    <td class="col-sym">r<sub>f0</sub><sup>*</sup></td>
+                                    <td class="col-val1"><div class="output-eng">0.0000</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub">0.0000</div></td>
+                                    <td class="col-unit">[m]</td>
+                                    <td class="col-action">Cung lượn chân</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================================
+             MASTER BLOCK 2: RESULTS SECTION & 2D CAD CANVAS (PHẦN KẾT QUẢ & MÔ PHỎNG)
+             ========================================================================= -->
+        <section class="master-block">
+            <div class="block-header block-header-results">
+                <span>PHẦN 2: KẾT QUẢ KỸ THUẬT &amp; MÔ PHỎNG 2D CAD (RESULTS &amp; CAD SIMULATION - MỤC 3.0 &amp; 4.0)</span>
+                <span class="block-header-toggle">▼</span>
+            </div>
+            <div class="block-content">
+                <!-- Mục 3.0: Kích thước cơ bản đầy đủ -->
+                <div class="calc-section open" id="sec30">
+                    <div class="section-header">
+                        <span>3.0 KÍCH THƯỚC CƠ BẢN ĐẦY ĐỦ CỦA THEN HOA (BASIC DIMENSIONS OF SPLINES)</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="section-body">
+                        <div class="section-image-box">
+                            <img src="img/splines_dimensions.png" alt="Bản vẽ kích thước tiêu chuẩn then hoa thân khai ISO / DIN" style="max-height: 250px;">
+                        </div>
+                        <table class="calc-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-idx">#</th>
+                                    <th class="col-param">Thông Số Hình Học Đầy Đủ</th>
+                                    <th class="col-sym">Ký Hiệu</th>
+                                    <th class="col-val1">Trục Then Hoa (Shaft)</th>
+                                    <th class="col-val2">Lỗ Moay-ơ (Hub)</th>
+                                    <th class="col-unit">Đơn Vị</th>
+                                    <th class="col-action">Công Thức Giải Tích</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="col-idx">3.1</td>
+                                    <td class="col-param">Số răng then hoa</td>
+                                    <td class="col-sym">z</td>
+                                    <td class="col-val1"><div class="output-eng" id="outSec3_z0">20</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outSec3_z2">20</div></td>
+                                    <td class="col-unit">-</td>
+                                    <td class="col-action">Số răng danh nghĩa</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.2</td>
+                                    <td class="col-param">Mô-đun pháp tiêu chuẩn</td>
+                                    <td class="col-sym">m</td>
+                                    <td class="col-val1" colspan="2"><div class="output-eng" id="outSec3_m">10.0000</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Mô-đun hình học</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.3</td>
+                                    <td class="col-param">Bước răng trên vòng chia</td>
+                                    <td class="col-sym">p</td>
+                                    <td class="col-val1" colspan="2"><div class="output-eng" id="outSec3_p">31.4159</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">p = &pi;&middot;m</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.4</td>
+                                    <td class="col-param">Bước răng cơ sở</td>
+                                    <td class="col-sym">p<sub>b</sub></td>
+                                    <td class="col-val1" colspan="2"><div class="output-eng" id="outSec3_pb">27.2070</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">p<sub>b</sub> = p&middot;cos&alpha;</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.5</td>
+                                    <td class="col-param">Góc ăn khớp danh nghĩa</td>
+                                    <td class="col-sym">&alpha;</td>
+                                    <td class="col-val1" colspan="2"><div class="output-eng" id="outSec3_alfa">30.00</div></td>
+                                    <td class="col-unit">[&deg;]</td>
+                                    <td class="col-action">Góc profin gốc</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.6</td>
+                                    <td class="col-param">Đường kính đỉnh răng</td>
+                                    <td class="col-sym">d<sub>a</sub> / D<sub>i</sub></td>
+                                    <td class="col-val1"><div class="output-eng highlight-key-param" id="outSec3_da0">210.0000</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub highlight-key-param" id="outSec3_da2">191.1454</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Đường kính ngoài</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.7</td>
+                                    <td class="col-param">Đường kính chia danh nghĩa</td>
+                                    <td class="col-sym">d</td>
+                                    <td class="col-val1"><div class="output-eng highlight-key-param" id="outSec3_d0">200.0000</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub highlight-key-param" id="outSec3_d2">200.0000</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">d = z&middot;m</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.8</td>
+                                    <td class="col-param">Đường kính vòng cơ sở</td>
+                                    <td class="col-sym">d<sub>b</sub></td>
+                                    <td class="col-val1"><div class="output-eng" id="outSec3_db0">173.2051</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outSec3_db2">173.2051</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">d<sub>b</sub> = d&middot;cos&alpha;</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.9</td>
+                                    <td class="col-param">Đường kính chân răng (đáy rãnh)</td>
+                                    <td class="col-sym">d<sub>f</sub> / D<sub>ri</sub></td>
+                                    <td class="col-val1"><div class="output-eng highlight-key-param" id="outSec3_df0">185.0000</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub highlight-key-param" id="outSec3_df2">215.0000</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Đường kính trong</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.10</td>
+                                    <td class="col-param">Chiều cao đỉnh răng</td>
+                                    <td class="col-sym">h<sub>a</sub></td>
+                                    <td class="col-val1"><div class="output-eng" id="outSec3_ha0">5.0000</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outSec3_ha2">4.4273</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">|da - d| / 2</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.11</td>
+                                    <td class="col-param">Chiều cao chân răng</td>
+                                    <td class="col-sym">h<sub>f</sub></td>
+                                    <td class="col-val1"><div class="output-eng" id="outSec3_hf0">7.5000</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outSec3_hf2">7.5000</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">|d - df| / 2</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.12</td>
+                                    <td class="col-param">Chiều dày răng trên đỉnh</td>
+                                    <td class="col-sym">s<sub>a</sub></td>
+                                    <td class="col-val1"><div class="output-eng" id="outSec3_sa0">10.0167</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outSec3_sa2">10.4840</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Bề rộng đỉnh răng</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.13</td>
+                                    <td class="col-param">Chiều dày răng trên vòng chia</td>
+                                    <td class="col-sym">s</td>
+                                    <td class="col-val1"><div class="output-eng" id="outSec3_s0">15.7080</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outSec3_s2">15.7080</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Chiều dày danh nghĩa</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.14</td>
+                                    <td class="col-param">Chiều dày răng ở chân răng</td>
+                                    <td class="col-sym">s<sub>f</sub></td>
+                                    <td class="col-val1"><div class="output-eng" id="outSec3_sb0">24.4739</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outSec3_sb2">27.1119</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Chiều dày chân răng</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.15</td>
+                                    <td class="col-param">Khe hở đỉnh răng hướng tâm</td>
+                                    <td class="col-sym">c</td>
+                                    <td class="col-val1"><div class="output-eng" id="outSec3_c0">2.5000</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outSec3_c2">3.0727</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Khe hở lắp ghép</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">3.16</td>
+                                    <td class="col-param">Hệ số khe hở đỉnh tương đối</td>
+                                    <td class="col-sym">c<sup>*</sup></td>
+                                    <td class="col-val1"><div class="output-eng" id="outSec3_c0_m">0.2500</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outSec3_c2_m">0.3073</div></td>
+                                    <td class="col-unit">[m]</td>
+                                    <td class="col-action">c / m</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Mục 4.0: Kích thước đo kiểm tra -->
+                <div class="calc-section open" id="sec40">
+                    <div class="section-header">
+                        <span>4.0 KÍCH THƯỚC ĐO KIỂM TRA THEN HOA (CHECK DIMENSIONS: PHÁP TUYẾN CHUNG W &amp; ĐO BI M)</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="section-body">
+                        <table class="calc-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-idx">#</th>
+                                    <th class="col-param">Thông Số Đo Kiểm Tra</th>
+                                    <th class="col-sym">Ký Hiệu</th>
+                                    <th class="col-val1">Trục Then Hoa (Shaft)</th>
+                                    <th class="col-val2">Lỗ Moay-ơ (Hub)</th>
+                                    <th class="col-unit">Đơn Vị</th>
+                                    <th class="col-action">Phương Pháp Kiểm Tra</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="col-idx">4.1</td>
+                                    <td class="col-param">Số răng đo pháp tuyến chung</td>
+                                    <td class="col-sym">k</td>
+                                    <td class="col-val1"><div class="output-eng highlight-key-param" id="outK0">4</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub highlight-key-param" id="outK2">3</div></td>
+                                    <td class="col-unit">Răng</td>
+                                    <td class="col-action">Số răng kẹp thước</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">4.2</td>
+                                    <td class="col-param">Chiều dài pháp tuyến chung</td>
+                                    <td class="col-sym">W</td>
+                                    <td class="col-val1"><div class="output-eng highlight-key-param" id="outW0">104.5345</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub highlight-key-param" id="outW2">104.5345</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Thước đo pháp tuyến</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">4.3</td>
+                                    <td class="col-param">Đường kính con lăn / đũa / bi đo</td>
+                                    <td class="col-sym">d<sub>p</sub></td>
+                                    <td class="col-val1"><input type="number" id="dt0Input" class="user-input" value="17.5000" step="0.1"></td>
+                                    <td class="col-val2"><input type="number" id="dt2Input" class="user-input" value="17.5000" step="0.1"></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">d<sub>p</sub> &approx; 1.75&middot;m</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">4.4</td>
+                                    <td class="col-param">Kích thước đo qua hai viên bi / con lăn</td>
+                                    <td class="col-sym">M</td>
+                                    <td class="col-val1"><div class="output-eng highlight-key-param" id="outM0">224.9091</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub highlight-key-param" id="outM2">174.1319</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Đo qua đũa/bi chính xác</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- KHUNG VẼ MÔ PHỎNG 2D CAD TRỰC TIẾP -->
+                <div class="canvas-card">
+                    <div class="canvas-toolbar">
+                        <div class="toolbar-group">
+                            <span class="toolbar-label">Chế Độ Xem:</span>
+                            <button type="button" class="btn-toggle active" id="btnModeAssembly">🔗 Cặp Ăn Khớp</button>
+                            <button type="button" class="btn-toggle" id="btnModeShaft">🔹 Trục (Shaft)</button>
+                            <button type="button" class="btn-toggle" id="btnModeHub">🔸 Lỗ (Hub)</button>
+                        </div>
+                        <div class="toolbar-group">
+                            <span class="toolbar-label">Phạm Vi:</span>
+                            <button type="button" class="btn-toggle active" id="btnScopeFull">🌐 Toàn Vành 360&deg;</button>
+                            <button type="button" class="btn-toggle" id="btnScopeDetail">🔍 Cụm 3 Răng</button>
+                            <button type="button" class="btn-toggle" id="btnScopeSingle">🔬 1 Răng Chi Tiết</button>
+                        </div>
+                        <div class="toolbar-group">
+                            <button type="button" class="btn-secondary" id="btnZoomIn">➕ Phóng To</button>
+                            <button type="button" class="btn-secondary" id="btnZoomOut">➖ Thu Nhỏ</button>
+                            <button type="button" class="btn-secondary" id="btnResetView">🎯 Căn Giữa</button>
+                            <button type="button" class="btn-secondary" id="btnExportPng">📷 Tải Ảnh PNG</button>
+                        </div>
+                    </div>
+                    <div class="canvas-wrapper">
+                        <canvas id="splinesCanvas" width="1200" height="650"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =========================================================================
+             MASTER BLOCK 3: ADDITIONS & CAD OUTPUT (TÍNH PHỤ TRỢ & XUẤT CAD)
+             ========================================================================= -->
+        <section class="master-block">
+            <div class="block-header block-header-additions">
+                <span>PHẦN 3: TÍNH TOÁN PHỤ TRỢ &amp; XUẤT CAD DXF (ADDITIONS &amp; CAD OUTPUT - MỤC 5.0 &amp; 6.0)</span>
+                <span class="block-header-toggle">▼</span>
+            </div>
+            <div class="block-content">
+                <!-- Mục 5.0: Tính toán gần đúng mô đun từ then hoa có sẵn -->
+                <div class="calc-section open" id="sec50">
+                    <div class="section-header">
+                        <span>5.0 TÍNH TOÁN GẦN ĐÚNG MÔ-ĐUN TỪ THEN HOA CÓ SẴN (APPROXIMATE MODULE CALCULATION)</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="section-body">
+                        <table class="calc-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-idx">#</th>
+                                    <th class="col-param">Thông Số Đo Thực Tế</th>
+                                    <th class="col-sym">Ký Hiệu</th>
+                                    <th class="col-val1">Trục Đo (Shaft)</th>
+                                    <th class="col-val2">Lỗ Đo (Hub)</th>
+                                    <th class="col-unit">Đơn Vị</th>
+                                    <th class="col-action">Thao Tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="col-idx">5.1</td>
+                                    <td class="col-param">Số răng đếm được</td>
+                                    <td class="col-sym">z<sub>x</sub></td>
+                                    <td class="col-val1"><input type="number" id="zRevShaftInput" class="user-input" value="24"></td>
+                                    <td class="col-val2"><input type="number" id="zRevHubInput" class="user-input" value="24"></td>
+                                    <td class="col-unit">-</td>
+                                    <td class="col-action">Đếm số răng</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">5.2</td>
+                                    <td class="col-param">Đường kính đỉnh răng đo được</td>
+                                    <td class="col-sym">d<sub>ax</sub></td>
+                                    <td class="col-val1"><input type="number" id="daRevShaftInput" class="user-input" value="20.000" step="0.1"></td>
+                                    <td class="col-val2"><input type="number" id="daRevHubInput" class="user-input" value="20.000" step="0.1"></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Đo bằng panme/thước kẹp</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">5.3</td>
+                                    <td class="col-param">Khoảng cách giữa các mép răng</td>
+                                    <td class="col-sym">u<sub>x</sub></td>
+                                    <td class="col-val1"><input type="number" id="uRevShaftInput" class="user-input" value="0.000" step="0.1"></td>
+                                    <td class="col-val2"><input type="number" id="uRevHubInput" class="user-input" value="0.000" step="0.1"></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">Bù trừ độ cong</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">5.4</td>
+                                    <td class="col-param">Đường kính đỉnh răng hiệu chỉnh</td>
+                                    <td class="col-sym">d<sub>axx</sub></td>
+                                    <td class="col-val1"><div class="output-eng" id="outDaxxShaft">20.0000</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub" id="outDaxxHub">20.0000</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">d<sub>ax</sub> + u<sup>2</sup>/(4&middot;d<sub>ax</sub>)</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">5.5</td>
+                                    <td class="col-param">Mô-đun răng tính toán được</td>
+                                    <td class="col-sym">m</td>
+                                    <td class="col-val1"><div class="output-eng highlight-key-param" id="outMRevShaft">0.769</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub highlight-key-param" id="outMRevHub">0.909</div></td>
+                                    <td class="col-unit">[mm]</td>
+                                    <td class="col-action">
+                                        <div style="display: flex; gap: 4px;">
+                                            <button type="button" class="btn-secondary" id="btnApplyRevShaft" style="font-size: 0.75rem; padding: 3px 6px;">[ &lArr; Trục ]</button>
+                                            <button type="button" class="btn-secondary" id="btnApplyRevHub" style="font-size: 0.75rem; padding: 3px 6px;">[ &lArr; Lỗ ]</button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Mục 6.0: Xuất bản vẽ CAD hệ thống -->
+                <div class="calc-section open" id="sec60">
+                    <div class="section-header">
+                        <span>6.0 XUẤT BẢN VẼ 2D CAD &amp; BẢNG CHẾ TẠO (DXF RELEASE 12 - AC1009)</span>
+                        <span class="toggle-icon">▼</span>
+                    </div>
+                    <div class="section-body">
+                        <div style="display: flex; gap: 16px; flex-wrap: wrap; align-items: center; justify-content: space-around; background: #0f172a; padding: 18px; border-radius: 6px; border: 1px solid var(--border-color);">
+                            <div style="text-align: center;">
+                                <img src="img/cad_icon_wheel.png" alt="Cặp then hoa ăn khớp" style="margin-bottom: 8px;">
+                                <div>
+                                    <button type="button" class="btn-primary" id="btnExportDxfAssembly2" onclick="document.getElementById('btnExportDxfAssembly').click();">
+                                        📐 Xuất Cặp Lắp Ghép (Assembly)
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                <img src="img/cad_icon_2d.png" alt="Trục then hoa" style="margin-bottom: 8px;">
+                                <div>
+                                    <button type="button" class="btn-secondary" id="btnExportDxfShaft">
+                                        🔹 Xuất Trục Then Hoa (Shaft)
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="text-align: center;">
+                                <img src="img/cad_icon_detail.png" alt="Lỗ moay-ơ then hoa" style="margin-bottom: 8px;">
+                                <div>
+                                    <button type="button" class="btn-secondary" id="btnExportDxfHub">
+                                        🔸 Xuất Lỗ Moay-ơ (Hub)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <p style="margin-top: 10px; font-size: 0.82rem; color: var(--text-muted); text-align: center;">
+                            * Định dạng file DXF chuẩn AC1009 tương thích 100% không lỗi với AutoCAD 2000 - 2026, SolidWorks, Autodesk Inventor, Mastercam, LibreCAD. Xuất 100% Offline qua Blob.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Toast notification -->
+        <div id="toastMsg" class="toast-msg">Thông báo</div>
+    </div>
+
+    <!-- Script bundle for zero-CORS file:/// execution -->
+    <script src="js/splines-engine.bundle.js"></script>
+</body>
+</html>

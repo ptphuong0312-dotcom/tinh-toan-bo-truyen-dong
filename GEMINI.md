@@ -2478,3 +2478,32 @@ ho_{f0} / \cos\gamma$.
   * *Hợp nhất giao diện sang trang đơn (Unified Single-Page)*: Loại bỏ thanh chuyển Tab 2 tách rời theo lệnh của người dùng, đưa khung vẽ biểu đồ Canvas 2D vào trực tiếp Master Block 2 ngay dưới bảng kết quả và 4 thẻ chỉ số của ISO 286.
   * *Nâng cấp đồ họa Canvas 2D*: Bổ sung đường gióng và mũi tên kích thước kỹ thuật cho khe hở $S_{max}, S_{min}$ và độ dôi $N_{max}, N_{min}$; tối ưu tọa độ nhãn 'Đường 0' để triệt tiêu hiện tượng đè chữ khi $EI = 0$; tích hợp bộ điều khiển Zoom In/Out, Đặt lại góc nhìn, Tải ảnh PNG và Sao chép thông số kỹ thuật mối ghép vào Clipboard.
 
+---
+
+### Quy Tắc 101: Quy Chuẩn Xây Dựng Mô-Đun 7 Then Hoa Thân Khai (Involute Splines: DIN 5480, ISO 4156, ANSI B92.1, ANSI B92.2M, CSN 4950) Chuẩn Zero-Force Scope & Zero-Tolerance (Δ = 0.000000)
+1. **Quy chuẩn lược bỏ lực tuyệt đối (Zero-Force Scope Protocol)**:
+   - Tập trung chuyên sâu 100% vào hình học then hoa thân khai, kích thước tiêu chuẩn Trục (Shaft) và Lỗ moay-ơ (Hub), khe hở ăn khớp/backlash, kích thước đo kiểm tra ($W, M$), tính toán ngược mô đun Section 5.0 và xuất bản vẽ 2D CAD DXF.
+   - Lược bỏ hoàn toàn các phép tính lực, mô-men xoắn, ứng suất dập/uốn để giữ giao diện và giải thuật thanh thoát, chuẩn xác tuyệt đối.
+2. **Cơ sở dữ liệu 7,341 tổ hợp tiêu chuẩn quốc tế**:
+   - Tích hợp trọn vẹn 17 hệ tiêu chuẩn từ sheet `Tables` của MITCalc `SplinesI_01.xlsb`:
+     * DIN 5480 - 30° (721 tổ hợp, module 0.5 đến 10, số răng z = 6 đến 100, đường kính danh nghĩa dB = 6 đến 500 mm).
+     * ISO 4156 & ANSI B92.2M: 30° Flat root, 30° Fillet root, 37.5° Fillet root, 45° Fillet root.
+     * ANSI B92.1 (hệ Inch): 30° Flat root side fit, 30° Flat root major fit, 30° & 37.5° Fillet root, 45° Fillet root.
+     * CSN 4950: 30° Flat root side fit, major fit và fillet root.
+   - Hỗ trợ dropdown tra cứu nhanh quy cách tiêu chuẩn (Quick Presets) tự động điền thông số chuẩn 1-click.
+3. **Giải thuật hình học & kích thước tiêu chuẩn chính xác tuyệt đối (Δ = 0.000000)**:
+   - Tiêu chuẩn ISO 4156 / ANSI B92.2M: $d = z \cdot m$, $d_{a0} = (z + 1)m$, $d_{f0} = (z - 1.5)m$ (flat) hoặc $(z - 1.8)m$ (fillet); $D_i = 2\sqrt{(0.5 d \cos\alpha)^2 + (0.5 d \sin\alpha - 0.6 m / \sin\alpha)^2} + 0.2 m$; $D_{ri} = (z + 1.5)m$ hoặc $(z + 1.8)m$.
+   - Tiêu chuẩn DIN 5480: tra cứu $d_B$ theo (m, z) khớp giải thuật `VLOOKUP` của Excel; $d_{a0} = d_B - 0.2m$, $d_{f0} = d_B - 2.2m$, $D_i = d_B - 2.0m$, $D_{ri} = d_B$; dịch chỉnh $x_0 \cdot m = (d_B - d - 1.1m) / 2$, $x_2 = 0.0$.
+   - Tiêu chuẩn ANSI B92.1 (Inch): $D = z / P$, $d_a = (z + 1)/P$, $d_f = (z - 1.35)/P$ hoặc $(z - 1.8)/P$, $D_i = (z - 1)/P$, $D_{ri} = (z + 1.35)/P$ hoặc $(z + 1.8)/P$.
+4. **Giải thuật đo kiểm tra chiều dài pháp tuyến chung W & đo qua bi/đũa M**:
+   - Số răng kẹp thước đo: $k_0 = \lfloor z_0 \cdot \alpha / 180 + 0.5 + 0.8 \rfloor$, $k_2 = |\lfloor -z_2 \cdot \alpha / 180 + 0.5 + 0.8 \rfloor|$.
+   - Chiều dài pháp tuyến chung: $W_0 = m \cos\alpha [(k_0 - 0.5)\pi + z_0 \text{inv}\alpha] + 2 x_0 m \sin\alpha$.
+   - Kích thước qua bi/đũa đo: $\text{inv}\alpha_M = \text{inv}\alpha + \frac{2 x \tan\alpha + \frac{d_p}{m \cos\alpha} - \frac{\pi}{2}}{z}$; giải bằng thuật toán bisection `invol` khớp MITCalc line 770 đến $10^{-8}$; hỗ trợ chính xác cả số răng chẵn ($M = d_s + d_p$) và số răng lẻ ($M = d_s \cos(\pi / 2z) + d_p$).
+5. **Giao diện Accordion 3 Master Blocks trang đơn tích hợp Canvas 2D CAD**:
+   - Master Block 1: Input Section (`#107c41`) gom Mục 1.0 và Mục 2.0.
+   - Master Block 2: Results Section (`#c55a11`) gom Mục 3.0, Mục 4.0 và Khung vẽ Canvas 2D tương tác trực tiếp.
+   - Master Block 3: Additions Section (`#1e3a8a`) gom Mục 5.0 tính ngược mô đun và Mục 6.0 xuất CAD DXF Release 12 AC1009.
+   - Canvas 2D vẽ biên dạng thân khai thực thể, vòng chia, vòng cơ sở, 2 con lăn đo $d_p$ đặt trong rãnh răng kèm đường kích thước $M$, hỗ trợ cử chỉ chuột & cảm ứng đa điểm pan/zoom.
+6. **Kiểm thử đối chiếu Live Audit 1-Click**:
+   - Script `tools/test_splines_qc.py` và batch launcher `RA_SOAT_SONG_SONG_THEN_HOA_THAN_KHAI.bat` đạt 62/62 phép tính PASS 100.0% với $\Delta = 0.000000$ so với MITCalc `SplinesI_01.xlsb`.
+   - Batch khởi động trực tiếp `CHAY_THEN_HOA_THAN_KHAI.bat` chạy 100% offline qua `file:///` không phụ thuộc Node.js hay web server.

@@ -25,13 +25,17 @@ res4 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_bevel_advance
 print("[5/6] Dang dong goi Mo-dun Truc Vit - Banh Vit Mo Rong (Advanced Worm Gear)...")
 res5 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_worm_advanced.py")])
 
-print("[6/6] Dang dong goi Mo-dun Bang Tra Dung Sai & Lap Ghep (Tolerances & Fits)...")
+print("[6/7] Dang dong goi Mo-dun Bang Tra Dung Sai & Lap Ghep (Tolerances & Fits)...")
 res6 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_tolerances.py")])
 
-if res1.returncode == 0 and res2.returncode == 0 and res3.returncode == 0 and res4.returncode == 0 and res5.returncode == 0 and res6.returncode == 0:
+print("[7/7] Dang dong goi Mo-dun Then Hoa Than Khai (Involute Splines)...")
+res7 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_splines.py")])
+
+if res1.returncode == 0 and res2.returncode == 0 and res3.returncode == 0 and res4.returncode == 0 and res5.returncode == 0 and res6.returncode == 0 and res7.returncode == 0:
     print()
-    print(">>> DONG GOI HOAN TAT 100% THANH CONG (6/6 MO-DUN)!")
+    print(">>> DONG GOI HOAN TAT 100% THANH CONG (7/7 MO-DUN)!")
 else:
     print()
     print(">>> CO LOI XAY RA TRONG QUA TRINH DONG GOI!")
     sys.exit(1)
+
