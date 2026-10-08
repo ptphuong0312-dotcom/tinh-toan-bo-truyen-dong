@@ -4032,3 +4032,17 @@ ho_{f0}$.
 
 
 
+  * *Loại bỏ hoàn toàn Khung tóm tắt (Summary Banner) & Đồng bộ Bản vẽ 2 Mặt Cắt Cơ Khí cho Then Bán Nguyệt và Then Hoa (Lệnh trực tiếp từ SirPhuong)*:
+    1. **Bỏ khung tóm tắt Summary Banner**: Loại bỏ hoàn toàn khối .summary-banner ở đầu trang trên cả 3 tab (Then Bằng, Then Bán Nguyệt, Then Hoa Răng Chữ Nhật), giúp giao diện thanh thoát và giải phóng 90px không gian dọc quý giá.
+    2. **Đồng bộ Bản vẽ Mặt Cắt Chuẩn Cơ Khí cho Then Bán Nguyệt (Woodruff Keys - DIN 6888 / ANSI B17.2)**:
+       - 2 hình cắt kỹ thuật cân đối: 1. HÌNH CẮT LỖ MOAY-Ơ (HUB CROSS-SECTION) và 2. HÌNH CẮT TRỤC (SHAFT CROSS-SECTION).
+       - Rãnh then mở thông suốt, gạch mặt cắt kim loại chuẩn 45 độ.
+       - Đầy đủ kích thước CAD: b, t1, t2, đường kính Lỗ, đường kính Trục, đường kính Đĩa Dk.
+       - Bổ sung và highlight kích thước d1 = d - t1 và d2 = d + t2 với đường gióng đứng và mũi tên CAD chuẩn kỹ thuật.
+    3. **Đồng bộ Bản vẽ Mặt Cắt Chuẩn Cơ Khí cho Then Hoa Răng Chữ Nhật (Straight-Sided Splines - ISO 14 / DIN 5464 / SAE)**:
+       - 2 hình cắt kỹ thuật đối xứng chuẩn xác:
+         * Bên trái: 1. HÌNH CẮT LỖ THEN HOA (HUB CROSS-SECTION) - Moay-ơ với n rãnh then hoa khoét ra ngoài từ r_minor đến r_major, miệng rãnh thông suốt vào lỗ, gạch mặt cắt kim loại moay-ơ evenodd.
+         * Bên phải: 2. HÌNH CẮT TRỤC THEN HOA (SHAFT CROSS-SECTION) - Trục với n then hoa hình chữ nhật nổi ra ngoài từ r_minor đến r_major, gạch mặt cắt kim loại trục chuẩn xác.
+       - Đầy đủ kích thước kỹ thuật CAD: Đường kính ngoài D, Đường kính trong d, Bề rộng then b, số then/rãnh n.
+    4. **Badge tiêu đề động**: Tự động chuyển đổi badge toolbar theo đúng tiêu chuẩn tương ứng (ISO 773 / DIN 6885, DIN 6888 / ANSI B17.2, ISO 14 / DIN 5464 / SAE).
+    5. **Đóng gói Bundle & Kiểm thử E2E**: Bundle keys-engine.bundle.js (187,469 bytes), kiểm thử tự động Playwright trên cả 3 tab PASS 100% với 0 lỗi.

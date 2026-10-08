@@ -19,26 +19,6 @@
       </div>
     </header>
 
-    <!-- Summary Banner -->
-    <div class="summary-banner">
-      <div class="sum-card">
-        <span class="sum-label">Loại Mối Ghép</span>
-        <span class="sum-value" id="sumJointType">Then Bằng (Parallel Key)</span>
-      </div>
-      <div class="sum-card">
-        <span class="sum-label">Tiêu Chuẩn Thiết Kế</span>
-        <span class="sum-value" id="sumStandard">DIN 6885 Blatt 1</span>
-      </div>
-      <div class="sum-card">
-        <span class="sum-label">Quy Cách Then (b x h x L)</span>
-        <span class="sum-value" id="sumDimensions">12.0 x 8.0 x 56.0</span>
-      </div>
-      <div class="sum-card">
-        <span class="sum-label">Đường Kính Trục (d)</span>
-        <span class="sum-value" id="sumShaftDiam">40.0 mm</span>
-      </div>
-    </div>
-
     <!-- Subsystem Selector -->
     <div class="subsystem-nav">
       <button class="joint-type-btn active" data-type="parallel">🔑 Then Bằng (Parallel Side Keys)</button>
@@ -439,11 +419,21 @@
               </tr>
               <tr>
                 <td class="col-num">4.22</td>
-                <td class="col-param">Chiều sâu rãnh trục / Đáy rãnh còn lại</td>
-                <td class="col-symbol">t / d1</td>
+                <td class="col-param">Sâu rãnh trục (t1) / Lỗ (t2)</td>
+                <td class="col-symbol">t1 / t2</td>
                 <td>
-                  <span class="output-eng highlight-key-param" id="outWoodruffT1">--</span> /
-                  <span class="output-eng" id="outWoodruffD1">--</span>
+                  <span class="output-eng" id="outWoodruffT1">--</span> /
+                  <span class="output-eng" id="outWoodruffT2">--</span>
+                </td>
+                <td class="col-unit unit-dim">mm</td>
+              </tr>
+              <tr>
+                <td class="col-num">4.22b</td>
+                <td class="col-param">Đáy trục (d1) / Đỉnh lỗ (d2)</td>
+                <td class="col-symbol">d1 / d2</td>
+                <td>
+                  <span class="output-eng highlight-key-param" id="outWoodruffD1">--</span> /
+                  <span class="output-eng highlight-key-param" id="outWoodruffD2">--</span>
                 </td>
                 <td class="col-unit unit-dim">mm</td>
               </tr>

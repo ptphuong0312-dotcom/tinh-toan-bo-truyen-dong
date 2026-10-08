@@ -10153,10 +10153,14 @@ const KeysCalc = {
 /* --- SOURCE: keys-canvas.js --- */
 /**
  * 2D CANVAS CAD RENDERING ENGINE: MODULE 8 KEYS & STRAIGHT-SIDED SPLINES
- * Hiển thị 2 BẢN VẼ MẶT CẮT KỸ THUẬT CHUẨN CƠ KHÍ (ISO 773 / DIN 6885):
- * 1. Bên Trái: Hình Cắt Lỗ Moay-ơ (Hub Cross-Section) - Kèm kích thước b, t2, Ø Lỗ, và d2
- * 2. Bên Phải: Hình Cắt Trục (Shaft Cross-Section) - Kèm kích thước b, t1, Ø Trục, và d1
- * Hỗ trợ 1, 2, 3, 4 then và cử chỉ cảm ứng chuột & Multi-touch trên Mobile
+ * Hiển thị 2 BẢN VẼ MẶT CẮT KỸ THUẬT CHUẨN CƠ KHÍ:
+ * - Then Bằng (Parallel Keys): ISO 773 / DIN 6885
+ * - Then Bán Nguyệt (Woodruff Keys): DIN 6888 / ANSI B17.2
+ * - Then Hoa Răng Chữ Nhật (Straight-Sided Splines): ISO 14 / DIN 5464 / SAE
+ * 1. Bên Trái: Hình Cắt Lỗ Moay-ơ (Hub Cross-Section)
+ * 2. Bên Phải: Hình Cắt Trục (Shaft Cross-Section)
+ * Cả 3 hệ thống đều chuẩn 2 hình cắt cơ khí, miệng rãnh/răng mở thông suốt,
+ * gạch mặt cắt kim loại (Hatching 45°), đường gióng kích thước và mũi tên CAD!
  */
 
 class KeysCanvas {
@@ -10277,6 +10281,18 @@ class KeysCanvas {
     const w = this.canvas.width;
     const h = this.canvas.height;
 
+    // Cập nhật linh hoạt tiêu đề bản vẽ theo tiêu chuẩn tương ứng
+    const badge = document.querySelector('.canvas-title-badge');
+    if (badge) {
+      if (this.jointType === 'parallel') {
+        badge.textContent = '📐 BẢN VẼ MẶT CẮT KỸ THUẬT: LỖ MOAY-Ơ & TRỤC (ISO 773 / DIN 6885)';
+      } else if (this.jointType === 'woodruff') {
+        badge.textContent = '📐 BẢN VẼ MẶT CẮT KỸ THUẬT: LỖ MOAY-Ơ & TRỤC (DIN 6888 / ANSI B17.2)';
+      } else if (this.jointType === 'spline') {
+        badge.textContent = '📐 BẢN VẼ MẶT CẮT KỸ THUẬT: LỖ & TRỤC THEN HOA (ISO 14 / DIN 5464 / SAE)';
+      }
+    }
+
     ctx.clearRect(0, 0, w, h);
     this.drawGrid(ctx, w, h);
 
@@ -10322,7 +10338,7 @@ class KeysCanvas {
 
   drawAxes(ctx, cx, cy, radius) {
     ctx.save();
-    ctx.strokeStyle = '#ef4444'; // Red centerline
+    ctx.strokeStyle = '#ef4444'; // Đường tâm đỏ
     ctx.lineWidth = 1.2;
     ctx.setLineDash([10, 4, 2, 4]);
 
@@ -10342,16 +10358,12 @@ class KeysCanvas {
    */
   getKeyAngles(numKeys) {
     if (numKeys === 4) {
-      // 4 then cách đều 90° (12h, 3h, 6h, 9h)
       return [-Math.PI / 2, 0, Math.PI / 2, Math.PI];
     } else if (numKeys === 3) {
-      // 3 then cách đều 120°
       return [-Math.PI / 2, -Math.PI / 2 + (2 * Math.PI) / 3, -Math.PI / 2 + (4 * Math.PI) / 3];
     } else if (numKeys === 2) {
-      // 2 then đối xứng 180° (12h và 6h)
       return [-Math.PI / 2, Math.PI / 2];
     }
-    // 1 then ở đỉnh (12h)
     return [-Math.PI / 2];
   }
 
@@ -10393,7 +10405,7 @@ class KeysCanvas {
     ctx.lineTo(x2, y2);
     ctx.stroke();
 
-    // Arrows pointing outwards to dimension endpoints
+    // Arrows pointing outwards to endpoints
     this.drawCadArrow(ctx, (x1 + x2) / 2, (y1 + y2) / 2, x1, y1, 7, 2.8);
     this.drawCadArrow(ctx, (x1 + x2) / 2, (y1 + y2) / 2, x2, y2, 7, 2.8);
 
@@ -10415,7 +10427,7 @@ class KeysCanvas {
   }
 
   // =========================================================================
-  // BỘ 2 HÌNH CẮT THEN BẰNG (PARALLEL KEYS: 1. HUB & 2. SHAFT)
+  // 1. BỘ 2 HÌNH CẮT THEN BẰNG (PARALLEL KEYS)
   // =========================================================================
   renderParallelKeys(ctx) {
     const data = this.currentData;
@@ -10428,22 +10440,19 @@ class KeysCanvas {
 
     // 2 Hình cắt cân đối: Hub bên trái (-290), Shaft bên phải (+290)
     const spacing = 290;
-    const pxPerUnit = 160 / d; // Kích thước to rõ, sắc nét
+    const pxPerUnit = 160 / d;
     const r_shaft = (d / 2) * pxPerUnit;
     const r_hub = r_shaft * 1.8;
     const w_key = b * pxPerUnit;
     const depth1 = t1 * pxPerUnit;
     const depth2 = t2 * pxPerUnit;
 
-    // 1. Bên trái: Hình cắt lỗ Moay-ơ (Hub)
     this.drawSingleHubView(ctx, -spacing, 0, r_shaft, r_hub, w_key, depth2, angles, data);
-
-    // 2. Bên phải: Hình cắt Trục (Shaft)
     this.drawSingleShaftView(ctx, spacing, 0, r_shaft, w_key, depth1, angles, data);
   }
 
   /**
-   * Tạo đường bao lỗ Moay-ơ khép kín với các rãnh khoét ra ngoài (Hole Contour with Open Notches)
+   * Tạo đường bao lỗ Moay-ơ khép kín với các rãnh khoét ra ngoài (Open Notches)
    * Tuyệt đối không có cung tròn chắn ngang miệng rãnh!
    */
   traceHubHoleContour(ctx, cx, cy, r_shaft, w_key, depth2, angles) {
@@ -10464,7 +10473,6 @@ class KeysCanvas {
       const pm1x = cx + r_shaft * Math.cos(angM1);
       const pm1y = cy + r_shaft * Math.sin(angM1);
 
-      // Điểm đỉnh nóc rãnh trong thân moay-ơ
       const pt1x = cx + (r_shaft + depth2) * radX - halfW * tanX;
       const pt1y = cy + (r_shaft + depth2) * radY - halfW * tanY;
 
@@ -10484,7 +10492,6 @@ class KeysCanvas {
       ctx.lineTo(pt2x, pt2y);
       ctx.lineTo(pm2x, pm2y);
 
-      // Cung tròn nối sang then tiếp theo theo chiều kim đồng hồ
       if (angles.length === 1) {
         ctx.arc(cx, cy, r_shaft, angM2, angM1 + Math.PI * 2, false);
       } else {
@@ -10500,8 +10507,8 @@ class KeysCanvas {
   }
 
   /**
-   * Tạo đường bao thân trục khép kín với các rãnh khoét vào trong (Shaft Contour with Open Notches)
-   * Miệng rãnh mở thông ra ngoài không khí, tuyệt đối không có cung tròn chắn ngang!
+   * Tạo đường bao thân trục khép kín với các rãnh khoét vào trong (Open Notches)
+   * Miệng rãnh mở thông ra ngoài không khí, không có cung tròn chắn ngang!
    */
   traceShaftContour(ctx, cx, cy, r_shaft, w_key, depth1, angles) {
     const halfW = w_key / 2;
@@ -10521,7 +10528,6 @@ class KeysCanvas {
       const pm1x = cx + r_shaft * Math.cos(angM1);
       const pm1y = cy + r_shaft * Math.sin(angM1);
 
-      // Điểm đáy rãnh khoét lõm vào trong thân trục
       const pb1x = cx + (r_shaft - depth1) * radX - halfW * tanX;
       const pb1y = cy + (r_shaft - depth1) * radY - halfW * tanY;
 
@@ -10541,7 +10547,6 @@ class KeysCanvas {
       ctx.lineTo(pb2x, pb2y);
       ctx.lineTo(pm2x, pm2y);
 
-      // Cung tròn bề mặt trụ nối sang then tiếp theo theo chiều kim đồng hồ
       if (angles.length === 1) {
         ctx.arc(cx, cy, r_shaft, angM2, angM1 + Math.PI * 2, false);
       } else {
@@ -10707,7 +10712,8 @@ class KeysCanvas {
     ctx.lineTo(dimX_d2 - 5, yD2_bot);
     ctx.stroke();
 
-    this.drawLinearDimension(ctx, dimX_d2, yD2_top, dimX_d2, yD2_bot, `d2 = ${data.d2.toFixed(2)}${unitStr}`, '#fbbf24', -36);
+    const d2Val = data.d2 !== undefined ? data.d2 : (data.d + data.t2);
+    this.drawLinearDimension(ctx, dimX_d2, yD2_top, dimX_d2, yD2_bot, `d2 = ${d2Val.toFixed(2)}${unitStr}`, '#fbbf24', -36);
 
     ctx.restore();
   }
@@ -10750,7 +10756,13 @@ class KeysCanvas {
     ctx.fillStyle = '#94a3b8';
     ctx.font = 'bold 12px "JetBrains Mono", Consolas, monospace';
     ctx.textAlign = 'center';
-    ctx.fillText(`Ø Trục = ${data.d.toFixed(1)}${unitStr}`, cx, cy + 22);
+    ctx.fillText(`Ø Trục = ${data.d.toFixed(1)}${unitStr}`, cx, cy + (data.Dk ? 16 : 22));
+
+    // Nếu có Dk (Then bán nguyệt)
+    if (data.Dk) {
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillText(`Ø Đĩa Dk = ${data.Dk.toFixed(1)}${unitStr}`, cx, cy + 34);
+    }
 
     // 4. KÍCH THƯỚC ĐÁY RÃNH TRỤC d1 (BÊN TRÁI)
     const dimX_d1 = cx - r_shaft - 35;
@@ -10769,13 +10781,14 @@ class KeysCanvas {
     ctx.lineTo(dimX_d1 - 5, yD1_bot);
     ctx.stroke();
 
-    this.drawLinearDimension(ctx, dimX_d1, yD1_top, dimX_d1, yD1_bot, `d1 = ${data.d1.toFixed(2)}${unitStr}`, '#10b981', -36);
+    const d1Val = data.d1 !== undefined ? data.d1 : (data.d - data.t1);
+    this.drawLinearDimension(ctx, dimX_d1, yD1_top, dimX_d1, yD1_bot, `d1 = ${d1Val.toFixed(2)}${unitStr}`, '#10b981', -36);
 
     ctx.restore();
   }
 
   // =========================================================================
-  // BỘ HÌNH THEN BÁN NGUYỆT (WOODRUFF) & THEN HOA (SPLINES)
+  // 2. BỘ 2 HÌNH CẮT THEN BÁN NGUYỆT (WOODRUFF KEYS)
   // =========================================================================
   renderWoodruffKeys(ctx) {
     const data = this.currentData;
@@ -10786,6 +10799,7 @@ class KeysCanvas {
     const numKeys = data.numKeys || 1;
     const angles = this.getKeyAngles(numKeys);
 
+    // 2 Hình cắt chuẩn cơ khí: Hub bên trái (-290), Shaft bên phải (+290)
     const spacing = 290;
     const pxPerUnit = 160 / d;
     const r_shaft = (d / 2) * pxPerUnit;
@@ -10798,6 +10812,9 @@ class KeysCanvas {
     this.drawSingleShaftView(ctx, spacing, 0, r_shaft, w_key, depth1, angles, data);
   }
 
+  // =========================================================================
+  // 3. BỘ 2 HÌNH CẮT THEN HOA RĂNG CHỮ NHẬT (STRAIGHT-SIDED SPLINES)
+  // =========================================================================
   renderStraightSplines(ctx) {
     const data = this.currentData;
     const n = data.n;
@@ -10805,96 +10822,308 @@ class KeysCanvas {
     const D = data.D; // major
     const b = data.b;
 
+    // 2 Hình cắt cân đối: Hub bên trái (-290), Shaft bên phải (+290)
     const spacing = 290;
-    const pxPerUnit = 140 / D;
+    const pxPerUnit = 160 / D;
     const r_minor = (d / 2) * pxPerUnit;
     const r_major = (D / 2) * pxPerUnit;
     const r_hub = r_major * 1.6;
     const halfB = (b / 2) * pxPerUnit;
 
-    // 1. Hub spline
+    // 1. Bên trái: Hình cắt lỗ then hoa (Hub)
     this.drawSplineHub(ctx, -spacing, 0, r_minor, r_major, r_hub, n, halfB, data);
-    // 2. Shaft spline
-    this.drawSplineShaft(ctx, spacing, 0, r_minor, r_major, n, halfB, data);
+
+    // 2. Bên phải: Hình cắt trục then hoa (Shaft)
+    this.drawSplineShaft(ctx, spacing, 0, r_minor, r_major, r_hub, n, halfB, data);
   }
 
-  drawSplineHub(ctx, cx, cy, rMinor, rMajor, rHub, n, halfB, data) {
-    ctx.save();
-    this.drawAxes(ctx, cx, cy, rHub);
-    ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
-    ctx.strokeStyle = '#64748b';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(cx, cy, rHub, 0, Math.PI * 2);
-    ctx.arc(cx, cy, rMajor, 0, Math.PI * 2, true);
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = '#38bdf8';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('1. HÌNH CẮT LỖ THEN HOA (HUB)', cx, cy + rHub + 45);
-    ctx.restore();
-  }
-
-  drawSplineShaft(ctx, cx, cy, rMinor, rMajor, n, halfB, data) {
-    ctx.save();
-    this.drawAxes(ctx, cx, cy, rMajor * 1.3);
-    this.drawSplineToothLoop(ctx, cx, cy, rMinor, rMajor, n, halfB, 'rgba(16, 185, 129, 0.25)', '#10b981');
-
-    ctx.fillStyle = '#10b981';
-    ctx.font = 'bold 14px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('2. HÌNH CẮT TRỤC THEN HOA (SHAFT)', cx, cy + rMajor * 1.6 + 45);
-    ctx.restore();
-  }
-
-  drawSplineToothLoop(ctx, cx, cy, rMinor, rMajor, n, halfB, fillColor, strokeColor) {
-    ctx.save();
-    ctx.fillStyle = fillColor;
-    ctx.strokeStyle = strokeColor;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
+  /**
+   * Tạo đường bao lỗ moay-ơ then hoa trong (Internal Spline Hole Contour)
+   * Rãnh then hoa khoét ra ngoài từ rMinor đến rMajor, miệng rãnh thông suốt!
+   */
+  traceSplineHubContour(ctx, cx, cy, rMinor, rMajor, n, halfB) {
     const angleStep = (Math.PI * 2) / n;
+    const yMin = Math.sqrt(Math.max(0, rMinor * rMinor - halfB * halfB));
+    const yMaj = Math.sqrt(Math.max(0, rMajor * rMajor - halfB * halfB));
 
     for (let i = 0; i < n; i++) {
-      const theta = i * angleStep;
+      const theta = i * angleStep - Math.PI / 2;
       const cosT = Math.cos(theta);
       const sinT = Math.sin(theta);
+      const radX = cosT;
+      const radY = sinT;
       const tanX = -sinT;
       const tanY = cosT;
 
-      const p1x = cx + rMajor * cosT - halfB * tanX;
-      const p1y = cy + rMajor * sinT - halfB * tanY;
-      const p2x = cx + rMajor * cosT + halfB * tanX;
-      const p2y = cy + rMajor * sinT + halfB * tanY;
+      const pm1x = cx + yMin * radX - halfB * tanX;
+      const pm1y = cy + yMin * radY - halfB * tanY;
 
-      const p0x = cx + rMinor * cosT - halfB * tanX;
-      const p0y = cy + rMinor * sinT - halfB * tanY;
-      const p3x = cx + rMinor * cosT + halfB * tanX;
-      const p3y = cy + rMinor * sinT + halfB * tanY;
+      const pt1x = cx + yMaj * radX - halfB * tanX;
+      const pt1y = cy + yMaj * radY - halfB * tanY;
 
-      if (i === 0) ctx.moveTo(p0x, p0y);
-      else ctx.lineTo(p0x, p0y);
-      ctx.lineTo(p1x, p1y);
-      ctx.lineTo(p2x, p2y);
-      ctx.lineTo(p3x, p3y);
+      const pt2x = cx + yMaj * radX + halfB * tanX;
+      const pt2y = cy + yMaj * radY + halfB * tanY;
 
-      const nextTheta = (i + 1) * angleStep;
+      const pm2x = cx + yMin * radX + halfB * tanX;
+      const pm2y = cy + yMin * radY + halfB * tanY;
+
+      if (i === 0) ctx.moveTo(pm1x, pm1y);
+      else ctx.lineTo(pm1x, pm1y);
+
+      ctx.lineTo(pt1x, pt1y);
+
+      const angT1 = Math.atan2(pt1y - cy, pt1x - cx);
+      let angT2 = Math.atan2(pt2y - cy, pt2x - cx);
+      while (angT2 <= angT1) angT2 += Math.PI * 2;
+      ctx.arc(cx, cy, rMajor, angT1, angT2, false);
+
+      ctx.lineTo(pm2x, pm2y);
+
+      const nextTheta = (i + 1) * angleStep - Math.PI / 2;
       const nextCos = Math.cos(nextTheta);
       const nextSin = Math.sin(nextTheta);
-      const nextTanX = -nextSin;
-      const nextTanY = nextCos;
-      const nextP0x = cx + rMinor * nextCos - halfB * nextTanX;
-      const nextP0y = cy + rMinor * nextSin - halfB * nextTanY;
+      const nextPm1x = cx + yMin * nextCos - halfB * (-nextSin);
+      const nextPm1y = cy + yMin * nextSin - halfB * nextCos;
 
-      const startAng = Math.atan2(p3y - cy, p3x - cx);
-      const endAng = Math.atan2(nextP0y - cy, nextP0x - cx);
-      ctx.arc(cx, cy, rMinor, startAng, endAng);
+      const startAng = Math.atan2(pm2y - cy, pm2x - cx);
+      let endAng = Math.atan2(nextPm1y - cy, nextPm1x - cx);
+      while (endAng <= startAng) endAng += Math.PI * 2;
+      ctx.arc(cx, cy, rMinor, startAng, endAng, false);
     }
     ctx.closePath();
-    ctx.fill();
+  }
+
+  /**
+   * Tạo đường bao trục then hoa ngoài (External Spline Shaft Contour)
+   * Răng then hoa nổi lên từ rMinor đến rMajor, các cạnh răng song song đối xứng!
+   */
+  traceSplineShaftContour(ctx, cx, cy, rMinor, rMajor, n, halfB) {
+    const angleStep = (Math.PI * 2) / n;
+    const yMin = Math.sqrt(Math.max(0, rMinor * rMinor - halfB * halfB));
+    const yMaj = Math.sqrt(Math.max(0, rMajor * rMajor - halfB * halfB));
+
+    for (let i = 0; i < n; i++) {
+      const theta = i * angleStep - Math.PI / 2;
+      const cosT = Math.cos(theta);
+      const sinT = Math.sin(theta);
+      const radX = cosT;
+      const radY = sinT;
+      const tanX = -sinT;
+      const tanY = cosT;
+
+      const pr1x = cx + yMin * radX - halfB * tanX;
+      const pr1y = cy + yMin * radY - halfB * tanY;
+
+      const pc1x = cx + yMaj * radX - halfB * tanX;
+      const pc1y = cy + yMaj * radY - halfB * tanY;
+
+      const pc2x = cx + yMaj * radX + halfB * tanX;
+      const pc2y = cy + yMaj * radY + halfB * tanY;
+
+      const pr2x = cx + yMin * radX + halfB * tanX;
+      const pr2y = cy + yMin * radY + halfB * tanY;
+
+      if (i === 0) ctx.moveTo(pr1x, pr1y);
+      else ctx.lineTo(pr1x, pr1y);
+
+      ctx.lineTo(pc1x, pc1y);
+
+      const angC1 = Math.atan2(pc1y - cy, pc1x - cx);
+      let angC2 = Math.atan2(pc2y - cy, pc2x - cx);
+      while (angC2 <= angC1) angC2 += Math.PI * 2;
+      ctx.arc(cx, cy, rMajor, angC1, angC2, false);
+
+      ctx.lineTo(pr2x, pr2y);
+
+      const nextTheta = (i + 1) * angleStep - Math.PI / 2;
+      const nextCos = Math.cos(nextTheta);
+      const nextSin = Math.sin(nextTheta);
+      const nextPr1x = cx + yMin * nextCos - halfB * (-nextSin);
+      const nextPr1y = cy + yMin * nextSin - halfB * nextCos;
+
+      const startAng = Math.atan2(pr2y - cy, pr2x - cx);
+      let endAng = Math.atan2(nextPr1y - cy, nextPr1x - cx);
+      while (endAng <= startAng) endAng += Math.PI * 2;
+      ctx.arc(cx, cy, rMinor, startAng, endAng, false);
+    }
+    ctx.closePath();
+  }
+
+  // 1. HÌNH CẮT LỖ THEN HOA (HUB)
+  drawSplineHub(ctx, cx, cy, rMinor, rMajor, rHub, n, halfB, data) {
+    ctx.save();
+    this.drawAxes(ctx, cx, cy, rHub);
+
+    // 1. Kim loại Moay-ơ kèm gạch mặt cắt (Chỉ gạch phần kim loại, rãnh và lỗ để rỗng)
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, rHub, 0, Math.PI * 2, false);
+    this.traceSplineHubContour(ctx, cx, cy, rMinor, rMajor, n, halfB);
+    ctx.fillStyle = 'rgba(30, 41, 59, 0.9)';
+    ctx.fill('evenodd');
+
+    ctx.clip('evenodd');
+    ctx.strokeStyle = '#334155';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    const ext = rHub * 1.5;
+    for (let x = -ext * 2; x <= ext * 2; x += 12) {
+      ctx.moveTo(cx + x, cy - ext);
+      ctx.lineTo(cx + x + ext * 2, cy + ext);
+    }
     ctx.stroke();
+    ctx.restore();
+
+    // 2. Đường bao ngoài Moay-ơ
+    ctx.beginPath();
+    ctx.arc(cx, cy, rHub, 0, Math.PI * 2);
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 2.0;
+    ctx.stroke();
+
+    // 3. Đường bao trong lỗ then hoa (Nét liền xanh cyan, miệng rãnh mở thông suốt)
+    ctx.beginPath();
+    this.traceSplineHubContour(ctx, cx, cy, rMinor, rMajor, n, halfB);
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+
+    // 4. Kích thước kỹ thuật cho Lỗ then hoa (b, D, d, n)
+    this.drawSplineHubDimensions(ctx, cx, cy, rMinor, rMajor, rHub, halfB, data);
+
+    // 5. Tiêu đề hình
+    ctx.fillStyle = '#38bdf8';
+    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('1. HÌNH CẮT LỖ THEN HOA (HUB CROSS-SECTION)', cx, cy + rHub + 45);
+
+    ctx.restore();
+  }
+
+  // 2. HÌNH CẮT TRỤC THEN HOA (SHAFT)
+  drawSplineShaft(ctx, cx, cy, rMinor, rMajor, rBound, n, halfB, data) {
+    ctx.save();
+    this.drawAxes(ctx, cx, cy, rBound);
+
+    // 1. Kim loại trục kèm gạch mặt cắt (Toàn bộ thân trục và răng then hoa)
+    ctx.save();
+    ctx.beginPath();
+    this.traceSplineShaftContour(ctx, cx, cy, rMinor, rMajor, n, halfB);
+    ctx.fillStyle = 'rgba(16, 185, 129, 0.15)';
+    ctx.fill();
+
+    ctx.clip();
+    ctx.strokeStyle = '#0e7490';
+    ctx.lineWidth = 1.0;
+    ctx.beginPath();
+    const ext = rBound * 1.5;
+    for (let x = -ext * 2; x <= ext * 2; x += 12) {
+      ctx.moveTo(cx + x, cy - ext);
+      ctx.lineTo(cx + x + ext * 2, cy + ext);
+    }
+    ctx.stroke();
+    ctx.restore();
+
+    // 2. Đường bao ngoài trục then hoa
+    ctx.beginPath();
+    this.traceSplineShaftContour(ctx, cx, cy, rMinor, rMajor, n, halfB);
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 2.2;
+    ctx.stroke();
+
+    // 3. Kích thước kỹ thuật cho Trục then hoa (b, D, d, n)
+    this.drawSplineShaftDimensions(ctx, cx, cy, rMinor, rMajor, rBound, halfB, data);
+
+    // 4. Tiêu đề hình
+    ctx.fillStyle = '#10b981';
+    ctx.font = 'bold 14px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('2. HÌNH CẮT TRỤC THEN HOA (SHAFT CROSS-SECTION)', cx, cy + rBound + 45);
+
+    ctx.restore();
+  }
+
+  // Đường gióng & Kích thước Lỗ then hoa
+  drawSplineHubDimensions(ctx, cx, cy, rMinor, rMajor, rHub, halfB, data) {
+    ctx.save();
+    const unitStr = data.isMetric ? ' mm' : ' in';
+
+    // 1. Bề rộng rãnh b ở đỉnh
+    const dimY_b = cy - rMajor - 25;
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(cx - halfB, cy - rMajor);
+    ctx.lineTo(cx - halfB, dimY_b - 5);
+    ctx.moveTo(cx + halfB, cy - rMajor);
+    ctx.lineTo(cx + halfB, dimY_b - 5);
+    ctx.stroke();
+
+    this.drawLinearDimension(ctx, cx - halfB, dimY_b, cx + halfB, dimY_b, `b = ${data.b.toFixed(2)}`, '#38bdf8');
+
+    // 2. Đường kính ngoài đáy rãnh D bên trái
+    const dimX_D = cx - rMajor - 35;
+    ctx.strokeStyle = '#f59e0b';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - rMajor);
+    ctx.lineTo(dimX_D - 5, cy - rMajor);
+    ctx.moveTo(cx, cy + rMajor);
+    ctx.lineTo(dimX_D - 5, cy + rMajor);
+    ctx.stroke();
+
+    this.drawLinearDimension(ctx, dimX_D, cy - rMajor, dimX_D, cy + rMajor, `D = ${data.D.toFixed(1)}${unitStr}`, '#fbbf24', -36);
+
+    // 3. Đường kính trong đỉnh răng d và số rãnh n ở tâm
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 12px "JetBrains Mono", Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Ø trong d = ${data.d.toFixed(1)}${unitStr}`, cx, cy + 18);
+    ctx.fillStyle = '#38bdf8';
+    ctx.fillText(`n = ${data.n} rãnh`, cx, cy + 34);
+
+    ctx.restore();
+  }
+
+  // Đường gióng & Kích thước Trục then hoa
+  drawSplineShaftDimensions(ctx, cx, cy, rMinor, rMajor, rBound, halfB, data) {
+    ctx.save();
+    const unitStr = data.isMetric ? ' mm' : ' in';
+
+    // 1. Bề rộng răng b ở đỉnh
+    const dimY_b = cy - rMajor - 25;
+    ctx.strokeStyle = '#64748b';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(cx - halfB, cy - rMajor);
+    ctx.lineTo(cx - halfB, dimY_b - 5);
+    ctx.moveTo(cx + halfB, cy - rMajor);
+    ctx.lineTo(cx + halfB, dimY_b - 5);
+    ctx.stroke();
+
+    this.drawLinearDimension(ctx, cx - halfB, dimY_b, cx + halfB, dimY_b, `b = ${data.b.toFixed(2)}`, '#10b981');
+
+    // 2. Đường kính ngoài đỉnh răng D bên trái
+    const dimX_D = cx - rMajor - 35;
+    ctx.strokeStyle = '#10b981';
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - rMajor);
+    ctx.lineTo(dimX_D - 5, cy - rMajor);
+    ctx.moveTo(cx, cy + rMajor);
+    ctx.lineTo(dimX_D - 5, cy + rMajor);
+    ctx.stroke();
+
+    this.drawLinearDimension(ctx, dimX_D, cy - rMajor, dimX_D, cy + rMajor, `D = ${data.D.toFixed(1)}${unitStr}`, '#10b981', -36);
+
+    // 3. Đường kính trong chân răng d và số răng n ở tâm
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = 'bold 12px "JetBrains Mono", Consolas, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`Ø chân d = ${data.d.toFixed(1)}${unitStr}`, cx, cy + 18);
+    ctx.fillStyle = '#10b981';
+    ctx.fillText(`n = ${data.n} răng`, cx, cy + 34);
+
     ctx.restore();
   }
 
@@ -11453,12 +11682,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('outTolShaft').textContent = res.tolerances.shaftKeywayTol;
       document.getElementById('outTolHub').textContent = res.tolerances.hubKeywayTol;
 
-      // Summary banner
-      document.getElementById('sumJointType').textContent = `Then Bằng (${res.numKeys} then)`;
-      document.getElementById('sumStandard').textContent = res.typeName.split('...')[1]?.trim() || res.typeName;
-      document.getElementById('sumDimensions').textContent = `${res.b.toFixed(1)} x ${res.h.toFixed(1)} x ${res.chosenL.toFixed(1)}`;
-      document.getElementById('sumShaftDiam').textContent = `${res.d.toFixed(1)} mm`;
-
     } else if (state.jointType === 'woodruff') {
       const res = KeysCalc.calculateWoodruffKey({
         units: state.units,
@@ -11489,15 +11712,13 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('outWoodruffDk').textContent = res.Dk.toFixed(2);
       document.getElementById('outWoodruffL').textContent = res.L.toFixed(2);
       document.getElementById('outWoodruffT1').textContent = res.t1.toFixed(2);
+      const elW_T2 = document.getElementById('outWoodruffT2');
+      if (elW_T2) elW_T2.textContent = res.t2.toFixed(2);
       document.getElementById('outWoodruffD1').textContent = res.d1.toFixed(2);
+      const elW_D2 = document.getElementById('outWoodruffD2');
+      if (elW_D2) elW_D2.textContent = res.d2.toFixed(2);
       document.getElementById('outWoodruffAreaS').textContent = res.areaShaft.toFixed(1);
       document.getElementById('outWoodruffAreaH').textContent = res.areaHub.toFixed(1);
-
-      // Summary
-      document.getElementById('sumJointType').textContent = 'Then Bán Nguyệt (Woodruff)';
-      document.getElementById('sumStandard').textContent = res.typeName.split('...')[1]?.trim() || res.typeName;
-      document.getElementById('sumDimensions').textContent = `${res.b.toFixed(1)} x ${res.h.toFixed(1)} (Ø${res.Dk.toFixed(1)})`;
-      document.getElementById('sumShaftDiam').textContent = `${res.d.toFixed(1)} mm`;
 
     } else if (state.jointType === 'spline') {
       const res = KeysCalc.calculateStraightSpline({
@@ -11535,12 +11756,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('outSplineCentering').textContent = res.tolerances.centeringType;
       document.getElementById('outSplineMinorFit').textContent = res.tolerances.minorDiameterFit;
       document.getElementById('outSplineWidthFit').textContent = res.tolerances.widthFit;
-
-      // Summary
-      document.getElementById('sumJointType').textContent = 'Then Hoa Chữ Nhật (Spline)';
-      document.getElementById('sumStandard').textContent = res.typeName.split('...')[1]?.trim() || res.typeName;
-      document.getElementById('sumDimensions').textContent = `${res.n} then | ${res.D.toFixed(1)}x${res.d.toFixed(1)}x${res.b.toFixed(1)}`;
-      document.getElementById('sumShaftDiam').textContent = `D = ${res.D.toFixed(1)} mm`;
     }
 
     // Send data to Canvas

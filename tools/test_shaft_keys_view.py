@@ -18,61 +18,47 @@ def run_test():
         print(f"Loading {file_url}...")
         page.goto(file_url, wait_until="networkidle")
 
-        # 1. Check Section 1.0 is collapsed
-        sec1_collapsed = page.eval_on_selector("#sec1Inputs", "el => el.classList.contains('collapsed')")
-        print(f"Section 1.0 collapsed: {sec1_collapsed}")
+        # 1. Verify summary banner is removed
+        banner_exists = page.locator(".summary-banner").count() > 0
+        print(f"Summary banner exists: {banner_exists} (should be False)")
 
-        # 2. Check font color and styling for input boxes
-        d_color = page.eval_on_selector("#txtParallelDiam", "el => window.getComputedStyle(el).color")
-        d_weight = page.eval_on_selector("#txtParallelDiam", "el => window.getComputedStyle(el).fontWeight")
-        print(f"txtParallelDiam color: {d_color}, font-weight: {d_weight}")
+        # 2. Parallel key screenshot
+        shot_par = os.path.join(artifacts_dir, "test_parallel_keys_no_banner.png")
+        page.screenshot(path=shot_par, full_page=True)
+        print(f"Saved: {shot_par}")
 
-        # 3. Check highlight on d1 and d2
-        d1_highlight = page.eval_on_selector("#outParallelD1", "el => el.classList.contains('highlight-key-param')")
-        d2_highlight = page.eval_on_selector("#outParallelD2", "el => el.classList.contains('highlight-key-param')")
-        lf_highlight = page.eval_on_selector("#outParallelLf", "el => el.classList.contains('highlight-key-param')")
-        print(f"Highlight check -> d1: {d1_highlight}, d2: {d2_highlight}, Lf: {lf_highlight}")
+        # 3. Switch to Woodruff tab
+        print("Switching to Woodruff tab...")
+        page.click("button[data-type='woodruff']")
+        page.wait_for_timeout(400)
 
-        # 4. Check dropdown default
-        sel_val = page.eval_on_selector("#selParallelType", "el => el.value")
-        sel_text = page.eval_on_selector("#selParallelType", "el => el.options[el.selectedIndex].text")
-        print(f"Default standard: {sel_val} -> {sel_text}")
+        badge_woodruff = page.inner_text(".canvas-title-badge")
+        print(f"Woodruff badge: {badge_woodruff.encode('ascii', 'ignore').decode()}")
 
-        # Screenshot 1: 1 then (Default)
-        shot1 = os.path.join(artifacts_dir, "keys_2views_1key.png")
-        page.screenshot(path=shot1, full_page=True)
-        print(f"Saved: {shot1}")
+        shot_woodruff = os.path.join(artifacts_dir, "test_woodruff_2views.png")
+        page.screenshot(path=shot_woodruff, full_page=True)
+        print(f"Saved: {shot_woodruff}")
 
-        # Zoom into Canvas
         canvas_box = page.locator(".canvas-container-box")
-        shot_canvas_1key = os.path.join(artifacts_dir, "keys_canvas_2views_1key.png")
-        canvas_box.screenshot(path=shot_canvas_1key)
-        print(f"Saved: {shot_canvas_1key}")
+        shot_canvas_woodruff = os.path.join(artifacts_dir, "test_woodruff_canvas.png")
+        canvas_box.screenshot(path=shot_canvas_woodruff)
+        print(f"Saved: {shot_canvas_woodruff}")
 
-        # Screenshot 2: 2 thens
-        page.select_option("#selParallelNumKeys", "2")
-        page.wait_for_timeout(300)
-        shot_canvas_2keys = os.path.join(artifacts_dir, "keys_canvas_2views_2keys.png")
-        canvas_box.screenshot(path=shot_canvas_2keys)
-        print(f"Saved: {shot_canvas_2keys}")
+        # 4. Switch to Splines tab
+        print("Switching to Splines tab...")
+        page.click("button[data-type='spline']")
+        page.wait_for_timeout(400)
 
-        # Screenshot 3: 3 thens
-        page.select_option("#selParallelNumKeys", "3")
-        page.wait_for_timeout(300)
-        shot_canvas_3keys = os.path.join(artifacts_dir, "keys_canvas_2views_3keys.png")
-        canvas_box.screenshot(path=shot_canvas_3keys)
-        print(f"Saved: {shot_canvas_3keys}")
+        badge_spline = page.inner_text(".canvas-title-badge")
+        print(f"Splines badge: {badge_spline.encode('ascii', 'ignore').decode()}")
 
-        # Screenshot 4: 4 thens
-        page.select_option("#selParallelNumKeys", "4")
-        page.wait_for_timeout(300)
-        shot_canvas_4keys = os.path.join(artifacts_dir, "keys_canvas_2views_4keys.png")
-        canvas_box.screenshot(path=shot_canvas_4keys)
-        print(f"Saved: {shot_canvas_4keys}")
+        shot_spline = os.path.join(artifacts_dir, "test_splines_2views.png")
+        page.screenshot(path=shot_spline, full_page=True)
+        print(f"Saved: {shot_spline}")
 
-        # Reset back to 1 then
-        page.select_option("#selParallelNumKeys", "1")
-        page.wait_for_timeout(300)
+        shot_canvas_spline = os.path.join(artifacts_dir, "test_splines_canvas.png")
+        canvas_box.screenshot(path=shot_canvas_spline)
+        print(f"Saved: {shot_canvas_spline}")
 
         browser.close()
 

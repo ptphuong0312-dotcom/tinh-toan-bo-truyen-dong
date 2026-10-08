@@ -296,12 +296,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('outTolShaft').textContent = res.tolerances.shaftKeywayTol;
       document.getElementById('outTolHub').textContent = res.tolerances.hubKeywayTol;
 
-      // Summary banner
-      document.getElementById('sumJointType').textContent = `Then Bằng (${res.numKeys} then)`;
-      document.getElementById('sumStandard').textContent = res.typeName.split('...')[1]?.trim() || res.typeName;
-      document.getElementById('sumDimensions').textContent = `${res.b.toFixed(1)} x ${res.h.toFixed(1)} x ${res.chosenL.toFixed(1)}`;
-      document.getElementById('sumShaftDiam').textContent = `${res.d.toFixed(1)} mm`;
-
     } else if (state.jointType === 'woodruff') {
       const res = KeysCalc.calculateWoodruffKey({
         units: state.units,
@@ -332,15 +326,13 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('outWoodruffDk').textContent = res.Dk.toFixed(2);
       document.getElementById('outWoodruffL').textContent = res.L.toFixed(2);
       document.getElementById('outWoodruffT1').textContent = res.t1.toFixed(2);
+      const elW_T2 = document.getElementById('outWoodruffT2');
+      if (elW_T2) elW_T2.textContent = res.t2.toFixed(2);
       document.getElementById('outWoodruffD1').textContent = res.d1.toFixed(2);
+      const elW_D2 = document.getElementById('outWoodruffD2');
+      if (elW_D2) elW_D2.textContent = res.d2.toFixed(2);
       document.getElementById('outWoodruffAreaS').textContent = res.areaShaft.toFixed(1);
       document.getElementById('outWoodruffAreaH').textContent = res.areaHub.toFixed(1);
-
-      // Summary
-      document.getElementById('sumJointType').textContent = 'Then Bán Nguyệt (Woodruff)';
-      document.getElementById('sumStandard').textContent = res.typeName.split('...')[1]?.trim() || res.typeName;
-      document.getElementById('sumDimensions').textContent = `${res.b.toFixed(1)} x ${res.h.toFixed(1)} (Ø${res.Dk.toFixed(1)})`;
-      document.getElementById('sumShaftDiam').textContent = `${res.d.toFixed(1)} mm`;
 
     } else if (state.jointType === 'spline') {
       const res = KeysCalc.calculateStraightSpline({
@@ -378,12 +370,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('outSplineCentering').textContent = res.tolerances.centeringType;
       document.getElementById('outSplineMinorFit').textContent = res.tolerances.minorDiameterFit;
       document.getElementById('outSplineWidthFit').textContent = res.tolerances.widthFit;
-
-      // Summary
-      document.getElementById('sumJointType').textContent = 'Then Hoa Chữ Nhật (Spline)';
-      document.getElementById('sumStandard').textContent = res.typeName.split('...')[1]?.trim() || res.typeName;
-      document.getElementById('sumDimensions').textContent = `${res.n} then | ${res.D.toFixed(1)}x${res.d.toFixed(1)}x${res.b.toFixed(1)}`;
-      document.getElementById('sumShaftDiam').textContent = `D = ${res.D.toFixed(1)} mm`;
     }
 
     // Send data to Canvas
