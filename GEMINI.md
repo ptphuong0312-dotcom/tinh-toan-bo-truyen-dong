@@ -2381,3 +2381,58 @@ ho_{f0} / \cos\gamma$.
      * Vành vai trục vít lấy chuẩn theo $r_{f1}(x)$, khớp liền mạch xuống $r_{Shaft}$, loại bỏ hoàn toàn gờ lơ lửng.
    - **Chuẩn Hóa Biên Dạng Thân Khai ZI & Duplex (DIN 3975 Section 4.3)**:
      * Biên dạng pháp tuyến của ZI tuân theo thanh răng thân khai tiêu chuẩn $\alpha_n = 20^\circ$, `slope` giữ chuẩn $\tan\alpha_n \approx 0.364$, phục hồi độ đầy đặn và tính đối xứng hoàn hảo của răng bánh vít Duplex.
+
+
+---
+
+### Quy Tắc 99: Quy Chuẩn Lưu Trữ Toàn Diện 30 Mô-Đun MITCalc 1.74 & Giao Thức Phản Hồi Tức Thì (Instant Response & Full Suite Knowledge Protocol)
+**Ngày áp dụng**: 08/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+1. **Bài Học Thực Tế Về Độ Trễ Phản Hồi**:
+   - Khi người dùng hỏi về danh mục các module còn lại trong MITCalc 1.74, việc AI tự động mở các tiến trình Excel nền (`Excel.Application` qua COM) trên các file có chứa Macro (`MITCalc_Run.xls`) đã làm Excel bị treo ngầm (chờ Macro Dialog) gây chậm trễ thời gian trả lời tới 40+ phút.
+   - **Quy tắc bất biến**: KHÔNG BAO GIỜ mở Excel COM trên các file launcher/macro khi chỉ cần tra cứu thông tin tĩnh. Mọi cấu trúc và danh mục phải được ghi nhớ và nạp sẵn trong tri thức tĩnh (`GEMINI.md` và `SKILL.md`) để có thể phản hồi cho người dùng ngay trong 3-5 giây!
+2. **Bản Đồ Toàn Bộ 30 Nhóm Mô-Đun Tính Toán Cơ Khí Của MITCalc 1.74 Gốc**:
+   - **Nhóm 1: Bánh Răng (Gears)**:
+     * `gear1` (`Gear1_01.xlsb`): Bánh răng trụ ăn khớp ngoài (ISO 6336, DIN 3990) -> [ĐÃ XONG - Module 1].
+     * `gear2` (`Gear2_01.xlsb`): Bánh răng côn tiêu chuẩn cổ điển (DIN 3971) -> [ĐÃ XONG - Module 2].
+     * `gear3` (`Gear3_01.xlsb`): Bánh răng trụ ăn khớp trong (ISO 6336) -> [ĐÃ XONG - Tích hợp Module 1].
+     * `gear4` (`Gear4_01.xlsb`): Trục vít - bánh vít tiêu chuẩn (DIN 3975, DIN 3996) -> [ĐÃ XONG - Module 3].
+     * `gear5` (`Gear5_01.xlsb`): Bánh răng hành tinh (Planetary/Epicyclic Gear - 2K-H, 3K) -> [Ưu tiên kế tiếp].
+     * `gear6` (`Gear6_01.xlsb`): Bánh răng trụ 3 bánh (Spur Gearing 3 Gears Train).
+     * `gear7` (`Gear7_01.xlsb`): Bánh răng côn & Hypoid hiện đại (ISO 23509) -> [ĐÃ XONG - Module 2 Nâng cao].
+     * `gearadds` (`gearadda_01.xlsb`): Tính toán phụ trợ bánh răng -> [ĐÃ XONG - Tích hợp Mục 15.0].
+     * *Module 5 Mở rộng của Web App*: Trục vít nâng cao ZA, ZN, ZI, ZK, ZH, Duplex biến bước, Glôbôit lõm họng -> [ĐÃ XONG - Module 5].
+   - **Nhóm 2: Truyền Động Đai & Xích (Belts & Chains)**:
+     * `vbelts` (`vbelt_01.xlsb`): Bộ truyền đai thang (V-Belt: SPZ, SPA, SPB, SPC, A, B, C... - DIN 2215, ISO 4184).
+     * `tbelts` (`TBelt_01.xlsb`): Bộ truyền đai răng đồng bộ (Timing Belt: HTD, T, AT, MXL, XL, L, H... - ISO 5296, DIN 7721).
+     * `chains` (`chains_01.xlsb`): Bộ truyền xích con lăn (Roller Chain - ISO 606, DIN 8187, ANSI B29.1).
+     * `mpulley` (`mpulley_01.xlsb`): Truyền động đai/xích nhiều puli/đĩa xích.
+   - **Nhóm 3: Trục, Then & Khớp Nối (Shafts & Couplings)**:
+     * `shafts` (`shaft_01.xlsb`): Thiết kế & kiểm nghiệm bền trục, độ võng, dao động (DIN 743).
+     * `shaftcon` (`ShaftCon_01.xlsb`): Mối ghép Then bằng, then bán nguyệt, then hoa răng chữ nhật & then hoa thân khai (DIN 6885, DIN 5480, ISO 4156).
+     * `shaftconf` (`ShaftConF_01.xlsb`): Mối ghép dôi / căng ép nhiệt-thủy lực (DIN 7190, ISO 286).
+     * `pins` (`Pins_01.xlsb`): Mối ghép chốt trụ & chốt côn (ISO 2338, ISO 2339).
+   - **Nhóm 4: Ổ Lăn (Bearings)**:
+     * `bearings` (`BearingSKF_01.xlsb`, `BearingFAG_01.xlsb`): Tính chọn và kiểm nghiệm tuổi thọ ổ lăn (ISO 281).
+   - **Nhóm 5: Lò Xo Kỹ Thuật (Springs)**:
+     * `sprcompress` (`sprcomp_01.xlsb`): Lò xo nén trụ (DIN 2089, DIN 2095).
+     * `sprtension` (`sprtens_01.xlsb`): Lò xo kéo trụ (DIN 2089, DIN 2097).
+     * `sprtorsion` (`sprtors_01.xlsb`): Lò xo xoắn góc (DIN 2088).
+     * `springs` (`Springs_01.xlsb`): Lò xo đĩa Belleville (DIN 2093), lò xo xoắn phẳng (Spiral), lò xo lá (Leaf).
+   - **Nhóm 6: Mối Ghép Cố Định (Connections & Fasteners)**:
+     * `boltcon` (`BoltCon_01.xlsb`): Mối ghép ren bulông xiết căng (VDI 2230).
+     * `welding` (`Welding_01.xlsb`): Mối hàn liên kết cơ khí (DIN 18800).
+   - **Nhóm 7: Sức Bền & Kết Cấu (Structural Mechanics)**:
+     * `beams` (`beam_01.xlsb`): Dầm thẳng chịu uốn mặt cắt không đổi.
+     * `buckling` (`buckling_01.xlsb`): Ổn định uốn dọc cột chịu nén (Euler, Tetmajer).
+     * `plates` (`plates_01.xlsb`): Độ võng và ứng suất tấm phẳng tròn/chữ nhật.
+     * `shells` (`shells_01.xlsb`): Bình áp lực & vỏ tròn xoay mỏng.
+     * `sections` (`sections_01.xlsb`): Đặc trưng hình học mặt cắt (A, I, W).
+   - **Nhóm 8: Dung Sai & Tiện Ích Kỹ Thuật (Tolerances & Utilities)**:
+     * `tolerances` (`Tolerances_01.xlsb`): Bảng tra dung sai & lắp ghép (ISO 286, ANSI B4.1).
+     * `tolanalysis1d` (`TolAnalysis1D_01.xlsb`): Chuỗi kích thước 1D.
+     * `tolanalysis3d` (`TolAnalysis3D_01.xlsb`): Chuỗi kích thước 2D & 3D.
+     * `tformulas` (`tformulas_01.xlsb`): Sổ tay công thức cơ lý.
+     * `unitconv` (`UnitConv_01.xlsb`): Chuyển đổi đơn vị & độ cứng.
+     * `aerodynamics` (`Aero_01.xlsb`): Khí động học ô tô.
+     * `ballistics` (`External_ballistics_01.xlsb`): Quỹ đạo đạn đạo ngoài.

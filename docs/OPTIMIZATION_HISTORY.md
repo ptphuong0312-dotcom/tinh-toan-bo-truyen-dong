@@ -3895,3 +3895,11 @@ ho_{f0}$.
     - `scratch/preset_mesh_duplex.png`, `scratch/preset_mesh_globoid.png`, `scratch/preset_mesh_zh.png`: Sườn răng bánh vít ăn khớp láng mịn, 0 nấc bậc thang.
     - `scratch/full_iso_duplex.png`, `scratch/full_wheel_duplex.png`, `scratch/full_worm_duplex.png`: Bánh vít Duplex răng nở tròn đều, vành răng phẳng mượt.
     - `scratch/full_iso_globoid.png`, `scratch/full_worm_globoid.png`: Trục vít Glôbôit răng đều dày suốt chiều dài, ôm khít bánh vít.
+
+
+---
+
+### Quy Tắc 99: Quy Chuẩn Lưu Trữ Toàn Diện 30 Mô-Đun MITCalc 1.74 & Giao Thức Phản Hồi Tức Thì (Instant Response & Full Suite Knowledge Protocol)
+- **Ngày hoàn thành**: 08/10/2026.
+- **Hiện tượng**: Lệnh mở file `MITCalc_Run.xls` bằng Excel COM gây treo ngầm do Macro VBA làm chậm phản hồi danh mục mô-đun.
+- **Giải pháp**: Dừng và kill toàn bộ tác vụ Excel treo, trích xuất và số hóa toàn bộ danh mục 30 mô-đun của MITCalc 1.74 lưu thẳng vào `GEMINI.md` và `SKILL.md`. Thiết lập nguyên tắc phản hồi tĩnh tức thì trong 3-5 giây cho mọi câu hỏi cấu trúc mô-đun trong tương lai.

@@ -2268,3 +2268,22 @@ ho_{f0}$.
    - **Chuẩn Hóa Biên Dạng Thân Khai ZI & Duplex (DIN 3975 Section 4.3)**:
      * Biên dạng pháp tuyến của ZI tuân theo thanh răng thân khai tiêu chuẩn $\alpha_n = 20^\circ$, `slope` giữ chuẩn $\tan\alpha_n \approx 0.364$, phục hồi độ đầy đặn và tính đối xứng hoàn hảo của răng bánh vít Duplex.
 
+
+
+---
+
+### Quy Tắc 99: Quy Chuẩn Lưu Trữ Toàn Diện 30 Mô-Đun MITCalc 1.74 & Giao Thức Phản Hồi Tức Thì (Instant Response & Full Suite Knowledge Protocol)
+**Ngày áp dụng**: 08/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+1. **Bài Học Thực Tế Về Độ Trễ Phản Hồi**:
+   - Khi người dùng hỏi về danh mục các module còn lại trong MITCalc 1.74, việc AI tự động mở các tiến trình Excel nền (`Excel.Application` qua COM) trên các file có chứa Macro (`MITCalc_Run.xls`) đã làm Excel bị treo ngầm (chờ Macro Dialog) gây chậm trễ thời gian trả lời tới 40+ phút.
+   - **Quy tắc bất biến**: KHÔNG BAO GIỜ mở Excel COM trên các file launcher/macro khi chỉ cần tra cứu thông tin tĩnh. Mọi cấu trúc và danh mục phải được ghi nhớ và nạp sẵn trong tri thức tĩnh (`GEMINI.md` và `SKILL.md`) để có thể phản hồi cho người dùng ngay trong 3-5 giây!
+2. **Bản Đồ Toàn Bộ 30 Nhóm Mô-Đun Tính Toán Cơ Khí Của MITCalc 1.74 Gốc**:
+   - Nhóm 1: Bánh Răng (Gears) - `gear1` (Trụ ngoài), `gear2` (Côn DIN 3971), `gear3` (Trụ trong), `gear4` (Trục vít tiêu chuẩn), `gear5` (Hành tinh), `gear6` (3 bánh), `gear7` (Côn ISO 23509), `gearadds` (Phụ trợ) + Web App Module 5 (Trục vít mở rộng ZA, ZN, ZI, ZK, ZH, Duplex, Glôbôit).
+   - Nhóm 2: Đai & Xích (Belts & Chains) - `vbelts` (Đai thang), `tbelts` (Đai răng đồng bộ), `chains` (Xích con lăn), `mpulley` (Nhiều puli).
+   - Nhóm 3: Trục, Then & Khớp Nối (Shafts & Couplings) - `shafts` (Trục DIN 743), `shaftcon` (Then & then hoa DIN 6885, DIN 5480), `shaftconf` (Ghép dôi DIN 7190), `pins` (Chốt ISO 2338).
+   - Nhóm 4: Ổ Lăn (Bearings) - `bearings` (SKF, FAG, INA - ISO 281).
+   - Nhóm 5: Lò Xo Kỹ Thuật (Springs) - `sprcompress` (Nén), `sprtension` (Kéo), `sprtorsion` (Xoắn), `springs` (Đĩa Belleville, Phẳng, Lá).
+   - Nhóm 6: Mối Ghép Cố Định (Connections) - `boltcon` (Bulông VDI 2230), `welding` (Hàn DIN 18800).
+   - Nhóm 7: Sức Bền & Kết Cấu (Structural) - `beams` (Dầm), `buckling` (Ổn định uốn dọc), `plates` (Tấm phẳng), `shells` (Bình áp lực), `sections` (Mặt cắt).
+   - Nhóm 8: Dung Sai & Tiện Ích (Tolerances & Utilities) - `tolerances` (ISO 286), `tolanalysis1d`, `tolanalysis3d`, `tformulas`, `unitconv`, `aerodynamics`, `ballistics`.
