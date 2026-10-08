@@ -3903,3 +3903,28 @@ ho_{f0}$.
 - **Ngày hoàn thành**: 08/10/2026.
 - **Hiện tượng**: Lệnh mở file `MITCalc_Run.xls` bằng Excel COM gây treo ngầm do Macro VBA làm chậm phản hồi danh mục mô-đun.
 - **Giải pháp**: Dừng và kill toàn bộ tác vụ Excel treo, trích xuất và số hóa toàn bộ danh mục 30 mô-đun của MITCalc 1.74 lưu thẳng vào `GEMINI.md` và `SKILL.md`. Thiết lập nguyên tắc phản hồi tĩnh tức thì trong 3-5 giây cho mọi câu hỏi cấu trúc mô-đun trong tương lai.
+
+---
+
+### Quy Tắc 100: Quy Chuẩn Xây Dựng Mô-Đun 6 Bảng Tra Dung Sai & Lắp Ghép Tiêu Chuẩn Quốc Tế ISO 286 / ANSI B4.1 / ISO 2768-1 (Comprehensive Tolerances & Fits Engineering Protocol)
+- **Ngày hoàn thành**: 08/10/2026.
+- **Yêu cầu & Phạm vi**:
+  * Xây dựng độc lập Module 6: Bảng tra dung sai và lắp ghép tiêu chuẩn ISO 286 / ANSI B4.1.
+  * Tuân thủ Quy Tắc 1 (Zero-Force Scope Protocol), Quy Tắc 7 (CORS-free single bundle offline), Quy Tắc 6 (Live Audit $\Delta = 0.000000$).
+- **Chi tiết triển khai kỹ thuật**:
+  1. *Cơ sở dữ liệu master*:
+     - Trích xuất 100% dữ liệu gốc từ C:\MITCalc\tolerances\Tolerances_01.xlsb.
+     - 20 cấp IT01..IT18, 41 dải bước kích thước cho sai lệch cơ bản Lỗ ..ZC$ & Trục ..zc$, bảng $\Delta$ 26 bước kích thước.
+     - 10 nhóm preferred fits ANSI B4.1 ( 1..9, LC 1..11, LT 1..6, LN 1..3, FN 1..5$).
+     - Dung sai kích thước chung ISO 2768-1 (, m, c, v$), bảng ma trận 19 phương pháp gia công và dải cấp IT.
+  2. *Bộ tính toán & Fit Design Engine*:
+     - calculateISOFit, calculateANSIFit, lookupISO2768.
+     - Fit Design Engine: tự động đề xuất Top 15 kiểu lắp ghép tối ưu theo khoảng hở / độ dôi mong muốn kèm nút [ Áp Dụng ].
+  3. *Mô phỏng 2D Canvas*:
+     - Vẽ biểu đồ miền dung sai tương tác, đường 0, miền Lỗ (Cyan #06b6d4), miền Trục (Amber #f59e0b), các đường gióng kích thước sai lệch , EI, es, ei$ và khe hở $ / độ dôi $.
+     - Tích hợp điều khiển cảm ứng đa điểm (Multi-touch Pan/Zoom).
+  4. *Kiểm thử nghiệm thu*:
+     - Đóng gói bundle modules/tolerances/js/tolerances-engine.bundle.js (165 KB).
+     - Script kiểm thử đối chiếu Excel COM: 	ools/test_tolerances_qc.py và batch file RA_SOAT_SONG_SONG_DUNG_SAI.bat.
+     - **Kết quả Live Audit: 24/24 kịch bản kiểm thử (16 ISO + 8 ANSI) đạt PASS tuyệt đối với $\Delta = 0.000000$**.
+

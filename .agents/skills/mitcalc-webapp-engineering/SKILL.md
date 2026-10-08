@@ -2287,3 +2287,19 @@ ho_{f0}$.
    - Nhóm 6: Mối Ghép Cố Định (Connections) - `boltcon` (Bulông VDI 2230), `welding` (Hàn DIN 18800).
    - Nhóm 7: Sức Bền & Kết Cấu (Structural) - `beams` (Dầm), `buckling` (Ổn định uốn dọc), `plates` (Tấm phẳng), `shells` (Bình áp lực), `sections` (Mặt cắt).
    - Nhóm 8: Dung Sai & Tiện Ích (Tolerances & Utilities) - `tolerances` (ISO 286), `tolanalysis1d`, `tolanalysis3d`, `tformulas`, `unitconv`, `aerodynamics`, `ballistics`.
+
+---
+
+### Quy Tắc 100: Quy Chuẩn Xây Dựng Mô-Đun 6 Bảng Tra Dung Sai & Lắp Ghép Tiêu Chuẩn Quốc Tế ISO 286 / ANSI B4.1 / ISO 2768-1 (Comprehensive Tolerances & Fits Engineering Protocol)
+**Ngày áp dụng**: 08/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+- **Kiến trúc mô-đun**: Độc lập 100% offline, zero-CORS không phụ thuộc Node.js hay Web Server, bundle tại modules/tolerances/js/tolerances-engine.bundle.js (165 KB).
+- **Bộ dữ liệu gốc Zero-Tolerance**:
+  * Trích xuất trực tiếp từ C:\MITCalc\tolerances\Tolerances_01.xlsb.
+  * ISO 286: 20 cấp IT01..IT18, 41 dải bước kích thước sai lệch cơ bản Lỗ ..ZC$ & Trục ..zc$ (bảo đảm chính xác cho các khoảng bước phụ $\le 500\text{ mm}$), bảng hiệu chỉnh $\Delta$ 26 bước cho Lỗ , M, N$ và ..ZC$.
+  * Bảng 10 danh mục preferred fits ANSI B4.1 (, LC, LT, LN, FN$), bảng dung sai chung ISO 2768-1 (kích thước dài, vát mép, góc), bảng ma trận 19 phương pháp gia công cơ khí vs cấp IT.
+- **Tính năng nổi bật**:
+  * Tab 1: 3 Master Blocks Accordion, tra cứu nhanh ISO/ANSI, tính toán lắp ghép tự động, công cụ Fit Design Engine đề xuất Top 15 kiểu lắp tối ưu kèm nút [ Áp Dụng ].
+  * Tab 2: Biểu đồ miền dung sai 2D Canvas trực quan với đường 0, miền Lỗ cyan, miền Trục amber, hiển thị vạch kích thước dung sai và khe hở/độ dôi, hỗ trợ cảm ứng Pan/Zoom đa điểm.
+- **Live Audit Test**: Script 	ools/test_tolerances_qc.py và batch 1-click RA_SOAT_SONG_SONG_DUNG_SAI.bat đạt **24/24 test cases PASS tuyệt đối với $\Delta = 0.000000$** so với Excel COM.
+

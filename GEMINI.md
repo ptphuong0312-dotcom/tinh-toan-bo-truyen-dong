@@ -2436,3 +2436,40 @@ ho_{f0} / \cos\gamma$.
      * `unitconv` (`UnitConv_01.xlsb`): Chuyển đổi đơn vị & độ cứng.
      * `aerodynamics` (`Aero_01.xlsb`): Khí động học ô tô.
      * `ballistics` (`External_ballistics_01.xlsb`): Quỹ đạo đạn đạo ngoài.
+
+---
+
+### Quy Tắc 100: Quy Chuẩn Xây Dựng Mô-Đun 6 Bảng Tra Dung Sai & Lắp Ghép Tiêu Chuẩn Quốc Tế ISO 286 / ANSI B4.1 / ISO 2768-1 (Comprehensive Tolerances & Fits Engineering Protocol)
+**Ngày áp dụng**: 08/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Phạm Vi Kỹ Thuật & Cấu Trúc Độc Lập**:
+   - Triển khai độc lập 100% offline, zero-CORS không phụ thuộc server mạng hay Node.js qua giao thức ile:///.
+   - Tuân thủ Quy Tắc 1 (Zero-Force Scope Protocol): thuần túy về dung sai hình học, sai lệch giới hạn (, EI, es, ei$), khe hở / độ dôi (, N$), khuyến nghị cấp chính xác và công nghệ gia công, lược bỏ hoàn toàn tính toán lực và áp suất ép.
+   - Giao diện 2 Tab chuẩn MITCalc 1.74:
+     * Tab 1 ⚙️ Bảng Tính Cơ Khí (Calculator): 3 Master Blocks Accordion chuẩn hóa (Xanh lá #107c41, Vàng cam #c55a11, Xanh dương #1e3a8a).
+     * Tab 2 📐 Biểu Đồ Miền Dung Sai (Canvas): Trực quan hóa tương tác 2D, đường không Zero line, miền dung sai Lỗ/Trục có vân gạch chéo cơ khí ^\circ$, hiển thị khoảng hở/độ dôi, hỗ trợ chuột và Multi-Touch Pan/Zoom trên Mobile.
+2. **Cơ Sở Dữ Liệu Dung Sai Master Chuẩn Tuyệt Đối (Zero-Tolerance Database Architecture)**:
+   - Trích xuất 100% dữ liệu gốc từ Tolerances_01.xlsb (sheet Data1, Tables):
+     * **ISO 286**: 20 cấp chính xác  \dots IT18$ trên 21 dải kích thước ( \to 3150\text{ mm}$).
+     * **Miền sai lệch cơ bản Lỗ  \dots ZC$ & Trục  \dots zc$**: Bao phủ đủ **41 dải bước kích thước chi tiết** (đặc biệt dải $\le 500\text{ mm}$ có các bước hẹp như 10-14, 14-18, 18-24... 315-355, 355-400... để đảm bảo các giá trị sai lệch cơ bản như $ ở  = 350\text{ mm}$ đạt chính xác $\Delta = 0.000000$).
+     * **Giá trị hiệu chỉnh $\Delta$ cho Lỗ**: Đầy đủ 26 bước kích thước cho , M, N$ trong IT3-IT8 và  \dots ZC$ trong IT7-IT8 theo công thức đảo đối xứng trục có hiệu chỉnh $\Delta$.
+     * **Cơ chế đối xứng  / JS$**:  = +IT/2$,  = -IT/2$ (và  = +IT/2, EI = -IT/2$).
+     * **Bảng Preferred Fits ISO**: Toàn bộ hệ Lỗ cơ bản (Clearance 44, Transition 19, Interference 19) và hệ Trục cơ bản (Clearance 41, Transition 17, Interference 7).
+     * **ANSI B4.1**: Đơn vị ^{-3}\text{ in}$ (mil), 10 cấp tiêu chuẩn 4..13, dải kích thước ANSI, và 10 danh mục preferred fits ( 1 \dots RC 9$,  1 \dots LC 11$,  1 \dots LT 6$,  1 \dots LN 3$,  1 \dots FN 5$).
+     * **ISO 2768-1**: Dung sai kích thước chung (dài, vát mép/bán kính, góc) cho 4 cấp , m, c, v$.
+     * **Công nghệ gia công & Độ nhám bề mặt**: Bảng ma trận 19 phương pháp gia công và dải cấp IT tương ứng ( \dots IT16$) kèm dải độ nhám $ ($\mu m$).
+3. **Thuật Toán Tính Toán Cơ Khí & Fit Design Engine**:
+   - calculateISOFit(D, holeLetter, holeGrade, shaftLetter, shaftGrade): Xác định , ES, ei, es$, tính {\max}, D_{\min}, d_{\max}, d_{\min}$, khe hở {\max}, S_{\min}$ hoặc độ dôi {\max}, N_{\min}$, phân loại chính xác kiểu lắp (Lỏng / Trung gian / Chặt) và dung sai lắp ghép {fit} = T_H + T_s$.
+   - calculateANSIFit(D_inch, fitCategory, fitIndex): Tra và tính toán dung sai Lỗ/Trục, khe hở/độ dôi theo hệ inch và mil.
+   - designFits(D, system, fitType, desiredMax, desiredMin): Động cơ thiết kế mối ghép tự động, quét hàng ngàn tổ hợp cấp dung sai theo hệ Lỗ cơ bản ($) hoặc Trục cơ bản ($), lọc theo loại lắp ghép và tính sai số tổng hợp so với yêu cầu, trả về Top 15 giải pháp tối ưu kèm nút [ Áp Dụng ] 1-click đưa trực tiếp vào Mục 1.0 và tự chuyển sang Tab 2 Canvas 2D.
+4. **Đồ Họa Biểu Đồ Miền Dung Sai 2D Canvas (Interactive Tolerance Zone Engine)**:
+   - Đường không danh nghĩa Zero line (\text{ }\mu m$) với vạch kích thước danh nghĩa $.
+   - Miền dung sai Lỗ: Màu Cyan #06b6d4, gạch chéo kỹ thuật ^\circ$, hiển thị , EI$.
+   - Miền dung sai Trục: Màu Amber #f59e0b, gạch chéo kỹ thuật $-45^\circ$, hiển thị , ei$.
+   - Miền khe hở ($) hoặc miền độ dôi ($) có mũi tên kích thước rõ nét.
+   - Hỗ trợ thao tác cảm ứng đa điểm chuột & Multi-touch trên Mobile: Kéo Pan, Lăn chuột / Chụm ngón tay Pinch-Zoom.
+5. **Quy Chuẩn Live Audit Tuyệt Đối ($\Delta = 0.000000$)**:
+   - Script 	ools/test_tolerances_qc.py đối chiếu song song tự động với file Excel COM Tolerances_01.xlsb.
+   - File thực thi 1-Click: RA_SOAT_SONG_SONG_DUNG_SAI.bat.
+   - Toàn bộ 24/24 kịch bản kiểm thử (16 trường hợp ISO 286 bao gồm cả Clearance, Transition, Interference, các kích thước đặc biệt  = 25, 50, 100, 350\text{ mm}$ và 8 trường hợp ANSI B4.1) đều phải đạt **100% PASS với $\Delta = 0.000000$**.
+
