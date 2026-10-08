@@ -309,7 +309,8 @@ body {
 }
 
 .col-val {
-  width: 180px;
+  min-width: 240px;
+  width: 270px;
 }
 
 .col-unit {
@@ -339,14 +340,27 @@ body {
 }
 
 .user-select {
-  background: #ffffff !important;
-  color: #111827 !important;
-  border: 1.5px solid #2563eb !important;
+  background: #ffffff;
+  color: #111827;
+  border: 1.5px solid #2563eb;
   border-radius: 4px;
   padding: 6px 8px;
   font-size: 0.85rem;
   width: 100%;
+  max-width: 320px;
   outline: none;
+}
+
+.user-select optgroup {
+  font-weight: 700;
+  color: #334155;
+  background: #f1f5f9;
+  padding: 4px 0;
+}
+
+.user-select option {
+  padding: 4px 6px;
+  background: #ffffff;
 }
 
 .output-eng {
@@ -436,7 +450,7 @@ body {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 1200 / 650;
+  aspect-ratio: 1200 / 520;
   background: #0f172a;
   touch-action: none;
 }

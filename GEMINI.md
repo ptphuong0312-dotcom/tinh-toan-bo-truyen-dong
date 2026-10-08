@@ -2534,4 +2534,26 @@ ho_{f0} / \cos\gamma$.
 6. **Kiểm thử đối chiếu Live Audit 1-Click**:
    - Script `tools/test_shaft_keys_qc.py` và batch `RA_SOAT_SONG_SONG_THEN_VA_THEN_HOA.bat` đạt **43/43 phép tính PASS 100.0% với $\Delta = 0.000000$** so với Excel COM `ShaftCon_01.xlsb`.
    - Batch 1-click `CHAY_THEN_VA_THEN_HOA.bat` khởi động tức thì qua giao thức `file:///`.
+7. **Cải tiến chuyên sâu Tab Then Bằng (Parallel Side Keys) theo chỉ đạo của SirPhuong**:
+   - **Phân nhóm chuẩn hóa 4 nhóm tiêu chuẩn Mục 2.2**:
+     * Nhóm 1: Hệ Mét Châu Âu & Quốc Tế (Chế độ ưu tiên cao): `(1)F ... DIN 6885: Blatt 1` (Màu xanh lá `#10b981`, MẶC ĐỊNH BAN ĐẦU), `(2)D ... ISO R773` (Màu xanh lá), `(3)K ... CSN 022562` (Màu xanh lá), `(4)E ... ISO 2491` (Màu vàng/cam `#f59e0b` - Then mỏng).
+     * Nhóm 2: Hệ Inch Hoa Kỳ (ANSI B17.1): `(5)A`, `(6)B`, `(7)C`.
+     * Nhóm 3: Tiêu chuẩn Nhật Bản (JIS): `(8)J ... JIS B 1301 (B)`.
+     * Nhóm 4: Tiêu chuẩn Anh (British Standard): `(9)G`, `(10)H`, `(11)I`.
+     * Combobox tự động đổi màu sắc thời gian thực phản ánh cấp ưu tiên của tiêu chuẩn đang chọn.
+   - **Mở rộng số lượng then trên trục ($z_{\text{key}}$)**:
+     * 1 Then ($0^\circ$, Tiêu chuẩn) -> $d_1 = d - t_1$.
+     * 2 Then (Đối xứng $180^\circ$) -> $d_1 = d - 2t_1$.
+     * 3 Then (Cách đều $120^\circ$) -> $d_1 = d - 2t_1$.
+     * 4 Then (Đối xứng $90^\circ$) -> $d_1 = d - 2t_1$.
+   - **Lược bỏ ảnh tĩnh minh họa thứ 1**: Xóa bỏ `img/keys_parallel_dimensions.png` trong Mục 2.0.
+   - **Bộ Ba 3 Hình Cắt Kỹ Thuật (Triple View Cross-Section)**:
+     * Thay thế hoàn toàn mặt cắt dọc, xây dựng 3 hình cắt kỹ thuật cơ khí sắc nét:
+       1. Hình Cắt Lỗ Moay-ơ (Hub Cross-Section): $b, t_2, \varnothing \text{Lỗ}$, gạch mặt cắt thân moay-ơ.
+       2. Hình Cắt Lắp Ghép (Assembly Cross-Section): Then lắp khớp liên hợp giữa trục và moay-ơ, then màu vàng cam gạch chéo kim loại, đường kích thước $b \times h, t_1, t_2, \varnothing d$.
+       3. Hình Cắt Trục (Shaft Cross-Section): Trục tròn khoét rãnh, $b, t_1, \varnothing d, d_1$, gạch mặt cắt thân trục.
+     * 4 nút chuyển đổi góc nhìn: `[ 📐 Bộ Ba 3 Hình (Bộ Bản Vẽ) ]`, `[ ⚙️ Cắt Lỗ Moay-ơ ]`, `[ 🔗 Cắt Lắp Ghép ]`, `[ 🔩 Cắt Trục ]`.
+     * Hàm `getKeyAngles(numKeys)` phân bổ vị trí các then chính xác trên cả 3 hình cắt.
+   - **Loại bỏ hoàn toàn Master Block 3**: Xóa sạch phần Bổ sung & Chế tạo (Mục 10.0 bảng so sánh, Mục 11.0 xuất DXF và ảnh tĩnh bên dưới).
+   - **Tối ưu hóa bố cục tinh gọn**: Chỉ còn 2 Master Blocks sạch sẽ (Input & Results), Canvas tỉ lệ 1200x520, giải phóng tối đa chiều cao màn hình.
 

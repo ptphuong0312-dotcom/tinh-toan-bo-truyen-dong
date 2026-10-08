@@ -130,6 +130,8 @@
                   <select class="user-select" id="selParallelNumKeys">
                     <option value="1" selected>1 Then (Tiêu chuẩn)</option>
                     <option value="2">2 Then (Đối xứng 180°)</option>
+                    <option value="3">3 Then (Cách đều 120°)</option>
+                    <option value="4">4 Then (Đối xứng 90°)</option>
                   </select>
                 </td>
                 <td class="col-unit">--</td>
@@ -167,10 +169,6 @@
               </tr>
             </tbody>
           </table>
-
-          <div class="tech-img-box">
-            <img src="img/keys_parallel_dimensions.png" alt="Kích thước Then Bằng DIN 6885">
-          </div>
         </div>
       </div>
 
@@ -571,8 +569,10 @@
       <div class="canvas-container-box">
         <div class="canvas-toolbar">
           <div class="canvas-btn-group">
-            <button class="btn-canvas active" id="btnCrossSection">⏺️ Mặt Cắt Ngang (Cross-Section)</button>
-            <button class="btn-canvas" id="btnLongSection">↔️ Mặt Cắt Dọc (Longitudinal)</button>
+            <button class="btn-canvas active" id="btnTripleView">📐 Bộ Ba 3 Hình (Bộ Bản Vẽ)</button>
+            <button class="btn-canvas" id="btnHubView">⚙️ Cắt Lỗ Moay-ơ</button>
+            <button class="btn-canvas" id="btnAssemblyView">🔗 Cắt Lắp Ghép</button>
+            <button class="btn-canvas" id="btnShaftView">🔩 Cắt Trục</button>
           </div>
           <div class="canvas-btn-group">
             <button class="btn-canvas" id="btnZoomIn">🔍+</button>
@@ -581,77 +581,7 @@
             <button class="btn-canvas" id="btnDownloadPNG">📷 Tải Ảnh PNG</button>
           </div>
         </div>
-        <canvas id="keysCanvas" width="1200" height="650"></canvas>
-      </div>
-    </div>
-
-    <!-- ========================================== -->
-    <!-- MASTER BLOCK 3: ADDITIONS SECTION (#1e3a8a)-->
-    <!-- ========================================== -->
-    <div class="master-block">
-      <div class="master-header additions-header">
-        <span>🔵 PHẦN BỔ SUNG & CHẾ TẠO (ADDITIONS & MANUFACTURING)</span>
-      </div>
-
-      <!-- Mục 10.0: Bảng So Sánh Các Giải Pháp Mối Ghép -->
-      <div class="calc-section">
-        <div class="section-header">
-          <span class="section-title">▼ 10.0 Bảng So Sánh Các Phương Án Mối Ghép (Comparative Table)</span>
-          <span class="section-toggle-icon">▼</span>
-        </div>
-        <div class="section-body">
-          <table class="calc-table">
-            <thead>
-              <tr>
-                <th>Loại Mối Ghép</th>
-                <th>Quy Cách / Tiêu Chuẩn</th>
-                <th>Kích Thước Then (b, h, t)</th>
-                <th>Đường Kính Còn Lại (d1)</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>1. Then Bằng</strong></td>
-                <td><span id="compPKName">--</span></td>
-                <td><span id="compPKDim">--</span></td>
-                <td><span id="compPKD1" class="output-eng">--</span></td>
-              </tr>
-              <tr>
-                <td><strong>2. Then Bán Nguyệt</strong></td>
-                <td><span id="compWKName">--</span></td>
-                <td><span id="compWKDim">--</span></td>
-                <td><span id="compWKD1" class="output-eng">--</span></td>
-              </tr>
-              <tr>
-                <td><strong>3. Then Hoa Chữ Nhật</strong></td>
-                <td><span id="compSSName">--</span></td>
-                <td><span id="compSSDim">--</span></td>
-                <td><span id="compSSD1" class="output-eng">--</span></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Mục 11.0: Xuất CAD 2D DXF -->
-      <div class="calc-section">
-        <div class="section-header">
-          <span class="section-title">▼ 11.0 Hệ Thống CAD & Xuất Bản Vẽ 2D (DXF Release 12 AC1009)</span>
-          <span class="section-toggle-icon">▼</span>
-        </div>
-        <div class="section-body">
-          <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 12px;">
-            Xuất file bản vẽ kỹ thuật 2D độc lập 100% offline (CORS-free), tương thích tuyệt đối với AutoCAD, SolidWorks, Autodesk Inventor, LibreCAD, BricsCAD, ZWCAD.
-          </p>
-          <div class="cad-export-bar">
-            <button class="btn-cad-export" id="btnExportDXF">
-              <span>💾</span> Xuất Bản Vẽ CAD 2D (DXF Release 12)
-            </button>
-          </div>
-          <div class="tech-img-box" style="margin-top: 10px;">
-            <img src="img/keys_cad_output.png" alt="Xuất CAD MITCalc">
-          </div>
-        </div>
+        <canvas id="keysCanvas" width="1200" height="520"></canvas>
       </div>
     </div>
   </div>

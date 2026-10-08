@@ -1,6 +1,6 @@
 /**
  * UI CONTROLLER: MODULE 8 KEYS & STRAIGHT-SIDED SPLINES
- * Connects DOM inputs, KeysCalc engine, 2D Canvas & DXF Exporter
+ * Connects DOM inputs, KeysCalc engine & 3-View Canvas CAD
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -10,10 +10,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const state = {
     units: 'metric',
     jointType: 'parallel', // 'parallel', 'woodruff', 'spline'
-    sectionType: 'cross',  // 'cross', 'long'
     fitClass: 'normal',
-    // Parallel
-    keyTypeIndex: 5,       // DIN 6885 Blatt 1
+    // Parallel: Default is (1)F ... DIN 6885: Blatt 1 (index 5)
+    keyTypeIndex: 5,
     parallelDiam: 40.0,
     parallelNumKeys: 1,
     parallelLength: 56.0,
@@ -28,23 +27,83 @@ document.addEventListener('DOMContentLoaded', () => {
     splineLength: 60.0
   };
 
+  function updateSelectColor() {
+    const sel = document.getElementById('selParallelType');
+    if (!sel) return;
+    const val = parseInt(sel.value, 10);
+    if ([5, 3, 10].includes(val)) {
+      sel.style.color = '#059669'; // Ưu tiên cao: Màu xanh lá đậm
+      sel.style.fontWeight = 'bold';
+    } else if (val === 4) {
+      sel.style.color = '#d97706'; // Then mỏng ISO 2491: Màu vàng/cam
+      sel.style.fontWeight = 'bold';
+    } else {
+      sel.style.color = '#111827';
+      sel.style.fontWeight = '600';
+    }
+  }
+
   // Init dropdowns
   initTypeDropdowns();
   bindEvents();
   updateCalculation();
 
   function initTypeDropdowns() {
-    // 1. Parallel keys standards
+    // 1. Parallel keys standards: Phân nhóm 1-4, đánh số (1) đến (11), tô màu ưu tiên
     const selParallelType = document.getElementById('selParallelType');
     if (selParallelType) {
       selParallelType.innerHTML = '';
-      KEYS_DATABASE.T_Key1_Name.forEach((meta, idx) => {
-        const opt = document.createElement('option');
-        opt.value = idx;
-        opt.textContent = meta[0];
-        if (idx === state.keyTypeIndex) opt.selected = true;
-        selParallelType.appendChild(opt);
+
+      // Định nghĩa 4 nhóm chuẩn hóa theo yêu cầu người dùng
+      const groups = [
+        {
+          label: 'Nhóm 1: Hệ Mét Châu Âu & Quốc Tế (Chế độ ưu tiên)',
+          items: [
+            { text: '(1)F ... DIN 6885: Blatt 1', val: 5, color: '#10b981', isDefault: true },
+            { text: '(2)D ... ISO R773', val: 3, color: '#10b981' },
+            { text: '(3)K ... CSN 022562', val: 10, color: '#10b981' },
+            { text: '(4)E ... ISO 2491', val: 4, color: '#f59e0b' } // Màu vàng: Then mỏng
+          ]
+        },
+        {
+          label: 'Nhóm 2: Hệ Inch Hoa Kỳ (ANSI B17.1)',
+          items: [
+            { text: '(5)A ... ANSI B17.1 (Preferred)', val: 0, color: '#94a3b8' },
+            { text: '(6)B ... ANSI B17.1 (Square)', val: 1, color: '#94a3b8' },
+            { text: '(7)C ... ANSI B17.1 (Rectangular)', val: 2, color: '#94a3b8' }
+          ]
+        },
+        {
+          label: 'Nhóm 3: Tiêu chuẩn Nhật Bản (JIS)',
+          items: [
+            { text: '(8)J ... JIS B 1301 (B)', val: 9, color: '#94a3b8' }
+          ]
+        },
+        {
+          label: 'Nhóm 4: Tiêu chuẩn Anh (British Standard)',
+          items: [
+            { text: '(9)G ... BS 46: Part 1 (Square)', val: 6, color: '#94a3b8' },
+            { text: '(10)H ... BS 46: Part 1 (Rectangular)', val: 7, color: '#94a3b8' },
+            { text: '(11)I ... BS 4235: Part 1', val: 8, color: '#94a3b8' }
+          ]
+        }
+      ];
+
+      groups.forEach(grp => {
+        const optgroup = document.createElement('optgroup');
+        optgroup.label = grp.label;
+        grp.items.forEach(it => {
+          const opt = document.createElement('option');
+          opt.value = it.val;
+          opt.textContent = it.text;
+          opt.style.color = it.color;
+          opt.style.fontWeight = 'bold';
+          if (it.val === state.keyTypeIndex) opt.selected = true;
+          optgroup.appendChild(opt);
+        });
+        selParallelType.appendChild(optgroup);
       });
+      updateSelectColor();
     }
 
     // 2. Woodruff keys standards
@@ -77,7 +136,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function bindEvents() {
     // Subsystem tabs
     document.querySelectorAll('.joint-type-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
+      btn.addEventListener('click', () => {
         document.querySelectorAll('.joint-type-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         state.jointType = btn.dataset.type;
@@ -114,6 +173,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Parallel Key controls
     document.getElementById('selParallelType').addEventListener('change', (e) => {
       state.keyTypeIndex = parseInt(e.target.value, 10);
+      updateSelectColor();
       updateCalculation();
     });
 
@@ -181,55 +241,32 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // View toggles
-    document.getElementById('btnCrossSection').addEventListener('click', () => {
-      state.sectionType = 'cross';
-      document.getElementById('btnCrossSection').classList.add('active');
-      document.getElementById('btnLongSection').classList.remove('active');
-      canvas.setSectionType('cross');
-    });
+    // 3-View Toolbar Buttons
+    const viewButtons = [
+      { id: 'btnTripleView', view: 'triple' },
+      { id: 'btnAssemblyView', view: 'assembly' },
+      { id: 'btnShaftView', view: 'shaft' },
+      { id: 'btnHubView', view: 'hub' }
+    ];
 
-    document.getElementById('btnLongSection').addEventListener('click', () => {
-      state.sectionType = 'long';
-      document.getElementById('btnLongSection').classList.add('active');
-      document.getElementById('btnCrossSection').classList.remove('active');
-      canvas.setSectionType('long');
+    viewButtons.forEach(btnInfo => {
+      const el = document.getElementById(btnInfo.id);
+      if (el) {
+        el.addEventListener('click', () => {
+          viewButtons.forEach(b => {
+            const btnEl = document.getElementById(b.id);
+            if (btnEl) btnEl.classList.remove('active');
+          });
+          el.classList.add('active');
+          canvas.setDisplayView(btnInfo.view);
+        });
+      }
     });
 
     document.getElementById('btnZoomIn').addEventListener('click', () => canvas.zoom(1.2));
     document.getElementById('btnZoomOut').addEventListener('click', () => canvas.zoom(0.8));
     document.getElementById('btnResetView').addEventListener('click', () => canvas.resetView());
     document.getElementById('btnDownloadPNG').addEventListener('click', () => canvas.downloadImage());
-
-    document.getElementById('btnExportDXF').addEventListener('click', () => {
-      let data = null;
-      if (state.jointType === 'parallel') {
-        data = KeysCalc.calculateParallelKey({
-          units: state.units,
-          keyTypeIndex: state.keyTypeIndex,
-          numKeys: state.parallelNumKeys,
-          shaftDiam: state.parallelDiam,
-          chosenLength: state.parallelLength,
-          fitClass: state.fitClass
-        });
-      } else if (state.jointType === 'woodruff') {
-        data = KeysCalc.calculateWoodruffKey({
-          units: state.units,
-          woodruffTypeIndex: state.woodruffTypeIndex,
-          numKeys: state.woodruffNumKeys,
-          shaftDiam: state.woodruffDiam,
-          keySizeIndex: state.woodruffKeyIndex
-        });
-      } else {
-        data = KeysCalc.calculateStraightSpline({
-          units: state.units,
-          splineTypeIndex: state.splineTypeIndex,
-          splineSizeIndex: state.splineSizeIndex,
-          chosenLength: state.splineLength
-        });
-      }
-      KeysDXF.exportDXF(state.jointType, data, state.sectionType);
-    });
 
     // Accordion global controls
     document.getElementById('btnExpandAll').addEventListener('click', () => {
@@ -280,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('outTolHub').textContent = res.tolerances.hubKeywayTol;
 
       // Summary banner
-      document.getElementById('sumJointType').textContent = 'Then Bằng (Parallel Key)';
+      document.getElementById('sumJointType').textContent = `Then Bằng (${res.numKeys} then)`;
       document.getElementById('sumStandard').textContent = res.typeName.split('...')[1]?.trim() || res.typeName;
       document.getElementById('sumDimensions').textContent = `${res.b.toFixed(1)} x ${res.h.toFixed(1)} x ${res.chosenL.toFixed(1)}`;
       document.getElementById('sumShaftDiam').textContent = `${res.d.toFixed(1)} mm`;
@@ -368,24 +405,6 @@ document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('sumDimensions').textContent = `${res.n} then | ${res.D.toFixed(1)}x${res.d.toFixed(1)}x${res.b.toFixed(1)}`;
       document.getElementById('sumShaftDiam').textContent = `D = ${res.D.toFixed(1)} mm`;
     }
-
-    // Update Section 10: Comparative table
-    const comp = KeysCalc.getComparativeTable(
-      state.jointType === 'parallel' ? state.parallelDiam : (state.jointType === 'woodruff' ? state.woodruffDiam : 40.0),
-      state.jointType === 'parallel' ? state.parallelLength : 50.0,
-      state.units === 'metric'
-    );
-    document.getElementById('compPKName').textContent = comp.parallelKey.name;
-    document.getElementById('compPKDim').textContent = comp.parallelKey.dimensions;
-    document.getElementById('compPKD1').textContent = comp.parallelKey.d1;
-
-    document.getElementById('compWKName').textContent = comp.woodruffKey.name;
-    document.getElementById('compWKDim').textContent = comp.woodruffKey.dimensions;
-    document.getElementById('compWKD1').textContent = comp.woodruffKey.d1;
-
-    document.getElementById('compSSName').textContent = comp.straightSpline.name;
-    document.getElementById('compSSDim').textContent = comp.straightSpline.dimensions;
-    document.getElementById('compSSD1').textContent = comp.straightSpline.d1;
 
     // Send data to Canvas
     canvas.setData(state.jointType, currentData);

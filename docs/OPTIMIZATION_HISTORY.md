@@ -3987,10 +3987,29 @@ ho_{f0}$.
 - **Xuất Bản Vẽ 2D CAD DXF Release 12 AC1009**:
   * Tương thích 100% AutoCAD, SolidWorks, Inventor qua Blob download offline.
   * Đầy đủ các layer kỹ thuật: `CONTOUR_SHAFT`, `CONTOUR_HUB`, `CONTOUR_KEY`, `CENTER`, và bảng thông số gia công `MFG_TABLE`.
-- **Kiểm thử nghiệm thu thực tế**:
-  * Đóng gói bundle: `modules/shaft-keys/js/keys-engine.bundle.js` (179.5 KB) 100% offline CORS-free.
-  * Live Audit Excel COM (`tools/test_shaft_keys_qc.py` & `RA_SOAT_SONG_SONG_THEN_VA_THEN_HOA.bat`): **43 / 43 phép tính PASS 100.0% với $\Delta = 0.000000$**.
-  * Batch 1-click `CHAY_THEN_VA_THEN_HOA.bat` khởi động tức thì qua giao thức `file:///`.
+- **Cập nhật ngày 08/10/2026 (Nâng cấp toàn diện Tab Then Bằng theo lệnh của SirPhuong)**:
+  * *Phân nhóm chuẩn hóa 4 nhóm tiêu chuẩn Mục 2.2*:
+    - Nhóm 1: Hệ Mét Châu Âu & Quốc Tế (Chế độ ưu tiên):
+      * `(1)F ... DIN 6885: Blatt 1` (Màu xanh lá `#10b981`, MẶC ĐỊNH BAN ĐẦU).
+      * `(2)D ... ISO R773` (Màu xanh lá `#10b981`).
+      * `(3)K ... CSN 022562` (Màu xanh lá `#10b981`).
+      * `(4)E ... ISO 2491` (Màu vàng/cam `#f59e0b` - Then mỏng).
+    - Nhóm 2: Hệ Inch Hoa Kỳ (ANSI B17.1): `(5)A`, `(6)B`, `(7)C`.
+    - Nhóm 3: Tiêu chuẩn Nhật Bản (JIS): `(8)J ... JIS B 1301 (B)`.
+    - Nhóm 4: Tiêu chuẩn Anh (British Standard): `(9)G`, `(10)H`, `(11)I`.
+    - Tích hợp hàm `updateSelectColor()` đổi màu trực tiếp combobox theo chuẩn ưu tiên/then mỏng/tiêu chuẩn khác.
+  * *Bổ sung số lượng then trên trục*: Mở rộng hỗ trợ 4 tùy chọn: 1 Then ($0^\circ$), 2 Then đối xứng ($180^\circ$), 3 Then cách đều ($120^\circ$), 4 Then đối xứng ($90^\circ$). Đường kính đáy rãnh $d_1 = d - t_1$ (cho 1 then) và $d_1 = d - 2t_1$ (cho 2, 3, 4 then).
+  * *Bỏ hoàn toàn ảnh tĩnh minh họa thứ 1*: Loại bỏ `keys_parallel_dimensions.png` trong Mục 2.0.
+  * *Tái cấu trúc đồ họa Canvas 2D: Bộ Ba 3 Hình Cắt Kỹ Thuật (Triple View)*:
+    - Loại bỏ mặt cắt dọc, xây dựng 3 hình cắt kỹ thuật đầy đủ đường gióng kích thước cơ khí:
+      1. Hình Cắt Lỗ Moay-ơ (Hub Cross-Section): $b, t_2, \varnothing \text{Lỗ}$, gạch mặt cắt thân moay-ơ.
+      2. Hình Cắt Lắp Ghép (Assembly Cross-Section): Then lắp khớp liên hợp giữa trục và moay-ơ, then màu vàng cam gạch chéo kim loại, đường kích thước $b \times h, t_1, t_2, \varnothing d$.
+      3. Hình Cắt Trục (Shaft Cross-Section): Trục tròn khoét rãnh, $b, t_1, \varnothing d, d_1$, gạch mặt cắt thân trục.
+    - Cung cấp 4 nút xem linh hoạt: `[ 📐 Bộ Ba 3 Hình (Bộ Bản Vẽ) ]`, `[ ⚙️ Cắt Lỗ Moay-ơ ]`, `[ 🔗 Cắt Lắp Ghép ]`, `[ 🔩 Cắt Trục ]`.
+    - Thuật toán tính góc đặt then `getKeyAngles(numKeys)` phân bổ chuẩn xác vị trí rãnh then trên cả 3 hình cắt cho 1, 2, 3, 4 then.
+  * *Bỏ hoàn toàn Master Block 3*: Xóa sạch phần Bổ sung & Chế tạo (Mục 10.0 bảng so sánh, Mục 11.0 xuất DXF và ảnh tĩnh bên dưới).
+  * *Tối ưu hóa bố cục gọn gàng*: Chỉ còn 2 Master Blocks (Input & Results), tối ưu chiều cao Canvas (520px), mở rộng độ rộng combobox (`max-width: 320px`, `min-width: 240px`) tránh tràn chữ tên tiêu chuẩn.
+  * *Kiểm thử tự động Playwright E2E (`tools/test_shaft_keys_view.py`)*: Chạy thành công 100% không có lỗi Console/JavaScript, ảnh chụp nghiệm thu lưu tại brain artifacts directory.
 
 
 

@@ -16,7 +16,7 @@ const KeysCalc = {
   calculateParallelKey(params) {
     const isMetric = params.units !== 'imperial';
     const typeIdx = Math.max(0, Math.min(10, params.keyTypeIndex || 0));
-    const numKeys = params.numKeys === 2 ? 2 : 1;
+    const numKeys = Math.max(1, Math.min(4, parseInt(params.numKeys, 10) || 1));
     const d = parseFloat(params.shaftDiam) || (isMetric ? 40.0 : 1.5);
     const fitClass = params.fitClass || 'normal'; // 'tight' (P9), 'normal' (N9), 'sliding' (JS9)
 

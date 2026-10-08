@@ -60,7 +60,7 @@ const KEYS_DATABASE = {
       0.0
     ],
     [
-      "F ... DIN 6885: Blat 1",
+      "F ... DIN 6885: Blatt 1",
       "T_Key1_DIN",
       1.0,
       0.03937007874015748,
