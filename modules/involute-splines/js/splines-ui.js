@@ -30,9 +30,21 @@ export class SplinesUI {
         this.elDPSelect = document.getElementById('dpSelect');
         this.elZ = document.getElementById('zInput');
         this.elAlfa = document.getElementById('alfaSelect');
+        this.elAlfaInput = document.getElementById('alfaInput');
         this.elX0 = document.getElementById('x0Input');
         this.elX2 = document.getElementById('x2Input');
         this.elAutoFill = document.getElementById('autoFillCheck');
+
+        // Section 2.0 tooth profile elements
+        this.elProfileStd = document.getElementById('profileStdCheck');
+        this.elHa0 = document.getElementById('ha0Input');
+        this.elHa2 = document.getElementById('ha2Input');
+        this.elHf0 = document.getElementById('hf0Input');
+        this.elHf2 = document.getElementById('hf2Input');
+        this.elRa0 = document.getElementById('ra0Input');
+        this.elRa2 = document.getElementById('ra2Input');
+        this.elRf0 = document.getElementById('rf0Input');
+        this.elRf2 = document.getElementById('rf2Input');
 
         // Diameters inputs
         this.elDa0 = document.getElementById('da0Input');
@@ -43,6 +55,10 @@ export class SplinesUI {
         // Inspection inputs
         this.elDt0 = document.getElementById('dt0Input');
         this.elDt2 = document.getElementById('dt2Input');
+        this.elK0 = document.getElementById('k0Input');
+        this.elK0Auto = document.getElementById('k0AutoCheck');
+        this.elK2 = document.getElementById('k2Input');
+        this.elK2Auto = document.getElementById('k2AutoCheck');
 
         // Section 5.0 reverse inputs
         this.elZRevShaft = document.getElementById('zRevShaftInput');
@@ -144,13 +160,117 @@ export class SplinesUI {
             delete this.elDt0?.dataset.userEdited;
             delete this.elDt2?.dataset.userEdited;
         };
-        this.elStdType?.addEventListener('change', resetPinFlag);
-        this.elAlfa?.addEventListener('change', resetPinFlag);
+
+        // Khi người dùng thay đổi Tiêu chuẩn Mục 1.2: Tự động đổi Mục 1.3 và Mục 2.0
+        this.elStdType?.addEventListener('change', () => {
+            const stdId = parseInt(this.elStdType.value);
+            const std = SplinesData.std_types.find(st => st.id === stdId);
+            if (std) {
+                // 1. Đồng bộ góc ăn khớp sang Mục 1.3
+                const ang = std.angle || 30.0;
+                if (this.elAlfaInput) this.elAlfaInput.value = ang.toFixed(2);
+                if (this.elAlfa) {
+                    const opt = Array.from(this.elAlfa.options).find(o => Math.abs(parseFloat(o.value) - ang) < 1e-3);
+                    this.elAlfa.value = opt ? opt.value : 'custom';
+                }
+
+                // 2. Đồng bộ thông số biên dạng răng Mục 2.0
+                if (this.elHa0) this.elHa0.value = (std.ha0 || 0.50).toFixed(4);
+                if (this.elHa2) this.elHa2.value = (std.ha2 || 0.50).toFixed(4);
+                if (this.elHf0) this.elHf0.value = (std.hf0 || 0.75).toFixed(4);
+                if (this.elHf2) this.elHf2.value = (std.hf2 || 0.75).toFixed(4);
+                if (this.elRa0) this.elRa0.value = (std.ra0 || 0.00).toFixed(4);
+                if (this.elRa2) this.elRa2.value = (std.ra2 || 0.20).toFixed(4);
+                if (this.elRf0) this.elRf0.value = (std.rf0 || 0.00).toFixed(4);
+                if (this.elRf2) this.elRf2.value = (std.rf2 || 0.00).toFixed(4);
+            }
+            resetPinFlag();
+            this.recalculate();
+        });
+
+        // Đồng bộ hai chiều Góc ăn khớp Mục 1.3
+        if (this.elAlfa) {
+            this.elAlfa.addEventListener('change', () => {
+                if (this.elAlfa.value === 'custom') {
+                    this.elAlfaInput?.focus();
+                    this.elAlfaInput?.select();
+                } else {
+                    const ang = parseFloat(this.elAlfa.value);
+                    if (!isNaN(ang) && this.elAlfaInput) {
+                        this.elAlfaInput.value = ang.toFixed(2);
+                    }
+                    resetPinFlag();
+                    this.recalculate();
+                }
+            });
+        }
+        if (this.elAlfaInput) {
+            const onAlfaInputChange = () => {
+                const ang = parseFloat(this.elAlfaInput.value);
+                if (!isNaN(ang) && ang > 0) {
+                    if (this.elAlfa) {
+                        const opt = Array.from(this.elAlfa.options).find(o => Math.abs(parseFloat(o.value) - ang) < 1e-3);
+                        this.elAlfa.value = opt ? opt.value : 'custom';
+                    }
+                    resetPinFlag();
+                    this.recalculate();
+                }
+            };
+            this.elAlfaInput.addEventListener('input', onAlfaInputChange);
+            this.elAlfaInput.addEventListener('change', onAlfaInputChange);
+        }
+
+        // Quản lý Checkbox Tiêu chuẩn Mục 2.0 (Khóa / Mở khóa chỉnh sửa)
+        if (this.elProfileStd) {
+            this.elProfileStd.addEventListener('change', () => {
+                const isStd = this.elProfileStd.checked;
+                const pInputs = [
+                    this.elHa0, this.elHa2, this.elHf0, this.elHf2,
+                    this.elRa0, this.elRa2, this.elRf0, this.elRf2
+                ];
+                pInputs.forEach(inp => {
+                    if (inp) inp.disabled = isStd;
+                });
+                if (isStd) {
+                    const stdId = parseInt(this.elStdType?.value || 6);
+                    const std = SplinesData.std_types.find(st => st.id === stdId);
+                    if (std) {
+                        if (this.elHa0) this.elHa0.value = (std.ha0 || 0.50).toFixed(4);
+                        if (this.elHa2) this.elHa2.value = (std.ha2 || 0.50).toFixed(4);
+                        if (this.elHf0) this.elHf0.value = (std.hf0 || 0.75).toFixed(4);
+                        if (this.elHf2) this.elHf2.value = (std.hf2 || 0.75).toFixed(4);
+                        if (this.elRa0) this.elRa0.value = (std.ra0 || 0.00).toFixed(4);
+                        if (this.elRa2) this.elRa2.value = (std.ra2 || 0.20).toFixed(4);
+                        if (this.elRf0) this.elRf0.value = (std.rf0 || 0.00).toFixed(4);
+                        if (this.elRf2) this.elRf2.value = (std.rf2 || 0.00).toFixed(4);
+                    }
+                }
+                this.recalculate();
+            });
+        }
+
+        // Quản lý Checkbox Tự động Mục 4.1 (Số răng k0, k2)
+        if (this.elK0Auto) {
+            this.elK0Auto.addEventListener('change', () => {
+                if (this.elK0) this.elK0.disabled = this.elK0Auto.checked;
+                this.recalculate();
+            });
+        }
+        if (this.elK2Auto) {
+            this.elK2Auto.addEventListener('change', () => {
+                if (this.elK2) this.elK2.disabled = this.elK2Auto.checked;
+                this.recalculate();
+            });
+        }
+        this.elK0?.addEventListener('input', () => this.recalculate());
+        this.elK2?.addEventListener('input', () => this.recalculate());
 
         // Inputs that trigger recalculation
         const triggerInputs = [
-            this.elUnits, this.elStdType, this.elZ, this.elAlfa,
+            this.elUnits, this.elZ,
             this.elX0, this.elX2, this.elAutoFill,
+            this.elHa0, this.elHa2, this.elHf0, this.elHf2,
+            this.elRa0, this.elRa2, this.elRf0, this.elRf2,
             this.elDa0, this.elDf0, this.elDi2, this.elDri2,
             this.elDt0, this.elDt2,
             this.elZRevShaft, this.elDaRevShaft, this.elURevShaft,
@@ -375,10 +495,25 @@ export class SplinesUI {
         let m = parseFloat(this.elModule?.value || 10.0);
         const DP = parseFloat(this.elDP?.value || 2.5);
         const z = parseInt(this.elZ?.value || 20);
-        const alfa = parseFloat(this.elAlfa?.value || 30.0);
+        const alfa = parseFloat(this.elAlfaInput?.value || this.elAlfa?.value || 30.0);
         const x0 = parseFloat(this.elX0?.value || 0.0);
         const x2 = parseFloat(this.elX2?.value || 0.0);
         const autoFill = this.elAutoFill ? this.elAutoFill.checked : true;
+
+        const profile_standard = this.elProfileStd ? this.elProfileStd.checked : true;
+        const ha0_tool = parseFloat(this.elHa0?.value || 0.5);
+        const hf0_tool = parseFloat(this.elHf0?.value || 0.75);
+        const ra0_tool = parseFloat(this.elRa0?.value || 0.0);
+        const rf0_tool = parseFloat(this.elRf0?.value || 0.0);
+        const ha2_tool = parseFloat(this.elHa2?.value || 0.5);
+        const hf2_tool = parseFloat(this.elHf2?.value || 0.75);
+        const ra2_tool = parseFloat(this.elRa2?.value || 0.2);
+        const rf2_tool = parseFloat(this.elRf2?.value || 0.0);
+
+        const k0_auto = this.elK0Auto ? this.elK0Auto.checked : true;
+        const k0_custom = parseInt(this.elK0?.value || 4);
+        const k2_auto = this.elK2Auto ? this.elK2Auto.checked : true;
+        const k2_custom = parseInt(this.elK2?.value || 3);
 
         const da0 = parseFloat(this.elDa0?.value || 210.0);
         const df0 = parseFloat(this.elDf0?.value || 185.0);
@@ -404,9 +539,23 @@ export class SplinesUI {
             DP,
             z,
             alfa,
+            customAlfa: true,
             x0,
             x2,
             autoFill,
+            profile_standard,
+            ha0_tool,
+            hf0_tool,
+            ra0_tool,
+            rf0_tool,
+            ha2_tool,
+            hf2_tool,
+            ra2_tool,
+            rf2_tool,
+            k0_auto,
+            k0_custom,
+            k2_auto,
+            k2_custom,
             da0,
             df0,
             di2,
@@ -423,16 +572,32 @@ export class SplinesUI {
 
         this.currentGeom = geom;
 
-        // If AutoFill is on, update input fields with standard values
-        if (autoFill) {
+        // If AutoFill is on or custom tooth profile is defined, update diameter fields
+        if (autoFill || !profile_standard) {
             if (this.elDa0) this.elDa0.value = geom.da0.toFixed(4);
             if (this.elDf0) this.elDf0.value = geom.df0.toFixed(4);
             if (this.elDi2) this.elDi2.value = geom.di2.toFixed(4);
             if (this.elDri2) this.elDri2.value = geom.dri2.toFixed(4);
-            if (stdType === 14) {
+            if (stdType === 14 && autoFill && profile_standard) {
                 if (this.elX0) this.elX0.value = geom.x0.toFixed(4);
                 if (this.elX2) this.elX2.value = geom.x2.toFixed(4);
             }
+        }
+
+        // Update k input fields if in auto mode
+        if (k0_auto && this.elK0) this.elK0.value = geom.k0;
+        if (k2_auto && this.elK2) this.elK2.value = geom.k2;
+
+        // If profile standard is active, ensure inputs reflect standard profile
+        if (profile_standard) {
+            if (this.elHa0) this.elHa0.value = geom.ha0_tool.toFixed(4);
+            if (this.elHf0) this.elHf0.value = geom.hf0_tool.toFixed(4);
+            if (this.elRa0) this.elRa0.value = geom.ra0_tool.toFixed(4);
+            if (this.elRf0) this.elRf0.value = geom.rf0_tool.toFixed(4);
+            if (this.elHa2) this.elHa2.value = geom.ha2_tool.toFixed(4);
+            if (this.elHf2) this.elHf2.value = geom.hf2_tool.toFixed(4);
+            if (this.elRa2) this.elRa2.value = geom.ra2_tool.toFixed(4);
+            if (this.elRf2) this.elRf2.value = geom.rf2_tool.toFixed(4);
         }
 
         // Always update recommended ball/pin diameter if not manually edited by user
@@ -454,7 +619,8 @@ export class SplinesUI {
         this.setTxt('ribbonW0', `${g.W0.toFixed(4)} mm`);
         this.setTxt('ribbonM0', `${g.M0.toFixed(4)} mm`);
 
-        // Section 1.0 Module & Pitch Diameters
+        // Section 1.0 Module & Pitch Diameters & Angles
+        this.setTxt('outAlfaHub', g.alfa.toFixed(2));
         this.setTxt('outModuleHub', g.m.toFixed(3));
         this.setTxt('outDPHub', g.DP.toFixed(3));
         this.setTxt('outD0', g.d0.toFixed(4));

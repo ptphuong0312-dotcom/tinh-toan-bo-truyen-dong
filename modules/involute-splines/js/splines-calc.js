@@ -56,33 +56,29 @@ export const SplinesCalc = {
 
     /**
      * Recommended pin/ball diameter dp according to international standards
-     * ISO 4156, ANSI B92.1, DIN 5480
+     * Quy tắc chuẩn: Với mọi then có góc ăn khớp danh nghĩa alfa <= 30°, mặc định dp = 1.75 * m
+     * (Bảo lưu đầy đủ các công thức ISO 4156 / ANSI B92.1 / DIN 5480 cho góc 37.5°, 45° hoặc khi cần tra cứu)
      */
     getRecommendedPinDiameter(stdTypeId, m, alfa = 30.0) {
+        if (alfa <= 30.0 + 1e-4) {
+            const dt = 1.75 * m;
+            return {
+                dt0: parseFloat(dt.toFixed(4)),
+                dt2: parseFloat(dt.toFixed(4))
+            };
+        }
+
+        // Với góc lớn hơn 30° (ví dụ 37.5°, 45°):
         let dt0 = 1.75 * m;
         let dt2 = 1.75 * m;
 
-        // ISO 4156 / ANSI B92.1 / ANSI B92.2M
-        if (stdTypeId >= 1 && stdTypeId <= 13) {
-            if (Math.abs(alfa - 30.0) < 0.1) {
-                const isFillet = (stdTypeId === 3 || stdTypeId === 7 || stdTypeId === 11);
-                dt0 = isFillet ? 1.920 * m : 1.728 * m;
-                dt2 = isFillet ? 1.728 * m : 1.440 * m;
-            } else if (Math.abs(alfa - 37.5) < 0.1) {
-                dt0 = 1.728 * m;
-                dt2 = 1.440 * m;
-            } else if (Math.abs(alfa - 45.0) < 0.1) {
-                dt0 = 1.920 * m;
-                dt2 = 1.440 * m;
-            }
-        } else if (stdTypeId === 14) {
-            // DIN 5480 (DIN 5480-15 standard inspection balls)
-            dt0 = 1.800 * m;
-            dt2 = 1.500 * m;
-        } else if (stdTypeId >= 15 && stdTypeId <= 17) {
-            // CSN 4950
-            dt0 = 1.750 * m;
-            dt2 = 1.500 * m;
+        // ISO 4156 / ANSI B92.1 / ANSI B92.2M cho góc > 30°:
+        if (Math.abs(alfa - 37.5) < 0.1) {
+            dt0 = 1.728 * m;
+            dt2 = 1.440 * m;
+        } else if (Math.abs(alfa - 45.0) < 0.1) {
+            dt0 = 1.920 * m;
+            dt2 = 1.440 * m;
         }
 
         return {
@@ -231,15 +227,34 @@ export const SplinesCalc = {
         let x0 = parseFloat(params.x0 !== undefined ? params.x0 : 0.0);
         let x2 = parseFloat(params.x2 !== undefined ? params.x2 : 0.0);
 
-        // AutoFill standard defaults if requested
+        // Tool profile defaults from standard or custom inputs (Section 2.0)
+        const std = SplinesData.std_types.find(t => t.id === stdTypeId) || SplinesData.std_types[5];
+        const profileStandard = params.profile_standard !== false;
+        const ha0_tool = parseFloat(params.ha0_tool !== undefined && !isNaN(params.ha0_tool) ? params.ha0_tool : (std.ha0 || 0.50));
+        const hf0_tool = parseFloat(params.hf0_tool !== undefined && !isNaN(params.hf0_tool) ? params.hf0_tool : (std.hf0 || 0.75));
+        const ra0_tool = parseFloat(params.ra0_tool !== undefined && !isNaN(params.ra0_tool) ? params.ra0_tool : (std.ra0 || 0.0));
+        const rf0_tool = parseFloat(params.rf0_tool !== undefined && !isNaN(params.rf0_tool) ? params.rf0_tool : (std.rf0 || 0.0));
+
+        const ha2_tool = parseFloat(params.ha2_tool !== undefined && !isNaN(params.ha2_tool) ? params.ha2_tool : (std.ha2 || 0.50));
+        const hf2_tool = parseFloat(params.hf2_tool !== undefined && !isNaN(params.hf2_tool) ? params.hf2_tool : (std.hf2 || 0.75));
+        const ra2_tool = parseFloat(params.ra2_tool !== undefined && !isNaN(params.ra2_tool) ? params.ra2_tool : (std.ra2 || 0.20));
+        const rf2_tool = parseFloat(params.rf2_tool !== undefined && !isNaN(params.rf2_tool) ? params.rf2_tool : (std.rf2 || 0.0));
+
+        // AutoFill standard defaults or calculate from custom tooth profile
         let da0 = parseFloat(params.da0);
         let df0 = parseFloat(params.df0);
         let di2 = parseFloat(params.di2);
         let dri2 = parseFloat(params.dri2);
 
-        if (params.autoFill) {
+        if (!profileStandard) {
+            // Khi người dùng tùy chỉnh thông số biên dạng răng Mục 2.0:
+            da0 = (z0 + 2.0 * ha0_tool) * m + 2.0 * x0 * m;
+            df0 = (z0 - 2.0 * hf0_tool) * m + 2.0 * x0 * m;
+            di2 = (z0 - 2.0 * ha2_tool) * m + 2.0 * x2 * m;
+            dri2 = (z0 + 2.0 * hf2_tool) * m + 2.0 * x2 * m;
+        } else if (params.autoFill) {
             const defs = this.getStandardSplineDefaults(stdTypeId, m, z0, units);
-            alfa = defs.alfa;
+            if (!params.customAlfa) alfa = defs.alfa;
             da0 = defs.da0;
             df0 = defs.df0;
             di2 = defs.di2;
@@ -316,16 +331,19 @@ export const SplinesCalc = {
         const c0_m = c0 / m;
         const c2_m = c2 / m;
 
-        // Tool profile defaults (Section 2.0)
-        const ha0_tool = params.ha0_tool !== undefined ? parseFloat(params.ha0_tool) : 0.75;
-        const hf0_tool = params.hf0_tool !== undefined ? parseFloat(params.hf0_tool) : 0.75;
-        const ra0_tool = params.ra0_tool !== undefined ? parseFloat(params.ra0_tool) : 0.20;
-        const rf0_tool = params.rf0_tool !== undefined ? parseFloat(params.rf0_tool) : 0.0;
-
         // Section 4.0 Check Dimensions
-        // Number of teeth measured k
-        const k0 = Math.floor((z0 * alfa / 180.0 + 0.5) + 0.8);
-        const k2 = Math.abs(Math.floor((z2 * alfa / 180.0 + 0.5) + 0.8));
+        // Number of teeth measured k (Shaft k0 and Hub k2)
+        // Công thức chuẩn MITCalc 1.74 SplinesI_01.xlsb:
+        // k = floor(z * alfa / 180 + 1.3)
+        let k0 = Math.floor((z0 * alfa / 180.0 + 0.5) + 0.8);
+        if (params.k0_auto === false && params.k0_custom !== undefined && !isNaN(parseInt(params.k0_custom))) {
+            k0 = Math.max(1, parseInt(params.k0_custom));
+        }
+
+        let k2 = Math.abs(Math.floor((z2 * alfa / 180.0 + 0.5) + 0.8));
+        if (params.k2_auto === false && params.k2_custom !== undefined && !isNaN(parseInt(params.k2_custom))) {
+            k2 = Math.max(1, parseInt(params.k2_custom));
+        }
 
         // Common normal length W
         const W0 = m * (pi * cosAlfa * (k0 - 0.5) + z0 * cosAlfa * invAlfa) + 2.0 * x0 * m * sinAlfa;
@@ -427,6 +445,10 @@ export const SplinesCalc = {
             hf0_tool,
             ra0_tool,
             rf0_tool,
+            ha2_tool,
+            hf2_tool,
+            ra2_tool,
+            rf2_tool,
             k0,
             k2,
             W0,

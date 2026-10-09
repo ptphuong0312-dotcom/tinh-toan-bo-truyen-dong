@@ -699,22 +699,46 @@ export class SplinesCanvas {
                 return { x: cx, y: cy, ang };
             });
 
-            // Distance line across the 2 balls (W_bi2: furthest outer distance)
+            // Vector between ball centers
+            const dx_c = pts[1].x - pts[0].x;
+            const dy_c = pts[1].y - pts[0].y;
+            const dist_c = Math.hypot(dx_c, dy_c) || 1e-6;
+            const ux = dx_c / dist_c;
+            const uy = dy_c / dist_c;
+
+            // Furthest outermost points of the two balls (mép ngoài xa nhất của 2 viên bi)
+            const pOut0 = { x: pts[0].x - ux * r_pin, y: pts[0].y - uy * r_pin };
+            const pOut1 = { x: pts[1].x + ux * r_pin, y: pts[1].y + uy * r_pin };
+
+            // Perpendicular unit vector for dimension boundary ticks
+            const nx = -uy;
+            const ny = ux;
+            const tickLen = 7 / this.scale;
+
+            // Dimension line across the 2 balls (W_bi2: furthest outer distance)
             ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 1.2 / this.scale;
+            ctx.lineWidth = 1.3 / this.scale;
             ctx.setLineDash([4 / this.scale, 3 / this.scale]);
             ctx.beginPath();
-            ctx.moveTo(pts[0].x, pts[0].y);
-            ctx.lineTo(pts[1].x, pts[1].y);
+            ctx.moveTo(pOut0.x, pOut0.y);
+            ctx.lineTo(pOut1.x, pOut1.y);
             ctx.stroke();
+
+            // Boundary ticks at both outermost edges
             ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(pOut0.x - nx * tickLen, pOut0.y - ny * tickLen);
+            ctx.lineTo(pOut0.x + nx * tickLen, pOut0.y + ny * tickLen);
+            ctx.moveTo(pOut1.x - nx * tickLen, pOut1.y - ny * tickLen);
+            ctx.lineTo(pOut1.x + nx * tickLen, pOut1.y + ny * tickLen);
+            ctx.stroke();
 
             // Text note for Wb between the 2 pins
-            const midX = (pts[0].x + pts[1].x) / 2;
-            const midY = (pts[0].y + pts[1].y) / 2;
+            const midX = (pOut0.x + pOut1.x) / 2;
+            const midY = (pOut0.y + pOut1.y) / 2;
             const wbVal = g.W_bi2 || g.W2;
             ctx.save();
-            ctx.translate(midX, midY + 8 / this.scale);
+            ctx.translate(midX + nx * (9 / this.scale), midY + ny * (9 / this.scale));
             ctx.scale(1, -1);
             ctx.fillStyle = '#7dd3fc';
             ctx.font = `bold ${Math.max(9, 11 / this.scale)}px sans-serif`;

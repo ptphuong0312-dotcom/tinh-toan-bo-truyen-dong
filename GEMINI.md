@@ -2631,3 +2631,29 @@ ho_{f0} / \cos\gamma$.
    - Mục 4.2 đổi thành: **"Pháp tuyến chung / Pháp tuyến đo bi" ($W / W_b$)**: Trục đo panme đĩa qua $k$ răng ($W_0$); Lỗ đo khoảng cách ngoài cùng qua 2 viên bi đặt cách nhau $k$ răng: $W_{bi2} = |d_{s2}| \cdot \sin(\pi k / z) + d_{t2}$.
    - Mục 4.4 đổi thành: **"Kích thước đo bi / con lăn" ($M$)**: Trục đo vòng tròn đồng tâm ngoài cùng $M_0 = d_{s0} + d_{t0}$; Lỗ đo vòng tròn đồng tâm trong cùng $M_2 = |d_{s2}| - d_{t2}$.
    - Canvas 2D: Vẽ đường tròn đồng tâm nét đứt vàng hổ phách (`#f59e0b`) đi qua điểm xa nhất của viên bi trục ($R = M_0 / 2$) và điểm trong nhất của viên bi lỗ ($r = M_2 / 2$). Vẽ đoạn đo khoảng cách 2 bi $W_b$ giữa 2 viên bi đặt cách nhau $k$ răng. Scale đảo trục Y cho text bằng `ctx.scale(1, -1)` đảm bảo chữ luôn xuôi chiều.
+
+---
+
+### Quy Tắc 109: Quy Chuẩn Hoàn Thiện Chuyên Sâu Then Hoa Thân Khai (Involute Splines): Tùy Biến Răng Đo k, Quy Chuẩn Bi Đo $d_p = 1.75m$, Đo 2 Bi Lỗ Xa Nhất, Góc Tùy Chọn ($20^\circ, 25^\circ$), Tùy Biến Biên Dạng Răng Đưa Lên Đầu & Đồng Bộ Toàn Cục
+**Ngày áp dụng**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Tùy biến số răng đo pháp tuyến $k$ (Mục 4.1)**:
+   - Cung cấp ô input và checkbox "Tự động" cho cả Trục ($k_0$) và Lỗ ($k_2$).
+   - Khi tích chọn: Khóa ô input (`disabled`), nhận giá trị tính toán tự động chuẩn MITCalc: $k = \lfloor z \cdot \alpha / 180 + 1.3 \rfloor$.
+   - Khi bỏ tích: Mở khóa ô input, cho phép kỹ sư xưởng tùy chỉnh số răng đo $k$ theo thực tế cỡ má panme đĩa; hệ thống tự động tính toán lại $W_0$ (chiều dài pháp tuyến chung trục) và $W_{bi2}$ (kích thước đo 2 viên bi lỗ) tức thì.
+2. **Quy chuẩn đường kính bi / con lăn đo $d_p$**:
+   - Đối với tất cả các loại then hoa có góc ăn khớp danh nghĩa $\alpha \le 30^\circ$, hệ thống mặc định tính: $d_p = 1.75 \cdot m$ (cho cả trục và lỗ).
+   - Với góc lớn hơn: $\alpha = 37.5^\circ \Rightarrow d_{p0} = 1.728m, d_{p2} = 1.440m$; $\alpha = 45^\circ \Rightarrow d_{p0} = 1.920m, d_{p2} = 1.440m$. Toàn bộ công thức ISO 4156 / ANSI / DIN vẫn được lưu giữ trong core engine để tra cứu khi cần.
+3. **Quy chuẩn kích thước đo 2 bi lỗ xa nhất ($W_{bi2}$ - Mục 4.2)**:
+   - Về giải tích: $W_{bi2} = |d_{s2}| \cdot \sin(\pi k_2 / z) + d_{t2}$, đại diện cho kích thước đo tới 2 mép ngoài cùng xa nhất của 2 viên bi đặt trong rãnh then lỗ cách nhau $k_2$ răng (không phải khoảng cách tâm).
+   - Trên Canvas 2D: Đường kích thước màu vàng hổ phách nối trực tiếp từ mép ngoài cùng viên bi 1 ($p_{outer0}$) tới mép ngoài cùng viên bi 2 ($p_{outer1}$) kèm 2 vạch giới hạn đo vuông góc chính xác.
+4. **Mở rộng góc ăn khớp danh nghĩa $\alpha$ (Mục 1.3)**:
+   - Dropdown hỗ trợ các góc tiêu chuẩn: $30^\circ, 37.5^\circ, 45^\circ$, bổ sung thêm $20^\circ$ (chuẩn ô tô xe máy JIS D 2001, tận dụng dao phay lăn răng có sẵn), $25^\circ$ (chuẩn ô tô Pháp NF E 22-141, cân bằng lực uốn và lực tách tâm moay-ơ), và chế độ "Tùy chỉnh...".
+   - Bổ sung ô nhập số trực tiếp $\alpha$, đồng bộ 2 chiều tức thì giữa dropdown và ô nhập liệu.
+5. **Tái cấu trúc Phân mục 2.0 Thông số biên dạng răng**:
+   - Đổi tên thành: **"THÔNG SỐ BIÊN DẠNG RĂNG (TOOTH PROFILE PARAMETERS)"** (loại bỏ chữ "và dụng cụ cắt", bỏ ảnh minh họa).
+   - Di chuyển lên đầu trang (ngay trước Mục 1.0), mặc định ở trạng thái thu gọn (`collapsed`).
+   - Tự động cập nhật hệ số răng ($h_a^*, h_f^*, r_a^*, r_f^*$) khi thay đổi tiêu chuẩn Mục 1.2.
+   - Bổ sung checkbox "Tiêu chuẩn": Khi bỏ tích, cho phép kỹ sư can thiệp trực tiếp vào chiều cao răng và bán kính lượn để thiết kế biên dạng phi tiêu chuẩn; khi thay đổi, kích thước đỉnh, chân, khe hở và toàn bộ bản vẽ Canvas 2D cập nhật đồng bộ.
+6. **Mặc định thu gọn các phân mục**:
+   - `#sec20` (Thông số biên dạng răng), `#sec50` (Kiểm tra bền), `#sec60` (Bản vẽ CAD), và `#secInvoluteGuide` (Cẩm nang kỹ thuật 17 tiêu chuẩn) đều ở trạng thái thu gọn (`calc-section`, không có `open`) khi tải trang để giao diện gọn gàng, tập trung vào tính toán cốt lõi.

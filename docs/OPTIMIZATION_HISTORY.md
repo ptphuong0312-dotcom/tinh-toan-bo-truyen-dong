@@ -4164,3 +4164,44 @@ ho_{f0}$.
   * Trục: Vẽ 1 viên bi áp rãnh, vẽ **đường tròn đồng tâm nét đứt vàng hổ phách (`#f59e0b`)** đi qua điểm xa nhất của viên bi ($R = M_0 / 2$), nhãn kích thước $M$.
   * Lỗ: Vẽ 2 viên bi đặt cách nhau $k_2$ răng, vẽ đoạn đo khoảng cách ngoài cùng $W_b$, và vẽ **đường tròn đồng tâm nét đứt vàng đi qua điểm trong nhất của viên bi** ($r = M_2 / 2$).
   * Đảo trục scale Y cho text bằng `ctx.scale(1, -1)` triệt tiêu hoàn toàn hiện tượng chữ bị lộn ngược trên Canvas.
+
+---
+
+## GIAI ĐOẠN 14: HOÀN THIỆN CHUYÊN SÂU TÙY BIẾN RĂNG ĐO, ĐƯỜNG KÍNH BI 1.75m, ĐO 2 BI LỖ XA NHẤT, GÓC TÙY CHỌN & TÙY BIẾN BIÊN DẠNG RĂNG (INVOLUTE SPLINES)
+**Ngày hoàn thành**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+**Mục tiêu**: Hoàn thiện toàn diện 10 hạng mục kỹ thuật chuyên sâu theo yêu cầu của chủ sở hữu cho module Then Hoa Thân Khai (`modules/involute-splines`).
+
+### 1. Tùy Biến Số Răng Đo Pháp Tuyến k (Mục 4.1)
+- Thiết kế giao diện kép gồm ô nhập liệu `k0Input` / `k2Input` kèm checkbox "Tự động" `k0AutoCheck` / `k2AutoCheck`.
+- Khi tích "Tự động": Khóa ô nhập liệu, nhận giá trị tính toán lý thuyết tối ưu chuẩn MITCalc: $k = \lfloor z \cdot \alpha / 180 + 1.3 \rfloor$.
+- Khi bỏ tích "Tự động": Cho phép kỹ sư xưởng tùy chỉnh giá trị $k$ tùy ý. Hệ thống ngay lập tức tính toán lại chiều dài pháp tuyến $W_0$ của trục và khoảng cách 2 viên bi $W_{bi2}$ của lỗ.
+
+### 2. Quy Chuẩn Đường Kính Bi Đo Mặc Định dp = 1.75m Với Góc alfa <= 30 độ
+- Cập nhật hàm `getRecommendedPinDiameter`: Với mọi tiêu chuẩn then hoa có góc ăn khớp danh nghĩa $\alpha \le 30^\circ$, hệ thống mặc định gán $d_p = 1.75 \cdot m$ cho cả trục và lỗ.
+- Với góc lớn hơn: $\alpha = 37.5^\circ \Rightarrow d_{p0} = 1.728m, d_{p2} = 1.440m$; $\alpha = 45^\circ \Rightarrow d_{p0} = 1.920m, d_{p2} = 1.440m$.
+- Toàn bộ công thức tính theo ISO 4156 / ANSI B92.1 / DIN 5480 vẫn được lưu giữ an toàn trong mã nguồn để phục vụ tra cứu.
+
+### 3. Chuẩn Hóa Đo Khoảng Cách 2 Viên Bi Lỗ Xa Nhất Wbi2 (Mục 4.2)
+- Công thức giải tích: $W_{bi2} = |d_{s2}| \cdot \sin(\pi k_2 / z) + d_{t2}$, đo tới 2 mép ngoài cùng xa nhất của 2 viên bi (đường kính ngoài tiếp xúc panme/thước cặp).
+- Trực quan hóa Canvas 2D: Đường kích thước màu vàng hổ phách nối chuẩn xác từ mép ngoài cùng viên bi 1 ($p_{outer0}$) tới mép ngoài cùng viên bi 2 ($p_{outer1}$) kèm 2 vạch giới hạn đo vuông góc.
+
+### 4. Bổ Sung Góc Ăn Khớp Tùy Biến & Chuyên Sâu Góc 20 độ và 25 độ (Mục 1.3)
+- Dropdown góc ăn khớp bổ sung các góc thực tế: $30^\circ, 37.5^\circ, 45^\circ, 20^\circ, 25^\circ$ và chế độ "Tùy chỉnh...".
+- Cung cấp ô nhập liệu trực tiếp `#alfaInput`, liên kết 2 chiều đồng bộ với `#alfaSelect`.
+- Cơ sở kỹ thuật:
+  * Góc $20^\circ$: Tiêu chuẩn xe hơi / xe máy Nhật Bản JIS D 2001, hoặc gia công bằng dao phay lăn răng bánh răng trụ $\alpha = 20^\circ$ sẵn có trong xưởng; giảm áp lực bung moay-ơ.
+  * Góc $25^\circ$: Tiêu chuẩn ô tô châu Âu NF E 22-141 (Pháp), cân bằng hoàn hảo giữa khả năng chịu mô-men xoắn và ứng suất tách hướng tâm, cho phép vỏ moay-ơ mỏng hơn.
+
+### 5. Tái Cấu Trúc Mục 2.0 Thông Số Biên Dạng Răng
+- Đổi tên thành: **"THÔNG SỐ BIÊN DẠNG RĂNG (TOOTH PROFILE PARAMETERS)"** (loại bỏ chữ "và dụng cụ cắt", bỏ ảnh minh họa).
+- Đưa lên đầu trang (trước Mục 1.0), mặc định ở trạng thái thu gọn (`collapsed`).
+- Tự động đồng bộ các hệ số $h_a^*, h_f^*, r_a^*, r_f^*$ khi chọn tiêu chuẩn ở Mục 1.2.
+- Tích hợp checkbox "Tiêu chuẩn": Cho phép kỹ sư xưởng tùy chỉnh thông số biên dạng phi tiêu chuẩn; khi thay đổi, kích thước đỉnh, chân và bản vẽ 2D Canvas phản ứng tức thì.
+
+### 6. Mặc Định Thu Gọn Giao Diện Gọn Gàng
+- Cấu hình `#sec20`, `#sec50`, `#sec60`, và `#secInvoluteGuide` ở trạng thái thu gọn mặc định (`calc-section`, không có `open`), giúp màn hình khởi động thoáng đãng, tập trung vào Mục 1.0, 3.0, 4.0.
+
+### 7. Đóng Gói Bundle Thuần & Kiểm Thử Toàn Diện
+- Đóng gói thành công `modules/involute-splines/js/splines-engine.bundle.js` (538.4 KB).
+- Chạy kiểm thử tự động Playwright xác nhận 100% tính năng hoạt động chính xác không lỗi console.
