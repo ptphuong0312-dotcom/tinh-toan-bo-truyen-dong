@@ -535,6 +535,183 @@
         return candidates.slice(0, 15);
     }
 
+    // Cơ sở dữ liệu vật liệu gia công nhiệt DIN 7190
+    const THERMAL_MATERIALS = {
+        steel: {
+            id: 'steel',
+            name: 'Thép kết cấu / Thép carbon (C45, 40Cr)',
+            alpha: 11.5e-6, // 1/K
+            E: 210000,      // MPa (N/mm2)
+            nu: 0.30,       // Hệ số Poisson
+            maxSafeTemp: 250 // °C nhiệt độ tối đa trước khi ram/giảm độ cứng
+        },
+        hard_steel: {
+            id: 'hard_steel',
+            name: 'Thép hợp kim tôi cứng (55-62 HRC)',
+            alpha: 12.0e-6,
+            E: 210000,
+            nu: 0.30,
+            maxSafeTemp: 180
+        },
+        cast_iron: {
+            id: 'cast_iron',
+            name: 'Gang xám / Gang cầu (GG25, GGG50)',
+            alpha: 10.5e-6,
+            E: 120000,
+            nu: 0.26,
+            maxSafeTemp: 350
+        },
+        bronze: {
+            id: 'bronze',
+            name: 'Đồng thanh / Đồng thau (CuSn, CuZn)',
+            alpha: 17.5e-6,
+            E: 105000,
+            nu: 0.35,
+            maxSafeTemp: 200
+        },
+        aluminum: {
+            id: 'aluminum',
+            name: 'Hợp kim nhôm (AlSi, Duralumin)',
+            alpha: 23.0e-6,
+            E: 70000,
+            nu: 0.33,
+            maxSafeTemp: 150
+        }
+    };
+
+    /**
+     * Tính toán Nhiệt độ nung lắp ghép & Biến dạng dôi theo DIN 7190
+     */
+    function calculateThermalFit(params) {
+        const d = Math.max(1, parseFloat(params.d) || 50.0); // mm
+        const N_max = Math.max(0, parseFloat(params.N_max) || 0.0); // µm
+        const N_min = Math.max(0, parseFloat(params.N_min) || 0.0); // µm
+        const D_hub = Math.max(d * 1.05, parseFloat(params.D_hub) || (d * 2.0)); // mm
+        const d0_shaft = Math.max(0, Math.min(d * 0.95, parseFloat(params.d0_shaft) || 0.0)); // mm
+        const L_hub = Math.max(1, parseFloat(params.L_hub) || d); // mm
+        const T0 = parseFloat(params.T0 !== undefined ? params.T0 : 20.0); // °C
+        
+        // Khe hở lắp ráp an toàn c (µm): mặc định max(20 µm, 0.001 * d * 1000)
+        const default_c = Math.max(20.0, d * 1.0);
+        const c = parseFloat(params.c !== undefined ? params.c : default_c); // µm
+        
+        const matH = THERMAL_MATERIALS[params.mat_hub] || THERMAL_MATERIALS.steel;
+        const matS = THERMAL_MATERIALS[params.mat_shaft] || THERMAL_MATERIALS.steel;
+
+        const Rz_hub = parseFloat(params.Rz_hub || 3.2); // µm
+        const Rz_shaft = parseFloat(params.Rz_shaft || 3.2); // µm
+
+        // 1. Độ dôi hiệu dụng sau khi cán phẳng vi nhấp nhô
+        const delta_u_R = 1.2 * (Rz_hub + Rz_shaft); // µm
+        const U_eff = Math.max(0, N_max - delta_u_R); // µm
+        const U_eff_mm = U_eff / 1000.0; // mm
+
+        // 2. Hệ số hình học ống dày Lame (DIN 7190)
+        const C_H = (D_hub * D_hub + d * d) / (D_hub * D_hub - d * d);
+        let C_S = 1.0;
+        if (d0_shaft > 0) {
+            C_S = (d * d + d0_shaft * d0_shaft) / (d * d - d0_shaft * d0_shaft);
+        }
+
+        // 3. Áp suất tiếp xúc mặt ghép p (MPa = N/mm2)
+        const term = ((C_S - matS.nu) / matS.E) + ((C_H + matH.nu) / matH.E);
+        const p = (term > 0 && d > 0) ? (U_eff_mm / (d * term)) : 0; // MPa
+
+        // 4. Biến dạng sau khi ghép nguội (DIN 7190)
+        // Độ nở đường kính ngoài moay-ơ delta_D (µm):
+        const delta_D = (matH.E > 0) ? (p * D_hub * (C_H - 1.0) / matH.E) * 1000.0 : 0; // µm
+        const D_act = D_hub + delta_D / 1000.0; // mm
+
+        // Độ co hẹp đường kính trong trục rỗng delta_d0 (µm):
+        let delta_d0 = 0;
+        let d0_act = 0;
+        if (d0_shaft > 0 && matS.E > 0) {
+            delta_d0 = (p * d0_shaft * (C_S + 1.0) / matS.E) * 1000.0; // µm
+            d0_act = d0_shaft - delta_d0 / 1000.0; // mm
+        }
+
+        // 5. Nhiệt độ gia công nhiệt (Assembly Thermal Process)
+        // Lượng giãn nở/co ngót cần thiết: delta_d_req = N_max + c (µm)
+        const delta_d_req_um = N_max + c;
+        const delta_d_req_mm = delta_d_req_um / 1000.0;
+
+        // Kịch bản A: Nung nóng Moay-ơ (Trục ở T0)
+        const delta_T_H = delta_d_req_mm / (d * matH.alpha);
+        const T_H = T0 + delta_T_H; // °C
+
+        let status_H = 'safe';
+        let status_H_text = 'An Toàn Tuyệt Đối';
+        let method_H = 'Nung trong bể dầu khoáng (100-120°C) hoặc máy gia nhiệt cảm ứng từ (Induction heater).';
+        if (T_H > matH.maxSafeTemp) {
+            status_H = 'danger';
+            status_H_text = 'CẢNH BÁO QUÁ NHIỆT';
+            method_H = `Vượt ngưỡng an toàn ${matH.maxSafeTemp}°C của vật liệu ${matH.name}! Nguy cơ non/ram giảm độ cứng. KHUYẾN NGHỊ: Kết hợp làm lạnh trục.`;
+        } else if (T_H > 150) {
+            status_H = 'warning';
+            status_H_text = 'Nhiệt Độ Cao';
+            method_H = 'Nung trong lò điện đối lưu có kiểm soát nhiệt độ. Tránh nung bằng ngọn lửa hở.';
+        }
+
+        // Kịch bản B: Làm lạnh sâu Trục (Moay-ơ ở T0)
+        const delta_T_S = delta_d_req_mm / (d * matS.alpha);
+        const T_S = T0 - delta_T_S; // °C
+
+        let coolant_text = '';
+        if (T_S >= -20) {
+            coolant_text = 'Tủ cấp đông công nghiệp (-20°C).';
+        } else if (T_S >= -78.5) {
+            coolant_text = 'Thùng đá khô CO2 (Dry Ice, -78.5°C).';
+        } else if (T_S >= -196) {
+            coolant_text = 'Bể nitơ lỏng (Liquid Nitrogen, -196°C). Thao tác nhanh với găng tay bảo hộ cách nhiệt.';
+        } else {
+            coolant_text = 'Độ dôi quá lớn, vượt quá nhiệt độ nitơ lỏng (-196°C). Bắt buộc phải kết hợp cả nung moay-ơ!';
+        }
+
+        // Kịch bản C: Phối hợp Nung vừa phải + Làm lạnh nhẹ
+        const T_H_combo = Math.min(100.0, T0 + delta_T_H * 0.5);
+        const exp_H_combo_um = d * matH.alpha * (T_H_combo - T0) * 1000.0; // µm
+        const req_S_combo_um = Math.max(0, delta_d_req_um - exp_H_combo_um);
+        const T_S_combo = T0 - (req_S_combo_um / 1000.0) / (d * matS.alpha);
+
+        return {
+            d,
+            N_max,
+            N_min,
+            D_hub,
+            d0_shaft,
+            L_hub,
+            T0,
+            c,
+            delta_d_req_um,
+            mat_hub: matH,
+            mat_shaft: matS,
+            U_eff,
+            p: parseFloat(p.toFixed(2)),
+            delta_D: parseFloat(delta_D.toFixed(2)),
+            D_act: parseFloat(D_act.toFixed(4)),
+            delta_d0: parseFloat(delta_d0.toFixed(2)),
+            d0_act: parseFloat(d0_act.toFixed(4)),
+            scenario_H: {
+                T_H: parseFloat(T_H.toFixed(1)),
+                delta_T_H: parseFloat(delta_T_H.toFixed(1)),
+                status: status_H,
+                statusText: status_H_text,
+                method: method_H
+            },
+            scenario_S: {
+                T_S: parseFloat(T_S.toFixed(1)),
+                delta_T_S: parseFloat(delta_T_S.toFixed(1)),
+                coolant: coolant_text
+            },
+            scenario_combo: {
+                T_H: parseFloat(T_H_combo.toFixed(1)),
+                T_S: parseFloat(T_S_combo.toFixed(1)),
+                exp_H_um: parseFloat(exp_H_combo_um.toFixed(1)),
+                shrink_S_um: parseFloat(req_S_combo_um.toFixed(1))
+            }
+        };
+    }
+
     // Export module ra window
     window.TolerancesEngine = {
         getIT,
@@ -545,7 +722,9 @@
         getANSI_IT,
         lookupISO2768,
         designFits,
-        getSizeIndex
+        getSizeIndex,
+        THERMAL_MATERIALS,
+        calculateThermalFit
     };
 
 })(typeof window !== 'undefined' ? window : this);

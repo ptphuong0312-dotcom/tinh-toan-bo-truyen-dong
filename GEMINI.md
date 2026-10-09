@@ -2779,3 +2779,34 @@ ho_{f0} / \cos\gamma$.
      * Độ lệch tọa độ giữa đỉnh đầu tiên và đỉnh cuối cùng đạt chuẩn Zero-Tolerance ($\Delta = 0.000000\text{ mm}$), tạo thành chuỗi biên dạng kín 100% khép kín, sẵn sàng gia công cắt dây Wire-EDM và đùn khối 3D Extrude trong CAD/CAM mà không cần xử lý bù nét (Overkill / Trim).
    - **Tinh gọn layer kiểm tra đo kiểm**:
      * Loại bỏ các nét chữ thập tâm bi đo cắt vào sườn răng; giữ lại đúng 2 thực thể tròn `MEASUREMENT_PIN` và đường kích thước `INSPECTION_DIM` hướng ra khoảng trống; ở chế độ lắp ráp `assembly`, tự động ẩn bi đo để bản vẽ ăn khớp sắc nét.
+
+---
+
+### Quy Tắc 115: Quy Chuẩn Tiện Ích Kỹ Thuật Quy Trình Nung Lắp Ghép Dôi & Biến Dạng Chi Tiết DIN 7190 Tích Hợp Module 6 (Interference Fit Thermal Assembly & Elastic Deformation Protocol)
+**Ngày áp dụng**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Bản chất kỹ thuật & Sự cần thiết tích hợp vào Module 6 (Dung Sai & Lắp Ghép ISO 286 / ANSI B4.1)**:
+   - Trong chế tạo cơ khí chính xác, khi tra cứu mối ghép có độ dôi (Interference Fit, ví dụ: $H7/s6, H7/r6, H7/u6, P7/h6$), kỹ sư xưởng bắt buộc phải biết:
+     * Cần nung moay-ơ lên bao nhiêu độ $T_H$ để lỗ giãn nở vượt qua độ dôi lớn nhất $N_{\max}$ cộng thêm khe hở an toàn lắp lọt $c$?
+     * Hoặc cần làm lạnh sâu trục xuống bao nhiêu độ $T_S$ (dùng đá khô $\text{CO}_2$ hay nitơ lỏng $\text{LN}_2$)?
+     * Sau khi nguội về nhiệt độ phòng ($20^\circ\text{C}$), áp suất nén tiếp xúc mặt ghép $p$ (MPa) theo phương trình Lamé ống dày bằng bao nhiêu?
+     * Moay-ơ bị dão/nở đường kính ngoài bao nhiêu ($\Delta D$), trục rỗng bị co hẹp lỗ bao nhiêu ($\Delta d_0$)?
+   - Việc tích hợp trực tiếp Tiện ích DIN 7190 ngay dưới bảng dung sai Module 6 giúp kỹ sư có ngay quy trình công nghệ gia công nhiệt mà không cần mở công cụ rời rạc.
+2. **Quy chuẩn tính toán nhiệt độ & biến dạng đàn hồi DIN 7190**:
+   - **Độ dôi hiệu dụng sau cào xước gia công**:
+     $$U_{\text{eff}} = \max(0,\, N_{\max} - 1.2 \cdot (R_{z1} + R_{z2}))$$
+   - **Áp suất tiếp xúc mặt ghép Lamé $p$ (MPa)**:
+     $$p = \frac{U_{\text{eff}} / 1000.0}{d \cdot \left( \frac{C_S - \nu_S}{E_S} + \frac{C_H + \nu_H}{E_H} \right)}$$
+     với $C_H = \frac{D^2 + d^2}{D^2 - d^2}$ (moay-ơ), $C_S = \frac{d^2 + d_0^2}{d^2 - d_0^2}$ (trục rỗng, hoặc $C_S = 1$ khi trục đặc $d_0 = 0$).
+   - **Biến dạng đàn hồi chi tiết**:
+     * Nở ngoài moay-ơ: $\Delta D = \frac{p \cdot D \cdot (C_H - 1)}{E_H} \times 1000.0\,\mu\text{m}$.
+     * Co trong trục rỗng: $\Delta d_0 = \frac{p \cdot d_0 \cdot (C_S - 1)}{E_S} \times 1000.0\,\mu\text{m}$.
+   - **Ba kịch bản nhiệt độ lắp ghép**:
+     * Kịch bản 1 (Chỉ nung moay-ơ): $T_H = T_0 + \frac{N_{\max} + c}{\alpha_H \cdot d \cdot 1000.0}$.
+     * Kịch bản 2 (Chỉ làm lạnh sâu trục): $T_S = T_0 - \frac{N_{\max} + c}{\alpha_S \cdot d \cdot 1000.0}$.
+     * Kịch bản 3 (Phối hợp bảo vệ ram thép): Nung nhẹ moay-ơ $T_{H3} \le 120^\circ\text{C}$ và làm lạnh trục $T_{S3}$.
+3. **Mô phỏng đồ họa Canvas 2D nhiệt & Trực quan hóa biến dạng**:
+   - Hai chế độ trực quan:
+     * Chế độ Nung nhiệt (`hot`): Moay-ơ đổi màu gradient lửa đỏ rực rỡ theo nhiệt độ nung $T_H$, thể hiện rõ khe hở lắp lọt an toàn $c$ giữa trục và moay-ơ.
+     * Chế độ Sau lắp nguội (`cold`): Thể hiện rõ mặt tiếp xúc nén đỏ, mũi tên chỉ biến dạng dãn ngoài $\Delta D$ và co trong $\Delta d_0$.
+   - Đồng bộ 2 chiều tự động với bảng ISO 286 / ANSI B4.1: Banner Callout tự động hiện khi chọn mối ghép dôi, nút `[ Xem Quy Trình Nung Nhiệt DIN 7190 ➔ ]`, nút sao chép Phiếu Quy Trình Công Nghệ Nhiệt Xưởng định dạng văn bản chuẩn công nghiệp.

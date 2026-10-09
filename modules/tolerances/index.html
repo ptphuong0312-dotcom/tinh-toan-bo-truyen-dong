@@ -426,6 +426,20 @@
                             </div>
                         </div>
 
+                        <!-- Nút kêu gọi hành động khi có độ dôi -->
+                        <div id="thermalCalloutContainer" style="display:none; margin-top:1rem; padding:0.85rem 1.25rem; background:linear-gradient(90deg, rgba(220, 38, 38, 0.2) 0%, rgba(249, 115, 22, 0.15) 100%); border-radius:8px; border:1px solid rgba(239,68,68,0.4); justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem;">
+                            <div style="display:flex; align-items:center; gap:0.75rem;">
+                                <span style="font-size:1.4rem;">🔥</span>
+                                <div>
+                                    <div style="font-weight:700; color:#f87171; font-size:0.92rem;">Mối ghép có ĐỘ DÔI LẮP CHẶT (N_max = <span id="callout_nmax_val">59</span> µm)!</div>
+                                    <div style="font-size:0.8rem; color:#cbd5e1;">Khuyến nghị nung nóng moay-ơ hoặc làm lạnh trục để ép không bị cào xước bề mặt.</div>
+                                </div>
+                            </div>
+                            <button type="button" id="btnJumpToThermal" class="btn" style="padding:0.5rem 1rem; font-size:0.82rem; font-weight:700; background:#dc2626; color:#fff; border:none; border-radius:6px; cursor:pointer; box-shadow:0 0 10px rgba(220,38,38,0.4);">
+                                Xem Quy Trình Nung Nhiệt DIN 7190 ➔
+                            </button>
+                        </div>
+
                         <!-- KHỐI BIỂU ĐỒ 2D CANVAS ĐỒ HỌA TRỰC QUAN TÍCH HỢP -->
                         <div class="canvas-wrapper" id="toleranceCanvasContainer" style="margin-top:1.5rem;">
                             <div class="canvas-toolbar">
@@ -446,6 +460,245 @@
                             <div style="margin-top:0.75rem; font-size:0.85rem; color:#94a3b8; display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
                                 <div>💡 <b>Thao tác:</b> Kéo chuột (hoặc 1 ngón tay) để di chuyển (Pan) • Cuộn chuột (hoặc 2 ngón tay) để Thu phóng (Zoom).</div>
                                 <div>🟢 <b>Màu sắc:</b> <span style="color:#22d3ee; font-weight:600;">Xanh Cyan</span> = Miền Lỗ • <span style="color:#fbbf24; font-weight:600;">Vàng Cam</span> = Miền Trục • <span style="color:#38bdf8; font-weight:600;">Xanh Dương</span> = Đường không 0.</div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- ============================================================== -->
+                <!-- Phân mục TIỆN ÍCH KỸ THUẬT: QUY TRÌNH NUNG LẮP GHÉP DÔI & BIẾN DẠNG CHI TIẾT (DIN 7190) -->
+                <!-- ============================================================== -->
+                <div class="calc-section collapsed" id="secThermalFit">
+                    <div class="section-header" style="background: linear-gradient(90deg, rgba(220, 38, 38, 0.25) 0%, rgba(31, 41, 55, 0.8) 100%);">
+                        <div class="section-title">
+                            <span style="color:#f87171;">🔥 TIỆN ÍCH KỸ THUẬT:</span> QUY TRÌNH NUNG LẮP GHÉP DÔI &amp; BIẾN DẠNG CHI TIẾT (DIN 7190)
+                        </div>
+                        <div style="display:flex; align-items:center; gap:0.75rem;">
+                            <span id="badge_thermal_status" class="badge-type" style="background:#dc2626; color:#ffffff;">🔥 Nung Nhiệt / Ghép Dôi</span>
+                            <span class="section-toggle-icon">▶</span>
+                        </div>
+                    </div>
+                    <div class="section-body">
+                        <div style="margin-bottom:1rem; font-size:0.9rem; color:#94a3b8; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem;">
+                            <span>
+                                Tính toán nhiệt độ nung Moay-ơ (<i>T_H</i>), làm lạnh sâu Trục (<i>T_S</i>) với khe hở an toàn chống kẹt khi lồng ghép, và độ phình nở ngoài / co bóp trong sau khi nguội theo tiêu chuẩn <b>DIN 7190</b>:
+                            </span>
+                            <button type="button" id="btnSyncFromISO" class="btn" style="padding:0.35rem 0.85rem; font-size:0.8rem; background:#0284c7; color:#fff; border:none; border-radius:4px; cursor:pointer;" title="Lấy kích thước d và độ dôi Nmax từ bảng ISO 286 ở trên">
+                                🔄 Đồng Bộ Từ ISO 286
+                            </button>
+                        </div>
+
+                        <!-- Bảng nhập thông số chi tiết -->
+                        <table class="calc-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 50px;">#</th>
+                                    <th>Thông số lắp ghép nhiệt</th>
+                                    <th>Ký hiệu</th>
+                                    <th>Giá trị nhập / Chọn lựa</th>
+                                    <th>Đơn vị</th>
+                                    <th>Mô tả / Ràng buộc kỹ thuật</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>T.1</td>
+                                    <td><b>Đường kính mặt ghép danh nghĩa</b></td>
+                                    <td><i>d</i></td>
+                                    <td>
+                                        <input type="text" id="thermal_inp_d" class="user-input" value="50.0" style="width:110px;">
+                                    </td>
+                                    <td>mm</td>
+                                    <td>Đường kính tiếp xúc giữa trục và lỗ moay-ơ</td>
+                                </tr>
+                                <tr>
+                                    <td>T.2</td>
+                                    <td><b>Độ dôi lớn nhất để tính toán</b></td>
+                                    <td><i>N_max</i></td>
+                                    <td>
+                                        <input type="text" id="thermal_inp_nmax" class="user-input highlight-key-param" value="59.0" style="width:110px;">
+                                    </td>
+                                    <td>µm</td>
+                                    <td>Độ dôi lớn nhất của mối ghép (1 µm = 0.001 mm)</td>
+                                </tr>
+                                <tr>
+                                    <td>T.3</td>
+                                    <td><b>Đường kính ngoài Moay-ơ</b></td>
+                                    <td><i>D</i></td>
+                                    <td>
+                                        <input type="text" id="thermal_inp_D" class="user-input" value="100.0" style="width:110px;">
+                                    </td>
+                                    <td>mm</td>
+                                    <td>Đường kính ngoài của chi tiết bao (bánh răng, gối, moay-ơ)</td>
+                                </tr>
+                                <tr>
+                                    <td>T.4</td>
+                                    <td><b>Đường kính lỗ trong trục rỗng</b></td>
+                                    <td><i>d_0</i></td>
+                                    <td>
+                                        <input type="text" id="thermal_inp_d0" class="user-input" value="0.0" style="width:110px;">
+                                    </td>
+                                    <td>mm</td>
+                                    <td>Nhập <b>0</b> nếu là trục đặc (nhập &gt; 0 nếu là trục rỗng)</td>
+                                </tr>
+                                <tr>
+                                    <td>T.5</td>
+                                    <td><b>Khe hở lắp lọt an toàn khi nung</b></td>
+                                    <td><i>c</i></td>
+                                    <td>
+                                        <input type="text" id="thermal_inp_c" class="user-input" value="50.0" style="width:110px;">
+                                    </td>
+                                    <td>µm</td>
+                                    <td>Khe hở dự phòng để đút lọt êm ái mà không bị kẹt sượng (thường 0.001·d)</td>
+                                </tr>
+                                <tr>
+                                    <td>T.6</td>
+                                    <td><b>Vật liệu Moay-ơ (Hub)</b></td>
+                                    <td><i>Mat_H</i></td>
+                                    <td>
+                                        <select id="thermal_sel_mat_hub" class="combo-select" style="width:100%; max-width:280px;">
+                                            <option value="steel" selected>Thép carbon / hợp kim (C45, 40Cr)</option>
+                                            <option value="hard_steel">Thép hợp kim tôi cứng (55-62 HRC)</option>
+                                            <option value="cast_iron">Gang xám / Gang cầu (GG25, GGG50)</option>
+                                            <option value="bronze">Đồng thanh / Đồng thau (CuSn, CuZn)</option>
+                                            <option value="aluminum">Hợp kim nhôm (AlSi, Duralumin)</option>
+                                        </select>
+                                    </td>
+                                    <td>-</td>
+                                    <td>Hệ số giãn nở nhiệt α_H &amp; Mô đun đàn hồi E_H</td>
+                                </tr>
+                                <tr>
+                                    <td>T.7</td>
+                                    <td><b>Vật liệu Trục (Shaft)</b></td>
+                                    <td><i>Mat_S</i></td>
+                                    <td>
+                                        <select id="thermal_sel_mat_shaft" class="combo-select" style="width:100%; max-width:280px;">
+                                            <option value="steel" selected>Thép kết cấu (C45, 40Cr, 42CrMo4)</option>
+                                            <option value="hard_steel">Thép tôi cứng bề mặt</option>
+                                            <option value="cast_iron">Gang trục</option>
+                                        </select>
+                                    </td>
+                                    <td>-</td>
+                                    <td>Hệ số giãn nở nhiệt α_S &amp; Mô đun đàn hồi E_S</td>
+                                </tr>
+                                <tr>
+                                    <td>T.8</td>
+                                    <td><b>Nhiệt độ môi trường xưởng</b></td>
+                                    <td><i>T_0</i></td>
+                                    <td>
+                                        <input type="text" id="thermal_inp_T0" class="user-input" value="20.0" style="width:110px;">
+                                    </td>
+                                    <td>°C</td>
+                                    <td>Nhiệt độ phòng lúc chuẩn bị chi tiết (thường 20°C ~ 25°C)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+
+                        <!-- KHỐI 3 THẺ KỊCH BẢN GIA CÔNG NHIỆT XƯỞNG -->
+                        <div style="margin-top:1.5rem;">
+                            <div style="font-weight:700; color:#38bdf8; font-size:1.05rem; margin-bottom:0.75rem;">
+                                🌡️ BA (03) KỊCH BẢN GIA CÔNG NHIỆT LẮP RÁP TẠI XƯỞNG:
+                            </div>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(320px, 1fr)); gap:1rem;">
+                                <!-- Kịch bản A: Nung nóng Moay-ơ -->
+                                <div style="background:#111827; padding:1.25rem; border-radius:8px; border:2px solid #ef4444; position:relative;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                                        <span style="font-weight:700; color:#f87171; font-size:0.95rem;">🔥 KỊCH BẢN 1: NUNG NÓNG MOAY-Ơ</span>
+                                        <span id="thermal_badge_H" class="badge-type" style="background:#15803d; font-size:0.72rem;">An toàn</span>
+                                    </div>
+                                    <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.25rem;">Nhiệt độ nung Moay-ơ cần thiết (T_hub):</div>
+                                    <div id="thermal_res_TH" style="font-size:1.6rem; font-weight:800; color:#ef4444; margin-bottom:0.5rem;">146.4 °C</div>
+                                    <div style="font-size:0.8rem; color:#cbd5e1; line-height:1.4;" id="thermal_res_method_H">
+                                        Nung trong bể dầu khoáng (100-150°C) hoặc máy gia nhiệt cảm ứng từ.
+                                    </div>
+                                    <div style="margin-top:0.5rem; font-size:0.75rem; color:#64748b;">(Trục giữ nguyên nhiệt độ phòng 20°C)</div>
+                                </div>
+
+                                <!-- Kịch bản B: Làm lạnh sâu Trục -->
+                                <div style="background:#111827; padding:1.25rem; border-radius:8px; border:2px solid #0284c7; position:relative;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                                        <span style="font-weight:700; color:#38bdf8; font-size:0.95rem;">❄️ KỊCH BẢN 2: LÀM LẠNH SÂU TRỤC</span>
+                                        <span class="badge-type" style="background:#0369a1; font-size:0.72rem;">Làm Lạnh</span>
+                                    </div>
+                                    <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.25rem;">Nhiệt độ làm lạnh Trục cần thiết (T_shaft):</div>
+                                    <div id="thermal_res_TS" style="font-size:1.6rem; font-weight:800; color:#38bdf8; margin-bottom:0.5rem;">-106.4 °C</div>
+                                    <div style="font-size:0.8rem; color:#cbd5e1; line-height:1.4;" id="thermal_res_coolant_S">
+                                        Bể nitơ lỏng (-196°C). Thao tác nhanh với kẹp và găng tay cách nhiệt.
+                                    </div>
+                                    <div style="margin-top:0.5rem; font-size:0.75rem; color:#64748b;">(Moay-ơ giữ nguyên nhiệt độ phòng 20°C)</div>
+                                </div>
+
+                                <!-- Kịch bản C: Phối hợp cả hai -->
+                                <div style="background:#111827; padding:1.25rem; border-radius:8px; border:2px solid #f59e0b; position:relative;">
+                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+                                        <span style="font-weight:700; color:#fbbf24; font-size:0.95rem;">⚡ KỊCH BẢN 3: PHỐI HỢP CẢ HAI</span>
+                                        <span class="badge-type" style="background:#b45309; font-size:0.72rem;">Tối ưu cơ tính</span>
+                                    </div>
+                                    <div style="display:flex; gap:1rem; margin-bottom:0.5rem;">
+                                        <div>
+                                            <div style="font-size:0.78rem; color:#94a3b8;">Nung Moay-ơ vừa:</div>
+                                            <div id="thermal_res_combo_TH" style="font-size:1.3rem; font-weight:800; color:#f97316;">83.2 °C</div>
+                                        </div>
+                                        <div style="border-left:1px solid #334155; padding-left:1rem;">
+                                            <div style="font-size:0.78rem; color:#94a3b8;">Lạnh Trục nhẹ:</div>
+                                            <div id="thermal_res_combo_TS" style="font-size:1.3rem; font-weight:800; color:#38bdf8;">-43.2 °C</div>
+                                        </div>
+                                    </div>
+                                    <div style="font-size:0.8rem; color:#cbd5e1; line-height:1.4;">
+                                        Tránh quá nhiệt làm non ram thép tôi. Trục chỉ cần ngâm thùng đá khô CO2 (-78.5°C).
+                                    </div>
+                                    <div style="margin-top:0.5rem; font-size:0.75rem; color:#64748b;">(Khuyến nghị cao cho ổ lăn &amp; bánh răng tôi)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KHỐI BIẾN DẠNG HÌNH HỌC & ÁP SUẤT SAU KHI NGUỘI -->
+                        <div style="margin-top:1.5rem;">
+                            <div style="font-weight:700; color:#34d399; font-size:1.05rem; margin-bottom:0.75rem;">
+                                📏 BIẾN DẠNG HÌNH HỌC &amp; ÁP SUẤT TIẾP XÚC SAU KHI GHÉP NGUỘI:
+                            </div>
+                            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:1rem;">
+                                <div style="background:#111827; padding:1rem; border-radius:8px; border:1px solid #1e293b;">
+                                    <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.25rem;">Áp suất tiếp xúc mặt ghép (p):</div>
+                                    <div id="thermal_res_p" style="font-size:1.25rem; font-weight:800; color:#fbbf24;">48.5 MPa</div>
+                                    <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;">Độ dôi hiệu dụng: <span id="thermal_res_ueff">51.3 µm</span></div>
+                                </div>
+                                <div style="background:#111827; padding:1rem; border-radius:8px; border:1px solid #1e293b;">
+                                    <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.25rem;">Nở đường kính ngoài Moay-ơ (ΔD):</div>
+                                    <div id="thermal_res_deltaD" style="font-size:1.25rem; font-weight:800; color:#38bdf8;">+15.4 µm</div>
+                                    <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;">Đường kính sau ép: <span id="thermal_res_Dact" style="color:#e2e8f0; font-weight:600;">100.0154 mm</span></div>
+                                </div>
+                                <div style="background:#111827; padding:1rem; border-radius:8px; border:1px solid #1e293b;">
+                                    <div style="font-size:0.8rem; color:#94a3b8; margin-bottom:0.25rem;">Co hẹp lỗ trong trục rỗng (Δd₀):</div>
+                                    <div id="thermal_res_deltad0" style="font-size:1.25rem; font-weight:800; color:#a855f7;">0.0 µm</div>
+                                    <div style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;" id="thermal_res_d0act_lbl">Trục đặc (không có lỗ trong)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- KHỐI 2D CANVAS ĐỒ HỌA MÔ PHỎNG NUNG NHIỆT & BIẾN DẠNG -->
+                        <div class="canvas-wrapper" style="margin-top:1.5rem;">
+                            <div class="canvas-toolbar">
+                                <div style="display:flex; align-items:center; gap:0.75rem;">
+                                    <span style="font-weight:700; color:#38bdf8; font-size:1rem;">📐 MÔ PHỎNG MẶT CẮT KỸ THUẬT LẮP GHÉP NHIỆT (2D CAD SIMULATION)</span>
+                                </div>
+                                <div class="canvas-controls">
+                                    <button type="button" class="canvas-btn" id="btnThermalModeHot" style="background:#dc2626; border-color:#ef4444; font-weight:700;">🔥 Lúc Nung Nóng</button>
+                                    <button type="button" class="canvas-btn" id="btnThermalModeCold" style="background:#0284c7; border-color:#0ea5e9; font-weight:700;">❄️ Lúc Ghép Nguội</button>
+                                    <button type="button" class="canvas-btn" id="btnThermalZoomIn">🔍 +</button>
+                                    <button type="button" class="canvas-btn" id="btnThermalZoomOut">🔍 -</button>
+                                    <button type="button" class="canvas-btn" id="btnThermalReset">🔄 Đặt Lại</button>
+                                    <button type="button" class="canvas-btn" id="btnThermalDownload" style="background:#059669; border-color:#10b981;">📷 Tải Ảnh</button>
+                                    <button type="button" class="canvas-btn" id="btnThermalCopy" style="background:#475569; border-color:#64748b;">📋 Sao Chép</button>
+                                </div>
+                            </div>
+
+                            <canvas id="thermalFitCanvas" width="1200" height="420"></canvas>
+
+                            <div style="margin-top:0.75rem; font-size:0.85rem; color:#94a3b8; display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+                                <div>💡 <b>Thao tác:</b> Kéo chuột/ngón tay để di chuyển (Pan) • Cuộn chuột/chụm ngón tay để Thu phóng (Zoom).</div>
+                                <div>🔴 <b>Chế độ nung nóng:</b> Moay-ơ nở rộng tạo khe hở an toàn c • 🔵 <b>Chế độ nguội:</b> Áp suất nén &amp; Biến dạng dôi.</div>
                             </div>
                         </div>
 

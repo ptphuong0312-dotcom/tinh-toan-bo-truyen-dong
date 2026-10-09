@@ -4404,4 +4404,28 @@ ho_{f0}$.
 ### 3. Đồng bộ menu dropdown chuyển module trên toàn bộ hệ thống
 - Bảo đảm cả 8 module kỹ thuật (`spur-gear`, `bevel-gear`, `bevel-gear-advanced`, `worm-gear`, `worm-gear-advanced`, `shaft-keys`, `involute-splines`, `tolerances`) đều có menu dropdown đồng bộ, đầy đủ 9 module (bao gồm cả Bánh Răng Côn Chuyên Sâu và Trục Vít Chuyên Sâu).
 
+---
+
+## Giai Đoạn 34: Tích Hợp Tiện Ích Kỹ Thuật Quy Trình Nung Lắp Ghép Dôi & Biến Dạng Chi Tiết (DIN 7190) Vào Mô-Đun 6 Dung Sai & Lắp Ghép
+* **Tiêu chuẩn**: DIN 7190, ISO 286, ISO 1101.
+* **Mục tiêu & Đột phá kỹ thuật**:
+  1. **Tích hợp liền mạch trong Master Block 1**:
+     - Bổ sung phân mục `🔥 TIỆN ÍCH KỸ THUẬT: QUY TRÌNH NUNG LẮP GHÉP DÔI & BIẾN DẠNG CHI TIẾT (DIN 7190)` (`#secThermalFit`) ngay dưới bảng kết quả và biểu đồ miền dung sai ISO 286.
+     - Khi người dùng chọn bất kỳ kiểu lắp dôi nào ($N_{\max} > 0$ hoặc Lắp chặt), thanh thông báo callout tự động hiển thị với nút bấm `[ Xem Quy Trình Nung Nhiệt DIN 7190 ➔ ]` mở tức thì phân mục nung nhiệt.
+     - Tự động đồng bộ đường kính danh nghĩa $d$ và độ dôi lớn nhất $N_{\max}$ từ bảng ISO 286 vào bảng tính nung nhiệt kèm nút `[ 🔄 Đồng Bộ Từ ISO 286 ]`.
+  2. **Giải thuật kỹ thuật chính xác theo DIN 7190**:
+     - Tính toán độ dôi hiệu dụng sau khi cán phẳng vi nhấp nhô bề mặt: $U_{\text{eff}} = \max(0, N_{\max} - 1.2(R_{z\text{hub}} + R_{z\text{shaft}}))$.
+     - Tính toán áp suất tiếp xúc mặt ghép $p$ (MPa) theo phương trình ống dày Lame.
+     - Tính toán độ phình nở đường kính ngoài moay-ơ $\Delta D$ và co hẹp lỗ trong trục rỗng $\Delta d_0$ sau khi nguội.
+     - **3 Kịch bản gia công nhiệt tại xưởng**:
+       * Kịch bản A: Nung nóng Moay-ơ ($T_H$) với cảnh báo an toàn cơ tính thép tôi ($>250^\circ\text{C}$).
+       * Kịch bản B: Làm lạnh sâu Trục ($T_S$) với chỉ dẫn môi chất lạnh (Tủ đông $-20^\circ\text{C}$, Đá khô $-78.5^\circ\text{C}$, Nitơ lỏng $-196^\circ\text{C}$).
+       * Kịch bản C: Phối hợp Nung moay-ơ vừa phải + Làm lạnh trục nhẹ để bảo vệ tối đa cơ tính thép tôi.
+  3. **Khung vẽ đồ họa 2D Canvas kỹ thuật (`ThermalFitVisualizer`)**:
+     - Tích hợp khung vẽ mặt cắt trục lồng moay-ơ với 2 chế độ:
+       * `🔥 Lúc Nung Nóng (Assembly State)`: Moay-ơ đổi màu gradient lửa đỏ rực rỡ, hiển thị rõ khe hở lắp lọt an toàn $c$ giữa trục và moay-ơ.
+       * `❄️ Lúc Ghép Nguội (Shrink Fit State)`: Moay-ơ xanh cyan, trục vàng cam, viền tiếp xúc nén ép đỏ, hiển thị độ nở ngoài $\Delta D$ và co trong $\Delta d_0$.
+     - Đầy đủ bộ điều khiển: Thu phóng Zoom, Di chuyển Pan, Đặt lại góc nhìn, Tải ảnh PNG và Sao chép toàn bộ phiếu quy trình kỹ thuật vào Clipboard.
+
+
 

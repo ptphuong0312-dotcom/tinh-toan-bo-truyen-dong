@@ -2631,3 +2631,28 @@ ho_{f0}$.
      $$\max_{i} \sqrt{(x_{i+1} - x_i)^2 + (y_{i+1} - y_i)^2} \le 1.0\text{ mm}$$
    - Đảm bảo không có bước nhảy đảo chiều (reversal jump $\approx 8 \div 10\text{ mm}$) và đỉnh đầu/cuối trùng khít 100%.
 
+
+---
+
+### Runbook 20: Tính Toán Kỹ Thuật Nhiệt Độ Nung Lắp Ghép & Biến Dạng Ép Dôi DIN 7190 Trong Module 6 Dung Sai & Lắp Ghép
+**Mục tiêu**: Tự động hóa tính toán quy trình công nghệ gia nhiệt / làm lạnh sâu và áp suất tiếp xúc Lamé, biến dạng đàn hồi cho các mối ghép có độ dôi ($H7/s6, H7/r6, H7/u6, P7/h6,...$) theo tiêu chuẩn DIN 7190.
+
+1. **Giải thuật tính toán cơ học DIN 7190 (`tolerances-calc.js`)**:
+   - Nhận thông số từ bảng ISO 286: đường kính danh nghĩa $d$, độ dôi lớn nhất $N_{\max} = es - EI$ (khi $N_{\max} > 0$).
+   - Nhập thông số công nghệ: đường kính ngoài moay-ơ $D$, lỗ trục rỗng $d_0$, độ nhám $R_{z1}, R_{z2}$, khe hở an toàn lắp lọt $c$.
+   - Cơ sở dữ liệu 5 vật liệu kỹ thuật (`THERMAL_MATERIALS`): Thép C45, Thép tôi hợp kim ($T_{\max} \le 180^\circ\text{C}$), Gang xám, Đồng thanh, Hợp kim Nhôm kèm $\alpha, E, \nu$.
+   - Độ dôi hiệu dụng $U_{\text{eff}} = \max(0, N_{\max} - 1.2(R_{z1} + R_{z2}))$.
+   - Áp suất tiếp xúc Lamé:
+     $$p = \frac{U_{\text{eff}} / 1000.0}{d \cdot \left( \frac{C_S - \nu_S}{E_S} + \frac{C_H + \nu_H}{E_H} \right)} \quad (\text{MPa})$$
+   - Biến dạng nở ngoài moay-ơ $\Delta D$ và co trong trục rỗng $\Delta d_0$.
+   - 3 kịch bản nhiệt độ: Nung nóng moay-ơ $T_H$, Làm lạnh sâu trục $T_S$ (đá khô/nitơ lỏng), và kịch bản kết hợp bảo vệ cơ tính thép tôi.
+
+2. **Trực quan hóa Canvas 2D chuyên biệt (`tolerances-canvas.js`)**:
+   - Class `ThermalFitVisualizer`: Hỗ trợ Pan / Zoom, kéo thả chuột và cảm ứng 2 ngón mobile mượt mà (`touch-action: none`).
+   - Mode `hot`: Moay-ơ nung đỏ rực gradient nhiệt độ, hiển thị khe hở an toàn lắp lọt $c$ giữa trục và moay-ơ.
+   - Mode `cold`: Moay-ơ nguội về $20^\circ\text{C}$, ép chặt vào trục, hiển thị vòng nén tiếp xúc đỏ, đường kính dãn ngoài $D + \Delta D$, lỗ co trong $d_0 - \Delta d_0$.
+
+3. **Tích hợp UI thông minh & Đồng bộ 2 chiều (`tolerances-ui.js`, `index.html`)**:
+   - Banner Callout tự động hiện khi người dùng chọn kiểu lắp có độ dôi trong ISO 286 / ANSI B4.1.
+   - Accordion `#secThermalFit` tích hợp trong Master Block 1 ngay dưới bảng kết quả.
+   - Nút `[ 🔄 Đồng Bộ Từ ISO 286 ]` và nút `[ 📋 Sao Chép Phiếu Quy Trình ]` xuất báo cáo công nghệ xưởng tiêu chuẩn.

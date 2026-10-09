@@ -7,15 +7,19 @@
     'use strict';
 
     let visualizer = null;
+    let thermalVisualizer = null;
     let currentISOResult = null;
+    let currentThermalResult = null;
 
     function init() {
-        // Khởi tạo visualizer
+        // Khởi tạo visualizers
         visualizer = new window.TolerancesVisualizer('toleranceCanvas');
+        thermalVisualizer = new window.ThermalFitVisualizer('thermalFitCanvas');
 
         initTabs();
         initAccordions();
         initISOControls();
+        initThermalFitControls();
         initANSIControls();
         initISO2768Controls();
         initFitDesignControls();
@@ -253,6 +257,41 @@
 
         // Cập nhật highlight phương pháp gia công khả thi (Mục 5.0)
         updateSurfaceFinishHighlights(hGrade, sGrade);
+
+        // Cập nhật tiện ích nung nhiệt nếu có độ dôi hoặc kiểu lắp chặt
+        const calloutContainer = document.getElementById('thermalCalloutContainer');
+        const calloutNmaxVal = document.getElementById('callout_nmax_val');
+        const isInterference = (res.fit.type === 'Interference' || res.fit.N_max > 0);
+        
+        if (calloutContainer) {
+            if (isInterference) {
+                calloutContainer.style.display = 'flex';
+                if (calloutNmaxVal) calloutNmaxVal.textContent = res.fit.N_max.toFixed(1);
+            } else {
+                calloutContainer.style.display = 'none';
+            }
+        }
+
+        // Tự động đồng bộ d và Nmax vào form nung nhiệt (nếu người dùng chưa chỉnh sửa tay)
+        const inpThermD = document.getElementById('thermal_inp_d');
+        const inpThermNmax = document.getElementById('thermal_inp_nmax');
+        const inpThermDhub = document.getElementById('thermal_inp_D');
+        const inpThermC = document.getElementById('thermal_inp_c');
+        if (inpThermD && (!inpThermD.dataset.userEdited)) {
+            inpThermD.value = res.D.toFixed(3);
+        }
+        if (inpThermNmax && (!inpThermNmax.dataset.userEdited)) {
+            if (isInterference) {
+                inpThermNmax.value = res.fit.N_max.toFixed(1);
+            }
+        }
+        if (inpThermDhub && (!inpThermDhub.dataset.userEdited)) {
+            inpThermDhub.value = (res.D * 2.0).toFixed(1);
+        }
+        if (inpThermC && (!inpThermC.dataset.userEdited)) {
+            inpThermC.value = Math.max(20.0, res.D * 1.0).toFixed(1);
+        }
+        calculateThermal();
     }
 
     // 4. ANSI B4.1 Controls
@@ -577,9 +616,249 @@ ${clearInfo}
         });
     }
 
+    // 3.5. Thermal Fit & Shrinkage Controls (DIN 7190)
+    function initThermalFitControls() {
+        const inpD = document.getElementById('thermal_inp_d');
+        const inpNmax = document.getElementById('thermal_inp_nmax');
+        const inpDhub = document.getElementById('thermal_inp_D');
+        const inpD0 = document.getElementById('thermal_inp_d0');
+        const inpC = document.getElementById('thermal_inp_c');
+        const inpT0 = document.getElementById('thermal_inp_T0');
+        const selMatH = document.getElementById('thermal_sel_mat_hub');
+        const selMatS = document.getElementById('thermal_sel_mat_shaft');
+
+        const inputs = [inpD, inpNmax, inpDhub, inpD0, inpC, inpT0];
+        inputs.forEach(inp => {
+            if (inp) {
+                inp.addEventListener('input', () => {
+                    inp.dataset.userEdited = 'true';
+                    calculateThermal();
+                });
+                inp.addEventListener('change', () => {
+                    inp.dataset.userEdited = 'true';
+                    calculateThermal();
+                });
+            }
+        });
+
+        if (selMatH) selMatH.addEventListener('change', calculateThermal);
+        if (selMatS) selMatS.addEventListener('change', calculateThermal);
+
+        // Nút đồng bộ từ ISO 286
+        const btnSync = document.getElementById('btnSyncFromISO');
+        if (btnSync) {
+            btnSync.addEventListener('click', () => {
+                if (currentISOResult) {
+                    if (inpD) {
+                        inpD.value = currentISOResult.D.toFixed(3);
+                        delete inpD.dataset.userEdited;
+                    }
+                    if (inpNmax) {
+                        inpNmax.value = (currentISOResult.fit.N_max > 0 ? currentISOResult.fit.N_max : 50.0).toFixed(1);
+                        delete inpNmax.dataset.userEdited;
+                    }
+                    if (inpDhub) {
+                        inpDhub.value = (currentISOResult.D * 2.0).toFixed(1);
+                        delete inpDhub.dataset.userEdited;
+                    }
+                    if (inpC) {
+                        inpC.value = Math.max(20.0, currentISOResult.D * 1.0).toFixed(1);
+                        delete inpC.dataset.userEdited;
+                    }
+                    calculateThermal();
+                }
+            });
+        }
+
+        // Nút nhảy tới tiện ích nung nhiệt
+        const btnJump = document.getElementById('btnJumpToThermal');
+        if (btnJump) {
+            btnJump.addEventListener('click', () => {
+                const sec = document.getElementById('secThermalFit');
+                if (sec) {
+                    sec.classList.remove('collapsed');
+                    sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        }
+
+        // Thermal Canvas Controls
+        const btnHot = document.getElementById('btnThermalModeHot');
+        const btnCold = document.getElementById('btnThermalModeCold');
+        if (btnHot && btnCold) {
+            btnHot.addEventListener('click', () => {
+                if (thermalVisualizer) thermalVisualizer.setMode('hot');
+                btnHot.style.background = '#dc2626';
+                btnHot.style.borderColor = '#ef4444';
+                btnCold.style.background = '#334155';
+                btnCold.style.borderColor = '#475569';
+            });
+            btnCold.addEventListener('click', () => {
+                if (thermalVisualizer) thermalVisualizer.setMode('cold');
+                btnCold.style.background = '#0284c7';
+                btnCold.style.borderColor = '#0ea5e9';
+                btnHot.style.background = '#334155';
+                btnHot.style.borderColor = '#475569';
+            });
+        }
+
+        const btnZoomIn = document.getElementById('btnThermalZoomIn');
+        if (btnZoomIn) {
+            btnZoomIn.addEventListener('click', () => {
+                if (thermalVisualizer) thermalVisualizer.zoomIn();
+            });
+        }
+
+        const btnZoomOut = document.getElementById('btnThermalZoomOut');
+        if (btnZoomOut) {
+            btnZoomOut.addEventListener('click', () => {
+                if (thermalVisualizer) thermalVisualizer.zoomOut();
+            });
+        }
+
+        const btnReset = document.getElementById('btnThermalReset');
+        if (btnReset) {
+            btnReset.addEventListener('click', () => {
+                if (thermalVisualizer) thermalVisualizer.resetView();
+            });
+        }
+
+        const btnDownload = document.getElementById('btnThermalDownload');
+        if (btnDownload) {
+            btnDownload.addEventListener('click', () => {
+                if (thermalVisualizer) thermalVisualizer.downloadPNG();
+            });
+        }
+
+        const btnCopy = document.getElementById('btnThermalCopy');
+        if (btnCopy) {
+            btnCopy.addEventListener('click', copyThermalReportToClipboard);
+        }
+    }
+
+    function calculateThermal() {
+        if (!window.TolerancesEngine || !window.TolerancesEngine.calculateThermalFit) return;
+
+        const d = parseFloat(document.getElementById('thermal_inp_d')?.value.replace(',', '.') || 50.0);
+        const N_max = parseFloat(document.getElementById('thermal_inp_nmax')?.value.replace(',', '.') || 59.0);
+        const D_hub = parseFloat(document.getElementById('thermal_inp_D')?.value.replace(',', '.') || 100.0);
+        const d0_shaft = parseFloat(document.getElementById('thermal_inp_d0')?.value.replace(',', '.') || 0.0);
+        const c = parseFloat(document.getElementById('thermal_inp_c')?.value.replace(',', '.') || 50.0);
+        const T0 = parseFloat(document.getElementById('thermal_inp_T0')?.value.replace(',', '.') || 20.0);
+        const mat_hub = document.getElementById('thermal_sel_mat_hub')?.value || 'steel';
+        const mat_shaft = document.getElementById('thermal_sel_mat_shaft')?.value || 'steel';
+
+        const res = window.TolerancesEngine.calculateThermalFit({
+            d,
+            N_max,
+            D_hub,
+            d0_shaft,
+            c,
+            T0,
+            mat_hub,
+            mat_shaft
+        });
+
+        currentThermalResult = res;
+
+        setVal('thermal_res_TH', `${res.scenario_H.T_H} °C`);
+        setVal('thermal_res_method_H', res.scenario_H.method);
+        const badgeH = document.getElementById('thermal_badge_H');
+        if (badgeH) {
+            badgeH.textContent = res.scenario_H.statusText;
+            if (res.scenario_H.status === 'safe') {
+                badgeH.style.background = '#15803d';
+            } else if (res.scenario_H.status === 'warning') {
+                badgeH.style.background = '#d97706';
+            } else {
+                badgeH.style.background = '#dc2626';
+            }
+        }
+
+        setVal('thermal_res_TS', `${res.scenario_S.T_S} °C`);
+        setVal('thermal_res_coolant_S', res.scenario_S.coolant);
+
+        setVal('thermal_res_combo_TH', `${res.scenario_combo.T_H} °C`);
+        setVal('thermal_res_combo_TS', `${res.scenario_combo.T_S} °C`);
+
+        setVal('thermal_res_p', `${res.p} MPa`);
+        setVal('thermal_res_ueff', `${res.U_eff} µm`);
+        setVal('thermal_res_deltaD', `+${res.delta_D} µm`);
+        setVal('thermal_res_Dact', `${res.D_act} mm`);
+
+        setVal('thermal_res_deltad0', `-${res.delta_d0} µm`);
+        const d0lbl = document.getElementById('thermal_res_d0act_lbl');
+        if (d0lbl) {
+            if (d0_shaft > 0) {
+                d0lbl.innerHTML = `Đường kính sau ép: <span style="color:#e2e8f0; font-weight:600;">${res.d0_act} mm</span>`;
+            } else {
+                d0lbl.textContent = 'Trục đặc (không có lỗ trong)';
+            }
+        }
+
+        if (thermalVisualizer) {
+            thermalVisualizer.updateData(res);
+        }
+    }
+
+    function copyThermalReportToClipboard() {
+        if (!currentThermalResult) return;
+        const res = currentThermalResult;
+
+        const text = `======================================================================
+PHIẾU QUY TRÌNH KỸ THUẬT: LẮP GHÉP NHIỆT & BIẾN DẠNG DÔI (DIN 7190)
+MITCalc Engineering Web App - Xuất Xưởng Tự Động
+======================================================================
+1. THÔNG SỐ MỐI GHÉP:
+   - Đường kính mặt ghép danh nghĩa d: ${res.d} mm
+   - Độ dôi lớn nhất tính toán N_max: ${res.N_max} µm (${(res.N_max / 1000).toFixed(4)} mm)
+   - Đường kính ngoài Moay-ơ D: ${res.D_hub} mm
+   - Đường kính lỗ trong trục rỗng d0: ${res.d0_shaft > 0 ? res.d0_shaft + ' mm' : 'Trục đặc (0 mm)'}
+   - Khe hở lắp lọt an toàn khi nung c: ${res.c} µm
+   - Độ giãn nở lỗ yêu cầu: Δd_req = ${res.delta_d_req_um} µm
+   - Vật liệu Moay-ơ: ${res.mat_hub.name} (α = ${(res.mat_hub.alpha * 1e6).toFixed(1)}e-6/K)
+   - Vật liệu Trục: ${res.mat_shaft.name} (α = ${(res.mat_shaft.alpha * 1e6).toFixed(1)}e-6/K)
+
+2. BA (03) KỊCH BẢN GIA CÔNG NHIỆT:
+   [A] NUNG NÓNG MOAY-Ơ (Trục ở ${res.T0}°C):
+       * Nhiệt độ nung cần thiết T_hub: ${res.scenario_H.T_H} °C
+       * Trạng thái & Phương pháp: ${res.scenario_H.statusText} - ${res.scenario_H.method}
+
+   [B] LÀM LẠNH SÂU TRỤC (Moay-ơ ở ${res.T0}°C):
+       * Nhiệt độ làm lạnh cần thiết T_shaft: ${res.scenario_S.T_S} °C
+       * Môi chất lạnh khuyến nghị: ${res.scenario_S.coolant}
+
+   [C] PHỐI HỢP CẢ HAI (Tối ưu cơ tính thép tôi):
+       * Nung Moay-ơ vừa phải: T_hub = ${res.scenario_combo.T_H} °C
+       * Làm lạnh Trục nhẹ: T_shaft = ${res.scenario_combo.T_S} °C
+
+3. BIẾN DẠNG HÌNH HỌC & ÁP SUẤT SAU KHI NGUỘI:
+   - Áp suất tiếp xúc mặt ghép p: ${res.p} MPa
+   - Độ dôi hiệu dụng sau khi cán phẳng U_eff: ${res.U_eff} µm
+   - Nở đường kính ngoài Moay-ơ ΔD: +${res.delta_D} µm (D_sau_ép = ${res.D_act} mm)
+   - Co hẹp lỗ trong trục rỗng Δd0: ${res.d0_shaft > 0 ? `-${res.delta_d0} µm (d0_sau_ép = ${res.d0_act} mm)` : '0.0 µm (Trục đặc)'}
+======================================================================`;
+
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = document.getElementById('btnThermalCopy');
+            if (btn) {
+                const oldText = btn.textContent;
+                btn.textContent = 'Đã Sao Chép! ✓';
+                btn.style.background = '#059669';
+                setTimeout(() => {
+                    btn.textContent = oldText;
+                    btn.style.background = '#475569';
+                }, 2000);
+            }
+        }).catch(() => {
+            alert('Không thể truy cập Clipboard trình duyệt.');
+        });
+    }
+
     function calculateAll() {
         calculateISO();
         calculateANSI();
+        calculateThermal();
     }
 
     function setVal(id, text) {
