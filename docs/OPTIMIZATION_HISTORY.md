@@ -4090,3 +4090,39 @@ ho_{f0}$.
   * Bi/đũa đo kiểm tra $M_0$ và $M_2$: Tự động định vị tiếp xúc đúng bề mặt sườn rãnh răng trục tại góc $\pi/z$ và rãnh lỗ tại góc $0$.
   * Kiểm thử toàn diện 3 chế độ: Toàn bộ 360°, Cụm 3 răng, và 1 răng chi tiết bằng Playwright E2E đều đạt chuẩn kỹ thuật cơ khí 100%.
 
+---
+
+## Giai Đoạn 12: Tích Hợp Cẩm Nang Kỹ Thuật Chuyên Sâu, Mở Rộng Dung Sai Then Bằng & Mặc Định Ẩn ANSI B4.1
+* **Thời gian**: 09/10/2026
+* **Các hạng mục hoàn thành theo chỉ đạo trực tiếp từ SirPhuong**:
+
+### 1. Tích Hợp Mục Hướng Dẫn & Giải Thích Kỹ Thuật Ở Cuối Các Tab
+- **Tab Then Bán Nguyệt (Woodruff Keys)**:
+  * Tích hợp `#secWoodruffGuide` ở cuối tab: Giải thích 10 tùy chọn tiêu chuẩn Mục 4.2 (ANSI B17.2 A/B, DIN 6888 A/B, BS 6 A/B, JIS B 1301 WA/WB, CSN 30 1385.1/.2).
+  * Làm rõ bản chất: *Full radius* (đáy tròn phay bằng dao phay đĩa tiêu chuẩn) vs *Flat bottom* (đáy phẳng bảo toàn độ bền uốn của trục nhỏ); *DIN 6888 A* (rãnh moay-ơ sâu cho vật liệu mềm như nhôm, gang) vs *DIN 6888 B* (rãnh moay-ơ nông cho moay-ơ thành mỏng); hướng dẫn ứng dụng then tự lựa góc nghiêng cho đầu trục côn.
+- **Tab Then Hoa Răng Chữ Nhật (Straight-Sided Splines)**:
+  * Tích hợp `#secSplineGuide` ở cuối tab: Giải thích các dòng tiêu chuẩn Mục 6.2 (SAE J499 Series A/B/C theo chế độ cố định, trượt không tải, trượt có tải; ISO 14 Light/Medium; DIN 5464 Heavy cho tải va đập cực nặng).
+  * **Phân tích chuyên sâu 3 phương pháp định tâm**:
+    1. Định tâm theo đường kính trong ($d$): Chính xác nhất và phổ biến nhất (sau tôi cứng mài tròn trong lỗ moay-ơ đạt IT6-IT7).
+    2. Định tâm theo đường kính ngoài ($D$): Dùng khi moay-ơ không tôi cứng ($HB < 350$), không cần mài lại sau chuốt.
+    3. Định tâm theo mặt bên ($b$): Chuyên dùng cho mô-men xoắn cực lớn và tải đảo chiều.
+  * **Bảng tra cứu dung sai lắp ghép ISO 14 / DIN 5464 / TCVN**: Tổng hợp chi tiết các cấp dung sai Lỗ và Trục ($H7/js6, H7/g6, H7/f7$, $F8/h9, D10/d10$, $H11/a11$) theo từng trạng thái làm việc (cố định, trượt không tải, trượt có tải).
+- **Module Then Hoa Thân Khai (Involute Splines)**:
+  * Tích hợp Master Block 4 (`#secInvoluteGuide`) ở cuối giao diện: Phân tích 4 yếu tố cấu thành (Góc $\alpha = 30^\circ, 37.5^\circ, 45^\circ$; Dạng chân răng *Flat root* vs *Fillet root* chống mỏi; Định tâm *Side fit* tự triệt tiêu độ lệch tâm vs *Major diam. fit*).
+  * Bảng tra cứu toàn diện 17 hệ tiêu chuẩn Mục 1.2 (Mã A đến Q) khớp 100% MITCalc 1.74.
+
+### 2. Mở Rộng Các Kiểu Lắp Ghép Dung Sai Then Bằng (Parallel Keys Fit Classes)
+- **Tổ chức giao diện combobox**:
+  * 3 kiểu lắp phổ biến tiêu chuẩn đặt ở đầu danh sách, in đậm và tô màu xanh lá nổi bật (`#059669`):
+    1. *(1) Thông thường: Trục N9 / Lỗ JS9 (Tiêu chuẩn xưởng)*
+    2. *(2) Chặt / Cố định: Trục P9 / Lỗ JS9 (Tải va đập, đảo chiều)*
+    3. *(3) Trượt / Di động: Trục JS9 / Lỗ D10 (Bánh răng trượt dọc trục)*
+  * Nhóm các kiểu lắp mở rộng tiếp theo: *(4) Rất chặt P9/P9*, *(5) Trượt tự do H9/D10*, *(6) Trượt dẫn hướng chính xác H9/F8*, *(7) Lắp trung gian H9/H9*, *(8) Lắp lỏng D10/D10*, *(9) Lắp trung gian nhẹ JS9/JS9*, và *(10, 11, 12) Chuẩn Mỹ Class 1, 2, 3 (Hệ Inch)*.
+- **Động cơ tính toán dung sai**: `getParallelKeyTolerances` trong `keys-calc.js` tính toán chính xác trị số sai lệch trên/dưới theo kích thước bề rộng then $b$ và cấp IT tương ứng.
+- Hàm `updateFitColor()` phản ứng thời gian thực đổi màu sắc combobox.
+
+### 3. Mặc Định Ẩn Hệ Thống Lắp Ghép Tiêu Chuẩn ANSI B4.1 Trong Module Tolerances
+- Đặt class `.calc-section.collapsed` mặc định cho cả Phân mục 2.0 (Đầu vào ANSI B4.1) và Phân mục Kết quả ANSI B4.1.
+- Màn hình khởi động tập trung 100% vào hệ thống ISO 286 và Biểu đồ Canvas miền dung sai trực quan; người dùng có thể nhấp chuột vào header để mở ANSI B4.1 bất kỳ lúc nào.
+
+

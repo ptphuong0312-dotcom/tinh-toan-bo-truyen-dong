@@ -9874,15 +9874,33 @@ const KeysCalc = {
   },
 
   /**
-   * Tính toán Dung sai lắp then bằng (ISO 286 / DIN 6885)
+    * Tính toán Dung sai lắp then bằng (ISO 286 / DIN 6885)
    */
-  getParallelKeyTolerances(b, h, isMetric, fitClass) {
-    if (!isMetric) {
+  getParallelKeyTolerances(b, h, isMetric, fitClass = 'normal') {
+    if (!isMetric || fitClass.startsWith('ansi_')) {
+      let shaftStr = '-0.000 / +0.002 in (Clearance)';
+      let hubStr = '+0.002 / -0.000 in (Clearance)';
+      let keyStr = '±0.002 in (Class 1)';
+      if (fitClass === 'tight' || fitClass === 'tight_p9_p9' || fitClass === 'ansi_class3') {
+        shaftStr = '-0.002 / +0.000 in (Interference / Ép chặt)';
+        hubStr = '-0.000 / -0.002 in (Interference / Ép chặt)';
+        keyStr = '+0.002 / -0.000 in (Class 3)';
+      } else if (fitClass === 'ansi_class2' || fitClass === 'light_js9_js9' || fitClass === 'normal_h9_h9') {
+        shaftStr = '±0.001 in (Transition / Trung gian)';
+        hubStr = '±0.001 in (Transition / Trung gian)';
+        keyStr = '±0.001 in (Class 2)';
+      } else if (fitClass === 'sliding' || fitClass === 'sliding_h9_d10' || fitClass === 'loose_d10_d10' || fitClass === 'ansi_class1') {
+        shaftStr = '-0.000 / +0.003 in (Sliding / Di trượt)';
+        hubStr = '+0.004 / +0.001 in (Sliding / Di trượt)';
+        keyStr = '-0.000 / -0.002 in (Class 1)';
+      }
       return {
-        keyWidthTol: '±0.002 in (Class 1)',
-        shaftKeywayTol: fitClass === 'tight' ? '-0.000 / +0.001 in' : '-0.000 / +0.002 in',
-        hubKeywayTol: '+0.002 / -0.000 in',
-        depthTol: '+0.010 / -0.000 in'
+        keyWidthTol: keyStr,
+        keyHeightTol: '±0.003 in',
+        shaftKeywayTol: shaftStr,
+        hubKeywayTol: hubStr,
+        depthTolShaft: '+0.010 / -0.000 in',
+        depthTolHub: '+0.010 / -0.000 in'
       };
     }
 
@@ -9896,25 +9914,58 @@ const KeysCalc = {
     else if (b <= 50) it9_um = 62;
     else it9_um = 74;
 
-    const h9 = { es: 0, ei: -it9_um };
-    let shaftTol = { sym: 'N9', es: 0, ei: -it9_um };
-    if (fitClass === 'tight') {
-      shaftTol = { sym: 'P9', es: -it9_um * 0.4, ei: -it9_um * 1.4 };
-    } else if (fitClass === 'sliding') {
-      shaftTol = { sym: 'JS9', es: it9_um / 2, ei: -it9_um / 2 };
+    const it_half = Math.round(it9_um / 2);
+    let s_sym = 'N9', s_es = 0, s_ei = -it9_um;
+    let h_sym = 'JS9', h_es = it_half, h_ei = -it_half;
+
+    switch (fitClass) {
+      case 'tight':
+        s_sym = 'P9'; s_es = -Math.round(it9_um * 0.4); s_ei = -Math.round(it9_um * 1.4);
+        h_sym = 'JS9'; h_es = it_half; h_ei = -it_half;
+        break;
+      case 'tight_p9_p9':
+        s_sym = 'P9'; s_es = -Math.round(it9_um * 0.4); s_ei = -Math.round(it9_um * 1.4);
+        h_sym = 'P9'; h_es = -Math.round(it9_um * 0.4); h_ei = -Math.round(it9_um * 1.4);
+        break;
+      case 'sliding':
+        s_sym = 'JS9'; s_es = it_half; s_ei = -it_half;
+        h_sym = 'D10'; h_es = Math.round(it9_um * 2.0); h_ei = Math.round(it9_um * 0.8);
+        break;
+      case 'sliding_h9_d10':
+        s_sym = 'H9'; s_es = it9_um; s_ei = 0;
+        h_sym = 'D10'; h_es = Math.round(it9_um * 2.0); h_ei = Math.round(it9_um * 0.8);
+        break;
+      case 'sliding_h9_f8':
+        s_sym = 'H9'; s_es = it9_um; s_ei = 0;
+        h_sym = 'F8'; h_es = Math.round(it9_um * 0.9); h_ei = Math.round(it9_um * 0.35);
+        break;
+      case 'normal_h9_h9':
+        s_sym = 'H9'; s_es = it9_um; s_ei = 0;
+        h_sym = 'H9'; h_es = it9_um; h_ei = 0;
+        break;
+      case 'loose_d10_d10':
+        s_sym = 'D10'; s_es = Math.round(it9_um * 2.0); s_ei = Math.round(it9_um * 0.8);
+        h_sym = 'D10'; h_es = Math.round(it9_um * 2.0); h_ei = Math.round(it9_um * 0.8);
+        break;
+      case 'light_js9_js9':
+        s_sym = 'JS9'; s_es = it_half; s_ei = -it_half;
+        h_sym = 'JS9'; h_es = it_half; h_ei = -it_half;
+        break;
+      default: // 'normal'
+        s_sym = 'N9'; s_es = 0; s_ei = -it9_um;
+        h_sym = 'JS9'; h_es = it_half; h_ei = -it_half;
+        break;
     }
 
-    const hubTol = { sym: 'JS9', ES: it9_um / 2, EI: -it9_um / 2 };
-    const hubSlidingTol = { sym: 'D10', ES: it9_um * 2.0, EI: it9_um * 0.8 };
+    const fmtDev = (val) => (val >= 0 ? '+' : '') + (val / 1000).toFixed(3);
 
     return {
-      keyWidthTol: `h9 (0 / -${(it9_um / 1000).toFixed(3)} mm)`,
-      keyHeightTol: `h11 (0 / -${(it9_um * 2.5 / 1000).toFixed(3)} mm)`,
-      shaftKeywayTol: `${shaftTol.sym} (${shaftTol.es >= 0 ? '+' : ''}${(shaftTol.es / 1000).toFixed(3)} / ${(shaftTol.ei / 1000).toFixed(3)} mm)`,
-      hubKeywayTol: `JS9 (±${(it9_um / 2000).toFixed(3)} mm)`,
-      hubSlidingTol: `D10 (+${(hubSlidingTol.ES / 1000).toFixed(3)} / +${(hubSlidingTol.EI / 1000).toFixed(3)} mm)`,
-      depthTolShaft: '+0.1 / 0 mm (t1 <= 6) hoặc +0.2 / 0 mm',
-      depthTolHub: '+0.1 / 0 mm (t2 <= 6) hoặc +0.2 / 0 mm'
+      keyWidthTol: `h9 (0.000 / -${(it9_um / 1000).toFixed(3)} mm)`,
+      keyHeightTol: `h11 (0.000 / -${(it9_um * 2.5 / 1000).toFixed(3)} mm)`,
+      shaftKeywayTol: `${s_sym} (${fmtDev(s_es)} / ${fmtDev(s_ei)} mm)`,
+      hubKeywayTol: `${h_sym} (${fmtDev(h_es)} / ${fmtDev(h_ei)} mm)`,
+      depthTolShaft: '+0.100 / 0.000 mm (t1 <= 6) hoặc +0.200 / 0.000 mm',
+      depthTolHub: '+0.100 / 0.000 mm (t2 <= 6) hoặc +0.200 / 0.000 mm'
     };
   },
 
@@ -11625,8 +11676,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function updateFitColor() {
+    const sel = document.getElementById('selFitClass');
+    if (!sel) return;
+    const val = sel.value;
+    if (['normal', 'tight', 'sliding'].includes(val)) {
+      sel.style.color = '#059669'; // 3 kiểu lắp phổ biến: Màu xanh lá đậm nổi bật
+      sel.style.fontWeight = 'bold';
+    } else {
+      sel.style.color = '#111827';
+      sel.style.fontWeight = '600';
+    }
+  }
+
   // Init dropdowns
   initTypeDropdowns();
+  updateFitColor();
   bindEvents();
   updateCalculation();
 
@@ -11733,7 +11798,27 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('secWoodruffResults').style.display = state.jointType === 'woodruff' ? 'block' : 'none';
         document.getElementById('secSplineResults').style.display = state.jointType === 'spline' ? 'block' : 'none';
 
+        // Toggle technical guide sections
+        const elWG = document.getElementById('secWoodruffGuide');
+        const elSG = document.getElementById('secSplineGuide');
+        if (elWG) elWG.style.display = state.jointType === 'woodruff' ? 'block' : 'none';
+        if (elSG) elSG.style.display = state.jointType === 'spline' ? 'block' : 'none';
+
         updateCalculation();
+      });
+    });
+
+    // Accordion toggle on section-header click
+    document.querySelectorAll('.section-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const parent = header.closest('.calc-section');
+        if (parent) {
+          parent.classList.toggle('collapsed');
+          const icon = header.querySelector('.section-toggle-icon');
+          if (icon) {
+            icon.textContent = parent.classList.contains('collapsed') ? '▶' : '▼';
+          }
+        }
       });
     });
 
@@ -11782,6 +11867,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('selFitClass').addEventListener('change', (e) => {
       state.fitClass = e.target.value;
+      updateFitColor();
       updateCalculation();
     });
 

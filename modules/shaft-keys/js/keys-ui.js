@@ -43,8 +43,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function updateFitColor() {
+    const sel = document.getElementById('selFitClass');
+    if (!sel) return;
+    const val = sel.value;
+    if (['normal', 'tight', 'sliding'].includes(val)) {
+      sel.style.color = '#059669'; // 3 kiểu lắp phổ biến: Màu xanh lá đậm nổi bật
+      sel.style.fontWeight = 'bold';
+    } else {
+      sel.style.color = '#111827';
+      sel.style.fontWeight = '600';
+    }
+  }
+
   // Init dropdowns
   initTypeDropdowns();
+  updateFitColor();
   bindEvents();
   updateCalculation();
 
@@ -151,7 +165,27 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('secWoodruffResults').style.display = state.jointType === 'woodruff' ? 'block' : 'none';
         document.getElementById('secSplineResults').style.display = state.jointType === 'spline' ? 'block' : 'none';
 
+        // Toggle technical guide sections
+        const elWG = document.getElementById('secWoodruffGuide');
+        const elSG = document.getElementById('secSplineGuide');
+        if (elWG) elWG.style.display = state.jointType === 'woodruff' ? 'block' : 'none';
+        if (elSG) elSG.style.display = state.jointType === 'spline' ? 'block' : 'none';
+
         updateCalculation();
+      });
+    });
+
+    // Accordion toggle on section-header click
+    document.querySelectorAll('.section-header').forEach(header => {
+      header.addEventListener('click', () => {
+        const parent = header.closest('.calc-section');
+        if (parent) {
+          parent.classList.toggle('collapsed');
+          const icon = header.querySelector('.section-toggle-icon');
+          if (icon) {
+            icon.textContent = parent.classList.contains('collapsed') ? '▶' : '▼';
+          }
+        }
       });
     });
 
@@ -200,6 +234,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('selFitClass').addEventListener('change', (e) => {
       state.fitClass = e.target.value;
+      updateFitColor();
       updateCalculation();
     });
 

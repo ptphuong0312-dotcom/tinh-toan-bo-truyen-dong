@@ -139,10 +139,23 @@
                 <td class="col-param">Kiểu lắp ghép</td>
                 <td class="col-symbol">Fit</td>
                 <td>
-                  <select class="user-select" id="selFitClass">
-                    <option value="normal" selected>Thông thường (Trục N9 / Lỗ JS9)</option>
-                    <option value="tight">Chặt / Cố định (Trục P9 / Lỗ JS9)</option>
-                    <option value="sliding">Trượt / Lỏng (Trục JS9 / Lỗ D10)</option>
+                  <select class="user-select" id="selFitClass" style="max-width: 320px; font-weight: bold; color: #059669;">
+                    <optgroup label="⭐ 3 KIỂU LẮP PHỔ BIẾN TIÊU CHUẨN (ISO 773 / DIN 6885)">
+                      <option value="normal" selected style="color: #059669; font-weight: bold;">(1) Thông thường: Trục N9 / Lỗ JS9 (Tiêu chuẩn xưởng)</option>
+                      <option value="tight" style="color: #059669; font-weight: bold;">(2) Chặt / Cố định: Trục P9 / Lỗ JS9 (Tải va đập, đảo chiều)</option>
+                      <option value="sliding" style="color: #059669; font-weight: bold;">(3) Trượt / Di động: Trục JS9 / Lỗ D10 (Bánh răng trượt)</option>
+                    </optgroup>
+                    <optgroup label="⚙️ CÁC KIỂU LẮP DUNG SAI MỞ RỘNG (EXTENDED FITS)">
+                      <option value="tight_p9_p9">(4) Rất chặt / Ép cưỡng bức: Trục P9 / Lỗ P9</option>
+                      <option value="sliding_h9_d10">(5) Trượt tự do: Trục H9 / Lỗ D10</option>
+                      <option value="sliding_h9_f8">(6) Trượt dẫn hướng chính xác: Trục H9 / Lỗ F8</option>
+                      <option value="normal_h9_h9">(7) Lắp trung gian cơ bản: Trục H9 / Lỗ H9</option>
+                      <option value="loose_d10_d10">(8) Lắp lỏng tháo lắp nhanh: Trục D10 / Lỗ D10</option>
+                      <option value="light_js9_js9">(9) Lắp trung gian nhẹ: Trục JS9 / Lỗ JS9</option>
+                      <option value="ansi_class1">(10) Chuẩn Mỹ Class 1: Clearance Fit (Hệ Inch)</option>
+                      <option value="ansi_class2">(11) Chuẩn Mỹ Class 2: Transition Fit (Hệ Inch)</option>
+                      <option value="ansi_class3">(12) Chuẩn Mỹ Class 3: Interference Fit (Hệ Inch)</option>
+                    </optgroup>
                   </select>
                 </td>
                 <td class="col-unit">--</td>
@@ -569,6 +582,279 @@
           </div>
         </div>
         <canvas id="keysCanvas" width="1200" height="520"></canvas>
+      </div>
+
+      <!-- MỤC GIẢI THÍCH KỸ THUẬT: THEN BÁN NGUYỆT (WOODRUFF KEYS) -->
+      <div class="calc-section" id="secWoodruffGuide" style="display: none; margin-top: 1.5rem;">
+        <div class="section-header" style="background: linear-gradient(90deg, #1e3a8a, #0f172a); cursor: pointer;">
+          <span class="section-title">▼ 📖 HƯỚNG DẪN KỸ THUẬT & GIẢI THÍCH LỰA CHỌN MỤC 4.2 (THEN BÁN NGUYỆT)</span>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-body" style="background: #0b1329; padding: 1.25rem; font-size: 0.9rem; line-height: 1.6; color: #cbd5e1;">
+          
+          <div style="margin-bottom: 1.25rem;">
+            <h4 style="color: #38bdf8; margin: 0 0 0.5rem 0; font-size: 1rem;">1. Ý Nghĩa Kỹ Thuật 10 Tùy Chọn Tiêu Chuẩn Mục 4.2:</h4>
+            <div style="overflow-x: auto;">
+              <table class="calc-table" style="min-width: 600px; font-size: 0.85rem;">
+                <thead>
+                  <tr style="background: #1e293b;">
+                    <th style="width: 70px;">Mã</th>
+                    <th>Tiêu chuẩn & Phân loại</th>
+                    <th>Đặc điểm hình học</th>
+                    <th>Ứng dụng thực tế khuyến nghị</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-weight: bold; color: #38bdf8;">A</td>
+                    <td><b>ANSI B17.2 A</b> (Full radius)</td>
+                    <td>Đáy then là cung tròn liên tục bán kính R = Dk/2. Rãnh trên trục phay bằng dao phay đĩa tròn chuẩn.</td>
+                    <td>Tiêu chuẩn thông dụng nhất của Mỹ cho trục truyền lực thông thường và đầu trục côn.</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #38bdf8;">B</td>
+                    <td><b>ANSI B17.2 B</b> (Flat bottom)</td>
+                    <td>Đáy then được vát phẳng một phần ở điểm sâu nhất của cung tròn.</td>
+                    <td>Giảm độ sâu khoét rãnh trên trục, bảo vệ độ bền chống uốn của trục nhỏ hoặc khi chịu tải dập hướng tâm.</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #10b981;">C</td>
+                    <td><b>DIN 6888 (A)</b> (Deep keyway in hub)</td>
+                    <td>Rãnh moay-ơ khoét sâu hơn (t2 lớn hơn, t1 nông hơn trên trục).</td>
+                    <td>Moay-ơ bằng <b>vật liệu mềm</b> (nhôm, gang xám, đồng) cần diện tích tiếp xúc dập lớn tránh xé rãnh.</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #10b981;">D</td>
+                    <td><b>DIN 6888 (B)</b> (Shallow keyway in hub)</td>
+                    <td>Rãnh moay-ơ nông hơn (t2 nhỏ hơn, t1 sâu hơn vào trục).</td>
+                    <td>Moay-ơ <b>thành mỏng</b> hoặc thép tôi cứng, giúp giữ chiều dày thành moay-ơ tránh nứt vỡ.</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #94a3b8;">E</td>
+                    <td><b>BS 6: Part 1 (A)</b> (Full radius)</td>
+                    <td>Tiêu chuẩn Anh hệ Inch, đáy cung tròn toàn bộ.</td>
+                    <td>Thiết bị cơ khí chế tạo theo chuẩn British Standard (BSI).</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #94a3b8;">F</td>
+                    <td><b>BS 6: Part 1 (B)</b> (Flat bottom)</td>
+                    <td>Tiêu chuẩn Anh hệ Inch, đáy vát phẳng.</td>
+                    <td>Cụm trục nhỏ truyền động hệ Inch của Anh.</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #fbbf24;">G</td>
+                    <td><b>JIS B 1301 WA</b> (Full radius)</td>
+                    <td>Tiêu chuẩn Nhật Bản hệ Mét, loại WA đĩa tròn hoàn toàn.</td>
+                    <td>Thiết bị, máy công cụ và công nghiệp ôtô Nhật Bản (Toyota, Honda, Komatsu...).</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #fbbf24;">H</td>
+                    <td><b>JIS B 1301 WB</b> (Flat bottom)</td>
+                    <td>Tiêu chuẩn Nhật Bản hệ Mét, loại WB vát phẳng đáy.</td>
+                    <td>Cụm trục chịu tải của Nhật cần giảm độ sâu khoét rãnh trên trục.</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #cbd5e1;">I</td>
+                    <td><b>CSN 30 1385.1</b> (Full radius)</td>
+                    <td>Tiêu chuẩn Tiệp Khắc / Đông Âu, loại đáy tròn (tương đương GOST 24071).</td>
+                    <td>Máy móc công nghiệp, thiết bị khai khoáng Đông Âu / Nga.</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #cbd5e1;">J</td>
+                    <td><b>CSN 30 1385.2</b> (Flattened tips)</td>
+                    <td>Dạng vát phẳng hai góc đỉnh của then.</td>
+                    <td>Chống cọ sát và kẹt then khi lắp ráp nghiêng trên cổ trục côn.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid #1e293b; border-radius: 6px; padding: 1rem;">
+            <h4 style="color: #38bdf8; margin: 0 0 0.5rem 0; font-size: 1rem;">2. Cẩm Nang Ứng Dụng Xưởng Cho Kỹ Sư Cơ Khí:</h4>
+            <ul style="margin: 0; padding-left: 1.25rem;">
+              <li><b>Tự lựa góc nghiêng:</b> Then bán nguyệt có thể xoay tự do trong rãnh trục tròn, cực kỳ thích hợp cho <b>đầu trục côn</b> lắp bánh đà, bánh đai puly, bánh răng côn mà không sợ bị lệch góc nghiêng.</li>
+              <li><b>Giới hạn chịu tải:</b> Do rãnh then khoét sâu hơn then bằng, độ bền uốn của trục bị giảm nhiều hơn. Vì vậy then bán nguyệt chỉ dùng cho <b>mô-men xoắn nhẹ đến trung bình</b> hoặc các trục phụ trợ định vị.</li>
+              <li><b>Quy tắc chọn:</b> Nếu moay-ơ mềm (nhôm, gang), luôn chọn loại <b>C (DIN 6888 A - Rãnh moay-ơ sâu)</b> để tăng diện tích tiếp xúc dập. Nếu moay-ơ thành mỏng, chọn loại <b>D (DIN 6888 B)</b>.</li>
+            </ul>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- MỤC GIẢI THÍCH KỸ THUẬT: THEN HOA RĂNG CHỮ NHẬT (STRAIGHT-SIDED SPLINES) -->
+      <div class="calc-section" id="secSplineGuide" style="display: none; margin-top: 1.5rem;">
+        <div class="section-header" style="background: linear-gradient(90deg, #1e3a8a, #0f172a); cursor: pointer;">
+          <span class="section-title">▼ 📖 HƯỚNG DẪN KỸ THUẬT & PHÂN TÍCH CHUYÊN SÂU LẮP GHÉP THEN HOA RĂNG CHỮ NHẬT</span>
+          <span class="section-toggle-icon">▼</span>
+        </div>
+        <div class="section-body" style="background: #0b1329; padding: 1.25rem; font-size: 0.9rem; line-height: 1.6; color: #cbd5e1;">
+          
+          <!-- Phần 1: Giải thích lựa chọn Mục 6.2 -->
+          <div style="margin-bottom: 1.25rem;">
+            <h4 style="color: #38bdf8; margin: 0 0 0.5rem 0; font-size: 1rem;">1. Giải Thích Các Lựa Chọn Tiêu Chuẩn Mục 6.2 (Dòng Tiêu Chuẩn Then Hoa):</h4>
+            <div style="overflow-x: auto;">
+              <table class="calc-table" style="min-width: 600px; font-size: 0.85rem;">
+                <thead>
+                  <tr style="background: #1e293b;">
+                    <th style="width: 70px;">Mã</th>
+                    <th>Dòng tiêu chuẩn</th>
+                    <th>Chế độ làm việc / Cấp tải</th>
+                    <th>Đặc điểm kỹ thuật & Ứng dụng</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style="font-weight: bold; color: #38bdf8;">A</td>
+                    <td><b>SAE - Series A</b></td>
+                    <td>Permanent Fit (Lắp cố định)</td>
+                    <td>Răng khít chặt, khe hở sườn răng bằng 0 hoặc có độ dôi nhẹ. Dùng cho chi tiết ép cố định trên trục, không di trượt (bánh đà, khớp nối trục cứng).</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #38bdf8;">B</td>
+                    <td><b>SAE - Series B</b></td>
+                    <td>To slide without load (Trượt không tải)</td>
+                    <td>Có khe hở sườn răng vừa phải. Chi tiết chỉ trượt dọc trục khi đã ngắt tải/côn (ví dụ: bánh răng di trượt trong hộp số tay khi chuyển số).</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #38bdf8;">C</td>
+                    <td><b>SAE - Series C</b></td>
+                    <td>To slide under load (Trượt có tải)</td>
+                    <td>Răng thấp, bề rộng then lớn, có khe hở bôi trơn. Chi tiết vừa truyền mô-men xoắn vừa trượt dọc trục liên tục (ống trượt các-đăng xe tải, bàn máy tiện/phay).</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #10b981;">D</td>
+                    <td><b>ISO 14 - Light series</b></td>
+                    <td>Dãy nhẹ (Hệ Mét)</td>
+                    <td>Chiều cao răng thấp, số răng vừa phải (n = 6). Dùng cho kết cấu chịu tải nhỏ đến trung bình, ưu tiên tiết kiệm vật liệu và kích thước nhỏ gọn.</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #10b981;">E</td>
+                    <td><b>ISO 14 - Medium series</b></td>
+                    <td>Dãy trung bình (Chuẩn công nghiệp)</td>
+                    <td>Cân bằng tối ưu giữa khả năng chịu mô-men xoắn và độ bền mỏi (n = 6, 8, 10). Đây là chuẩn phổ biến nhất trong chế tạo máy toàn cầu.</td>
+                  </tr>
+                  <tr>
+                    <td style="font-weight: bold; color: #f59e0b;">F, I</td>
+                    <td><b>DIN 5464 / CSN 01 4942</b></td>
+                    <td>Heavy series (Dãy nặng)</td>
+                    <td>Răng cao, rãnh sâu, số răng nhiều (n = 8 đến 20). Dùng cho máy móc siêu nặng, tải va đập và đảo chiều cực mạnh (máy cán thép, máy xúc, hộp số xe công trình).</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Phần 2: Phân tích chuyên sâu về 3 phương pháp định tâm -->
+          <div style="margin-bottom: 1.25rem;">
+            <h4 style="color: #f59e0b; margin: 0 0 0.5rem 0; font-size: 1rem;">2. Phân Tích Chuyên Sâu 3 Phương Pháp Định Tâm & Lắp Ghép Then Hoa Chữ Nhật:</h4>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; margin-top: 0.75rem;">
+              
+              <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #1e3a8a; border-radius: 6px; padding: 1rem;">
+                <h5 style="color: #38bdf8; margin: 0 0 0.5rem 0; font-size: 0.95rem;">🎯 Định Tâm Theo Đường Kính Trong (d)</h5>
+                <p style="margin: 0 0 0.5rem 0; font-size: 0.85rem; color: #94a3b8;"><b>Phổ biến nhất & Chính xác nhất trong chế tạo máy:</b></p>
+                <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.85rem;">
+                  <li><b>Bản chất:</b> Lỗ moay-ơ và trục tiếp xúc chính xác tại đường kính đáy d. Bề rộng b truyền lực, đường kính đỉnh D có khe hở tự do lớn.</li>
+                  <li><b>Ưu điểm công nghệ:</b> Sau khi tôi cứng nhiệt luyện, lỗ moay-ơ có thể dùng máy mài tròn trong để mài bóng mặt trụ d đạt độ đồng tâm rất cao (IT6, IT7). Đáy rãnh trục cũng mài định hình dễ dàng.</li>
+                  <li><b>Ứng dụng:</b> Trục truyền động tốc độ cao, hộp số ôtô, máy công cụ chính xác sau nhiệt luyện.</li>
+                </ul>
+              </div>
+
+              <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #1e3a8a; border-radius: 6px; padding: 1rem;">
+                <h5 style="color: #10b981; margin: 0 0 0.5rem 0; font-size: 0.95rem;">🎯 Định Tâm Theo Đường Kính Ngoài (D)</h5>
+                <p style="margin: 0 0 0.5rem 0; font-size: 0.85rem; color: #94a3b8;"><b>Dùng khi moay-ơ không tôi cứng:</b></p>
+                <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.85rem;">
+                  <li><b>Bản chất:</b> Lỗ và trục tiếp xúc định tâm tại đường kính ngoài D. Bề rộng b truyền lực, đường kính trong d có khe hở tự do.</li>
+                  <li><b>Đặc điểm:</b> Đỉnh răng trục là mặt trụ ngoài nên mài tròn ngoài rất dễ. Tuy nhiên đáy rãnh lỗ moay-ơ rất khó mài sau tôi cứng.</li>
+                  <li><b>Ứng dụng:</b> Chỉ dùng khi moay-ơ không tôi cứng (độ cứng HB &lt; 350) để sau khi chuốt là đạt độ chính xác ngay không cần mài lại.</li>
+                </ul>
+              </div>
+
+              <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #1e3a8a; border-radius: 6px; padding: 1rem;">
+                <h5 style="color: #f59e0b; margin: 0 0 0.5rem 0; font-size: 0.95rem;">🎯 Định Tâm Theo Mặt Bên Răng (b)</h5>
+                <p style="margin: 0 0 0.5rem 0; font-size: 0.85rem; color: #94a3b8;"><b>Chuyên dùng cho mô-men xoắn cực lớn:</b></p>
+                <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.85rem;">
+                  <li><b>Bản chất:</b> Tiếp xúc định tâm và truyền tải đều bằng hai mặt bên răng b. Cả d và D đều có khe hở tự do lớn.</li>
+                  <li><b>Đặc điểm:</b> Tải trọng phân bố đều trên tất cả các răng khi truyền mô-men xoắn đảo chiều mạnh, nhưng độ đồng tâm hướng tâm kém hơn định tâm theo d.</li>
+                  <li><b>Ứng dụng:</b> Máy kéo, máy cán thép, máy khoan công trình không đòi hỏi tốc độ quay quá cao.</li>
+                </ul>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Phần 3: Bảng tra dung sai chuẩn ISO 14 / DIN 5464 / TCVN -->
+          <div>
+            <h4 style="color: #38bdf8; margin: 0 0 0.5rem 0; font-size: 1rem;">3. Bảng Tra Cứu Dung Sai Lắp Ghép Then Hoa Chữ Nhật (ISO 14 / DIN 5464 / TCVN):</h4>
+            <div style="overflow-x: auto;">
+              <table class="calc-table" style="min-width: 650px; font-size: 0.85rem;">
+                <thead>
+                  <tr style="background: #1e293b;">
+                    <th>Phương pháp định tâm</th>
+                    <th>Yếu tố hình học</th>
+                    <th>Lỗ (Hub)</th>
+                    <th>Trục cố định (Fixed)</th>
+                    <th>Trục trượt không tải</th>
+                    <th>Trục trượt có tải</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td rowspan="3" style="font-weight: bold; color: #38bdf8;">Định tâm theo d<br>(Phổ biến nhất)</td>
+                    <td><b>Mặt định tâm (d)</b></td>
+                    <td style="color: #22d3ee;">H7</td>
+                    <td style="color: #fbbf24;">js6 hoặc k6</td>
+                    <td style="color: #fbbf24;">g6</td>
+                    <td style="color: #fbbf24;">f7</td>
+                  </tr>
+                  <tr>
+                    <td><b>Mặt truyền lực (b)</b></td>
+                    <td style="color: #22d3ee;">F8 hoặc D10</td>
+                    <td style="color: #fbbf24;">h9 hoặc js9</td>
+                    <td style="color: #fbbf24;">f9</td>
+                    <td style="color: #fbbf24;">d10</td>
+                  </tr>
+                  <tr>
+                    <td><b>Mặt tự do (D)</b></td>
+                    <td colspan="4" style="text-align: center; color: #94a3b8;">Khe hở tự do: H11 / a11</td>
+                  </tr>
+                  <tr style="border-top: 1px solid #334155;">
+                    <td rowspan="3" style="font-weight: bold; color: #10b981;">Định tâm theo D<br>(Lỗ không tôi)</td>
+                    <td><b>Mặt định tâm (D)</b></td>
+                    <td style="color: #22d3ee;">H7</td>
+                    <td style="color: #fbbf24;">js6 hoặc k6</td>
+                    <td style="color: #fbbf24;">g6</td>
+                    <td style="color: #fbbf24;">f7</td>
+                  </tr>
+                  <tr>
+                    <td><b>Mặt truyền lực (b)</b></td>
+                    <td style="color: #22d3ee;">H8</td>
+                    <td style="color: #fbbf24;">js7</td>
+                    <td style="color: #fbbf24;">f7</td>
+                    <td style="color: #fbbf24;">d10</td>
+                  </tr>
+                  <tr>
+                    <td><b>Mặt tự do (d)</b></td>
+                    <td colspan="4" style="text-align: center; color: #94a3b8;">Khe hở tự do: H11 / a11</td>
+                  </tr>
+                  <tr style="border-top: 1px solid #334155;">
+                    <td rowspan="2" style="font-weight: bold; color: #f59e0b;">Định tâm theo b<br>(Tải rất nặng)</td>
+                    <td><b>Mặt định tâm & truyền lực (b)</b></td>
+                    <td style="color: #22d3ee;">H8 hoặc D10</td>
+                    <td style="color: #fbbf24;">js7</td>
+                    <td style="color: #fbbf24;">f7</td>
+                    <td style="color: #fbbf24;">d10</td>
+                  </tr>
+                  <tr>
+                    <td><b>Mặt tự do (d và D)</b></td>
+                    <td colspan="4" style="text-align: center; color: #94a3b8;">Khe hở tự do lớn: H11 / a11</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   </div>

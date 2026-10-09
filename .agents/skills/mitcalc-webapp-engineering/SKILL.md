@@ -2445,6 +2445,23 @@ ho_{f0}$.
     3. Path 3: `beginPath()` + `ctx.arc(0, 0, r_hub_outer, ...)` + `ctx.stroke()` (viền vành ngoài).
   * Đảm bảo bản vẽ 2D Canvas CAD không bao giờ có đường stroke nối chéo xuyên qua kim loại moay-ơ.
 
+---
+
+### Quy Tắc 107: Quy Chuẩn Cẩm Nang Kỹ Thuật Chuyên Sâu Các Loại Then & Then Hoa, Mở Rộng Dung Sai Then Bằng & Mặc Định Ẩn ANSI B4.1
+**Ngày áp dụng**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+- **Tích hợp cẩm nang kỹ thuật ở cuối các tab**:
+  * **Then Bán Nguyệt (`#secWoodruffGuide`)**: Giải thích chi tiết 10 dòng tiêu chuẩn Mục 4.2 (Full radius vs Flat bottom, DIN 6888 A rãnh moay-ơ sâu cho vật liệu mềm vs DIN 6888 B rãnh nông cho thành mỏng, đặc tính tự lựa góc nghiêng cho đầu trục côn).
+  * **Then Hoa Răng Chữ Nhật (`#secSplineGuide`)**: Giải thích Mục 6.2 (SAE Series A, B, C; ISO 14 Light/Medium; DIN 5464 Heavy); Phân tích chuyên sâu 3 phương pháp định tâm ($d$ chính xác nhất mài lỗ tròn trong sau tôi cứng, $D$ cho moay-ơ không tôi cứng, $b$ cho mô-men xoắn cực lớn và tải đảo chiều); Bảng tra cứu dung sai lắp ghép ISO 14 / DIN 5464 / TCVN ($H7/js6, H7/g6, H7/f7$, $F8/h9, D10/d10$, $H11/a11$).
+  * **Then Hoa Thân Khai (Master Block 4 `#secInvoluteGuide`)**: Phân tích 4 yếu tố cấu thành (&alpha; = 30°, 37.5°, 45°; chân răng Flat root vs Fillet root chống mỏi; định tâm Side fit tự triệt tiêu độ lệch tâm vs Major diam. fit); Bảng tra cứu toàn diện 17 hệ tiêu chuẩn Mục 1.2 (Mã A đến Q).
+- **Mở rộng dung sai lắp ghép Then Bằng**:
+  * 3 kiểu lắp phổ biến tiêu chuẩn luôn đặt ở đầu danh sách, in đậm và tô màu xanh lá nổi bật (`#059669`): (1) Thông thường N9/JS9, (2) Chặt/cố định P9/JS9, (3) Di trượt JS9/D10.
+  * Mở rộng thêm 9 kiểu lắp: P9/P9, H9/D10, H9/F8, H9/H9, D10/D10, JS9/JS9, và ANSI Class 1, 2, 3 (Hệ Inch).
+  * Hàm `updateFitColor()` đổi màu sắc combobox phản ánh trạng thái ưu tiên theo thời gian thực.
+- **Mặc định ẩn hệ thống lắp ghép tiêu chuẩn ANSI B4.1**:
+  * Đặt class `.calc-section.collapsed` cho cả Phân mục 2.0 (Đầu vào) và Phân mục Kết quả ANSI B4.1 để màn hình mở ra tập trung trọn vẹn vào hệ thống ISO 286 và Biểu đồ Canvas miền dung sai trực quan.
+
+
 
 
 
