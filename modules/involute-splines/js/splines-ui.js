@@ -283,14 +283,15 @@ export class SplinesUI {
             });
         }
 
-        // Quản lý Checkbox Đồng nhất hệ số dịch chỉnh x2 = x0 (Mục 1.10)
+        // Quản lý Checkbox Liên hợp hệ số dịch chỉnh x2 = -x0 (Mục 1.10)
         if (this.elSyncX0X2) {
             this.elSyncX0X2.addEventListener('change', () => {
                 const isSync = this.elSyncX0X2.checked;
                 if (this.elX2) {
                     this.elX2.disabled = isSync;
                     if (isSync && this.elX0) {
-                        this.elX2.value = this.elX0.value;
+                        const val0 = parseFloat(this.elX0.value || 0.0);
+                        this.elX2.value = (-val0).toFixed(4);
                     }
                 }
                 this.recalculate();
@@ -299,7 +300,8 @@ export class SplinesUI {
         if (this.elX0) {
             this.elX0.addEventListener('input', () => {
                 if (this.elSyncX0X2 && this.elSyncX0X2.checked && this.elX2) {
-                    this.elX2.value = this.elX0.value;
+                    const val0 = parseFloat(this.elX0.value || 0.0);
+                    this.elX2.value = (-val0).toFixed(4);
                 }
             });
         }
@@ -552,9 +554,10 @@ export class SplinesUI {
         const z = parseInt(this.elZ?.value || 20);
         const alfa = parseFloat(this.elAlfaInput?.value || this.elAlfa?.value || 30.0);
 
-        // Đồng nhất x2 theo x0 nếu checkbox đang tích
+        // Liên hợp x2 theo x0 (x2 = -x0) nếu checkbox đang tích
         if (this.elSyncX0X2 && this.elSyncX0X2.checked && this.elX0 && this.elX2) {
-            this.elX2.value = this.elX0.value;
+            const val0 = parseFloat(this.elX0.value || 0.0);
+            this.elX2.value = (-val0).toFixed(4);
         }
 
         const x0 = parseFloat(this.elX0?.value || 0.0);

@@ -34,6 +34,13 @@
                                 <span class="item-desc">Bevel Gears (ISO 23509)</span>
                             </div>
                         </a>
+                        <a href="../worm-gear/index.html" class="dropdown-item">
+                            <span class="item-icon">🌀</span>
+                            <div class="item-info">
+                                <span class="item-title">Trục Vít - Bánh Vít</span>
+                                <span class="item-desc">Worm Gears (ISO/CD 14521 / DIN 3996)</span>
+                            </div>
+                        </a>
                         <a href="../tolerances/index.html" class="dropdown-item">
                             <span class="item-icon">🎯</span>
                             <div class="item-info">
@@ -41,33 +48,25 @@
                                 <span class="item-desc">Fits &amp; Tolerances (ISO 286 / ANSI)</span>
                             </div>
                         </a>
-                        <a href="../shaft-keys/index.html" class="dropdown-item">
+                        <a href="../shaft-keys/index.html#secParallelKey" class="dropdown-item">
                             <span class="item-icon">🔑</span>
                             <div class="item-info">
                                 <span class="item-title">Then Bằng &amp; Bán Nguyệt</span>
                                 <span class="item-desc">Parallel &amp; Woodruff Keys</span>
                             </div>
                         </a>
-                        <a href="../straight-splines/index.html" class="dropdown-item">
+                        <a href="../shaft-keys/index.html#secStraightSpline" class="dropdown-item">
                             <span class="item-icon">🛡️</span>
                             <div class="item-info">
                                 <span class="item-title">Then Hoa Răng Chữ Nhật</span>
                                 <span class="item-desc">Straight-Sided Splines (ISO 14 / DIN 5464)</span>
                             </div>
                         </a>
-                        <a href="../involute-splines/index.html" class="dropdown-item active">
+                        <a href="index.html" class="dropdown-item active">
                             <span class="item-icon">⚙️</span>
                             <div class="item-info">
                                 <span class="item-title">Then Hoa Thân Khai (Đang chọn)</span>
                                 <span class="item-desc">Involute Splines (DIN 5480 / ISO 4156)</span>
-                            </div>
-                        </a>
-                        <div class="dropdown-divider"></div>
-                        <a href="../../index.html" class="dropdown-item dropdown-home-link">
-                            <span class="item-icon">🏠</span>
-                            <div class="item-info">
-                                <span class="item-title">Trang Chủ Hub Trung Tâm</span>
-                                <span class="item-desc">Hệ thống tính toán cơ khí độc lập</span>
                             </div>
                         </a>
                     </div>
@@ -305,8 +304,8 @@
                                     <td class="col-val2"><input type="number" id="x2Input" class="user-input" value="0.0000" step="0.01" disabled></td>
                                     <td class="col-unit">[m]</td>
                                     <td class="col-action">
-                                        <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer; color: #38bdf8;" title="Tự động đồng nhất hệ số dịch chỉnh Trục và Lỗ (x2 = x0)">
-                                            <input type="checkbox" id="syncX0X2Check" checked> Đồng nhất (x₂=x₀)
+                                        <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer; color: #38bdf8;" title="Tự động liên hợp hệ số dịch chỉnh Trục và Lỗ (x2 = -x0) theo chuẩn ăn khớp MITCalc">
+                                            <input type="checkbox" id="syncX0X2Check" checked> Liên hợp (x₂ = -x₀)
                                         </label>
                                     </td>
                                 </tr>

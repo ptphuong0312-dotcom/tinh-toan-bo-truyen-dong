@@ -214,18 +214,10 @@ export class SplinesCanvas {
         let alfa_tip = Math.acos(r_base / r_tip);
         const inv_tip = Math.tan(alfa_tip) - alfa_tip;
         const phi_tip = psi + invAlfa - inv_tip;
-        const ra0 = (g.ra0_tool || 0.0) * (g.m || 1.0);
 
-        if (ra0 > 0.01 && ra0 < (r_tip - r_start) * 0.5) {
-            pts.push({ r: r_tip - ra0 * 0.3, theta: -(phi_tip - (ra0 * 0.4) / r_tip) });
-            pts.push({ r: r_tip, theta: -(phi_tip - (ra0 * 0.9) / r_tip) });
-            pts.push({ r: r_tip, theta: 0.0 });
-            pts.push({ r: r_tip, theta: phi_tip - (ra0 * 0.9) / r_tip });
-            pts.push({ r: r_tip - ra0 * 0.3, theta: phi_tip - (ra0 * 0.4) / r_tip });
-        } else {
-            pts.push({ r: r_tip, theta: -phi_tip });
-            pts.push({ r: r_tip, theta: phi_tip });
-        }
+        pts.push({ r: r_tip, theta: -phi_tip });
+        pts.push({ r: r_tip, theta: 0.0 });
+        pts.push({ r: r_tip, theta: phi_tip });
 
         // 4. Right flank downwards: from r_tip down to r_start
         for (let i = numFlankPts; i >= 0; i--) {
@@ -280,16 +272,9 @@ export class SplinesCanvas {
         const inv_start = Math.tan(alfa_start) - alfa_start;
         const phi_start = psi_space + invAlfa - inv_start;
 
-        const ra2 = (g.ra2_tool || 0.2) * (g.m || 1.0);
-
         pts.push({ r: r_tip, theta: -tau });
         if (phi_start < tau) {
-            if (ra2 > 0.01) {
-                pts.push({ r: r_tip, theta: -(phi_start + (ra2 * 0.8) / r_tip) });
-                pts.push({ r: r_tip + ra2 * 0.3, theta: -(phi_start + (ra2 * 0.3) / r_tip) });
-            } else {
-                pts.push({ r: r_tip, theta: -phi_start });
-            }
+            pts.push({ r: r_tip, theta: -phi_start });
         }
 
         // 2. Left flank of groove outwards: from r_start (inner) to r_root (outer)
@@ -322,12 +307,7 @@ export class SplinesCanvas {
 
         // 5. Inner tooth crest arc on right: from phi_start to +tau at r_tip
         if (phi_start < tau) {
-            if (ra2 > 0.01) {
-                pts.push({ r: r_tip + ra2 * 0.3, theta: phi_start + (ra2 * 0.3) / r_tip });
-                pts.push({ r: r_tip, theta: phi_start + (ra2 * 0.8) / r_tip });
-            } else {
-                pts.push({ r: r_tip, theta: phi_start });
-            }
+            pts.push({ r: r_tip, theta: phi_start });
         }
         pts.push({ r: r_tip, theta: tau });
 

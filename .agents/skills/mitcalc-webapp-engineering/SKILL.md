@@ -2539,3 +2539,29 @@ ho_{f0}$.
    - **Khắc phục triệt để lỗi đè chữ trong AutoCAD**: Tái cấu trúc Bảng thông số chế tạo DXF với chiều rộng 200mm, tách riêng Cột 1 (118mm) và Cột 2 (82mm), cỡ chữ chuẩn 2.5mm, bổ sung khung viền và đường kẻ phân cách dọc giữa 2 cột, không bao giờ xảy ra hiện tượng chồng lấn văn bản.
    - **Mô hình hóa đường bao 360° khép kín (Closed Polyline)**: Xuất đường biên dạng thực thể giống hệt mô phỏng Canvas, bao gồm lỗ trục cho Trục, vành ngoài cho Lỗ Moay-ơ, các đường chân răng - sườn thân khai - đỉnh răng nối tiếp mượt mà 360 độ, sẵn sàng gia công CNC/Wire-EDM.
 
+
+---
+
+### Quy Tắc 111: Quy Chuẩn Then Hoa Thân Khai Nâng Cấp Chuyên Sâu: Cơ Học Dịch Chỉnh Liên Hợp $x_2 = -x_0$, Danh Sách Tiêu Chuẩn [1]..[17] Tối Giản Thứ Tự, Khử Gờ Đỉnh Răng Hub Moay-ơ, CAD DXF Thực Thể ARC Cung Tròn Đỉnh Đáy, Bi Đo CIRCLE & Kích Thước Đo Kiểm $M, W_b$, Menu Tích Hợp Module Trục Vít
+**Ngày áp dụng**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Quy luật ăn khớp dịch chỉnh liên hợp Then Hoa ($x_2 = -x_0$)**:
+   - Khắc phục sai lầm gán $x_2 = x_0$. Theo đúng cơ học ăn khớp bánh răng trong (Internal Gear Meshing) và chuẩn gốc MITCalc (`SplinesI_01.xlsb`, cell $Z116$ `_x2Prop = -_x0_Input` và $B116$ `_x0eqx2 = TRUE`):
+     $$\mathbf{x_2 = -x_0} \quad \text{và} \quad \mathbf{x_{m2} = -x_{m0}}$$
+   - Khi dịch chỉnh trục dương ($x_0 > 0$, răng trục dày hơn), răng moay-ơ phải dịch chỉnh âm ($x_2 < 0$, rãnh moay-ơ rộng hơn tương ứng) để bán kính vòng lăn ăn khớp bảo toàn và khe hở cạnh răng (backlash) giữ đúng giá trị danh nghĩa.
+   - UI Mục 1.10: Thiết lập checkbox `<input type="checkbox" id="syncX0X2Check" checked> Liên hợp (x₂ = -x₀)`. Khi tích chọn, sửa $x_0 \implies x_2 = -x_0$ tự động; khi bỏ tích, kỹ sư có thể tùy chỉnh độc lập.
+2. **Chuẩn hóa danh mục 17 Tiêu chuẩn tối giản & Thứ tự ưu tiên (Mục 1.2)**:
+   - Sắp xếp tăng dần từ `[1]` đến `[17]`, đặt **[1] DIN 5480 - 30°** lên đầu danh sách và làm mặc định khi tải trang.
+   - Loại bỏ hoàn toàn emoji sao ⭐ và các cụm từ mô tả rườm rà ("thông dụng", "rất thông dụng", "thông dụng nhất", "ít dùng/tiêu chuẩn cũ"). Chỉ giữ lại duy nhất số thứ tự và tên chuẩn kỹ thuật ngắn gọn, chuyên nghiệp.
+3. **Triệt tiêu dứt điểm gờ bậc thang đỉnh răng Hub Moay-ơ (Smooth Tip Arc)**:
+   - Loại bỏ triệt để đoạn mã nội suy sai lệch `r_tip + ra2 * 0.3` ở cả sườn trái và sườn phải trong giải thuật tạo điểm của `splines-canvas.js` và `splines-dxf.js`.
+   - Bảo tồn cung tròn thuần khiết bán kính đỉnh răng $r_{tip}$ và đáy rãnh $r_{root}$ tiếp tuyến mượt mà với sườn thân khai. Không còn bất kỳ góc gãy hay mấu gai nào đâm vào viên bi đo.
+4. **Bản vẽ CAD DXF chuẩn kỹ thuật: Thực thể ARC đỉnh đáy, Bi đo CIRCLE & Kích thước $M, W_b$**:
+   - Xuất các cung tròn đỉnh răng và đáy rãnh bằng thực thể `ARC` chuẩn của AutoCAD Release 12 (`addArc(cx, cy, r, startAngle, endAngle)`), đảm bảo các kỹ sư bóc tách CAD nhận diện chuẩn là đối tượng đường cong tròn thay vì đa giác nối điểm gãy khúc.
+   - Thể hiện viên bi đo bằng thực thể `CIRCLE` trên layer `MEASUREMENT_PIN` (màu vàng) có chữ thập tâm.
+   - Xuất kích thước đo qua bi $M$ (đường tròn nét đứt đồng tâm `CIRCLE` trên layer `INSPECTION_DASH` + text $M_0 / M_2$).
+   - Xuất kích thước pháp tuyến đo bi xa nhất $W_b$ trên layer `INSPECTION_DIM` (đường kích thước nối 2 mép ngoài xa nhất của 2 viên bi + 2 vạch giới hạn vuông góc + text $W_b$).
+   - Xuất kích thước đo pháp tuyến chung $W_0$ của trục qua $k_0$ răng.
+5. **Menu Dropdown luân chuyển module toàn diện**:
+   - Bổ sung module **Trục Vít - Bánh Vít (Worm Gear)** (`../worm-gear/index.html`).
+   - Loại bỏ mục "🏠 Trang Chủ Hub Trung Tâm" khỏi menu dropdown; chỉ tập trung danh sách 7 module kỹ thuật cơ khí độc lập.

@@ -4260,3 +4260,38 @@ ho_{f0}$.
   * Test 8 (Console Logs): **0 Lỗi**
 - Kiểm thử tự động đạt: **100% PASS**!
 
+
+---
+
+## GIAI ĐOẠN 16: HOÀN THIỆN THEN HOA THÂN KHAI THEO PHẢN HỒI THỰC TẾ
+**Thời gian hoàn thành**: 09/10/2026  
+**Chủ sở hữu**: `SirPhuong`  
+**Mục tiêu**: Xử lý triệt để 5 yêu cầu phản hồi từ người dùng về cơ học dịch chỉnh liên hợp, danh sách tiêu chuẩn, loại bỏ gờ đỉnh răng, chuẩn hóa thực thể CAD DXF và hoàn thiện menu chuyển module.
+
+### 1. Cơ Học Dịch Chỉnh Ăn Khớp Liên Hợp ($x_2 = -x_0$)
+- Khắc phục sự hiểu nhầm $x_2 = x_0$. Theo đúng cơ học ăn khớp bánh răng trong và file chuẩn gốc MITCalc `SplinesI_01.xlsb` (cell Z116 `_x2Prop = -_x0_Input`), hệ số dịch chỉnh của lỗ moay-ơ phải liên hợp ngược dấu với trục:
+  $$x_2 = -x_0 \quad (x_{m2} = -x_{m0})$$
+- Tích hợp checkbox `Liên hợp (x₂ = -x₀)` tại Mục 1.10. Tự động đồng bộ thời gian thực $x_2 = -x_0$ khi chỉnh sửa $x_0$.
+
+### 2. Chuẩn Hóa Danh Mục Tiêu Chuẩn [1]..[17] Tối Giản
+- Sắp xếp tăng dần theo thứ tự tự nhiên từ [1] đến [17], đưa [1] DIN 5480 - 30° lên đầu danh sách và làm mặc định.
+- Xóa bỏ toàn bộ emoji sao ⭐ và các cụm từ mô tả rườm rà ("thông dụng nhất", "rất thông dụng", "thông dụng", "tiêu chuẩn cũ"). Tên gọi chuẩn hóa ngắn gọn, chuẩn mực kỹ sư.
+
+### 3. Khử Triệt Để Gờ Bậc Thang Đỉnh Răng Hub Moay-ơ
+- Loại bỏ các điểm nội suy sai lệch `r_tip + ra2 * 0.3` tạo mấu gai ở đỉnh răng lỗ.
+- Đỉnh răng được dựng bằng cung tròn đồng tâm thuần khiết bán kính $r_{tip}$, đáy rãnh là cung tròn bán kính $r_{root}$, tiếp xúc mượt mà $C^1$ với sườn thân khai. Đã chụp ảnh xác thực nghiệm thu không còn góc gãy.
+
+### 4. Nâng Cấp Xuất Bản Vẽ CAD DXF (ARC, CIRCLE, Kích Thước $M, W_b$)
+- Dựng cung tròn đỉnh và chân bằng thực thể `ARC` chuẩn của AutoCAD thay vì xấp xỉ đoạn thẳng.
+- Viên bi đo được dựng bằng đường tròn `CIRCLE` trên layer `MEASUREMENT_PIN` có dấu tâm.
+- Thêm đường tròn kích thước nét đứt đo qua bi $M_0, M_2$ (`INSPECTION_DASH`).
+- Thêm đường gióng kích thước đo 2 bi ngoài cùng của lỗ $W_b$ (`INSPECTION_DIM`) và chiều dài pháp tuyến chung của trục $W_0$.
+- Bảng thông số chế tạo mở rộng 200mm, tách cột 118mm/82mm, triệt tiêu 100% lỗi đè chữ.
+
+### 5. Tối Ưu Menu Dropdown
+- Bổ sung module Trục Vít - Bánh Vít (`../worm-gear/index.html`).
+- Bỏ mục "Trang Chủ Hub Trung Tâm" để menu tập trung 100% vào việc luân chuyển giữa các module tính toán.
+
+### 6. Đóng Gói Bundle & Kiểm Thử Nghiệm Thu
+- Đóng gói bundle thuần: `modules/involute-splines/js/splines-engine.bundle.js` (556.4 KB).
+- Kịch bản Playwright E2E `scratch/test_splines_round2.py`: **6/6 TESTS PASS, 0 CONSOLE ERRORS**.
