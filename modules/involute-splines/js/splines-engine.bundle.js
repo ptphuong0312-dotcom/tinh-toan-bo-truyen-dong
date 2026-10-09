@@ -1372,9 +1372,10 @@ class SplinesCanvas {
  * MITCalc Web App - Involute Splines 2D CAD DXF Exporter
  * Generates 100% compliant AutoCAD Release 12 (AC1009) DXF files.
  * Supports Shaft, Hub, and Assembly with:
- *  - True circular arcs for tooth tip and root
- *  - Circular measurement pins (CIRCLE)
- *  - Complete inspection dimensions (M0, M2, W0, Wb)
+ *  - True circular arcs (ARC) for tooth tip crests and root lands
+ *  - True circular measurement pins (CIRCLE) on dedicated layer
+ *  - Clean inspection leader dimensioning (M0, M2, W0, Wb) without intersecting tooth profiles
+ *  - Mathematically continuous, single-pass contours without duplicate or stray lines
  *  - Non-overlapping manufacturing specification table
  */
 
@@ -1424,8 +1425,8 @@ const SplinesDxf = {
             '0', 'LAYER', '2', 'BASE_CIRCLE', '70', '0', '62', '6', '6', 'DASHED',       // Magenta
             '0', 'LAYER', '2', 'CENTER', '70', '0', '62', '2', '6', 'CENTER',             // Yellow
             '0', 'LAYER', '2', 'MEASUREMENT_PIN', '70', '0', '62', '2', '6', 'CONTINUOUS',// Yellow circle pins
-            '0', 'LAYER', '2', 'INSPECTION_DIM', '70', '0', '62', '1', '6', 'CONTINUOUS', // Red inspection dims
-            '0', 'LAYER', '2', 'INSPECTION_DASH', '70', '0', '62', '1', '6', 'DASHED',    // Red dashed inspection circles
+            '0', 'LAYER', '2', 'INSPECTION_DIM', '70', '0', '62', '3', '6', 'CONTINUOUS', // Green dims (distinct from Red Hub)
+            '0', 'LAYER', '2', 'INSPECTION_DASH', '70', '0', '62', '6', '6', 'DASHED',    // Magenta dashed circles
             '0', 'LAYER', '2', 'MFG_TABLE', '70', '0', '62', '7', '6', 'CONTINUOUS',     // White
             '0', 'ENDTAB',
             '0', 'ENDSEC'
@@ -1460,11 +1461,8 @@ const SplinesDxf = {
 
         // 1. Shaft Geometry (External Spline)
         if (target === 'shaft' || target === 'assembly') {
-            const shaftPoints = this.buildShaftContour(geom);
-            this.addPolyline(lines, 'CONTOUR_SHAFT', shaftPoints, true);
-            
-            // Add explicit true circular arcs for shaft tip and root
-            this.addShaftTrueArcs(lines, geom);
+            // Draw clean single-pass profile composed of true circular ARCs and involute LINEs
+            this.drawShaftContour(lines, geom);
 
             // Inner shaft bore (hole)
             const rBore = (geom.df0 / 2.0) * 0.5;
@@ -1476,11 +1474,8 @@ const SplinesDxf = {
 
         // 2. Hub Geometry (Internal Spline)
         if (target === 'hub' || target === 'assembly') {
-            const hubPoints = this.buildHubContour(geom);
-            this.addPolyline(lines, 'CONTOUR_HUB', hubPoints, true);
-
-            // Add explicit true circular arcs for hub tip and root
-            this.addHubTrueArcs(lines, geom);
+            // Draw clean single-pass profile composed of true circular ARCs and involute LINEs
+            this.drawHubContour(lines, geom);
 
             // Outer hub collar
             const rCollar = (geom.dri2 / 2.0) * 1.35;
@@ -1554,30 +1549,20 @@ const SplinesDxf = {
         );
     },
 
-    addPolyline(lines, layer, pts, isClosed = true) {
-        lines.push(
-            '0', 'POLYLINE',
-            '8', layer,
-            '66', '1',
-            '70', isClosed ? '1' : '0'
-        );
-        pts.forEach(p => {
-            lines.push(
-                '0', 'VERTEX',
-                '8', layer,
-                '10', p[0].toFixed(4),
-                '20', p[1].toFixed(4),
-                '30', '0.0'
-            );
-        });
-        lines.push('0', 'SEQEND', '8', layer);
+    toCadAngle(x, y) {
+        let ang = (Math.atan2(y, x) * 180.0) / Math.PI;
+        return (ang % 360.0 + 360.0) % 360.0;
     },
 
     /**
-     * Add true circular arcs for Shaft tip crests and root lands
+     * Draw external Shaft profile with zero duplicate/stray lines:
+     * - Every tooth tip crest is a true AutoCAD ARC
+     * - Every root land between teeth is a true AutoCAD ARC
+     * - Involute flanks are discretized LINE segments touching arc endpoints exactly
      */
-    addShaftTrueArcs(lines, geom) {
+    drawShaftContour(lines, geom) {
         const z = geom.z0;
+        const m = geom.m;
         const alfaRad = (geom.alfa * Math.PI) / 180.0;
         const invAlfa = Math.tan(alfaRad) - alfaRad;
         const d = geom.d0;
@@ -1591,38 +1576,72 @@ const SplinesDxf = {
         const rRoot = df / 2.0;
         const tau = Math.PI / z;
         const psi = s / d;
+        const numFlank = 14;
 
-        let alfaTip = Math.acos(Math.min(1.0, rBase / rTip));
+        const alfaTip = rTip > rBase ? Math.acos(Math.min(1.0, rBase / rTip)) : 0;
         const invTip = Math.tan(alfaTip) - alfaTip;
         const phiTip = psi + invAlfa - invTip;
 
-        let alfaStart = rRoot > rBase ? Math.acos(rBase / rRoot) : 0;
-        const invStart = Math.tan(alfaStart) - alfaStart;
-        const phiStart = psi + invAlfa - invStart;
+        const alfaRoot = rRoot > rBase ? Math.acos(Math.min(1.0, rBase / rRoot)) : 0;
+        const invRoot = Math.tan(alfaRoot) - alfaRoot;
+        const phiRoot = psi + invAlfa - invRoot;
 
-        // Radians to DXF standard degrees (counter-clockwise from +X axis)
-        // In our polar representation: X = r*sin(theta), Y = r*cos(theta), so polar angle from +X is 90 deg - theta
         for (let j = 0; j < z; j++) {
-            const rotAng = (j * 2 * Math.PI) / z;
-            
-            // Tip crest arc: from -phiTip to +phiTip around rotAng
-            const tipAngleCenter = (Math.PI / 2.0 - rotAng) * (180.0 / Math.PI);
-            const tipSpanDeg = (2.0 * phiTip) * (180.0 / Math.PI);
-            this.addArc(lines, 'CONTOUR_SHAFT', 0, 0, rTip, tipAngleCenter - tipSpanDeg / 2.0, tipAngleCenter + tipSpanDeg / 2.0);
+            const rotAng = (j * 2.0 * Math.PI) / z;
 
-            // Root land arc between teeth: from +phiStart of tooth j to (2*tau - phiStart) of next tooth
-            const rootAngleCenter = (Math.PI / 2.0 - (rotAng + tau)) * (180.0 / Math.PI);
-            const rootSpanDeg = (2.0 * (tau - phiStart)) * (180.0 / Math.PI);
-            if (rootSpanDeg > 0.1) {
-                this.addArc(lines, 'CONTOUR_SHAFT', 0, 0, rRoot, rootAngleCenter - rootSpanDeg / 2.0, rootAngleCenter + rootSpanDeg / 2.0);
+            // 1. Tooth crest ARC at rTip (spans from rotAng - phiTip to rotAng + phiTip)
+            const pTipL = [rTip * Math.sin(rotAng - phiTip), rTip * Math.cos(rotAng - phiTip)];
+            const pTipR = [rTip * Math.sin(rotAng + phiTip), rTip * Math.cos(rotAng + phiTip)];
+            const angTipL = this.toCadAngle(pTipL[0], pTipL[1]);
+            const angTipR = this.toCadAngle(pTipR[0], pTipR[1]);
+            // In AutoCAD CCW across rotAng (+Y direction): start at right, end at left
+            this.addArc(lines, 'CONTOUR_SHAFT', 0, 0, rTip, angTipR, angTipL);
+
+            // 2. Right flank of tooth j: from pTipR down to root land
+            let prevP = pTipR;
+            for (let step = 1; step <= numFlank; step++) {
+                const frac = step / numFlank;
+                const r = rTip - (rTip - rRoot) * frac;
+                const alfaR = r > rBase ? Math.acos(Math.min(1.0, rBase / r)) : 0;
+                const invR = Math.tan(alfaR) - alfaR;
+                const phiR = psi + invAlfa - invR;
+                const curP = [r * Math.sin(rotAng + phiR), r * Math.cos(rotAng + phiR)];
+                this.addLine(lines, 'CONTOUR_SHAFT', prevP[0], prevP[1], curP[0], curP[1]);
+                prevP = curP;
+            }
+
+            // 3. Root land ARC between tooth j and tooth j+1 (centered at rotAng + tau)
+            // Spans from rotAng + phiRoot to rotAng + 2*tau - phiRoot
+            const pRootStart = prevP;
+            const pRootEnd = [rRoot * Math.sin(rotAng + 2.0 * tau - phiRoot), rRoot * Math.cos(rotAng + 2.0 * tau - phiRoot)];
+            const angRootStart = this.toCadAngle(pRootStart[0], pRootStart[1]);
+            const angRootEnd = this.toCadAngle(pRootEnd[0], pRootEnd[1]);
+            // In AutoCAD CCW: start at angRootEnd, end at angRootStart
+            this.addArc(lines, 'CONTOUR_SHAFT', 0, 0, rRoot, angRootEnd, angRootStart);
+
+            // 4. Left flank of tooth j+1: from pRootEnd up to tooth j+1 tip
+            const rotNext = rotAng + 2.0 * tau;
+            prevP = pRootEnd;
+            for (let step = 1; step <= numFlank; step++) {
+                const frac = step / numFlank;
+                const r = rRoot + (rTip - rRoot) * frac;
+                const alfaR = r > rBase ? Math.acos(Math.min(1.0, rBase / r)) : 0;
+                const invR = Math.tan(alfaR) - alfaR;
+                const phiR = psi + invAlfa - invR;
+                const curP = [r * Math.sin(rotNext - phiR), r * Math.cos(rotNext - phiR)];
+                this.addLine(lines, 'CONTOUR_SHAFT', prevP[0], prevP[1], curP[0], curP[1]);
+                prevP = curP;
             }
         }
     },
 
     /**
-     * Add true circular arcs for Hub tip crests and root lands
+     * Draw internal Hub profile with zero duplicate/stray lines:
+     * - Every groove root land is a true AutoCAD ARC
+     * - Every internal tooth crest is a true AutoCAD ARC
+     * - Involute flanks are discretized LINE segments touching arc endpoints exactly
      */
-    addHubTrueArcs(lines, geom) {
+    drawHubContour(lines, geom) {
         const z = geom.z0;
         const m = geom.m;
         const alfaRad = (geom.alfa * Math.PI) / 180.0;
@@ -1639,34 +1658,67 @@ const SplinesDxf = {
         const rTip = di / 2.0;
         const tau = Math.PI / z;
         const psiSpace = e2 / d;
+        const numFlank = 14;
 
-        let alfaStart = rTip > rBase ? Math.acos(rBase / rTip) : 0;
-        const invStart = Math.tan(alfaStart) - alfaStart;
-        const phiStart = psiSpace + invAlfa - invStart;
+        const alfaTip = rTip > rBase ? Math.acos(Math.min(1.0, rBase / rTip)) : 0;
+        const invTip = Math.tan(alfaTip) - alfaTip;
+        const phiTip = psiSpace + invAlfa - invTip;
 
-        let alfaRoot = rRoot > rBase ? Math.acos(rBase / rRoot) : 0;
+        const alfaRoot = rRoot > rBase ? Math.acos(Math.min(1.0, rBase / rRoot)) : 0;
         const invRoot = Math.tan(alfaRoot) - alfaRoot;
         const phiRoot = psiSpace + invAlfa - invRoot;
 
         for (let j = 0; j < z; j++) {
-            const rotAng = (j * 2 * Math.PI) / z;
+            const rotAng = (j * 2.0 * Math.PI) / z;
 
-            // Groove bottom arc: from -phiRoot to +phiRoot around rotAng
-            const grooveAngleCenter = (Math.PI / 2.0 - rotAng) * (180.0 / Math.PI);
-            const grooveSpanDeg = (2.0 * phiRoot) * (180.0 / Math.PI);
-            this.addArc(lines, 'CONTOUR_HUB', 0, 0, rRoot, grooveAngleCenter - grooveSpanDeg / 2.0, grooveAngleCenter + grooveSpanDeg / 2.0);
+            // 1. Groove root ARC at rRoot (spans from rotAng - phiRoot to rotAng + phiRoot)
+            const pRootL = [rRoot * Math.sin(rotAng - phiRoot), rRoot * Math.cos(rotAng - phiRoot)];
+            const pRootR = [rRoot * Math.sin(rotAng + phiRoot), rRoot * Math.cos(rotAng + phiRoot)];
+            const angRootL = this.toCadAngle(pRootL[0], pRootL[1]);
+            const angRootR = this.toCadAngle(pRootR[0], pRootR[1]);
+            // In AutoCAD CCW across rotAng: start at right, end at left
+            this.addArc(lines, 'CONTOUR_HUB', 0, 0, rRoot, angRootR, angRootL);
 
-            // Inner crest arc between grooves: around rotAng + tau
-            const crestAngleCenter = (Math.PI / 2.0 - (rotAng + tau)) * (180.0 / Math.PI);
-            const crestSpanDeg = (2.0 * (tau - phiStart)) * (180.0 / Math.PI);
-            if (crestSpanDeg > 0.1) {
-                this.addArc(lines, 'CONTOUR_HUB', 0, 0, rTip, crestAngleCenter - crestSpanDeg / 2.0, crestAngleCenter + crestSpanDeg / 2.0);
+            // 2. Right flank of groove j: from pRootR down to inner tip crest
+            let prevP = pRootR;
+            for (let step = 1; step <= numFlank; step++) {
+                const frac = step / numFlank;
+                const r = rRoot - (rRoot - rTip) * frac;
+                const alfaR = r > rBase ? Math.acos(Math.min(1.0, rBase / r)) : 0;
+                const invR = Math.tan(alfaR) - alfaR;
+                const phiR = psiSpace + invAlfa - invR;
+                const curP = [r * Math.sin(rotAng + phiR), r * Math.cos(rotAng + phiR)];
+                this.addLine(lines, 'CONTOUR_HUB', prevP[0], prevP[1], curP[0], curP[1]);
+                prevP = curP;
+            }
+
+            // 3. Tooth crest ARC at rTip between groove j and groove j+1 (centered at rotAng + tau)
+            // Spans from rotAng + phiTip to rotAng + 2*tau - phiTip
+            const pCrestStart = prevP;
+            const pCrestEnd = [rTip * Math.sin(rotAng + 2.0 * tau - phiTip), rTip * Math.cos(rotAng + 2.0 * tau - phiTip)];
+            const angCrestStart = this.toCadAngle(pCrestStart[0], pCrestStart[1]);
+            const angCrestEnd = this.toCadAngle(pCrestEnd[0], pCrestEnd[1]);
+            // In AutoCAD CCW: start at angCrestEnd, end at angCrestStart
+            this.addArc(lines, 'CONTOUR_HUB', 0, 0, rTip, angCrestEnd, angCrestStart);
+
+            // 4. Left flank of groove j+1: from pCrestEnd up to groove j+1 root
+            const rotNext = rotAng + 2.0 * tau;
+            prevP = pCrestEnd;
+            for (let step = 1; step <= numFlank; step++) {
+                const frac = step / numFlank;
+                const r = rTip + (rRoot - rTip) * frac;
+                const alfaR = r > rBase ? Math.acos(Math.min(1.0, rBase / r)) : 0;
+                const invR = Math.tan(alfaR) - alfaR;
+                const phiR = psiSpace + invAlfa - invR;
+                const curP = [r * Math.sin(rotNext - phiR), r * Math.cos(rotNext - phiR)];
+                this.addLine(lines, 'CONTOUR_HUB', prevP[0], prevP[1], curP[0], curP[1]);
+                prevP = curP;
             }
         }
     },
 
     /**
-     * Draw circular measurement pins and dimensions for Shaft
+     * Draw circular measurement pins and dimensions for Shaft (M0 & W0)
      */
     drawShaftInspectionPins(lines, geom) {
         const dt = geom.dt0 || (1.75 * geom.m);
@@ -1677,7 +1729,7 @@ const SplinesDxf = {
         // Concentric measurement circle through outermost point (Radius = M0 / 2)
         this.addCircle(lines, 'INSPECTION_DASH', 0, 0, geom.M0 / 2.0);
 
-        // Place pins: top space at pi/z, and opposite space if even z
+        // Place pin in top tooth space (tau = pi / z)
         const angles = (geom.z0 % 2 === 0) ? [pi / geom.z0, pi / geom.z0 + pi] : [pi / geom.z0];
 
         angles.forEach(ang => {
@@ -1691,7 +1743,7 @@ const SplinesDxf = {
             this.addLine(lines, 'MEASUREMENT_PIN', cx, cy - s, cx, cy + s);
         });
 
-        // Dimension leader and text for M0
+        // Clean leader pointing outward from top pin into empty space (no lines crossing profile)
         const lblAng = pi / geom.z0;
         const pOuterX = (geom.M0 / 2.0) * Math.sin(lblAng);
         const pOuterY = (geom.M0 / 2.0) * Math.cos(lblAng);
@@ -1701,10 +1753,10 @@ const SplinesDxf = {
         this.addLine(lines, 'INSPECTION_DIM', pExtX, pExtY, pExtX + 35.0, pExtY);
         this.addText(lines, 'INSPECTION_DIM', `M0 = ${geom.M0.toFixed(4)} mm (dp = ${dt.toFixed(3)})`, pExtX + 2.0, pExtY + 1.5, 2.8);
 
-        // Common normal length dimension W0 leader and text
-        const w0ExtX = -rCenter * 0.8;
-        const w0ExtY = (geom.da0 / 2.0) * 1.05;
-        this.addText(lines, 'INSPECTION_DIM', `W0 = ${geom.W0.toFixed(4)} mm (k = ${geom.k0})`, w0ExtX, w0ExtY, 2.8);
+        // Common normal length dimension W0 note in clear space
+        const w0ExtX = pExtX + 2.0;
+        const w0ExtY = pExtY - 4.5;
+        this.addText(lines, 'INSPECTION_DIM', `W0 = ${geom.W0.toFixed(4)} mm (k = ${geom.k0})`, w0ExtX, w0ExtY, 2.5);
     },
 
     /**
@@ -1740,213 +1792,19 @@ const SplinesDxf = {
         this.addLine(lines, 'MEASUREMENT_PIN', cx2 - s, cy2, cx2 + s, cy2);
         this.addLine(lines, 'MEASUREMENT_PIN', cx2, cy2 - s, cx2, cy2 + s);
 
-        // Calculate furthest outermost points of the two balls (Wb)
-        const dx = cx2 - cx1;
-        const dy = cy2 - cy1;
-        const dist = Math.hypot(dx, dy) || 1e-6;
-        const ux = dx / dist;
-        const uy = dy / dist;
+        // Clean leader pointing outward from top pin (cx1, cy1) into clear space
+        // NO lines crossing through the hub body!
+        const pOuterX = 0.0;
+        const pOuterY = cy1 + rPin;
+        const pExtX = pOuterX + 15.0;
+        const pExtY = pOuterY + 12.0;
+        this.addLine(lines, 'INSPECTION_DIM', pOuterX, pOuterY, pExtX, pExtY);
+        this.addLine(lines, 'INSPECTION_DIM', pExtX, pExtY, pExtX + 38.0, pExtY);
+        this.addText(lines, 'INSPECTION_DIM', `M2 = ${geom.M2.toFixed(4)} mm (dp = ${dt.toFixed(3)})`, pExtX + 2.0, pExtY + 1.5, 2.8);
 
-        const pOut1X = cx1 - ux * rPin;
-        const pOut1Y = cy1 - uy * rPin;
-        const pOut2X = cx2 + ux * rPin;
-        const pOut2Y = cy2 + uy * rPin;
-
-        // Dimension line across 2 balls (Wb)
-        this.addLine(lines, 'INSPECTION_DIM', pOut1X, pOut1Y, pOut2X, pOut2Y);
-
-        // Perpendicular boundary ticks
-        const tickLen = 6.0;
-        const nx = -uy * tickLen;
-        const ny = ux * tickLen;
-        this.addLine(lines, 'INSPECTION_DIM', pOut1X - nx, pOut1Y - ny, pOut1X + nx, pOut1Y + ny);
-        this.addLine(lines, 'INSPECTION_DIM', pOut2X - nx, pOut2Y - ny, pOut2X + nx, pOut2Y + ny);
-
-        // Wb Dimension text
-        const midX = (pOut1X + pOut2X) / 2.0;
-        const midY = (pOut1Y + pOut2Y) / 2.0;
+        // Wb note placed cleanly right below M2 shelf
         const wbVal = (geom.W_bi2 || geom.W2).toFixed(4);
-        this.addText(lines, 'INSPECTION_DIM', `Wb = ${wbVal} mm (k = ${k2})`, midX + nx * 0.8, midY + ny * 0.8, 2.8);
-
-        // M2 Dimension leader and text
-        const m2ExtX = -(geom.di2 / 2.0) * 1.1;
-        const m2ExtY = -(geom.di2 / 2.0) * 0.8;
-        this.addText(lines, 'INSPECTION_DIM', `M2 = ${geom.M2.toFixed(4)} mm (dp = ${dt.toFixed(3)})`, m2ExtX, m2ExtY, 2.8);
-    },
-
-    /**
-     * Build full 360-degree closed conjugate contour for external shaft spline
-     */
-    buildShaftContour(geom) {
-        const z = geom.z0;
-        const alfaRad = (geom.alfa * Math.PI) / 180.0;
-        const invAlfa = Math.tan(alfaRad) - alfaRad;
-        const d = geom.d0;
-        const db = geom.db0;
-        const da = geom.da0;
-        const df = geom.df0;
-        const s = geom.s0;
-
-        const rBase = db / 2.0;
-        const rTip = da / 2.0;
-        const rRoot = df / 2.0;
-        const tau = Math.PI / z;
-        const psi = s / d;
-
-        const rStart = Math.max(rBase, rRoot);
-        const rEnd = rTip;
-        const numFlank = 16;
-
-        // 1. One tooth sector in polar (r, theta)
-        const secPts = [];
-        let alfaStart = 0;
-        if (rStart > rBase) alfaStart = Math.acos(rBase / rStart);
-        const invStart = Math.tan(alfaStart) - alfaStart;
-        const phiStart = psi + invAlfa - invStart;
-
-        // Root bottom arc on left
-        secPts.push([rRoot, -tau]);
-        if (phiStart < tau) {
-            secPts.push([rRoot, -phiStart]);
-        }
-
-        // Left involute flank
-        for (let i = 0; i <= numFlank; i++) {
-            const frac = i / numFlank;
-            const r = rStart + (rEnd - rStart) * frac;
-            let alfaR = 0;
-            if (r > rBase) alfaR = Math.acos(rBase / r);
-            const invR = Math.tan(alfaR) - alfaR;
-            const phi = psi + invAlfa - invR;
-            secPts.push([r, -phi]);
-        }
-
-        // Pure smooth circular crest arc at rTip
-        let alfaTip = Math.acos(Math.min(1.0, rBase / rTip));
-        const invTip = Math.tan(alfaTip) - alfaTip;
-        const phiTip = psi + invAlfa - invTip;
-
-        secPts.push([rTip, -phiTip]);
-        secPts.push([rTip, 0.0]);
-        secPts.push([rTip, phiTip]);
-
-        // Right involute flank
-        for (let i = numFlank; i >= 0; i--) {
-            const frac = i / numFlank;
-            const r = rStart + (rEnd - rStart) * frac;
-            let alfaR = 0;
-            if (r > rBase) alfaR = Math.acos(rBase / r);
-            const invR = Math.tan(alfaR) - alfaR;
-            const phi = psi + invAlfa - invR;
-            secPts.push([r, phi]);
-        }
-
-        // Root bottom arc on right
-        if (phiStart < tau) {
-            secPts.push([rRoot, phiStart]);
-        }
-        secPts.push([rRoot, tau]);
-
-        // 2. Replicate sector around 360 degrees
-        const fullPts = [];
-        for (let j = 0; j < z; j++) {
-            const rotAng = (j * 2 * Math.PI) / z;
-            for (let i = 0; i < secPts.length; i++) {
-                const totalTheta = rotAng + secPts[i][1];
-                const px = secPts[i][0] * Math.sin(totalTheta);
-                const py = secPts[i][0] * Math.cos(totalTheta);
-                fullPts.push([px, py]);
-            }
-        }
-        return fullPts;
-    },
-
-    /**
-     * Build full 360-degree closed conjugate contour for internal hub spline
-     */
-    buildHubContour(geom) {
-        const z = geom.z0;
-        const m = geom.m;
-        const alfaRad = (geom.alfa * Math.PI) / 180.0;
-        const invAlfa = Math.tan(alfaRad) - alfaRad;
-        const d = geom.d2 || geom.d0;
-        const db = geom.db2 || geom.db0;
-        const dri = geom.dri2;
-        const di = geom.di2;
-        const s2 = geom.s2;
-        const e2 = Math.PI * m - s2;
-
-        const rBase = db / 2.0;
-        const rRoot = dri / 2.0;
-        const rTip = di / 2.0;
-        const tau = Math.PI / z;
-        const psiSpace = e2 / d;
-
-        const rStart = Math.max(rBase, rTip);
-        const rEnd = rRoot;
-        const numFlank = 16;
-
-        const secPts = [];
-        let alfaStart = 0;
-        if (rStart > rBase) alfaStart = Math.acos(rBase / rStart);
-        const invStart = Math.tan(alfaStart) - alfaStart;
-        const phiStart = psiSpace + invAlfa - invStart;
-
-        // Inner crest arc on left: pure smooth circular arc at rTip
-        secPts.push([rTip, -tau]);
-        if (phiStart < tau) {
-            secPts.push([rTip, -phiStart]);
-        }
-
-        // Left internal flank
-        for (let i = 0; i <= numFlank; i++) {
-            const frac = i / numFlank;
-            const r = rStart + (rEnd - rStart) * frac;
-            let alfaR = 0;
-            if (r > rBase) alfaR = Math.acos(rBase / r);
-            const invR = Math.tan(alfaR) - alfaR;
-            const phi = psiSpace + invAlfa - invR;
-            secPts.push([r, -phi]);
-        }
-
-        // Outer root groove bottom: pure smooth circular arc at rRoot
-        let alfaRoot = 0;
-        if (rRoot > rBase) alfaRoot = Math.acos(rBase / rRoot);
-        const invRoot = Math.tan(alfaRoot) - alfaRoot;
-        const phiRoot = psiSpace + invAlfa - invRoot;
-        secPts.push([rRoot, -phiRoot]);
-        secPts.push([rRoot, 0.0]);
-        secPts.push([rRoot, phiRoot]);
-
-        // Right internal flank
-        for (let i = numFlank; i >= 0; i--) {
-            const frac = i / numFlank;
-            const r = rStart + (rEnd - rStart) * frac;
-            let alfaR = 0;
-            if (r > rBase) alfaR = Math.acos(rBase / r);
-            const invR = Math.tan(alfaR) - alfaR;
-            const phi = psiSpace + invAlfa - invR;
-            secPts.push([r, phi]);
-        }
-
-        // Inner crest arc on right: pure smooth circular arc at rTip
-        if (phiStart < tau) {
-            secPts.push([rTip, phiStart]);
-        }
-        secPts.push([rTip, tau]);
-
-        // Replicate space around 360 degrees
-        const fullPts = [];
-        for (let j = 0; j < z; j++) {
-            const rotAng = (j * 2 * Math.PI) / z;
-            for (let i = 0; i < secPts.length; i++) {
-                const totalTheta = rotAng + secPts[i][1];
-                const px = secPts[i][0] * Math.sin(totalTheta);
-                const py = secPts[i][0] * Math.cos(totalTheta);
-                fullPts.push([px, py]);
-            }
-        }
-        return fullPts;
+        this.addText(lines, 'INSPECTION_DIM', `Wb = ${wbVal} mm (k = ${k2})`, pExtX + 2.0, pExtY - 4.5, 2.5);
     },
 
     /**
@@ -2001,6 +1859,7 @@ const SplinesDxf = {
 
         // Outer Borders
         this.addLine(lines, 'MFG_TABLE', xTable, yTable + 11.0, xTable, yCurr);
+        this.addText(lines, 'MFG_TABLE', '', xTable, yCurr, 2.0); // anchor
         this.addLine(lines, 'MFG_TABLE', xTable + wTotal, yTable + 11.0, xTable + wTotal, yCurr);
     },
 

@@ -13,6 +13,115 @@
     <meta http-equiv="Expires" content="0">
     <link rel="stylesheet" href="../../shared/css/engineering-theme.css">
     <link rel="stylesheet" href="css/tolerances.css">
+<style>
+
+/* Navigation Module Dropdown Unified */
+.nav-module-dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+    vertical-align: middle;
+}
+.nav-module-dropdown .btn-home {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    border-right: none !important;
+}
+.nav-module-dropdown .btn-dropdown-toggle {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    padding: 6px 10px !important;
+    font-size: 0.75rem !important;
+    color: #38bdf8 !important;
+    background: #334155;
+    border: 1px solid #475569;
+    border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
+    cursor: pointer !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+.nav-module-dropdown .btn-dropdown-toggle:hover {
+    background: #475569 !important;
+    color: #ffffff !important;
+}
+.module-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    width: 330px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+    z-index: 10000;
+    overflow: hidden;
+    text-align: left;
+}
+.module-dropdown-menu.show {
+    display: block;
+}
+.module-dropdown-menu .dropdown-header {
+    padding: 10px 14px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+}
+.module-dropdown-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    color: #e2e8f0;
+    text-decoration: none;
+    border-bottom: 1px solid #1e293b;
+    transition: all 0.12s ease;
+}
+.module-dropdown-menu .dropdown-item:last-child {
+    border-bottom: none;
+}
+.module-dropdown-menu .dropdown-item:hover {
+    background: #1e293b;
+    color: #38bdf8;
+    padding-left: 18px;
+}
+.module-dropdown-menu .dropdown-item.active {
+    background: rgba(14, 165, 233, 0.15);
+    border-left: 3px solid #38bdf8;
+}
+.module-dropdown-menu .dropdown-item.active .item-title {
+    color: #38bdf8;
+    font-weight: 700;
+}
+.module-dropdown-menu .dropdown-item .item-icon {
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+.module-dropdown-menu .dropdown-item .item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.module-dropdown-menu .dropdown-item .item-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+.module-dropdown-menu .dropdown-item .item-desc {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    line-height: 1.2;
+}
+
+</style>
 </head>
 <body>
 
@@ -26,7 +135,76 @@
             </div>
         </div>
         <div class="header-controls">
-            <a href="../../index.html" class="btn btn-secondary" style="font-size:0.85rem; text-decoration:none;">🏠 Trang Chủ</a>
+            <div class="nav-module-dropdown" id="navModuleDropdown">
+    <a href="../../index.html" class="btn btn-secondary btn-home">🏠 Trang Chủ</a>
+    <button type="button" class="btn btn-secondary btn-dropdown-toggle" id="btnModuleMenuToggle" title="Chuyển nhanh module tính toán">▼</button>
+    <div class="module-dropdown-menu" id="moduleDropdownMenu">
+        <div class="dropdown-header">DANH MỤC MÔ-ĐUN TÍNH TOÁN</div>
+        <a href="../spur-gear/index.html" class="dropdown-item">
+            <span class="item-icon">⚙️</span>
+            <div class="item-info">
+                <span class="item-title">Bánh Răng Trụ</span>
+                <span class="item-desc">Spur & Helical Gears (ISO 6336)</span>
+            </div>
+        </a>
+        <a href="../bevel-gear/index.html" class="dropdown-item">
+            <span class="item-icon">📐</span>
+            <div class="item-info">
+                <span class="item-title">Bánh Răng Côn</span>
+                <span class="item-desc">Bevel Gears (ISO 23509)</span>
+            </div>
+        </a>
+        <a href="../bevel-gear-advanced/index.html" class="dropdown-item">
+            <span class="item-icon">🚀</span>
+            <div class="item-info">
+                <span class="item-title">Bánh Răng Côn (Chuyên Sâu)</span>
+                <span class="item-desc">Bevel Gears Advanced (ISO 23509 / Gleason TCA)</span>
+            </div>
+        </a>
+        <a href="../worm-gear/index.html" class="dropdown-item">
+            <span class="item-icon">🌀</span>
+            <div class="item-info">
+                <span class="item-title">Trục Vít - Bánh Vít</span>
+                <span class="item-desc">Worm Gears (ISO/CD 14521 / DIN 3996)</span>
+            </div>
+        </a>
+        <a href="../worm-gear-advanced/index.html" class="dropdown-item">
+            <span class="item-icon">🚀</span>
+            <div class="item-info">
+                <span class="item-title">Trục Vít (Chuyên Sâu)</span>
+                <span class="item-desc">Worm Gears Advanced (DIN 3996 / Flank TCA)</span>
+            </div>
+        </a>
+        <a href="index.html" class="dropdown-item active">
+            <span class="item-icon">🎯</span>
+            <div class="item-info">
+                <span class="item-title">Dung Sai & Lắp Ghép (Đang chọn)</span>
+                <span class="item-desc">Fits & Tolerances (ISO 286 / ANSI)</span>
+            </div>
+        </a>
+        <a href="../shaft-keys/index.html#secParallelKey" class="dropdown-item">
+            <span class="item-icon">🔑</span>
+            <div class="item-info">
+                <span class="item-title">Then Bằng & Bán Nguyệt</span>
+                <span class="item-desc">Parallel & Woodruff Keys (DIN 6885)</span>
+            </div>
+        </a>
+        <a href="../shaft-keys/index.html#secStraightSpline" class="dropdown-item">
+            <span class="item-icon">🛡️</span>
+            <div class="item-info">
+                <span class="item-title">Then Hoa Răng Chữ Nhật</span>
+                <span class="item-desc">Straight-Sided Splines (ISO 14 / DIN 5464)</span>
+            </div>
+        </a>
+        <a href="../involute-splines/index.html" class="dropdown-item">
+            <span class="item-icon">⚙️</span>
+            <div class="item-info">
+                <span class="item-title">Then Hoa Thân Khai</span>
+                <span class="item-desc">Involute Splines (DIN 5480 / ISO 4156)</span>
+            </div>
+        </a>
+    </div>
+</div>
             <span style="font-size:0.85rem; color:#10b981; font-weight:600; padding:0.35rem 0.6rem; background:rgba(16,185,129,0.1); border:1px solid #10b981; border-radius:4px;">● Mô-đun 6 (Tolerances & Fits)</span>
         </div>
     </header>
@@ -597,6 +775,33 @@
 
     <!-- Nạp Single Bundle độc lập Zero-CORS -->
     <script src="js/tolerances-engine.bundle.js"></script>
+
+
+<script>
+// Unified Module Navigation Dropdown Toggle
+(function() {
+    function initModuleDropdown() {
+        var btnMenu = document.getElementById('btnModuleMenuToggle');
+        var menuDropdown = document.getElementById('moduleDropdownMenu');
+        if (btnMenu && menuDropdown) {
+            btnMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
+                menuDropdown.classList.toggle('show');
+            });
+            document.addEventListener('click', function(e) {
+                if (!menuDropdown.contains(e.target) && e.target !== btnMenu) {
+                    menuDropdown.classList.remove('show');
+                }
+            });
+        }
+    }
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initModuleDropdown);
+    } else {
+        initModuleDropdown();
+    }
+})();
+</script>
 
 </body>
 </html>

@@ -4295,3 +4295,38 @@ ho_{f0}$.
 ### 6. Đóng Gói Bundle & Kiểm Thử Nghiệm Thu
 - Đóng gói bundle thuần: `modules/involute-splines/js/splines-engine.bundle.js` (556.4 KB).
 - Kịch bản Playwright E2E `scratch/test_splines_round2.py`: **6/6 TESTS PASS, 0 CONSOLE ERRORS**.
+
+---
+
+## GIAI ĐOẠN 17: ĐỒNG BỘ DROPDOWN TOÀN DIỆN 8 MODULE & TRIỆT TIÊU 100% LỖI THỪA NÉT CAD DXF
+**Thời gian hoàn thành**: 09/10/2026  
+**Chủ sở hữu**: `SirPhuong`  
+**Mục tiêu**: Đồng bộ menu dropdown luân chuyển module trên toàn bộ 8 module (bổ sung Bánh Răng Côn Chuyên Sâu và Trục Vít Chuyên Sâu) và tái cấu trúc engine xuất DXF Single-Pass loại bỏ hoàn toàn các nét trùng/thừa trong AutoCAD Mechanical.
+
+### 1. Đồng Bộ Hóa Menu Dropdown Trên Cả 8 Module
+- Thêm nút mũi tên sổ xuống `▼` (`.btn-dropdown-toggle`) cạnh nút "🏠 Trang Chủ" cho tất cả 8 module: Spur Gear, Bevel Gear, Bevel Gear Pro, Worm Gear, Worm Gear Pro, Tolerances, Shaft Keys, và Involute Splines.
+- Danh mục menu gồm đầy đủ 9 lựa chọn kỹ thuật cơ khí:
+  1. ⚙️ Bánh Răng Trụ (Spur & Helical Gears - ISO 6336)
+  2. 📐 Bánh Răng Côn (Bevel Gears - ISO 23509)
+  3. 🚀 Bánh Răng Côn (Chuyên Sâu) (Bevel Gears Advanced - ISO 23509 / Gleason TCA)
+  4. 🌀 Trục Vít - Bánh Vít (Worm Gears - ISO/CD 14521 / DIN 3996)
+  5. 🚀 Trục Vít (Chuyên Sâu) (Worm Gears Advanced - DIN 3996 / Flank TCA)
+  6. 🎯 Dung Sai & Lắp Ghép (Fits & Tolerances - ISO 286 / ANSI)
+  7. 🔑 Then Bằng & Bán Nguyệt (Parallel & Woodruff Keys - DIN 6885)
+  8. 🛡️ Then Hoa Răng Chữ Nhật (Straight-Sided Splines - ISO 14 / DIN 5464)
+  9. ⚙️ Then Hoa Thân Khai (Involute Splines - DIN 5480 / ISO 4156)
+- Tự động đánh dấu `(Đang chọn)` và active tương ứng cho từng module.
+
+### 2. Triệt Tiêu 100% Lỗi Thừa Nét / Trùng Nét Trong DXF (AutoCAD Mechanical)
+- Loại bỏ hoàn toàn thực thể `POLYLINE` gây trùng nét với các cung tròn đỉnh/đáy.
+- Dựng biên dạng Single-Pass thuần khiết: Mỗi đỉnh răng là 1 cung tròn `ARC`, mỗi đáy rãnh là 1 cung tròn `ARC`, các sườn răng là các đoạn `LINE` thân khai tiếp nối chính xác tới $10^{-10}$ mm.
+- Xóa bỏ đường kích thước $W_b$ cắt ngang qua thân răng. Thay thế bằng đường dóng leader chỉ từ viên bi ra ngoài khoảng trống (giống hệt hiển thị trên Canvas 2D) ghi chú $M$ và $W_b$.
+- Đổi màu layer `INSPECTION_DIM` sang Green (Color 3) để tránh nhầm lẫn với Red (Color 1) của Moay-ơ.
+
+### 3. Nghiệm Thu Tự Động Playwright E2E
+- Kịch bản kiểm thử `scratch/test_final_verification.py`:
+  * Test 1 (Dropdown Menu trên cả 8 module): **8/8 PASS**
+  * Test 2 (Tải 3 file DXF Assembly, Shaft, Hub): **PASS**
+  * Test 3 (Phân tích thực thể DXF: 0 Polyline, 40 Arcs/chi tiết, 0 đường xuyên tâm): **PASS**
+  * Test 4 (Console Errors): **0 LỖI (PASS)**
+- Tổng kết: **100% PASS**!

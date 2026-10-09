@@ -2565,3 +2565,32 @@ ho_{f0}$.
 5. **Menu Dropdown luân chuyển module toàn diện**:
    - Bổ sung module **Trục Vít - Bánh Vít (Worm Gear)** (`../worm-gear/index.html`).
    - Loại bỏ mục "🏠 Trang Chủ Hub Trung Tâm" khỏi menu dropdown; chỉ tập trung danh sách 7 module kỹ thuật cơ khí độc lập.
+
+---
+
+### Quy Tắc 112: Quy Chuẩn Đồng Bộ Menu Dropdown Toàn Bộ 8 Module (Gồm Cả Bánh Răng Côn Chuyên Sâu & Trục Vít Chuyên Sâu) & Kiến Trúc Xuất Bản Vẽ CAD DXF Single-Pass Triệt Tiêu 100% Trùng Nét / Thừa Nét
+**Ngày áp dụng**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Đồng bộ hóa Menu Dropdown Luân Chuyển Trên Toàn Bộ 8 Module Cơ Khí**:
+   - Nút "🏠 Trang Chủ" tích hợp nút mũi tên sổ xuống `▼` (`.btn-dropdown-toggle`) đồng bộ 1-to-1 trên tất cả 8 module:
+     1. `modules/spur-gear`: Bánh Răng Trụ (ISO 6336)
+     2. `modules/bevel-gear`: Bánh Răng Côn (ISO 23509)
+     3. `modules/bevel-gear-advanced`: Bánh Răng Côn (Chuyên Sâu) (Zerol, Klingelnberg, Hypoid TCA)
+     4. `modules/worm-gear`: Trục Vít - Bánh Vít (ISO/CD 14521 / DIN 3996)
+     5. `modules/worm-gear-advanced`: Trục Vít (Chuyên Sâu) (Flank Contact TCA)
+     6. `modules/tolerances`: Dung Sai & Lắp Ghép (ISO 286 / ANSI)
+     7. `modules/shaft-keys`: Then Bằng, Bán Nguyệt & Then Hoa Răng Chữ Nhật
+     8. `modules/involute-splines`: Then Hoa Thân Khai (DIN 5480 / ISO 4156)
+   - Menu dropdown mở ra danh sách đầy đủ 9 hạng mục mô-đun kỹ thuật (bao gồm cả 2 module chuyên sâu), loại bỏ hoàn toàn mục "Trang Chủ Hub". Module đang hoạt động được đánh dấu nổi bật với nhãn `(Đang chọn)`.
+2. **Kiến trúc xuất CAD DXF Single-Pass (Triệt tiêu 100% trùng nét / thừa nét)**:
+   - **Bản chất lỗi thừa nét trước đó**: Khi xuất CAD, việc vừa gọi `addPolyline` (chứa các đoạn thẳng xấp xỉ cung đỉnh/đáy) vừa gọi `addArc` (vẽ thêm các cung tròn đỉnh/đáy đè lên trên) đã tạo ra 2 lớp hình học chồng lấn. Đồng thời, đường kích thước $W_b$ nối 2 viên bi xuyên tâm qua các răng bị hiểu nhầm là nét thừa của chi tiết.
+   - **Giải pháp Single-Pass**: Loại bỏ hoàn toàn thực thể `POLYLINE` xấp xỉ đoạn thẳng trên các layer đường bao (`CONTOUR_SHAFT`, `CONTOUR_HUB`). Toàn bộ biên dạng được dựng theo chu trình tuần hoàn kín 360° kết hợp giải tích:
+     * Đỉnh răng trục / Đáy rãnh moay-ơ: Cung tròn thực thể `ARC` chuẩn AutoCAD.
+     * Sườn răng: Các đoạn thẳng `LINE` thân khai nối tiếp mượt mà.
+     * Đáy rãnh trục / Đỉnh răng moay-ơ: Cung tròn thực thể `ARC` chuẩn AutoCAD.
+     * Sườn răng đối diện: Các đoạn thẳng `LINE` thân khai nối tiếp mượt mà.
+     * Độ hở giữa các thực thể liền kề đạt chuẩn Zero-Tolerance: $\Delta = 0.0000000000	ext{ mm}$.
+   - **Bi đo & Kích thước kiểm tra**:
+     * Bi đo được vẽ bằng thực thể `CIRCLE` trên layer `MEASUREMENT_PIN` (màu vàng).
+     * Kích thước đo qua bi $M$: Đường tròn nét đứt đồng tâm `CIRCLE` (`INSPECTION_DASH`) kèm đường dóng leader dẫn ra khoảng trống bên ngoài phôi ghi text $M$ và ghi chú $W_b/W_0$.
+     * Tuyệt đối không vẽ đường nối xuyên tâm cắt ngang qua thân răng. Layer kích thước `INSPECTION_DIM` chuyển sang màu Xanh Lá (Color 3) để tách biệt hoàn toàn với màu Đỏ (Color 1) của Moay-ơ.
