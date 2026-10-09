@@ -505,34 +505,34 @@
                                     <td class="col-val1"><div class="output-eng highlight-key-param" id="outK0">4</div></td>
                                     <td class="col-val2"><div class="output-eng output-hub highlight-key-param" id="outK2">3</div></td>
                                     <td class="col-unit">Răng</td>
-                                    <td class="col-action">Số răng kẹp thước</td>
+                                    <td class="col-action">Số răng kẹp thước / khoảng đo bi</td>
                                 </tr>
                                 <tr>
                                     <td class="col-idx">4.2</td>
-                                    <td class="col-param">Chiều dài pháp tuyến chung</td>
-                                    <td class="col-sym">W</td>
+                                    <td class="col-param">Pháp tuyến chung / Pháp tuyến đo bi</td>
+                                    <td class="col-sym">W / W<sub>b</sub></td>
                                     <td class="col-val1"><div class="output-eng highlight-key-param" id="outW0">104.5345</div></td>
-                                    <td class="col-val2"><div class="output-eng output-hub highlight-key-param" id="outW2">104.5345</div></td>
+                                    <td class="col-val2"><div class="output-eng output-hub highlight-key-param" id="outW2">130.1380</div></td>
                                     <td class="col-unit">[mm]</td>
-                                    <td class="col-action">Thước đo pháp tuyến</td>
+                                    <td class="col-action">Panme đĩa (Trục) / Đo 2 bi qua k răng (Lỗ)</td>
                                 </tr>
                                 <tr>
                                     <td class="col-idx">4.3</td>
                                     <td class="col-param">Đường kính con lăn / đũa / bi đo</td>
                                     <td class="col-sym">d<sub>p</sub></td>
-                                    <td class="col-val1"><input type="number" id="dt0Input" class="user-input" value="17.5000" step="0.1"></td>
-                                    <td class="col-val2"><input type="number" id="dt2Input" class="user-input" value="17.5000" step="0.1"></td>
+                                    <td class="col-val1"><input type="number" id="dt0Input" class="user-input" value="17.2800" step="0.05" title="Đường kính bi đo trục"></td>
+                                    <td class="col-val2"><input type="number" id="dt2Input" class="user-input" value="14.4000" step="0.05" title="Đường kính bi đo lỗ"></td>
                                     <td class="col-unit">[mm]</td>
-                                    <td class="col-action">d<sub>p</sub> &approx; 1.75&middot;m</td>
+                                    <td class="col-action">ISO 4156 / DIN 5480 / ANSI B92.1</td>
                                 </tr>
                                 <tr>
                                     <td class="col-idx">4.4</td>
-                                    <td class="col-param">Kích thước đo qua hai viên bi / con lăn</td>
+                                    <td class="col-param">Kích thước đo bi / con lăn</td>
                                     <td class="col-sym">M</td>
                                     <td class="col-val1"><div class="output-eng highlight-key-param" id="outM0">224.9091</div></td>
                                     <td class="col-val2"><div class="output-eng output-hub highlight-key-param" id="outM2">174.1319</div></td>
                                     <td class="col-unit">[mm]</td>
-                                    <td class="col-action">Đo qua đũa/bi chính xác</td>
+                                    <td class="col-action">Vòng đo bi ngoài (Trục) / Vòng đo bi trong (Lỗ)</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -740,11 +740,40 @@
                                 <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #1e3a8a; border-radius: 6px; padding: 1rem;">
                                     <h5 style="color: #cbd5e1; margin: 0 0 0.5rem 0; font-size: 0.95rem;">🌐 Hệ Thống Tiêu Chuẩn Quốc Tế</h5>
                                     <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.85rem;">
-                                        <li><b>ANSI B92.1:</b> Chuẩn Mỹ hệ Inch (Diametral Pitch P).</li>
-                                        <li><b>ISO 4156 & ANSI B92.2M:</b> Chuẩn Quốc Tế hệ Mét (Mô-đun m).</li>
-                                        <li><b>DIN 5480:</b> Chuẩn Đức định danh theo kích thước phôi tròn dB và mô-đun m, răng có dịch chỉnh x0.</li>
+                                        <li><b>ANSI B92.1:</b> Chuẩn Mỹ hệ Inch (Diametral Pitch P = 2.5 ÷ 128).</li>
+                                        <li><b>ISO 4156 & ANSI B92.2M:</b> Chuẩn Quốc Tế hệ Mét (Mô-đun m = 0.5 ÷ 10 mm).</li>
+                                        <li><b>DIN 5480:</b> Chuẩn Đức định danh theo phôi tròn dB và mô-đun m.</li>
                                         <li><b>CSN 4950:</b> Chuẩn Tiệp Khắc / Đông Âu (tương đương GOST 6033).</li>
                                     </ul>
+                                </div>
+
+                                <div style="background: rgba(15, 23, 42, 0.85); border: 1px solid #0284c7; border-radius: 6px; padding: 1rem; grid-column: 1 / -1;">
+                                    <h5 style="color: #38bdf8; margin: 0 0 0.5rem 0; font-size: 0.95rem;">📏 Quy Định Chiều Cao Đỉnh Răng (h<sub>a</sub>), Chân Răng (h<sub>f</sub>) &amp; Chiều Cao Toàn Bộ (Stub Teeth Protocol)</h5>
+                                    <div style="font-size: 0.85rem; line-height: 1.6;">
+                                        <p style="margin: 0 0 0.5rem 0;"><b>Bản chất cơ khí:</b> Khác hoàn toàn bánh răng trụ truyền động thông thường (chiều cao toàn bộ h = 2.25&middot;m, h<sub>a</sub> = 1.0&middot;m, h<sub>f</sub> = 1.25&middot;m), <b>then hoa thân khai là loại răng thấp (Stub Teeth)</b> với chiều cao làm việc chỉ khoảng 0.8 ÷ 1.0&middot;m. Mục đích: tối đa hóa diện tích tiết diện chống cắt xoắn, giảm chiều dài tay đòn uốn, loại trừ triệt để nguy cơ gãy chân răng và giữ cho đường kính lõi trục lớn nhất để tăng độ cứng vững.</p>
+                                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 0.75rem; margin-top: 0.5rem;">
+                                            <div style="background: rgba(30, 41, 59, 0.6); padding: 0.5rem 0.75rem; border-radius: 4px; border-left: 3px solid #38bdf8;">
+                                                <b>ANSI B92.1 (Hệ Inch):</b> Ký hiệu phân số hai bước răng P/P<sub>stub</sub> với P<sub>stub</sub> = 2P (ví dụ 10/20).
+                                                <br>&bull; Chiều cao đỉnh răng: h<sub>a</sub> = 1/P<sub>stub</sub> = 0.5/P = <b>0.50&middot;m</b>
+                                                <br>&bull; Chân Flat root: h<sub>f</sub> = 1.35/P<sub>stub</sub> = <b>0.675&middot;m</b> (khe hở c = 0.175&middot;m)
+                                                <br>&bull; Chân Fillet root: h<sub>f</sub> = 1.80/P<sub>stub</sub> = <b>0.900&middot;m</b> (khe hở c = 0.400&middot;m)
+                                            </div>
+                                            <div style="background: rgba(30, 41, 59, 0.6); padding: 0.5rem 0.75rem; border-radius: 4px; border-left: 3px solid #10b981;">
+                                                <b>ISO 4156 &amp; ANSI B92.2M (Hệ Mét):</b>
+                                                <br>&bull; Góc 30° Flat root: h<sub>a</sub> = <b>0.50&middot;m</b>, h<sub>f</sub> = <b>0.75&middot;m</b> (c = 0.25&middot;m)
+                                                <br>&bull; Góc 30° Fillet root: h<sub>a</sub> = <b>0.50&middot;m</b>, h<sub>f</sub> = <b>0.90&middot;m</b> (c = 0.40&middot;m)
+                                                <br>&bull; Góc 37.5° Fillet root: h<sub>a</sub> = <b>0.45&middot;m</b>, h<sub>f</sub> = <b>0.70&middot;m</b> (c = 0.25&middot;m)
+                                                <br>&bull; Góc 45° Fillet root: h<sub>a</sub> = <b>0.40&middot;m</b>, h<sub>f</sub> = <b>0.60&middot;m</b> (c = 0.20&middot;m)
+                                            </div>
+                                            <div style="background: rgba(30, 41, 59, 0.6); padding: 0.5rem 0.75rem; border-radius: 4px; border-left: 3px solid #f59e0b;">
+                                                <b>DIN 5480 (Chuẩn Đức):</b>
+                                                <br>&bull; Quy chuẩn theo phôi tròn d<sub>B</sub>: d<sub>a0</sub> = d<sub>B</sub> - 0.2&middot;m &rArr; h<sub>a0</sub> &approx; <b>0.45&middot;m</b>
+                                                <br>&bull; Đáy rãnh trục: d<sub>f0</sub> = d<sub>B</sub> - 2.2&middot;m &rArr; h<sub>f0</sub> &approx; <b>0.65&middot;m</b>
+                                                <br>&bull; Lỗ moay-ơ: đỉnh d<sub>i2</sub> = d<sub>B</sub> - 2.0&middot;m; đáy rãnh d<sub>ri2</sub> = d<sub>B</sub>.
+                                                <br>&bull; Tổng chiều cao răng ăn khớp: <b>h = 1.0 ÷ 1.1&middot;m</b>.
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                             </div>
@@ -754,14 +783,15 @@
                         <div>
                             <h4 style="color: #38bdf8; margin: 0 0 0.5rem 0; font-size: 1rem;">2. Bảng Tra Cứu Toàn Diện 17 Hệ Tiêu Chuẩn Tại Mục 1.2 (Mã A đến Q):</h4>
                             <div style="overflow-x: auto;">
-                                <table class="calc-table" style="min-width: 700px; font-size: 0.85rem;">
+                                <table class="calc-table" style="min-width: 820px; font-size: 0.85rem;">
                                     <thead>
                                         <tr style="background: #1e293b;">
-                                            <th style="width: 50px;">Mã</th>
+                                            <th style="width: 45px;">Mã</th>
                                             <th>Tên Tiêu Chuẩn</th>
                                             <th>Hệ Đơn Vị</th>
-                                            <th>Góc Ăn Khớp &alpha;</th>
-                                            <th>Đáy Rãnh (Root)</th>
+                                            <th>Góc &alpha;</th>
+                                            <th>Đáy Rãnh</th>
+                                            <th>Chiều Cao h<sub>a</sub> / h<sub>f</sub></th>
                                             <th>Kiểu Định Tâm</th>
                                             <th>Đặc Tính & Ứng Dụng</th>
                                         </tr>
@@ -773,6 +803,7 @@
                                             <td>Inch (P)</td>
                                             <td>30°</td>
                                             <td>Flat root</td>
+                                            <td style="color: #38bdf8;">0.50&middot;m / 0.675&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td>Thông dụng nhất hệ Inch Mỹ, chi phí chế tạo thấp.</td>
                                         </tr>
@@ -782,6 +813,7 @@
                                             <td>Inch (P)</td>
                                             <td>30°</td>
                                             <td>Flat root</td>
+                                            <td style="color: #38bdf8;">0.50&middot;m / 0.675&middot;m</td>
                                             <td style="color: #fbbf24;">Major diam. fit</td>
                                             <td>Yêu cầu độ đồng tâm hướng tâm ban đầu rất cao.</td>
                                         </tr>
@@ -791,6 +823,7 @@
                                             <td>Inch (P)</td>
                                             <td>30°</td>
                                             <td>Fillet root</td>
+                                            <td style="color: #38bdf8;">0.50&middot;m / 0.900&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td>Chịu tải mỏi chu kỳ cao, giảm ứng suất tập trung uốn.</td>
                                         </tr>
@@ -800,8 +833,9 @@
                                             <td>Inch (P)</td>
                                             <td>37.5°</td>
                                             <td>Fillet root</td>
+                                            <td style="color: #38bdf8;">0.50&middot;m / 0.650&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
-                                            <td>Gốc răng dày, chịu uốn lớn trong ngành hàng không/ôtô tải.</td>
+                                            <td>Gốc răng dày, chịu uốn lớn trong hàng không/ôtô tải.</td>
                                         </tr>
                                         <tr>
                                             <td style="font-weight: bold; color: #38bdf8;">E</td>
@@ -809,6 +843,7 @@
                                             <td>Inch (P)</td>
                                             <td>45°</td>
                                             <td>Fillet root</td>
+                                            <td style="color: #38bdf8;">0.50&middot;m / 0.500&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td>Răng thấp vững chắc cho trục rỗng và chi tiết thành mỏng.</td>
                                         </tr>
@@ -818,6 +853,7 @@
                                             <td>Mét (m)</td>
                                             <td>30°</td>
                                             <td>Flat root</td>
+                                            <td style="color: #10b981;">0.50&middot;m / 0.750&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td><b>Chuẩn quốc tế thông dụng nhất</b> cho cơ khí chế tạo máy.</td>
                                         </tr>
@@ -827,6 +863,7 @@
                                             <td>Mét (m)</td>
                                             <td>30°</td>
                                             <td>Fillet root</td>
+                                            <td style="color: #10b981;">0.50&middot;m / 0.900&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td>Khuyên dùng cho kết cấu chịu tải rung động, tải đổi chiều.</td>
                                         </tr>
@@ -836,6 +873,7 @@
                                             <td>Mét (m)</td>
                                             <td>37.5°</td>
                                             <td>Fillet root</td>
+                                            <td style="color: #10b981;">0.45&middot;m / 0.700&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td>Tải trọng uốn răng cao theo hệ Mét.</td>
                                         </tr>
@@ -845,6 +883,7 @@
                                             <td>Mét (m)</td>
                                             <td>45°</td>
                                             <td>Fillet root</td>
+                                            <td style="color: #10b981;">0.40&middot;m / 0.600&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td>Trục rỗng, mô-men xoắn nhẹ đến vừa hệ Mét.</td>
                                         </tr>
@@ -854,6 +893,7 @@
                                             <td>Mét (m)</td>
                                             <td>30°</td>
                                             <td>Flat root</td>
+                                            <td style="color: #38bdf8;">0.50&middot;m / 0.750&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td>Hệ Mét Hoa Kỳ tương thích ISO 4156 Flat root.</td>
                                         </tr>
@@ -863,6 +903,7 @@
                                             <td>Mét (m)</td>
                                             <td>30°</td>
                                             <td>Fillet root</td>
+                                            <td style="color: #38bdf8;">0.50&middot;m / 0.900&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td>Hệ Mét Hoa Kỳ Fillet root chống mỏi cao.</td>
                                         </tr>
@@ -872,6 +913,7 @@
                                             <td>Mét (m)</td>
                                             <td>37.5°</td>
                                             <td>Fillet root</td>
+                                            <td style="color: #38bdf8;">0.45&middot;m / 0.700&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td>Hệ Mét Hoa Kỳ góc 37.5° tải nặng.</td>
                                         </tr>
@@ -881,6 +923,7 @@
                                             <td>Mét (m)</td>
                                             <td>45°</td>
                                             <td>Fillet root</td>
+                                            <td style="color: #38bdf8;">0.40&middot;m / 0.600&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td>Hệ Mét Hoa Kỳ góc 45° răng thấp.</td>
                                         </tr>
@@ -890,6 +933,7 @@
                                             <td>Mét (m)</td>
                                             <td>30°</td>
                                             <td>Fillet root</td>
+                                            <td style="color: #f59e0b;">0.45&middot;m / 0.650&middot;m</td>
                                             <td style="color: #34d399;">Side fit (Flank)</td>
                                             <td><b>Chuẩn công nghiệp Đức đỉnh cao</b>, quy chuẩn theo phôi tròn dB.</td>
                                         </tr>
@@ -899,6 +943,7 @@
                                             <td>Mét (m)</td>
                                             <td>30°</td>
                                             <td>Flat root</td>
+                                            <td style="color: #cbd5e1;">0.45&middot;m / 0.650&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td>Chuẩn Đông Âu / Nga (tương đương GOST 6033).</td>
                                         </tr>
@@ -908,6 +953,7 @@
                                             <td>Mét (m)</td>
                                             <td>30°</td>
                                             <td>Flat root</td>
+                                            <td style="color: #cbd5e1;">0.55&middot;m / 0.650&middot;m</td>
                                             <td style="color: #fbbf24;">Major diam. fit</td>
                                             <td>Định tâm theo đường kính ngoài chuẩn Đông Âu.</td>
                                         </tr>
@@ -917,6 +963,7 @@
                                             <td>Mét (m)</td>
                                             <td>30°</td>
                                             <td>Fillet root</td>
+                                            <td style="color: #cbd5e1;">0.45&middot;m / 0.930&middot;m</td>
                                             <td style="color: #34d399;">Side fit</td>
                                             <td>Đáy lượn tròn chống mỏi chuẩn Đông Âu.</td>
                                         </tr>

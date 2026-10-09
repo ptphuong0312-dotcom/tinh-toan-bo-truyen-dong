@@ -55,6 +55,43 @@ export const SplinesCalc = {
     },
 
     /**
+     * Recommended pin/ball diameter dp according to international standards
+     * ISO 4156, ANSI B92.1, DIN 5480
+     */
+    getRecommendedPinDiameter(stdTypeId, m, alfa = 30.0) {
+        let dt0 = 1.75 * m;
+        let dt2 = 1.75 * m;
+
+        // ISO 4156 / ANSI B92.1 / ANSI B92.2M
+        if (stdTypeId >= 1 && stdTypeId <= 13) {
+            if (Math.abs(alfa - 30.0) < 0.1) {
+                const isFillet = (stdTypeId === 3 || stdTypeId === 7 || stdTypeId === 11);
+                dt0 = isFillet ? 1.920 * m : 1.728 * m;
+                dt2 = isFillet ? 1.728 * m : 1.440 * m;
+            } else if (Math.abs(alfa - 37.5) < 0.1) {
+                dt0 = 1.728 * m;
+                dt2 = 1.440 * m;
+            } else if (Math.abs(alfa - 45.0) < 0.1) {
+                dt0 = 1.920 * m;
+                dt2 = 1.440 * m;
+            }
+        } else if (stdTypeId === 14) {
+            // DIN 5480 (DIN 5480-15 standard inspection balls)
+            dt0 = 1.800 * m;
+            dt2 = 1.500 * m;
+        } else if (stdTypeId >= 15 && stdTypeId <= 17) {
+            // CSN 4950
+            dt0 = 1.750 * m;
+            dt2 = 1.500 * m;
+        }
+
+        return {
+            dt0: parseFloat(dt0.toFixed(4)),
+            dt2: parseFloat(dt2.toFixed(4))
+        };
+    },
+
+    /**
      * Look up standard diameters and shift for standard types
      */
     getStandardSplineDefaults(stdTypeId, m, z, units = 1) {
@@ -295,8 +332,9 @@ export const SplinesCalc = {
         const W2 = Math.abs(m * (pi * cosAlfa * (-k2 - 0.5) + z2 * cosAlfa * invAlfa) + 2.0 * x2 * m * sinAlfa);
 
         // Pin / ball diameter
-        const dt0 = params.dt0 !== undefined ? parseFloat(params.dt0) : 1.75 * m;
-        const dt2 = params.dt2 !== undefined ? parseFloat(params.dt2) : 1.75 * m;
+        const recPin = this.getRecommendedPinDiameter(stdTypeId, m, alfa);
+        const dt0 = (params.dt0 !== undefined && parseFloat(params.dt0) > 0) ? parseFloat(params.dt0) : recPin.dt0;
+        const dt2 = (params.dt2 !== undefined && parseFloat(params.dt2) > 0) ? parseFloat(params.dt2) : recPin.dt2;
 
         // Measurement over pins M
         // Shaft:
@@ -316,12 +354,17 @@ export const SplinesCalc = {
         const alfaM2_deg = this.invol(invAlfaM2);
         const alfaM2_rad = this.degToRad(alfaM2_deg);
         const ds2 = db2 / Math.cos(alfaM2_rad);
+        const absDs2 = Math.abs(ds2);
         let M2 = 0.0;
         if (Math.abs(z2) % 2 === 0) {
             M2 = Math.abs(-ds2 + dt2);
         } else {
             M2 = Math.abs(-ds2 * Math.cos(pi / (2.0 * Math.abs(z2))) + dt2);
         }
+
+        // Hub 2-ball measurement across k teeth: W_bi2 (furthest distance between 2 pins)
+        const Lc2 = absDs2 * Math.sin((pi * k2) / z0);
+        const W_bi2 = Lc2 + dt2;
 
         // Section 5.0 Approximate Module Calculation
         const z_rev_shaft = params.z_rev_shaft !== undefined ? parseInt(params.z_rev_shaft) : 24;
@@ -390,6 +433,12 @@ export const SplinesCalc = {
             W2,
             dt0,
             dt2,
+            dt0_rec: recPin.dt0,
+            dt2_rec: recPin.dt2,
+            ds0,
+            ds2: absDs2,
+            Lc2,
+            W_bi2,
             M0,
             M2,
             z_rev_shaft,

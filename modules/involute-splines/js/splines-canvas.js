@@ -594,22 +594,32 @@ export class SplinesCanvas {
 
         ctx.save();
 
-        // 1. Inspection Pins / Balls for Shaft (placed in tooth space at angle pi / z)
+        // 1. Inspection Pins / Balls for Shaft
         if (this.viewMode === 'shaft' || this.viewMode === 'assembly') {
             const dt = g.dt0;
             const r_pin = dt / 2;
             const r_center = (g.M0 - dt) / 2.0;
 
-            const angles = [pi / g.z0, pi / g.z0 + pi]; // opposite tooth spaces
-            ctx.fillStyle = 'rgba(250, 204, 21, 0.45)';  // yellow pin
+            // Concentric Circle through the outermost point of the balls (Radius = M0 / 2)
+            ctx.strokeStyle = '#f59e0b'; // Amber Gold
+            ctx.setLineDash([8 / this.scale, 4 / this.scale]);
+            ctx.lineWidth = 1.5 / this.scale;
+            ctx.beginPath();
+            ctx.arc(0, 0, g.M0 / 2, 0, pi * 2);
+            ctx.stroke();
+
+            // Place ball(s) in tooth space (Top space at pi / z0, and opposite space if even z)
+            const angles = (g.z0 % 2 === 0) ? [pi / g.z0, pi / g.z0 + pi] : [pi / g.z0];
+            ctx.fillStyle = 'rgba(250, 204, 21, 0.5)';  // translucent yellow
             ctx.strokeStyle = '#facc15';
             ctx.lineWidth = 1.5 / this.scale;
+            ctx.setLineDash([]);
 
             angles.forEach(ang => {
                 const cx = r_center * Math.sin(ang);
                 const cy = r_center * Math.cos(ang);
                 ctx.beginPath();
-                ctx.arc(cx, cy, r_pin, 0, Math.PI * 2);
+                ctx.arc(cx, cy, r_pin, 0, pi * 2);
                 ctx.fill();
                 ctx.stroke();
 
@@ -623,33 +633,59 @@ export class SplinesCanvas {
                 ctx.stroke();
             });
 
-            // Dimension line M0
+            // Dimension line & label for Shaft Ball Circle
+            const lblAng = pi / g.z0;
+            const ptOuter = { x: (g.M0 / 2) * Math.sin(lblAng), y: (g.M0 / 2) * Math.cos(lblAng) };
             ctx.strokeStyle = '#facc15';
-            ctx.setLineDash([5 / this.scale, 3 / this.scale]);
+            ctx.lineWidth = 1.2 / this.scale;
             ctx.beginPath();
-            const p1 = { x: r_center * Math.sin(angles[0]), y: r_center * Math.cos(angles[0]) };
-            const p2 = { x: r_center * Math.sin(angles[1]), y: r_center * Math.cos(angles[1]) };
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
+            ctx.moveTo(ptOuter.x, ptOuter.y);
+            const ptExt = { x: ptOuter.x + 18 / this.scale, y: ptOuter.y + 12 / this.scale };
+            ctx.lineTo(ptExt.x, ptExt.y);
+            ctx.lineTo(ptExt.x + 42 / this.scale, ptExt.y);
             ctx.stroke();
+
+            ctx.save();
+            ctx.translate(ptExt.x + 2 / this.scale, ptExt.y + 3 / this.scale);
+            ctx.scale(1, -1);
+            ctx.fillStyle = '#fef08a';
+            ctx.font = `bold ${Math.max(9, 11 / this.scale)}px sans-serif`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(`M = ${g.M0.toFixed(3)}`, 0, 0);
+            ctx.restore();
         }
 
-        // 2. Inspection Pins / Balls for Hub (placed in hub space at angle 0)
+        // 2. Inspection Pins / Balls for Hub
         if (this.viewMode === 'hub') {
             const dt = g.dt2 || g.dt0;
             const r_pin = dt / 2;
-            const r_center = (g.M2 + dt) / 2.0;
+            const r_center = (g.ds2 || Math.abs(g.M2 + dt)) / 2.0;
+            const k2 = g.k2 || 3;
 
-            const angles = [0, pi]; // opposite hub spaces
-            ctx.fillStyle = 'rgba(250, 204, 21, 0.45)';
+            // Concentric Circle through the innermost point of the balls (Radius = M2 / 2)
+            ctx.strokeStyle = '#f59e0b';
+            ctx.setLineDash([8 / this.scale, 4 / this.scale]);
+            ctx.lineWidth = 1.5 / this.scale;
+            ctx.beginPath();
+            ctx.arc(0, 0, g.M2 / 2, 0, pi * 2);
+            ctx.stroke();
+
+            // Two balls placed in hub tooth spaces across k teeth
+            const ang1 = 0;
+            const ang2 = (2 * pi * k2) / g.z0;
+            const angles = [ang1, ang2];
+
+            ctx.fillStyle = 'rgba(250, 204, 21, 0.5)';
             ctx.strokeStyle = '#facc15';
             ctx.lineWidth = 1.5 / this.scale;
+            ctx.setLineDash([]);
 
-            angles.forEach(ang => {
+            const pts = angles.map(ang => {
                 const cx = r_center * Math.sin(ang);
                 const cy = r_center * Math.cos(ang);
                 ctx.beginPath();
-                ctx.arc(cx, cy, r_pin, 0, Math.PI * 2);
+                ctx.arc(cx, cy, r_pin, 0, pi * 2);
                 ctx.fill();
                 ctx.stroke();
 
@@ -660,16 +696,52 @@ export class SplinesCanvas {
                 ctx.moveTo(cx, cy - s);
                 ctx.lineTo(cx, cy + s);
                 ctx.stroke();
+                return { x: cx, y: cy, ang };
             });
 
-            ctx.strokeStyle = '#facc15';
-            ctx.setLineDash([5 / this.scale, 3 / this.scale]);
+            // Distance line across the 2 balls (W_bi2: furthest outer distance)
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.2 / this.scale;
+            ctx.setLineDash([4 / this.scale, 3 / this.scale]);
             ctx.beginPath();
-            const p1 = { x: r_center * Math.sin(angles[0]), y: r_center * Math.cos(angles[0]) };
-            const p2 = { x: r_center * Math.sin(angles[1]), y: r_center * Math.cos(angles[1]) };
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
+            ctx.moveTo(pts[0].x, pts[0].y);
+            ctx.lineTo(pts[1].x, pts[1].y);
             ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Text note for Wb between the 2 pins
+            const midX = (pts[0].x + pts[1].x) / 2;
+            const midY = (pts[0].y + pts[1].y) / 2;
+            const wbVal = g.W_bi2 || g.W2;
+            ctx.save();
+            ctx.translate(midX, midY + 8 / this.scale);
+            ctx.scale(1, -1);
+            ctx.fillStyle = '#7dd3fc';
+            ctx.font = `bold ${Math.max(9, 11 / this.scale)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`Wb = ${wbVal.toFixed(3)} (k=${k2})`, 0, 0);
+            ctx.restore();
+
+            // Leader for Innermost Ball Circle M2
+            ctx.strokeStyle = '#facc15';
+            ctx.beginPath();
+            const ptInner = { x: 0, y: -(g.M2 / 2) };
+            ctx.moveTo(ptInner.x, ptInner.y);
+            const ptExt = { x: ptInner.x - 25 / this.scale, y: ptInner.y - 15 / this.scale };
+            ctx.lineTo(ptExt.x, ptExt.y);
+            ctx.lineTo(ptExt.x - 30 / this.scale, ptExt.y);
+            ctx.stroke();
+
+            ctx.save();
+            ctx.translate(ptExt.x - 2 / this.scale, ptExt.y - 3 / this.scale);
+            ctx.scale(1, -1);
+            ctx.fillStyle = '#fef08a';
+            ctx.font = `bold ${Math.max(9, 11 / this.scale)}px sans-serif`;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(`M = ${g.M2.toFixed(3)}`, 0, 0);
+            ctx.restore();
         }
 
         ctx.restore();
@@ -691,28 +763,52 @@ export class SplinesCanvas {
 
         ctx.fillStyle = '#f8fafc';
         ctx.font = 'bold 13px "Segoe UI", Tahoma, sans-serif';
-        ctx.fillText(`Mô Phỏng 2D Then Hoa: z = ${g.z0}, m = ${g.m} mm`, 28, 38);
+        const viewTitle = this.viewMode === 'hub' ? 'Lỗ Moay-ơ (Hub)' : (this.viewMode === 'shaft' ? 'Trục Then Hoa (Shaft)' : 'Cặp Ăn Khớp');
+        ctx.fillText(`2D Then Hoa: ${viewTitle} (z=${g.z0}, m=${g.m} mm)`, 28, 38);
 
         ctx.font = '12px "Segoe UI", Tahoma, sans-serif';
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`Đường kính đỉnh Trục da0: `, 28, 58);
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillText(`${g.da0.toFixed(3)} mm`, 185, 58);
+        if (this.viewMode === 'hub') {
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Đường kính đỉnh Lỗ Di: `, 28, 58);
+            ctx.fillStyle = '#fb923c';
+            ctx.fillText(`${g.di2.toFixed(3)} mm`, 195, 58);
 
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`Đường kính đỉnh Lỗ Di: `, 28, 76);
-        ctx.fillStyle = '#fb923c';
-        ctx.fillText(`${g.di2.toFixed(3)} mm`, 185, 76);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Đường kính rãnh Lỗ Dri: `, 28, 76);
+            ctx.fillStyle = '#f43f5e';
+            ctx.fillText(`${g.dri2.toFixed(3)} mm`, 195, 76);
 
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`Kích thước đo bi M0: `, 28, 94);
-        ctx.fillStyle = '#facc15';
-        ctx.fillText(`${g.M0.toFixed(4)} mm`, 185, 94);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Kích thước đo bi trong M: `, 28, 94);
+            ctx.fillStyle = '#facc15';
+            ctx.fillText(`${g.M2.toFixed(4)} mm`, 195, 94);
 
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`Pháp tuyến chung W0: `, 28, 112);
-        ctx.fillStyle = '#4ade80';
-        ctx.fillText(`${g.W0.toFixed(4)} mm (k=${g.k0})`, 185, 112);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Pháp tuyến đo 2 bi Wb: `, 28, 112);
+            ctx.fillStyle = '#38bdf8';
+            const wbVal = g.W_bi2 || g.W2;
+            ctx.fillText(`${wbVal.toFixed(4)} mm (k=${g.k2})`, 195, 112);
+        } else {
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Đường kính đỉnh Trục da0: `, 28, 58);
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillText(`${g.da0.toFixed(3)} mm`, 195, 58);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Đường kính chân Trục df0: `, 28, 76);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`${g.df0.toFixed(3)} mm`, 195, 76);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Kích thước đo bi ngoài M: `, 28, 94);
+            ctx.fillStyle = '#facc15';
+            ctx.fillText(`${g.M0.toFixed(4)} mm`, 195, 94);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Pháp tuyến chung W0: `, 28, 112);
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText(`${g.W0.toFixed(4)} mm (k=${g.k0})`, 195, 112);
+        }
 
         // Controls hint (Bottom Right)
         ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';

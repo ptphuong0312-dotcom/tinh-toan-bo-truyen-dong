@@ -78,6 +78,43 @@ const SplinesCalc = {
     },
 
     /**
+     * Recommended pin/ball diameter dp according to international standards
+     * ISO 4156, ANSI B92.1, DIN 5480
+     */
+    getRecommendedPinDiameter(stdTypeId, m, alfa = 30.0) {
+        let dt0 = 1.75 * m;
+        let dt2 = 1.75 * m;
+
+        // ISO 4156 / ANSI B92.1 / ANSI B92.2M
+        if (stdTypeId >= 1 && stdTypeId <= 13) {
+            if (Math.abs(alfa - 30.0) < 0.1) {
+                const isFillet = (stdTypeId === 3 || stdTypeId === 7 || stdTypeId === 11);
+                dt0 = isFillet ? 1.920 * m : 1.728 * m;
+                dt2 = isFillet ? 1.728 * m : 1.440 * m;
+            } else if (Math.abs(alfa - 37.5) < 0.1) {
+                dt0 = 1.728 * m;
+                dt2 = 1.440 * m;
+            } else if (Math.abs(alfa - 45.0) < 0.1) {
+                dt0 = 1.920 * m;
+                dt2 = 1.440 * m;
+            }
+        } else if (stdTypeId === 14) {
+            // DIN 5480 (DIN 5480-15 standard inspection balls)
+            dt0 = 1.800 * m;
+            dt2 = 1.500 * m;
+        } else if (stdTypeId >= 15 && stdTypeId <= 17) {
+            // CSN 4950
+            dt0 = 1.750 * m;
+            dt2 = 1.500 * m;
+        }
+
+        return {
+            dt0: parseFloat(dt0.toFixed(4)),
+            dt2: parseFloat(dt2.toFixed(4))
+        };
+    },
+
+    /**
      * Look up standard diameters and shift for standard types
      */
     getStandardSplineDefaults(stdTypeId, m, z, units = 1) {
@@ -318,8 +355,9 @@ const SplinesCalc = {
         const W2 = Math.abs(m * (pi * cosAlfa * (-k2 - 0.5) + z2 * cosAlfa * invAlfa) + 2.0 * x2 * m * sinAlfa);
 
         // Pin / ball diameter
-        const dt0 = params.dt0 !== undefined ? parseFloat(params.dt0) : 1.75 * m;
-        const dt2 = params.dt2 !== undefined ? parseFloat(params.dt2) : 1.75 * m;
+        const recPin = this.getRecommendedPinDiameter(stdTypeId, m, alfa);
+        const dt0 = (params.dt0 !== undefined && parseFloat(params.dt0) > 0) ? parseFloat(params.dt0) : recPin.dt0;
+        const dt2 = (params.dt2 !== undefined && parseFloat(params.dt2) > 0) ? parseFloat(params.dt2) : recPin.dt2;
 
         // Measurement over pins M
         // Shaft:
@@ -339,12 +377,17 @@ const SplinesCalc = {
         const alfaM2_deg = this.invol(invAlfaM2);
         const alfaM2_rad = this.degToRad(alfaM2_deg);
         const ds2 = db2 / Math.cos(alfaM2_rad);
+        const absDs2 = Math.abs(ds2);
         let M2 = 0.0;
         if (Math.abs(z2) % 2 === 0) {
             M2 = Math.abs(-ds2 + dt2);
         } else {
             M2 = Math.abs(-ds2 * Math.cos(pi / (2.0 * Math.abs(z2))) + dt2);
         }
+
+        // Hub 2-ball measurement across k teeth: W_bi2 (furthest distance between 2 pins)
+        const Lc2 = absDs2 * Math.sin((pi * k2) / z0);
+        const W_bi2 = Lc2 + dt2;
 
         // Section 5.0 Approximate Module Calculation
         const z_rev_shaft = params.z_rev_shaft !== undefined ? parseInt(params.z_rev_shaft) : 24;
@@ -413,6 +456,12 @@ const SplinesCalc = {
             W2,
             dt0,
             dt2,
+            dt0_rec: recPin.dt0,
+            dt2_rec: recPin.dt2,
+            ds0,
+            ds2: absDs2,
+            Lc2,
+            W_bi2,
             M0,
             M2,
             z_rev_shaft,
@@ -1028,22 +1077,32 @@ class SplinesCanvas {
 
         ctx.save();
 
-        // 1. Inspection Pins / Balls for Shaft (placed in tooth space at angle pi / z)
+        // 1. Inspection Pins / Balls for Shaft
         if (this.viewMode === 'shaft' || this.viewMode === 'assembly') {
             const dt = g.dt0;
             const r_pin = dt / 2;
             const r_center = (g.M0 - dt) / 2.0;
 
-            const angles = [pi / g.z0, pi / g.z0 + pi]; // opposite tooth spaces
-            ctx.fillStyle = 'rgba(250, 204, 21, 0.45)';  // yellow pin
+            // Concentric Circle through the outermost point of the balls (Radius = M0 / 2)
+            ctx.strokeStyle = '#f59e0b'; // Amber Gold
+            ctx.setLineDash([8 / this.scale, 4 / this.scale]);
+            ctx.lineWidth = 1.5 / this.scale;
+            ctx.beginPath();
+            ctx.arc(0, 0, g.M0 / 2, 0, pi * 2);
+            ctx.stroke();
+
+            // Place ball(s) in tooth space (Top space at pi / z0, and opposite space if even z)
+            const angles = (g.z0 % 2 === 0) ? [pi / g.z0, pi / g.z0 + pi] : [pi / g.z0];
+            ctx.fillStyle = 'rgba(250, 204, 21, 0.5)';  // translucent yellow
             ctx.strokeStyle = '#facc15';
             ctx.lineWidth = 1.5 / this.scale;
+            ctx.setLineDash([]);
 
             angles.forEach(ang => {
                 const cx = r_center * Math.sin(ang);
                 const cy = r_center * Math.cos(ang);
                 ctx.beginPath();
-                ctx.arc(cx, cy, r_pin, 0, Math.PI * 2);
+                ctx.arc(cx, cy, r_pin, 0, pi * 2);
                 ctx.fill();
                 ctx.stroke();
 
@@ -1057,33 +1116,59 @@ class SplinesCanvas {
                 ctx.stroke();
             });
 
-            // Dimension line M0
+            // Dimension line & label for Shaft Ball Circle
+            const lblAng = pi / g.z0;
+            const ptOuter = { x: (g.M0 / 2) * Math.sin(lblAng), y: (g.M0 / 2) * Math.cos(lblAng) };
             ctx.strokeStyle = '#facc15';
-            ctx.setLineDash([5 / this.scale, 3 / this.scale]);
+            ctx.lineWidth = 1.2 / this.scale;
             ctx.beginPath();
-            const p1 = { x: r_center * Math.sin(angles[0]), y: r_center * Math.cos(angles[0]) };
-            const p2 = { x: r_center * Math.sin(angles[1]), y: r_center * Math.cos(angles[1]) };
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
+            ctx.moveTo(ptOuter.x, ptOuter.y);
+            const ptExt = { x: ptOuter.x + 18 / this.scale, y: ptOuter.y + 12 / this.scale };
+            ctx.lineTo(ptExt.x, ptExt.y);
+            ctx.lineTo(ptExt.x + 42 / this.scale, ptExt.y);
             ctx.stroke();
+
+            ctx.save();
+            ctx.translate(ptExt.x + 2 / this.scale, ptExt.y + 3 / this.scale);
+            ctx.scale(1, -1);
+            ctx.fillStyle = '#fef08a';
+            ctx.font = `bold ${Math.max(9, 11 / this.scale)}px sans-serif`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(`M = ${g.M0.toFixed(3)}`, 0, 0);
+            ctx.restore();
         }
 
-        // 2. Inspection Pins / Balls for Hub (placed in hub space at angle 0)
+        // 2. Inspection Pins / Balls for Hub
         if (this.viewMode === 'hub') {
             const dt = g.dt2 || g.dt0;
             const r_pin = dt / 2;
-            const r_center = (g.M2 + dt) / 2.0;
+            const r_center = (g.ds2 || Math.abs(g.M2 + dt)) / 2.0;
+            const k2 = g.k2 || 3;
 
-            const angles = [0, pi]; // opposite hub spaces
-            ctx.fillStyle = 'rgba(250, 204, 21, 0.45)';
+            // Concentric Circle through the innermost point of the balls (Radius = M2 / 2)
+            ctx.strokeStyle = '#f59e0b';
+            ctx.setLineDash([8 / this.scale, 4 / this.scale]);
+            ctx.lineWidth = 1.5 / this.scale;
+            ctx.beginPath();
+            ctx.arc(0, 0, g.M2 / 2, 0, pi * 2);
+            ctx.stroke();
+
+            // Two balls placed in hub tooth spaces across k teeth
+            const ang1 = 0;
+            const ang2 = (2 * pi * k2) / g.z0;
+            const angles = [ang1, ang2];
+
+            ctx.fillStyle = 'rgba(250, 204, 21, 0.5)';
             ctx.strokeStyle = '#facc15';
             ctx.lineWidth = 1.5 / this.scale;
+            ctx.setLineDash([]);
 
-            angles.forEach(ang => {
+            const pts = angles.map(ang => {
                 const cx = r_center * Math.sin(ang);
                 const cy = r_center * Math.cos(ang);
                 ctx.beginPath();
-                ctx.arc(cx, cy, r_pin, 0, Math.PI * 2);
+                ctx.arc(cx, cy, r_pin, 0, pi * 2);
                 ctx.fill();
                 ctx.stroke();
 
@@ -1094,16 +1179,52 @@ class SplinesCanvas {
                 ctx.moveTo(cx, cy - s);
                 ctx.lineTo(cx, cy + s);
                 ctx.stroke();
+                return { x: cx, y: cy, ang };
             });
 
-            ctx.strokeStyle = '#facc15';
-            ctx.setLineDash([5 / this.scale, 3 / this.scale]);
+            // Distance line across the 2 balls (W_bi2: furthest outer distance)
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.2 / this.scale;
+            ctx.setLineDash([4 / this.scale, 3 / this.scale]);
             ctx.beginPath();
-            const p1 = { x: r_center * Math.sin(angles[0]), y: r_center * Math.cos(angles[0]) };
-            const p2 = { x: r_center * Math.sin(angles[1]), y: r_center * Math.cos(angles[1]) };
-            ctx.moveTo(p1.x, p1.y);
-            ctx.lineTo(p2.x, p2.y);
+            ctx.moveTo(pts[0].x, pts[0].y);
+            ctx.lineTo(pts[1].x, pts[1].y);
             ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Text note for Wb between the 2 pins
+            const midX = (pts[0].x + pts[1].x) / 2;
+            const midY = (pts[0].y + pts[1].y) / 2;
+            const wbVal = g.W_bi2 || g.W2;
+            ctx.save();
+            ctx.translate(midX, midY + 8 / this.scale);
+            ctx.scale(1, -1);
+            ctx.fillStyle = '#7dd3fc';
+            ctx.font = `bold ${Math.max(9, 11 / this.scale)}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(`Wb = ${wbVal.toFixed(3)} (k=${k2})`, 0, 0);
+            ctx.restore();
+
+            // Leader for Innermost Ball Circle M2
+            ctx.strokeStyle = '#facc15';
+            ctx.beginPath();
+            const ptInner = { x: 0, y: -(g.M2 / 2) };
+            ctx.moveTo(ptInner.x, ptInner.y);
+            const ptExt = { x: ptInner.x - 25 / this.scale, y: ptInner.y - 15 / this.scale };
+            ctx.lineTo(ptExt.x, ptExt.y);
+            ctx.lineTo(ptExt.x - 30 / this.scale, ptExt.y);
+            ctx.stroke();
+
+            ctx.save();
+            ctx.translate(ptExt.x - 2 / this.scale, ptExt.y - 3 / this.scale);
+            ctx.scale(1, -1);
+            ctx.fillStyle = '#fef08a';
+            ctx.font = `bold ${Math.max(9, 11 / this.scale)}px sans-serif`;
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(`M = ${g.M2.toFixed(3)}`, 0, 0);
+            ctx.restore();
         }
 
         ctx.restore();
@@ -1125,28 +1246,52 @@ class SplinesCanvas {
 
         ctx.fillStyle = '#f8fafc';
         ctx.font = 'bold 13px "Segoe UI", Tahoma, sans-serif';
-        ctx.fillText(`Mô Phỏng 2D Then Hoa: z = ${g.z0}, m = ${g.m} mm`, 28, 38);
+        const viewTitle = this.viewMode === 'hub' ? 'Lỗ Moay-ơ (Hub)' : (this.viewMode === 'shaft' ? 'Trục Then Hoa (Shaft)' : 'Cặp Ăn Khớp');
+        ctx.fillText(`2D Then Hoa: ${viewTitle} (z=${g.z0}, m=${g.m} mm)`, 28, 38);
 
         ctx.font = '12px "Segoe UI", Tahoma, sans-serif';
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`Đường kính đỉnh Trục da0: `, 28, 58);
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillText(`${g.da0.toFixed(3)} mm`, 185, 58);
+        if (this.viewMode === 'hub') {
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Đường kính đỉnh Lỗ Di: `, 28, 58);
+            ctx.fillStyle = '#fb923c';
+            ctx.fillText(`${g.di2.toFixed(3)} mm`, 195, 58);
 
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`Đường kính đỉnh Lỗ Di: `, 28, 76);
-        ctx.fillStyle = '#fb923c';
-        ctx.fillText(`${g.di2.toFixed(3)} mm`, 185, 76);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Đường kính rãnh Lỗ Dri: `, 28, 76);
+            ctx.fillStyle = '#f43f5e';
+            ctx.fillText(`${g.dri2.toFixed(3)} mm`, 195, 76);
 
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`Kích thước đo bi M0: `, 28, 94);
-        ctx.fillStyle = '#facc15';
-        ctx.fillText(`${g.M0.toFixed(4)} mm`, 185, 94);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Kích thước đo bi trong M: `, 28, 94);
+            ctx.fillStyle = '#facc15';
+            ctx.fillText(`${g.M2.toFixed(4)} mm`, 195, 94);
 
-        ctx.fillStyle = '#94a3b8';
-        ctx.fillText(`Pháp tuyến chung W0: `, 28, 112);
-        ctx.fillStyle = '#4ade80';
-        ctx.fillText(`${g.W0.toFixed(4)} mm (k=${g.k0})`, 185, 112);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Pháp tuyến đo 2 bi Wb: `, 28, 112);
+            ctx.fillStyle = '#38bdf8';
+            const wbVal = g.W_bi2 || g.W2;
+            ctx.fillText(`${wbVal.toFixed(4)} mm (k=${g.k2})`, 195, 112);
+        } else {
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Đường kính đỉnh Trục da0: `, 28, 58);
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillText(`${g.da0.toFixed(3)} mm`, 195, 58);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Đường kính chân Trục df0: `, 28, 76);
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`${g.df0.toFixed(3)} mm`, 195, 76);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Kích thước đo bi ngoài M: `, 28, 94);
+            ctx.fillStyle = '#facc15';
+            ctx.fillText(`${g.M0.toFixed(4)} mm`, 195, 94);
+
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText(`Pháp tuyến chung W0: `, 28, 112);
+            ctx.fillStyle = '#4ade80';
+            ctx.fillText(`${g.W0.toFixed(4)} mm (k=${g.k0})`, 195, 112);
+        }
 
         // Controls hint (Bottom Right)
         ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
@@ -1572,9 +1717,25 @@ class SplinesUI {
     }
 
     bindEvents() {
+        // Track manual edits for pin diameter
+        this.elDt0?.addEventListener('input', () => {
+            this.elDt0.dataset.userEdited = 'true';
+        });
+        this.elDt2?.addEventListener('input', () => {
+            this.elDt2.dataset.userEdited = 'true';
+        });
+
+        // Clear manual edit flags when standard type or module changes so pin is recalculated
+        const resetPinFlag = () => {
+            delete this.elDt0?.dataset.userEdited;
+            delete this.elDt2?.dataset.userEdited;
+        };
+        this.elStdType?.addEventListener('change', resetPinFlag);
+        this.elAlfa?.addEventListener('change', resetPinFlag);
+
         // Inputs that trigger recalculation
         const triggerInputs = [
-            this.elUnits, this.elStdType, this.elModule, this.elDP, this.elZ, this.elAlfa,
+            this.elUnits, this.elStdType, this.elZ, this.elAlfa,
             this.elX0, this.elX2, this.elAutoFill,
             this.elDa0, this.elDf0, this.elDi2, this.elDri2,
             this.elDt0, this.elDt2,
@@ -1589,11 +1750,49 @@ class SplinesUI {
             }
         });
 
+        // Two-way synchronization: Module (Metric) <-> Diametral Pitch (ANSI Inch)
+        if (this.elModule) {
+            const onModuleChange = () => {
+                const mVal = parseFloat(this.elModule.value);
+                if (!isNaN(mVal) && mVal > 0) {
+                    if (this.elDP) this.elDP.value = (25.4 / mVal).toFixed(4);
+                    if (this.elModuleSelect) {
+                        const opt = Array.from(this.elModuleSelect.options).find(o => Math.abs(parseFloat(o.value) - mVal) < 1e-3);
+                        if (opt) this.elModuleSelect.value = opt.value;
+                    }
+                    resetPinFlag();
+                }
+                this.recalculate();
+            };
+            this.elModule.addEventListener('input', onModuleChange);
+            this.elModule.addEventListener('change', onModuleChange);
+        }
+
+        if (this.elDP) {
+            const onDPChange = () => {
+                const dpVal = parseFloat(this.elDP.value);
+                if (!isNaN(dpVal) && dpVal > 0) {
+                    if (this.elModule) this.elModule.value = (25.4 / dpVal).toFixed(4);
+                    if (this.elDPSelect) {
+                        const opt = Array.from(this.elDPSelect.options).find(o => Math.abs(parseFloat(o.value) - dpVal) < 1e-3);
+                        if (opt) this.elDPSelect.value = opt.value;
+                    }
+                    resetPinFlag();
+                }
+                this.recalculate();
+            };
+            this.elDP.addEventListener('input', onDPChange);
+            this.elDP.addEventListener('change', onDPChange);
+        }
+
         // Module dropdown synchronizer
         if (this.elModuleSelect) {
             this.elModuleSelect.addEventListener('change', () => {
                 if (this.elModule) {
                     this.elModule.value = this.elModuleSelect.value;
+                    const mVal = parseFloat(this.elModuleSelect.value);
+                    if (this.elDP) this.elDP.value = (25.4 / mVal).toFixed(4);
+                    resetPinFlag();
                     this.recalculate();
                 }
             });
@@ -1604,9 +1803,11 @@ class SplinesUI {
             this.elDPSelect.addEventListener('change', () => {
                 if (this.elDP) {
                     this.elDP.value = this.elDPSelect.value;
+                    const dpVal = parseFloat(this.elDP.value);
                     if (this.elModule) {
-                        this.elModule.value = (25.4 / parseFloat(this.elDP.value)).toFixed(4);
+                        this.elModule.value = (25.4 / dpVal).toFixed(4);
                     }
+                    resetPinFlag();
                     this.recalculate();
                 }
             });
@@ -1770,8 +1971,8 @@ class SplinesUI {
         const di2 = parseFloat(this.elDi2?.value || 191.1454);
         const dri2 = parseFloat(this.elDri2?.value || 215.0);
 
-        const dt0 = this.elDt0 && this.elDt0.value ? parseFloat(this.elDt0.value) : 1.75 * m;
-        const dt2 = this.elDt2 && this.elDt2.value ? parseFloat(this.elDt2.value) : 1.75 * m;
+        const dt0 = (this.elDt0 && this.elDt0.dataset.userEdited && this.elDt0.value) ? parseFloat(this.elDt0.value) : 0;
+        const dt2 = (this.elDt2 && this.elDt2.dataset.userEdited && this.elDt2.value) ? parseFloat(this.elDt2.value) : 0;
 
         const z_rev_shaft = parseInt(this.elZRevShaft?.value || 24);
         const da_rev_shaft = parseFloat(this.elDaRevShaft?.value || 20.0);
@@ -1814,13 +2015,15 @@ class SplinesUI {
             if (this.elDf0) this.elDf0.value = geom.df0.toFixed(4);
             if (this.elDi2) this.elDi2.value = geom.di2.toFixed(4);
             if (this.elDri2) this.elDri2.value = geom.dri2.toFixed(4);
-            if (this.elDt0 && !this.elDt0.dataset.userEdited) this.elDt0.value = geom.dt0.toFixed(4);
-            if (this.elDt2 && !this.elDt2.dataset.userEdited) this.elDt2.value = geom.dt2.toFixed(4);
             if (stdType === 14) {
                 if (this.elX0) this.elX0.value = geom.x0.toFixed(4);
                 if (this.elX2) this.elX2.value = geom.x2.toFixed(4);
             }
         }
+
+        // Always update recommended ball/pin diameter if not manually edited by user
+        if (this.elDt0 && !this.elDt0.dataset.userEdited) this.elDt0.value = geom.dt0.toFixed(4);
+        if (this.elDt2 && !this.elDt2.dataset.userEdited) this.elDt2.value = geom.dt2.toFixed(4);
 
         // Update DOM outputs
         this.updateDOMOutputs(geom);
@@ -1837,7 +2040,9 @@ class SplinesUI {
         this.setTxt('ribbonW0', `${g.W0.toFixed(4)} mm`);
         this.setTxt('ribbonM0', `${g.M0.toFixed(4)} mm`);
 
-        // Section 1.0 Pitch & Base Diameters
+        // Section 1.0 Module & Pitch Diameters
+        this.setTxt('outModuleHub', g.m.toFixed(3));
+        this.setTxt('outDPHub', g.DP.toFixed(3));
         this.setTxt('outD0', g.d0.toFixed(4));
         this.setTxt('outDb0', g.db0.toFixed(4));
         this.setTxt('outD2', g.d2.toFixed(4));
@@ -1888,7 +2093,7 @@ class SplinesUI {
         this.setTxt('outK0', g.k0);
         this.setTxt('outK2', g.k2);
         this.setTxt('outW0', g.W0.toFixed(4));
-        this.setTxt('outW2', g.W2.toFixed(4));
+        this.setTxt('outW2', (g.W_bi2 || g.W2).toFixed(4)); // 2-ball measurement across k teeth for hub
         this.setTxt('outM0', g.M0.toFixed(4));
         this.setTxt('outM2', g.M2.toFixed(4));
 

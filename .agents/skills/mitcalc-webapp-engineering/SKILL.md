@@ -2466,3 +2466,24 @@ ho_{f0}$.
 
 
 
+
+---
+
+### Quy Tắc 108: Quy Chuẩn Kiểm Tra Đo Bi, Đo Pháp Tuyến & Quy Định Chiều Cao Răng Then Hoa Thân Khai (Involute Splines Inspection & Stub Teeth Protocol - ISO 4156 / DIN 5480 / ANSI B92.1)
+**Ngày áp dụng**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Quy định chiều cao răng Stub Teeth Protocol ($h_a / h_f$)**:
+   - Bản chất: Răng thấp $h_w \approx 0.8 \div 1.0m$ (bằng ~45% chiều cao bánh răng trụ) giúp tối ưu diện tích chống cắt xoắn và loại trừ nguy cơ gãy chân răng do uốn.
+   - ANSI B92.1: Phân số hai pitch $P / P_{stub}$ ($P_{stub} = 2P$). Chiều cao đỉnh $h_a = 0.5/P = 0.50m$; Flat root $h_f = 0.675m$; Fillet root $h_f = 0.900m$.
+   - ISO 4156 / ANSI B92.2M: Góc $30^\circ$ Flat root $h_a = 0.50m, h_f = 0.75m$; Fillet root $h_a = 0.50m, h_f = 0.90m$; Góc $37.5^\circ$ $h_a = 0.45m, h_f = 0.70m$; Góc $45^\circ$ $h_a = 0.40m, h_f = 0.60m$.
+   - DIN 5480: Chuẩn theo phôi tròn $d_B$: $d_{a0} = d_B - 0.2m$ ($h_{a0} \approx 0.45m$), $d_{f0} = d_B - 2.2m$ ($h_{f0} \approx 0.65m$), $d_{i2} = d_B - 2.0m$, $d_{ri2} = d_B$.
+2. **Đồng bộ hai chiều Mô-đun (1.4) và Diametral Pitch (1.5)**:
+   - Thay đổi $m$ tự động tính $P = 25.4/m$; thay đổi $P$ tự động tính $m = 25.4/P$. Cập nhật tức thì `outModuleHub` và `outDPHub`.
+3. **Đường kính con lăn / bi đo $d_p$ chuẩn hóa theo tiêu chuẩn**:
+   - Tự động tính toán lại $d_p$ khi thay đổi $m$ hoặc tiêu chuẩn bằng hàm `getRecommendedPinDiameter`:
+     * Trục: ISO 4156 $30^\circ$ Flat root $1.728m$, Fillet root $1.920m$; DIN 5480 $1.800m$.
+     * Lỗ: ISO 4156 $30^\circ$ Flat root $1.440m$, Fillet root $1.728m$; DIN 5480 $1.500m$.
+4. **Quy cách đo kiểm tra Mục 4.0 & Trực quan hóa Canvas 2D**:
+   - Mục 4.2 đổi thành: **"Pháp tuyến chung / Pháp tuyến đo bi" ($W / W_b$)**: Trục đo panme đĩa qua $k$ răng ($W_0$); Lỗ đo khoảng cách ngoài cùng qua 2 viên bi đặt cách nhau $k$ răng: $W_{bi2} = |d_{s2}| \cdot \sin(\pi k / z) + d_{t2}$.
+   - Mục 4.4 đổi thành: **"Kích thước đo bi / con lăn" ($M$)**: Trục đo vòng tròn đồng tâm ngoài cùng $M_0 = d_{s0} + d_{t0}$; Lỗ đo vòng tròn đồng tâm trong cùng $M_2 = |d_{s2}| - d_{t2}$.
+   - Canvas 2D: Vẽ đường tròn đồng tâm nét đứt vàng hổ phách (`#f59e0b`) đi qua điểm xa nhất của viên bi trục ($R = M_0 / 2$) và điểm trong nhất của viên bi lỗ ($r = M_2 / 2$). Vẽ đoạn đo khoảng cách 2 bi $W_b$ giữa 2 viên bi đặt cách nhau $k$ răng. Scale đảo trục Y cho text bằng `ctx.scale(1, -1)` đảm bảo chữ luôn xuôi chiều.

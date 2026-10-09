@@ -4126,3 +4126,41 @@ ho_{f0}$.
 - Màn hình khởi động tập trung 100% vào hệ thống ISO 286 và Biểu đồ Canvas miền dung sai trực quan; người dùng có thể nhấp chuột vào header để mở ANSI B4.1 bất kỳ lúc nào.
 
 
+
+---
+
+## GIAI ĐOẠN 13: CHUẨN HÓA QUY TRÌNH KIỂM TRA ĐO BI, ĐO PHÁP TUYẾN & QUY ĐỊNH CHIỀU CAO RĂNG THEN HOA THÂN KHAI (INVOLUTE SPLINES)
+**Ngày hoàn thành**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+**Mục tiêu**: Hoàn thiện toàn diện giải thuật hình học, kích thước đo kiểm tra (Over/Between Pins) và cẩm nang kỹ thuật cho module Then Hoa Thân Khai (`modules/involute-splines`).
+
+### 1. Giải Thích Quy Định Chiều Cao Răng Stub Teeth Protocol (ha / hf) Trong 17 Tiêu Chuẩn
+- Bổ sung Card chuyên đề độc lập trong Master Block 4 (`#secInvoluteGuide`): **📏 Quy Định Chiều Cao Đỉnh Răng (ha), Chân Răng (hf) & Chiều Cao Toàn Bộ (Stub Teeth Protocol)**.
+- Phân tích bản chất: Khác với bánh răng truyền động liên hợp ($h = 2.25m, h_a = 1.0m, h_f = 1.25m$), then hoa là dạng **răng thấp (Stub teeth)** ($h_w \approx 0.8 \div 1.0m$) để tối đa hóa diện tích chống cắt, giảm tay đòn uốn gãy và tăng độ cứng vững trục.
+- Chi tiết từng hệ tiêu chuẩn:
+  * **ANSI B92.1 (Hệ Inch)**: Dùng phân số hai pitch $P / P_{stub}$ với $P_{stub} = 2P$. Chiều cao đỉnh $h_a = 0.5/P = 0.50m$; Chân Flat root $h_f = 0.675m$ ($c = 0.175m$); Chân Fillet root $h_f = 0.900m$ ($c = 0.400m$).
+  * **ISO 4156 & ANSI B92.2M (Hệ Mét)**: Góc $30^\circ$ Flat root $h_a = 0.50m, h_f = 0.75m$; Fillet root $h_a = 0.50m, h_f = 0.90m$; Góc $37.5^\circ$ $h_a = 0.45m, h_f = 0.70m$; Góc $45^\circ$ $h_a = 0.40m, h_f = 0.60m$.
+  * **DIN 5480 (Chuẩn Đức)**: Chuẩn theo phôi tròn $d_B$: $d_{a0} = d_B - 0.2m$ ($h_{a0} \approx 0.45m$), $d_{f0} = d_B - 2.2m$ ($h_{f0} \approx 0.65m$), lỗ moay-ơ $d_{i2} = d_B - 2.0m$, đáy rãnh $d_{ri2} = d_B$. Tổng chiều cao ăn khớp $h = 1.0 \div 1.1m$.
+- Mở rộng thêm cột **Chiếu Cao $h_a / h_f$** vào Bảng tra cứu 17 tiêu chuẩn Mục 1.2 (Mã A đến Q).
+
+### 2. Đồng Bộ Hai Chiều Mô-Đun (1.4) và Diametral Pitch (1.5)
+- Đồng bộ tức thì: Khi người dùng gõ Mô-đun $m$ tại Mục 1.4 $\rightarrow$ tự động tính $P = 25.4 / m$ tại Mục 1.5 và ngược lại.
+- Cập nhật đúng giá trị của `outModuleHub` và `outDPHub` trong `updateDOMOutputs` (khắc phục hoàn toàn lỗi hiển thị tĩnh $10.000$ và $2.540$).
+
+### 3. Tự Động Tính Đường Kính Bi Khuyến Nghị Theo Tiêu Chuẩn & Kiểm Tra Xưởng
+- Xây dựng hàm `getRecommendedPinDiameter(stdTypeId, m, alfa)` trong `splines-calc.js`:
+  * Trục: ISO 4156 $30^\circ$ Flat root $d_{p0} = 1.728m$, Fillet root $1.920m$; DIN 5480 $d_{p0} = 1.800m$.
+  * Lỗ: ISO 4156 $30^\circ$ Flat root $d_{p2} = 1.440m$, Fillet root $1.728m$; DIN 5480 $d_{p2} = 1.500m$.
+- Khi thay đổi $m$ hoặc tiêu chuẩn, hệ thống tự động cập nhật lại đường kính bi vào `dt0Input` và `dt2Input` (khắc phục hoàn toàn lỗi giữ nguyên $17.5000$ khi đổi $m$).
+
+### 4. Quy Chuẩn Kiểm Tra Đo Bi M & Đo Pháp Tuyến W/Wb
+- **Mục 4.2**: Đổi tên thành **'Pháp tuyến chung / Pháp tuyến đo bi' ($W / W_b$)**:
+  * Trục (Shaft): Chiều dài pháp tuyến chung $W_0$ kẹp panme qua $k_0$ răng.
+  * Lỗ (Hub): Kích thước đo qua 2 viên bi đặt cách nhau $k_2$ răng: $W_{bi2} = |d_{s2}| \cdot \sin\left(\frac{\pi k_2}{z}\right) + d_{t2}$.
+- **Mục 4.4**: Đổi tên thành **'Kích thước đo bi / con lăn' ($M$)**:
+  * Trục: Đường kính vòng tròn đồng tâm đi qua điểm xa nhất (ngoài nhất) của viên bi ($M_0 = d_{s0} + d_{t0}$).
+  * Lỗ: Đường kính vòng tròn đồng tâm đi qua điểm nhỏ nhất (trong nhất) của viên bi ($M_2 = |d_{s2}| - d_{t2}$).
+- **Trực quan hóa Canvas 2D**:
+  * Trục: Vẽ 1 viên bi áp rãnh, vẽ **đường tròn đồng tâm nét đứt vàng hổ phách (`#f59e0b`)** đi qua điểm xa nhất của viên bi ($R = M_0 / 2$), nhãn kích thước $M$.
+  * Lỗ: Vẽ 2 viên bi đặt cách nhau $k_2$ răng, vẽ đoạn đo khoảng cách ngoài cùng $W_b$, và vẽ **đường tròn đồng tâm nét đứt vàng đi qua điểm trong nhất của viên bi** ($r = M_2 / 2$).
+  * Đảo trục scale Y cho text bằng `ctx.scale(1, -1)` triệt tiêu hoàn toàn hiện tượng chữ bị lộn ngược trên Canvas.

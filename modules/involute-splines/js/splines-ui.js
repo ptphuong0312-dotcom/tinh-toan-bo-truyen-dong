@@ -131,9 +131,25 @@ export class SplinesUI {
     }
 
     bindEvents() {
+        // Track manual edits for pin diameter
+        this.elDt0?.addEventListener('input', () => {
+            this.elDt0.dataset.userEdited = 'true';
+        });
+        this.elDt2?.addEventListener('input', () => {
+            this.elDt2.dataset.userEdited = 'true';
+        });
+
+        // Clear manual edit flags when standard type or module changes so pin is recalculated
+        const resetPinFlag = () => {
+            delete this.elDt0?.dataset.userEdited;
+            delete this.elDt2?.dataset.userEdited;
+        };
+        this.elStdType?.addEventListener('change', resetPinFlag);
+        this.elAlfa?.addEventListener('change', resetPinFlag);
+
         // Inputs that trigger recalculation
         const triggerInputs = [
-            this.elUnits, this.elStdType, this.elModule, this.elDP, this.elZ, this.elAlfa,
+            this.elUnits, this.elStdType, this.elZ, this.elAlfa,
             this.elX0, this.elX2, this.elAutoFill,
             this.elDa0, this.elDf0, this.elDi2, this.elDri2,
             this.elDt0, this.elDt2,
@@ -148,11 +164,49 @@ export class SplinesUI {
             }
         });
 
+        // Two-way synchronization: Module (Metric) <-> Diametral Pitch (ANSI Inch)
+        if (this.elModule) {
+            const onModuleChange = () => {
+                const mVal = parseFloat(this.elModule.value);
+                if (!isNaN(mVal) && mVal > 0) {
+                    if (this.elDP) this.elDP.value = (25.4 / mVal).toFixed(4);
+                    if (this.elModuleSelect) {
+                        const opt = Array.from(this.elModuleSelect.options).find(o => Math.abs(parseFloat(o.value) - mVal) < 1e-3);
+                        if (opt) this.elModuleSelect.value = opt.value;
+                    }
+                    resetPinFlag();
+                }
+                this.recalculate();
+            };
+            this.elModule.addEventListener('input', onModuleChange);
+            this.elModule.addEventListener('change', onModuleChange);
+        }
+
+        if (this.elDP) {
+            const onDPChange = () => {
+                const dpVal = parseFloat(this.elDP.value);
+                if (!isNaN(dpVal) && dpVal > 0) {
+                    if (this.elModule) this.elModule.value = (25.4 / dpVal).toFixed(4);
+                    if (this.elDPSelect) {
+                        const opt = Array.from(this.elDPSelect.options).find(o => Math.abs(parseFloat(o.value) - dpVal) < 1e-3);
+                        if (opt) this.elDPSelect.value = opt.value;
+                    }
+                    resetPinFlag();
+                }
+                this.recalculate();
+            };
+            this.elDP.addEventListener('input', onDPChange);
+            this.elDP.addEventListener('change', onDPChange);
+        }
+
         // Module dropdown synchronizer
         if (this.elModuleSelect) {
             this.elModuleSelect.addEventListener('change', () => {
                 if (this.elModule) {
                     this.elModule.value = this.elModuleSelect.value;
+                    const mVal = parseFloat(this.elModuleSelect.value);
+                    if (this.elDP) this.elDP.value = (25.4 / mVal).toFixed(4);
+                    resetPinFlag();
                     this.recalculate();
                 }
             });
@@ -163,9 +217,11 @@ export class SplinesUI {
             this.elDPSelect.addEventListener('change', () => {
                 if (this.elDP) {
                     this.elDP.value = this.elDPSelect.value;
+                    const dpVal = parseFloat(this.elDP.value);
                     if (this.elModule) {
-                        this.elModule.value = (25.4 / parseFloat(this.elDP.value)).toFixed(4);
+                        this.elModule.value = (25.4 / dpVal).toFixed(4);
                     }
+                    resetPinFlag();
                     this.recalculate();
                 }
             });
@@ -329,8 +385,8 @@ export class SplinesUI {
         const di2 = parseFloat(this.elDi2?.value || 191.1454);
         const dri2 = parseFloat(this.elDri2?.value || 215.0);
 
-        const dt0 = this.elDt0 && this.elDt0.value ? parseFloat(this.elDt0.value) : 1.75 * m;
-        const dt2 = this.elDt2 && this.elDt2.value ? parseFloat(this.elDt2.value) : 1.75 * m;
+        const dt0 = (this.elDt0 && this.elDt0.dataset.userEdited && this.elDt0.value) ? parseFloat(this.elDt0.value) : 0;
+        const dt2 = (this.elDt2 && this.elDt2.dataset.userEdited && this.elDt2.value) ? parseFloat(this.elDt2.value) : 0;
 
         const z_rev_shaft = parseInt(this.elZRevShaft?.value || 24);
         const da_rev_shaft = parseFloat(this.elDaRevShaft?.value || 20.0);
@@ -373,13 +429,15 @@ export class SplinesUI {
             if (this.elDf0) this.elDf0.value = geom.df0.toFixed(4);
             if (this.elDi2) this.elDi2.value = geom.di2.toFixed(4);
             if (this.elDri2) this.elDri2.value = geom.dri2.toFixed(4);
-            if (this.elDt0 && !this.elDt0.dataset.userEdited) this.elDt0.value = geom.dt0.toFixed(4);
-            if (this.elDt2 && !this.elDt2.dataset.userEdited) this.elDt2.value = geom.dt2.toFixed(4);
             if (stdType === 14) {
                 if (this.elX0) this.elX0.value = geom.x0.toFixed(4);
                 if (this.elX2) this.elX2.value = geom.x2.toFixed(4);
             }
         }
+
+        // Always update recommended ball/pin diameter if not manually edited by user
+        if (this.elDt0 && !this.elDt0.dataset.userEdited) this.elDt0.value = geom.dt0.toFixed(4);
+        if (this.elDt2 && !this.elDt2.dataset.userEdited) this.elDt2.value = geom.dt2.toFixed(4);
 
         // Update DOM outputs
         this.updateDOMOutputs(geom);
@@ -396,7 +454,9 @@ export class SplinesUI {
         this.setTxt('ribbonW0', `${g.W0.toFixed(4)} mm`);
         this.setTxt('ribbonM0', `${g.M0.toFixed(4)} mm`);
 
-        // Section 1.0 Pitch & Base Diameters
+        // Section 1.0 Module & Pitch Diameters
+        this.setTxt('outModuleHub', g.m.toFixed(3));
+        this.setTxt('outDPHub', g.DP.toFixed(3));
         this.setTxt('outD0', g.d0.toFixed(4));
         this.setTxt('outDb0', g.db0.toFixed(4));
         this.setTxt('outD2', g.d2.toFixed(4));
@@ -447,7 +507,7 @@ export class SplinesUI {
         this.setTxt('outK0', g.k0);
         this.setTxt('outK2', g.k2);
         this.setTxt('outW0', g.W0.toFixed(4));
-        this.setTxt('outW2', g.W2.toFixed(4));
+        this.setTxt('outW2', (g.W_bi2 || g.W2).toFixed(4)); // 2-ball measurement across k teeth for hub
         this.setTxt('outM0', g.M0.toFixed(4));
         this.setTxt('outM2', g.M2.toFixed(4));
 
