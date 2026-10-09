@@ -160,7 +160,7 @@ const SplinesCalc = {
             let dB = match ? match.d_ref : (z * m + 2.0 * m); // fallback if not in table
             xm = (dB - D - 1.1 * m) / 2.0;
             x0 = xm / m;
-            x2 = 0.0;
+            x2 = -x0;
             da0 = dB - 0.2 * m;
             df0 = dB - 2.2 * m;
             di2 = dB - 2.0 * m;
@@ -282,10 +282,8 @@ const SplinesCalc = {
             df0 = defs.df0;
             di2 = defs.di2;
             dri2 = defs.dri2;
-            if (stdTypeId === 14) {
-                x0 = defs.x0;
-                x2 = defs.x2;
-            }
+            x0 = defs.x0;
+            x2 = defs.x2;
         }
 
         const pi = this.PI;
@@ -715,14 +713,8 @@ class SplinesCanvas {
             pts.push({ r, theta: -phi });
         }
 
-        // 3. Tip crest arc: from -phi_tip to +phi_tip at r_tip
-        let alfa_tip = Math.acos(r_base / r_tip);
-        const inv_tip = Math.tan(alfa_tip) - alfa_tip;
-        const phi_tip = psi + invAlfa - inv_tip;
-
-        pts.push({ r: r_tip, theta: -phi_tip });
+        // 3. Tip crest center at r_tip
         pts.push({ r: r_tip, theta: 0.0 });
-        pts.push({ r: r_tip, theta: phi_tip });
 
         // 4. Right flank downwards: from r_tip down to r_start
         for (let i = numFlankPts; i >= 0; i--) {
@@ -793,14 +785,16 @@ class SplinesCanvas {
             pts.push({ r, theta: -phi });
         }
 
-        // 3. Groove bottom arc (at outer radius r_root): from -phi_root to +phi_root
-        let alfa_root = Math.acos(r_base / r_root);
+        // 3. Groove bottom arc (at outer radius r_root): smoothly across theta = 0
+        let alfa_root = 0;
+        if (r_root > r_base) alfa_root = Math.acos(r_base / r_root);
         const inv_root = Math.tan(alfa_root) - alfa_root;
         const phi_root = psi_space + invAlfa - inv_root;
+        pts.push({ r: r_root, theta: 0.0 });
         pts.push({ r: r_root, theta: phi_root });
 
         // 4. Right flank of groove inwards: from r_root down to r_start
-        for (let i = numFlankPts; i >= 0; i--) {
+        for (let i = numFlankPts - 1; i >= 0; i--) {
             const frac = i / numFlankPts;
             const r = r_start + (r_end - r_start) * frac;
             let alfa_r = 0;
@@ -2181,10 +2175,16 @@ class SplinesUI {
         }
         if (this.elX0) {
             this.elX0.addEventListener('input', () => {
+                if (this.elAutoFill) this.elAutoFill.checked = false;
                 if (this.elSyncX0X2 && this.elSyncX0X2.checked && this.elX2) {
                     const val0 = parseFloat(this.elX0.value || 0.0);
                     this.elX2.value = (-val0).toFixed(4);
                 }
+            });
+        }
+        if (this.elX2) {
+            this.elX2.addEventListener('input', () => {
+                if (this.elAutoFill) this.elAutoFill.checked = false;
             });
         }
 
@@ -2519,7 +2519,14 @@ class SplinesUI {
         this.currentGeom = geom;
 
         // If AutoFill is on or custom tooth profile is defined, update diameter fields
-        if (autoFill || !profile_standard) {
+        if (autoFill) {
+            if (this.elX0) this.elX0.value = geom.x0.toFixed(4);
+            if (this.elX2) this.elX2.value = geom.x2.toFixed(4);
+            if (this.elDa0) this.elDa0.value = geom.da0.toFixed(4);
+            if (this.elDf0) this.elDf0.value = geom.df0.toFixed(4);
+            if (this.elDi2) this.elDi2.value = geom.di2.toFixed(4);
+            if (this.elDri2) this.elDri2.value = geom.dri2.toFixed(4);
+        } else if (!profile_standard) {
             if (this.elDa0) this.elDa0.value = geom.da0.toFixed(4);
             if (this.elDf0) this.elDf0.value = geom.df0.toFixed(4);
             if (this.elDi2) this.elDi2.value = geom.di2.toFixed(4);

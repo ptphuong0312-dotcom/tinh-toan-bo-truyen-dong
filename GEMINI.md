@@ -2738,3 +2738,25 @@ ho_{f0} / \cos\gamma$.
      * Bi đo được vẽ bằng thực thể `CIRCLE` trên layer `MEASUREMENT_PIN` (màu vàng).
      * Kích thước đo qua bi $M$: Đường tròn nét đứt đồng tâm `CIRCLE` (`INSPECTION_DASH`) kèm đường dóng leader dẫn ra khoảng trống bên ngoài phôi ghi text $M$ và ghi chú $W_b/W_0$.
      * Tuyệt đối không vẽ đường nối xuyên tâm cắt ngang qua thân răng. Layer kích thước `INSPECTION_DIM` chuyển sang màu Xanh Lá (Color 3) để tách biệt hoàn toàn với màu Đỏ (Color 1) của Moay-ơ.
+
+---
+
+### Quy Tắc 113: Quy Chuẩn Hệ Số Dịch Chỉnh Liên Hợp Then Hoa Thân Khai ($x_2 = -x_0$) & Triệt Tiêu 100% Va Chạm Ăn Khớp (Zero-Collision Conjugate Meshing Protocol)
+**Ngày áp dụng**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Bản chất hình học liên hợp giữa Trục và Lỗ Then Hoa Thân Khai (Conjugate Internal Meshing)**:
+   - Trong tiêu chuẩn DIN 5480, ISO 4156 và MITCalc 1.74 (`SplinesI_01.xlsb`):
+     * Chiều dày răng trục trên vòng chia: $s_0 = \frac{\pi m}{2} + 2 x_0 m \tan\alpha$.
+     * Chiều rộng rãnh moay-ơ trên vòng chia: $e_2 = \pi m - s_2 = \frac{\pi m}{2} - 2 x_2 m \tan\alpha$.
+     * Để cặp then hoa ăn khớp liên hợp hoàn hảo, khe hở cạnh răng $\text{backlash} = \frac{e_2 - s_0}{2} \cos\alpha = 0$, bắt buộc:
+       $$e_2 = s_0 \iff \frac{\pi m}{2} - 2 x_2 m \tan\alpha = \frac{\pi m}{2} + 2 x_0 m \tan\alpha \iff x_2 = -x_0$$
+   - Khi $x_0 > 0$ (ví dụ DIN 5480 $z=20, m=10 \implies x_0 = +0.4500$), răng trục dày phình ra $s_0 = 20.9041\text{ mm}$. Để chứa vừa răng trục, rãnh của lỗ moay-ơ cũng phải mở rộng thành $e_2 = 20.9041\text{ mm}$, tương ứng $x_2 = -0.4500$.
+   - Tuyệt đối không để $x_2 = 0$ hoặc $x_2 = +x_0$ khi $x_0 \ne 0$ vì sẽ làm rãnh lỗ bị hẹp ($15.708\text{ mm}$ hoặc $10.512\text{ mm}$), gây khe hở âm và khiến trục cắn đâm xuyên vào thân răng moay-ơ.
+2. **Đồng bộ hóa 1-to-1 với cơ chế của MITCalc 1.74**:
+   - Trong `SplinesI_01.xlsb`, ô truyền liên hợp `$Z$116` (`_x2Prop`) luôn mang công thức `=-_x0_Input`.
+   - Khi AutoFill hoạt động: Cả hai ô $x_0$ và $x_2$ phải được cập nhật thời gian thực lên giao diện người dùng (ví dụ: $x_0 = 0.4500, x_2 = -0.4500$).
+   - Checkbox "Liên hợp ($x_2 = -x_0$)" mặc định được tích và khóa ô $x_2$ để tự động đồng bộ theo $x_0$. Khi người dùng bỏ tích, ô $x_2$ mở khóa cho phép nhập tùy chỉnh tự do.
+   - Khi người dùng chủ động chỉnh sửa tay ô $x_0$ hoặc $x_2$, hệ thống tự động tắt AutoFill để bảo toàn giá trị nhập liệu thủ công của người dùng.
+3. **Mô phỏng Canvas 2D & CAD DXF ăn khớp hoàn hảo**:
+   - Cung đáy rãnh của lỗ moay-ơ bổ sung điểm đối xứng $\theta = 0.0$ tại bán kính $r_{root}$ để đảm bảo độ trơn nhẵn $C^1$.
+   - Hai sườn thân khai tiếp xúc chuẩn xác, viên bi đo $M$ đặt êm ái trên sườn thân khai, các khe hở hướng tâm đỉnh - đáy $c_0, c_2$ dương và an toàn.

@@ -2594,3 +2594,22 @@ ho_{f0}$.
      * Bi đo được vẽ bằng thực thể `CIRCLE` trên layer `MEASUREMENT_PIN` (màu vàng).
      * Kích thước đo qua bi $M$: Đường tròn nét đứt đồng tâm `CIRCLE` (`INSPECTION_DASH`) kèm đường dóng leader dẫn ra khoảng trống bên ngoài phôi ghi text $M$ và ghi chú $W_b/W_0$.
      * Tuyệt đối không vẽ đường nối xuyên tâm cắt ngang qua thân răng. Layer kích thước `INSPECTION_DIM` chuyển sang màu Xanh Lá (Color 3) để tách biệt hoàn toàn với màu Đỏ (Color 1) của Moay-ơ.
+
+
+---
+
+### Runbook 18: Khắc Phục Lỗi Va Chạm Ăn Khớp Trục & Lỗ Then Hoa Thân Khai (DIN 5480 / ISO 4156)
+**Mục tiêu**: Đảm bảo cặp ăn khớp then hoa thân khai luôn tiếp xúc liên hợp chuẩn xác, không va chạm sườn răng, không khe hở âm.
+
+1. **Quy chuẩn hệ số dịch chỉnh liên hợp**:
+   - Khi có dịch chỉnh $x_0$ trên trục: chiều dày răng trục $s_0 = \frac{\pi m}{2} + 2 x_0 m \tan\alpha$.
+   - Rãnh then lỗ moay-ơ: $e_2 = \pi m - s_2 = \frac{\pi m}{2} - 2 x_2 m \tan\alpha$.
+   - Bắt buộc $x_2 = -x_0$ để $e_2 = s_0$ (backlash $= 0$).
+   - Trong DIN 5480 ($z=20, m=10$), $x_0 = 0.4500 \implies x_2 = -0.4500$.
+2. **Đồng bộ hai chiều ô nhập liệu và AutoFill**:
+   - Khi AutoFill hoạt động: Cập nhật đồng bộ cả $x_0$ và $x_2$ lên giao diện người dùng.
+   - Khi người dùng chỉnh sửa tay: Tự động nhả checkbox AutoFill để giữ nguyên giá trị người dùng nhập.
+   - Checkbox liên hợp $x_2 = -x_0$: Khóa ô $x_2$ khi tích, mở khóa cho phép nhập tự do khi bỏ tích.
+3. **Mô phỏng Canvas 2D**:
+   - Bổ sung điểm đáy rãnh $\theta = 0.0$ tại bán kính $r_{root}$ để cung đáy rãnh lỗ moay-ơ tiếp xúc mượt mà $C^1$.
+   - Đảm bảo các khe hở hướng tâm đỉnh - đáy $c_0, c_2$ luôn dương.

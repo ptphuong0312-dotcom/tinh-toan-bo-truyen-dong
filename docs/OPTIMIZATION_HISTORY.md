@@ -4330,3 +4330,48 @@ ho_{f0}$.
   * Test 3 (Phân tích thực thể DXF: 0 Polyline, 40 Arcs/chi tiết, 0 đường xuyên tâm): **PASS**
   * Test 4 (Console Errors): **0 LỖI (PASS)**
 - Tổng kết: **100% PASS**!
+
+---
+
+## GIAI ĐOẠN 18: KHẮC PHỤC TRIỆT ĐỂ LỖI ĂN XUYÊN THÂU TRỤC VÀ LỖ THEN HOA (ZERO-COLLISION CONJUGATE MESHING)
+**Thời gian hoàn thành**: 09/10/2026  
+**Chủ sở hữu**: `SirPhuong`  
+**Mục tiêu**: Điều tra nguyên nhân gốc rễ và xử lý triệt để hiện tượng sườn răng trục then đâm xuyên vào thân răng lỗ moay-ơ trên Canvas 2D và bản vẽ CAD lắp ghép DIN 5480.
+
+### 1. Nguyên Nhân Gốc Rễ
+- Trong bảng tính Excel gốc của MITCalc 1.74 (`SplinesI_01.xlsb`):
+  * Checkbox mang tên kỹ thuật `_x0eqx2`, nhưng công thức truyền giá trị thực tế tại ô `$A$116` là `=CellTransmitVal(_x2Prop & _x2_Input)`, trong đó `_x2Prop` tại `$Z$116` là `=-_x0_Input`.
+  * Nghĩa là đối với bánh răng trong (lỗ moay-ơ), hệ số dịch chỉnh biên dạng $x_2$ thực tế phải mang dấu âm đảo ngược: $x_2 = -x_0$.
+  * Về mặt hình học cơ khí:
+    - Bánh răng ngoài (trục) có chiều dày răng trên vòng chia: $s_0 = \frac{\pi m}{2} + 2 x_0 m \tan \alpha$.
+    - Bánh răng trong (lỗ moay-ơ) có chiều rộng rãnh răng trên vòng chia: $e_2 = \pi m - s_2 = \frac{\pi m}{2} - 2 x_2 m \tan \alpha$.
+    - Để cặp then hoa ăn khớp liên hợp hoàn hảo, không có khe hở âm (backlash $\ge 0$), chiều rộng rãnh của lỗ $e_2$ phải bằng chiều dày răng của trục $s_0$:
+      $$\frac{\pi m}{2} - 2 x_2 m \tan \alpha = \frac{\pi m}{2} + 2 x_0 m \tan \alpha \iff x_2 = -x_0$$
+- **Lỗi phát sinh trước đó**:
+  * Trong hàm `getStandardSplineDefaults` cho tiêu chuẩn DIN 5480 ($z=20, m=10$), hệ số $x_0 = 0.45$ nhưng $x_2$ bị gán nhầm cứng thành `0.0`.
+  * Hậu quả: $s_0 = 20.9041\text{ mm}$ (dày) trong khi $e_2$ chỉ có $15.7080\text{ mm}$ (hẹp). Khe hở cạnh răng backlash bị âm nặng $\Delta = -2.25\text{ mm}$, dẫn đến sườn răng trục đè xuyên sâu $5.2\text{ mm}$ vào răng moay-ơ trên Canvas 2D và CAD DXF.
+  * Ngoài ra, giao diện người dùng không cập nhật hiển thị $x_0$ và $x_2$ khi bật AutoFill, khiến người dùng nhìn thấy $0.0000$ trong khi engine lại tính $x_0 = 0.45$.
+
+### 2. Các Biện Pháp Khắc Phục Triệt Để
+1. **Chuẩn hóa công thức hình học liên hợp**:
+   - `getStandardSplineDefaults` và `calculate`: Gán chính xác $x_2 = -x_0$ cho DIN 5480 (với $z=20, m=10 \implies x_0 = 0.4500, x_2 = -0.4500$).
+   - Kết quả: $s_0 = 20.9041\text{ mm} = e_2 = 20.9041\text{ mm}$, khe hở cạnh răng $\text{backlash} = 0.0000\text{ mm}$.
+2. **Đồng bộ giao diện thời gian thực**:
+   - Khi AutoFill hoạt động, tự động đồng bộ giá trị chuẩn của cả $x_0$ ($0.4500$) và $x_2$ ($-0.4500$) lên hai ô nhập liệu.
+   - Khi checkbox "Liên hợp ($x_2 = -x_0$)" được tích: tự động khóa ô $x_2$ và cập nhật $x_2 = -x_0$ mỗi khi người dùng đổi $x_0$.
+   - Khi bỏ tích checkbox liên hợp: cho phép người dùng tùy chỉnh tự do độc lập cả hai ô $x_0$ và $x_2$.
+   - Tự động bỏ tích AutoFill khi người dùng chủ động gõ số vào ô $x_0$ hoặc $x_2$ để tôn trọng ý định thiết kế.
+3. **Tối ưu hóa đa giác đáy rãnh và đỉnh răng trên Canvas 2D**:
+   - Bổ sung điểm cung tròn đáy rãnh `{ r: r_root, theta: 0.0 }` trong `generateHubSpacePoints` để đáy rãnh tiếp xúc mượt mà đối xứng $12$ giờ.
+   - Loại bỏ các đỉnh trùng lặp giữa sườn thân khai và cung tròn đỉnh/đáy.
+
+### 3. Nghiệm Thu & Đo Kiểm Hình Học
+- Kịch bản Playwright E2E `scratch/test_splines_e2e_cases.py`:
+  * DIN 5480 ($z=20, m=10$): $s_0 = 20.9041\text{ mm}, e_2 = 20.9041\text{ mm}$, backlash $= 0.0000\text{ mm}$ -> **PASS**.
+  * ISO 4156 ($z=20, m=10$): $s_0 = 15.7080\text{ mm}, e_2 = 15.7080\text{ mm}$, backlash $= 0.0000\text{ mm}$ -> **PASS**.
+  * Chụp ảnh nghiệm thu trực quan `scratch/verified_canvas_meshing.png` và `scratch/verified_canvas_detail_scope.png`:
+    - Răng trục lọt khít 100% vào rãnh moay-ơ, hai sườn thân khai áp sát tiếp xúc hoàn hảo.
+    - Khe hở đỉnh răng trục - đáy rãnh lỗ: $c_0 = (220 - 218) / 2 = 1.0\text{ mm}$ (dương, an toàn tuyệt đối).
+    - Khe hở đỉnh răng lỗ - chân răng trục: $c_2 = (200 - 198) / 2 = 1.0\text{ mm}$ (dương, an toàn tuyệt đối).
+    - Viên bi đo $M = 232.767\text{ mm}$ tiếp xúc êm ái trên sườn thân khai, không còn đè lên moay-ơ.
+

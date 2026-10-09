@@ -299,10 +299,16 @@ export class SplinesUI {
         }
         if (this.elX0) {
             this.elX0.addEventListener('input', () => {
+                if (this.elAutoFill) this.elAutoFill.checked = false;
                 if (this.elSyncX0X2 && this.elSyncX0X2.checked && this.elX2) {
                     const val0 = parseFloat(this.elX0.value || 0.0);
                     this.elX2.value = (-val0).toFixed(4);
                 }
+            });
+        }
+        if (this.elX2) {
+            this.elX2.addEventListener('input', () => {
+                if (this.elAutoFill) this.elAutoFill.checked = false;
             });
         }
 
@@ -637,7 +643,14 @@ export class SplinesUI {
         this.currentGeom = geom;
 
         // If AutoFill is on or custom tooth profile is defined, update diameter fields
-        if (autoFill || !profile_standard) {
+        if (autoFill) {
+            if (this.elX0) this.elX0.value = geom.x0.toFixed(4);
+            if (this.elX2) this.elX2.value = geom.x2.toFixed(4);
+            if (this.elDa0) this.elDa0.value = geom.da0.toFixed(4);
+            if (this.elDf0) this.elDf0.value = geom.df0.toFixed(4);
+            if (this.elDi2) this.elDi2.value = geom.di2.toFixed(4);
+            if (this.elDri2) this.elDri2.value = geom.dri2.toFixed(4);
+        } else if (!profile_standard) {
             if (this.elDa0) this.elDa0.value = geom.da0.toFixed(4);
             if (this.elDf0) this.elDf0.value = geom.df0.toFixed(4);
             if (this.elDi2) this.elDi2.value = geom.di2.toFixed(4);

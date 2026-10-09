@@ -137,7 +137,7 @@ export const SplinesCalc = {
             let dB = match ? match.d_ref : (z * m + 2.0 * m); // fallback if not in table
             xm = (dB - D - 1.1 * m) / 2.0;
             x0 = xm / m;
-            x2 = 0.0;
+            x2 = -x0;
             da0 = dB - 0.2 * m;
             df0 = dB - 2.2 * m;
             di2 = dB - 2.0 * m;
@@ -259,10 +259,8 @@ export const SplinesCalc = {
             df0 = defs.df0;
             di2 = defs.di2;
             dri2 = defs.dri2;
-            if (stdTypeId === 14) {
-                x0 = defs.x0;
-                x2 = defs.x2;
-            }
+            x0 = defs.x0;
+            x2 = defs.x2;
         }
 
         const pi = this.PI;
