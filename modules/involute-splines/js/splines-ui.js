@@ -4,7 +4,7 @@
  */
 
 import { SplinesData } from './splines-data.js';
-import { SplinesCalc } from './splines-calc.js';
+import { SplinesCalc, SPLINE_RESOLUTION_LEVELS } from './splines-calc.js';
 import { SplinesCanvas } from './splines-canvas.js';
 import { SplinesDxf } from './splines-dxf.js';
 
@@ -78,6 +78,16 @@ export class SplinesUI {
 
         // Toast element
         this.elToast = document.getElementById('toastMsg');
+
+        // Resolution selector
+        this.selResolution = document.getElementById('selProfileResolutionCanvas');
+        this.profileResolution = 6;
+
+        // Profile shift advice elements
+        this.elXAdviceText = document.getElementById('xAdviceText');
+        this.elXAdviceDetail = document.getElementById('xAdviceDetail');
+        this.elXAdviceBadge = document.getElementById('xAdviceBadge');
+        this.elPinStdHint = document.getElementById('outPinStdHint');
     }
 
     populateStandardDropdowns() {
@@ -542,21 +552,36 @@ export class SplinesUI {
             this.showToast('Đã tải hình ảnh 2D PNG!');
         });
 
+        // Profile Resolution Selector (11 Levels)
+        if (this.selResolution) {
+            this.selResolution.addEventListener('change', () => {
+                const lvl = parseInt(this.selResolution.value, 10) || 6;
+                this.profileResolution = lvl;
+                if (this.canvas) this.canvas.setResolution(lvl);
+                if (this.currentGeom) this.currentGeom.profileResolution = lvl;
+                const info = (typeof SPLINE_RESOLUTION_LEVELS !== 'undefined') ? SPLINE_RESOLUTION_LEVELS[lvl] : null;
+                this.showToast(`Đã chọn: ${info ? info.name : ('Mức ' + lvl)}`);
+            });
+        }
+
         // DXF Export Buttons
         document.getElementById('btnExportDxfAssembly')?.addEventListener('click', () => {
             if (this.currentGeom) {
+                this.currentGeom.profileResolution = this.profileResolution;
                 SplinesDxf.downloadDxf(this.currentGeom, 'assembly');
                 this.showToast('Đã xuất bản vẽ CAD DXF (Cặp Lắp Ghép)!');
             }
         });
         document.getElementById('btnExportDxfShaft')?.addEventListener('click', () => {
             if (this.currentGeom) {
+                this.currentGeom.profileResolution = this.profileResolution;
                 SplinesDxf.downloadDxf(this.currentGeom, 'shaft');
                 this.showToast('Đã xuất bản vẽ CAD DXF (Trục Then Hoa)!');
             }
         });
         document.getElementById('btnExportDxfHub')?.addEventListener('click', () => {
             if (this.currentGeom) {
+                this.currentGeom.profileResolution = this.profileResolution;
                 SplinesDxf.downloadDxf(this.currentGeom, 'hub');
                 this.showToast('Đã xuất bản vẽ CAD DXF (Lỗ Moay-ơ)!');
             }
@@ -679,6 +704,7 @@ export class SplinesUI {
             u_rev_hub
         });
 
+        geom.profileResolution = this.profileResolution;
         this.currentGeom = geom;
 
         // Cập nhật giá trị đường kính trên giao diện (luôn đồng bộ chuẩn trừ khi người dùng đang nhập custom)
@@ -784,6 +810,44 @@ export class SplinesUI {
         this.setTxt('outMRevShaft', g.m_rev_shaft.toFixed(3));
         this.setTxt('outDaxxHub', g.daxx_hub.toFixed(4));
         this.setTxt('outMRevHub', g.m_rev_hub.toFixed(3));
+
+        // Update Profile Shift Advice in Real-Time
+        if (g.profileShiftAdvice) {
+            const adv = g.profileShiftAdvice;
+            if (this.elXAdviceText) {
+                this.elXAdviceText.textContent = adv.stdNote;
+            }
+            if (this.elXAdviceDetail) {
+                this.elXAdviceDetail.textContent = `${adv.detail} ${adv.conjNote}`;
+            }
+            if (this.elXAdviceBadge) {
+                this.elXAdviceBadge.textContent = (adv.status === 'optimal' ? '✅ ' : '⚠️ ') + adv.title;
+                if (adv.status === 'optimal') {
+                    this.elXAdviceBadge.style.background = 'rgba(16, 185, 129, 0.2)';
+                    this.elXAdviceBadge.style.color = '#10b981';
+                    this.elXAdviceBadge.style.borderColor = '#10b981';
+                } else {
+                    this.elXAdviceBadge.style.background = 'rgba(245, 158, 11, 0.2)';
+                    this.elXAdviceBadge.style.color = '#f59e0b';
+                    this.elXAdviceBadge.style.borderColor = '#f59e0b';
+                }
+            }
+        }
+
+        // Update Pin Standard Hint
+        if (this.elPinStdHint) {
+            if (g.stdType === 14) {
+                this.elPinStdHint.textContent = 'DIN 5480: 1.800·m (Trục) / 1.500·m (Lỗ)';
+            } else if (g.stdType === 7 || g.stdType === 3 || g.stdType === 11) {
+                this.elPinStdHint.textContent = 'ISO 4156 Fillet: 1.920·m (Trục) / 1.728·m (Lỗ)';
+            } else if (g.stdType === 6 || g.stdType === 1 || g.stdType === 10) {
+                this.elPinStdHint.textContent = 'ISO 4156 Flat: 1.728·m (Trục) / 1.440·m (Lỗ)';
+            } else if (g.stdType >= 15 && g.stdType <= 17) {
+                this.elPinStdHint.textContent = 'CSN 4950: 1.750·m (Trục) / 1.500·m (Lỗ)';
+            } else {
+                this.elPinStdHint.textContent = `dp tiêu chuẩn: ${g.dt0_rec.toFixed(3)} / ${g.dt2_rec.toFixed(3)} mm`;
+            }
+        }
     }
 
     setTxt(id, val) {

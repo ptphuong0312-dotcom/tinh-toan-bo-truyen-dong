@@ -432,6 +432,24 @@
                                         </label>
                                     </td>
                                 </tr>
+                                <tr id="rowXAdvice" class="row-advice" style="background: rgba(15, 23, 42, 0.75);">
+                                    <td class="col-idx" style="color: #38bdf8; text-align: center;">💡</td>
+                                    <td colspan="6" style="padding: 6px 12px; font-size: 0.82rem;">
+                                        <div id="xAdviceContent" style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                                            <div style="display: flex; flex-direction: column; gap: 2px;">
+                                                <span id="xAdviceText" style="color: #cbd5e1; font-weight: 500;">
+                                                    Khuyến nghị: Dải an toàn x₀ &isin; [-0.40, +0.45].
+                                                </span>
+                                                <span id="xAdviceDetail" style="color: #94a3b8; font-size: 0.78rem;">
+                                                    Ăn khớp liên hợp hoàn hảo (x₂ = -x₀, tổng &Sigma;x = 0): Bảo toàn khe hở cạnh răng danh nghĩa.
+                                                </span>
+                                            </div>
+                                            <span id="xAdviceBadge" class="badge-status" style="padding: 3px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid #10b981; white-space: nowrap;">
+                                                ✅ Tối Ưu
+                                            </span>
+                                        </div>
+                                    </td>
+                                </tr>
                                 <tr>
                                     <td class="col-idx">1.11</td>
                                     <td class="col-param">Chiều dày răng trên vòng chia</td>
@@ -698,10 +716,10 @@
                                     <td class="col-idx">4.3</td>
                                     <td class="col-param">Đường kính con lăn / đũa / bi đo</td>
                                     <td class="col-sym">d<sub>p</sub></td>
-                                    <td class="col-val1"><input type="number" id="dt0Input" class="user-input" value="17.5000" step="0.05" title="Đường kính bi đo trục (Mặc định = 1.75*m)"></td>
-                                    <td class="col-val2"><input type="number" id="dt2Input" class="user-input" value="17.5000" step="0.05" title="Đường kính bi đo lỗ (Mặc định = 1.75*m)"></td>
+                                    <td class="col-val1"><input type="number" id="dt0Input" class="user-input" value="18.0000" step="0.05" title="Đường kính bi đo trục (DIN 5480: 1.800*m, ISO 4156: 1.728*m/1.920*m, CSN: 1.750*m)"></td>
+                                    <td class="col-val2"><input type="number" id="dt2Input" class="user-input" value="15.0000" step="0.05" title="Đường kính bi đo lỗ (DIN 5480: 1.500*m, ISO 4156: 1.440*m/1.728*m, CSN: 1.500*m)"></td>
                                     <td class="col-unit">[mm]</td>
-                                    <td class="col-action">dp = 1.75&middot;m (&alpha; &le; 30&deg;)</td>
+                                    <td class="col-action" id="outPinStdHint">DIN 5480: 1.8m / 1.5m | ISO 4156: 1.728m / 1.44m</td>
                                 </tr>
                                 <tr>
                                     <td class="col-idx">4.4</td>
@@ -731,6 +749,22 @@
                             <button type="button" class="btn-toggle active" id="btnScopeFull">🌐 Toàn Vành 360&deg;</button>
                             <button type="button" class="btn-toggle" id="btnScopeDetail">🔍 Cụm 3 Răng</button>
                             <button type="button" class="btn-toggle" id="btnScopeSingle">🔬 1 Răng Chi Tiết</button>
+                        </div>
+                        <div class="toolbar-group" style="display: flex; align-items: center; gap: 5px; background: rgba(0,0,0,0.3); padding: 3px 8px; border-radius: 4px; border: 1px solid var(--border-color);" title="Độ mịn biên dạng thân khai 2D & xuất file CAD DXF (11 mức: Mức 1 thô 40pts đến Mức 11 siêu mịn 500pts)">
+                            <label for="selProfileResolutionCanvas" style="font-size: 0.8rem; font-weight: 600; color: var(--text-secondary); white-space: nowrap;">🎯 Độ mịn (2D &amp; DXF):</label>
+                            <select id="selProfileResolutionCanvas" class="calc-select" style="padding: 4px 8px; font-size: 0.8rem; font-weight: 600; border-radius: 4px; background-color: #1e293b; color: #38bdf8; border: 1.5px solid #0284c7; cursor: pointer;">
+                                <option value="1">Mức 1 (40pts)</option>
+                                <option value="2">Mức 2 (60pts)</option>
+                                <option value="3">Mức 3 (80pts)</option>
+                                <option value="4">Mức 4 (100pts)</option>
+                                <option value="5">Mức 5 (120pts)</option>
+                                <option value="6" selected>Mức 6 (Chuẩn Gốc 160pts)</option>
+                                <option value="7">Mức 7 (200pts)</option>
+                                <option value="8">Mức 8 (240pts)</option>
+                                <option value="9">Mức 9 (300pts)</option>
+                                <option value="10">Mức 10 (380pts)</option>
+                                <option value="11">Mức 11 (Siêu Mịn CNC/EDM 500pts)</option>
+                            </select>
                         </div>
                         <div class="toolbar-group">
                             <button type="button" class="btn-secondary" id="btnZoomIn">➕ Phóng To</button>

@@ -4,6 +4,8 @@
  * Supports multi-touch gestures, pan/zoom, measurement pins, and common normal overlay.
  */
 
+import { SplinesCalc, SPLINE_RESOLUTION_LEVELS } from './splines-calc.js';
+
 export class SplinesCanvas {
     constructor(canvasId) {
         this.canvas = document.getElementById(canvasId);
@@ -16,6 +18,7 @@ export class SplinesCanvas {
         this.showCircles = true;
         this.showInspection = true;
         this.showCenterlines = true;
+        this.profileResolution = 6; // Mặc định Mức 6 (Chuẩn Gốc MITCalc 1.74)
 
         // Transform state
         this.scale = 1.0;
@@ -32,6 +35,11 @@ export class SplinesCanvas {
         this.geom = null;
 
         this.initEvents();
+    }
+
+    setResolution(lvl) {
+        this.profileResolution = parseInt(lvl, 10) || 6;
+        this.render();
     }
 
     initEvents() {
@@ -166,149 +174,18 @@ export class SplinesCanvas {
 
     /**
      * Compute analytical profile points for shaft teeth sector (External Spline)
-     * Returns array of points with local polar coordinates (r, theta) centered at tooth angle 0
+     * Delegated to SplinesCalc for 100% unified geometry with DXF exporter
      */
-    generateShaftSectorPoints(g, numFlankPts = 16) {
-        const z = g.z0;
-        const alfaRad = (g.alfa * Math.PI) / 180.0;
-        const invAlfa = Math.tan(alfaRad) - alfaRad;
-        const d = g.d0;
-        const db = g.db0;
-        const da = g.da0;
-        const df = g.df0;
-        const s = g.s0;
-
-        const r_base = db / 2.0;
-        const r_tip = da / 2.0;
-        const r_root = df / 2.0;
-        const tau = Math.PI / z; // Half-pitch
-        const psi = s / d;       // Half-tooth angle on pitch circle
-
-        const r_start = Math.max(r_base, r_root);
-        const r_end = Math.max(r_start + 0.05 * (g.m || 1.0), r_tip);
-
-        const pts = [];
-
-        // 1. Root bottom arc on left: from -tau to -phi_start
-        let alfa_start = 0;
-        if (r_start > r_base) alfa_start = Math.acos(Math.min(1.0, r_base / r_start));
-        const inv_start = Math.tan(alfa_start) - alfa_start;
-        const phi_start = psi + invAlfa - inv_start;
-
-        pts.push({ r: r_root, theta: -tau });
-        if (phi_start < tau) {
-            pts.push({ r: r_root, theta: -phi_start });
-        }
-
-        // 2. Left flank upwards: from r_start to r_tip
-        for (let i = 0; i <= numFlankPts; i++) {
-            const frac = i / numFlankPts;
-            const r = r_start + (r_end - r_start) * frac;
-            let alfa_r = 0;
-            if (r > r_base) alfa_r = Math.acos(Math.min(1.0, r_base / r));
-            const inv_r = Math.tan(alfa_r) - alfa_r;
-            const phi = psi + invAlfa - inv_r;
-            pts.push({ r, theta: -phi });
-        }
-
-        // 3. Tip crest center at r_tip
-        pts.push({ r: r_tip, theta: 0.0 });
-
-        // 4. Right flank downwards: from r_tip down to r_start
-        for (let i = numFlankPts; i >= 0; i--) {
-            const frac = i / numFlankPts;
-            const r = r_start + (r_end - r_start) * frac;
-            let alfa_r = 0;
-            if (r > r_base) alfa_r = Math.acos(Math.min(1.0, r_base / r));
-            const inv_r = Math.tan(alfa_r) - alfa_r;
-            const phi = psi + invAlfa - inv_r;
-            pts.push({ r, theta: phi });
-        }
-
-        // 5. Root bottom arc on right: from phi_start to +tau
-        if (phi_start < tau) {
-            pts.push({ r: r_root, theta: phi_start });
-        }
-        pts.push({ r: r_root, theta: tau });
-
-        return pts;
+    generateShaftSectorPoints(g, resLevel = 6) {
+        return SplinesCalc.generateShaftSectorPoints(g, resLevel);
     }
 
     /**
-     * Compute analytical profile points for internal hub tooth space (Internal Spline Groove)
-     * Returns array of points with local polar coordinates (r, theta) centered at groove angle 0
+     * Compute analytical profile points for internal hub tooth sector (Internal Spline Tooth)
+     * Delegated to SplinesCalc for 100% unified geometry with DXF exporter
      */
-    generateHubSpacePoints(g, numFlankPts = 16) {
-        const z = g.z0;
-        const m = g.m;
-        const alfaRad = (g.alfa * Math.PI) / 180.0;
-        const invAlfa = Math.tan(alfaRad) - alfaRad;
-        const d = g.d2 || g.d0;
-        const db = g.db2 || g.db0;
-        const dri = g.dri2; // Hub root diameter (outer groove bottom)
-        const di = g.di2;   // Hub tip diameter (inner tooth crest)
-        const s2 = g.s2;
-        const e2 = Math.PI * m - s2; // Groove width on pitch circle
-
-        const r_base = db / 2.0;
-        const r_root = dri / 2.0; // Outer groove bottom
-        const r_tip = di / 2.0;   // Inner tooth crest
-        const tau = Math.PI / z;
-        const psi_space = e2 / d; // Half-groove angle on pitch circle
-
-        const r_start = Math.max(r_base, r_tip);
-        const r_end = Math.max(r_start + 0.05 * (g.m || 1.0), r_root);
-
-        const pts = [];
-
-        // 1. Inner tooth crest arc on left: from -tau to -phi_start at r_tip
-        let alfa_start = 0;
-        if (r_start > r_base) alfa_start = Math.acos(Math.min(1.0, r_base / r_start));
-        const inv_start = Math.tan(alfa_start) - alfa_start;
-        const phi_start = psi_space + invAlfa - inv_start;
-
-        pts.push({ r: r_tip, theta: -tau });
-        if (phi_start < tau) {
-            pts.push({ r: r_tip, theta: -phi_start });
-        }
-
-        // 2. Left flank of groove outwards: from r_start (inner) to r_root (outer)
-        for (let i = 0; i <= numFlankPts; i++) {
-            const frac = i / numFlankPts;
-            const r = r_start + (r_end - r_start) * frac;
-            let alfa_r = 0;
-            if (r > r_base) alfa_r = Math.acos(r_base / r);
-            const inv_r = Math.tan(alfa_r) - alfa_r;
-            const phi = psi_space + invAlfa - inv_r;
-            pts.push({ r, theta: -phi });
-        }
-
-        // 3. Groove bottom arc (at outer radius r_root): smoothly across theta = 0
-        let alfa_root = 0;
-        if (r_root > r_base) alfa_root = Math.acos(r_base / r_root);
-        const inv_root = Math.tan(alfa_root) - alfa_root;
-        const phi_root = psi_space + invAlfa - inv_root;
-        pts.push({ r: r_root, theta: 0.0 });
-        pts.push({ r: r_root, theta: phi_root });
-
-        // 4. Right flank of groove inwards: from r_root down to r_start
-        for (let i = numFlankPts - 1; i >= 0; i--) {
-            const frac = i / numFlankPts;
-            const r = r_start + (r_end - r_start) * frac;
-            let alfa_r = 0;
-            if (r > r_base) alfa_r = Math.acos(r_base / r);
-            const inv_r = Math.tan(alfa_r) - alfa_r;
-            const phi = psi_space + invAlfa - inv_r;
-            pts.push({ r, theta: phi });
-        }
-
-        // 5. Inner tooth crest arc on right: from phi_start to +tau at r_tip
-        if (phi_start < tau) {
-            pts.push({ r: r_tip, theta: phi_start });
-        }
-        pts.push({ r: r_tip, theta: tau });
-
-        return pts;
+    generateHubSpacePoints(g, resLevel = 6) {
+        return SplinesCalc.generateHubSpacePoints(g, resLevel);
     }
 
     render() {
@@ -451,7 +328,7 @@ export class SplinesCanvas {
     drawShaft(ctx) {
         const g = this.geom;
         const z = g.z0;
-        const pts = this.generateShaftSectorPoints(g);
+        const pts = this.generateShaftSectorPoints(g, this.profileResolution);
 
         ctx.save();
         ctx.fillStyle = 'rgba(2, 132, 199, 0.28)';   // Sky blue translucent fill
@@ -501,7 +378,7 @@ export class SplinesCanvas {
     drawHub(ctx) {
         const g = this.geom;
         const z = g.z0;
-        const pts = this.generateHubSpacePoints(g);
+        const pts = this.generateHubSpacePoints(g, this.profileResolution);
 
         ctx.save();
         ctx.fillStyle = 'rgba(249, 115, 22, 0.18)'; // Orange translucent fill
@@ -772,67 +649,7 @@ export class SplinesCanvas {
     }
 
     drawOverlayUI(ctx, w, h) {
-        const g = this.geom;
         ctx.save();
-        ctx.font = '12px "Segoe UI", Tahoma, sans-serif';
-
-        // HUD Info Card (Top Left)
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.roundRect(16, 16, 260, 115, 6);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = '#f8fafc';
-        ctx.font = 'bold 13px "Segoe UI", Tahoma, sans-serif';
-        const viewTitle = this.viewMode === 'hub' ? 'Lỗ Moay-ơ (Hub)' : (this.viewMode === 'shaft' ? 'Trục Then Hoa (Shaft)' : 'Cặp Ăn Khớp');
-        ctx.fillText(`2D Then Hoa: ${viewTitle} (z=${g.z0}, m=${g.m} mm)`, 28, 38);
-
-        ctx.font = '12px "Segoe UI", Tahoma, sans-serif';
-        if (this.viewMode === 'hub') {
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Đường kính đỉnh Lỗ Di: `, 28, 58);
-            ctx.fillStyle = '#fb923c';
-            ctx.fillText(`${g.di2.toFixed(3)} mm`, 195, 58);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Đường kính rãnh Lỗ Dri: `, 28, 76);
-            ctx.fillStyle = '#f43f5e';
-            ctx.fillText(`${g.dri2.toFixed(3)} mm`, 195, 76);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Kích thước đo bi trong M: `, 28, 94);
-            ctx.fillStyle = '#facc15';
-            ctx.fillText(`${g.M2.toFixed(4)} mm`, 195, 94);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Pháp tuyến đo 2 bi Wb: `, 28, 112);
-            ctx.fillStyle = '#38bdf8';
-            const wbVal = g.W_bi2 || g.W2;
-            ctx.fillText(`${wbVal.toFixed(4)} mm (k=${g.k2})`, 195, 112);
-        } else {
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Đường kính đỉnh Trục da0: `, 28, 58);
-            ctx.fillStyle = '#38bdf8';
-            ctx.fillText(`${g.da0.toFixed(3)} mm`, 195, 58);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Đường kính chân Trục df0: `, 28, 76);
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`${g.df0.toFixed(3)} mm`, 195, 76);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Kích thước đo bi ngoài M: `, 28, 94);
-            ctx.fillStyle = '#facc15';
-            ctx.fillText(`${g.M0.toFixed(4)} mm`, 195, 94);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Pháp tuyến chung W0: `, 28, 112);
-            ctx.fillStyle = '#4ade80';
-            ctx.fillText(`${g.W0.toFixed(4)} mm (k=${g.k0})`, 195, 112);
-        }
 
         // Controls hint (Bottom Right)
         ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';

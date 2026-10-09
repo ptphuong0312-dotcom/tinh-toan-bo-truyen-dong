@@ -9,9 +9,12 @@
  *  - Non-overlapping manufacturing specification table
  */
 
+import { SplinesCalc } from './splines-calc.js';
+
 export const SplinesDxf = {
     generateDXF(geom, target = 'assembly') {
         if (!geom) return '';
+        geom._target = target;
 
         const lines = [];
 
@@ -201,84 +204,14 @@ export const SplinesDxf = {
     /**
      * Draw external Shaft profile with 100% continuous, watertight closed POLYLINE:
      * - Zero gaps, zero duplicate entities, zero stray lines
-     * - Involute flanks and true circular tip/root lands connected in continuous order
+     * - C1 smooth root fillet radius (rf) and involute flanks connected in continuous order
+     * - Resolution level driven by geom.profileResolution (1 to 11)
      */
     drawShaftContour(lines, geom) {
         const z = geom.z0;
-        const m = geom.m;
-        const alfaRad = (geom.alfa * Math.PI) / 180.0;
-        const invAlfa = Math.tan(alfaRad) - alfaRad;
-        const d = geom.d0;
-        const db = geom.db0;
-        const da = geom.da0;
-        const df = geom.df0;
-        const s = geom.s0;
+        const resLevel = geom.profileResolution || 6;
+        const sectorPts = SplinesCalc.generateShaftSectorPoints(geom, resLevel);
 
-        const rBase = db / 2.0;
-        const rTip = da / 2.0;
-        const rRoot = df / 2.0;
-        const tau = Math.PI / z;
-        const psi = s / d;
-        const numFlank = 16;
-        const numArc = 6;
-
-        const rStart = Math.max(rBase, rRoot);
-        const rEnd = Math.max(rStart + 0.05 * (m || 1.0), rTip);
-
-        // 1. Sector geometry for a single tooth (-tau to +tau)
-        const sectorPts = [];
-
-        // 1.1 Root bottom arc left: from -tau to -phiStart at rRoot
-        let alfaStart = 0;
-        if (rStart > rBase) alfaStart = Math.acos(Math.min(1.0, rBase / rStart));
-        const invStart = Math.tan(alfaStart) - alfaStart;
-        const phiStart = psi + invAlfa - invStart;
-
-        for (let i = 0; i < numArc; i++) {
-            const th = -tau + (tau - phiStart) * (i / numArc);
-            sectorPts.push({ r: rRoot, theta: th });
-        }
-
-        // 1.2 Left flank upwards: from rStart to rTip at -phi
-        for (let i = 0; i < numFlank; i++) {
-            const frac = i / numFlank;
-            const r = rStart + (rEnd - rStart) * frac;
-            let alfaR = 0;
-            if (r > rBase) alfaR = Math.acos(Math.min(1.0, rBase / r));
-            const invR = Math.tan(alfaR) - alfaR;
-            const phi = psi + invAlfa - invR;
-            sectorPts.push({ r, theta: -phi });
-        }
-
-        // 1.3 Tip crest arc: from -phiTip to +phiTip at rTip
-        let alfaTip = 0;
-        if (rTip > rBase) alfaTip = Math.acos(Math.min(1.0, rBase / rTip));
-        const invTip = Math.tan(alfaTip) - alfaTip;
-        const phiTip = psi + invAlfa - invTip;
-
-        for (let i = 0; i <= numArc; i++) {
-            const th = -phiTip + (2.0 * phiTip) * (i / numArc);
-            sectorPts.push({ r: rTip, theta: th });
-        }
-
-        // 1.4 Right flank downwards: from rTip down to rStart at +phi
-        for (let i = 0; i < numFlank; i++) {
-            const frac = i / numFlank;
-            const r = rEnd - (rEnd - rStart) * frac;
-            let alfaR = 0;
-            if (r > rBase) alfaR = Math.acos(Math.min(1.0, rBase / r));
-            const invR = Math.tan(alfaR) - alfaR;
-            const phi = psi + invAlfa - invR;
-            sectorPts.push({ r, theta: phi });
-        }
-
-        // 1.5 Root bottom arc right: from +phiStart to +tau at rRoot
-        for (let i = 1; i <= numArc; i++) {
-            const th = phiStart + (tau - phiStart) * (i / numArc);
-            sectorPts.push({ r: rRoot, theta: th });
-        }
-
-        // 2. Generate full 360 degree closed contour points
         const fullPts = [];
         for (let j = 0; j < z; j++) {
             const rotAng = (j * 2.0 * Math.PI) / z;
@@ -292,90 +225,24 @@ export const SplinesDxf = {
         }
 
         this.addPolyline(lines, 'CONTOUR_SHAFT', fullPts);
+
+        // Inner bore circle if drawing shaft standalone
+        if (geom._target === 'shaft') {
+            this.addCircle(lines, 'CONTOUR_SHAFT', 0, 0, (geom.df0 / 2.0) * 0.5);
+        }
     },
 
     /**
      * Draw internal Hub profile with 100% continuous, watertight closed POLYLINE:
      * - Zero gaps, zero duplicate entities, zero stray lines
-     * - Involute flanks and true circular tip/root lands connected in continuous order
+     * - C1 smooth tip fillet radius (ra) and involute flanks connected in continuous order
+     * - Resolution level driven by geom.profileResolution (1 to 11)
      */
     drawHubContour(lines, geom) {
         const z = geom.z0;
-        const m = geom.m;
-        const alfaRad = (geom.alfa * Math.PI) / 180.0;
-        const invAlfa = Math.tan(alfaRad) - alfaRad;
-        const d = geom.d2 || geom.d0;
-        const db = geom.db2 || geom.db0;
-        const dri = geom.dri2;
-        const di = geom.di2;
-        const s2 = geom.s2;
-        const e2 = Math.PI * m - s2;
+        const resLevel = geom.profileResolution || 6;
+        const sectorPts = SplinesCalc.generateHubSpacePoints(geom, resLevel);
 
-        const rBase = db / 2.0;
-        const rRoot = dri / 2.0; // Outer groove bottom
-        const rTip = di / 2.0;   // Inner tooth crest
-        const tau = Math.PI / z;
-        const psiSpace = e2 / d;
-        const numFlank = 16;
-        const numArc = 6;
-
-        const rStart = Math.max(rBase, rTip);
-        const rEnd = Math.max(rStart + 0.05 * (m || 1.0), rRoot);
-
-        // 1. Sector geometry for a single tooth space (-tau to +tau)
-        const sectorPts = [];
-
-        // 1.1 Inner tip crest arc left: from -tau to -phiStart at rTip
-        let alfaStart = 0;
-        if (rStart > rBase) alfaStart = Math.acos(Math.min(1.0, rBase / rStart));
-        const invStart = Math.tan(alfaStart) - alfaStart;
-        const phiStart = psiSpace + invAlfa - invStart;
-
-        for (let i = 0; i < numArc; i++) {
-            const th = -tau + (tau - phiStart) * (i / numArc);
-            sectorPts.push({ r: rTip, theta: th });
-        }
-
-        // 1.2 Left flank of groove outwards: from rTip to rRoot at -phi
-        for (let i = 0; i < numFlank; i++) {
-            const frac = i / numFlank;
-            const r = rStart + (rEnd - rStart) * frac;
-            let alfaR = 0;
-            if (r > rBase) alfaR = Math.acos(Math.min(1.0, rBase / r));
-            const invR = Math.tan(alfaR) - alfaR;
-            const phi = psiSpace + invAlfa - invR;
-            sectorPts.push({ r, theta: -phi });
-        }
-
-        // 1.3 Groove bottom arc: from -phiRoot to +phiRoot at rRoot
-        let alfaRoot = 0;
-        if (rRoot > rBase) alfaRoot = Math.acos(Math.min(1.0, rBase / rRoot));
-        const invRoot = Math.tan(alfaRoot) - alfaRoot;
-        const phiRoot = psiSpace + invAlfa - invRoot;
-
-        for (let i = 0; i <= numArc; i++) {
-            const th = -phiRoot + (2.0 * phiRoot) * (i / numArc);
-            sectorPts.push({ r: rRoot, theta: th });
-        }
-
-        // 1.4 Right flank of groove inwards: from rRoot down to rTip at +phi
-        for (let i = 0; i < numFlank; i++) {
-            const frac = i / numFlank;
-            const r = rEnd - (rEnd - rStart) * frac;
-            let alfaR = 0;
-            if (r > rBase) alfaR = Math.acos(Math.min(1.0, rBase / r));
-            const invR = Math.tan(alfaR) - alfaR;
-            const phi = psiSpace + invAlfa - invR;
-            sectorPts.push({ r, theta: phi });
-        }
-
-        // 1.5 Inner tip crest arc right: from +phiStart to +tau at rTip
-        for (let i = 1; i <= numArc; i++) {
-            const th = phiStart + (tau - phiStart) * (i / numArc);
-            sectorPts.push({ r: rTip, theta: th });
-        }
-
-        // 2. Generate full 360 degree closed contour points
         const fullPts = [];
         for (let j = 0; j < z; j++) {
             const rotAng = (j * 2.0 * Math.PI) / z;
@@ -389,13 +256,19 @@ export const SplinesDxf = {
         }
 
         this.addPolyline(lines, 'CONTOUR_HUB', fullPts);
+
+        // Outer collar circle if drawing hub standalone
+        if (geom._target === 'hub') {
+            this.addCircle(lines, 'CONTOUR_HUB', 0, 0, (geom.dri2 / 2.0) * 1.35);
+        }
     },
 
     /**
      * Draw circular measurement pins and dimensions for Shaft (M0 & W0)
      */
     drawShaftInspectionPins(lines, geom) {
-        const dt = geom.dt0 || (1.75 * geom.m);
+        const recPin = SplinesCalc.getRecommendedPinDiameter(geom.stdType, geom.m, geom.alfa);
+        const dt = geom.dt0 || recPin.dt0;
         const rPin = dt / 2.0;
         const rCenter = (geom.M0 - dt) / 2.0;
         const pi = Math.PI;
@@ -430,7 +303,8 @@ export const SplinesDxf = {
      * Draw circular measurement pins and dimensions for Hub (M2 & Wb)
      */
     drawHubInspectionPins(lines, geom) {
-        const dt = geom.dt2 || geom.dt0 || (1.75 * geom.m);
+        const recPin = SplinesCalc.getRecommendedPinDiameter(geom.stdType, geom.m, geom.alfa);
+        const dt = geom.dt2 || recPin.dt2;
         const rPin = dt / 2.0;
         const rCenter = (geom.ds2 || Math.abs(geom.M2 + dt)) / 2.0;
         const k2 = geom.k2 || 3;

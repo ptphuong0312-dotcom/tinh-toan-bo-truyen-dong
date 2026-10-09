@@ -4429,3 +4429,35 @@ ho_{f0}$.
 
 
 
+
+---
+
+## Giai Đoạn 35: Nâng Cấp Hoàn Thiện Biên Dạng Then Hoa Thân Khai (Involute Splines): Cung Bo Tròn C1 Chân Trục & Đỉnh Lỗ, 11 Mức Độ Mịn, Khôi Phục Công Thức Bi Đo & Tư Vấn Hệ Số Dịch Chỉnh
+* **Tiêu chuẩn**: DIN 5480, ISO 4156, ANSI B92.1, ANSI B92.2M, CSN 4950.
+* **Yêu cầu & Đột phá kỹ thuật**:
+  1. **Khắc phục biên dạng bo chân then trục & đỉnh then lỗ**:
+     - Thay thế hoàn toàn các đoạn thẳng cắt góc nhọn trước đây bằng **cung bo tròn giải tích tiếp tuyến $C^1$ trơn tru mượt mà**:
+       * Chân then trục ($r_f = 0.20 \cdot m$): Giải phương trình bisection tìm góc tiếp xúc $\alpha_{\tan}$, dựng tâm cung tròn $C$, nối tiếp tuyến mượt mà từ sườn thân khai vào cung đáy rãnh $r_{\text{root}}$.
+       * Đỉnh then lỗ ($r_a = 0.20 \cdot m$): Giải phương trình bisection tìm góc tiếp xúc $\alpha_{\tan}$, dựng tâm cung tròn $C$, nối tiếp tuyến mượt mà từ sườn thân khai vào cung đỉnh răng trong $r_{\text{tip}}$.
+     - Cả Canvas 2D và bộ xuất CAD DXF (Release 12 AC1009) đều sử dụng chung 1 bộ giải hình học duy nhất trong `SplinesCalc` (`generateShaftSectorPoints` và `generateHubSpacePoints`), tạo thành Closed Polyline liên tục $360^\circ$ kín khít tuyệt đối ($\Delta = 0.000000\text{ mm}$).
+  2. **Thêm tính năng 11 Mức độ mịn (Resolution Levels) đồng bộ Bánh răng trụ**:
+     - Tích hợp dropdown `selProfileResolutionCanvas` trên Canvas Toolbar và trong mã xuất DXF với 11 mức độ mịn:
+       * Mức 1: Thô (40 điểm/răng).
+       * Mức 6: Chuẩn gốc MITCalc 1.74 (160 điểm/răng).
+       * Mức 11: Siêu mịn CNC/EDM (500 điểm/răng) cho gia công cắt dây Wire-EDM và phay CNC siêu chính xác.
+  3. **Khôi phục công thức đường kính bi đo ($d_p$) chuẩn của app**:
+     - Bỏ công thức cứng $1.75 \times m$, khôi phục hàm giải tích `getRecommendedPinDiameter`:
+       * DIN 5480: $d_{t0} = 1.800 \cdot m$ (Trục), $d_{t2} = 1.500 \cdot m$ (Lỗ).
+       * ISO 4156 Flat root: $d_{t0} = 1.728 \cdot m$, $d_{t2} = 1.440 \cdot m$.
+       * ISO 4156 Fillet root ($30^\circ$): $d_{t0} = 1.920 \cdot m$, $d_{t2} = 1.728 \cdot m$.
+       * Góc $37.5^\circ$: $1.728 \cdot m / 1.440 \cdot m$; Góc $45^\circ$: $1.920 \cdot m / 1.440 \cdot m$.
+       * Vẫn cho phép người dùng tự do chỉnh sửa tùy chỉnh đường kính bi đo thực tế có sẵn trong xưởng.
+  4. **Tối giản giao diện Canvas**:
+     - Xóa bỏ hoàn toàn hộp thông tin (HUD Info card) ở góc trên bên trái khung vẽ để màn hình mô phỏng ăn khớp, trục và lỗ moay-ơ hoàn toàn thoáng đãng, sắc nét.
+  5. **Tích hợp khối tư vấn hệ số dịch chỉnh ($x_0, x_2$) thời gian thực**:
+     - Bổ sung khối chỉ dẫn kỹ thuật thông minh ngay dưới hàng 1.10:
+       * Hiển thị giá trị $x_0$ chuẩn danh nghĩa của DIN 5480 tra cứu theo đường kính $d_B$.
+       * Đánh giá dải an toàn hình học: Tránh nguy cơ cắt lẹm chân răng khi $x_0 < -0.40$ (Undercut) và nguy cơ nhọn đỉnh răng khi $x_0 > +0.45$ (Pointing).
+       * Kiểm tra và tư vấn tính liên hợp ăn khớp ($x_2 = -x_0$, $\Sigma x = 0$) để bảo toàn khe hở cạnh răng danh nghĩa (Backlash).
+  6. **Module Dung sai (Module 6)**:
+     - Lược bỏ phần Canvas mô phỏng nhiệt theo đúng yêu cầu, giữ lại trọn vẹn bảng tính biến dạng và nút `[ 📋 Sao Chép Phiếu Quy Trình ]`. Test QC 24/24 ca kiểm thử đạt PASS tuyệt đối ($\Delta = 0.000000$).

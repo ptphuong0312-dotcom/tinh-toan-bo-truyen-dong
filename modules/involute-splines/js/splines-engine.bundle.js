@@ -29,6 +29,20 @@ const SplinesData = {"modules": [0.5, 0.6, 0.75, 0.8, 1.0, 1.25, 1.5, 1.75, 2.0,
 
 
 
+const SPLINE_RESOLUTION_LEVELS = {
+    1: { level: 1, name: 'Mức 1 (Thô - 40pts/răng)', numFlank: 8, numArc: 6, numFillet: 4, ptsPerTooth: 40 },
+    2: { level: 2, name: 'Mức 2 (60pts/răng)', numFlank: 10, numArc: 8, numFillet: 6, ptsPerTooth: 60 },
+    3: { level: 3, name: 'Mức 3 (80pts/răng)', numFlank: 12, numArc: 10, numFillet: 8, ptsPerTooth: 80 },
+    4: { level: 4, name: 'Mức 4 (100pts/răng)', numFlank: 14, numArc: 12, numFillet: 10, ptsPerTooth: 100 },
+    5: { level: 5, name: 'Mức 5 (120pts/răng)', numFlank: 16, numArc: 14, numFillet: 12, ptsPerTooth: 120 },
+    6: { level: 6, name: 'Mức 6 (Chuẩn Gốc MITCalc 1.74 - 160pts/răng)', numFlank: 20, numArc: 18, numFillet: 16, ptsPerTooth: 160 },
+    7: { level: 7, name: 'Mức 7 (200pts/răng)', numFlank: 25, numArc: 22, numFillet: 20, ptsPerTooth: 200 },
+    8: { level: 8, name: 'Mức 8 (240pts/răng)', numFlank: 30, numArc: 26, numFillet: 24, ptsPerTooth: 240 },
+    9: { level: 9, name: 'Mức 9 (300pts/răng)', numFlank: 38, numArc: 32, numFillet: 30, ptsPerTooth: 300 },
+    10: { level: 10, name: 'Mức 10 (380pts/răng)', numFlank: 48, numArc: 40, numFillet: 38, ptsPerTooth: 380 },
+    11: { level: 11, name: 'Mức 11 (Siêu Mịn CNC/EDM - 500pts/răng)', numFlank: 64, numArc: 50, numFillet: 50, ptsPerTooth: 500 }
+};
+
 const SplinesCalc = {
     PI: 3.14159265358979,
 
@@ -79,29 +93,34 @@ const SplinesCalc = {
 
     /**
      * Recommended pin/ball diameter dp according to international standards
-     * Quy tắc chuẩn: Với mọi then có góc ăn khớp danh nghĩa alfa <= 30°, mặc định dp = 1.75 * m
-     * (Bảo lưu đầy đủ các công thức ISO 4156 / ANSI B92.1 / DIN 5480 cho góc 37.5°, 45° hoặc khi cần tra cứu)
+     * DIN 5480, ISO 4156, ANSI B92.1, ANSI B92.2M, CSN 4950
+     * Tự động tính kích thước tiêu chuẩn, người dùng vẫn có thể tùy chỉnh tự do
      */
     getRecommendedPinDiameter(stdTypeId, m, alfa = 30.0) {
-        if (alfa <= 30.0 + 1e-4) {
-            const dt = 1.75 * m;
-            return {
-                dt0: parseFloat(dt.toFixed(4)),
-                dt2: parseFloat(dt.toFixed(4))
-            };
-        }
+        let dt0 = 1.800 * m;
+        let dt2 = 1.500 * m;
 
-        // Với góc lớn hơn 30° (ví dụ 37.5°, 45°):
-        let dt0 = 1.75 * m;
-        let dt2 = 1.75 * m;
-
-        // ISO 4156 / ANSI B92.1 / ANSI B92.2M cho góc > 30°:
-        if (Math.abs(alfa - 37.5) < 0.1) {
-            dt0 = 1.728 * m;
-            dt2 = 1.440 * m;
-        } else if (Math.abs(alfa - 45.0) < 0.1) {
-            dt0 = 1.920 * m;
-            dt2 = 1.440 * m;
+        // ISO 4156 / ANSI B92.1 / ANSI B92.2M
+        if (stdTypeId >= 1 && stdTypeId <= 13) {
+            if (Math.abs(alfa - 30.0) < 0.1) {
+                const isFillet = (stdTypeId === 3 || stdTypeId === 7 || stdTypeId === 11);
+                dt0 = isFillet ? 1.920 * m : 1.728 * m;
+                dt2 = isFillet ? 1.728 * m : 1.440 * m;
+            } else if (Math.abs(alfa - 37.5) < 0.1) {
+                dt0 = 1.728 * m;
+                dt2 = 1.440 * m;
+            } else if (Math.abs(alfa - 45.0) < 0.1) {
+                dt0 = 1.920 * m;
+                dt2 = 1.440 * m;
+            }
+        } else if (stdTypeId === 14) {
+            // DIN 5480 (DIN 5480-15 inspection balls: Trục dt0 = 1.800*m, Lỗ dt2 = 1.500*m)
+            dt0 = 1.800 * m;
+            dt2 = 1.500 * m;
+        } else if (stdTypeId >= 15 && stdTypeId <= 17) {
+            // CSN 4950
+            dt0 = 1.750 * m;
+            dt2 = 1.500 * m;
         }
 
         return {
@@ -541,8 +560,363 @@ const SplinesCalc = {
             da_rev_hub,
             u_rev_hub,
             daxx_hub,
-            m_rev_hub
+            m_rev_hub,
+            profileShiftAdvice: this.getProfileShiftAdvice(stdTypeId, m, z0, x0, x2)
         };
+    },
+
+    /**
+     * Tư vấn hệ số dịch chỉnh biên dạng then hoa thân khai (Profile Shift Advice)
+     * Dựa trên tiêu chuẩn DIN 5480, ISO 4156, ANSI B92.1 và lý thuyết hình học răng
+     */
+    getProfileShiftAdvice(stdTypeId, m, z, x0, x2) {
+        let stdName = 'ISO 4156 / ANSI B92';
+        let x0_std = 0.0;
+        let isStandardMatched = false;
+        let stdNote = '';
+
+        if (stdTypeId === 14) {
+            stdName = 'DIN 5480';
+            const matches = SplinesData.din5480.filter(e => Math.abs(e.m - m) < 1e-4 && e.z === z);
+            if (matches.length > 0) {
+                const match = matches[matches.length - 1];
+                const dB = match.d_ref;
+                x0_std = parseFloat(((dB - z * m - 1.1 * m) / (2.0 * m)).toFixed(4));
+                isStandardMatched = true;
+                stdNote = `Quy cách chuẩn: ${match.name} (dB = ${dB} mm) ⇒ x₀ chuẩn = ${x0_std >= 0 ? '+' : ''}${x0_std.toFixed(4)}`;
+            } else {
+                stdNote = `DIN 5480 dải quy chuẩn: x₀ ∈ [-0.05, +0.45] tùy theo đường kính chuẩn dB`;
+            }
+        } else {
+            stdNote = `Theo ISO 4156 / ANSI: Biên dạng tiêu chuẩn không dịch chỉnh (x₀ = 0.0000)`;
+        }
+
+        // Đánh giá trạng thái an toàn hình học
+        let status = 'optimal'; // 'optimal' | 'warning_undercut' | 'warning_pointing' | 'info_custom'
+        let title = 'Tối ưu';
+        let detail = '';
+
+        if (x0 < -0.40) {
+            status = 'warning_undercut';
+            title = 'Nguy Cơ Cắt Lẹm (Undercut)';
+            detail = `Hệ số x₀ = ${x0.toFixed(4)} < -0.40: Bán kính thân khai bị lùi sâu, chân răng có nguy cơ bị cắt lẹm làm yếu độ bền uốn.`;
+        } else if (x0 > 0.45) {
+            status = 'warning_pointing';
+            title = 'Nguy Cơ Nhọn Đỉnh (Pointing)';
+            detail = `Hệ số x₀ = ${x0.toFixed(4)} > +0.45: Đỉnh răng bị vót nhọn (chiều dày đỉnh sa mỏng), nguy cơ sứt mẻ khi truyền tải hoặc va đập.`;
+        } else {
+            status = 'optimal';
+            title = 'Dải An Toàn Tiêu Chuẩn';
+            if (isStandardMatched && Math.abs(x0 - x0_std) < 0.01) {
+                detail = `Trùng khớp chính xác quy cách DIN 5480 chuẩn (x₀ = ${x0_std >= 0 ? '+' : ''}${x0_std.toFixed(4)}). Biên dạng cân bằng, răng khỏe.`;
+            } else {
+                detail = `Dải an toàn tiêu chuẩn x₀ ∈ [-0.40, +0.45]. Biên dạng răng không cắt lẹm, chiều dày đỉnh đủ bền.`;
+            }
+        }
+
+        // Đánh giá tính liên hợp
+        const isConjugate = Math.abs(x0 + x2) < 0.005;
+        let conjNote = isConjugate
+            ? `Ăn khớp liên hợp hoàn hảo (x₂ = -x₀, tổng Σx = 0): Bảo toàn khe hở cạnh răng danh nghĩa.`
+            : `Hệ số không liên hợp (x₂ ≠ -x₀, tổng Σx = ${(x0 + x2).toFixed(4)}): Khe hở ăn khớp và độ dày răng có sự bù trừ.`;
+
+        return {
+            stdName,
+            x0_std,
+            isStandardMatched,
+            stdNote,
+            status,
+            title,
+            detail,
+            isConjugate,
+            conjNote
+        };
+    },
+
+    /**
+     * Compute analytical profile points for shaft teeth sector (External Spline)
+     * Tiếp tuyến C1 cung bo chân răng rf trơn tru mượt mà
+     */
+    generateShaftSectorPoints(g, resLevel = 6) {
+        const z = g.z0;
+        const m = g.m || 1.0;
+        const alfaRad = (g.alfa * Math.PI) / 180.0;
+        const invAlfa = Math.tan(alfaRad) - alfaRad;
+        const d = g.d0;
+        const db = g.db0;
+        const da = g.da0;
+        const df = g.df0;
+        const s = g.s0;
+
+        const r_base = db / 2.0;
+        const r_tip = da / 2.0;
+        const r_root = df / 2.0;
+        const tau = Math.PI / z;
+        const psi = s / d;
+
+        const resInfo = (typeof SPLINE_RESOLUTION_LEVELS !== 'undefined')
+            ? (SPLINE_RESOLUTION_LEVELS[resLevel] || SPLINE_RESOLUTION_LEVELS[6])
+            : { numFlank: 20, numArc: 18, numFillet: 16 };
+        const numFlank = resInfo.numFlank;
+        const numArc = resInfo.numArc;
+        const numFillet = resInfo.numFillet;
+
+        let rf = 0.20 * m;
+        if (g.rf0_tool && g.rf0_tool > 0) rf = g.rf0_tool * m;
+        else if (g.rf0 && g.rf0 > 0) rf = g.rf0;
+        rf = Math.max(0.08 * m, Math.min(0.40 * m, rf));
+        const target_R = r_root + rf;
+        const alfa_tip = Math.acos(Math.min(1.0, r_base / r_tip));
+
+        function getRightFlank(alfa_t) {
+            const r_t = r_base / Math.cos(alfa_t);
+            const inv_t = Math.tan(alfa_t) - alfa_t;
+            const th_t = psi + invAlfa - inv_t;
+            const Px = r_t * Math.sin(th_t);
+            const Py = r_t * Math.cos(th_t);
+            const phi = alfa_t - th_t;
+            const nx = Math.cos(phi);
+            const ny = Math.sin(phi);
+            const Cx = Px + rf * nx;
+            const Cy = Py + rf * ny;
+            return { Px, Py, Cx, Cy, R_C: Math.hypot(Cx, Cy), th_t, r_t };
+        }
+
+        let low = 0.0001;
+        let high = Math.min(alfaRad, alfa_tip);
+        for (let iter = 0; iter < 40; iter++) {
+            const mid = (low + high) / 2.0;
+            if (getRightFlank(mid).R_C < target_R) low = mid;
+            else high = mid;
+        }
+        const alfa_tan = (low + high) / 2.0;
+        const { Px: Px_r, Py: Py_r, Cx: Cx_r, Cy: Cy_r, R_C: R_C_r } = getRightFlank(alfa_tan);
+        const P_root_x = Cx_r * (r_root / R_C_r);
+        const P_root_y = Cy_r * (r_root / R_C_r);
+        const th_root_r = Math.atan2(P_root_x, P_root_y);
+
+        const pts = [];
+
+        // 1. Cung đáy rãnh chân răng bên trái: từ -tau đến -th_root_r
+        for (let i = 0; i < numArc; i++) {
+            const frac = i / numArc;
+            const th = -tau + (tau - th_root_r) * frac;
+            const x = r_root * Math.sin(th);
+            const y = r_root * Math.cos(th);
+            pts.push({ x, y, r: r_root, theta: th });
+        }
+
+        // 2. Cung bo chân răng bên trái: từ tiếp xúc đáy đến tiếp xúc thân khai
+        const ang_root_l = Math.atan2(-P_root_x - (-Cx_r), P_root_y - Cy_r);
+        const ang_tan_l = Math.atan2(-Px_r - (-Cx_r), Py_r - Cy_r);
+        for (let i = 0; i < numFillet; i++) {
+            const frac = i / numFillet;
+            const ang = ang_root_l + (ang_tan_l - ang_root_l) * frac;
+            const x = -Cx_r + rf * Math.sin(ang);
+            const y = Cy_r + rf * Math.cos(ang);
+            pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
+        }
+
+        // 3. Sườn thân khai bên trái: từ alfa_tan lên alfa_tip
+        for (let i = 0; i < numFlank; i++) {
+            const frac = i / numFlank;
+            const a = alfa_tan + (alfa_tip - alfa_tan) * frac;
+            const r_t = r_base / Math.cos(a);
+            const inv_t = Math.tan(a) - a;
+            const th_t = -(psi + invAlfa - inv_t);
+            const x = r_t * Math.sin(th_t);
+            const y = r_t * Math.cos(th_t);
+            pts.push({ x, y, r: r_t, theta: th_t });
+        }
+
+        // 4. Cung đỉnh răng: từ -th_tip đến +th_tip
+        const inv_tip = Math.tan(alfa_tip) - alfa_tip;
+        const th_tip = psi + invAlfa - inv_tip;
+        for (let i = 0; i <= numArc; i++) {
+            const frac = i / numArc;
+            const th = -th_tip + (2.0 * th_tip) * frac;
+            const x = r_tip * Math.sin(th);
+            const y = r_tip * Math.cos(th);
+            pts.push({ x, y, r: r_tip, theta: th });
+        }
+
+        // 5. Sườn thân khai bên phải: từ alfa_tip xuống alfa_tan
+        for (let i = 0; i < numFlank; i++) {
+            const frac = i / numFlank;
+            const a = alfa_tip - (alfa_tip - alfa_tan) * frac;
+            const r_t = r_base / Math.cos(a);
+            const inv_t = Math.tan(a) - a;
+            const th_t = +(psi + invAlfa - inv_t);
+            const x = r_t * Math.sin(th_t);
+            const y = r_t * Math.cos(th_t);
+            pts.push({ x, y, r: r_t, theta: th_t });
+        }
+
+        // 6. Cung bo chân răng bên phải: từ tiếp xúc thân khai xuống tiếp xúc đáy rãnh
+        const ang_tan_r = Math.atan2(Px_r - Cx_r, Py_r - Cy_r);
+        const ang_root_r = Math.atan2(P_root_x - Cx_r, P_root_y - Cy_r);
+        for (let i = 0; i < numFillet; i++) {
+            const frac = i / numFillet;
+            const ang = ang_tan_r + (ang_root_r - ang_tan_r) * frac;
+            const x = Cx_r + rf * Math.sin(ang);
+            const y = Cy_r + rf * Math.cos(ang);
+            pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
+        }
+
+        // 7. Cung đáy rãnh chân răng bên phải: từ th_root_r đến +tau
+        for (let i = 0; i <= numArc; i++) {
+            const frac = i / numArc;
+            const th = th_root_r + (tau - th_root_r) * frac;
+            const x = r_root * Math.sin(th);
+            const y = r_root * Math.cos(th);
+            pts.push({ x, y, r: r_root, theta: th });
+        }
+
+        return pts;
+    },
+
+    /**
+     * Compute analytical profile points for internal hub tooth sector (Internal Spline Tooth)
+     * Tiếp tuyến C1 cung bo đỉnh răng ra trơn tru mượt mà
+     */
+    generateHubSpacePoints(g, resLevel = 6) {
+        const z = g.z0;
+        const m = g.m || 1.0;
+        const alfaRad = (g.alfa * Math.PI) / 180.0;
+        const invAlfa = Math.tan(alfaRad) - alfaRad;
+        const d = g.d2 || g.d0;
+        const db = g.db2 || g.db0;
+        const dri = g.dri2;
+        const di = g.di2;
+        const s2 = g.s2;
+
+        const r_base = db / 2.0;
+        const r_root = dri / 2.0;
+        const r_tip = di / 2.0;
+        const tau = Math.PI / z;
+        const psi = s2 / d;
+
+        const resInfo = (typeof SPLINE_RESOLUTION_LEVELS !== 'undefined')
+            ? (SPLINE_RESOLUTION_LEVELS[resLevel] || SPLINE_RESOLUTION_LEVELS[6])
+            : { numFlank: 20, numArc: 18, numFillet: 16 };
+        const numFlank = resInfo.numFlank;
+        const numArc = resInfo.numArc;
+        const numFillet = resInfo.numFillet;
+
+        let ra = 0.20 * m;
+        if (g.ra2_tool && g.ra2_tool > 0) ra = g.ra2_tool * m;
+        else if (g.ra2 && g.ra2 > 0) ra = g.ra2;
+        ra = Math.max(0.08 * m, Math.min(0.35 * m, ra));
+        const target_R = r_tip + ra;
+
+        const alfa_tip = Math.acos(Math.min(1.0, r_base / r_tip));
+        const alfa_root = Math.acos(Math.min(1.0, r_base / r_root));
+
+        function getHubFlankPt(alfa_t) {
+            const r_t = r_base / Math.cos(alfa_t);
+            const inv_t = Math.tan(alfa_t) - alfa_t;
+            const th_t = psi + invAlfa - inv_t;
+            const Px = r_t * Math.sin(th_t);
+            const Py = r_t * Math.cos(th_t);
+            const phi = alfa_t - th_t;
+            const nx = -Math.cos(phi);
+            const ny = -Math.sin(phi);
+            const Cx = Px + ra * nx;
+            const Cy = Py + ra * ny;
+            return { Px, Py, Cx, Cy, R_C: Math.hypot(Cx, Cy), th_t, r_t };
+        }
+
+        let low = alfa_tip;
+        let high = alfa_root;
+        for (let iter = 0; iter < 40; iter++) {
+            const mid = (low + high) / 2.0;
+            if (getHubFlankPt(mid).R_C < target_R) low = mid;
+            else high = mid;
+        }
+        const alfa_tan = (low + high) / 2.0;
+        const { Px: Px_r, Py: Py_r, Cx: Cx_r, Cy: Cy_r, R_C: R_C_r } = getHubFlankPt(alfa_tan);
+        const P_tip_x = Cx_r * (r_tip / R_C_r);
+        const P_tip_y = Cy_r * (r_tip / R_C_r);
+        const th_tip_r = Math.atan2(P_tip_x, P_tip_y);
+
+        const pts = [];
+        const inv_root = Math.tan(alfa_root) - alfa_root;
+        const th_root = psi + invAlfa - inv_root;
+
+        // 1. Cung rãnh ngoài bên trái: từ -tau đến -th_root tại r_root
+        for (let i = 0; i < numArc; i++) {
+            const frac = i / numArc;
+            const th = -tau + (tau - th_root) * frac;
+            const x = r_root * Math.sin(th);
+            const y = r_root * Math.cos(th);
+            pts.push({ x, y, r: r_root, theta: th });
+        }
+
+        // 2. Sườn răng bên trái: từ alfa_root vào trong đến alfa_tan
+        for (let i = 0; i < numFlank; i++) {
+            const frac = i / numFlank;
+            const a = alfa_root - (alfa_root - alfa_tan) * frac;
+            const r_t = r_base / Math.cos(a);
+            const inv_t = Math.tan(a) - a;
+            const th_t = -(psi + invAlfa - inv_t);
+            const x = r_t * Math.sin(th_t);
+            const y = r_t * Math.cos(th_t);
+            pts.push({ x, y, r: r_t, theta: th_t });
+        }
+
+        // 3. Cung bo đỉnh răng bên trái: từ tiếp xúc thân khai đến tiếp xúc cung đỉnh
+        const ang_tan_l = Math.atan2(-Px_r - (-Cx_r), Py_r - Cy_r);
+        const ang_tip_l = Math.atan2(-P_tip_x - (-Cx_r), P_tip_y - Cy_r);
+        for (let i = 0; i < numFillet; i++) {
+            const frac = i / numFillet;
+            const ang = ang_tan_l + (ang_tip_l - ang_tan_l) * frac;
+            const x = -Cx_r + ra * Math.sin(ang);
+            const y = Cy_r + ra * Math.cos(ang);
+            pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
+        }
+
+        // 4. Cung đỉnh răng trong: từ -th_tip_r đến +th_tip_r tại r_tip
+        for (let i = 0; i <= numArc; i++) {
+            const frac = i / numArc;
+            const th = -th_tip_r + (2.0 * th_tip_r) * frac;
+            const x = r_tip * Math.sin(th);
+            const y = r_tip * Math.cos(th);
+            pts.push({ x, y, r: r_tip, theta: th });
+        }
+
+        // 5. Cung bo đỉnh răng bên phải: từ tiếp xúc cung đỉnh đến tiếp xúc thân khai
+        const ang_tip_r = Math.atan2(P_tip_x - Cx_r, P_tip_y - Cy_r);
+        const ang_tan_r = Math.atan2(Px_r - Cx_r, Py_r - Cy_r);
+        for (let i = 0; i < numFillet; i++) {
+            const frac = i / numFillet;
+            const ang = ang_tip_r + (ang_tan_r - ang_tip_r) * frac;
+            const x = Cx_r + ra * Math.sin(ang);
+            const y = Cy_r + ra * Math.cos(ang);
+            pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
+        }
+
+        // 6. Sườn răng bên phải: từ alfa_tan ra ngoài đến alfa_root
+        for (let i = 0; i < numFlank; i++) {
+            const frac = i / numFlank;
+            const a = alfa_tan + (alfa_root - alfa_tan) * frac;
+            const r_t = r_base / Math.cos(a);
+            const inv_t = Math.tan(a) - a;
+            const th_t = +(psi + invAlfa - inv_t);
+            const x = r_t * Math.sin(th_t);
+            const y = r_t * Math.cos(th_t);
+            pts.push({ x, y, r: r_t, theta: th_t });
+        }
+
+        // 7. Cung rãnh ngoài bên phải: từ th_root đến +tau tại r_root
+        for (let i = 0; i <= numArc; i++) {
+            const frac = i / numArc;
+            const th = th_root + (tau - th_root) * frac;
+            const x = r_root * Math.sin(th);
+            const y = r_root * Math.cos(th);
+            pts.push({ x, y, r: r_root, theta: th });
+        }
+
+        return pts;
     }
 };
 
@@ -554,6 +928,8 @@ const SplinesCalc = {
  * Renders exact involute profile geometry for shaft, hub, and meshing assembly.
  * Supports multi-touch gestures, pan/zoom, measurement pins, and common normal overlay.
  */
+
+
 
 class SplinesCanvas {
     constructor(canvasId) {
@@ -567,6 +943,7 @@ class SplinesCanvas {
         this.showCircles = true;
         this.showInspection = true;
         this.showCenterlines = true;
+        this.profileResolution = 6; // Mặc định Mức 6 (Chuẩn Gốc MITCalc 1.74)
 
         // Transform state
         this.scale = 1.0;
@@ -583,6 +960,11 @@ class SplinesCanvas {
         this.geom = null;
 
         this.initEvents();
+    }
+
+    setResolution(lvl) {
+        this.profileResolution = parseInt(lvl, 10) || 6;
+        this.render();
     }
 
     initEvents() {
@@ -717,149 +1099,18 @@ class SplinesCanvas {
 
     /**
      * Compute analytical profile points for shaft teeth sector (External Spline)
-     * Returns array of points with local polar coordinates (r, theta) centered at tooth angle 0
+     * Delegated to SplinesCalc for 100% unified geometry with DXF exporter
      */
-    generateShaftSectorPoints(g, numFlankPts = 16) {
-        const z = g.z0;
-        const alfaRad = (g.alfa * Math.PI) / 180.0;
-        const invAlfa = Math.tan(alfaRad) - alfaRad;
-        const d = g.d0;
-        const db = g.db0;
-        const da = g.da0;
-        const df = g.df0;
-        const s = g.s0;
-
-        const r_base = db / 2.0;
-        const r_tip = da / 2.0;
-        const r_root = df / 2.0;
-        const tau = Math.PI / z; // Half-pitch
-        const psi = s / d;       // Half-tooth angle on pitch circle
-
-        const r_start = Math.max(r_base, r_root);
-        const r_end = Math.max(r_start + 0.05 * (g.m || 1.0), r_tip);
-
-        const pts = [];
-
-        // 1. Root bottom arc on left: from -tau to -phi_start
-        let alfa_start = 0;
-        if (r_start > r_base) alfa_start = Math.acos(Math.min(1.0, r_base / r_start));
-        const inv_start = Math.tan(alfa_start) - alfa_start;
-        const phi_start = psi + invAlfa - inv_start;
-
-        pts.push({ r: r_root, theta: -tau });
-        if (phi_start < tau) {
-            pts.push({ r: r_root, theta: -phi_start });
-        }
-
-        // 2. Left flank upwards: from r_start to r_tip
-        for (let i = 0; i <= numFlankPts; i++) {
-            const frac = i / numFlankPts;
-            const r = r_start + (r_end - r_start) * frac;
-            let alfa_r = 0;
-            if (r > r_base) alfa_r = Math.acos(Math.min(1.0, r_base / r));
-            const inv_r = Math.tan(alfa_r) - alfa_r;
-            const phi = psi + invAlfa - inv_r;
-            pts.push({ r, theta: -phi });
-        }
-
-        // 3. Tip crest center at r_tip
-        pts.push({ r: r_tip, theta: 0.0 });
-
-        // 4. Right flank downwards: from r_tip down to r_start
-        for (let i = numFlankPts; i >= 0; i--) {
-            const frac = i / numFlankPts;
-            const r = r_start + (r_end - r_start) * frac;
-            let alfa_r = 0;
-            if (r > r_base) alfa_r = Math.acos(Math.min(1.0, r_base / r));
-            const inv_r = Math.tan(alfa_r) - alfa_r;
-            const phi = psi + invAlfa - inv_r;
-            pts.push({ r, theta: phi });
-        }
-
-        // 5. Root bottom arc on right: from phi_start to +tau
-        if (phi_start < tau) {
-            pts.push({ r: r_root, theta: phi_start });
-        }
-        pts.push({ r: r_root, theta: tau });
-
-        return pts;
+    generateShaftSectorPoints(g, resLevel = 6) {
+        return SplinesCalc.generateShaftSectorPoints(g, resLevel);
     }
 
     /**
-     * Compute analytical profile points for internal hub tooth space (Internal Spline Groove)
-     * Returns array of points with local polar coordinates (r, theta) centered at groove angle 0
+     * Compute analytical profile points for internal hub tooth sector (Internal Spline Tooth)
+     * Delegated to SplinesCalc for 100% unified geometry with DXF exporter
      */
-    generateHubSpacePoints(g, numFlankPts = 16) {
-        const z = g.z0;
-        const m = g.m;
-        const alfaRad = (g.alfa * Math.PI) / 180.0;
-        const invAlfa = Math.tan(alfaRad) - alfaRad;
-        const d = g.d2 || g.d0;
-        const db = g.db2 || g.db0;
-        const dri = g.dri2; // Hub root diameter (outer groove bottom)
-        const di = g.di2;   // Hub tip diameter (inner tooth crest)
-        const s2 = g.s2;
-        const e2 = Math.PI * m - s2; // Groove width on pitch circle
-
-        const r_base = db / 2.0;
-        const r_root = dri / 2.0; // Outer groove bottom
-        const r_tip = di / 2.0;   // Inner tooth crest
-        const tau = Math.PI / z;
-        const psi_space = e2 / d; // Half-groove angle on pitch circle
-
-        const r_start = Math.max(r_base, r_tip);
-        const r_end = Math.max(r_start + 0.05 * (g.m || 1.0), r_root);
-
-        const pts = [];
-
-        // 1. Inner tooth crest arc on left: from -tau to -phi_start at r_tip
-        let alfa_start = 0;
-        if (r_start > r_base) alfa_start = Math.acos(Math.min(1.0, r_base / r_start));
-        const inv_start = Math.tan(alfa_start) - alfa_start;
-        const phi_start = psi_space + invAlfa - inv_start;
-
-        pts.push({ r: r_tip, theta: -tau });
-        if (phi_start < tau) {
-            pts.push({ r: r_tip, theta: -phi_start });
-        }
-
-        // 2. Left flank of groove outwards: from r_start (inner) to r_root (outer)
-        for (let i = 0; i <= numFlankPts; i++) {
-            const frac = i / numFlankPts;
-            const r = r_start + (r_end - r_start) * frac;
-            let alfa_r = 0;
-            if (r > r_base) alfa_r = Math.acos(r_base / r);
-            const inv_r = Math.tan(alfa_r) - alfa_r;
-            const phi = psi_space + invAlfa - inv_r;
-            pts.push({ r, theta: -phi });
-        }
-
-        // 3. Groove bottom arc (at outer radius r_root): smoothly across theta = 0
-        let alfa_root = 0;
-        if (r_root > r_base) alfa_root = Math.acos(r_base / r_root);
-        const inv_root = Math.tan(alfa_root) - alfa_root;
-        const phi_root = psi_space + invAlfa - inv_root;
-        pts.push({ r: r_root, theta: 0.0 });
-        pts.push({ r: r_root, theta: phi_root });
-
-        // 4. Right flank of groove inwards: from r_root down to r_start
-        for (let i = numFlankPts - 1; i >= 0; i--) {
-            const frac = i / numFlankPts;
-            const r = r_start + (r_end - r_start) * frac;
-            let alfa_r = 0;
-            if (r > r_base) alfa_r = Math.acos(r_base / r);
-            const inv_r = Math.tan(alfa_r) - alfa_r;
-            const phi = psi_space + invAlfa - inv_r;
-            pts.push({ r, theta: phi });
-        }
-
-        // 5. Inner tooth crest arc on right: from phi_start to +tau at r_tip
-        if (phi_start < tau) {
-            pts.push({ r: r_tip, theta: phi_start });
-        }
-        pts.push({ r: r_tip, theta: tau });
-
-        return pts;
+    generateHubSpacePoints(g, resLevel = 6) {
+        return SplinesCalc.generateHubSpacePoints(g, resLevel);
     }
 
     render() {
@@ -1002,7 +1253,7 @@ class SplinesCanvas {
     drawShaft(ctx) {
         const g = this.geom;
         const z = g.z0;
-        const pts = this.generateShaftSectorPoints(g);
+        const pts = this.generateShaftSectorPoints(g, this.profileResolution);
 
         ctx.save();
         ctx.fillStyle = 'rgba(2, 132, 199, 0.28)';   // Sky blue translucent fill
@@ -1052,7 +1303,7 @@ class SplinesCanvas {
     drawHub(ctx) {
         const g = this.geom;
         const z = g.z0;
-        const pts = this.generateHubSpacePoints(g);
+        const pts = this.generateHubSpacePoints(g, this.profileResolution);
 
         ctx.save();
         ctx.fillStyle = 'rgba(249, 115, 22, 0.18)'; // Orange translucent fill
@@ -1323,67 +1574,7 @@ class SplinesCanvas {
     }
 
     drawOverlayUI(ctx, w, h) {
-        const g = this.geom;
         ctx.save();
-        ctx.font = '12px "Segoe UI", Tahoma, sans-serif';
-
-        // HUD Info Card (Top Left)
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
-        ctx.strokeStyle = '#334155';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.roundRect(16, 16, 260, 115, 6);
-        ctx.fill();
-        ctx.stroke();
-
-        ctx.fillStyle = '#f8fafc';
-        ctx.font = 'bold 13px "Segoe UI", Tahoma, sans-serif';
-        const viewTitle = this.viewMode === 'hub' ? 'Lỗ Moay-ơ (Hub)' : (this.viewMode === 'shaft' ? 'Trục Then Hoa (Shaft)' : 'Cặp Ăn Khớp');
-        ctx.fillText(`2D Then Hoa: ${viewTitle} (z=${g.z0}, m=${g.m} mm)`, 28, 38);
-
-        ctx.font = '12px "Segoe UI", Tahoma, sans-serif';
-        if (this.viewMode === 'hub') {
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Đường kính đỉnh Lỗ Di: `, 28, 58);
-            ctx.fillStyle = '#fb923c';
-            ctx.fillText(`${g.di2.toFixed(3)} mm`, 195, 58);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Đường kính rãnh Lỗ Dri: `, 28, 76);
-            ctx.fillStyle = '#f43f5e';
-            ctx.fillText(`${g.dri2.toFixed(3)} mm`, 195, 76);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Kích thước đo bi trong M: `, 28, 94);
-            ctx.fillStyle = '#facc15';
-            ctx.fillText(`${g.M2.toFixed(4)} mm`, 195, 94);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Pháp tuyến đo 2 bi Wb: `, 28, 112);
-            ctx.fillStyle = '#38bdf8';
-            const wbVal = g.W_bi2 || g.W2;
-            ctx.fillText(`${wbVal.toFixed(4)} mm (k=${g.k2})`, 195, 112);
-        } else {
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Đường kính đỉnh Trục da0: `, 28, 58);
-            ctx.fillStyle = '#38bdf8';
-            ctx.fillText(`${g.da0.toFixed(3)} mm`, 195, 58);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Đường kính chân Trục df0: `, 28, 76);
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`${g.df0.toFixed(3)} mm`, 195, 76);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Kích thước đo bi ngoài M: `, 28, 94);
-            ctx.fillStyle = '#facc15';
-            ctx.fillText(`${g.M0.toFixed(4)} mm`, 195, 94);
-
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillText(`Pháp tuyến chung W0: `, 28, 112);
-            ctx.fillStyle = '#4ade80';
-            ctx.fillText(`${g.W0.toFixed(4)} mm (k=${g.k0})`, 195, 112);
-        }
 
         // Controls hint (Bottom Right)
         ctx.fillStyle = 'rgba(15, 23, 42, 0.85)';
@@ -1422,9 +1613,12 @@ class SplinesCanvas {
  *  - Non-overlapping manufacturing specification table
  */
 
+
+
 const SplinesDxf = {
     generateDXF(geom, target = 'assembly') {
         if (!geom) return '';
+        geom._target = target;
 
         const lines = [];
 
@@ -1614,84 +1808,14 @@ const SplinesDxf = {
     /**
      * Draw external Shaft profile with 100% continuous, watertight closed POLYLINE:
      * - Zero gaps, zero duplicate entities, zero stray lines
-     * - Involute flanks and true circular tip/root lands connected in continuous order
+     * - C1 smooth root fillet radius (rf) and involute flanks connected in continuous order
+     * - Resolution level driven by geom.profileResolution (1 to 11)
      */
     drawShaftContour(lines, geom) {
         const z = geom.z0;
-        const m = geom.m;
-        const alfaRad = (geom.alfa * Math.PI) / 180.0;
-        const invAlfa = Math.tan(alfaRad) - alfaRad;
-        const d = geom.d0;
-        const db = geom.db0;
-        const da = geom.da0;
-        const df = geom.df0;
-        const s = geom.s0;
+        const resLevel = geom.profileResolution || 6;
+        const sectorPts = SplinesCalc.generateShaftSectorPoints(geom, resLevel);
 
-        const rBase = db / 2.0;
-        const rTip = da / 2.0;
-        const rRoot = df / 2.0;
-        const tau = Math.PI / z;
-        const psi = s / d;
-        const numFlank = 16;
-        const numArc = 6;
-
-        const rStart = Math.max(rBase, rRoot);
-        const rEnd = Math.max(rStart + 0.05 * (m || 1.0), rTip);
-
-        // 1. Sector geometry for a single tooth (-tau to +tau)
-        const sectorPts = [];
-
-        // 1.1 Root bottom arc left: from -tau to -phiStart at rRoot
-        let alfaStart = 0;
-        if (rStart > rBase) alfaStart = Math.acos(Math.min(1.0, rBase / rStart));
-        const invStart = Math.tan(alfaStart) - alfaStart;
-        const phiStart = psi + invAlfa - invStart;
-
-        for (let i = 0; i < numArc; i++) {
-            const th = -tau + (tau - phiStart) * (i / numArc);
-            sectorPts.push({ r: rRoot, theta: th });
-        }
-
-        // 1.2 Left flank upwards: from rStart to rTip at -phi
-        for (let i = 0; i < numFlank; i++) {
-            const frac = i / numFlank;
-            const r = rStart + (rEnd - rStart) * frac;
-            let alfaR = 0;
-            if (r > rBase) alfaR = Math.acos(Math.min(1.0, rBase / r));
-            const invR = Math.tan(alfaR) - alfaR;
-            const phi = psi + invAlfa - invR;
-            sectorPts.push({ r, theta: -phi });
-        }
-
-        // 1.3 Tip crest arc: from -phiTip to +phiTip at rTip
-        let alfaTip = 0;
-        if (rTip > rBase) alfaTip = Math.acos(Math.min(1.0, rBase / rTip));
-        const invTip = Math.tan(alfaTip) - alfaTip;
-        const phiTip = psi + invAlfa - invTip;
-
-        for (let i = 0; i <= numArc; i++) {
-            const th = -phiTip + (2.0 * phiTip) * (i / numArc);
-            sectorPts.push({ r: rTip, theta: th });
-        }
-
-        // 1.4 Right flank downwards: from rTip down to rStart at +phi
-        for (let i = 0; i < numFlank; i++) {
-            const frac = i / numFlank;
-            const r = rEnd - (rEnd - rStart) * frac;
-            let alfaR = 0;
-            if (r > rBase) alfaR = Math.acos(Math.min(1.0, rBase / r));
-            const invR = Math.tan(alfaR) - alfaR;
-            const phi = psi + invAlfa - invR;
-            sectorPts.push({ r, theta: phi });
-        }
-
-        // 1.5 Root bottom arc right: from +phiStart to +tau at rRoot
-        for (let i = 1; i <= numArc; i++) {
-            const th = phiStart + (tau - phiStart) * (i / numArc);
-            sectorPts.push({ r: rRoot, theta: th });
-        }
-
-        // 2. Generate full 360 degree closed contour points
         const fullPts = [];
         for (let j = 0; j < z; j++) {
             const rotAng = (j * 2.0 * Math.PI) / z;
@@ -1705,90 +1829,24 @@ const SplinesDxf = {
         }
 
         this.addPolyline(lines, 'CONTOUR_SHAFT', fullPts);
+
+        // Inner bore circle if drawing shaft standalone
+        if (geom._target === 'shaft') {
+            this.addCircle(lines, 'CONTOUR_SHAFT', 0, 0, (geom.df0 / 2.0) * 0.5);
+        }
     },
 
     /**
      * Draw internal Hub profile with 100% continuous, watertight closed POLYLINE:
      * - Zero gaps, zero duplicate entities, zero stray lines
-     * - Involute flanks and true circular tip/root lands connected in continuous order
+     * - C1 smooth tip fillet radius (ra) and involute flanks connected in continuous order
+     * - Resolution level driven by geom.profileResolution (1 to 11)
      */
     drawHubContour(lines, geom) {
         const z = geom.z0;
-        const m = geom.m;
-        const alfaRad = (geom.alfa * Math.PI) / 180.0;
-        const invAlfa = Math.tan(alfaRad) - alfaRad;
-        const d = geom.d2 || geom.d0;
-        const db = geom.db2 || geom.db0;
-        const dri = geom.dri2;
-        const di = geom.di2;
-        const s2 = geom.s2;
-        const e2 = Math.PI * m - s2;
+        const resLevel = geom.profileResolution || 6;
+        const sectorPts = SplinesCalc.generateHubSpacePoints(geom, resLevel);
 
-        const rBase = db / 2.0;
-        const rRoot = dri / 2.0; // Outer groove bottom
-        const rTip = di / 2.0;   // Inner tooth crest
-        const tau = Math.PI / z;
-        const psiSpace = e2 / d;
-        const numFlank = 16;
-        const numArc = 6;
-
-        const rStart = Math.max(rBase, rTip);
-        const rEnd = Math.max(rStart + 0.05 * (m || 1.0), rRoot);
-
-        // 1. Sector geometry for a single tooth space (-tau to +tau)
-        const sectorPts = [];
-
-        // 1.1 Inner tip crest arc left: from -tau to -phiStart at rTip
-        let alfaStart = 0;
-        if (rStart > rBase) alfaStart = Math.acos(Math.min(1.0, rBase / rStart));
-        const invStart = Math.tan(alfaStart) - alfaStart;
-        const phiStart = psiSpace + invAlfa - invStart;
-
-        for (let i = 0; i < numArc; i++) {
-            const th = -tau + (tau - phiStart) * (i / numArc);
-            sectorPts.push({ r: rTip, theta: th });
-        }
-
-        // 1.2 Left flank of groove outwards: from rTip to rRoot at -phi
-        for (let i = 0; i < numFlank; i++) {
-            const frac = i / numFlank;
-            const r = rStart + (rEnd - rStart) * frac;
-            let alfaR = 0;
-            if (r > rBase) alfaR = Math.acos(Math.min(1.0, rBase / r));
-            const invR = Math.tan(alfaR) - alfaR;
-            const phi = psiSpace + invAlfa - invR;
-            sectorPts.push({ r, theta: -phi });
-        }
-
-        // 1.3 Groove bottom arc: from -phiRoot to +phiRoot at rRoot
-        let alfaRoot = 0;
-        if (rRoot > rBase) alfaRoot = Math.acos(Math.min(1.0, rBase / rRoot));
-        const invRoot = Math.tan(alfaRoot) - alfaRoot;
-        const phiRoot = psiSpace + invAlfa - invRoot;
-
-        for (let i = 0; i <= numArc; i++) {
-            const th = -phiRoot + (2.0 * phiRoot) * (i / numArc);
-            sectorPts.push({ r: rRoot, theta: th });
-        }
-
-        // 1.4 Right flank of groove inwards: from rRoot down to rTip at +phi
-        for (let i = 0; i < numFlank; i++) {
-            const frac = i / numFlank;
-            const r = rEnd - (rEnd - rStart) * frac;
-            let alfaR = 0;
-            if (r > rBase) alfaR = Math.acos(Math.min(1.0, rBase / r));
-            const invR = Math.tan(alfaR) - alfaR;
-            const phi = psiSpace + invAlfa - invR;
-            sectorPts.push({ r, theta: phi });
-        }
-
-        // 1.5 Inner tip crest arc right: from +phiStart to +tau at rTip
-        for (let i = 1; i <= numArc; i++) {
-            const th = phiStart + (tau - phiStart) * (i / numArc);
-            sectorPts.push({ r: rTip, theta: th });
-        }
-
-        // 2. Generate full 360 degree closed contour points
         const fullPts = [];
         for (let j = 0; j < z; j++) {
             const rotAng = (j * 2.0 * Math.PI) / z;
@@ -1802,13 +1860,19 @@ const SplinesDxf = {
         }
 
         this.addPolyline(lines, 'CONTOUR_HUB', fullPts);
+
+        // Outer collar circle if drawing hub standalone
+        if (geom._target === 'hub') {
+            this.addCircle(lines, 'CONTOUR_HUB', 0, 0, (geom.dri2 / 2.0) * 1.35);
+        }
     },
 
     /**
      * Draw circular measurement pins and dimensions for Shaft (M0 & W0)
      */
     drawShaftInspectionPins(lines, geom) {
-        const dt = geom.dt0 || (1.75 * geom.m);
+        const recPin = SplinesCalc.getRecommendedPinDiameter(geom.stdType, geom.m, geom.alfa);
+        const dt = geom.dt0 || recPin.dt0;
         const rPin = dt / 2.0;
         const rCenter = (geom.M0 - dt) / 2.0;
         const pi = Math.PI;
@@ -1843,7 +1907,8 @@ const SplinesDxf = {
      * Draw circular measurement pins and dimensions for Hub (M2 & Wb)
      */
     drawHubInspectionPins(lines, geom) {
-        const dt = geom.dt2 || geom.dt0 || (1.75 * geom.m);
+        const recPin = SplinesCalc.getRecommendedPinDiameter(geom.stdType, geom.m, geom.alfa);
+        const dt = geom.dt2 || recPin.dt2;
         const rPin = dt / 2.0;
         const rCenter = (geom.ds2 || Math.abs(geom.M2 + dt)) / 2.0;
         const k2 = geom.k2 || 3;
@@ -2029,6 +2094,16 @@ class SplinesUI {
 
         // Toast element
         this.elToast = document.getElementById('toastMsg');
+
+        // Resolution selector
+        this.selResolution = document.getElementById('selProfileResolutionCanvas');
+        this.profileResolution = 6;
+
+        // Profile shift advice elements
+        this.elXAdviceText = document.getElementById('xAdviceText');
+        this.elXAdviceDetail = document.getElementById('xAdviceDetail');
+        this.elXAdviceBadge = document.getElementById('xAdviceBadge');
+        this.elPinStdHint = document.getElementById('outPinStdHint');
     }
 
     populateStandardDropdowns() {
@@ -2493,21 +2568,36 @@ class SplinesUI {
             this.showToast('Đã tải hình ảnh 2D PNG!');
         });
 
+        // Profile Resolution Selector (11 Levels)
+        if (this.selResolution) {
+            this.selResolution.addEventListener('change', () => {
+                const lvl = parseInt(this.selResolution.value, 10) || 6;
+                this.profileResolution = lvl;
+                if (this.canvas) this.canvas.setResolution(lvl);
+                if (this.currentGeom) this.currentGeom.profileResolution = lvl;
+                const info = (typeof SPLINE_RESOLUTION_LEVELS !== 'undefined') ? SPLINE_RESOLUTION_LEVELS[lvl] : null;
+                this.showToast(`Đã chọn: ${info ? info.name : ('Mức ' + lvl)}`);
+            });
+        }
+
         // DXF Export Buttons
         document.getElementById('btnExportDxfAssembly')?.addEventListener('click', () => {
             if (this.currentGeom) {
+                this.currentGeom.profileResolution = this.profileResolution;
                 SplinesDxf.downloadDxf(this.currentGeom, 'assembly');
                 this.showToast('Đã xuất bản vẽ CAD DXF (Cặp Lắp Ghép)!');
             }
         });
         document.getElementById('btnExportDxfShaft')?.addEventListener('click', () => {
             if (this.currentGeom) {
+                this.currentGeom.profileResolution = this.profileResolution;
                 SplinesDxf.downloadDxf(this.currentGeom, 'shaft');
                 this.showToast('Đã xuất bản vẽ CAD DXF (Trục Then Hoa)!');
             }
         });
         document.getElementById('btnExportDxfHub')?.addEventListener('click', () => {
             if (this.currentGeom) {
+                this.currentGeom.profileResolution = this.profileResolution;
                 SplinesDxf.downloadDxf(this.currentGeom, 'hub');
                 this.showToast('Đã xuất bản vẽ CAD DXF (Lỗ Moay-ơ)!');
             }
@@ -2630,6 +2720,7 @@ class SplinesUI {
             u_rev_hub
         });
 
+        geom.profileResolution = this.profileResolution;
         this.currentGeom = geom;
 
         // Cập nhật giá trị đường kính trên giao diện (luôn đồng bộ chuẩn trừ khi người dùng đang nhập custom)
@@ -2735,6 +2826,44 @@ class SplinesUI {
         this.setTxt('outMRevShaft', g.m_rev_shaft.toFixed(3));
         this.setTxt('outDaxxHub', g.daxx_hub.toFixed(4));
         this.setTxt('outMRevHub', g.m_rev_hub.toFixed(3));
+
+        // Update Profile Shift Advice in Real-Time
+        if (g.profileShiftAdvice) {
+            const adv = g.profileShiftAdvice;
+            if (this.elXAdviceText) {
+                this.elXAdviceText.textContent = adv.stdNote;
+            }
+            if (this.elXAdviceDetail) {
+                this.elXAdviceDetail.textContent = `${adv.detail} ${adv.conjNote}`;
+            }
+            if (this.elXAdviceBadge) {
+                this.elXAdviceBadge.textContent = (adv.status === 'optimal' ? '✅ ' : '⚠️ ') + adv.title;
+                if (adv.status === 'optimal') {
+                    this.elXAdviceBadge.style.background = 'rgba(16, 185, 129, 0.2)';
+                    this.elXAdviceBadge.style.color = '#10b981';
+                    this.elXAdviceBadge.style.borderColor = '#10b981';
+                } else {
+                    this.elXAdviceBadge.style.background = 'rgba(245, 158, 11, 0.2)';
+                    this.elXAdviceBadge.style.color = '#f59e0b';
+                    this.elXAdviceBadge.style.borderColor = '#f59e0b';
+                }
+            }
+        }
+
+        // Update Pin Standard Hint
+        if (this.elPinStdHint) {
+            if (g.stdType === 14) {
+                this.elPinStdHint.textContent = 'DIN 5480: 1.800·m (Trục) / 1.500·m (Lỗ)';
+            } else if (g.stdType === 7 || g.stdType === 3 || g.stdType === 11) {
+                this.elPinStdHint.textContent = 'ISO 4156 Fillet: 1.920·m (Trục) / 1.728·m (Lỗ)';
+            } else if (g.stdType === 6 || g.stdType === 1 || g.stdType === 10) {
+                this.elPinStdHint.textContent = 'ISO 4156 Flat: 1.728·m (Trục) / 1.440·m (Lỗ)';
+            } else if (g.stdType >= 15 && g.stdType <= 17) {
+                this.elPinStdHint.textContent = 'CSN 4950: 1.750·m (Trục) / 1.500·m (Lỗ)';
+            } else {
+                this.elPinStdHint.textContent = `dp tiêu chuẩn: ${g.dt0_rec.toFixed(3)} / ${g.dt2_rec.toFixed(3)} mm`;
+            }
+        }
     }
 
     setTxt(id, val) {
