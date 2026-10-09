@@ -74,30 +74,22 @@ export const SplinesCalc = {
      * Tự động tính kích thước tiêu chuẩn, người dùng vẫn có thể tùy chỉnh tự do
      */
     getRecommendedPinDiameter(stdTypeId, m, alfa = 30.0) {
-        let dt0 = 1.800 * m;
-        let dt2 = 1.500 * m;
+        let dt0 = 1.750 * m;
+        let dt2 = 1.750 * m;
 
-        // ISO 4156 / ANSI B92.1 / ANSI B92.2M
-        if (stdTypeId >= 1 && stdTypeId <= 13) {
-            if (Math.abs(alfa - 30.0) < 0.1) {
-                const isFillet = (stdTypeId === 3 || stdTypeId === 7 || stdTypeId === 11);
-                dt0 = isFillet ? 1.920 * m : 1.728 * m;
-                dt2 = isFillet ? 1.728 * m : 1.440 * m;
-            } else if (Math.abs(alfa - 37.5) < 0.1) {
-                dt0 = 1.728 * m;
-                dt2 = 1.440 * m;
-            } else if (Math.abs(alfa - 45.0) < 0.1) {
-                dt0 = 1.920 * m;
-                dt2 = 1.440 * m;
-            }
-        } else if (stdTypeId === 14) {
-            // DIN 5480 (DIN 5480-15 inspection balls: Trục dt0 = 1.800*m, Lỗ dt2 = 1.500*m)
-            dt0 = 1.800 * m;
-            dt2 = 1.500 * m;
-        } else if (stdTypeId >= 15 && stdTypeId <= 17) {
-            // CSN 4950
+        // Góc ăn khớp từ 30 độ trở xuống: ưu tiên dùng công thức 1.75 * m theo yêu cầu người dùng
+        if (alfa <= 30.05) {
             dt0 = 1.750 * m;
-            dt2 = 1.500 * m;
+            dt2 = 1.750 * m;
+        } else if (Math.abs(alfa - 37.5) < 0.1) {
+            dt0 = 1.728 * m;
+            dt2 = 1.440 * m;
+        } else if (Math.abs(alfa - 45.0) < 0.1) {
+            dt0 = 1.920 * m;
+            dt2 = 1.440 * m;
+        } else {
+            dt0 = 1.750 * m;
+            dt2 = 1.750 * m;
         }
 
         return {
@@ -639,13 +631,14 @@ export const SplinesCalc = {
         const numFillet = resInfo.numFillet;
 
         let rf = 0.20 * m;
-        if (g.rf0_tool && g.rf0_tool > 0) rf = g.rf0_tool * m;
-        else if (g.rf0 && g.rf0 > 0) rf = g.rf0;
-        rf = Math.max(0.08 * m, Math.min(0.40 * m, rf));
-        const target_R = r_root + rf;
-        const alfa_tip = Math.acos(Math.min(1.0, r_base / r_tip));
+        if (g.rf0_tool !== undefined && g.rf0_tool > 0) rf = g.rf0_tool * m;
+        else if (g.rf0 !== undefined && g.rf0 > 0) rf = g.rf0;
+        rf = Math.max(0.05 * m, Math.min(0.40 * m, rf));
 
-        function getRightFlank(alfa_t) {
+        const alfa_tip = Math.acos(Math.min(1.0, r_base / r_tip));
+        const alfa_root = (r_root > r_base) ? Math.acos(Math.min(1.0, r_base / r_root)) : 0.0;
+
+        function getRightFlank(alfa_t, cur_rf) {
             const r_t = r_base / Math.cos(alfa_t);
             const inv_t = Math.tan(alfa_t) - alfa_t;
             const th_t = psi + invAlfa - inv_t;
@@ -654,23 +647,47 @@ export const SplinesCalc = {
             const phi = alfa_t - th_t;
             const nx = Math.cos(phi);
             const ny = Math.sin(phi);
-            const Cx = Px + rf * nx;
-            const Cy = Py + rf * ny;
+            const Cx = Px + cur_rf * nx;
+            const Cy = Py + cur_rf * ny;
             return { Px, Py, Cx, Cy, R_C: Math.hypot(Cx, Cy), th_t, r_t };
         }
 
-        let low = 0.0001;
-        let high = Math.min(alfaRad, alfa_tip);
-        for (let iter = 0; iter < 40; iter++) {
-            const mid = (low + high) / 2.0;
-            if (getRightFlank(mid).R_C < target_R) low = mid;
-            else high = mid;
+        let cur_rf = rf;
+        let alfa_tan = alfa_root;
+        let Px_r = 0, Py_r = 0, Cx_r = 0, Cy_r = 0, R_C_r = 0;
+        let th_root_r = 0;
+
+        for (let attempt = 0; attempt < 5; attempt++) {
+            const target_R = r_root + cur_rf;
+            let low = (r_root > r_base) ? alfa_root : 0.0001;
+            let high = Math.min(alfa_tip, Math.max(alfaRad, alfa_root) + 0.35);
+
+            for (let iter = 0; iter < 45; iter++) {
+                const mid = (low + high) / 2.0;
+                if (getRightFlank(mid, cur_rf).R_C < target_R) low = mid;
+                else high = mid;
+            }
+            alfa_tan = (low + high) / 2.0;
+            const flank = getRightFlank(alfa_tan, cur_rf);
+            Px_r = flank.Px;
+            Py_r = flank.Py;
+            Cx_r = flank.Cx;
+            Cy_r = flank.Cy;
+            R_C_r = flank.R_C;
+
+            const P_root_x_tmp = Cx_r * (r_root / R_C_r);
+            const P_root_y_tmp = Cy_r * (r_root / R_C_r);
+            th_root_r = Math.atan2(P_root_x_tmp, P_root_y_tmp);
+
+            if (th_root_r < tau * 0.92) {
+                break;
+            }
+            cur_rf *= 0.70;
         }
-        const alfa_tan = (low + high) / 2.0;
-        const { Px: Px_r, Py: Py_r, Cx: Cx_r, Cy: Cy_r, R_C: R_C_r } = getRightFlank(alfa_tan);
+
         const P_root_x = Cx_r * (r_root / R_C_r);
         const P_root_y = Cy_r * (r_root / R_C_r);
-        const th_root_r = Math.atan2(P_root_x, P_root_y);
+        th_root_r = Math.atan2(P_root_x, P_root_y);
 
         const pts = [];
 
@@ -689,8 +706,8 @@ export const SplinesCalc = {
         for (let i = 0; i < numFillet; i++) {
             const frac = i / numFillet;
             const ang = ang_root_l + (ang_tan_l - ang_root_l) * frac;
-            const x = -Cx_r + rf * Math.sin(ang);
-            const y = Cy_r + rf * Math.cos(ang);
+            const x = -Cx_r + cur_rf * Math.sin(ang);
+            const y = Cy_r + cur_rf * Math.cos(ang);
             pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
         }
 
@@ -706,7 +723,7 @@ export const SplinesCalc = {
             pts.push({ x, y, r: r_t, theta: th_t });
         }
 
-        // 4. Cung đỉnh răng: từ -th_tip đến +th_tip
+        // 4. Cung đỉnh răng: từ -th_tip đến +th_tip (ra0* = 0 theo chuẩn, cung đỉnh tròn r_tip nối thẳng sườn)
         const inv_tip = Math.tan(alfa_tip) - alfa_tip;
         const th_tip = psi + invAlfa - inv_tip;
         for (let i = 0; i <= numArc; i++) {
@@ -735,8 +752,8 @@ export const SplinesCalc = {
         for (let i = 0; i < numFillet; i++) {
             const frac = i / numFillet;
             const ang = ang_tan_r + (ang_root_r - ang_tan_r) * frac;
-            const x = Cx_r + rf * Math.sin(ang);
-            const y = Cy_r + rf * Math.cos(ang);
+            const x = Cx_r + cur_rf * Math.sin(ang);
+            const y = Cy_r + cur_rf * Math.cos(ang);
             pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
         }
 

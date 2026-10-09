@@ -2841,3 +2841,22 @@ ho_{f0} / \cos\gamma$.
    - Đoạn 6: Cung bo tròn đỉnh răng phải ($r_a$): tiếp tuyến $C^1$ từ sườn sang đỉnh răng.
    - Đoạn 7: Nửa cung đỉnh răng phải: từ $+\theta_{\text{tip\_tan}}$ đến $+\tau$ tại $r_{\text{tip}} = D_i / 2$.
    - Khi ghép $z$ răng xoay chu kỳ $j \cdot 2\tau$, hai nửa đỉnh răng ở hai sector cạnh nhau ghép lại thành 1 đỉnh răng hoàn chỉnh kín khít tuyệt đối $\Delta = 0.000000\text{ mm}$, sẵn sàng xuất DXF AC1009 Closed Polyline và gia công CNC/EDM.
+
+---
+
+### Quy Tắc 117: Quy Chuẩn Bo Đỉnh/Bo Chân Răng Then Hoa Theo Tiêu Chuẩn Quốc Tế (DIN 5480 / ISO 4156), Khắc Phục Lỗi Chân Then Trục Khi x₀ = 0.6 & Khôi Phục Đường Kính Bi Đo 1.75 × m Cho α ≤ 30°
+**Ngày áp dụng**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Lý do tiêu chuẩn chỉ có r_a2* khác không (DIN 5480 & ISO 4156 Basic Rack)**:
+   - Trong bảng thông số thanh răng cơ sở của DIN 5480 và ISO 4156: $r_{a0}^* = 0.0000, r_{f0}^* = 0.0000, r_{f2}^* = 0.0000$, duy nhất $r_{a2}^* = 0.1600$ (DIN) hoặc $0.2000$ (ISO) là khác không!
+   - **Đỉnh then trục ($r_{a0}^* = 0.0000$)**: Phôi trục được tiện tròn ngoài đạt đường kính đỉnh $d_{a0}$ trước khi phay lăn răng (Hobbing). Khi gia công, dao chỉ cắt sườn và đáy rãnh, mặt đỉnh giữ nguyên mặt trụ ngoài $d_{a0}$ (cung tròn $r_{\text{tip}}$) nối vuông góc vào sườn thân khai (thợ tiện/CNC chỉ vát mép $45^\circ$ ở đầu trục để bẻ cạnh sắc). Vì vậy không tạo bo tròn bán kính cong dọc đỉnh răng trục.
+   - **Đỉnh then lỗ ($r_{a2}^* = 0.1600 \div 0.2000$) BẮT BUỘC KHÁC KHÔNG**: Then lỗ đóng vai trò ôm then trục khi lắp ráp. Nếu đỉnh răng lỗ sắc cạnh, quá trình lắp ráp trượt sẽ rất dễ bị cấn mép, kẹt cứng hoặc cào xước sườn then trục. Tiêu chuẩn quốc tế bắt buộc bo tròn đỉnh răng lỗ để dẫn hướng êm ái khi lồng trục vào moay-ơ và triệt tiêu ứng suất tập trung.
+   - **Chân răng ($r_{f0}^* = 0, r_{f2}^* = 0$)**: Tự động hình thành theo kiểu chân phẳng (Flat root) hoặc chân lượn (Fillet root) theo chiều cao chân răng $h_f^*$ và khe hở đáy $c$.
+2. **Khắc phục triệt để lỗi chân then trục khi x₀ = 0.6 (Mở rộng Bisection Flank Range)**:
+   - Khi $x_0 = 0.6$ ($m = 5, z = 24$), bán kính đáy $r_{\text{root}} = 60.25\text{ mm} >$ bán kính vòng chia $r_0 = 60.00\text{ mm} >$ bán kính cơ sở $r_b = 51.96\text{ mm}$. Góc áp lực tại vòng đáy $\alpha_{\text{root}} = 30.4093^\circ > 30.0^\circ$.
+   - Mở rộng dải bisection: `low = (r_root > r_base) ? alfa_root : 0.0001; high = Math.min(alfa_tip, Math.max(alfaRad, alfa_root) + 0.35);`.
+   - Tìm được $\alpha_{\tan} = 31.17^\circ, r_t = 60.73\text{ mm} > r_{\text{root}} = 60.25\text{ mm}$, $100\%$ các điểm đều $\ge r_{\text{root}}$, triệt tiêu hoàn toàn hiện tượng chém xuyên thân trục.
+3. **Khôi phục công thức đường kính bi đo d_p = 1.75 × m cho α ≤ 30°**:
+   - Khi $\alpha \le 30.05^\circ$: Áp dụng công thức quy chuẩn $d_p = 1.750 \times m$ cho cả Trục ($d_{t0}$) và Lỗ ($d_{t2}$).
+   - Khi $\alpha > 30.05^\circ$ ($37.5^\circ, 45^\circ$): Giữ theo chuẩn tương ứng ($1.728 \cdot m, 1.440 \cdot m, 1.920 \cdot m$).
+   - Vẫn bảo toàn quyền tùy chỉnh tự do đường kính bi đo thực tế của người dùng qua ô nhập liệu.

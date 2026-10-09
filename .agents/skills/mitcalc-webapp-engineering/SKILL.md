@@ -2688,3 +2688,26 @@ ho_{f0}$.
    - Bi đo $M_2$ đặt tại $\theta = 0^\circ$ tiếp xúc êm ái trên 2 sườn thân khai trong rãnh.
    - Chế độ ăn khớp Assembly: răng trục lồi ra ăn khớp hoàn hảo vào rãnh then lỗ, khe hở chân răng $c$ đều đặn.
    - Bộ kiểm thử Live Audit COM Excel: 62/62 phép tính PASS 100% tuyệt đối ($\Delta = 0.000000$).
+
+---
+
+### Runbook 22: Chuẩn Hóa Hình Học Bo Đỉnh / Bo Chân Then Hoa Theo Tiêu Chuẩn Quốc Tế, Khắc Phục Lỗi Chân Trục Khi x₀ = 0.6 & Khôi Phục Đường Kính Bi Đo 1.75 × m Cho α ≤ 30°
+**Mục tiêu**: Nắm vững quy chuẩn cơ khí quốc tế về bo đỉnh/bo chân then hoa, giải thuật mở rộng bisection xử lý hệ số dịch chỉnh lớn $x_0 = 0.6$, và công thức đường kính bi đo $1.75 \times m$.
+
+1. **Quy chuẩn quốc tế về bo đỉnh / bo chân răng then hoa (DIN 5480 & ISO 4156)**:
+   - Trong bảng thông số dao cắt/thanh răng cơ sở: $r_{a0}^* = 0.0000, r_{f0}^* = 0.0000, r_{f2}^* = 0.0000$, duy nhất $r_{a2}^* = 0.1600 \div 0.2000$ là khác 0.
+   - **Đỉnh then trục ($r_{a0}^* = 0.0000$)**: Trục được tiện trụ ngoài trước khi phay lăn răng, mặt đỉnh giữ nguyên mặt trụ ngoài $d_{a0}$ (cung tròn $r_{\text{tip}}$) tiếp xúc vuông góc với sườn thân khai. Không tạo fillet bo đỉnh dọc chiều dài răng.
+   - **Đỉnh then lỗ ($r_{a2}^* = 0.1600 \div 0.2000$)**: Bắt buộc bo tròn đỉnh răng lỗ để dẫn hướng êm ái khi lắp ghép trượt, chống cấn mép và triệt tiêu nguy cơ cào xước sườn răng trục.
+   - **Chân răng ($r_{f0}^*, r_{f2}^*$)**: Tự động hình thành theo kiểu chân phẳng (Flat root) hoặc chân lượn (Fillet root).
+
+2. **Giải thuật mở rộng Bisection cho chân then trục khi $x_0 = 0.6$ (`generateShaftSectorPoints`)**:
+   - Khi $x_0 = 0.6$, $r_{\text{root}} = 60.25\text{ mm} > r_0 = 60.00\text{ mm} > r_b = 51.96\text{ mm}$, dẫn đến $\alpha_{\text{root}} = 30.4093^\circ > 30.0^\circ$.
+   - Giới hạn trên `high` của bisection không được khóa cứng ở $\alpha = 30^\circ$, mà phải mở rộng:
+     `low = (r_root > r_base) ? alfa_root : 0.0001;`
+     `high = Math.min(alfa_tip, Math.max(alfaRad, alfa_root) + 0.35);`
+   - Tìm được $\alpha_{\tan} = 31.17^\circ, r_t = 60.73\text{ mm} > r_{\text{root}} = 60.25\text{ mm}$, bảo đảm $100\%$ điểm biên dạng $\ge r_{\text{root}}$, triệt tiêu hoàn toàn lỗi chém xuyên thân trục.
+
+3. **Khôi phục công thức đường kính con lăn/đũa/bi đo ($d_p$)**:
+   - Khi $\alpha \le 30.05^\circ$: $d_{t0} = 1.750 \times m$ (Trục), $d_{t2} = 1.750 \times m$ (Lỗ).
+   - Khi $\alpha > 30.05^\circ$: Áp dụng theo chuẩn quốc tế tương ứng ($1.728 \cdot m$ hoặc $1.920 \cdot m$).
+   - Người dùng tự do tùy chỉnh đường kính bi đo thực tế trong xưởng.

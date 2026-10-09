@@ -836,14 +836,12 @@ export class SplinesUI {
 
         // Update Pin Standard Hint
         if (this.elPinStdHint) {
-            if (g.stdType === 14) {
-                this.elPinStdHint.textContent = 'DIN 5480: 1.800·m (Trục) / 1.500·m (Lỗ)';
-            } else if (g.stdType === 7 || g.stdType === 3 || g.stdType === 11) {
-                this.elPinStdHint.textContent = 'ISO 4156 Fillet: 1.920·m (Trục) / 1.728·m (Lỗ)';
-            } else if (g.stdType === 6 || g.stdType === 1 || g.stdType === 10) {
-                this.elPinStdHint.textContent = 'ISO 4156 Flat: 1.728·m (Trục) / 1.440·m (Lỗ)';
-            } else if (g.stdType >= 15 && g.stdType <= 17) {
-                this.elPinStdHint.textContent = 'CSN 4950: 1.750·m (Trục) / 1.500·m (Lỗ)';
+            if (g.alfa <= 30.05) {
+                this.elPinStdHint.textContent = 'Quy chuẩn: 1.750·m (Trục & Lỗ)';
+            } else if (Math.abs(g.alfa - 37.5) < 0.1) {
+                this.elPinStdHint.textContent = 'Tiêu chuẩn 37.5°: 1.728·m (Trục) / 1.440·m (Lỗ)';
+            } else if (Math.abs(g.alfa - 45.0) < 0.1) {
+                this.elPinStdHint.textContent = 'Tiêu chuẩn 45°: 1.920·m (Trục) / 1.440·m (Lỗ)';
             } else {
                 this.elPinStdHint.textContent = `dp tiêu chuẩn: ${g.dt0_rec.toFixed(3)} / ${g.dt2_rec.toFixed(3)} mm`;
             }

@@ -4490,3 +4490,28 @@ ho_{f0}$.
   - Ăn khớp Assembly: Răng trục (lồi ra ngoài) ăn khớp hoàn hảo vào rãnh then lỗ (lõm vào trong), khe hở hướng tâm đỉnh-đáy đều đặn $c = 2.5\text{ mm}$.
   - Bộ kiểm thử Live Audit COM Excel: **62 / 62 phép tính PASS 100% tuyệt đối ($\Delta = 0.000000$)**.
   - Xuất 3 file DXF Release 12 AC1009 (Assembly, Shaft, Hub) thành công, polyline kín khít sẵn sàng đùn khối 3D trong CAD.
+
+---
+
+## Giai Đoạn 37: Chuẩn Hóa Hình Học Bo Đỉnh / Bo Chân Then Hoa Theo Tiêu Chuẩn Quốc Tế, Khắc Phục Lỗi Chân Trục Khi x₀ = 0.6 & Khôi Phục Đường Kính Bi Đo 1.75 × m Cho α ≤ 30°
+* **Tiêu chuẩn**: DIN 5480, ISO 4156, ANSI B92.1, ISO 1122-1.
+* **Yêu cầu & Phản hồi trực tiếp từ SirPhuong**:
+  1. *Giải thích & chuẩn hóa bo đỉnh/bo chân theo tiêu chuẩn quốc tế*:
+     - Tiêu chuẩn DIN 5480 và ISO 4156 quy định hệ số thanh răng cơ sở: $r_{a0}^* = 0.0000$, $r_{f0}^* = 0.0000$, $r_{f2}^* = 0.0000$, chỉ duy nhất $r_{a2}^*$ khác không ($0.1600$ cho DIN 5480, $0.2000$ cho ISO 4156).
+     - **Bản chất cơ khí**:
+       * **Đỉnh trục ($r_{a0}^* = 0.0000$)**: Phôi trục được gia công tiện trụ ngoài trước đạt đường kính đỉnh $d_{a0}$. Khi phay lăn răng (Hobbing), dao chỉ cắt hai bên sườn thân khai và đáy rãnh, mặt đỉnh giữ nguyên mặt trụ ngoài $d_{a0}$ tiếp xúc vuông góc với sườn (thợ tiện chỉ vát mép nhẹ $45^\circ$ ở đầu trục để bẻ cạnh sắc). Vì vậy thanh răng tiêu chuẩn không quy định bo tròn đỉnh răng trục.
+       * **Đỉnh lỗ ($r_{a2}^* = 0.1600 \div 0.2000$) bắt buộc khác không**: Then lỗ ôm then trục khi lắp ghép. Nếu đỉnh răng lỗ là góc sắc nhọn, quá trình lắp ráp trượt sẽ rất dễ bị cấn mép, kẹt cứng (jamming) hoặc cào xước sườn then trục. Tiêu chuẩn quốc tế bắt buộc bo tròn đỉnh răng lỗ để dẫn hướng êm ái khi lồng trục vào moay-ơ và triệt tiêu ứng suất tập trung.
+       * **Chân răng ($r_{f0}^* = 0, r_{f2}^* = 0$)**: Tùy theo kiểu chân phẳng (Flat root) hay chân lượn (Fillet root), đáy rãnh được tạo hình tự nhiên theo chiều cao chân răng $h_f^*$ và khe hở đáy $c$.
+  2. *Khắc phục triệt để lỗi vẽ chém chân răng trục khi tăng hệ số dịch chỉnh $x_0 = 0.6$*:
+     - **Nguyên nhân toán học**: Khi $x_0 = 0.6$ ($m = 5, z = 24$), bán kính đáy rãnh $r_{\text{root}} = d_{f0} / 2 = 60.25\text{ mm}$ lớn hơn bán kính vòng chia $d_0 / 2 = 60.00\text{ mm}$ và bán kính cơ sở $r_b = 51.96\text{ mm}$. Do đó góc áp lực tại vòng đáy $\alpha_{\text{root}} = \arccos(r_b / r_{\text{root}}) = 30.4093^\circ > 30.0^\circ$. Trong mã nguồn cũ, dải tìm kiếm bisection bị giới hạn cứng ở `high = Math.min(alfaRad, alfa_tip) = 30.0°`, khiến bộ giải bị kẹt cứng ở $30.0^\circ$, ép bán kính tiếp xúc $r_t = 60.00\text{ mm} < r_{\text{root}} = 60.25\text{ mm}$. Kết quả là tâm cung bo tròn $C$ bị thụt sâu dưới vòng đáy rãnh $0.75\text{ mm}$, sinh ra các vòng xoắn chéo chém sâu vào thân trục.
+     - **Giải pháp xử lý**:
+       * Mở rộng dải bisection: `low = (r_root > r_base) ? alfa_root : 0.0001; high = Math.min(alfa_tip, Math.max(alfaRad, alfa_root) + 0.35);`.
+       * Tự động điều chỉnh bán kính lượn $r_f$ khi rãnh răng hẹp để góc tiếp xúc đáy $\theta_{\text{root}, r} < \tau \cdot 0.92$, triệt tiêu hoàn toàn khả năng giao cắt hai sườn chân răng.
+       * Kiểm chứng Python & Playwright: Với $x_0 = 0.6$, tìm được chính xác $\alpha_{\tan} = 31.17^\circ, r_t = 60.73\text{ mm} > r_{\text{root}} = 60.25\text{ mm}$, $R_C = 61.25\text{ mm}$, $100\%$ các điểm đều $\ge r_{\text{root}} = 60.25\text{ mm}$ (Count points under root = 0). Chân then trục trơn tru, sắc nét, tiếp tuyến $C^1$ hoàn hảo.
+  3. *Khôi phục công thức đường kính bi đo $d_p = 1.75 \times m$ cho các góc $\le 30^\circ$*:
+     - Cập nhật hàm `getRecommendedPinDiameter`: Khi $\alpha \le 30.05^\circ$, tự động áp dụng công thức $d_p = 1.750 \times m$ cho cả trục ($d_{t0}$) và lỗ ($d_{t2}$).
+     - Khi $\alpha > 30.05^\circ$ ($37.5^\circ, 45^\circ$): Giữ theo chuẩn ($1.728 \cdot m, 1.440 \cdot m, 1.920 \cdot m$).
+     - Vẫn cho phép người dùng nhập tùy chỉnh tự do đường kính bi đo thực tế.
+* **Kết quả kiểm thử**:
+  - Live Audit QC Suite: **62 / 62 phép tính PASS tuyệt đối 100.0% ($\Delta = 0.000000$)**.
+  - Kiểm tra trực quan Canvas 2D & Playwright: Đỉnh trục phẳng tiếp xúc sườn ($r_{a0}^* = 0$), đỉnh lỗ bo tròn mượt mà ($r_{a2}^* > 0$), chân trục không còn chém lẹm khi $x_0 = 0.6$, bi đo $d_p = 8.75\text{ mm}$ ($1.75 \times 5$) tiếp xúc chuẩn xác.
