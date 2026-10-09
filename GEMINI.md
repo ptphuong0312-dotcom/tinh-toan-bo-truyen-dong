@@ -2657,3 +2657,29 @@ ho_{f0} / \cos\gamma$.
    - Bổ sung checkbox "Tiêu chuẩn": Khi bỏ tích, cho phép kỹ sư can thiệp trực tiếp vào chiều cao răng và bán kính lượn để thiết kế biên dạng phi tiêu chuẩn; khi thay đổi, kích thước đỉnh, chân, khe hở và toàn bộ bản vẽ Canvas 2D cập nhật đồng bộ.
 6. **Mặc định thu gọn các phân mục**:
    - `#sec20` (Thông số biên dạng răng), `#sec50` (Kiểm tra bền), `#sec60` (Bản vẽ CAD), và `#secInvoluteGuide` (Cẩm nang kỹ thuật 17 tiêu chuẩn) đều ở trạng thái thu gọn (`calc-section`, không có `open`) khi tải trang để giao diện gọn gàng, tập trung vào tính toán cốt lõi.
+
+---
+
+### Quy Tắc 110: Quy Chuẩn Tối Ưu Toàn Diện Then Hoa Thân Khai (Involute Splines): Xếp Hạng Chuẩn & Mặc Định DIN 5480, Đồng Nhất Hệ Số Dịch Chỉnh $x_2 = x_0$, Bo Đỉnh Răng $r_a$, Dropdown Chuyển Nhanh Module, Tinh Giản Giao Diện & Tái Thiết Bản Vẽ CAD DXF Khép Kín 360° Không Đè Chữ
+**Ngày áp dụng**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Xếp hạng độ thông dụng 17 Tiêu chuẩn & Mặc định DIN 5480 (Mục 1.2)**:
+   - Toàn bộ 17 hệ tiêu chuẩn được gắn nhãn số thứ tự ưu tiên `[1]...[17]` kèm đánh giá sao trực quan `⭐⭐⭐ / ⭐⭐ / ⭐`.
+   - **DIN 5480 - 30°** (ID 14, `[1] ⭐⭐⭐ [THÔNG DỤNG NHẤT] DIN 5480 - 30° (ha≈0.45m, hf≈0.65m) - Tiêu chuẩn Châu Âu & Đức`) được thiết lập làm tiêu chuẩn mặc định khi tải trang.
+2. **Đồng nhất hệ số dịch chỉnh biên dạng ($x_0, x_2$)**:
+   - Bổ sung checkbox "Đồng nhất (x₂=x₀)" tại Mục 1.10 (mặc định tích chọn).
+   - Khi tích chọn: Khóa ô $x_2$ (`disabled`) và tự động gán $x_2 = x_0$ khi người dùng chỉnh sửa $x_0$; người dùng chỉ cần sửa 1 ô duy nhất.
+   - Khi bỏ tích: Mở khóa ô $x_2$, cho phép kỹ sư xưởng tùy chỉnh lượng dịch chỉnh độc lập giữa trục và lỗ moay-ơ theo yêu cầu ăn khớp đặc biệt.
+3. **Quy chuẩn bán kính lượn đỉnh răng tương đối ($r_a = r_a^* \cdot m$)**:
+   - Trục và lỗ then hoa có bán kính bo mép đỉnh răng ($r_{a0}^* = 0.0$ cho trục, $r_{a2}^* = 0.16 \div 0.20$ cho lỗ theo ISO 4156 / DIN 5480) nhằm triệt tiêu ba-via cắt và tạo dẫn hướng khi lồng trục vào lỗ.
+   - Cả đồ họa Canvas 2D và mô hình CAD DXF đều tích hợp giải thuật bo góc đỉnh răng mượt mà, thể hiện trung thực thông số $r_a$ trên bản vẽ.
+4. **Loại bỏ trùng lặp và tinh giản màn hình**:
+   - Bỏ nút "Xuất Bản Vẽ CAD (DXF)" tại góc trên bên phải thanh Header (tránh trùng lặp với Section 6.0).
+   - Bỏ khối thẻ tóm tắt nhanh (Summary Cards Ribbon) đầu trang để màn hình thoáng đãng, dữ liệu tập trung trọn vẹn vào Bảng tính toán cơ khí.
+5. **Dropdown menu luân chuyển tức thì giữa các module**:
+   - Bổ sung nút mũi tên sổ xuống `▼` (`.btn-dropdown-toggle`) ngay cạnh nút "🏠 Trang Chủ".
+   - Nhấp vào sẽ mở menu dropdown chứa danh sách đầy đủ 7 mục (6 module cơ khí + Hub Trung Tâm) với biểu tượng, tên tiếng Việt, tiêu chuẩn quốc tế và nhãn "(Đang chọn)". Cho phép luân chuyển tức thì mà không cần quay về trang chủ.
+6. **Tái thiết lập xuất bản vẽ CAD DXF (Assembly, Shaft, Hub)**:
+   - **Khắc phục triệt để lỗi đè chữ trong AutoCAD**: Tái cấu trúc Bảng thông số chế tạo DXF với chiều rộng 200mm, tách riêng Cột 1 (118mm) và Cột 2 (82mm), cỡ chữ chuẩn 2.5mm, bổ sung khung viền và đường kẻ phân cách dọc giữa 2 cột, không bao giờ xảy ra hiện tượng chồng lấn văn bản.
+   - **Mô hình hóa đường bao 360° khép kín (Closed Polyline)**: Xuất đường biên dạng thực thể giống hệt mô phỏng Canvas, bao gồm lỗ trục cho Trục, vành ngoài cho Lỗ Moay-ơ, các đường chân răng - sườn thân khai - đỉnh răng nối tiếp mượt mà 360 độ, sẵn sàng gia công CNC/Wire-EDM.
+

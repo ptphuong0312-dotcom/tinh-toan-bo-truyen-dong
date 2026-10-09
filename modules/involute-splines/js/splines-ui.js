@@ -69,6 +69,13 @@ export class SplinesUI {
         this.elDaRevHub = document.getElementById('daRevHubInput');
         this.elURevHub = document.getElementById('uRevHubInput');
 
+        // Sync X0 and X2 checkbox
+        this.elSyncX0X2 = document.getElementById('syncX0X2Check');
+
+        // Navigation module dropdown
+        this.btnModuleMenuToggle = document.getElementById('btnModuleMenuToggle');
+        this.moduleDropdownMenu = document.getElementById('moduleDropdownMenu');
+
         // Toast element
         this.elToast = document.getElementById('toastMsg');
     }
@@ -83,7 +90,21 @@ export class SplinesUI {
                 opt.textContent = st.name;
                 this.elStdType.appendChild(opt);
             });
-            this.elStdType.value = '6'; // Default ISO 4156 30 Flat root
+            // Default: DIN 5480 - 30° (ID: 14) - Kiểu thông dụng nhất
+            this.elStdType.value = '14';
+            const std = SplinesData.std_types.find(st => st.id === 14);
+            if (std) {
+                if (this.elAlfaInput) this.elAlfaInput.value = (std.angle || 30.0).toFixed(2);
+                if (this.elAlfa) this.elAlfa.value = '30';
+                if (this.elHa0) this.elHa0.value = (std.ha0 || 0.45).toFixed(4);
+                if (this.elHa2) this.elHa2.value = (std.ha2 || 0.45).toFixed(4);
+                if (this.elHf0) this.elHf0.value = (std.hf0 || 0.65).toFixed(4);
+                if (this.elHf2) this.elHf2.value = (std.hf2 || 0.65).toFixed(4);
+                if (this.elRa0) this.elRa0.value = (std.ra0 || 0.00).toFixed(4);
+                if (this.elRa2) this.elRa2.value = (std.ra2 || 0.16).toFixed(4);
+                if (this.elRf0) this.elRf0.value = (std.rf0 || 0.00).toFixed(4);
+                if (this.elRf2) this.elRf2.value = (std.rf2 || 0.00).toFixed(4);
+            }
         }
 
         // 2. Populate Standard Metric Modules
@@ -246,6 +267,40 @@ export class SplinesUI {
                     }
                 }
                 this.recalculate();
+            });
+        }
+
+        // Xử lý menu dropdown luân chuyển module bên cạnh nút "Trang Chủ"
+        if (this.btnModuleMenuToggle && this.moduleDropdownMenu) {
+            this.btnModuleMenuToggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.moduleDropdownMenu.classList.toggle('show');
+            });
+            document.addEventListener('click', (e) => {
+                if (!this.moduleDropdownMenu.contains(e.target) && e.target !== this.btnModuleMenuToggle) {
+                    this.moduleDropdownMenu.classList.remove('show');
+                }
+            });
+        }
+
+        // Quản lý Checkbox Đồng nhất hệ số dịch chỉnh x2 = x0 (Mục 1.10)
+        if (this.elSyncX0X2) {
+            this.elSyncX0X2.addEventListener('change', () => {
+                const isSync = this.elSyncX0X2.checked;
+                if (this.elX2) {
+                    this.elX2.disabled = isSync;
+                    if (isSync && this.elX0) {
+                        this.elX2.value = this.elX0.value;
+                    }
+                }
+                this.recalculate();
+            });
+        }
+        if (this.elX0) {
+            this.elX0.addEventListener('input', () => {
+                if (this.elSyncX0X2 && this.elSyncX0X2.checked && this.elX2) {
+                    this.elX2.value = this.elX0.value;
+                }
             });
         }
 
@@ -491,11 +546,17 @@ export class SplinesUI {
 
     recalculate() {
         const units = parseInt(this.elUnits?.value || 1);
-        const stdType = parseInt(this.elStdType?.value || 6);
+        const stdType = parseInt(this.elStdType?.value || 14);
         let m = parseFloat(this.elModule?.value || 10.0);
         const DP = parseFloat(this.elDP?.value || 2.5);
         const z = parseInt(this.elZ?.value || 20);
         const alfa = parseFloat(this.elAlfaInput?.value || this.elAlfa?.value || 30.0);
+
+        // Đồng nhất x2 theo x0 nếu checkbox đang tích
+        if (this.elSyncX0X2 && this.elSyncX0X2.checked && this.elX0 && this.elX2) {
+            this.elX2.value = this.elX0.value;
+        }
+
         const x0 = parseFloat(this.elX0?.value || 0.0);
         const x2 = parseFloat(this.elX2?.value || 0.0);
         const autoFill = this.elAutoFill ? this.elAutoFill.checked : true;
@@ -578,10 +639,6 @@ export class SplinesUI {
             if (this.elDf0) this.elDf0.value = geom.df0.toFixed(4);
             if (this.elDi2) this.elDi2.value = geom.di2.toFixed(4);
             if (this.elDri2) this.elDri2.value = geom.dri2.toFixed(4);
-            if (stdType === 14 && autoFill && profile_standard) {
-                if (this.elX0) this.elX0.value = geom.x0.toFixed(4);
-                if (this.elX2) this.elX2.value = geom.x2.toFixed(4);
-            }
         }
 
         // Update k input fields if in auto mode
@@ -612,13 +669,6 @@ export class SplinesUI {
     }
 
     updateDOMOutputs(g) {
-        // Summary ribbon cards
-        this.setTxt('ribbonPitchD', `${g.d0.toFixed(3)} mm`);
-        this.setTxt('ribbonShaftTip', `${g.da0.toFixed(3)} mm`);
-        this.setTxt('ribbonHubTip', `${g.di2.toFixed(3)} mm`);
-        this.setTxt('ribbonW0', `${g.W0.toFixed(4)} mm`);
-        this.setTxt('ribbonM0', `${g.M0.toFixed(4)} mm`);
-
         // Section 1.0 Module & Pitch Diameters & Angles
         this.setTxt('outAlfaHub', g.alfa.toFixed(2));
         this.setTxt('outModuleHub', g.m.toFixed(3));

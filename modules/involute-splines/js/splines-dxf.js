@@ -1,7 +1,7 @@
 /**
  * MITCalc Web App - Involute Splines 2D CAD DXF Exporter
  * Generates 100% compliant AutoCAD Release 12 (AC1009) DXF files.
- * Supports Shaft, Hub, and Assembly with manufacturing specification table.
+ * Supports Shaft, Hub, and Assembly with continuous closed tooth contour and non-overlapping manufacturing table.
  */
 
 export const SplinesDxf = {
@@ -42,14 +42,12 @@ export const SplinesDxf = {
             '0', 'ENDTAB',
             '0', 'TABLE',
             '2', 'LAYER',
-            '70', '8',
+            '70', '7',
             '0', 'LAYER', '2', '0', '70', '0', '62', '7', '6', 'CONTINUOUS',
             '0', 'LAYER', '2', 'CONTOUR_SHAFT', '70', '0', '62', '4', '6', 'CONTINUOUS', // Cyan
             '0', 'LAYER', '2', 'CONTOUR_HUB', '70', '0', '62', '1', '6', 'CONTINUOUS',   // Red
             '0', 'LAYER', '2', 'PITCH_CIRCLE', '70', '0', '62', '3', '6', 'CENTER',       // Green
             '0', 'LAYER', '2', 'BASE_CIRCLE', '70', '0', '62', '6', '6', 'DASHED',       // Magenta
-            '0', 'LAYER', '2', 'TIP_CIRCLE', '70', '0', '62', '5', '6', 'CONTINUOUS',    // Blue
-            '0', 'LAYER', '2', 'ROOT_CIRCLE', '70', '0', '62', '8', '6', 'CONTINUOUS',   // Gray
             '0', 'LAYER', '2', 'CENTER', '70', '0', '62', '2', '6', 'CENTER',             // Yellow
             '0', 'LAYER', '2', 'MFG_TABLE', '70', '0', '62', '7', '6', 'CONTINUOUS',     // White
             '0', 'ENDTAB',
@@ -69,38 +67,40 @@ export const SplinesDxf = {
             '2', 'ENTITIES'
         );
 
-        const pi = Math.PI;
         const z = geom.z0;
         const m = geom.m;
-        const alfa = (geom.alfa * pi) / 180.0;
         const d = geom.d0;
         const db = geom.db0;
+        const rMax = Math.max(geom.da0, geom.dri2) * 0.75;
 
         // Draw Centerlines
-        const rMax = Math.max(geom.da0, geom.dri2) * 0.75;
-        this.addLine(lines, 'CENTER', -rMax, 0, rMax, 0);
-        this.addLine(lines, 'CENTER', 0, -rMax, 0, rMax);
+        this.addLine(lines, 'CENTER', -rMax * 1.2, 0, rMax * 1.2, 0);
+        this.addLine(lines, 'CENTER', 0, -rMax * 1.2, 0, rMax * 1.2);
 
-        // Draw Reference Circles
+        // Draw Pitch Circle & Base Circle
         this.addCircle(lines, 'PITCH_CIRCLE', 0, 0, d / 2.0);
         this.addCircle(lines, 'BASE_CIRCLE', 0, 0, db / 2.0);
 
-        // Draw Shaft
+        // 1. Shaft Geometry (External Spline)
         if (target === 'shaft' || target === 'assembly') {
-            this.addCircle(lines, 'TIP_CIRCLE', 0, 0, geom.da0 / 2.0);
-            this.addCircle(lines, 'ROOT_CIRCLE', 0, 0, geom.df0 / 2.0);
-            this.drawSplineToothing(lines, 'CONTOUR_SHAFT', geom, true);
+            const shaftPoints = this.buildShaftContour(geom);
+            this.addPolyline(lines, 'CONTOUR_SHAFT', shaftPoints, true);
+            // Inner shaft bore (hole)
+            const rBore = (geom.df0 / 2.0) * 0.5;
+            this.addCircle(lines, 'CONTOUR_SHAFT', 0, 0, rBore);
         }
 
-        // Draw Hub
+        // 2. Hub Geometry (Internal Spline)
         if (target === 'hub' || target === 'assembly') {
-            this.addCircle(lines, 'TIP_CIRCLE', 0, 0, geom.di2 / 2.0);
-            this.addCircle(lines, 'ROOT_CIRCLE', 0, 0, geom.dri2 / 2.0);
-            this.drawSplineToothing(lines, 'CONTOUR_HUB', geom, false);
+            const hubPoints = this.buildHubContour(geom);
+            this.addPolyline(lines, 'CONTOUR_HUB', hubPoints, true);
+            // Outer hub collar
+            const rCollar = (geom.dri2 / 2.0) * 1.35;
+            this.addCircle(lines, 'CONTOUR_HUB', 0, 0, rCollar);
         }
 
-        // Draw Manufacturing Table
-        this.drawMfgTable(lines, geom, target);
+        // 3. Manufacturing Specification Table
+        this.drawMfgTable(lines, geom, target, rMax);
 
         lines.push(
             '0', 'ENDSEC',
@@ -134,7 +134,7 @@ export const SplinesDxf = {
         );
     },
 
-    addText(lines, layer, text, x, y, height = 3.5) {
+    addText(lines, layer, text, x, y, height = 2.5) {
         lines.push(
             '0', 'TEXT',
             '8', layer,
@@ -142,110 +142,277 @@ export const SplinesDxf = {
             '20', y.toFixed(4),
             '30', '0.0',
             '40', height.toFixed(4),
-            '1', text
+            '1', String(text)
         );
     },
 
-    drawSplineToothing(lines, layer, geom, isShaft) {
-        const z = geom.z0;
-        const d = geom.d0;
-        const db = geom.db0;
-        const da = isShaft ? geom.da0 : geom.dri2;
-        const df = isShaft ? geom.df0 : geom.di2;
-        const s = isShaft ? geom.s0 : geom.s2;
-        const alfaDeg = geom.alfa;
-
-        const pi = Math.PI;
-        const alfa = (alfaDeg * pi) / 180.0;
-        const invAlfa = Math.tan(alfa) - alfa;
-
-        const r_base = db / 2.0;
-        const r_tip = da / 2.0;
-        const r_root = df / 2.0;
-        const psi = s / d;
-
-        const numFlankPts = 16;
-        const r_start = Math.max(r_base, r_root);
-        const r_end = r_tip;
-
-        const halfPitch = isShaft ? 0 : (pi / z);
-
-        for (let j = 0; j < z; j++) {
-            const rotAngle = (j * 2 * pi) / z + halfPitch;
-            const cosA = Math.cos(rotAngle);
-            const sinA = Math.sin(rotAngle);
-
-            const rot = (r, phi) => ({
-                x: (r * Math.sin(phi)) * cosA - (r * Math.cos(phi)) * sinA,
-                y: (r * Math.sin(phi)) * sinA + (r * Math.cos(phi)) * cosA
-            });
-
-            // Trace left flank up
-            let prevPt = null;
-            for (let i = 0; i <= numFlankPts; i++) {
-                const frac = i / numFlankPts;
-                const r = r_start + (r_end - r_start) * frac;
-                let alfa_r = 0;
-                if (r > r_base) alfa_r = Math.acos(r_base / r);
-                const invAlfa_r = Math.tan(alfa_r) - alfa_r;
-                const phi = -psi - invAlfa + invAlfa_r;
-                const pt = rot(r, phi);
-                if (prevPt) {
-                    this.addLine(lines, layer, prevPt.x, prevPt.y, pt.x, pt.y);
-                }
-                prevPt = pt;
-            }
-
-            // Trace right flank down
-            const tipLeft = prevPt;
-            prevPt = null;
-            for (let i = numFlankPts; i >= 0; i--) {
-                const frac = i / numFlankPts;
-                const r = r_start + (r_end - r_start) * frac;
-                let alfa_r = 0;
-                if (r > r_base) alfa_r = Math.acos(r_base / r);
-                const invAlfa_r = Math.tan(alfa_r) - alfa_r;
-                const phi = psi + invAlfa - invAlfa_r;
-                const pt = rot(r, phi);
-                if (prevPt) {
-                    this.addLine(lines, layer, prevPt.x, prevPt.y, pt.x, pt.y);
-                }
-                prevPt = pt;
-            }
-        }
+    addPolyline(lines, layer, pts, isClosed = true) {
+        lines.push(
+            '0', 'POLYLINE',
+            '8', layer,
+            '66', '1',
+            '70', isClosed ? '1' : '0'
+        );
+        pts.forEach(p => {
+            lines.push(
+                '0', 'VERTEX',
+                '8', layer,
+                '10', p[0].toFixed(4),
+                '20', p[1].toFixed(4),
+                '30', '0.0'
+            );
+        });
+        lines.push('0', 'SEQEND', '8', layer);
     },
 
-    drawMfgTable(lines, geom, target) {
-        const x0 = (geom.da0 / 2.0) + 40.0;
-        let y0 = (geom.da0 / 2.0);
-        const wCol = 140.0;
+    /**
+     * Build full 360-degree closed conjugate contour for external shaft spline
+     */
+    buildShaftContour(geom) {
+        const z = geom.z0;
+        const alfaRad = (geom.alfa * Math.PI) / 180.0;
+        const invAlfa = Math.tan(alfaRad) - alfaRad;
+        const d = geom.d0;
+        const db = geom.db0;
+        const da = geom.da0;
+        const df = geom.df0;
+        const s = geom.s0;
+        const ra0 = (geom.ra0_tool || 0.0) * geom.m;
+
+        const rBase = db / 2.0;
+        const rTip = da / 2.0;
+        const rRoot = df / 2.0;
+        const tau = Math.PI / z;
+        const psi = s / d;
+
+        const rStart = Math.max(rBase, rRoot);
+        const rEnd = rTip;
+        const numFlank = 12;
+
+        // 1. One tooth sector in polar (r, theta)
+        const secPts = [];
+        let alfaStart = 0;
+        if (rStart > rBase) alfaStart = Math.acos(rBase / rStart);
+        const invStart = Math.tan(alfaStart) - alfaStart;
+        const phiStart = psi + invAlfa - invStart;
+
+        // Root bottom arc on left
+        secPts.push([rRoot, -tau]);
+        if (phiStart < tau) {
+            secPts.push([rRoot, -phiStart]);
+        }
+
+        // Left involute flank
+        for (let i = 0; i <= numFlank; i++) {
+            const frac = i / numFlank;
+            const r = rStart + (rEnd - rStart) * frac;
+            let alfaR = 0;
+            if (r > rBase) alfaR = Math.acos(rBase / r);
+            const invR = Math.tan(alfaR) - alfaR;
+            const phi = psi + invAlfa - invR;
+            secPts.push([r, -phi]);
+        }
+
+        // Tip arc (with corner fillet if ra0 > 0)
+        let alfaTip = Math.acos(rBase / rTip);
+        const invTip = Math.tan(alfaTip) - alfaTip;
+        const phiTip = psi + invAlfa - invTip;
+
+        if (ra0 > 0.01 && ra0 < (rTip - rStart) * 0.5) {
+            // Left tip corner fillet
+            secPts.push([rTip - ra0 * 0.3, -(phiTip - (ra0 * 0.4) / rTip)]);
+            secPts.push([rTip, -(phiTip - (ra0 * 0.9) / rTip)]);
+            // Crest center
+            secPts.push([rTip, 0.0]);
+            // Right tip corner fillet
+            secPts.push([rTip, phiTip - (ra0 * 0.9) / rTip]);
+            secPts.push([rTip - ra0 * 0.3, phiTip - (ra0 * 0.4) / rTip]);
+        } else {
+            secPts.push([rTip, -phiTip]);
+            secPts.push([rTip, phiTip]);
+        }
+
+        // Right involute flank
+        for (let i = numFlank; i >= 0; i--) {
+            const frac = i / numFlank;
+            const r = rStart + (rEnd - rStart) * frac;
+            let alfaR = 0;
+            if (r > rBase) alfaR = Math.acos(rBase / r);
+            const invR = Math.tan(alfaR) - alfaR;
+            const phi = psi + invAlfa - invR;
+            secPts.push([r, phi]);
+        }
+
+        // Root bottom arc on right
+        if (phiStart < tau) {
+            secPts.push([rRoot, phiStart]);
+        }
+        secPts.push([rRoot, tau]);
+
+        // 2. Replicate sector around 360 degrees
+        const fullPts = [];
+        for (let j = 0; j < z; j++) {
+            const rotAng = (j * 2 * Math.PI) / z;
+            for (let i = 0; i < secPts.length; i++) {
+                const totalTheta = rotAng + secPts[i][1];
+                const px = secPts[i][0] * Math.sin(totalTheta);
+                const py = secPts[i][0] * Math.cos(totalTheta);
+                fullPts.push([px, py]);
+            }
+        }
+        return fullPts;
+    },
+
+    /**
+     * Build full 360-degree closed conjugate contour for internal hub spline
+     */
+    buildHubContour(geom) {
+        const z = geom.z0;
+        const m = geom.m;
+        const alfaRad = (geom.alfa * Math.PI) / 180.0;
+        const invAlfa = Math.tan(alfaRad) - alfaRad;
+        const d = geom.d2 || geom.d0;
+        const db = geom.db2 || geom.db0;
+        const dri = geom.dri2;
+        const di = geom.di2;
+        const s2 = geom.s2;
+        const e2 = Math.PI * m - s2;
+        const ra2 = (geom.ra2_tool || 0.2) * m;
+
+        const rBase = db / 2.0;
+        const rRoot = dri / 2.0;
+        const rTip = di / 2.0;
+        const tau = Math.PI / z;
+        const psiSpace = e2 / d;
+
+        const rStart = Math.max(rBase, rTip);
+        const rEnd = rRoot;
+        const numFlank = 12;
+
+        const secPts = [];
+        let alfaStart = 0;
+        if (rStart > rBase) alfaStart = Math.acos(rBase / rStart);
+        const invStart = Math.tan(alfaStart) - alfaStart;
+        const phiStart = psiSpace + invAlfa - invStart;
+
+        // Inner crest arc on left
+        secPts.push([rTip, -tau]);
+        if (phiStart < tau) {
+            if (ra2 > 0.01) {
+                secPts.push([rTip, -(phiStart + (ra2 * 0.8) / rTip)]);
+                secPts.push([rTip + ra2 * 0.3, -(phiStart + (ra2 * 0.3) / rTip)]);
+            } else {
+                secPts.push([rTip, -phiStart]);
+            }
+        }
+
+        // Left internal flank
+        for (let i = 0; i <= numFlank; i++) {
+            const frac = i / numFlank;
+            const r = rStart + (rEnd - rStart) * frac;
+            let alfaR = 0;
+            if (r > rBase) alfaR = Math.acos(rBase / r);
+            const invR = Math.tan(alfaR) - alfaR;
+            const phi = psiSpace + invAlfa - invR;
+            secPts.push([r, -phi]);
+        }
+
+        // Outer root groove bottom
+        let alfaRoot = 0;
+        if (rRoot > rBase) alfaRoot = Math.acos(rBase / rRoot);
+        const invRoot = Math.tan(alfaRoot) - alfaRoot;
+        const phiRoot = psiSpace + invAlfa - invRoot;
+        secPts.push([rRoot, -phiRoot]);
+        secPts.push([rRoot, phiRoot]);
+
+        // Right internal flank
+        for (let i = numFlank; i >= 0; i--) {
+            const frac = i / numFlank;
+            const r = rStart + (rEnd - rStart) * frac;
+            let alfaR = 0;
+            if (r > rBase) alfaR = Math.acos(rBase / r);
+            const invR = Math.tan(alfaR) - alfaR;
+            const phi = psiSpace + invAlfa - invR;
+            secPts.push([r, phi]);
+        }
+
+        // Inner crest arc on right
+        if (phiStart < tau) {
+            if (ra2 > 0.01) {
+                secPts.push([rTip + ra2 * 0.3, phiStart + (ra2 * 0.3) / rTip]);
+                secPts.push([rTip, phiStart + (ra2 * 0.8) / rTip]);
+            } else {
+                secPts.push([rTip, phiStart]);
+            }
+        }
+        secPts.push([rTip, tau]);
+
+        // Replicate space around 360 degrees
+        const fullPts = [];
+        for (let j = 0; j < z; j++) {
+            const rotAng = (j * 2 * Math.PI) / z;
+            for (let i = 0; i < secPts.length; i++) {
+                const totalTheta = rotAng + secPts[i][1];
+                const px = secPts[i][0] * Math.sin(totalTheta);
+                const py = secPts[i][0] * Math.cos(totalTheta);
+                fullPts.push([px, py]);
+            }
+        }
+        return fullPts;
+    },
+
+    /**
+     * Draw manufacturing specification table with non-overlapping columns and grid lines
+     */
+    drawMfgTable(lines, geom, target, rMax) {
+        const xTable = rMax * 1.25 + 20.0;
+        const yTable = rMax * 0.85;
+        const wCol1 = 118.0;
+        const wCol2 = 82.0;
+        const wTotal = wCol1 + wCol2; // 200.0 mm
         const rowH = 7.0;
 
-        this.addText(lines, 'MFG_TABLE', 'BANG THONG SO CHE TAO THEN HOA THAN KHAI', x0, y0 + 10, 4.5);
-
-        const rows = [
+        const tableRows = [
             ['Tieu Chuan / Standard', 'DIN 5480 / ISO 4156 / ANSI B92.1'],
             ['So Rang / Number of teeth (z)', `${geom.z0}`],
             ['Mo-dun / Module (m)', `${geom.m.toFixed(4)} mm`],
-            ['Goc An Khop / Pressure angle (alpha)', `${geom.alfa.toFixed(2)} deg`],
-            ['Duong Kinh Chia / Pitch diameter (d)', `${geom.d0.toFixed(4)} mm`],
-            ['Duong Kinh Co So / Base diameter (db)', `${geom.db0.toFixed(4)} mm`],
+            ['Goc An Khop / Pressure angle', `${geom.alfa.toFixed(2)} deg`],
+            ['Duong Kinh Chia / Pitch diam. (d)', `${geom.d0.toFixed(4)} mm`],
+            ['Duong Kinh Co So / Base diam. (db)', `${geom.db0.toFixed(4)} mm`],
             ['Duong Kinh Dinh Truc / Shaft tip (da0)', `${geom.da0.toFixed(4)} mm`],
             ['Duong Kinh Day Truc / Shaft root (df0)', `${geom.df0.toFixed(4)} mm`],
             ['Duong Kinh Dinh Lo / Hub tip (Di)', `${geom.di2.toFixed(4)} mm`],
             ['Duong Kinh Day Lo / Hub root (Dri)', `${geom.dri2.toFixed(4)} mm`],
             ['Chieu Day Rang / Tooth thickness (s0)', `${geom.s0.toFixed(4)} mm`],
-            ['Chieu Dai Phap Tuyen Chung (W0)', `${geom.W0.toFixed(4)} mm (k=${geom.k0})`],
-            ['Kich Thuoc Qua Bi/Dua Do (M0)', `${geom.M0.toFixed(4)} mm (dp=${geom.dt0.toFixed(3)})`],
-            ['Do Bi Trong Lo / Hub pin measure (M2)', `${geom.M2.toFixed(4)} mm (dp=${geom.dt2.toFixed(3)})`]
+            ['Phap Tuyen Chung / Norm. length (W0)', `${geom.W0.toFixed(4)} mm (k=${geom.k0})`],
+            ['Do Bi Ngoai Truc / Over-pin (M0)', `${geom.M0.toFixed(4)} mm (dp=${geom.dt0.toFixed(3)})`],
+            ['Do Bi Trong Lo / Between-pin (M2)', `${geom.M2.toFixed(4)} mm (dp=${geom.dt2.toFixed(3)})`]
         ];
 
-        rows.forEach((r, idx) => {
-            const y = y0 - idx * rowH;
-            this.addText(lines, 'MFG_TABLE', r[0], x0, y, 3.0);
-            this.addText(lines, 'MFG_TABLE', r[1], x0 + 80.0, y, 3.0);
-            this.addLine(lines, 'MFG_TABLE', x0 - 2, y - 2, x0 + wCol, y - 2);
+        // Table Title Box
+        this.addLine(lines, 'MFG_TABLE', xTable, yTable + 11.0, xTable + wTotal, yTable + 11.0);
+        this.addText(lines, 'MFG_TABLE', 'BANG THONG SO CHE TAO THEN HOA THAN KHAI', xTable + 12.0, yTable + 3.5, 3.8);
+        this.addLine(lines, 'MFG_TABLE', xTable, yTable, xTable + wTotal, yTable);
+
+        // Table Rows & Cells
+        let yCurr = yTable;
+        tableRows.forEach(r => {
+            const yNext = yCurr - rowH;
+            // Column 1 text (Param name)
+            this.addText(lines, 'MFG_TABLE', r[0], xTable + 4.0, yCurr - 5.0, 2.5);
+            // Column 2 text (Value)
+            this.addText(lines, 'MFG_TABLE', r[1], xTable + wCol1 + 4.0, yCurr - 5.0, 2.5);
+            // Horizontal grid line
+            this.addLine(lines, 'MFG_TABLE', xTable, yNext, xTable + wTotal, yNext);
+            yCurr = yNext;
         });
+
+        // Vertical Column Divider line
+        this.addLine(lines, 'MFG_TABLE', xTable + wCol1, yTable, xTable + wCol1, yCurr);
+
+        // Outer Borders
+        this.addLine(lines, 'MFG_TABLE', xTable, yTable + 11.0, xTable, yCurr);
+        this.addLine(lines, 'MFG_TABLE', xTable + wTotal, yTable + 11.0, xTable + wTotal, yCurr);
     },
 
     downloadDxf(geom, target = 'assembly') {

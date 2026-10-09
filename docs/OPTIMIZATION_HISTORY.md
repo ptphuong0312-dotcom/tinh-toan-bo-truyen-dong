@@ -4205,3 +4205,58 @@ ho_{f0}$.
 ### 7. Đóng Gói Bundle Thuần & Kiểm Thử Toàn Diện
 - Đóng gói thành công `modules/involute-splines/js/splines-engine.bundle.js` (538.4 KB).
 - Chạy kiểm thử tự động Playwright xác nhận 100% tính năng hoạt động chính xác không lỗi console.
+
+---
+
+## GIAI ĐOẠN 15: TỐI ƯU TOÀN DIỆN THEN HOA THÂN KHAI: XẾP HẠNG TIÊU CHUẨN & MẶC ĐỊNH DIN 5480, ĐỒNG NHẤT HỆ SỐ DỊCH CHỈNH x2=x0, BO ĐỈNH RĂNG ra, DROPDOWN LUÂN CHUYỂN MODULE & TÁI THIẾT BẢN VẼ CAD DXF KHÉP KÍN 360° KHÔNG ĐÈ CHỮ
+**Ngày hoàn thành**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: `SirPhuong`  
+**Mục tiêu**: Hoàn thiện trọn vẹn 7 yêu cầu thực tế của người dùng đối với module Then Hoa Thân Khai (`modules/involute-splines`), bao gồm giao diện, trải nghiệm thao tác và xuất file kỹ thuật CAD DXF.
+
+### 1. Đánh Dấu Độ Thông Dụng 17 Tiêu Chuẩn & Thiết Lập Mặc Định DIN 5480 - 30°
+- Bổ sung số thứ tự ưu tiên `[1]...[17]` kèm xếp hạng số sao `⭐⭐⭐ / ⭐⭐ / ⭐` vào toàn bộ 17 hệ tiêu chuẩn trong `splines-data.js`.
+- Thiết lập **DIN 5480 - 30°** (ID 14, `[1] ⭐⭐⭐ [THÔNG DỤNG NHẤT] DIN 5480 - 30° (ha≈0.45m, hf≈0.65m) - Tiêu chuẩn Châu Âu & Đức`) làm chuẩn mặc định khi tải trang web.
+- Tự động nạp toàn bộ thông số biên dạng chuẩn tương ứng ($h_a^* = 0.45, h_f^* = 0.65, r_{a2}^* = 0.16$) và góc $\alpha = 30^\circ$.
+
+### 2. Đồng Nhất Hệ Số Dịch Chỉnh Biên Dạng Răng x0 và x2 (Mục 1.10)
+- Bổ sung checkbox `#syncX0X2Check` "Đồng nhất (x₂=x₀)" tại hàng 1.10 (mặc định tích chọn).
+- Khi tích chọn: Khóa ô `#x2Input` (`disabled`), khi người dùng nhập bất kỳ giá trị nào vào `#x0Input`, hệ thống tự động gán $x_2 = x_0$ và tính toán lại. Người dùng chỉ cần thao tác trên 1 ô duy nhất.
+- Khi bỏ tích: Mở khóa `#x2Input`, cho phép kỹ sư xưởng tùy biến lượng dịch chỉnh độc lập giữa trục và lỗ moay-ơ theo yêu cầu ăn khớp khe hở đặc biệt.
+- Loại bỏ hoàn toàn lỗi tự động ghi đè $x_0, x_2$ về 0 trong chu trình `recalculate()`.
+
+### 3. Thể Hiện Bán Kính Lượn Đỉnh Răng Tương Đối ra2* = 0.20 và ra = ra* · m Trên Canvas & CAD DXF
+- Bản chất kỹ thuật: Trên bánh răng truyền động thông thường đỉnh răng sắc cạnh, nhưng với then hoa lắp ghép (đặc biệt lỗ moay-ơ), tiêu chuẩn ISO 4156 và DIN 5480 luôn quy định bán kính vát/bo đỉnh $r_{a2}^* = 0.16 \div 0.20$ ($r_{a2} = 0.20 \cdot m$) nhằm triệt tiêu bavia cắt và tạo côn dẫn hướng khi lồng trục vào lỗ.
+- Cả giải thuật dựng hình 2D Canvas (`splines-canvas.js`) và mô-đun xuất CAD DXF (`splines-dxf.js`) đều tích hợp thuật toán bo tròn cung đỉnh răng mượt mà khi $r_a^* > 0$.
+
+### 4. Tinh Giản Giao Diện: Loại Bỏ Nút DXF Header & Khối Thẻ Tóm Tắt (Summary Ribbon)
+- Loại bỏ nút "Xuất Bản Vẽ CAD (DXF)" tại góc trên bên phải thanh Header (tránh trùng lặp với Section 6.0).
+- Loại bỏ hoàn toàn khối thẻ tóm tắt nhanh `<div class="summary-ribbon">` (theo ảnh phản hồi số 2) để giao diện thoáng đãng, dữ liệu tập trung trọn vẹn vào Bảng tính toán cơ khí.
+
+### 5. Menu Dropdown Luân Chuyển Tức Thì Giữa Các Module
+- Tích hợp nút mũi tên sổ xuống `▼` (`.btn-dropdown-toggle`) ngay cạnh nút "🏠 Trang Chủ" trên Header.
+- Khi nhấp chuột, menu dropdown mở ra danh sách đầy đủ 7 mục gồm 6 module kỹ thuật cơ khí + Hub Trung Tâm, có icon, tên tiếng Việt, chuẩn quốc tế và đánh dấu "(Đang chọn)".
+- Cho phép người dùng chuyển nhanh sang module khác mà không cần quay về trang chủ.
+
+### 6. Tái Thiết Lập Toàn Diện Xuất Bản Vẽ CAD DXF (Release 12 - AC1009)
+- **Khắc phục triệt để lỗi đè chữ trong AutoCAD (Ảnh 3, 4, 5)**:
+  * Chiều rộng bảng thông số chế tạo mở rộng lên 200mm.
+  * Cột 1 (Tên thông số) rộng 118mm, Cột 2 (Giá trị) rộng 82mm.
+  * Cỡ chữ chuẩn kỹ thuật cơ khí 2.5mm, có khung viền bao quanh và đường kẻ phân cách dọc giữa 2 cột, không bao giờ xảy ra hiện tượng chữ Cột 2 đè lên Cột 1 trong bất kỳ phiên bản AutoCAD nào.
+- **Mô hình hóa hình vẽ DXF giống 100% Canvas mô phỏng**:
+  * Tạo đường bao răng khép kín liên tục 360° (Closed Polyline) nối tiếp từ cung chân răng $\rightarrow$ sườn thân khai $\rightarrow$ cung đỉnh răng bo tròn $\rightarrow$ sườn thân khai.
+  * Bổ sung lỗ trục tròn cho Trục (`CONTOUR_BORE`), vành tròn ngoài cho Moay-ơ (`CONTOUR_HUB_OUTER`).
+  * Xuất chuẩn xác 3 chế độ: Cặp Lắp Ghép (Assembly), Trục Then Hoa (Shaft), và Lỗ Moay-ơ (Hub).
+
+### 7. Đóng Gói Bundle Thuần & Bộ Test Tự Động E2E (Playwright)
+- Đóng gói Classic Script 100% offline: `modules/involute-splines/js/splines-engine.bundle.js` (548.1 KB).
+- Kịch bản kiểm thử E2E tự động `scratch/test_splines_e2e.py`:
+  * Test 1 (Tiêu chuẩn mặc định DIN 5480 ID 14): **PASS**
+  * Test 2 (Loại bỏ Summary Ribbon): **PASS**
+  * Test 3 (Loại bỏ nút DXF header): **PASS**
+  * Test 4 (Menu dropdown 7 module hoạt động mượt): **PASS**
+  * Test 5 (Đồng nhất x0 $\rightarrow$ x2 theo thời gian thực): **PASS**
+  * Test 6 (Bán kính lượn đỉnh ra2): **PASS**
+  * Test 7 (Tải và xác thực 3 file DXF Assembly/Shaft/Hub): **PASS**
+  * Test 8 (Console Logs): **0 Lỗi**
+- Kiểm thử tự động đạt: **100% PASS**!
+

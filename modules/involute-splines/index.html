@@ -15,34 +15,65 @@
                 <p>Tiêu chuẩn: DIN 5480, ISO 4156, ANSI B92.1, ANSI B92.2M, CSN 4950 | Chuẩn MITCalc 1.74 (Δ = 0.000000)</p>
             </div>
             <div class="header-actions">
-                <a href="../../index.html" class="btn-secondary">🏠 Trang Chủ</a>
-                <button type="button" class="btn-primary" id="btnExportDxfAssembly">📐 Xuất Bản Vẽ CAD (DXF)</button>
+                <div class="nav-module-dropdown" id="navModuleDropdown">
+                    <a href="../../index.html" class="btn-secondary btn-home">🏠 Trang Chủ</a>
+                    <button type="button" class="btn-secondary btn-dropdown-toggle" id="btnModuleMenuToggle" title="Chuyển nhanh module tính toán">▼</button>
+                    <div class="module-dropdown-menu" id="moduleDropdownMenu">
+                        <div class="dropdown-header">DANH MỤC MÔ-ĐUN TÍNH TOÁN</div>
+                        <a href="../spur-gear/index.html" class="dropdown-item">
+                            <span class="item-icon">⚙️</span>
+                            <div class="item-info">
+                                <span class="item-title">Bánh Răng Trụ</span>
+                                <span class="item-desc">Spur &amp; Helical Gears (ISO 6336)</span>
+                            </div>
+                        </a>
+                        <a href="../bevel-gear/index.html" class="dropdown-item">
+                            <span class="item-icon">📐</span>
+                            <div class="item-info">
+                                <span class="item-title">Bánh Răng Côn</span>
+                                <span class="item-desc">Bevel Gears (ISO 23509)</span>
+                            </div>
+                        </a>
+                        <a href="../tolerances/index.html" class="dropdown-item">
+                            <span class="item-icon">🎯</span>
+                            <div class="item-info">
+                                <span class="item-title">Dung Sai &amp; Lắp Ghép</span>
+                                <span class="item-desc">Fits &amp; Tolerances (ISO 286 / ANSI)</span>
+                            </div>
+                        </a>
+                        <a href="../shaft-keys/index.html" class="dropdown-item">
+                            <span class="item-icon">🔑</span>
+                            <div class="item-info">
+                                <span class="item-title">Then Bằng &amp; Bán Nguyệt</span>
+                                <span class="item-desc">Parallel &amp; Woodruff Keys</span>
+                            </div>
+                        </a>
+                        <a href="../straight-splines/index.html" class="dropdown-item">
+                            <span class="item-icon">🛡️</span>
+                            <div class="item-info">
+                                <span class="item-title">Then Hoa Răng Chữ Nhật</span>
+                                <span class="item-desc">Straight-Sided Splines (ISO 14 / DIN 5464)</span>
+                            </div>
+                        </a>
+                        <a href="../involute-splines/index.html" class="dropdown-item active">
+                            <span class="item-icon">⚙️</span>
+                            <div class="item-info">
+                                <span class="item-title">Then Hoa Thân Khai (Đang chọn)</span>
+                                <span class="item-desc">Involute Splines (DIN 5480 / ISO 4156)</span>
+                            </div>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="../../index.html" class="dropdown-item dropdown-home-link">
+                            <span class="item-icon">🏠</span>
+                            <div class="item-info">
+                                <span class="item-title">Trang Chủ Hub Trung Tâm</span>
+                                <span class="item-desc">Hệ thống tính toán cơ khí độc lập</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
             </div>
         </header>
-
-        <!-- Summary Ribbon -->
-        <div class="summary-ribbon">
-            <div class="summary-card">
-                <span class="summary-label">Đường Kính Chia (d)</span>
-                <span class="summary-val" id="ribbonPitchD">200.000 <span class="summary-unit">mm</span></span>
-            </div>
-            <div class="summary-card highlight">
-                <span class="summary-label">Đỉnh Răng Trục (da0)</span>
-                <span class="summary-val" id="ribbonShaftTip">210.000 <span class="summary-unit">mm</span></span>
-            </div>
-            <div class="summary-card highlight">
-                <span class="summary-label">Đỉnh Răng Lỗ (Di)</span>
-                <span class="summary-val" id="ribbonHubTip">191.145 <span class="summary-unit">mm</span></span>
-            </div>
-            <div class="summary-card">
-                <span class="summary-label">Pháp Tuyến Chung (W0)</span>
-                <span class="summary-val" id="ribbonW0">104.5345 <span class="summary-unit">mm</span></span>
-            </div>
-            <div class="summary-card">
-                <span class="summary-label">Kích Thước Qua Bi (M0)</span>
-                <span class="summary-val" id="ribbonM0">224.9091 <span class="summary-unit">mm</span></span>
-            </div>
-        </div>
 
         <!-- Accordion Global Toolbar -->
         <div class="accordion-toolbar">
@@ -271,9 +302,13 @@
                                     <td class="col-param">Hệ số dịch chỉnh biên dạng răng</td>
                                     <td class="col-sym">x<sub>0</sub> / x<sub>2</sub></td>
                                     <td class="col-val1"><input type="number" id="x0Input" class="user-input" value="0.0000" step="0.01"></td>
-                                    <td class="col-val2"><input type="number" id="x2Input" class="user-input" value="0.0000" step="0.01"></td>
+                                    <td class="col-val2"><input type="number" id="x2Input" class="user-input" value="0.0000" step="0.01" disabled></td>
                                     <td class="col-unit">[m]</td>
-                                    <td class="col-action">Profile shift</td>
+                                    <td class="col-action">
+                                        <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer; color: #38bdf8;" title="Tự động đồng nhất hệ số dịch chỉnh Trục và Lỗ (x2 = x0)">
+                                            <input type="checkbox" id="syncX0X2Check" checked> Đồng nhất (x₂=x₀)
+                                        </label>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td class="col-idx">1.11</td>
@@ -684,7 +719,7 @@
                             <div style="text-align: center;">
                                 <img src="img/cad_icon_wheel.png" alt="Cặp then hoa ăn khớp" style="margin-bottom: 8px;">
                                 <div>
-                                    <button type="button" class="btn-primary" id="btnExportDxfAssembly2" onclick="document.getElementById('btnExportDxfAssembly').click();">
+                                    <button type="button" class="btn-primary" id="btnExportDxfAssembly">
                                         📐 Xuất Cặp Lắp Ghép (Assembly)
                                     </button>
                                 </div>
