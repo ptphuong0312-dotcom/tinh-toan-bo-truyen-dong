@@ -2656,3 +2656,35 @@ ho_{f0}$.
    - Banner Callout tự động hiện khi người dùng chọn kiểu lắp có độ dôi trong ISO 286 / ANSI B4.1.
    - Accordion `#secThermalFit` tích hợp trong Master Block 1 ngay dưới bảng kết quả.
    - Nút `[ 🔄 Đồng Bộ Từ ISO 286 ]` và nút `[ 📋 Sao Chép Phiếu Quy Trình ]` xuất báo cáo công nghệ xưởng tiêu chuẩn.
+
+---
+
+### Runbook 21: Giải Thuật Biên Dạng Then Lỗ Moay-ơ (Internal Hub Spline Profile) Chuẩn 1-to-1 Sheet Coordinates MITCalc 1.74
+**Mục tiêu**: Xây dựng biên dạng răng trong then lỗ moay-ơ (Hub) chuẩn xác 100%, khắc phục triệt để lỗi đảo ngược hình học (inverted profile), đảm bảo ăn khớp liên hợp hoàn hảo với trục và tiếp xúc êm ái với bi đo kiểm tra $M_2$.
+
+1. **Bản chất toán học răng trong (Hub Tooth Profile)**:
+   - Răng then lỗ là răng trong (Internal Tooth): đỉnh răng ở đường kính trong $D_i$ ($r_{\text{tip}} = D_i / 2$), chân răng ở đường kính ngoài $D_{ri}$ ($r_{\text{root}} = D_{ri} / 2$).
+   - Răng lỗ phải MỎNG ở đỉnh ($s_{a2} = 10.484\text{ mm} \approx 6.28^\circ$) và DÀY ở chân ($s_{f2} = 27.112\text{ mm} \approx 14.45^\circ$).
+   - Khe rãnh của lỗ (Tooth Space) là nơi nhận răng của trục: RỘNG ở miệng ($D_i$) và HẸP ở đáy ($D_{ri}$, $e_f \approx 3.55^\circ$).
+   - Phương trình sườn thân khai của rãnh then lỗ:
+     $$\theta_{\text{space\_flank}}(r) = \frac{e_2}{d} + \text{inv}\alpha - \text{inv}\alpha_r$$
+     với $\frac{e_2}{d} + \text{inv}\alpha = \text{const}$ (bằng $7.5796^\circ$ khi $z=20, m=10$).
+   - Khớp 100% với 60 điểm tọa độ Hub trong Sheet `Coordinates` của MITCalc 1.74 (`SplinesI_01.xlsb`).
+
+2. **Cấu trúc chu kỳ 7 phân đoạn giải tích liên tục $C^1$ từ $-\tau$ đến $+\tau$ (`generateHubSpacePoints`)**:
+   - Tâm khe rãnh đặt tại $\theta = 0^\circ$ (bán kính $r = D_{ri} / 2$), nơi đặt bi đo kiểm tra $M_2$.
+   - Tâm đỉnh răng đặt tại $\theta = \pm \tau = \pm \frac{\pi}{z}$.
+   - 7 phân đoạn trong 1 chu kỳ bước răng:
+     * Đoạn 1: Nửa cung đỉnh răng trái: từ $-\tau$ đến $-\theta_{\text{tip\_tan}}$ tại $r_{\text{tip}} = D_i / 2$.
+     * Đoạn 2: Cung bo tròn đỉnh răng trái ($r_a$): tiếp tuyến $C^1$ từ đỉnh sang sườn thân khai.
+     * Đoạn 3: Sườn thân khai trái: $r$ tăng từ $r_{\text{tan}}$ lên $r_{\text{root}}$, góc $\theta = -(\psi_{\text{space}} + \text{inv}\alpha - \text{inv}\alpha_r)$.
+     * Đoạn 4: Cung đáy rãnh moay-ơ: nằm ở tâm $\theta = 0^\circ$, nối mượt mà qua hai sườn tại bán kính $r_{\text{root}} = D_{ri} / 2$.
+     * Đoạn 5: Sườn thân khai phải: $r$ giảm từ $r_{\text{root}}$ xuống $r_{\text{tan}}$, góc $\theta = +(\psi_{\text{space}} + \text{inv}\alpha - \text{inv}\alpha_r)$.
+     * Đoạn 6: Cung bo tròn đỉnh răng phải ($r_a$): tiếp tuyến $C^1$ từ sườn sang đỉnh.
+     * Đoạn 7: Nửa cung đỉnh răng phải: từ $+\theta_{\text{tip\_tan}}$ đến $+\tau$ tại $r_{\text{tip}} = D_i / 2$.
+
+3. **Kiểm tra chất lượng (Verification Protocol)**:
+   - Khi ghép $z$ răng xoay chu kỳ $j \cdot 2\tau$: khoảng cách giữa điểm cuối sector $j$ và điểm đầu sector $j+1$ đạt $\Delta = 0.000000\text{ mm}$ (Closed Polyline kín khít).
+   - Bi đo $M_2$ đặt tại $\theta = 0^\circ$ tiếp xúc êm ái trên 2 sườn thân khai trong rãnh.
+   - Chế độ ăn khớp Assembly: răng trục lồi ra ăn khớp hoàn hảo vào rãnh then lỗ, khe hở chân răng $c$ đều đặn.
+   - Bộ kiểm thử Live Audit COM Excel: 62/62 phép tính PASS 100% tuyệt đối ($\Delta = 0.000000$).

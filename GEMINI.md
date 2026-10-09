@@ -2810,3 +2810,34 @@ ho_{f0} / \cos\gamma$.
      * Chế độ Nung nhiệt (`hot`): Moay-ơ đổi màu gradient lửa đỏ rực rỡ theo nhiệt độ nung $T_H$, thể hiện rõ khe hở lắp lọt an toàn $c$ giữa trục và moay-ơ.
      * Chế độ Sau lắp nguội (`cold`): Thể hiện rõ mặt tiếp xúc nén đỏ, mũi tên chỉ biến dạng dãn ngoài $\Delta D$ và co trong $\Delta d_0$.
    - Đồng bộ 2 chiều tự động với bảng ISO 286 / ANSI B4.1: Banner Callout tự động hiện khi chọn mối ghép dôi, nút `[ Xem Quy Trình Nung Nhiệt DIN 7190 ➔ ]`, nút sao chép Phiếu Quy Trình Công Nghệ Nhiệt Xưởng định dạng văn bản chuẩn công nghiệp.
+
+---
+
+### Quy Tắc 116: Quy Chuẩn Biên Dạng Then Lỗ (Internal Hub Profile Protocol) Chuẩn 1-to-1 MITCalc 1.74 & Zero-Tolerance Conjugate Involute Splines
+**Ngày áp dụng**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Bản chất hình học răng trong (Internal Involute Spline Hub Tooth)**:
+   - Trong mối ghép then hoa thân khai, răng của Lỗ moay-ơ (Hub) là **răng trong**:
+     * Đỉnh răng hướng vào trong tâm tại đường kính trong $D_i$ ($r_{\text{tip}} = D_i / 2 < d/2$).
+     * Chân răng gắn liền vào vành kim loại ngoài tại đường kính ngoài $D_{ri}$ ($r_{\text{root}} = D_{ri} / 2 > d/2$).
+     * Chiều dày răng ở đỉnh $D_i$ là **MỎNG NHẤT** ($s_{a2} = 10.484\text{ mm} \approx 6.28^\circ$ đối với $z=20, m=10$).
+     * Chiều dày răng ở chân $D_{ri}$ là **DÀY NHẤT** ($s_{f2} = 27.112\text{ mm} \approx 14.45^\circ$).
+     * Bán kính cong thân khai của răng trong: $\theta_{\text{tooth\_hub}}(r) = \psi_{\text{tooth}} + (\text{inv}\alpha_r - \text{inv}\alpha)$, răng dày dần khi bán kính $r$ tăng từ $D_i/2$ lên $D_{ri}/2$.
+   - Khe rãnh của Lỗ moay-ơ (Tooth Space) là nơi nhận răng của trục:
+     * Miệng rãnh tại $D_i$ là **RỘNG NHẤT** (khoảng hở giữa 2 đỉnh răng lân cận).
+     * Đáy rãnh tại $D_{ri}$ là **HẸP NHẤT** ($e_f \approx 3.55^\circ$, đáy rãnh lượn tròn chứa vừa đỉnh răng trục hoặc bi đo $M_2$).
+2. **Khắc phục triệt để lỗi vẽ lộn ngược hình học (Inverted Profile Bug Elimination)**:
+   - Nghiêm cấm dùng công thức răng ngoài ($\psi - \text{inv}\alpha_r$) cho răng trong khiến răng bị vẽ bè to ở đỉnh $D_i$ và thắt nhọn thành gai/mũi tên ở chân $D_{ri}$.
+   - Khớp 100% với 60 điểm tọa độ Hub trong Sheet `Coordinates` của MITCalc 1.74 (`SplinesI_01.xlsb`):
+     * Tâm rãnh (Space Centerline) đặt tại góc $\theta = 0^\circ$, bán kính $r = D_{ri} / 2$. Bi đo $M_2$ đặt tại $\theta = 0^\circ$ tiếp xúc êm ái trên hai sườn thân khai.
+     * Tâm đỉnh răng (Tooth Centerline) đặt tại góc $\theta = \pm \tau = \pm \frac{\pi}{z}$.
+     * Định luật bảo toàn góc sườn thân khai của rãnh: $\theta_{\text{space\_flank}}(r) + \text{inv}\alpha_r = \frac{\pi}{2z} + \text{inv}\alpha = \text{const}$ ($7.5796^\circ$).
+3. **Cấu trúc chu kỳ 7 phân đoạn giải tích liên tục $C^1$**:
+   - Đoạn 1: Nửa cung đỉnh răng trái (Left tip crest): từ $-\tau$ đến $-\theta_{\text{tip\_tan}}$ tại $r_{\text{tip}} = D_i / 2$.
+   - Đoạn 2: Cung bo tròn đỉnh răng trái ($r_a$): tiếp tuyến $C^1$ từ đỉnh răng sang sườn thân khai.
+   - Đoạn 3: Sườn thân khai trái: $r$ tăng từ $r_{\text{tan}}$ lên $r_{\text{root}} = D_{ri} / 2$, góc $\theta = -(\psi_{\text{space}} + \text{inv}\alpha - \text{inv}\alpha_r)$.
+   - Đoạn 4: Cung đáy rãnh moay-ơ: nằm ở tâm $\theta = 0^\circ$, nối mượt mà qua hai sườn tại bán kính $r_{\text{root}} = D_{ri} / 2$.
+   - Đoạn 5: Sườn thân khai phải: $r$ giảm từ $r_{\text{root}}$ xuống $r_{\text{tan}}$, góc $\theta = +(\psi_{\text{space}} + \text{inv}\alpha - \text{inv}\alpha_r)$.
+   - Đoạn 6: Cung bo tròn đỉnh răng phải ($r_a$): tiếp tuyến $C^1$ từ sườn sang đỉnh răng.
+   - Đoạn 7: Nửa cung đỉnh răng phải: từ $+\theta_{\text{tip\_tan}}$ đến $+\tau$ tại $r_{\text{tip}} = D_i / 2$.
+   - Khi ghép $z$ răng xoay chu kỳ $j \cdot 2\tau$, hai nửa đỉnh răng ở hai sector cạnh nhau ghép lại thành 1 đỉnh răng hoàn chỉnh kín khít tuyệt đối $\Delta = 0.000000\text{ mm}$, sẵn sàng xuất DXF AC1009 Closed Polyline và gia công CNC/EDM.

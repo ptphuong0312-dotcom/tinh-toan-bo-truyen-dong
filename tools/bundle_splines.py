@@ -46,6 +46,13 @@ def bundle_splines():
         bundle_parts.append(f'\n/* === File: {fname} === */\n')
         bundle_parts.append(code)
 
+    bundle_parts.append('\n  if (typeof window !== "undefined") {')
+    bundle_parts.append('    window.SplinesData = SplinesData;')
+    bundle_parts.append('    window.SplinesCalc = SplinesCalc;')
+    bundle_parts.append('    window.SplinesCanvas = SplinesCanvas;')
+    bundle_parts.append('    window.SplinesDxf = SplinesDxf;')
+    bundle_parts.append('    window.SplinesUI = SplinesUI;')
+    bundle_parts.append('  }')
     bundle_parts.append('\n})();\n')
 
     full_bundle = '\n'.join(bundle_parts)

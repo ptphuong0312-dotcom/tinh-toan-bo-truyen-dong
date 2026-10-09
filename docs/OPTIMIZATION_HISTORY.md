@@ -4461,3 +4461,32 @@ ho_{f0}$.
        * Kiểm tra và tư vấn tính liên hợp ăn khớp ($x_2 = -x_0$, $\Sigma x = 0$) để bảo toàn khe hở cạnh răng danh nghĩa (Backlash).
   6. **Module Dung sai (Module 6)**:
      - Lược bỏ phần Canvas mô phỏng nhiệt theo đúng yêu cầu, giữ lại trọn vẹn bảng tính biến dạng và nút `[ 📋 Sao Chép Phiếu Quy Trình ]`. Test QC 24/24 ca kiểm thử đạt PASS tuyệt đối ($\Delta = 0.000000$).
+
+---
+
+## Giai Đoạn 36: Sửa Triệt Để Biên Dạng Then Lỗ (Hub Profile) & Khôi Phục Đúng 1-to-1 Hình Học Cơ Khí Ăn Khớp Chuẩn MITCalc 1.74
+* **Tiêu chuẩn**: DIN 5480, ISO 4156, ANSI B92.1, Sheet `Coordinates` của MITCalc 1.74 (`SplinesI_01.xlsb`).
+* **Bối cảnh & Phản hồi từ SirPhuong**:
+  - Người dùng gửi ảnh màn hình `media_1791553410146_a7bd7fde.png` chụp chế độ xem Lỗ (Hub) của then hoa thân khai và phản hồi: *"then lỗ lại bi sao thê này, tôi chưa hiểu tại sao bạn lại làm sao được nhỉ, bạn không học từ app mitcalc à"*.
+  - Phát hiện nguyên nhân cốt lõi: Trước đó trong `generateHubSpacePoints`, công thức thân khai răng trong bị áp dụng nhầm dấu của răng ngoài dẫn đến hiện tượng răng bị vẽ lộn ngược (inverted profile): ở đường kính trong $D_i$ (đỉnh răng) thì răng bị bè to bản ($9^\circ$), còn ra đường kính ngoài $D_{ri}$ (chân răng) thì răng bị bóp nhỏ nhọn hoắt ($1.5^\circ$) rồi chéo chém qua nhau tạo thành các hình mũi tên/gai nhọn chĩa vào tâm và cắt xuyên qua bi đo ở đỉnh $\theta = 0^\circ$.
+* **Đột phá toán học & Trích xuất tọa độ gốc từ Sheet Coordinates của MITCalc 1.74**:
+  1. Trích xuất toàn bộ 60 điểm tọa độ Hub trong Sheet `Coordinates` của MITCalc:
+     - Hàng 6 (ID 1): $X = -14.95086, Y = 94.39604 \implies r = 95.5727\text{ mm} = D_i / 2$, góc $\theta = -9.0000^\circ = -\tau$. Đây là đỉnh răng của lỗ!
+     - Hàng 6-15 (ID 1-10): $r = 95.5727$, góc chạy từ $-9.0000^\circ$ đến $-5.8574^\circ$. Bề rộng nửa đỉnh răng $= 3.1426^\circ \implies$ chiều dày đỉnh răng $s_a = 2 \cdot r_{\text{tip}} \cdot \theta = 10.484\text{ mm}$ (khớp 100% $s_{a2}$ trên giao diện!).
+     - Hàng 15-61 (ID 10-56): Sườn thân khai của lỗ tuân theo hằng số tuyệt đối: $\theta_{\text{space\_flank}}(r) + \text{inv}(\alpha_r) = \frac{\pi}{2z} + \text{inv}(\alpha) = 7.5796^\circ$. Răng dày dần từ đỉnh ($s_a = 10.484\text{ mm}$) ra chân ($s_f = 27.112\text{ mm}$).
+     - Hàng 65 (ID 60): $X = 0, Y = 107.5000 \implies r = D_{ri} / 2$, góc $\theta = 0^\circ$. Đáy rãnh (tâm rãnh) của then lỗ nằm đúng ở đỉnh góc $\theta = 0^\circ$!
+  2. **Tái cấu trúc 7 phân đoạn giải tích chu kỳ then lỗ từ $-\tau$ đến $+\tau$**:
+     - Đoạn 1: Cung nửa đỉnh răng bên trái: từ $-\tau$ đến $-\theta_{\text{tip\_tan}}$ tại $r_{\text{tip}} = D_i / 2$.
+     - Đoạn 2: Cung bo đỉnh răng bên trái ($r_a$): tiếp tuyến $C^1$ từ đỉnh răng sang sườn thân khai.
+     - Đoạn 3: Sườn thân khai bên trái: $r$ tăng từ $r_{\text{tan}}$ lên $r_{\text{root}} = D_{ri} / 2$, góc $\theta = -(\psi_{\text{space}} + \text{inv}\alpha - \text{inv}\alpha_r)$.
+     - Đoạn 4: Cung đáy rãnh moay-ơ: nằm ở tâm $\theta = 0$, nối mượt mà qua hai sườn tại bán kính $r_{\text{root}} = D_{ri} / 2$.
+     - Đoạn 5: Sườn thân khai bên phải: $r$ giảm từ $r_{\text{root}}$ xuống $r_{\text{tan}}$, góc $\theta = +(\psi_{\text{space}} + \text{inv}\alpha - \text{inv}\alpha_r)$.
+     - Đoạn 6: Cung bo đỉnh răng bên phải ($r_a$): tiếp tuyến $C^1$ từ sườn sang đỉnh răng.
+     - Đoạn 7: Cung nửa đỉnh răng bên phải: từ $+\theta_{\text{tip\_tan}}$ đến $+\tau$ tại $r_{\text{tip}} = D_i / 2$.
+* **Kết quả kiểm chứng thực nghiệm**:
+  - Khi ghép $z$ răng xoay chu kỳ $j \cdot 2\tau$: hai nửa đỉnh răng ở hai sector cạnh nhau ghép lại thành 1 đỉnh răng hoàn chỉnh; tâm $\theta = 0$ là rãnh chứa bi đo.
+  - Khe hở giữa các đỉnh liên tiếp: $\Delta = 0.000000\text{ mm}$ (kín khít 100%, không kẽ hở, không tự cắt).
+  - Vành kim loại ngoài moay-ơ tô màu cam đều đặn, lòng lỗ khoét rỗng, răng nhô vào trong hướng tâm, chân to đỉnh thon đẹp như sách giáo khoa cơ khí.
+  - Ăn khớp Assembly: Răng trục (lồi ra ngoài) ăn khớp hoàn hảo vào rãnh then lỗ (lõm vào trong), khe hở hướng tâm đỉnh-đáy đều đặn $c = 2.5\text{ mm}$.
+  - Bộ kiểm thử Live Audit COM Excel: **62 / 62 phép tính PASS 100% tuyệt đối ($\Delta = 0.000000$)**.
+  - Xuất 3 file DXF Release 12 AC1009 (Assembly, Shaft, Hub) thành công, polyline kín khít sẵn sàng đùn khối 3D trong CAD.

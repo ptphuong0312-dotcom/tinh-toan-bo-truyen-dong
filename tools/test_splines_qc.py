@@ -22,7 +22,7 @@ def run_js_calc(params):
         console.log(JSON.stringify(res));
     }});
     """
-    proc = subprocess.run(['node', '-e', script], capture_output=True, text=True, cwd=r'f:\Antigravity\MITCalc-Gear-Engineering')
+    proc = subprocess.run(['node', '-e', script], capture_output=True, text=True, encoding='utf-8', cwd=r'f:\Antigravity\MITCalc-Gear-Engineering')
     if proc.returncode != 0:
         print("Error running Node calc:", proc.stderr)
         return None

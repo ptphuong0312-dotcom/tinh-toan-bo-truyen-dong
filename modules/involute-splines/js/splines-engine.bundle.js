@@ -777,7 +777,8 @@ const SplinesCalc = {
 
     /**
      * Compute analytical profile points for internal hub tooth sector (Internal Spline Tooth)
-     * Tiếp tuyến C1 cung bo đỉnh răng ra trơn tru mượt mà
+     * Răng hướng vào trong, chân dày ở r_root (Dri/2), đỉnh mỏng ở r_tip (Di/2), bo tròn C1 đỉnh răng ra
+     * Khe rãnh (Tooth space) tại tâm theta = 0, đỉnh răng tại +/- tau
      */
     generateHubSpacePoints(g, resLevel = 6) {
         const z = g.z0;
@@ -788,13 +789,13 @@ const SplinesCalc = {
         const db = g.db2 || g.db0;
         const dri = g.dri2;
         const di = g.di2;
-        const s2 = g.s2;
+        const e2 = g.e2 || (Math.PI * m / 2.0);
 
         const r_base = db / 2.0;
         const r_root = dri / 2.0;
         const r_tip = di / 2.0;
         const tau = Math.PI / z;
-        const psi = s2 / d;
+        const psi_space = e2 / d;
 
         const resInfo = (typeof SPLINE_RESOLUTION_LEVELS !== 'undefined')
             ? (SPLINE_RESOLUTION_LEVELS[resLevel] || SPLINE_RESOLUTION_LEVELS[6])
@@ -812,108 +813,111 @@ const SplinesCalc = {
         const alfa_tip = Math.acos(Math.min(1.0, r_base / r_tip));
         const alfa_root = Math.acos(Math.min(1.0, r_base / r_root));
 
-        function getHubFlankPt(alfa_t) {
+        function getRightFlank(alfa_t) {
             const r_t = r_base / Math.cos(alfa_t);
             const inv_t = Math.tan(alfa_t) - alfa_t;
-            const th_t = psi + invAlfa - inv_t;
+            const th_t = psi_space + invAlfa - inv_t;
             const Px = r_t * Math.sin(th_t);
             const Py = r_t * Math.cos(th_t);
             const phi = alfa_t - th_t;
-            const nx = -Math.cos(phi);
-            const ny = -Math.sin(phi);
+            const nx = Math.cos(phi);
+            const ny = Math.sin(phi);
             const Cx = Px + ra * nx;
             const Cy = Py + ra * ny;
             return { Px, Py, Cx, Cy, R_C: Math.hypot(Cx, Cy), th_t, r_t };
         }
 
         let low = alfa_tip;
-        let high = alfa_root;
-        for (let iter = 0; iter < 40; iter++) {
+        let high = Math.min(alfa_root, alfa_tip + 0.35);
+        for (let iter = 0; iter < 45; iter++) {
             const mid = (low + high) / 2.0;
-            if (getHubFlankPt(mid).R_C < target_R) low = mid;
+            if (getRightFlank(mid).R_C < target_R) low = mid;
             else high = mid;
         }
         const alfa_tan = (low + high) / 2.0;
-        const { Px: Px_r, Py: Py_r, Cx: Cx_r, Cy: Cy_r, R_C: R_C_r } = getHubFlankPt(alfa_tan);
+        const { Px: Px_r, Py: Py_r, Cx: Cx_r, Cy: Cy_r, R_C: R_C_r } = getRightFlank(alfa_tan);
+
         const P_tip_x = Cx_r * (r_tip / R_C_r);
         const P_tip_y = Cy_r * (r_tip / R_C_r);
-        const th_tip_r = Math.atan2(P_tip_x, P_tip_y);
+        const th_tip_tan = Math.atan2(P_tip_x, P_tip_y);
+
+        const inv_root = Math.tan(alfa_root) - alfa_root;
+        const th_space_root = psi_space + invAlfa - inv_root;
 
         const pts = [];
-        const inv_root = Math.tan(alfa_root) - alfa_root;
-        const th_root = psi + invAlfa - inv_root;
+        const numCrest = Math.max(6, Math.floor(numArc / 2));
 
-        // 1. Cung rãnh ngoài bên trái: từ -tau đến -th_root tại r_root
-        for (let i = 0; i < numArc; i++) {
-            const frac = i / numArc;
-            const th = -tau + (tau - th_root) * frac;
-            const x = r_root * Math.sin(th);
-            const y = r_root * Math.cos(th);
-            pts.push({ x, y, r: r_root, theta: th });
-        }
-
-        // 2. Sườn răng bên trái: từ alfa_root vào trong đến alfa_tan
-        for (let i = 0; i < numFlank; i++) {
-            const frac = i / numFlank;
-            const a = alfa_root - (alfa_root - alfa_tan) * frac;
-            const r_t = r_base / Math.cos(a);
-            const inv_t = Math.tan(a) - a;
-            const th_t = -(psi + invAlfa - inv_t);
-            const x = r_t * Math.sin(th_t);
-            const y = r_t * Math.cos(th_t);
-            pts.push({ x, y, r: r_t, theta: th_t });
-        }
-
-        // 3. Cung bo đỉnh răng bên trái: từ tiếp xúc thân khai đến tiếp xúc cung đỉnh
-        const ang_tan_l = Math.atan2(-Px_r - (-Cx_r), Py_r - Cy_r);
-        const ang_tip_l = Math.atan2(-P_tip_x - (-Cx_r), P_tip_y - Cy_r);
-        for (let i = 0; i < numFillet; i++) {
-            const frac = i / numFillet;
-            const ang = ang_tan_l + (ang_tip_l - ang_tan_l) * frac;
-            const x = -Cx_r + ra * Math.sin(ang);
-            const y = Cy_r + ra * Math.cos(ang);
-            pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
-        }
-
-        // 4. Cung đỉnh răng trong: từ -th_tip_r đến +th_tip_r tại r_tip
-        for (let i = 0; i <= numArc; i++) {
-            const frac = i / numArc;
-            const th = -th_tip_r + (2.0 * th_tip_r) * frac;
+        // 1. Cung đỉnh răng bên trái: từ -tau đến -th_tip_tan tại r_tip
+        for (let i = 0; i < numCrest; i++) {
+            const frac = i / numCrest;
+            const th = -tau + (tau - th_tip_tan) * frac;
             const x = r_tip * Math.sin(th);
             const y = r_tip * Math.cos(th);
             pts.push({ x, y, r: r_tip, theta: th });
         }
 
-        // 5. Cung bo đỉnh răng bên phải: từ tiếp xúc cung đỉnh đến tiếp xúc thân khai
-        const ang_tip_r = Math.atan2(P_tip_x - Cx_r, P_tip_y - Cy_r);
-        const ang_tan_r = Math.atan2(Px_r - Cx_r, Py_r - Cy_r);
+        // 2. Cung bo đỉnh răng bên trái (Fillet ra): từ tiếp xúc đỉnh sang tiếp xúc thân khai
+        const ang_tip_l = Math.atan2(-P_tip_x - (-Cx_r), P_tip_y - Cy_r);
+        const ang_flank_l = Math.atan2(-Px_r - (-Cx_r), Py_r - Cy_r);
         for (let i = 0; i < numFillet; i++) {
             const frac = i / numFillet;
-            const ang = ang_tip_r + (ang_tan_r - ang_tip_r) * frac;
-            const x = Cx_r + ra * Math.sin(ang);
+            const ang = ang_tip_l + (ang_flank_l - ang_tip_l) * frac;
+            const x = -Cx_r + ra * Math.sin(ang);
             const y = Cy_r + ra * Math.cos(ang);
             pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
         }
 
-        // 6. Sườn răng bên phải: từ alfa_tan ra ngoài đến alfa_root
+        // 3. Sườn thân khai bên trái: từ alfa_tan lên alfa_root
         for (let i = 0; i < numFlank; i++) {
             const frac = i / numFlank;
             const a = alfa_tan + (alfa_root - alfa_tan) * frac;
             const r_t = r_base / Math.cos(a);
             const inv_t = Math.tan(a) - a;
-            const th_t = +(psi + invAlfa - inv_t);
+            const th_t = -(psi_space + invAlfa - inv_t);
             const x = r_t * Math.sin(th_t);
             const y = r_t * Math.cos(th_t);
             pts.push({ x, y, r: r_t, theta: th_t });
         }
 
-        // 7. Cung rãnh ngoài bên phải: từ th_root đến +tau tại r_root
-        for (let i = 0; i <= numArc; i++) {
+        // 4. Cung đáy rãnh của lỗ: từ -th_space_root đến +th_space_root tại r_root
+        for (let i = 0; i < numArc; i++) {
             const frac = i / numArc;
-            const th = th_root + (tau - th_root) * frac;
+            const th = -th_space_root + (2.0 * th_space_root) * frac;
             const x = r_root * Math.sin(th);
             const y = r_root * Math.cos(th);
             pts.push({ x, y, r: r_root, theta: th });
+        }
+
+        // 5. Sườn thân khai bên phải: từ alfa_root xuống alfa_tan
+        for (let i = 0; i < numFlank; i++) {
+            const frac = i / numFlank;
+            const a = alfa_root - (alfa_root - alfa_tan) * frac;
+            const r_t = r_base / Math.cos(a);
+            const inv_t = Math.tan(a) - a;
+            const th_t = +(psi_space + invAlfa - inv_t);
+            const x = r_t * Math.sin(th_t);
+            const y = r_t * Math.cos(th_t);
+            pts.push({ x, y, r: r_t, theta: th_t });
+        }
+
+        // 6. Cung bo đỉnh răng bên phải (Fillet ra): từ tiếp xúc thân khai sang tiếp xúc cung đỉnh
+        const ang_flank_r = Math.atan2(Px_r - Cx_r, Py_r - Cy_r);
+        const ang_tip_r = Math.atan2(P_tip_x - Cx_r, P_tip_y - Cy_r);
+        for (let i = 0; i < numFillet; i++) {
+            const frac = i / numFillet;
+            const ang = ang_flank_r + (ang_tip_r - ang_flank_r) * frac;
+            const x = Cx_r + ra * Math.sin(ang);
+            const y = Cy_r + ra * Math.cos(ang);
+            pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
+        }
+
+        // 7. Cung đỉnh răng bên phải: từ +th_tip_tan đến +tau tại r_tip
+        for (let i = 0; i <= numCrest; i++) {
+            const frac = i / numCrest;
+            const th = th_tip_tan + (tau - th_tip_tan) * frac;
+            const x = r_tip * Math.sin(th);
+            const y = r_tip * Math.cos(th);
+            pts.push({ x, y, r: r_tip, theta: th });
         }
 
         return pts;
@@ -2886,5 +2890,13 @@ window.addEventListener('DOMContentLoaded', () => {
     window.splinesApp = new SplinesUI();
 });
 
+
+  if (typeof window !== "undefined") {
+    window.SplinesData = SplinesData;
+    window.SplinesCalc = SplinesCalc;
+    window.SplinesCanvas = SplinesCanvas;
+    window.SplinesDxf = SplinesDxf;
+    window.SplinesUI = SplinesUI;
+  }
 
 })();
