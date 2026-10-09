@@ -137,7 +137,7 @@ export const SplinesCalc = {
             let dB = match ? match.d_ref : (z * m + 2.0 * m); // fallback if not in table
             xm = (dB - D - 1.1 * m) / 2.0;
             x0 = xm / m;
-            x2 = -x0;
+            x2 = 0.0;
             da0 = dB - 0.2 * m;
             df0 = dB - 2.2 * m;
             di2 = dB - 2.0 * m;
@@ -252,7 +252,7 @@ export const SplinesCalc = {
             df0 = (z0 - 2.0 * hf0_tool) * m + 2.0 * x0 * m;
             di2 = (z0 - 2.0 * ha2_tool) * m + 2.0 * x2 * m;
             dri2 = (z0 + 2.0 * hf2_tool) * m + 2.0 * x2 * m;
-        } else if (params.autoFill) {
+        } else if (params.autoFill && !params.x0_custom) {
             const defs = this.getStandardSplineDefaults(stdTypeId, m, z0, units);
             if (!params.customAlfa) alfa = defs.alfa;
             da0 = defs.da0;
@@ -260,7 +260,55 @@ export const SplinesCalc = {
             di2 = defs.di2;
             dri2 = defs.dri2;
             x0 = defs.x0;
-            x2 = defs.x2;
+            if (params.syncX0X2) {
+                x2 = -x0;
+            } else if (params.x2 !== undefined && !isNaN(parseFloat(params.x2))) {
+                x2 = parseFloat(params.x2);
+            } else {
+                x2 = defs.x2;
+            }
+        } else {
+            // Khi người dùng nhập x0 tùy chỉnh hoặc thay đổi thông số z, m:
+            // Tự động tính toán đường kính chính xác theo x0, x2 và chuẩn:
+            if (stdTypeId === 14) { // DIN 5480
+                const dB = (z0 + 1.1 + 2.0 * x0) * m;
+                da0 = dB - 0.2 * m;
+                df0 = dB - 2.2 * m;
+                di2 = dB - 2.0 * m;
+                dri2 = dB;
+            } else if (stdTypeId >= 15 && stdTypeId <= 17) { // CSN 4950
+                const dB = (z0 + 2.0 + 2.0 * x0) * m;
+                da0 = dB - 0.2 * m;
+                df0 = dB - 2.2 * m;
+                di2 = dB - 2.0 * m;
+                dri2 = dB;
+            } else { // ISO 4156 / ANSI B92
+                da0 = (z0 + 2.0 * ha0_tool + 2.0 * x0) * m;
+                df0 = (z0 - 2.0 * hf0_tool + 2.0 * x0) * m;
+                di2 = (z0 - 2.0 * ha2_tool + 2.0 * x2) * m;
+                dri2 = (z0 + 2.0 * hf2_tool + 2.0 * x2) * m;
+            }
+            if (params.da0_custom && !isNaN(parseFloat(params.da0))) da0 = parseFloat(params.da0);
+            if (params.df0_custom && !isNaN(parseFloat(params.df0))) df0 = parseFloat(params.df0);
+            if (params.di2_custom && !isNaN(parseFloat(params.di2))) di2 = parseFloat(params.di2);
+            if (params.dri2_custom && !isNaN(parseFloat(params.dri2))) dri2 = parseFloat(params.dri2);
+        }
+
+        // Sanity guard to protect tooth geometry from negative/inverted height or stale values
+        const d_pitch = z0 * m;
+        if (isNaN(da0) || da0 <= d_pitch * 0.75 || da0 <= df0) {
+            if (stdTypeId === 14) {
+                const dB = (z0 + 1.1 + 2.0 * x0) * m;
+                da0 = dB - 0.2 * m;
+                df0 = dB - 2.2 * m;
+                di2 = dB - 2.0 * m;
+                dri2 = dB;
+            } else {
+                da0 = (z0 + 2.0 * ha0_tool + 2.0 * x0) * m;
+                df0 = (z0 - 2.0 * hf0_tool + 2.0 * x0) * m;
+                di2 = (z0 - 2.0 * ha2_tool + 2.0 * x2) * m;
+                dri2 = (z0 + 2.0 * hf2_tool + 2.0 * x2) * m;
+            }
         }
 
         const pi = this.PI;

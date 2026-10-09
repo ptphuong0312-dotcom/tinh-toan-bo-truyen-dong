@@ -2613,3 +2613,21 @@ ho_{f0}$.
 3. **Mô phỏng Canvas 2D**:
    - Bổ sung điểm đáy rãnh $\theta = 0.0$ tại bán kính $r_{root}$ để cung đáy rãnh lỗ moay-ơ tiếp xúc mượt mà $C^1$.
    - Đảm bảo các khe hở hướng tâm đỉnh - đáy $c_0, c_2$ luôn dương.
+
+---
+
+### Runbook 19: Khắc Phục Lỗi Dựng Hình Khi Đổi Thông Số & Chuẩn Hóa Xuất CAD DXF Closed Polyline 1020 Đỉnh (Zero-Artifact CAD Protocol)
+**Mục tiêu**: Đảm bảo hình học then hoa thân khai cập nhật tức thời khi thay đổi bất kỳ thông số nào ($m, z, x_0$), bi đo $M$ tiếp xúc chuẩn xác và file CAD DXF xuất ra 100% sạch nét không thừa nét (closed continuous polyline).
+
+1. **Khắc phục lỗi đóng băng đường kính khi đổi thông số (Stale Input Elimination)**:
+   - Trong `splines-calc.js`: Bổ sung tính toán động cho mọi tiêu chuẩn (DIN 5480, ISO 4156, CSN, ANSI) khi $z, m, x_0$ thay đổi. Bổ sung Sanity Guard khôi phục đường kính nếu phát hiện $d_{a0} \le d \cdot 0.75$ hoặc $d_{a0} \le d_{f0}$.
+   - Trong `splines-ui.js`: Bổ sung hàm `resetGeometryOverrideFlags()` khi đổi $z, m, P$; luôn cập nhật các ô đường kính trên DOM (`txtDa0`, `txtDf0`, `txtDi2`, `txtDri2`) đồng bộ với kết quả tính toán động; Canvas 2D tự động gọi `resetView()` để khung hình co giãn tự nhiên theo kích thước mới.
+2. **Quy chuẩn xuất CAD DXF Closed Polyline 1020 Đỉnh Chuẩn AC1009**:
+   - Trong `splines-dxf.js`: Thay thế toàn bộ các thực thể `ARC` và `LINE` rời rạc trên layer đường bao (`CONTOUR_SHAFT`, `CONTOUR_HUB`) bằng duy nhất 1 thực thể **Closed `POLYLINE` (`flag 70 = 1`, `VERTEX`, `SEQEND`)**.
+   - Tạo chuỗi 1020 đỉnh giải tích liên tục theo đúng 1 chiều chu vi 360° (CCW). Độ lệch tọa độ giữa đỉnh đầu tiên và đỉnh cuối cùng đạt $\Delta = 0.000000\text{ mm}$.
+   - Loại bỏ các nét chữ thập tâm bi đo cắt vào sườn răng; giữ lại đúng 2 thực thể tròn `MEASUREMENT_PIN` và đường kích thước `INSPECTION_DIM` hướng ra ngoài; ở chế độ lắp ráp `assembly`, tự động ẩn bi đo để bản vẽ ăn khớp sắc nét.
+3. **Quy trình kiểm tra file DXF bằng Python**:
+   - Sử dụng script đọc DXF kiểm tra khoảng cách giữa các điểm đỉnh liên tiếp:
+     $$\max_{i} \sqrt{(x_{i+1} - x_i)^2 + (y_{i+1} - y_i)^2} \le 1.0\text{ mm}$$
+   - Đảm bảo không có bước nhảy đảo chiều (reversal jump $\approx 8 \div 10\text{ mm}$) và đỉnh đầu/cuối trùng khít 100%.
+

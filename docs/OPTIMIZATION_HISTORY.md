@@ -4375,3 +4375,33 @@ ho_{f0}$.
     - Khe hở đỉnh răng lỗ - chân răng trục: $c_2 = (200 - 198) / 2 = 1.0\text{ mm}$ (dương, an toàn tuyệt đối).
     - Viên bi đo $M = 232.767\text{ mm}$ tiếp xúc êm ái trên sườn thân khai, không còn đè lên moay-ơ.
 
+---
+
+## Giai Đoạn 33: Khắc Phục Triệt Để Lỗi Dựng Hình Khi Đổi Thông Số & Chuẩn Hóa Xuất Bản Vẽ CAD DXF Closed Polyline 100% Không Thừa Nét
+* **Tiêu chuẩn**: DIN 5480, ISO 4156, ANSI B92.1, AutoCAD Release 12 (AC1009).
+* **Đột phá kỹ thuật & Khắc phục triệt để**:
+
+### 1. Khắc phục lỗi "Thay đổi thông số tuy tính toán đúng nhưng dựng hình mô phỏng sai"
+- **Bản chất lỗi**:
+  * Khi người dùng thay đổi $z, m$ hoặc gõ $x_0$, cờ `autoFill` cũ tự động bị tắt.
+  * Trong engine tính toán cũ, khi `autoFill` tắt, các kích thước đường kính đỉnh/chân $d_{a0}, d_{f0}, D_i, D_{ri}$ không được tính lại theo $z, m, x_0$ mới mà bị giữ nguyên giá trị cũ của cấu hình trước đó ($z=20, m=6 \implies d_{a0}=128.8, d_{f0}=116.8$).
+  * Khi người dùng đổi sang $z=24, m=6$ (vòng chia $d = 144\text{ mm}$), đường kính đỉnh trên DOM vẫn là $128.8 < 144\text{ mm}$. Hệ quả: chiều cao răng thân khai trên Canvas 2D bị âm, răng bị co rút li ti thành gai nhọn đảo lộn, trong khi bi đo $M=163.26\text{ mm}$ tính theo $d=144$ bị treo lơ lửng ngoài vành răng.
+- **Giải pháp triệt để**:
+  * Bổ sung nhánh tính toán đường kính động học cho mọi tiêu chuẩn (DIN 5480, ISO 4156, CSN) tự động tính lại $d_{a0}, d_{f0}, D_i, D_{ri}$ bất cứ khi nào $z, m, x_0$ thay đổi.
+  * Bổ sung cơ chế bảo vệ an toàn (Sanity Guard): Nếu $d_{a0} \le d \cdot 0.75$ hoặc $d_{a0} \le d_{f0}$, tự động phục hồi đường kính giải tích chuẩn theo tiêu chuẩn hiện hành.
+  * Trong `SplinesUI`: Tự động xóa cờ ghi đè (`resetGeometryOverrideFlags()`) khi $z, m, P$ thay đổi; luôn đồng bộ kết quả đường kính mới lên DOM; gọi `resetView()` trên Canvas mỗi khi đường kính vòng chia thay đổi.
+
+### 2. Triệt tiêu 100% hiện tượng "Thừa nét DXF (cả trục then lẫn lỗ then)"
+- **Bản chất lỗi**:
+  * Trong giải thuật xuất DXF cũ, biên dạng răng được ghép nối giữa các cung `ARC` và đoạn thẳng `LINE`. Tuy nhiên, trong AutoCAD quy ước góc quay cung `ARC` luôn luôn là ngược chiều kim đồng hồ (CCW). Việc đảo chiều giữa sườn trái (đi lên) và sườn phải (đi xuống) khiến các cung `ARC` tại đỉnh răng và đáy rãnh bị lệch chiều, sinh ra bước nhảy lùi góc (gap $8.68\text{ mm} - 10.5\text{ mm}$) tại mỗi răng.
+  * Khi mở file DXF trong AutoCAD, SolidWorks, hoặc Mastercam Wire EDM, các cung bị quét ngược $354^\circ$ tạo thành hàng loạt đường nét thừa cắt ngang qua thân bánh răng. Ngoài ra, nét chữ thập ở tâm bi đo cũng cắt ngang qua sườn răng.
+- **Giải pháp chuẩn hóa AC1009 Closed Polyline**:
+  * Chuyển đổi 100% biên dạng trục then (`CONTOUR_SHAFT`) và lỗ then (`CONTOUR_HUB`) sang thực thể **`POLYLINE` khép kín (Closed Polyline, `70: 1`, `VERTEX`, `SEQEND`)** theo chuẩn AutoCAD Release 12.
+  * Mỗi biên dạng được tạo thành từ 1020 đỉnh giải tích liên kết liên tục theo đúng một chiều chu vi $360^\circ$. Khoảng cách giữa điểm đầu và điểm cuối đạt chuẩn Zero-Tolerance: $\Delta = 0.000000\text{ mm}$.
+  * Loại bỏ hoàn toàn nét chữ thập tâm bi đo cắt vào sườn răng; giữ lại đúng 2 thực thể hình tròn bi đo thực tế `MEASUREMENT_PIN` và đường kích thước chỉ dẫn `INSPECTION_DIM` hướng ra ngoài khoảng trống.
+  * Ở chế độ xuất Cặp Ăn Khớp (`assembly`), tự động ẩn các bi đo và đường kích thước kiểm tra để bản vẽ ăn khớp sắc nét và không bị rối.
+
+### 3. Đồng bộ menu dropdown chuyển module trên toàn bộ hệ thống
+- Bảo đảm cả 8 module kỹ thuật (`spur-gear`, `bevel-gear`, `bevel-gear-advanced`, `worm-gear`, `worm-gear-advanced`, `shaft-keys`, `involute-splines`, `tolerances`) đều có menu dropdown đồng bộ, đầy đủ 9 module (bao gồm cả Bánh Răng Côn Chuyên Sâu và Trục Vít Chuyên Sâu).
+
+

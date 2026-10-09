@@ -155,8 +155,9 @@ export class SplinesCanvas {
     }
 
     updateData(geom) {
+        const prevD = this.geom ? this.geom.d0 : null;
         this.geom = geom;
-        if (this.scale === 1.0) {
+        if (this.scale === 1.0 || !prevD || Math.abs(prevD - geom.d0) > 1e-3) {
             this.resetView();
         } else {
             this.render();
@@ -184,13 +185,13 @@ export class SplinesCanvas {
         const psi = s / d;       // Half-tooth angle on pitch circle
 
         const r_start = Math.max(r_base, r_root);
-        const r_end = r_tip;
+        const r_end = Math.max(r_start + 0.05 * (g.m || 1.0), r_tip);
 
         const pts = [];
 
         // 1. Root bottom arc on left: from -tau to -phi_start
         let alfa_start = 0;
-        if (r_start > r_base) alfa_start = Math.acos(r_base / r_start);
+        if (r_start > r_base) alfa_start = Math.acos(Math.min(1.0, r_base / r_start));
         const inv_start = Math.tan(alfa_start) - alfa_start;
         const phi_start = psi + invAlfa - inv_start;
 
@@ -204,7 +205,7 @@ export class SplinesCanvas {
             const frac = i / numFlankPts;
             const r = r_start + (r_end - r_start) * frac;
             let alfa_r = 0;
-            if (r > r_base) alfa_r = Math.acos(r_base / r);
+            if (r > r_base) alfa_r = Math.acos(Math.min(1.0, r_base / r));
             const inv_r = Math.tan(alfa_r) - alfa_r;
             const phi = psi + invAlfa - inv_r;
             pts.push({ r, theta: -phi });
@@ -218,7 +219,7 @@ export class SplinesCanvas {
             const frac = i / numFlankPts;
             const r = r_start + (r_end - r_start) * frac;
             let alfa_r = 0;
-            if (r > r_base) alfa_r = Math.acos(r_base / r);
+            if (r > r_base) alfa_r = Math.acos(Math.min(1.0, r_base / r));
             const inv_r = Math.tan(alfa_r) - alfa_r;
             const phi = psi + invAlfa - inv_r;
             pts.push({ r, theta: phi });
@@ -256,13 +257,13 @@ export class SplinesCanvas {
         const psi_space = e2 / d; // Half-groove angle on pitch circle
 
         const r_start = Math.max(r_base, r_tip);
-        const r_end = r_root;
+        const r_end = Math.max(r_start + 0.05 * (g.m || 1.0), r_root);
 
         const pts = [];
 
         // 1. Inner tooth crest arc on left: from -tau to -phi_start at r_tip
         let alfa_start = 0;
-        if (r_start > r_base) alfa_start = Math.acos(r_base / r_start);
+        if (r_start > r_base) alfa_start = Math.acos(Math.min(1.0, r_base / r_start));
         const inv_start = Math.tan(alfa_start) - alfa_start;
         const phi_start = psi_space + invAlfa - inv_start;
 

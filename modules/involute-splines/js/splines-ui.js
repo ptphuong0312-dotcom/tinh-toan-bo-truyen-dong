@@ -176,10 +176,26 @@ export class SplinesUI {
             this.elDt2.dataset.userEdited = 'true';
         });
 
-        // Clear manual edit flags when standard type or module changes so pin is recalculated
-        const resetPinFlag = () => {
+        // Track manual edits for diameter fields
+        [this.elDa0, this.elDf0, this.elDi2, this.elDri2].forEach(inp => {
+            inp?.addEventListener('input', () => {
+                inp.dataset.userEdited = 'true';
+            });
+        });
+
+        // Clear manual edit flags when standard type, module, DP, or z changes
+        const resetGeometryOverrideFlags = () => {
             delete this.elDt0?.dataset.userEdited;
             delete this.elDt2?.dataset.userEdited;
+            delete this.elDa0?.dataset.userEdited;
+            delete this.elDf0?.dataset.userEdited;
+            delete this.elDi2?.dataset.userEdited;
+            delete this.elDri2?.dataset.userEdited;
+        };
+        const resetAllOverrideFlags = () => {
+            resetGeometryOverrideFlags();
+            delete this.elX0?.dataset.userEdited;
+            delete this.elX2?.dataset.userEdited;
         };
 
         // Khi người dùng thay đổi Tiêu chuẩn Mục 1.2: Tự động đổi Mục 1.3 và Mục 2.0
@@ -205,7 +221,7 @@ export class SplinesUI {
                 if (this.elRf0) this.elRf0.value = (std.rf0 || 0.00).toFixed(4);
                 if (this.elRf2) this.elRf2.value = (std.rf2 || 0.00).toFixed(4);
             }
-            resetPinFlag();
+            resetAllOverrideFlags();
             this.recalculate();
         });
 
@@ -220,7 +236,7 @@ export class SplinesUI {
                     if (!isNaN(ang) && this.elAlfaInput) {
                         this.elAlfaInput.value = ang.toFixed(2);
                     }
-                    resetPinFlag();
+                    resetGeometryOverrideFlags();
                     this.recalculate();
                 }
             });
@@ -233,7 +249,7 @@ export class SplinesUI {
                         const opt = Array.from(this.elAlfa.options).find(o => Math.abs(parseFloat(o.value) - ang) < 1e-3);
                         this.elAlfa.value = opt ? opt.value : 'custom';
                     }
-                    resetPinFlag();
+                    resetGeometryOverrideFlags();
                     this.recalculate();
                 }
             };
@@ -299,7 +315,7 @@ export class SplinesUI {
         }
         if (this.elX0) {
             this.elX0.addEventListener('input', () => {
-                if (this.elAutoFill) this.elAutoFill.checked = false;
+                this.elX0.dataset.userEdited = 'true';
                 if (this.elSyncX0X2 && this.elSyncX0X2.checked && this.elX2) {
                     const val0 = parseFloat(this.elX0.value || 0.0);
                     this.elX2.value = (-val0).toFixed(4);
@@ -308,7 +324,17 @@ export class SplinesUI {
         }
         if (this.elX2) {
             this.elX2.addEventListener('input', () => {
-                if (this.elAutoFill) this.elAutoFill.checked = false;
+                this.elX2.dataset.userEdited = 'true';
+            });
+        }
+
+        // Khi người dùng thay đổi số răng z: Tự động xóa cờ ghi đè đường kính cũ để tính toán mới
+        if (this.elZ) {
+            this.elZ.addEventListener('input', () => {
+                resetGeometryOverrideFlags();
+            });
+            this.elZ.addEventListener('change', () => {
+                resetGeometryOverrideFlags();
             });
         }
 
@@ -357,7 +383,7 @@ export class SplinesUI {
                         const opt = Array.from(this.elModuleSelect.options).find(o => Math.abs(parseFloat(o.value) - mVal) < 1e-3);
                         if (opt) this.elModuleSelect.value = opt.value;
                     }
-                    resetPinFlag();
+                    resetGeometryOverrideFlags();
                 }
                 this.recalculate();
             };
@@ -374,7 +400,7 @@ export class SplinesUI {
                         const opt = Array.from(this.elDPSelect.options).find(o => Math.abs(parseFloat(o.value) - dpVal) < 1e-3);
                         if (opt) this.elDPSelect.value = opt.value;
                     }
-                    resetPinFlag();
+                    resetGeometryOverrideFlags();
                 }
                 this.recalculate();
             };
@@ -389,7 +415,7 @@ export class SplinesUI {
                     this.elModule.value = this.elModuleSelect.value;
                     const mVal = parseFloat(this.elModuleSelect.value);
                     if (this.elDP) this.elDP.value = (25.4 / mVal).toFixed(4);
-                    resetPinFlag();
+                    resetGeometryOverrideFlags();
                     this.recalculate();
                 }
             });
@@ -404,7 +430,7 @@ export class SplinesUI {
                     if (this.elModule) {
                         this.elModule.value = (25.4 / dpVal).toFixed(4);
                     }
-                    resetPinFlag();
+                    resetGeometryOverrideFlags();
                     this.recalculate();
                 }
             });
@@ -422,6 +448,7 @@ export class SplinesUI {
                     if (this.elZ) this.elZ.value = preset.z;
                     if (preset.angle && this.elAlfa) this.elAlfa.value = preset.angle;
                     if (this.elAutoFill) this.elAutoFill.checked = true;
+                    resetAllOverrideFlags();
                     this.recalculate();
                     this.showToast(`Đã nạp quy cách tiêu chuẩn thành công!`);
                 } catch (e) {
@@ -585,6 +612,12 @@ export class SplinesUI {
         const k2_auto = this.elK2Auto ? this.elK2Auto.checked : true;
         const k2_custom = parseInt(this.elK2?.value || 3);
 
+        const da0_custom = !!(this.elDa0 && this.elDa0.dataset.userEdited);
+        const df0_custom = !!(this.elDf0 && this.elDf0.dataset.userEdited);
+        const di2_custom = !!(this.elDi2 && this.elDi2.dataset.userEdited);
+        const dri2_custom = !!(this.elDri2 && this.elDri2.dataset.userEdited);
+        const x0_custom = !!(this.elX0 && this.elX0.dataset.userEdited);
+
         const da0 = parseFloat(this.elDa0?.value || 210.0);
         const df0 = parseFloat(this.elDf0?.value || 185.0);
         const di2 = parseFloat(this.elDi2?.value || 191.1454);
@@ -612,6 +645,8 @@ export class SplinesUI {
             customAlfa: true,
             x0,
             x2,
+            syncX0X2: !!(this.elSyncX0X2 && this.elSyncX0X2.checked),
+            x0_custom,
             autoFill,
             profile_standard,
             ha0_tool,
@@ -630,6 +665,10 @@ export class SplinesUI {
             df0,
             di2,
             dri2,
+            da0_custom,
+            df0_custom,
+            di2_custom,
+            dri2_custom,
             dt0,
             dt2,
             z_rev_shaft,
@@ -642,19 +681,16 @@ export class SplinesUI {
 
         this.currentGeom = geom;
 
-        // If AutoFill is on or custom tooth profile is defined, update diameter fields
-        if (autoFill) {
+        // Cập nhật giá trị đường kính trên giao diện (luôn đồng bộ chuẩn trừ khi người dùng đang nhập custom)
+        if (this.elDa0 && !da0_custom) this.elDa0.value = geom.da0.toFixed(4);
+        if (this.elDf0 && !df0_custom) this.elDf0.value = geom.df0.toFixed(4);
+        if (this.elDi2 && !di2_custom) this.elDi2.value = geom.di2.toFixed(4);
+        if (this.elDri2 && !dri2_custom) this.elDri2.value = geom.dri2.toFixed(4);
+
+        // Cập nhật hệ số dịch chỉnh x0, x2 từ chuẩn nếu không phải người dùng tự gõ
+        if (autoFill && !x0_custom) {
             if (this.elX0) this.elX0.value = geom.x0.toFixed(4);
             if (this.elX2) this.elX2.value = geom.x2.toFixed(4);
-            if (this.elDa0) this.elDa0.value = geom.da0.toFixed(4);
-            if (this.elDf0) this.elDf0.value = geom.df0.toFixed(4);
-            if (this.elDi2) this.elDi2.value = geom.di2.toFixed(4);
-            if (this.elDri2) this.elDri2.value = geom.dri2.toFixed(4);
-        } else if (!profile_standard) {
-            if (this.elDa0) this.elDa0.value = geom.da0.toFixed(4);
-            if (this.elDf0) this.elDf0.value = geom.df0.toFixed(4);
-            if (this.elDi2) this.elDi2.value = geom.di2.toFixed(4);
-            if (this.elDri2) this.elDri2.value = geom.dri2.toFixed(4);
         }
 
         // Update k input fields if in auto mode

@@ -2760,3 +2760,22 @@ ho_{f0} / \cos\gamma$.
 3. **Mô phỏng Canvas 2D & CAD DXF ăn khớp hoàn hảo**:
    - Cung đáy rãnh của lỗ moay-ơ bổ sung điểm đối xứng $\theta = 0.0$ tại bán kính $r_{root}$ để đảm bảo độ trơn nhẵn $C^1$.
    - Hai sườn thân khai tiếp xúc chuẩn xác, viên bi đo $M$ đặt êm ái trên sườn thân khai, các khe hở hướng tâm đỉnh - đáy $c_0, c_2$ dương và an toàn.
+
+---
+
+### Quy Tắc 114: Quy Chuẩn Tính Đường Kính Động Học Chống Stale Inputs Cho Then Hoa Thân Khai & Xuất CAD DXF Closed Polyline 1020 Đỉnh Chuẩn AC1009 Triệt Tiêu 100% Thừa Nét (Zero-Artifact Closed Polyline CAD Protocol)
+**Ngày áp dụng**: 09/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Khắc phục triệt để lỗi "Mặc định thì ổn nhưng đổi thông số thì dựng hình sai" (Dynamic Diameter Refresh & Sanity Guard)**:
+   - **Bản chất lỗi**: Khi người dùng thay đổi các thông số hình học cốt lõi ($m, z, x_0$, ví dụ đổi sang $m = 6\text{ mm}, z = 24, x_0 = 0.4$ so với mặc định $m = 5, z = 24$), hàm tính toán trong engine `calculate()` trước đó bị phụ thuộc vào các ô DOM đường kính cũ ($d_{a0}, d_{f0}, D_i, D_{ri}$) nếu không qua bước tra bảng tự động. Dẫn tới đường kính đỉnh/đáy bị "đóng băng" ở giá trị cũ nhỏ hơn ($128.8\text{ mm}$ thay vì $154.2\text{ mm}$), làm đỉnh răng co rút vào trong vòng chia, chân răng lộn xộn và bi đo $M = 163.26\text{ mm}$ lơ lửng ngoài vành.
+   - **Giải pháp xử lý triệt để**:
+     * Trong `splines-calc.js`: Bổ sung cơ chế tính toán động hình học tức thời ($d_{a0}, d_{f0}, D_i, D_{ri}$) theo đúng tiêu chuẩn đang chọn (DIN 5480, ISO 4156, CSN, ANSI) ngay khi $z, m, x_0$ thay đổi. Bổ sung Sanity Guard tự động khôi phục công thức chuẩn nếu $d_{a0} \le d \cdot 0.75$ hoặc $d_{a0} \le d_{f0}$.
+     * Trong `splines-ui.js`: Bổ sung `resetGeometryOverrideFlags()` khi $z, m, P$ thay đổi; luôn cập nhật các ô đường kính trên DOM (`txtDa0`, `txtDf0`, `txtDi2`, `txtDri2`) đồng bộ với kết quả tính toán động; Canvas 2D tự động gọi `resetView()` để khung hình co giãn tự nhiên theo kích thước mới.
+2. **Triệt tiêu 100% hiện tượng "Thừa Nét" trong xuất CAD DXF (Closed POLYLINE 1020 Đỉnh Chuẩn AC1009)**:
+   - **Bản chất lỗi thừa nét**: AutoCAD Release 12 quy định góc của thực thể `ARC` luôn theo chiều ngược chiều kim đồng hồ (CCW). Khi nối các cung tròn đỉnh/đáy với các đoạn thẳng sườn răng (sườn trái đi lên, sườn phải đi xuống), chiều quay và thứ tự các điểm bị nghịch đảo, sinh ra bước nhảy lùi góc (gap $8.68\text{ mm} - 10.5\text{ mm}$) tại mỗi răng. Khi các phần mềm CAD/CAM (AutoCAD, SolidWorks, Mastercam) mở file, bộ đọc cố gắng khép kín hoặc quét ngược $354^\circ$ tạo thành hàng chục đến hàng trăm nét thừa cắt chéo qua thân bánh răng.
+   - **Giải pháp chuẩn công nghiệp AC1009**:
+     * Thay thế toàn bộ các thực thể `ARC` và `LINE` rời rạc trên layer đường bao (`CONTOUR_SHAFT`, `CONTOUR_HUB`) bằng duy nhất 1 thực thể **Closed `POLYLINE` (`flag 70 = 1`, `VERTEX`, `SEQEND`)**.
+     * Xây dựng chuỗi 1020 đỉnh giải tích (hoặc liên tục theo số răng $z$) nối tiếp nhau theo đúng 1 chiều chu vi $360^\circ$ (Counter-Clockwise): Cung chân răng $\to$ Sườn thân khai trái $\to$ Cung đỉnh răng (có bo đỉnh $r_a$) $\to$ Sườn thân khai phải $\to$ Cung chân răng tiếp theo.
+     * Độ lệch tọa độ giữa đỉnh đầu tiên và đỉnh cuối cùng đạt chuẩn Zero-Tolerance ($\Delta = 0.000000\text{ mm}$), tạo thành chuỗi biên dạng kín 100% khép kín, sẵn sàng gia công cắt dây Wire-EDM và đùn khối 3D Extrude trong CAD/CAM mà không cần xử lý bù nét (Overkill / Trim).
+   - **Tinh gọn layer kiểm tra đo kiểm**:
+     * Loại bỏ các nét chữ thập tâm bi đo cắt vào sườn răng; giữ lại đúng 2 thực thể tròn `MEASUREMENT_PIN` và đường kích thước `INSPECTION_DIM` hướng ra khoảng trống; ở chế độ lắp ráp `assembly`, tự động ẩn bi đo để bản vẽ ăn khớp sắc nét.
