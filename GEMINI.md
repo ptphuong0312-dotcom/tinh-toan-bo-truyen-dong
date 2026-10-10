@@ -3004,3 +3004,33 @@ ho_{f0} / \cos\gamma$.
      * Con lăn xích (Rollers): Khối tròn màu xanh cyan (#0284c7, viền #38bdf8) đặt khít trong rãnh đĩa xích.
      * Má xích ngoài (Outer links): Màu hợp kim bạc sáng bán trong suốt (rgba(148, 163, 184, 0.85)).
      * Chốt xích tán đinh (Pins): Chấm đen tâm tán viền bạc (#0f172a, viền #94a3b8).
+
+---
+
+### Quy Tắc 124: Quy Chuẩn Điều Khiển Động Bán Kính Lượn Đỉnh & Chân Răng Then Hoa Thân Khai (Involute Splines Dynamic Fillets & Manufacturing DXF Table Sync Protocol)
+**Ngày áp dụng**: 10/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Quy chuẩn Input DOM & Cơ chế hủy cờ Tiêu chuẩn (`splines-ui.js`, `index.html`)**:
+   - Tất cả các ô nhập Section 2.0 (`ha0Input`, `hf0Input`, `ra0Input`, `rf0Input`, `ha2Input`, `hf2Input`, `ra2Input`, `rf2Input`, `c0Input`, `c2Input`) tuyệt đối không bị khóa `disabled`.
+   - Khi người dùng gõ vào bất kỳ ô nào của Mục 2.0:
+     * Gán cờ `dataset.userEdited = 'true'` trên phần tử đó.
+     * Tự động bỏ chọn checkbox tiêu chuẩn: `profileStdCheck.checked = false`.
+   - Trong hàm `recalculate()`: Bảo vệ tuyệt đối các ô có cờ `dataset.userEdited`, không bị giá trị tiêu chuẩn ghi đè lên.
+   - Cập nhật hiển thị kích thước milimét thực tế trong cột Thao tác thời gian thực: `ra0 = ... mm | ra2 = ... mm` và `rf0 = ... mm | rf2 = ... mm`.
+2. **Quy chuẩn Giải thuật Hình học Biên dạng Trục & Lỗ (`splines-calc.js`)**:
+   - Hỗ trợ linh hoạt cả `params.ra0_tool` lẫn fallback `params.ra0` (tương tự cho `rf0, ra2, rf2`).
+   - Hỗ trợ đầy đủ trường hợp $r = 0.0$:
+     * Khi $r_f \le 0.005m$: Vẽ góc chân răng sắc nét phẳng trực tiếp từ sườn thân khai vào cung đáy mà không bị ép fallback về $0.18m$.
+     * Khi $r_a \le 0.005m$: Vẽ đỉnh răng phẳng sắc nét tại mặt trụ đỉnh $d_a / 2$.
+   - Khi $r > 0.005m$:
+     * Thuật toán tìm kiếm nhị phân 45 bước dựng cung bo tròn tiếp tuyến $C^1$ trơn tru mượt mà với sườn thân khai và mặt trụ chân/đỉnh.
+3. **Quy chuẩn Đồng bộ Bảng Thông số Chế tạo CAD DXF (`splines-dxf.js`)**:
+   - Section 6.0 xuất bản vẽ DXF AC1009 tích hợp đầy đủ 4 dòng kích thước góc lượn trong bảng chế tạo:
+     * `Luon Dinh Truc / Shaft tip fillet (ra0)`: `$geom.ra0 mm (ra0*=$geom.ra0_tool)`
+     * `Luon Chan Truc / Shaft root fillet (rf0)`: `$geom.rf0 mm (rf0*=$geom.rf0_tool)`
+     * `Luon Dinh Lo / Hub tip fillet (ra2)`: `$geom.ra2 mm (ra2*=$geom.ra2_tool)`
+     * `Luon Chan Lo / Hub root fillet (rf2)`: `$geom.rf2 mm (rf2*=$geom.rf2_tool)`
+4. **Quy chuẩn Kiểm thử Tự động**:
+   - `python tools/test_splines_qc.py`: Đạt 110/110 phép tính PASS tuyệt đối 100.0% với $\Delta = 0.000000$ đối chiếu MITCalc 1.74 Excel COM.
+   - `node scratch/test_splines_fillet_verification.js`: Đạt kiểm tra hình học và độ nhạy của điểm sector và DXF.
+   - `python scratch/test_splines_e2e.py`: Playwright browser test đạt 100% PASS (Canvas redraw, DOM update, DXF output).

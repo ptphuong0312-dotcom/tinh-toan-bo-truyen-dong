@@ -451,26 +451,26 @@
                                     <td class="col-idx">2.1</td>
                                     <td class="col-param">Chiều cao đầu răng tương đối</td>
                                     <td class="col-sym">h<sub>a0</sub><sup>*</sup> / h<sub>a2</sub><sup>*</sup></td>
-                                    <td class="col-val1"><input type="number" id="ha0Input" class="user-input" value="0.5000" step="0.05" disabled></td>
-                                    <td class="col-val2"><input type="number" id="ha2Input" class="user-input output-hub" value="0.5000" step="0.05" disabled></td>
+                                    <td class="col-val1"><input type="number" id="ha0Input" class="user-input" value="0.5000" step="0.05"></td>
+                                    <td class="col-val2"><input type="number" id="ha2Input" class="user-input output-hub" value="0.5000" step="0.05"></td>
                                     <td class="col-unit">[m]</td>
-                                    <td class="col-action">ha = ha* &middot; m</td>
+                                    <td class="col-action" id="outHaMm">ha = ha* &middot; m</td>
                                 </tr>
                                 <tr>
                                     <td class="col-idx">2.2</td>
                                     <td class="col-param">Chiều cao chân răng tương đối</td>
                                     <td class="col-sym">h<sub>f0</sub><sup>*</sup> / h<sub>f2</sub><sup>*</sup></td>
-                                    <td class="col-val1"><input type="number" id="hf0Input" class="user-input" value="0.7500" step="0.05" disabled></td>
-                                    <td class="col-val2"><input type="number" id="hf2Input" class="user-input output-hub" value="0.7500" step="0.05" disabled></td>
+                                    <td class="col-val1"><input type="number" id="hf0Input" class="user-input" value="0.7500" step="0.05"></td>
+                                    <td class="col-val2"><input type="number" id="hf2Input" class="user-input output-hub" value="0.7500" step="0.05"></td>
                                     <td class="col-unit">[m]</td>
-                                    <td class="col-action">hf = hf* &middot; m</td>
+                                    <td class="col-action" id="outHfMm">hf = hf* &middot; m</td>
                                 </tr>
                                 <tr>
                                     <td class="col-idx">2.3</td>
                                     <td class="col-param">Hệ số khe hở đỉnh tương đối</td>
                                     <td class="col-sym">c<sub>0</sub><sup>*</sup> / c<sub>2</sub><sup>*</sup></td>
-                                    <td class="col-val1"><input type="number" id="c0Input" class="user-input" value="0.2500" step="0.05" disabled></td>
-                                    <td class="col-val2"><input type="number" id="c2Input" class="user-input output-hub" value="0.2500" step="0.05" disabled></td>
+                                    <td class="col-val1"><input type="number" id="c0Input" class="user-input" value="0.2500" step="0.05"></td>
+                                    <td class="col-val2"><input type="number" id="c2Input" class="user-input output-hub" value="0.2500" step="0.05"></td>
                                     <td class="col-unit">[m]</td>
                                     <td class="col-action">c<sup>*</sup> = h<sub>f</sub><sup>*</sup> - h<sub>a</sub><sup>*</sup> = c/m</td>
                                 </tr>
@@ -478,19 +478,19 @@
                                     <td class="col-idx">2.4</td>
                                     <td class="col-param">Bán kính lượn đỉnh răng tương đối</td>
                                     <td class="col-sym">r<sub>a0</sub><sup>*</sup> / r<sub>a2</sub><sup>*</sup></td>
-                                    <td class="col-val1"><input type="number" id="ra0Input" class="user-input" value="0.0000" step="0.05" disabled></td>
-                                    <td class="col-val2"><input type="number" id="ra2Input" class="user-input output-hub" value="0.2000" step="0.05" disabled></td>
+                                    <td class="col-val1"><input type="number" id="ra0Input" class="user-input" value="0.0000" step="0.05"></td>
+                                    <td class="col-val2"><input type="number" id="ra2Input" class="user-input output-hub" value="0.2000" step="0.05"></td>
                                     <td class="col-unit">[m]</td>
-                                    <td class="col-action">ra = ra* &middot; m</td>
+                                    <td class="col-action" id="outRaMm">ra = ra* &middot; m</td>
                                 </tr>
                                 <tr>
                                     <td class="col-idx">2.5</td>
                                     <td class="col-param">Bán kính lượn chân răng tương đối</td>
                                     <td class="col-sym">r<sub>f0</sub><sup>*</sup> / r<sub>f2</sub><sup>*</sup></td>
-                                    <td class="col-val1"><input type="number" id="rf0Input" class="user-input" value="0.0000" step="0.05" disabled></td>
-                                    <td class="col-val2"><input type="number" id="rf2Input" class="user-input output-hub" value="0.0000" step="0.05" disabled></td>
+                                    <td class="col-val1"><input type="number" id="rf0Input" class="user-input" value="0.0000" step="0.05"></td>
+                                    <td class="col-val2"><input type="number" id="rf2Input" class="user-input output-hub" value="0.0000" step="0.05"></td>
                                     <td class="col-unit">[m]</td>
-                                    <td class="col-action">rf = rf* &middot; m</td>
+                                    <td class="col-action" id="outRfMm">rf = rf* &middot; m</td>
                                 </tr>
                             </tbody>
                         </table>

@@ -4706,3 +4706,36 @@ ho_{f0}$.
   4. **Kiểm thử trình duyệt thực tế Chromium (Playwright)**:
      - Chụp ảnh kiểm tra cả 4 chế độ hiển thị: Toàn cảnh (`browser_chain_full.png`), Đĩa 1 (`browser_chain_sp1.png`), Đĩa 2 (`browser_chain_sp2.png`), Vùng ăn khớp (`browser_chain_mesh.png`).
      - Đạt 0 console error, độ mượt 60fps, hỗ trợ cảm ứng đa điểm Pan/Zoom hoàn hảo.
+
+---
+
+## Giai Đoạn 44: Nâng Cấp Bán Kính Lượn Đỉnh & Chân Răng Then Hoa Thân Khai Động (Involute Splines Fillet Dynamics & DXF Sync)
+* **Bối cảnh & Yêu cầu từ người dùng (`SirPhuong`)**:
+  - *"TÍNH TOÁN THEN HOA THÂN KHAI (INVOLUTE SPLINES) : hiện tại tôi thay đổi các giá trị "Bán kính lượn đỉnh răng tương đối" và "Bán kính lượn chân răng tương đối" thì không thấy bản vẽ thay đổi"* (kèm ảnh chụp Section 6.0 Xuất Bản Vẽ 2D CAD & Bảng Chế Tạo DXF).
+* **Phân tích nguyên nhân gốc rễ**:
+  1. Trong `index.html`, các thẻ `<input id="ra0Input"...>`, `<input id="rf0Input"...>` ban đầu có thuộc tính `disabled` hoặc bị khóa bởi cờ tiêu chuẩn `profileStdCheck.checked = true`, khiến người dùng không thao tác được hoặc bị hàm `recalculate()` ghi đè lại giá trị chuẩn.
+  2. Trong `splines-calc.js`, các điều kiện cũ kiểm tra `> 0` đã loại trừ giá trị `0.0`. Khi người dùng thử nhập `0.00` để xem góc nhọn, hàm tự động fallback về giá trị chuẩn khiến bản vẽ không thay đổi.
+  3. Thiếu hỗ trợ đồng thời tên tham số `ra0/ra0_tool`, `rf0/rf0_tool`, `ra2/ra2_tool`, `rf2/rf2_tool` dẫn đến mất tính liên thông khi truyền tham số từ các kịch bản kiểm thử hay các mô-đun khác.
+  4. Bảng thông số chế tạo DXF (Section 6.0) trước đây chưa có các dòng ghi nhận bán kính lượn đỉnh và chân răng của trục và lỗ.
+* **Đột phá giải thuật & Thành quả triển khai**:
+  1. **Mở khóa tương tác Section 2.0 & Hiển thị mm trực quan thời gian thực (`splines-ui.js`, `index.html`)**:
+     - Bỏ `disabled` khỏi tất cả các ô nhập liệu Section 2.0.
+     - Bổ sung cơ chế tự động hủy cờ tiêu chuẩn (`profileStdCheck.checked = false`) và đánh dấu `dataset.userEdited = 'true'` ngay khi người dùng gõ vào bất kỳ ô nào của Mục 2.0.
+     - Hàm `recalculate()` bảo vệ nguyên vẹn các ô có `dataset.userEdited` không bị ghi đè bởi giá trị chuẩn.
+     - Bổ sung hiển thị bán kính quy đổi milimét thời gian thực trong cột Thao tác: `ra0 = ... mm | ra2 = ... mm` và `rf0 = ... mm | rf2 = ... mm`.
+  2. **Giải thuật hình học góc bo đỉnh & chân răng $C^1$ tiếp tuyến mượt mà (`splines-calc.js`)**:
+     - Hỗ trợ đầy đủ cả 2 trạng thái: Góc sắc nét phẳng ($r = 0.0$) và Cung tròn tiếp tuyến $C^1$ ($r > 0.0$).
+     - Shaft Tip Fillet ($r_{a0}$): Nối tiếp tuyến mượt mà từ sườn thân khai lên mặt trụ đỉnh $r_{\text{tip}} = d_{a0} / 2$.
+     - Shaft Root Fillet ($r_{f0}$): Tìm tâm cung bo $C$ bằng thuật toán nhị phân, đảm bảo tiếp tuyến mượt mà với sườn thân khai và tiếp tuyến với mặt trụ đáy $r_{\text{root}} = d_{f0} / 2$.
+     - Hub Tip Fillet ($r_{a2}$): Cung tròn tiếp tuyến đỉnh then lỗ ở $r_{\text{tip}} = D_i / 2$.
+     - Hub Root Fillet ($r_{f2}$): Cung tròn tiếp tuyến chân rãnh then lỗ ở $r_{\text{root}} = D_{ri} / 2$.
+  3. **Đồng bộ Bảng Thông Số Chế Tạo DXF Section 6.0 (`splines-dxf.js`)**:
+     - Bổ sung 4 dòng thông số then chốt vào bảng gia công DXF:
+       * `Luon Dinh Truc / Shaft tip fillet (ra0)`: hiển thị cả giá trị mm và hệ số tương đối $r_{a0}^*$.
+       * `Luon Chan Truc / Shaft root fillet (rf0)`: hiển thị cả giá trị mm và hệ số tương đối $r_{f0}^*$.
+       * `Luon Dinh Lo / Hub tip fillet (ra2)`: hiển thị cả giá trị mm và hệ số tương đối $r_{a2}^*$.
+       * `Luon Chan Lo / Hub root fillet (rf2)`: hiển thị cả giá trị mm và hệ số tương đối $r_{f2}^*$.
+  4. **Kiểm thử tự động đa tầng**:
+     - **QC Suite (`test_splines_qc.py`)**: **110 / 110 phép tính PASS tuyệt đối 100.0% với $\Delta = 0.000000$** đối chiếu Excel COM MITCalc 1.74.
+     - **Geometry Dynamics Verification (`test_splines_fillet_verification.js`)**: Kiểm tra số điểm biên dạng và tọa độ phản ứng tức thì khi đổi bán kính góc lượn (128 -> 160 -> 96 điểm cho trục, 133 -> 69 điểm cho lỗ).
+     - **Playwright E2E Browser Test (`test_splines_e2e.py`)**: Kiểm tra Chromium thực tế: gõ giá trị, tự động uncheck standard, cập nhật mm, Canvas 2D vẽ lại tức thì, DXF sinh đủ 4 dòng thông số.

@@ -277,20 +277,29 @@ export class SplinesUI {
             this.elAlfaInput.addEventListener('change', onAlfaInputChange);
         }
 
-        // Quản lý Checkbox Tiêu chuẩn Mục 2.0 (Khóa / Mở khóa chỉnh sửa)
+        // Quản lý Checkbox Tiêu chuẩn Mục 2.0 & tự động nhận diện tùy chỉnh biên dạng
+        const profileInputs = [
+            this.elHa0, this.elHa2, this.elHf0, this.elHf2,
+            this.elC0, this.elC2,
+            this.elRa0, this.elRa2, this.elRf0, this.elRf2
+        ];
+
+        profileInputs.forEach(inp => {
+            if (!inp) return;
+            inp.addEventListener('input', () => {
+                inp.dataset.userEdited = 'true';
+                if (this.elProfileStd) this.elProfileStd.checked = false;
+            });
+        });
+
         if (this.elProfileStd) {
             this.elProfileStd.addEventListener('change', () => {
                 const isStd = this.elProfileStd.checked;
-                const pInputs = [
-                    this.elHa0, this.elHa2, this.elHf0, this.elHf2,
-                    this.elC0, this.elC2,
-                    this.elRa0, this.elRa2, this.elRf0, this.elRf2
-                ];
-                pInputs.forEach(inp => {
-                    if (inp) inp.disabled = isStd;
-                });
-                resetGeometryOverrideFlags();
                 if (isStd) {
+                    profileInputs.forEach(inp => {
+                        if (inp) delete inp.dataset.userEdited;
+                    });
+                    resetGeometryOverrideFlags();
                     const stdId = parseInt(this.elStdType?.value || 6);
                     const std = SplinesData.std_types.find(st => st.id === stdId);
                     if (std) {
@@ -783,16 +792,16 @@ export class SplinesUI {
         if (k0_auto && this.elK0) this.elK0.value = geom.k0;
         if (k2_auto && this.elK2) this.elK2.value = geom.k2;
 
-        // If profile standard is active, ensure inputs reflect standard profile
+        // If profile standard is active, ensure inputs reflect standard profile (unless edited by user)
         if (profile_standard) {
-            if (this.elHa0) this.elHa0.value = geom.ha0_tool.toFixed(4);
-            if (this.elHf0) this.elHf0.value = geom.hf0_tool.toFixed(4);
-            if (this.elRa0) this.elRa0.value = geom.ra0_tool.toFixed(4);
-            if (this.elRf0) this.elRf0.value = geom.rf0_tool.toFixed(4);
-            if (this.elHa2) this.elHa2.value = geom.ha2_tool.toFixed(4);
-            if (this.elHf2) this.elHf2.value = geom.hf2_tool.toFixed(4);
-            if (this.elRa2) this.elRa2.value = geom.ra2_tool.toFixed(4);
-            if (this.elRf2) this.elRf2.value = geom.rf2_tool.toFixed(4);
+            if (this.elHa0 && !this.elHa0.dataset.userEdited) this.elHa0.value = geom.ha0_tool.toFixed(4);
+            if (this.elHf0 && !this.elHf0.dataset.userEdited) this.elHf0.value = geom.hf0_tool.toFixed(4);
+            if (this.elRa0 && !this.elRa0.dataset.userEdited) this.elRa0.value = geom.ra0_tool.toFixed(4);
+            if (this.elRf0 && !this.elRf0.dataset.userEdited) this.elRf0.value = geom.rf0_tool.toFixed(4);
+            if (this.elHa2 && !this.elHa2.dataset.userEdited) this.elHa2.value = geom.ha2_tool.toFixed(4);
+            if (this.elHf2 && !this.elHf2.dataset.userEdited) this.elHf2.value = geom.hf2_tool.toFixed(4);
+            if (this.elRa2 && !this.elRa2.dataset.userEdited) this.elRa2.value = geom.ra2_tool.toFixed(4);
+            if (this.elRf2 && !this.elRf2.dataset.userEdited) this.elRf2.value = geom.rf2_tool.toFixed(4);
         }
 
         // Always update recommended ball/pin diameter if not manually edited by user
@@ -807,6 +816,12 @@ export class SplinesUI {
     }
 
     updateDOMOutputs(g) {
+        // Section 2.0 Live Millimeter Radii Display
+        this.setTxt('outHaMm', `ha0 = ${(g.ha0_tool * g.m).toFixed(2)} mm | ha2 = ${(g.ha2_tool * g.m).toFixed(2)} mm`);
+        this.setTxt('outHfMm', `hf0 = ${(g.hf0_tool * g.m).toFixed(2)} mm | hf2 = ${(g.hf2_tool * g.m).toFixed(2)} mm`);
+        this.setTxt('outRaMm', `ra0 = ${(g.ra0_tool * g.m).toFixed(2)} mm | ra2 = ${(g.ra2_tool * g.m).toFixed(2)} mm`);
+        this.setTxt('outRfMm', `rf0 = ${(g.rf0_tool * g.m).toFixed(2)} mm | rf2 = ${(g.rf2_tool * g.m).toFixed(2)} mm`);
+
         // Section 1.0 Module & Pitch Diameters & Angles
         this.setTxt('outAlfaHub', g.alfa.toFixed(2));
         this.setTxt('outModuleHub', g.m.toFixed(3));

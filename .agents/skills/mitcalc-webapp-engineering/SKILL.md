@@ -2881,3 +2881,39 @@ ho_{f0}$.
    - **Má xích hình số 8 cơ khí (Figure-8 Dog-bone Link Plates)**:
      * Dựng hình học má xích số 8 thực tế: Chiều cao má H ~ 0.88*p, bán kính 2 đầu tròn ôm chốt R_end = H/2, bề rộng eo thắt giữa w_m = 0.78*H / 2.
      * Phân lớp đồ họa: Má xích trong (Inner links, xám tôi nhiệt), Con lăn (Rollers, cyan khít đáy rãnh), Má xích ngoài (Outer links, hợp kim bạc sáng bán trong suốt), Chốt xích tán đinh (Pins).
+
+
+---
+
+### Runbook 27: Quy Chuẩn Tương Tác Bán Kính Lượn Đỉnh & Chân Răng Then Hoa Thân Khai (Involute Splines Dynamic Fillets & Manufacturing DXF Table Sync)
+**Mục tiêu**: Đảm bảo người dùng thay đổi các bán kính lượn tương đối $r_{a0}^*, r_{f0}^*$ (trên trục) và $r_{a2}^*, r_{f2}^*$ (trong lỗ) thì hệ thống phản ứng tức thì: mở khóa ô nhập, uncheck cờ tiêu chuẩn, vẽ lại 2D Canvas sắc nét, cập nhật milimét thời gian thực và đồng bộ đầy đủ các dòng thông số vào bảng chế tạo CAD DXF (Section 6.0).
+
+1. **Quy chuẩn Input DOM & Cơ chế hủy cờ Tiêu chuẩn (`splines-ui.js`, `index.html`)**:
+   - Tất cả ô nhập Section 2.0 (`ha0Input`, `hf0Input`, `ra0Input`, `rf0Input`, `ha2Input`, `hf2Input`, `ra2Input`, `rf2Input`, `c0Input`, `c2Input`) không có thuộc tính `disabled`.
+   - Ngay khi người dùng thao tác nhập liệu trên bất kỳ ô nào của Section 2.0:
+     * Gán `dataset.userEdited = 'true'` trên phần tử đó.
+     * Tự động bỏ chọn checkbox tiêu chuẩn: `profileStdCheck.checked = false`.
+   - Trong hàm `recalculate()`: Các ô có cờ `dataset.userEdited` được bảo vệ tuyệt đối, không bị các giá trị chuẩn đè lên.
+   - Bổ sung hiển thị bán kính thực tế dạng milimét thời gian thực trong cột Thao tác:
+     `ra0 = (ra0* · m) mm | ra2 = (ra2* · m) mm` và `rf0 = (rf0* · m) mm | rf2 = (rf2* · m) mm`.
+
+2. **Quy chuẩn Giải thuật Hình học Biên dạng Trục & Lỗ (`splines-calc.js`)**:
+   - Hỗ trợ tham số linh hoạt cả `params.ra0_tool` lẫn fallback `params.ra0` (tương tự cho `rf0, ra2, rf2`).
+   - Hỗ trợ đầy đủ trường hợp $r = 0.0$:
+     * Khi $r_f \le 0.005m$: Vẽ góc chân răng sắc nét phẳng trực tiếp từ sườn thân khai vào đáy rãnh mà không bị ép fallback về $0.18m$.
+     * Khi $r_a \le 0.005m$: Vẽ đỉnh răng phẳng sắc nét tại mặt trụ đỉnh $d_a / 2$.
+   - Khi $r > 0.005m$:
+     * Tính toán tiếp tuyến $C^1$ trơn tru mượt mà với sườn thân khai và mặt trụ chân/đỉnh bằng thuật toán tìm kiếm nhị phân 45 bước.
+
+3. **Quy chuẩn Bảng Thông Số Chế Tạo CAD DXF (`splines-dxf.js`)**:
+   - Bổ sung trọn vẹn 4 dòng góc lượn vào bảng chế tạo DXF trong Section 6.0:
+     * `Luon Dinh Truc / Shaft tip fillet (ra0)`: `$geom.ra0 mm (ra0*=$geom.ra0_tool)`
+     * `Luon Chan Truc / Shaft root fillet (rf0)`: `$geom.rf0 mm (rf0*=$geom.rf0_tool)`
+     * `Luon Dinh Lo / Hub tip fillet (ra2)`: `$geom.ra2 mm (ra2*=$geom.ra2_tool)`
+     * `Luon Chan Lo / Hub root fillet (rf2)`: `$geom.rf2 mm (rf2*=$geom.rf2_tool)`
+   - File DXF AC1009 xuất ra chứa trọn vẹn các thông số kích thước và layer khép kín chuẩn công nghiệp.
+
+4. **Quy trình Kiểm thử**:
+   - `python tools/test_splines_qc.py`: Đạt 110/110 phép tính PASS 100.0% với $\Delta = 0.000000$.
+   - `node scratch/test_splines_fillet_verification.js`: Đạt kiểm tra hình học và độ nhạy của điểm sector và DXF.
+   - `python scratch/test_splines_e2e.py`: Playwright browser test đạt 100% PASS (Canvas redraw, DOM update, DXF output).
