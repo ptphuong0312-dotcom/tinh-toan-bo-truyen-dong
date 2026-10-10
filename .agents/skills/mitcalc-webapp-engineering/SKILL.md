@@ -2711,3 +2711,27 @@ ho_{f0}$.
    - Khi $\alpha \le 30.05^\circ$: $d_{t0} = 1.750 \times m$ (Trục), $d_{t2} = 1.750 \times m$ (Lỗ).
    - Khi $\alpha > 30.05^\circ$: Áp dụng theo chuẩn quốc tế tương ứng ($1.728 \cdot m$ hoặc $1.920 \cdot m$).
    - Người dùng tự do tùy chỉnh đường kính bi đo thực tế trong xưởng.
+
+---
+
+### Runbook 23: Quy Chuẩn Bảo Tồn Đường Kính Danh Nghĩa Then Hoa Thân Khai (ISO 4156 / DIN 5480 / ANSI B92.1) & Giải Thuật Bo Chân Răng Siêu Hẹp Khi $x_0 = 0.6$
+**Mục tiêu**: Hiểu rõ bản chất mối ghép then hoa đồng trục, không bao giờ để đường kính đỉnh/đáy tịnh tiến hay đâm xuyên nhau khi thay đổi $x_0$, và xử lý triệt để giải thuật bo tròn chân răng khi khoảng hở rãnh hẹp.
+
+1. **Bản chất cơ học: Bánh răng vs Then hoa thân khai**:
+   - Bánh răng: Dịch chỉnh góc làm đổi khoảng cách trục $a_w$, phải tính lại $d_a$ để giữ khe hở đỉnh răng.
+   - Then hoa: Mối ghép đồng trục ($a = 0$), định tâm theo bảng quy cách chuẩn. Các đường kính đỉnh và đáy danh nghĩa ($d_{a0}, d_{f0}, D_i, D_{ri}$) là hằng số tiêu chuẩn được tra cứu từ bảng `T_spl2_Name`.
+   - Hệ số $x_0$ và $x_2$ **CHỈ DÙNG ĐỂ ĐIỀU CHỈNH CHIỀU DÀY RĂNG $s_0, s_2$ VÀ KHE HỞ CẠNH RĂNG (BACKLASH)**:
+     $$s_0 = \frac{\pi m}{2} + 2 x_0 m \tan\alpha, \quad s_2 = \frac{\pi m}{2} + 2 x_2 m \tan\alpha$$
+   - **Tuyệt đối KHÔNG ĐƯỢC cộng $+2 x_0 m$ vào $d_{a0}, d_{f0}$ và $-2 x_0 m$ vào $D_i, D_{ri}$**.
+   - Bảo toàn 100% đường kính danh nghĩa từ `getStandardSplineDefaults()` cho cả 17 hệ tiêu chuẩn khi thay đổi $x_0, x_2$.
+
+2. **Giải thuật xử lý góc lượn chân răng khi rãnh răng siêu hẹp ($x_0 = 0.6$)**:
+   - Khi $x_0 = 0.6$ ($m=10, z=20$), chiều dày răng trục $s_0 = 22.64\text{ mm}$, khoảng hở rãnh còn lại $w_{\text{avail}} \approx 0.062\text{ mm}$.
+   - Khống chế bán kính góc lượn $r_f \le w_{\text{avail}} \times 0.85$.
+   - Khống chế góc tiếp xúc chân răng $th_{root\_r} \le \tau - 0.0005$, bảo đảm bước góc quét $d\_\theta = \max(0, \tau - th_{root\_r})$ luôn dương.
+   - Triệt tiêu 100% hiện tượng tự giao nhau hoặc lộn ngược cung đáy vào trong.
+
+3. **Quy trình kiểm thử QC kép 110 phép tính**:
+   - Chạy `python tools/test_splines_qc.py` kiểm tra 9 ca thử nghiệm trên 17 hệ tiêu chuẩn.
+   - Yêu cầu nghiêm ngặt: 110/110 phép tính PASS 100.0% với $\Delta = 0.000000$ so với MITCalc 1.74 Excel COM.
+

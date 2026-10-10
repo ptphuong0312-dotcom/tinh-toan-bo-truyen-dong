@@ -281,47 +281,37 @@ const SplinesCalc = {
         let dri2 = parseFloat(params.dri2);
 
         if (!profileStandard) {
-            // Khi người dùng tùy chỉnh thông số biên dạng răng Mục 2.0:
-            da0 = (z0 + 2.0 * ha0_tool) * m + 2.0 * x0 * m;
-            df0 = (z0 - 2.0 * hf0_tool) * m + 2.0 * x0 * m;
-            di2 = (z0 - 2.0 * ha2_tool) * m + 2.0 * x2 * m;
-            dri2 = (z0 + 2.0 * hf2_tool) * m + 2.0 * x2 * m;
-        } else if (params.autoFill && !params.x0_custom) {
+            // Khi người dùng tùy chỉnh thông số biên dạng răng Mục 2.0 (không theo chuẩn):
+            da0 = (z0 + 2.0 * ha0_tool) * m;
+            df0 = (z0 - 2.0 * hf0_tool) * m;
+            di2 = (z0 - 2.0 * ha2_tool) * m;
+            dri2 = (z0 + 2.0 * hf2_tool) * m;
+            if (params.da0_custom && !isNaN(parseFloat(params.da0))) da0 = parseFloat(params.da0);
+            if (params.df0_custom && !isNaN(parseFloat(params.df0))) df0 = parseFloat(params.df0);
+            if (params.di2_custom && !isNaN(parseFloat(params.di2))) di2 = parseFloat(params.di2);
+            if (params.dri2_custom && !isNaN(parseFloat(params.dri2))) dri2 = parseFloat(params.dri2);
+        } else {
+            // Chuẩn 1-to-1 MITCalc 1.74: Kích thước đường kính theo chuẩn quốc tế (T_spl2_Name)
+            // Đường kính danh nghĩa KHÔNG thay đổi khi thay đổi hệ số dịch chỉnh x0!
             const defs = this.getStandardSplineDefaults(stdTypeId, m, z0, units);
             if (!params.customAlfa) alfa = defs.alfa;
             da0 = defs.da0;
             df0 = defs.df0;
             di2 = defs.di2;
             dri2 = defs.dri2;
-            x0 = defs.x0;
-            if (params.syncX0X2) {
-                x2 = -x0;
-            } else if (params.x2 !== undefined && !isNaN(parseFloat(params.x2))) {
-                x2 = parseFloat(params.x2);
-            } else {
-                x2 = defs.x2;
+
+            if (params.autoFill && !params.x0_custom) {
+                x0 = defs.x0;
+                if (params.syncX0X2) {
+                    x2 = -x0;
+                } else if (params.x2 !== undefined && !isNaN(parseFloat(params.x2))) {
+                    x2 = parseFloat(params.x2);
+                } else {
+                    x2 = defs.x2;
+                }
             }
-        } else {
-            // Khi người dùng nhập x0 tùy chỉnh hoặc thay đổi thông số z, m:
-            // Tự động tính toán đường kính chính xác theo x0, x2 và chuẩn:
-            if (stdTypeId === 14) { // DIN 5480
-                const dB = (z0 + 1.1 + 2.0 * x0) * m;
-                da0 = dB - 0.2 * m;
-                df0 = dB - 2.2 * m;
-                di2 = dB - 2.0 * m;
-                dri2 = dB;
-            } else if (stdTypeId >= 15 && stdTypeId <= 17) { // CSN 4950
-                const dB = (z0 + 2.0 + 2.0 * x0) * m;
-                da0 = dB - 0.2 * m;
-                df0 = dB - 2.2 * m;
-                di2 = dB - 2.0 * m;
-                dri2 = dB;
-            } else { // ISO 4156 / ANSI B92
-                da0 = (z0 + 2.0 * ha0_tool + 2.0 * x0) * m;
-                df0 = (z0 - 2.0 * hf0_tool + 2.0 * x0) * m;
-                di2 = (z0 - 2.0 * ha2_tool + 2.0 * x2) * m;
-                dri2 = (z0 + 2.0 * hf2_tool + 2.0 * x2) * m;
-            }
+
+            // Chỉ ghi đè khi người dùng cố tình gõ số tùy chỉnh vào ô đường kính:
             if (params.da0_custom && !isNaN(parseFloat(params.da0))) da0 = parseFloat(params.da0);
             if (params.df0_custom && !isNaN(parseFloat(params.df0))) df0 = parseFloat(params.df0);
             if (params.di2_custom && !isNaN(parseFloat(params.di2))) di2 = parseFloat(params.di2);
@@ -331,18 +321,11 @@ const SplinesCalc = {
         // Sanity guard to protect tooth geometry from negative/inverted height or stale values
         const d_pitch = z0 * m;
         if (isNaN(da0) || da0 <= d_pitch * 0.75 || da0 <= df0) {
-            if (stdTypeId === 14) {
-                const dB = (z0 + 1.1 + 2.0 * x0) * m;
-                da0 = dB - 0.2 * m;
-                df0 = dB - 2.2 * m;
-                di2 = dB - 2.0 * m;
-                dri2 = dB;
-            } else {
-                da0 = (z0 + 2.0 * ha0_tool + 2.0 * x0) * m;
-                df0 = (z0 - 2.0 * hf0_tool + 2.0 * x0) * m;
-                di2 = (z0 - 2.0 * ha2_tool + 2.0 * x2) * m;
-                dri2 = (z0 + 2.0 * hf2_tool + 2.0 * x2) * m;
-            }
+            const defs = this.getStandardSplineDefaults(stdTypeId, m, z0, units);
+            da0 = defs.da0;
+            df0 = defs.df0;
+            di2 = defs.di2;
+            dri2 = defs.dri2;
         }
 
         const pi = this.PI;
@@ -653,13 +636,22 @@ const SplinesCalc = {
         const numArc = resInfo.numArc;
         const numFillet = resInfo.numFillet;
 
-        let rf = 0.20 * m;
-        if (g.rf0_tool !== undefined && g.rf0_tool > 0) rf = g.rf0_tool * m;
-        else if (g.rf0 !== undefined && g.rf0 > 0) rf = g.rf0;
-        rf = Math.max(0.05 * m, Math.min(0.40 * m, rf));
-
         const alfa_tip = Math.acos(Math.min(1.0, r_base / r_tip));
         const alfa_root = (r_root > r_base) ? Math.acos(Math.min(1.0, r_base / r_root)) : 0.0;
+
+        // Tính bề rộng góc khả dụng giữa sườn thân khai ở chân răng và biên sector tau
+        const inv_root = (alfa_root > 0) ? (Math.tan(alfa_root) - alfa_root) : 0.0;
+        const th_flank_root = psi + invAlfa - inv_root;
+        const avail_dth = Math.max(0.0001, tau - th_flank_root);
+        const avail_w = r_root * avail_dth;
+
+        // Bán kính góc lượn chân răng tự động thích ứng với khoảng trống thực tế
+        let rf_nominal = 0.20 * m;
+        if (g.ra0_tool !== undefined && g.ra0_tool > 0) rf_nominal = g.ra0_tool * m;
+        else if (g.rf0_tool !== undefined && g.rf0_tool > 0) rf_nominal = g.rf0_tool * m;
+        else if (g.rf0 !== undefined && g.rf0 > 0) rf_nominal = g.rf0;
+
+        let rf = Math.min(rf_nominal, Math.max(0.01 * m, avail_w * 0.85));
 
         function getRightFlank(alfa_t, cur_rf) {
             const r_t = r_base / Math.cos(alfa_t);
@@ -679,8 +671,9 @@ const SplinesCalc = {
         let alfa_tan = alfa_root;
         let Px_r = 0, Py_r = 0, Cx_r = 0, Cy_r = 0, R_C_r = 0;
         let th_root_r = 0;
+        let th_t_r = 0;
 
-        for (let attempt = 0; attempt < 5; attempt++) {
+        for (let attempt = 0; attempt < 20; attempt++) {
             const target_R = r_root + cur_rf;
             let low = (r_root > r_base) ? alfa_root : 0.0001;
             let high = Math.min(alfa_tip, Math.max(alfaRad, alfa_root) + 0.35);
@@ -697,27 +690,35 @@ const SplinesCalc = {
             Cx_r = flank.Cx;
             Cy_r = flank.Cy;
             R_C_r = flank.R_C;
+            th_t_r = flank.th_t;
 
             const P_root_x_tmp = Cx_r * (r_root / R_C_r);
             const P_root_y_tmp = Cy_r * (r_root / R_C_r);
             th_root_r = Math.atan2(P_root_x_tmp, P_root_y_tmp);
 
-            if (th_root_r < tau * 0.92) {
+            if (th_root_r <= tau * 0.98) {
                 break;
             }
-            cur_rf *= 0.70;
+            cur_rf *= 0.60;
+            if (cur_rf < 0.01 * m) {
+                cur_rf = 0.01 * m;
+                break;
+            }
         }
+
+        // Chặn trên nghiêm ngặt để góc đáy không bao giờ vượt quá tau
+        th_root_r = Math.min(tau - 0.0005, Math.max(th_t_r, th_root_r));
+        const d_th = Math.max(0.0, tau - th_root_r);
 
         const P_root_x = Cx_r * (r_root / R_C_r);
         const P_root_y = Cy_r * (r_root / R_C_r);
-        th_root_r = Math.atan2(P_root_x, P_root_y);
 
         const pts = [];
 
         // 1. Cung đáy rãnh chân răng bên trái: từ -tau đến -th_root_r
         for (let i = 0; i < numArc; i++) {
             const frac = i / numArc;
-            const th = -tau + (tau - th_root_r) * frac;
+            const th = -tau + d_th * frac;
             const x = r_root * Math.sin(th);
             const y = r_root * Math.cos(th);
             pts.push({ x, y, r: r_root, theta: th });
@@ -783,7 +784,7 @@ const SplinesCalc = {
         // 7. Cung đáy rãnh chân răng bên phải: từ th_root_r đến +tau
         for (let i = 0; i <= numArc; i++) {
             const frac = i / numArc;
-            const th = th_root_r + (tau - th_root_r) * frac;
+            const th = th_root_r + d_th * frac;
             const x = r_root * Math.sin(th);
             const y = r_root * Math.cos(th);
             pts.push({ x, y, r: r_root, theta: th });
@@ -857,6 +858,8 @@ const SplinesCalc = {
         const P_tip_x = Cx_r * (r_tip / R_C_r);
         const P_tip_y = Cy_r * (r_tip / R_C_r);
         const th_tip_tan = Math.atan2(P_tip_x, P_tip_y);
+        const th_tip_tan_clamped = Math.min(tau - 0.0005, Math.max(0.0001, th_tip_tan));
+        const d_th_crest = Math.max(0.0, tau - th_tip_tan_clamped);
 
         const inv_root = Math.tan(alfa_root) - alfa_root;
         const th_space_root = psi_space + invAlfa - inv_root;
@@ -867,7 +870,7 @@ const SplinesCalc = {
         // 1. Cung đỉnh răng bên trái: từ -tau đến -th_tip_tan tại r_tip
         for (let i = 0; i < numCrest; i++) {
             const frac = i / numCrest;
-            const th = -tau + (tau - th_tip_tan) * frac;
+            const th = -tau + d_th_crest * frac;
             const x = r_tip * Math.sin(th);
             const y = r_tip * Math.cos(th);
             pts.push({ x, y, r: r_tip, theta: th });
@@ -931,7 +934,7 @@ const SplinesCalc = {
         // 7. Cung đỉnh răng bên phải: từ +th_tip_tan đến +tau tại r_tip
         for (let i = 0; i <= numCrest; i++) {
             const frac = i / numCrest;
-            const th = th_tip_tan + (tau - th_tip_tan) * frac;
+            const th = th_tip_tan_clamped + d_th_crest * frac;
             const x = r_tip * Math.sin(th);
             const y = r_tip * Math.cos(th);
             pts.push({ x, y, r: r_tip, theta: th });

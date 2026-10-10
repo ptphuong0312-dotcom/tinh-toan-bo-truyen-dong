@@ -2860,3 +2860,29 @@ ho_{f0} / \cos\gamma$.
    - Khi $\alpha \le 30.05^\circ$: Áp dụng công thức quy chuẩn $d_p = 1.750 \times m$ cho cả Trục ($d_{t0}$) và Lỗ ($d_{t2}$).
    - Khi $\alpha > 30.05^\circ$ ($37.5^\circ, 45^\circ$): Giữ theo chuẩn tương ứng ($1.728 \cdot m, 1.440 \cdot m, 1.920 \cdot m$).
    - Vẫn bảo toàn quyền tùy chỉnh tự do đường kính bi đo thực tế của người dùng qua ô nhập liệu.
+
+---
+
+### Quy Tắc 118: Quy Chuẩn Bảo Tồn Đường Kính Danh Nghĩa Then Hoa Thân Khai Khi Thay Đổi Dịch Chỉnh $x_0$ (Nominal Diameter Persistence Protocol) & Giải Thuật Giới Hạn Góc Lượn Chân Răng Siêu Hẹp Khi $x_0 = 0.6$
+**Ngày áp dụng**: 10/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Bản chất khác biệt tuyệt đối giữa Bánh Răng (Gears) và Then Hoa Thân Khai (Splines)**:
+   - Ở Bánh răng truyền động: Thay đổi dịch chỉnh góc $\Sigma x$ làm thay đổi khoảng cách trục $a_w$, góc ăn khớp $\alpha_w$, và bắt buộc phải tính lại đường kính đỉnh $d_a$ để duy trì khe hở đỉnh răng $c = c^* m$.
+   - Ở Mối ghép Then hoa: Đây là mối ghép đồng trục ($a = 0$) tiêu chuẩn hóa cao độ theo bảng quy cách (`T_spl2_Name`). Các đường kính đỉnh và đáy danh nghĩa ($d_{a0}, d_{f0}, D_i, D_{ri}$) được ấn định cố định bởi tiêu chuẩn quốc tế (ISO 4156 / DIN 5480 / ANSI B92.1 / CSN 4950).
+   - Hệ số dịch chỉnh $x_0$ và $x_2$ **CHỈ DÙNG ĐỂ THAY ĐỔI CHIỀU DÀY RĂNG $s_0, s_2$ TRÊN VÒNG CHIA VÀ KHE HỞ CẠNH RĂNG (BACKLASH)**:
+     $$s_0 = \frac{\pi m}{2} + 2 x_0 m \tan\alpha, \quad s_2 = \frac{\pi m}{2} + 2 x_2 m \tan\alpha$$
+   - **Tuyệt đối KHÔNG ĐƯỢC cộng $+2 x_0 m$ vào $d_{a0}, d_{f0}$ và $-2 x_0 m$ vào $D_i, D_{ri}$**:
+     * Trước đây do nhầm lẫn áp dụng công thức bánh răng, khi người dùng tăng $x_0$ ở ISO 4156: trục bị cộng dồn đường kính còn lỗ bị trừ tụt xuống ($x_2 = -x_0$). Khi $x_0 = 0.2$, khe hở hướng tâm bị thu hẹp về 0; khi $x_0 = 0.4$, đỉnh lỗ đâm thủng sâu vào đáy trục $6.85\text{ mm}$!
+     * Lý do DIN 5480 trước đây "có vẻ đúng": DIN 5480 tính 4 đường kính tịnh tiến cùng chiều theo $d_B = (z + 1.1 + 2x_0)m$, nên khe hở không đổi, nhưng đó là do tịnh tiến cùng pha chứ không phải bản chất chung của mọi tiêu chuẩn.
+     * Quy tắc chuẩn hóa: Bảo toàn 100% đường kính danh nghĩa từ `getStandardSplineDefaults()` cho cả 17 tiêu chuẩn khi thay đổi $x_0, x_2$.
+2. **Giải thuật giới hạn góc lượn chân răng trục khi $x_0 = 0.6$ (Rãnh răng siêu hẹp)**:
+   - Khi $x_0 = 0.6$ ($m=10, z=20$), răng trục dày phình to $s_0 = 22.64\text{ mm}$, khoảng hở đáy rãnh còn lại cực kỳ hẹp ($w_{\text{avail}} \approx 0.062\text{ mm}$).
+   - Bán kính góc lượn danh nghĩa $r_f = 2.0\text{ mm}$ quá lớn so với khoảng hẹp $0.062\text{ mm}$, đẩy góc tiếp xúc chân $th_{root\_r} = 9.18^\circ$ vượt quá nửa bước góc $\tau = 9.00^\circ$. Bước quét góc $(tau - th_{root\_r})$ mang dấu âm làm cung đáy bị lộn ngược vào trong và tự đan chéo thân khai.
+   - Giải pháp công nghệ:
+     * Tự động khống chế bán kính góc lượn $r_f \le w_{\text{avail}} \times 0.85$.
+     * Khống chế góc tiếp xúc chân răng $th_{root\_r} \le \tau - 0.0005$, đảm bảo bước góc quét $d\_\theta = \max(0, \tau - th_{root\_r})$ luôn dương.
+     * Triệt tiêu 100% hiện tượng tự giao nhau, bảo đảm chân răng trục và rãnh then lỗ luôn trơn tru, sắc nét trên mọi dải $x_0 \in [-0.75, +0.6]$.
+3. **Bộ kiểm thử Live Audit QC Suite 110/110 PASS Tuyệt Đối ($\Delta = 0.000000$)**:
+   - Mở rộng kiểm tra 9 ca thử nghiệm bao quát 17 tiêu chuẩn then hoa quốc tế (ISO 4156 Flat/Fillet, ISO 37.5°, ISO 45°, DIN 5480, ANSI B92.1 với các nấc $x_0 = 0.0, 0.2, 0.4, 0.6$).
+   - 100.0% các chỉ tiêu hình học, kích thước đo qua bi $M_0, M_2$ và pháp tuyến chung $W_0, W_2$ khớp tuyệt đối với Excel COM `SplinesI_01.xlsb`.
+

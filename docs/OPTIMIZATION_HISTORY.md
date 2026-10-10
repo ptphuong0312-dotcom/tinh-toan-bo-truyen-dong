@@ -4515,3 +4515,33 @@ ho_{f0}$.
 * **Kết quả kiểm thử**:
   - Live Audit QC Suite: **62 / 62 phép tính PASS tuyệt đối 100.0% ($\Delta = 0.000000$)**.
   - Kiểm tra trực quan Canvas 2D & Playwright: Đỉnh trục phẳng tiếp xúc sườn ($r_{a0}^* = 0$), đỉnh lỗ bo tròn mượt mà ($r_{a2}^* > 0$), chân trục không còn chém lẹm khi $x_0 = 0.6$, bi đo $d_p = 8.75\text{ mm}$ ($1.75 \times 5$) tiếp xúc chuẩn xác.
+
+---
+
+## Giai Đoạn 38: Khắc Phục Triệt Để Cơ Chế Bảo Tồn Đường Kính Danh Nghĩa Then Hoa Thân Khai (ISO 4156 / DIN 5480 / ANSI B92.1) Khi Thay Đổi Dịch Chỉnh $x_0$, Giải Thuật Giới Hạn Góc Lượn Chân Răng Siêu Hẹp Khi $x_0 = 0.6$ & Mở Rộng Test Suite QC Lên 110 Phép Tính PASS 100% (Δ = 0.000000)
+* **Tiêu chuẩn**: ISO 4156-1 (Flat / Fillet Root, 30°, 37.5°, 45°), DIN 5480, ANSI B92.1, CSN 4950.
+* **Bối cảnh & Phản hồi trực tiếp từ SirPhuong**:
+  - Người dùng phát hiện khi tăng hệ số dịch chỉnh $x_0 > 0$: Loại [1] DIN 5480 vẽ "có vẻ đúng", còn Loại [2] ISO 4156 và các loại khác bị sai hoàn toàn (khi $x_0 = 0.2 \implies$ chạm đáy; khi $x_0 = 0.4 \implies$ đỉnh lỗ đâm thủng sâu vào đáy trục $6.85\text{ mm}$).
+  - Người dùng yêu cầu khắc phục triệt để hiện tượng vẽ sai chân then trục khi tăng $x_0 = 0.6$, đồng thời khôi phục công thức đường kính bi đo $1.75 \times m$ cho các góc $\alpha \le 30^\circ$.
+* **Đột phá & Giải pháp kỹ thuật**:
+  1. **Bản chất cơ học khác biệt giữa Bánh răng (Gears) và Then hoa (Splines)**:
+     - Bánh răng: Dịch chỉnh góc làm thay đổi khoảng cách trục $a_w$ và bắt buộc phải cộng dồn $2 x m$ vào đường kính để giữ nguyên khe hở đỉnh $c$.
+     - Then hoa thân khai: Mối ghép đồng trục ($a = 0$) tiêu chuẩn hóa. Các đường kính đỉnh và đáy danh nghĩa ($d_{a0}, d_{f0}, D_i, D_{ri}$) được quy định cố định theo tiêu chuẩn (`T_spl2_Name`).
+     - Hệ số $x_0$ và $x_2$ **CHỈ DÙNG ĐỂ THAY ĐỔI CHIỀU DÀY RĂNG $s_0, s_2$ TRÊN VÒNG CHIA VÀ KHE HỞ CẠNH RĂNG (BACKLASH)**:
+       $$s_0 = \frac{\pi m}{2} + 2 x_0 m \tan\alpha, \quad s_2 = \frac{\pi m}{2} + 2 x_2 m \tan\alpha$$
+     - Loại bỏ hoàn toàn việc cộng dồn $+2 x_0 m$ vào $d_{a0}, d_{f0}$ và $-2 x_0 m$ vào $D_i, D_{ri}$. Bảo toàn 100% đường kính danh nghĩa từ `getStandardSplineDefaults()` cho cả 17 hệ tiêu chuẩn khi thay đổi $x_0, x_2$.
+     - Khớp 1-to-1 với hành vi của MITCalc 1.74 `SplinesI_01.xlsb`.
+  2. **Khắc phục triệt để giải thuật tạo điểm chân răng trục khi $x_0 = 0.6$ (`generateShaftSectorPoints`)**:
+     - Khi $x_0 = 0.6$ ($m=10, z=20$), chiều dày răng trục $s_0 = 22.64\text{ mm}$, khoảng hở đáy rãnh còn lại cực kỳ hẹp ($w_{\text{avail}} \approx 0.062\text{ mm}$).
+     - Bán kính góc lượn danh nghĩa $r_f = 2.0\text{ mm}$ không thể lọt vừa trong khoảng trống $0.062\text{ mm}$, đẩy góc tiếp xúc chân $th_{root\_r} = 9.18^\circ$ vượt quá nửa bước góc $\tau = 9.00^\circ$. Bước quét góc $(tau - th_{root\_r})$ mang dấu âm làm cung đáy bị lộn ngược vào trong và tự đan chéo thân khai.
+     - **Giải pháp**:
+       * Tự động khống chế bán kính góc lượn $r_f \le w_{\text{avail}} \times 0.85$.
+       * Khống chế góc tiếp xúc chân răng $th_{root\_r} \le \tau - 0.0005$, bảo đảm bước góc quét $d\_\theta = \max(0, \tau - th_{root\_r})$ luôn dương.
+       * Chân răng trục mượt mà, trơn tru, không còn biến dạng hay tự giao nhau tại mọi dải $x_0 \in [-0.75, +0.6]$.
+  3. **Đóng gói Bundle & Đo kiểm nghiệm thu Playwright**:
+     - Đóng gói Classic Script offline: `modules/involute-splines/js/splines-engine.bundle.js` (566.6 KB).
+     - Kiểm tra trực quan Playwright: Ảnh chụp Canvas `scratch/splines_x0_0_6.png` tại $x_0 = 0.6$ xác nhận răng ăn khớp hoàn hảo, khe hở đáy $4.57\text{ mm}$ được bảo toàn trọn vẹn, kích thước đo qua bi $M_0 = 235.267\text{ mm}$ tiếp xúc êm ái trên sườn thân khai.
+  4. **Mở rộng bộ kiểm thử Live Audit QC Suite lên 110 phép tính**:
+     - Script `tools/test_splines_qc.py` mở rộng lên 9 ca thử nghiệm: ISO 4156 Flat root, ISO 4156 Fillet root, ISO 37.5°, ISO 45°, DIN 5480, ANSI B92.1 với các nấc $x_0 = 0.0, 0.2, 0.4, 0.6$.
+     - **Kết quả đo đạc: 110 / 110 phép tính PASS tuyệt đối 100.0% với $\Delta = 0.000000$**!
+

@@ -83,10 +83,54 @@ test_cases = [
         'm': 2.0,
         'z': 28,
         'alfa': 30.0,
-        'x0': 0.0,
+        'x0': 0.45,
         'x2': 0.0,
         'dt0': 3.5,
         'dt2': 3.5
+    },
+    {
+        'name': 'Case 6: ISO 4156 - 30 deg Fillet Root (m=10, z=20) x0=0.2',
+        'stdType': 7,
+        'm': 10.0,
+        'z': 20,
+        'alfa': 30.0,
+        'x0': 0.2,
+        'x2': -0.2,
+        'dt0': 17.5,
+        'dt2': 17.5
+    },
+    {
+        'name': 'Case 7: ISO 4156 - 30 deg Fillet Root (m=10, z=20) x0=0.4',
+        'stdType': 7,
+        'm': 10.0,
+        'z': 20,
+        'alfa': 30.0,
+        'x0': 0.4,
+        'x2': -0.4,
+        'dt0': 17.5,
+        'dt2': 17.5
+    },
+    {
+        'name': 'Case 8: ISO 4156 - 30 deg Fillet Root (m=10, z=20) x0=0.6',
+        'stdType': 7,
+        'm': 10.0,
+        'z': 20,
+        'alfa': 30.0,
+        'x0': 0.6,
+        'x2': -0.6,
+        'dt0': 17.5,
+        'dt2': 17.5
+    },
+    {
+        'name': 'Case 9: ANSI B92.1 - 30 deg Fillet Root (m=10, z=20) x0=0.2',
+        'stdType': 3,
+        'm': 10.0,
+        'z': 20,
+        'alfa': 30.0,
+        'x0': 0.2,
+        'x2': -0.2,
+        'dt0': 17.5,
+        'dt2': 17.5
     }
 ]
 
@@ -98,20 +142,36 @@ try:
     wb = excel.Workbooks.Open(r'C:\MITCalc\shaftcon\SplinesI_01.xlsb', ReadOnly=True)
     ws = wb.Sheets('Calculation')
 
+    excel.EnableEvents = False
     for tc in test_cases:
         print(f"\n>>> Dang kiem thu: {tc['name']}")
         
         # 1. Set Excel inputs
         ws.Range('_spl2TypeP').Value = tc['stdType']
         ws.Range('_DPmnSwitch').Value = 1
+        ws.Range('_mn').Value = tc['m']
         ws.Range('_mn_mm').Value = tc['m']
         ws.Range('_z0').Value = tc['z']
         ws.Range('_alfa').Value = tc['alfa']
-        ws.Range('_x0_Input').Value = tc['x0']
-        ws.Range('_x2_Input').Value = tc['x2']
+        excel.Calculate()
+
+        # Apply AutoFill standard diameters
+        ws.Range('O111').Value = ws.Range('AA111').Value
+        ws.Range('Q111').Value = ws.Range('AA112').Value
+        ws.Range('O112').Value = ws.Range('AA113').Value
+        ws.Range('Q112').Value = ws.Range('AA114').Value
+
+        # Set shift x0 and pins
+        ws.Range('_x0_Input').Value = tc['x0'] * tc['m']
+        ws.Range('_x2_Input').Value = tc['x2'] * tc['m']
         ws.Range('_dt0XX').Value = tc['dt0']
         ws.Range('_dt2XX').Value = tc['dt2']
-        ws.Calculate()
+        excel.Calculate()
+
+        # Copy proposed k teeth (zw) into input cells O201, Q201
+        ws.Range('O201').Value = ws.Range('O200').Value
+        ws.Range('Q201').Value = ws.Range('Q200').Value
+        excel.Calculate()
 
         # 2. Read Excel expected outputs
         excel_out = {
@@ -138,6 +198,7 @@ try:
             'alfa': tc['alfa'],
             'x0': tc['x0'],
             'x2': tc['x2'],
+            'x0_custom': (tc['x0'] != 0.0),
             'autoFill': True,
             'dt0': tc['dt0'],
             'dt2': tc['dt2']
