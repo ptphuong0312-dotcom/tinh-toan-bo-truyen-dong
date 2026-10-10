@@ -123,9 +123,9 @@ class ChainCanvas {
 
         if (this.viewMode === 'full') {
             // Full transmission: Sprocket 1 at (0, 0), Sprocket 2 at (a, 0)
-            const margin = 1.25;
+            const margin = 1.30;
             const bboxWidth = (a + da1 / 2 + da2 / 2) * margin;
-            const bboxHeight = Math.max(da1, da2) * 1.5;
+            const bboxHeight = Math.max(da1, da2) * 2.2;
 
             const scaleX = cw / bboxWidth;
             const scaleY = ch / bboxHeight;
@@ -133,7 +133,7 @@ class ChainCanvas {
 
             // Center of transmission is at (a / 2, 0)
             this.panX = cw / 2 - (a / 2) * this.zoom;
-            this.panY = ch / 2;
+            this.panY = ch / 2 - 15;
         } else if (this.viewMode === 'sprocket1') {
             // Focus on Sprocket 1 (Pinion)
             const margin = 1.35;
@@ -283,14 +283,19 @@ class ChainCanvas {
         const angle1 = this.rotationAngle;
         const angle2 = this.rotationAngle * (z1 / z2);
 
+        const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, bf1: res.bf, rx: res.rx, Dg: res.Dg1 };
+        const sp2 = res.sprocket2 || { da: res.da2, df: res.df2, R1: res.R1, bf1: res.bf, rx: res.rx, Dg: res.Dg2 };
+        const da1 = sp1.da || (d1 + 10);
+        const da2 = sp2.da || (d2 + 10);
+
         ctx.save();
 
         if (this.viewMode === 'full') {
             // 1. Draw Sprocket 1 at (0, 0)
-            this.drawSprocket(0, 0, d1, z1, res.sprocket1, angle1, '#38bdf8', 'Đĩa dẫn 1 (Z1=' + z1 + ')');
+            this.drawSprocket(0, 0, d1, z1, sp1, angle1, '#38bdf8', 'Đĩa dẫn 1 (Z1=' + z1 + ')');
 
             // 2. Draw Sprocket 2 at (a, 0)
-            this.drawSprocket(a, 0, d2, z2, res.sprocket2, angle2, '#fbbf24', 'Đĩa bị dẫn 2 (Z2=' + z2 + ')');
+            this.drawSprocket(a, 0, d2, z2, sp2, angle2, '#fbbf24', 'Đĩa bị dẫn 2 (Z2=' + z2 + ')');
 
             // 3. Draw Chain Kinematics (Loop & Rollers & Links)
             if (this.showLinks) {
@@ -302,23 +307,23 @@ class ChainCanvas {
                 this.drawCenterLine(0, 0, a, 0);
             }
             if (this.showDimensions) {
-                this.drawTransmissionDimensions(0, 0, a, 0, d1, d2, res.sprocket1.da, res.sprocket2.da, a);
+                this.drawTransmissionDimensions(0, 0, a, 0, d1, d2, da1, da2, a);
             }
         } else if (this.viewMode === 'sprocket1') {
             // Focused on Sprocket 1
-            this.drawSprocket(0, 0, d1, z1, res.sprocket1, angle1, '#38bdf8', 'Đĩa xích dẫn 1 (Z1=' + z1 + ')');
+            this.drawSprocket(0, 0, d1, z1, sp1, angle1, '#38bdf8', 'Đĩa xích dẫn 1 (Z1=' + z1 + ')');
             if (this.showDimensions) {
-                this.drawSprocketDimensions(0, 0, d1, res.sprocket1);
+                this.drawSprocketDimensions(0, 0, d1, sp1);
             }
         } else if (this.viewMode === 'sprocket2') {
             // Focused on Sprocket 2
-            this.drawSprocket(0, 0, d2, z2, res.sprocket2, angle2, '#fbbf24', 'Đĩa xích bị dẫn 2 (Z2=' + z2 + ')');
+            this.drawSprocket(0, 0, d2, z2, sp2, angle2, '#fbbf24', 'Đĩa xích bị dẫn 2 (Z2=' + z2 + ')');
             if (this.showDimensions) {
-                this.drawSprocketDimensions(0, 0, d2, res.sprocket2);
+                this.drawSprocketDimensions(0, 0, d2, sp2);
             }
         } else if (this.viewMode === 'mesh') {
             // Zoomed Mesh Detail
-            this.drawSprocket(0, 0, d1, z1, res.sprocket1, angle1, '#38bdf8', 'Khu vực ăn khớp (Mesh Detail)');
+            this.drawSprocket(0, 0, d1, z1, sp1, angle1, '#38bdf8', 'Khu vực ăn khớp (Mesh Detail)');
             this.drawChainLoop(d1, d2, a, p, d3, X, angle1, true);
         }
 

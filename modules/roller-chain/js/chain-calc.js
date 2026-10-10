@@ -234,6 +234,40 @@ const ChainCalc = {
         // Weight estimation
         const chain_weight = (L * (chain.mass || 0.70)) / (isMetric ? 1000.0 : 1.0);
 
+        // Nested sprocket objects for direct access
+        const sprocket1 = {
+            d: d1,
+            da: da1,
+            df: df1,
+            R1: R1,
+            R2: R2_1,
+            bf1: bf,
+            rx: rx,
+            Dg: Dg1,
+            p: p,
+            d3: d3,
+            alphaDeg: flank_alpha1
+        };
+
+        const sprocket2 = {
+            d: d2,
+            da: da2,
+            df: df2,
+            R1: R1,
+            R2: R2_2,
+            bf1: bf,
+            rx: rx,
+            Dg: Dg2,
+            p: p,
+            d3: d3,
+            alphaDeg: flank_alpha2
+        };
+
+        // Recommended lubrication description string
+        let lubrication = 'Bôi trơn nhỏ giọt (Drip lubrication)';
+        if (rec_lub_id === 2) lubrication = 'Bôi trơn ngâm dầu (Oil bath)';
+        else if (rec_lub_id === 3) lubrication = 'Bôi trơn cưỡng bức áp lực (Force-feed / Pressure spray)';
+
         return {
             units,
             isMetric,
@@ -247,8 +281,10 @@ const ChainCalc = {
             n1,
             n2_req,
             n2_act,
+            n2: n2_act,
             i_req,
             i_act,
+            i: i_act,
             i_diff_pct,
             Mk1,
             Mk2,
@@ -264,6 +300,7 @@ const ChainCalc = {
             a_max,
             X_exact,
             X,
+            X_even: X,
             L,
             v,
             v_metric,
@@ -274,8 +311,10 @@ const ChainCalc = {
             alpha2,
             speed_var_pct,
             y_slack,
+            y: y_slack,
             f_impact,
             rec_lub_id,
+            lubrication,
 
             // ISO 606 Sprocket Dimensions (Section 5.0)
             d3,
@@ -298,25 +337,44 @@ const ChainCalc = {
             f,
             Dg1,
             Dg2,
-            chain_weight
+            chain_weight,
+
+            // Nested sprocket structures
+            sprocket1,
+            sprocket2
         };
     },
 
     /**
      * Generate 2D Profile Points for a Sprocket Tooth (ISO 606)
      */
-    generateSprocket2DPoints(z, p, d3, da, df, R1, R2, alphaDeg, numPointsPerTooth = 24) {
+    generateSprocket2DPoints(z, pOrData, d3, da, df, R1, R2, alphaDeg, numPointsPerTooth = 24) {
+        let p, d3_val, da_val, df_val, R1_val;
+        if (typeof pOrData === 'object' && pOrData !== null) {
+            p = pOrData.p || 12.7;
+            d3_val = pOrData.d3 || 8.51;
+            da_val = pOrData.da || (p / Math.sin(Math.PI / z) + 10);
+            df_val = pOrData.df || (p / Math.sin(Math.PI / z) - 10);
+            R1_val = pOrData.R1 || 4.25;
+        } else {
+            p = pOrData || 12.7;
+            d3_val = d3 || 8.51;
+            da_val = da || (p / Math.sin(Math.PI / z) + 10);
+            df_val = df || (p / Math.sin(Math.PI / z) - 10);
+            R1_val = R1 || 4.25;
+        }
+
         const d = p / Math.sin(Math.PI / z);
         const pitchAngle = (2.0 * Math.PI) / z;
         const halfPitch = pitchAngle / 2.0;
 
         const points = [];
-        const r_root = df / 2.0;
-        const r_tip = da / 2.0;
+        const r_root = df_val / 2.0;
+        const r_tip = da_val / 2.0;
         const r_pitch = d / 2.0;
 
         // Angular spread of roller gullet
-        const gamma = Math.asin(Math.min(1.0, (d3 / 2.0) / r_pitch));
+        const gamma = Math.asin(Math.min(1.0, (d3_val / 2.0) / r_pitch));
 
         for (let i = 0; i < z; i++) {
             const centerAngle = i * pitchAngle;

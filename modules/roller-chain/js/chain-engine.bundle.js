@@ -3847,6 +3847,40 @@ const ChainCalc = {
         // Weight estimation
         const chain_weight = (L * (chain.mass || 0.70)) / (isMetric ? 1000.0 : 1.0);
 
+        // Nested sprocket objects for direct access
+        const sprocket1 = {
+            d: d1,
+            da: da1,
+            df: df1,
+            R1: R1,
+            R2: R2_1,
+            bf1: bf,
+            rx: rx,
+            Dg: Dg1,
+            p: p,
+            d3: d3,
+            alphaDeg: flank_alpha1
+        };
+
+        const sprocket2 = {
+            d: d2,
+            da: da2,
+            df: df2,
+            R1: R1,
+            R2: R2_2,
+            bf1: bf,
+            rx: rx,
+            Dg: Dg2,
+            p: p,
+            d3: d3,
+            alphaDeg: flank_alpha2
+        };
+
+        // Recommended lubrication description string
+        let lubrication = 'Bôi trơn nhỏ giọt (Drip lubrication)';
+        if (rec_lub_id === 2) lubrication = 'Bôi trơn ngâm dầu (Oil bath)';
+        else if (rec_lub_id === 3) lubrication = 'Bôi trơn cưỡng bức áp lực (Force-feed / Pressure spray)';
+
         return {
             units,
             isMetric,
@@ -3860,8 +3894,10 @@ const ChainCalc = {
             n1,
             n2_req,
             n2_act,
+            n2: n2_act,
             i_req,
             i_act,
+            i: i_act,
             i_diff_pct,
             Mk1,
             Mk2,
@@ -3877,6 +3913,7 @@ const ChainCalc = {
             a_max,
             X_exact,
             X,
+            X_even: X,
             L,
             v,
             v_metric,
@@ -3887,8 +3924,10 @@ const ChainCalc = {
             alpha2,
             speed_var_pct,
             y_slack,
+            y: y_slack,
             f_impact,
             rec_lub_id,
+            lubrication,
 
             // ISO 606 Sprocket Dimensions (Section 5.0)
             d3,
@@ -3911,25 +3950,44 @@ const ChainCalc = {
             f,
             Dg1,
             Dg2,
-            chain_weight
+            chain_weight,
+
+            // Nested sprocket structures
+            sprocket1,
+            sprocket2
         };
     },
 
     /**
      * Generate 2D Profile Points for a Sprocket Tooth (ISO 606)
      */
-    generateSprocket2DPoints(z, p, d3, da, df, R1, R2, alphaDeg, numPointsPerTooth = 24) {
+    generateSprocket2DPoints(z, pOrData, d3, da, df, R1, R2, alphaDeg, numPointsPerTooth = 24) {
+        let p, d3_val, da_val, df_val, R1_val;
+        if (typeof pOrData === 'object' && pOrData !== null) {
+            p = pOrData.p || 12.7;
+            d3_val = pOrData.d3 || 8.51;
+            da_val = pOrData.da || (p / Math.sin(Math.PI / z) + 10);
+            df_val = pOrData.df || (p / Math.sin(Math.PI / z) - 10);
+            R1_val = pOrData.R1 || 4.25;
+        } else {
+            p = pOrData || 12.7;
+            d3_val = d3 || 8.51;
+            da_val = da || (p / Math.sin(Math.PI / z) + 10);
+            df_val = df || (p / Math.sin(Math.PI / z) - 10);
+            R1_val = R1 || 4.25;
+        }
+
         const d = p / Math.sin(Math.PI / z);
         const pitchAngle = (2.0 * Math.PI) / z;
         const halfPitch = pitchAngle / 2.0;
 
         const points = [];
-        const r_root = df / 2.0;
-        const r_tip = da / 2.0;
+        const r_root = df_val / 2.0;
+        const r_tip = da_val / 2.0;
         const r_pitch = d / 2.0;
 
         // Angular spread of roller gullet
-        const gamma = Math.asin(Math.min(1.0, (d3 / 2.0) / r_pitch));
+        const gamma = Math.asin(Math.min(1.0, (d3_val / 2.0) / r_pitch));
 
         for (let i = 0; i < z; i++) {
             const centerAngle = i * pitchAngle;
@@ -4198,9 +4256,9 @@ class ChainCanvas {
 
         if (this.viewMode === 'full') {
             // Full transmission: Sprocket 1 at (0, 0), Sprocket 2 at (a, 0)
-            const margin = 1.25;
+            const margin = 1.30;
             const bboxWidth = (a + da1 / 2 + da2 / 2) * margin;
-            const bboxHeight = Math.max(da1, da2) * 1.5;
+            const bboxHeight = Math.max(da1, da2) * 2.2;
 
             const scaleX = cw / bboxWidth;
             const scaleY = ch / bboxHeight;
@@ -4208,7 +4266,7 @@ class ChainCanvas {
 
             // Center of transmission is at (a / 2, 0)
             this.panX = cw / 2 - (a / 2) * this.zoom;
-            this.panY = ch / 2;
+            this.panY = ch / 2 - 15;
         } else if (this.viewMode === 'sprocket1') {
             // Focus on Sprocket 1 (Pinion)
             const margin = 1.35;
@@ -4358,14 +4416,19 @@ class ChainCanvas {
         const angle1 = this.rotationAngle;
         const angle2 = this.rotationAngle * (z1 / z2);
 
+        const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, bf1: res.bf, rx: res.rx, Dg: res.Dg1 };
+        const sp2 = res.sprocket2 || { da: res.da2, df: res.df2, R1: res.R1, bf1: res.bf, rx: res.rx, Dg: res.Dg2 };
+        const da1 = sp1.da || (d1 + 10);
+        const da2 = sp2.da || (d2 + 10);
+
         ctx.save();
 
         if (this.viewMode === 'full') {
             // 1. Draw Sprocket 1 at (0, 0)
-            this.drawSprocket(0, 0, d1, z1, res.sprocket1, angle1, '#38bdf8', 'Đĩa dẫn 1 (Z1=' + z1 + ')');
+            this.drawSprocket(0, 0, d1, z1, sp1, angle1, '#38bdf8', 'Đĩa dẫn 1 (Z1=' + z1 + ')');
 
             // 2. Draw Sprocket 2 at (a, 0)
-            this.drawSprocket(a, 0, d2, z2, res.sprocket2, angle2, '#fbbf24', 'Đĩa bị dẫn 2 (Z2=' + z2 + ')');
+            this.drawSprocket(a, 0, d2, z2, sp2, angle2, '#fbbf24', 'Đĩa bị dẫn 2 (Z2=' + z2 + ')');
 
             // 3. Draw Chain Kinematics (Loop & Rollers & Links)
             if (this.showLinks) {
@@ -4377,23 +4440,23 @@ class ChainCanvas {
                 this.drawCenterLine(0, 0, a, 0);
             }
             if (this.showDimensions) {
-                this.drawTransmissionDimensions(0, 0, a, 0, d1, d2, res.sprocket1.da, res.sprocket2.da, a);
+                this.drawTransmissionDimensions(0, 0, a, 0, d1, d2, da1, da2, a);
             }
         } else if (this.viewMode === 'sprocket1') {
             // Focused on Sprocket 1
-            this.drawSprocket(0, 0, d1, z1, res.sprocket1, angle1, '#38bdf8', 'Đĩa xích dẫn 1 (Z1=' + z1 + ')');
+            this.drawSprocket(0, 0, d1, z1, sp1, angle1, '#38bdf8', 'Đĩa xích dẫn 1 (Z1=' + z1 + ')');
             if (this.showDimensions) {
-                this.drawSprocketDimensions(0, 0, d1, res.sprocket1);
+                this.drawSprocketDimensions(0, 0, d1, sp1);
             }
         } else if (this.viewMode === 'sprocket2') {
             // Focused on Sprocket 2
-            this.drawSprocket(0, 0, d2, z2, res.sprocket2, angle2, '#fbbf24', 'Đĩa xích bị dẫn 2 (Z2=' + z2 + ')');
+            this.drawSprocket(0, 0, d2, z2, sp2, angle2, '#fbbf24', 'Đĩa xích bị dẫn 2 (Z2=' + z2 + ')');
             if (this.showDimensions) {
-                this.drawSprocketDimensions(0, 0, d2, res.sprocket2);
+                this.drawSprocketDimensions(0, 0, d2, sp2);
             }
         } else if (this.viewMode === 'mesh') {
             // Zoomed Mesh Detail
-            this.drawSprocket(0, 0, d1, z1, res.sprocket1, angle1, '#38bdf8', 'Khu vực ăn khớp (Mesh Detail)');
+            this.drawSprocket(0, 0, d1, z1, sp1, angle1, '#38bdf8', 'Khu vực ăn khớp (Mesh Detail)');
             this.drawChainLoop(d1, d2, a, p, d3, X, angle1, true);
         }
 
@@ -5334,11 +5397,23 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateUI(res) {
         if (!res) return;
 
+        const i_val = res.i ?? res.i_act ?? (res.z2 && res.z1 ? res.z2 / res.z1 : 2.0);
+        const n2_val = res.n2 ?? res.n2_act ?? 690;
+        const Mk1_val = res.Mk1 ?? 0;
+        const Mk2_val = res.Mk2 ?? 0;
+        const X_val = res.X_even ?? res.X ?? 100;
+        const a_val = res.a ?? 300;
+        const L_val = res.L ?? (X_val * (res.chain ? res.chain.pitch : 12.7));
+        const v_val = res.v ?? 0;
+        const y_val = res.y ?? res.y_slack ?? 0;
+        const alpha1_val = res.alpha1 ?? 180;
+        const alpha2_val = res.alpha2 ?? 180;
+
         // Sec 1.0 Kinematics
-        if (el.inputRatio) el.inputRatio.value = res.i.toFixed(4);
-        if (el.outActualN2) el.outActualN2.textContent = res.n2.toFixed(1);
-        if (el.outMk1) el.outMk1.textContent = res.Mk1.toFixed(2);
-        if (el.outMk2) el.outMk2.textContent = res.Mk2.toFixed(2);
+        if (el.inputRatio) el.inputRatio.value = typeof i_val === 'number' ? i_val.toFixed(4) : i_val;
+        if (el.outActualN2) el.outActualN2.textContent = typeof n2_val === 'number' ? n2_val.toFixed(1) : n2_val;
+        if (el.outMk1) el.outMk1.textContent = typeof Mk1_val === 'number' ? Mk1_val.toFixed(2) : Mk1_val;
+        if (el.outMk2) el.outMk2.textContent = typeof Mk2_val === 'number' ? Mk2_val.toFixed(2) : Mk2_val;
 
         // Sec 3.0 Chain Geometry
         if (res.chain) {
@@ -5350,48 +5425,50 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Sec 4.0 Center Distance & Transmission Quality
-        if (el.outXExact) el.outXExact.textContent = res.X_exact.toFixed(2);
-        if (el.outXActual) el.outXActual.textContent = res.X_even;
-        if (el.outAActual) el.outAActual.textContent = res.a.toFixed(2);
+        if (el.outXExact) el.outXExact.textContent = typeof res.X_exact === 'number' ? res.X_exact.toFixed(2) : res.X_exact;
+        if (el.outXActual) el.outXActual.textContent = X_val;
+        if (el.outAActual) el.outAActual.textContent = typeof a_val === 'number' ? a_val.toFixed(2) : a_val;
         if (el.outAPercent) {
             const p = res.chain ? res.chain.pitch : 12.7;
-            const a_in_p = res.a / p;
+            const a_in_p = a_val / p;
             el.outAPercent.textContent = a_in_p.toFixed(1) + ' p';
         }
-        if (el.outChainLength) el.outChainLength.textContent = res.L.toFixed(1);
-        if (el.outChainSpeed) el.outChainSpeed.textContent = res.v.toFixed(2);
-        if (el.outAlpha1) el.outAlpha1.textContent = res.alpha1.toFixed(2) + '°';
-        if (el.outAlpha2) el.outAlpha2.textContent = res.alpha2.toFixed(2) + '°';
-        if (el.outSagY) el.outSagY.textContent = res.y.toFixed(1) + ' mm';
-        if (el.outLubeType) el.outLubeType.textContent = res.lubrication;
+        if (el.outChainLength) el.outChainLength.textContent = typeof L_val === 'number' ? L_val.toFixed(1) : L_val;
+        if (el.outChainSpeed) el.outChainSpeed.textContent = typeof v_val === 'number' ? v_val.toFixed(2) : v_val;
+        if (el.outAlpha1) el.outAlpha1.textContent = typeof alpha1_val === 'number' ? alpha1_val.toFixed(2) + '°' : alpha1_val;
+        if (el.outAlpha2) el.outAlpha2.textContent = typeof alpha2_val === 'number' ? alpha2_val.toFixed(2) + '°' : alpha2_val;
+        if (el.outSagY) el.outSagY.textContent = typeof y_val === 'number' ? y_val.toFixed(1) + ' mm' : y_val;
+        if (el.outLubeType) el.outLubeType.textContent = res.lubrication || 'Bôi trơn nhỏ giọt (Drip lubrication)';
 
         // Sec 5.0 Sprocket Dimensions (ISO 606)
-        if (el.outD1) el.outD1.textContent = res.d1.toFixed(2);
-        if (el.outD2) el.outD2.textContent = res.d2.toFixed(2);
+        if (el.outD1 && res.d1 != null) el.outD1.textContent = res.d1.toFixed(2);
+        if (el.outD2 && res.d2 != null) el.outD2.textContent = res.d2.toFixed(2);
 
-        if (res.sprocket1) {
-            if (el.outDa1) el.outDa1.textContent = res.sprocket1.da.toFixed(2);
-            if (el.outDf1) el.outDf1.textContent = res.sprocket1.df.toFixed(2);
-            if (el.outR1_1) el.outR1_1.textContent = res.sprocket1.R1.toFixed(2);
-            if (el.outBf1) el.outBf1.textContent = res.sprocket1.bf1.toFixed(2);
-            if (el.outRx) el.outRx.textContent = res.sprocket1.rx.toFixed(2);
-            if (el.outDg1) el.outDg1.textContent = res.sprocket1.Dg.toFixed(2);
+        const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, bf1: res.bf, rx: res.rx, Dg: res.Dg1 };
+        if (sp1) {
+            if (el.outDa1 && sp1.da != null) el.outDa1.textContent = sp1.da.toFixed(2);
+            if (el.outDf1 && sp1.df != null) el.outDf1.textContent = sp1.df.toFixed(2);
+            if (el.outR1_1 && sp1.R1 != null) el.outR1_1.textContent = sp1.R1.toFixed(2);
+            if (el.outBf1 && sp1.bf1 != null) el.outBf1.textContent = sp1.bf1.toFixed(2);
+            if (el.outRx && sp1.rx != null) el.outRx.textContent = sp1.rx.toFixed(2);
+            if (el.outDg1 && sp1.Dg != null) el.outDg1.textContent = sp1.Dg.toFixed(2);
         }
 
-        if (res.sprocket2) {
-            if (el.outDa2) el.outDa2.textContent = res.sprocket2.da.toFixed(2);
-            if (el.outDf2) el.outDf2.textContent = res.sprocket2.df.toFixed(2);
-            if (el.outR1_2) el.outR1_2.textContent = res.sprocket2.R1.toFixed(2);
-            if (el.outDg2) el.outDg2.textContent = res.sprocket2.Dg.toFixed(2);
+        const sp2 = res.sprocket2 || { da: res.da2, df: res.df2, R1: res.R1, Dg: res.Dg2 };
+        if (sp2) {
+            if (el.outDa2 && sp2.da != null) el.outDa2.textContent = sp2.da.toFixed(2);
+            if (el.outDf2 && sp2.df != null) el.outDf2.textContent = sp2.df.toFixed(2);
+            if (el.outR1_2 && sp2.R1 != null) el.outR1_2.textContent = sp2.R1.toFixed(2);
+            if (el.outDg2 && sp2.Dg != null) el.outDg2.textContent = sp2.Dg.toFixed(2);
         }
 
         // Summary Banner Cards
         if (el.bannerPitch && res.chain) el.bannerPitch.textContent = `${res.chain.pitch.toFixed(2)} mm (${res.chain.code})`;
-        if (el.bannerSpeed) el.bannerSpeed.textContent = `${res.v.toFixed(2)} m/s`;
-        if (el.bannerAxisDist) el.bannerAxisDist.textContent = `${res.a.toFixed(2)} mm`;
-        if (el.bannerLinks) el.bannerLinks.textContent = `${res.X_even} mắt (${res.L.toFixed(0)} mm)`;
+        if (el.bannerSpeed && v_val != null) el.bannerSpeed.textContent = `${typeof v_val === 'number' ? v_val.toFixed(2) : v_val} m/s`;
+        if (el.bannerAxisDist && a_val != null) el.bannerAxisDist.textContent = `${typeof a_val === 'number' ? a_val.toFixed(2) : a_val} mm`;
+        if (el.bannerLinks) el.bannerLinks.textContent = `${X_val} mắt (${typeof L_val === 'number' ? L_val.toFixed(0) : L_val} mm)`;
         if (el.bannerStatus) {
-            const isAngleGood = res.alpha1 >= 120;
+            const isAngleGood = alpha1_val >= 120;
             el.bannerStatus.textContent = isAngleGood ? 'ĐẠT TIÊU CHUẨN ISO 606' : 'CẢNH BÁO: GÓC ÔM < 120°';
             el.bannerStatus.className = isAngleGood ? 'status-pill status-pass' : 'status-pill status-warn';
         }
