@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnViewSp1: document.getElementById('btnViewSp1'),
         btnViewSp2: document.getElementById('btnViewSp2'),
         btnViewMesh: document.getElementById('btnViewMesh'),
+        btnToggleLinks: document.getElementById('btnToggleLinks'),
         btnAnimToggle: document.getElementById('btnAnimToggle'),
         rangeAnimSpeed: document.getElementById('rangeAnimSpeed'),
         spanAnimSpeed: document.getElementById('spanAnimSpeed'),
@@ -477,6 +478,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el.btnViewSp1) el.btnViewSp1.addEventListener('click', () => canvasEngine.setViewMode('sprocket1'));
             if (el.btnViewSp2) el.btnViewSp2.addEventListener('click', () => canvasEngine.setViewMode('sprocket2'));
             if (el.btnViewMesh) el.btnViewMesh.addEventListener('click', () => canvasEngine.setViewMode('mesh'));
+            if (el.btnToggleLinks) {
+                el.btnToggleLinks.addEventListener('click', () => {
+                    const show = canvasEngine.toggleLinks();
+                    el.btnToggleLinks.textContent = show ? '🔗 Ẩn/Hiện Xích' : '⛓️ Hiện Xích';
+                });
+            }
 
             if (el.btnAnimToggle) {
                 el.btnAnimToggle.addEventListener('click', () => {

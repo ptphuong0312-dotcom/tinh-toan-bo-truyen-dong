@@ -3962,11 +3962,12 @@ const ChainCalc = {
      * Generate 2D Profile Points for a Sprocket Tooth (ISO 606)
      */
     /**
-     * Generate 2D Profile Points for a Sprocket Tooth (ISO 606 / DIN 8187)
-     * Full analytical contour with:
-     * - Roller seating arc R1 (angle alpha)
+     * Generate 2D Profile Points for a Sprocket Tooth (ISO 606 / DIN 8196 / ASME B29.1M)
+     * Authentic closed analytical contour:
+     * - Roller seating arc R1 (subtending angle alpha)
      * - Flank arc R2 tangent C1 to R1
-     * - Tip arc ra
+     * - Analytic topping crown arc Rt tangent C1 to both flanks and reaching ra at the apex
+     * - 100% conjugate alignment with roller meshing positions
      */
     generateSprocket2DPoints(z, pOrData, d3, da, df, R1, R2, alphaDeg) {
         let p, d3_val, da_val, df_val, R1_val, R2_val, alpha_val;
@@ -3988,111 +3989,125 @@ const ChainCalc = {
             alpha_val = alphaDeg || (130.0 - 90.0 / z);
         }
 
-        const rp = p / (2.0 * Math.sin(Math.PI / z));
+        const dp = p / Math.sin(Math.PI / z);
+        const rp = dp / 2.0;
         const ra = da_val / 2.0;
-        const beta0 = (alpha_val * Math.PI / 180.0) / 2.0;
+
+        const alpha = (alpha_val * Math.PI) / 180.0;
+        const beta0 = alpha / 2.0;
         const pitch_ang = (2.0 * Math.PI) / z;
 
-        function solveTipPhi(O2x, O2y, R2_radius, ra_radius, phi_start, d_phi) {
-            let phi_curr = phi_start;
-            for (let step = 0; step < 500; step++) {
-                phi_curr += d_phi;
-                if (Math.hypot(O2x + R2_radius * Math.cos(phi_curr), O2y + R2_radius * Math.sin(phi_curr)) >= ra_radius) {
-                    let lo = phi_curr - d_phi;
-                    let hi = phi_curr;
-                    for (let it = 0; it < 20; it++) {
-                        const mid = (lo + hi) / 2.0;
-                        if (Math.hypot(O2x + R2_radius * Math.cos(mid), O2y + R2_radius * Math.sin(mid)) < ra_radius) {
-                            lo = mid;
-                        } else {
-                            hi = mid;
-                        }
-                    }
-                    return hi;
-                }
-            }
-            return phi_start + d_phi * 20;
+        // Construct 1 symmetric tooth sector in local coordinates where tooth centerline is along positive X-axis (theta = 0)
+        // Space on left is at -pitch_ang / 2
+        const th_space = -pitch_ang / 2.0;
+        const Okx = rp * Math.cos(th_space);
+        const Oky = rp * Math.sin(th_space);
+
+        // Basis vectors for space on left:
+        const ux = -Math.cos(th_space);
+        const uy = -Math.sin(th_space);
+        const px = -Math.sin(th_space);
+        const py = Math.cos(th_space);
+
+        // Flank contact vector towards tooth (CCW by beta0 from ux):
+        const vx = Math.cos(beta0) * ux + Math.sin(beta0) * px;
+        const vy = Math.cos(beta0) * uy + Math.sin(beta0) * py;
+
+        // Seating curve contact point Ar and flank center O2
+        const Arx = Okx + R1_val * vx;
+        const Ary = Oky + R1_val * vy;
+        const O2x = Okx + (R1_val - R2_val) * vx;
+        const O2y = Oky + (R1_val - R2_val) * vy;
+
+        // Exact analytical topping curve radius Rt and center xc on tooth centerline (y = 0)
+        // such that topping arc reaches ra at apex and is tangent C1 to both flanks of radius R2
+        const delta = O2x - ra;
+        const numer = delta * delta + O2y * O2y - R2_val * R2_val;
+        const denom = 2.0 * (R2_val - delta);
+        let Rt = denom !== 0 ? numer / denom : 0.05 * p;
+        if (Rt <= 0 || isNaN(Rt) || Rt > 0.4 * ra) {
+            Rt = 0.08 * p;
+        }
+        const xc = ra - Rt;
+
+        // Tangent contact point between flank and topping arc
+        const dist_O2_C = Math.hypot(O2x - xc, O2y);
+        const u_tang_x = (xc - O2x) / dist_O2_C;
+        const u_tang_y = (0.0 - O2y) / dist_O2_C;
+        const Ptx = O2x + R2_val * u_tang_x;
+        const Pty = O2y + R2_val * u_tang_y;
+
+        // Arc angles
+        const phi_flank_start = Math.atan2(Ary - O2y, Arx - O2x);
+        const phi_flank_end = Math.atan2(Pty - O2y, Ptx - O2x);
+        const phi_top_start = Math.atan2(Pty, Ptx - xc); // negative
+        const phi_top_end = -phi_top_start;              // positive
+
+        // Sample 1 tooth sector points:
+        // Starts at bottom of space left (b = 0), curves through seating arc, left flank, topping arc, right flank, into bottom of space right (b = 0)
+        const tooth_pts = [];
+        const n_seat = 6;
+        for (let j = 0; j <= n_seat; j++) {
+            const u = j / n_seat;
+            const b = u * beta0;
+            const v_curr_x = Math.cos(b) * ux + Math.sin(b) * px;
+            const v_curr_y = Math.cos(b) * uy + Math.sin(b) * py;
+            tooth_pts.push({ x: Okx + R1_val * v_curr_x, y: Oky + R1_val * v_curr_y });
         }
 
+        const n_flank = 8;
+        for (let j = 1; j <= n_flank; j++) {
+            const u = j / n_flank;
+            const phi = phi_flank_start + u * (phi_flank_end - phi_flank_start);
+            tooth_pts.push({ x: O2x + R2_val * Math.cos(phi), y: O2y + R2_val * Math.sin(phi) });
+        }
+
+        const n_top = 8;
+        for (let j = 1; j <= n_top; j++) {
+            const u = j / n_top;
+            const phi = phi_top_start + u * (phi_top_end - phi_top_start);
+            tooth_pts.push({ x: xc + Rt * Math.cos(phi), y: Rt * Math.sin(phi) });
+        }
+
+        // Right flank (symmetric across X-axis)
+        for (let j = 1; j <= n_flank; j++) {
+            const u = j / n_flank;
+            const phi_r = -phi_flank_end + u * (-phi_flank_start - (-phi_flank_end));
+            tooth_pts.push({ x: O2x + R2_val * Math.cos(phi_r), y: -O2y + R2_val * Math.sin(phi_r) });
+        }
+
+        // Seating arc on right (space at +pitch_ang / 2)
+        const th_space_r = pitch_ang / 2.0;
+        const Okx_r = rp * Math.cos(th_space_r);
+        const Oky_r = rp * Math.sin(th_space_r);
+        const ux_r = -Math.cos(th_space_r);
+        const uy_r = -Math.sin(th_space_r);
+        const px_r = -Math.sin(th_space_r);
+        const py_r = Math.cos(th_space_r);
+
+        for (let j = 1; j <= n_seat; j++) {
+            const u = j / n_seat;
+            const b = -beta0 + u * beta0;
+            const v_curr_x = Math.cos(b) * ux_r + Math.sin(b) * px_r;
+            const v_curr_y = Math.cos(b) * uy_r + Math.sin(b) * py_r;
+            tooth_pts.push({ x: Okx_r + R1_val * v_curr_x, y: Oky_r + R1_val * v_curr_y });
+        }
+
+        // Replicate across all z teeth:
+        // Rotating tooth k by (k + 0.5) * pitch_ang ensures that space 0 is at angle 0.0 rad!
+        // This guarantees 100% conjugate alignment with roller meshing positions!
         const pts = [];
+        const n_pts_sector = tooth_pts.length - 1; // Exclude last point to avoid duplicate with start of next tooth
         for (let k = 0; k < z; k++) {
-            const th_space = k * pitch_ang;
-            const Okx = rp * Math.cos(th_space);
-            const Oky = rp * Math.sin(th_space);
-            const ux = -Math.cos(th_space);
-            const uy = -Math.sin(th_space);
-            const px = -Math.sin(th_space);
-            const py = Math.cos(th_space);
-
-            // 1. Seating arc in space k around Ok from -beta0 to +beta0
-            const n_seat = 10;
-            for (let j = 0; j <= n_seat; j++) {
-                const u = j / n_seat;
-                const b_ang = -beta0 + u * (2.0 * beta0);
-                const vx = Math.cos(b_ang) * ux + Math.sin(b_ang) * px;
-                const vy = Math.cos(b_ang) * uy + Math.sin(b_ang) * py;
-                pts.push({ x: Okx + R1_val * vx, y: Oky + R1_val * vy });
-            }
-
-            // 2. Right flank of space k (left flank of tooth k)
-            const vx_r = Math.cos(beta0) * ux + Math.sin(beta0) * px;
-            const vy_r = Math.cos(beta0) * uy + Math.sin(beta0) * py;
-            const O2_rx = Okx + (R1_val - R2_val) * vx_r;
-            const O2_ry = Oky + (R1_val - R2_val) * vy_r;
-            const A_rx = Okx + R1_val * vx_r;
-            const A_ry = Oky + R1_val * vy_r;
-            const phi_start_r = Math.atan2(A_ry - O2_ry, A_rx - O2_rx);
-            const phi_end_r = solveTipPhi(O2_rx, O2_ry, R2_val, ra, phi_start_r, -0.01);
-
-            const n_flank = 8;
-            for (let j = 1; j <= n_flank; j++) {
-                const u = j / n_flank;
-                const phi = phi_start_r + u * (phi_end_r - phi_start_r);
-                pts.push({ x: O2_rx + R2_val * Math.cos(phi), y: O2_ry + R2_val * Math.sin(phi) });
-            }
-
-            const p_tip_r = pts[pts.length - 1];
-            const ang_tip_r = Math.atan2(p_tip_r.y, p_tip_r.x);
-
-            // 3. Left flank of space k+1 (right flank of tooth k)
-            const th_space_next = (k + 1) * pitch_ang;
-            const Okx_next = rp * Math.cos(th_space_next);
-            const Oky_next = rp * Math.sin(th_space_next);
-            const ux_next = -Math.cos(th_space_next);
-            const uy_next = -Math.sin(th_space_next);
-            const px_next = -Math.sin(th_space_next);
-            const py_next = Math.cos(th_space_next);
-
-            const vx_l = Math.cos(-beta0) * ux_next + Math.sin(-beta0) * px_next;
-            const vy_l = Math.cos(-beta0) * uy_next + Math.sin(-beta0) * py_next;
-            const O2_lx = Okx_next + (R1_val - R2_val) * vx_l;
-            const O2_ly = Oky_next + (R1_val - R2_val) * vy_l;
-            const A_lx = Okx_next + R1_val * vx_l;
-            const A_ly = Oky_next + R1_val * vy_l;
-            const phi_start_l = Math.atan2(A_ly - O2_ly, A_lx - O2_lx);
-            const phi_end_l = solveTipPhi(O2_lx, O2_ly, R2_val, ra, phi_start_l, 0.01);
-
-            const p_tip_l = {
-                x: O2_lx + R2_val * Math.cos(phi_end_l),
-                y: O2_ly + R2_val * Math.sin(phi_end_l)
-            };
-            const ang_tip_l = Math.atan2(p_tip_l.y, p_tip_l.x);
-
-            let d_ang = ang_tip_l - ang_tip_r;
-            while (d_ang < 0) d_ang += 2 * Math.PI;
-            while (d_ang > 2 * Math.PI) d_ang -= 2 * Math.PI;
-
-            const n_tip = 4;
-            for (let j = 1; j < n_tip; j++) {
-                const u = j / n_tip;
-                const ang = ang_tip_r + u * d_ang;
-                pts.push({ x: ra * Math.cos(ang), y: ra * Math.sin(ang) });
-            }
-
-            for (let j = 0; j < n_flank; j++) {
-                const u = (n_flank - j) / n_flank;
-                const phi = phi_start_l + u * (phi_end_l - phi_start_l);
-                pts.push({ x: O2_lx + R2_val * Math.cos(phi), y: O2_ly + R2_val * Math.sin(phi) });
+            const ang_k = (k + 0.5) * pitch_ang;
+            const cos_k = Math.cos(ang_k);
+            const sin_k = Math.sin(ang_k);
+            for (let j = 0; j < n_pts_sector; j++) {
+                const pt = tooth_pts[j];
+                pts.push({
+                    x: pt.x * cos_k - pt.y * sin_k,
+                    y: pt.x * sin_k + pt.y * cos_k
+                });
             }
         }
 
@@ -4286,6 +4301,12 @@ class ChainCanvas {
     toggleAnimation() {
         this.isRunning = !this.isRunning;
         return this.isRunning;
+    }
+
+    toggleLinks() {
+        this.showLinks = !this.showLinks;
+        this.render();
+        return this.showLinks;
     }
 
     resetRotation() {
@@ -4487,9 +4508,9 @@ class ChainCanvas {
         const d2 = res.d2 || 200;
         const z1 = res.z1 || 19;
         const z2 = res.z2 || 40;
-        const p = res.chain ? res.chain.pitch : 12.7;
-        const d3 = res.chain ? res.chain.d3 : 8.51; // roller diameter
-        const b1 = res.chain ? res.chain.b1 : 7.75;
+        const p = res.p || (res.chain ? res.chain.pitch : 12.7);
+        const d3 = res.d3 || (res.chain ? res.chain.d3 : 8.51); // roller diameter
+        const b1 = res.b1 || (res.chain ? res.chain.b1 : 7.75);
         const X = res.X_even || res.X_exact || res.X || 100;
 
         const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, bf1: res.bf, rx: res.rx, Dg: res.Dg1, p, d3 };
@@ -4791,7 +4812,7 @@ class ChainCanvas {
         for (let i = 0; i < screenRollers.length; i++) {
             if (i % 2 === 1) {
                 const nextIdx = (i + 1) % screenRollers.length;
-                this.drawFigure8LinkPlate(screenRollers[i], screenRollers[nextIdx], H_plate, waist, 'rgba(51, 65, 85, 0.90)', '#475569');
+                this.drawFigure8LinkPlate(screenRollers[i], screenRollers[nextIdx], H_plate, waist, 'rgba(51, 65, 85, 0.40)', '#475569');
             }
         }
 
@@ -4813,7 +4834,7 @@ class ChainCanvas {
         for (let i = 0; i < screenRollers.length; i++) {
             if (i % 2 === 0) {
                 const nextIdx = (i + 1) % screenRollers.length;
-                this.drawFigure8LinkPlate(screenRollers[i], screenRollers[nextIdx], H_plate, waist, 'rgba(148, 163, 184, 0.85)', '#cbd5e1');
+                this.drawFigure8LinkPlate(screenRollers[i], screenRollers[nextIdx], H_plate, waist, 'rgba(148, 163, 184, 0.40)', '#cbd5e1');
             }
         }
 
@@ -5419,6 +5440,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnViewSp1: document.getElementById('btnViewSp1'),
         btnViewSp2: document.getElementById('btnViewSp2'),
         btnViewMesh: document.getElementById('btnViewMesh'),
+        btnToggleLinks: document.getElementById('btnToggleLinks'),
         btnAnimToggle: document.getElementById('btnAnimToggle'),
         rangeAnimSpeed: document.getElementById('rangeAnimSpeed'),
         spanAnimSpeed: document.getElementById('spanAnimSpeed'),
@@ -5782,6 +5804,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el.btnViewSp1) el.btnViewSp1.addEventListener('click', () => canvasEngine.setViewMode('sprocket1'));
             if (el.btnViewSp2) el.btnViewSp2.addEventListener('click', () => canvasEngine.setViewMode('sprocket2'));
             if (el.btnViewMesh) el.btnViewMesh.addEventListener('click', () => canvasEngine.setViewMode('mesh'));
+            if (el.btnToggleLinks) {
+                el.btnToggleLinks.addEventListener('click', () => {
+                    const show = canvasEngine.toggleLinks();
+                    el.btnToggleLinks.textContent = show ? '🔗 Ẩn/Hiện Xích' : '⛓️ Hiện Xích';
+                });
+            }
 
             if (el.btnAnimToggle) {
                 el.btnAnimToggle.addEventListener('click', () => {

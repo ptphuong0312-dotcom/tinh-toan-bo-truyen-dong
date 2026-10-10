@@ -75,6 +75,12 @@ class ChainCanvas {
         return this.isRunning;
     }
 
+    toggleLinks() {
+        this.showLinks = !this.showLinks;
+        this.render();
+        return this.showLinks;
+    }
+
     resetRotation() {
         this.rotationAngle = 0.0;
         this.render();
@@ -274,9 +280,9 @@ class ChainCanvas {
         const d2 = res.d2 || 200;
         const z1 = res.z1 || 19;
         const z2 = res.z2 || 40;
-        const p = res.chain ? res.chain.pitch : 12.7;
-        const d3 = res.chain ? res.chain.d3 : 8.51; // roller diameter
-        const b1 = res.chain ? res.chain.b1 : 7.75;
+        const p = res.p || (res.chain ? res.chain.pitch : 12.7);
+        const d3 = res.d3 || (res.chain ? res.chain.d3 : 8.51); // roller diameter
+        const b1 = res.b1 || (res.chain ? res.chain.b1 : 7.75);
         const X = res.X_even || res.X_exact || res.X || 100;
 
         const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, bf1: res.bf, rx: res.rx, Dg: res.Dg1, p, d3 };
@@ -578,7 +584,7 @@ class ChainCanvas {
         for (let i = 0; i < screenRollers.length; i++) {
             if (i % 2 === 1) {
                 const nextIdx = (i + 1) % screenRollers.length;
-                this.drawFigure8LinkPlate(screenRollers[i], screenRollers[nextIdx], H_plate, waist, 'rgba(51, 65, 85, 0.90)', '#475569');
+                this.drawFigure8LinkPlate(screenRollers[i], screenRollers[nextIdx], H_plate, waist, 'rgba(51, 65, 85, 0.40)', '#475569');
             }
         }
 
@@ -600,7 +606,7 @@ class ChainCanvas {
         for (let i = 0; i < screenRollers.length; i++) {
             if (i % 2 === 0) {
                 const nextIdx = (i + 1) % screenRollers.length;
-                this.drawFigure8LinkPlate(screenRollers[i], screenRollers[nextIdx], H_plate, waist, 'rgba(148, 163, 184, 0.85)', '#cbd5e1');
+                this.drawFigure8LinkPlate(screenRollers[i], screenRollers[nextIdx], H_plate, waist, 'rgba(148, 163, 184, 0.40)', '#cbd5e1');
             }
         }
 

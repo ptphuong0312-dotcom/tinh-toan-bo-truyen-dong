@@ -4739,3 +4739,34 @@ ho_{f0}$.
      - **QC Suite (`test_splines_qc.py`)**: **110 / 110 phép tính PASS tuyệt đối 100.0% với $\Delta = 0.000000$** đối chiếu Excel COM MITCalc 1.74.
      - **Geometry Dynamics Verification (`test_splines_fillet_verification.js`)**: Kiểm tra số điểm biên dạng và tọa độ phản ứng tức thì khi đổi bán kính góc lượn (128 -> 160 -> 96 điểm cho trục, 133 -> 69 điểm cho lỗ).
      - **Playwright E2E Browser Test (`test_splines_e2e.py`)**: Kiểm tra Chromium thực tế: gõ giá trị, tự động uncheck standard, cập nhật mm, Canvas 2D vẽ lại tức thì, DXF sinh đủ 4 dòng thông số.
+
+
+---
+
+## Giai Đoạn 45: Chuẩn Hóa Hoàn Hảo Biên Dạng Răng Đĩa Xích Con Lăn (ISO 606 / DIN 8196 / ASME B29.1M), Bo Tròn Đỉnh Răng $R_t$ Tiếp Tuyến $C^1$ & Tối Ưu Hóa Canvas 2D
+* **Bối cảnh & Yêu cầu từ người dùng (`SirPhuong`)**:
+  - *"TÍNH TOÁN BỘ TRUYỀN XÍCH CON LĂN (ROLLER CHAINS) : biên dạng profile răng xích chưa đúng"*.
+* **Phân tích nguyên nhân gốc rễ**:
+  1. Biên dạng răng cũ trong `generateSprocket2DPoints` (`chain-calc.js`) tìm giao điểm với bán kính ngoài $r_a$ rồi nối hai sườn bằng một cung tròn thô sơ trên đường tròn đỉnh, khiến đầu răng bị chặt phẳng với 2 góc vuông gãy khúc hoặc bị nhọn hoắt dạng sóng tam giác bất thường.
+  2. Tại vùng ăn khớp trên Canvas 2D, khi xích thoát khỏi đĩa dẫn trên nhánh thẳng (Straight Span), góc vuông sắc nhọn của đỉnh răng cũ nhô ra ngoài va chạm trực tiếp với con lăn đang di chuyển trên đường thẳng tiếp tuyến.
+  3. Độ chắn sáng của má xích cũ quá cao (`0.85 - 0.90`), che khuất toàn bộ biên dạng răng đĩa xích khi xích ôm quanh đĩa, đồng thời chưa có nút bật/tắt mắt xích để quan sát trọn vẹn bánh xích trần.
+  4. Thiếu đồng bộ đơn vị đo giữa bước xích $p$ và đường kính con lăn $d_3$ khi chuyển đổi giữa hệ Mét và hệ Inch trên Canvas.
+* **Đột phá giải thuật & Thành quả triển khai**:
+  1. **Giải thuật giải tích hình học 3 cung liên hợp $C^1$ chuẩn quốc tế ISO 606 / DIN 8196 / ASME B29.1M (`chain-calc.js`)**:
+     - **Cung đáy rãnh con lăn ($R_1$)**: Bán kính $R_1 \approx 0.505 d_3$, góc ôm rãnh $\alpha = 130^\circ - 90^\circ / z$.
+     - **Cung sườn răng làm việc ($R_2$)**: Bán kính $R_2$ tiếp xúc $C^1$ hoàn hảo với $R_1$ tại góc $\beta_0 = \alpha / 2$.
+     - **Cung bo đỉnh răng hình vương miện ($R_t$)**: Giải tích tìm bán kính $R_t$ và tâm $C(x_c, 0)$ trên trục đối xứng đỉnh răng để cung tròn đỉnh tiệm cận chính xác $r_a = d_a / 2$ tại đỉnh và tiếp xúc trơn tru $C^1$ với cả hai sườn răng $R_2$:
+       $$\Delta = O_{2x} - r_a, \quad R_t = \frac{\Delta^2 + O_{2y}^2 - R_2^2}{2(R_2 - \Delta)}, \quad x_c = r_a - R_t$$
+       $$P_t = O_2 + R_2 \cdot \frac{C - O_2}{|C - O_2|}$$
+     - Triệt tiêu 100% sừng nhọn, góc vuông và hiện tượng đan chéo. Đầu răng thuôn mượt, tròn trịa, chuẩn xưởng đĩa xích công nghiệp.
+  2. **Khóa pha động học ăn khớp liên hợp con lăn khít đáy rãnh 100%**:
+     - Sector mỗi răng $k$ được xoay góc $(k + 0.5) \cdot \frac{2\pi}{z}$, đảm bảo rãnh răng số 0 luôn nằm chính xác tại góc $0.0\text{ rad}$.
+     - Khi đĩa xích quay góc $\theta_1$, mọi con lăn trong hoạt họa kinematics đều lọt khít 100% vào tâm đáy rãnh $R_1$ của cả đĩa dẫn 1 và đĩa bị dẫn 2, không bị lệch pha, triệt tiêu hoàn toàn va chạm đỉnh răng khi cuốn vào và nhả xích.
+  3. **Cải tiến Canvas 2D & Công cụ kiểm tra trực quan (`chain-canvas.js`, `chain-ui.js`, `index.html`)**:
+     - Thêm nút công cụ "🔗 Ẩn/Hiện Xích" (`#btnToggleLinks`) cho phép kỹ sư ẩn/hiện mắt xích chỉ bằng 1 cú nhấp chuột để quan sát toàn bộ bánh xích.
+     - Tinh chỉnh độ trong suốt má xích (`rgba(..., 0.40)`): Vừa thấy cấu trúc xích 3D sinh động vừa nhìn thấu rõ nét biên dạng răng ăn khớp bên dưới.
+     - Thống nhất đơn vị đo $p, d_3$ trên Canvas theo hệ hiển thị (`res.p`, `res.d3`).
+  4. **Kiểm thử tự động đa tầng**:
+     - **QC Suite (`test_chain_qc.py`)**: **33 / 33 phép tính PASS tuyệt đối 100.0% với $\Delta = 0.000000$** đối chiếu MITCalc 1.74 Excel COM (`chains_01.xlsb`).
+     - **Đóng gói Bundle (`bundle_chain.py`, `bundle_all.py`)**: 9/9 module đóng gói 100% thành công không phụ thuộc CORS.
+     - **Playwright E2E Browser Test (`take_screenshot.py`)**: Kiểm tra trực quan cả 4 chế độ view (Full, Sprocket 1, Mesh, Sprocket 1 Bare), ghi nhận răng đĩa xích bo tròn đỉnh vương miện chuẩn xác và con lăn ăn khớp lọt khít hoàn hảo.

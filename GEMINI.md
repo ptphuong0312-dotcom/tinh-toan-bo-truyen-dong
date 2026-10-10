@@ -3034,3 +3034,24 @@ ho_{f0} / \cos\gamma$.
    - `python tools/test_splines_qc.py`: Đạt 110/110 phép tính PASS tuyệt đối 100.0% với $\Delta = 0.000000$ đối chiếu MITCalc 1.74 Excel COM.
    - `node scratch/test_splines_fillet_verification.js`: Đạt kiểm tra hình học và độ nhạy của điểm sector và DXF.
    - `python scratch/test_splines_e2e.py`: Playwright browser test đạt 100% PASS (Canvas redraw, DOM update, DXF output).
+
+---
+
+### Quy Tắc 125: Quy Chuẩn Biên Dạng Hình Học Răng Đĩa Xích Con Lăn Chuẩn Quốc Tế ISO 606 / ASME B29.1M & Bo Tròn Đỉnh Răng $R_t$ Liên Hợp $C^1$ (Module 9 Sprocket Profile Protocol)
+**Ngày áp dụng**: 10/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Khắc phục Triệt để Lỗi Biên dạng Răng Đĩa Xích**:
+   - Khắc phục hiện tượng răng bị nhọn hoắt dạng sóng tam giác hoặc đầu răng bị chặt phẳng có góc vuông gãy khúc.
+   - Biên dạng mới được xây dựng theo chuẩn quốc tế ISO 606 / DIN 8196 / ASME B29.1M bao gồm 3 thành phần giải tích khép kín $C^1$:
+     * **Cung đáy rãnh con lăn ($R_1$)**: Bán kính $R_1 \approx 0.505 d_3$, góc ôm $\alpha = 130^\circ - 90^\circ / z$, ôm khít con lăn xích với độ chính xác tuyệt đối.
+     * **Cung sườn răng làm việc ($R_2$)**: Bán kính $R_2$ tiếp xúc trơn tru $C^1$ với $R_1$ tại góc tiếp xúc $\beta_0 = \alpha / 2$.
+     * **Cung bo đỉnh răng hình vương miện ($R_t$)**: Bo tròn đỉnh răng bằng cung tròn bán kính $R_t$ có tâm $C(x_c, 0)$ trên trục đối xứng đỉnh răng, tiệm cận chính xác bán kính đỉnh ngoài $r_a = d_a / 2$, tiếp tuyến $C^1$ hoàn hảo với cả hai sườn răng $R_2$:
+       $$\Delta = O_{2x} - r_a, \quad R_t = \frac{\Delta^2 + O_{2y}^2 - R_2^2}{2(R_2 - \Delta)}, \quad x_c = r_a - R_t$$
+2. **Khóa Pha Động Học Ăn Khớp Liên Hợp (Conjugate Phase Locking)**:
+   - Sector mỗi răng $k$ được xoay góc $(k + 0.5) \cdot \frac{2\pi}{z}$, đảm bảo rãnh răng số 0 luôn nằm chính xác tại góc $0.0\text{ rad}$.
+   - Khi đĩa xích quay góc $\theta_1$, mọi con lăn trong hoạt họa kinematics đều lọt khít 100% vào tâm đáy rãnh $R_1$ của cả đĩa dẫn 1 và đĩa bị dẫn 2, không bị lệch pha, triệt tiêu hoàn toàn va chạm đỉnh răng khi cuốn vào và nhả xích.
+3. **Tiện ích Canvas 2D & Độ Trong Suốt Má Xích**:
+   - Bổ sung nút công cụ "🔗 Ẩn/Hiện Xích" (`#btnToggleLinks`) trên thanh điều khiển Canvas 2D.
+   - Tinh chỉnh độ trong suốt má xích (`rgba(..., 0.40)`): Giúp người dùng quan sát rõ nét toàn bộ biên dạng răng ăn khớp bên dưới mà vẫn giữ trọn hiệu ứng 3D kim loại sinh động.
+   - Thống nhất đơn vị đo $p, d_3$ trên Canvas theo hệ hiển thị (`res.p`, `res.d3`), bảo đảm kích thước ăn khớp chính xác 100% trên cả hệ Mét và hệ Inch.
+

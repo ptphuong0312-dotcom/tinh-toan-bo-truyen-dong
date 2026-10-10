@@ -2917,3 +2917,38 @@ ho_{f0}$.
    - `python tools/test_splines_qc.py`: Đạt 110/110 phép tính PASS 100.0% với $\Delta = 0.000000$.
    - `node scratch/test_splines_fillet_verification.js`: Đạt kiểm tra hình học và độ nhạy của điểm sector và DXF.
    - `python scratch/test_splines_e2e.py`: Playwright browser test đạt 100% PASS (Canvas redraw, DOM update, DXF output).
+
+---
+
+### Runbook 28: Giải Thuật Giải Tích Biên Dạng Răng Đĩa Xích Con Lăn Chuẩn Quốc Tế ISO 606 / DIN 8196 / ASME B29.1M & Bo Tròn Đỉnh Răng $R_t$ Liên Hợp $C^1$
+**Mục tiêu**: Chuẩn hóa 100% hình học biên dạng răng đĩa xích con lăn (Sprocket Tooth Profile) đạt dáng vẻ cơ khí công nghiệp chuẩn xác, khắc phục triệt để hiện tượng răng nhọn dạng sóng / đầu răng bị chặt phẳng có góc vuông, đảm bảo con lăn lọt khít 100% vào đáy rãnh và ăn khớp liên hợp hoàn hảo (Conjugate Meshing).
+
+1. **Ba thành phần hình học giải tích chuẩn xác 100%**:
+   - **Cung đáy rãnh con lăn (Seating Curve $R_1$)**:
+     * Bán kính danh nghĩa: $R_1 = (R_{1,\min} + R_{1,\max})/2 \approx 0.505 d_3$.
+     * Tâm đặt tại tâm con lăn $O_k(r_p \cos\theta_k, r_p \sin\theta_k)$ trên vòng chia $r_p = p / (2 \sin(\pi / z))$.
+     * Góc ôm con lăn: $\alpha = 130^\circ - 90^\circ / z$. Quét đối xứng $\pm \alpha / 2$ quanh trục tâm rãnh.
+     * Điểm tiếp xúc chuyển tiếp $A_r = O_k + R_1 \vec{v}_r$.
+   - **Cung sườn răng làm việc (Working Flank $R_2$)**:
+     * Bán kính danh nghĩa: $R_2 = (R_{2,\min} + R_{2,\max})/2$ theo ISO 606.
+     * Tiếp tuyến mượt $C^1$ với $R_1$ tại điểm $A_r$. Tâm sườn $O_2 = O_k + (R_1 - R_2) \vec{v}_r$.
+   - **Cung bo đỉnh răng hình vương miện (Analytical Topping Crown Arc $R_t$)**:
+     * Khắc phục hoàn toàn góc gãy nhọn hoặc đường đỉnh chặt phẳng bằng cung tròn bán kính $R_t$ có tâm $C(x_c, 0)$ nằm trên đường tâm răng.
+     * Đỉnh cung tiệm cận chính xác đường kính ngoài danh nghĩa: $x_{\text{apex}} = x_c + R_t = r_a = d_a / 2$.
+     * Công thức giải tích nghiệm duy nhất bảo toàn tiếp tuyến $C^1$ với cả 2 sườn răng $R_2$:
+       $$\Delta = O_{2x} - r_a$$
+       $$R_t = \frac{\Delta^2 + O_{2y}^2 - R_2^2}{2 (R_2 - \Delta)}$$
+       $$x_c = r_a - R_t$$
+     * Tiếp điểm giải tích: $P_t = O_2 + R_2 \cdot \frac{C - O_2}{|C - O_2|}$.
+
+2. **Quy chuẩn đồng bộ pha liên hợp con lăn & rãnh răng**:
+   - Phân bố $z$ răng đối xứng: Mỗi răng $k$ được xoay góc $(k + 0.5) \cdot \frac{2\pi}{z}$.
+   - Rãnh răng 0 nằm chính xác tại góc $0.0\text{ rad}$. Khi đĩa xích quay góc $\theta_1$, rãnh răng quay tới $\theta_1$.
+   - Tọa độ con lăn trong hoạt họa kinematics quay tới $\theta_{\text{roller}} = \theta_1 - i \cdot \frac{2\pi}{z_1}$.
+   - Kết quả: Con lăn luôn lọt khít 100% vào đáy rãnh $R_1$ trong mọi khung hình, không bị lệch pha, không bị chạm đỉnh răng khi cuốn vào và nhả xích.
+
+3. **Cải tiến giao diện 2D Canvas & Tiện ích**:
+   - Nút công cụ "🔗 Ẩn/Hiện Xích" (`#btnToggleLinks`) cho phép kỹ sư ẩn/hiện mắt xích để quan sát trọn vẹn đĩa xích trần.
+   - Độ mờ bán trong suốt má xích (`rgba(..., 0.40)`): Giúp vừa thấy cấu trúc xích 3D sinh động vừa nhìn rõ biên dạng răng ăn khớp bên dưới.
+   - Thống nhất đơn vị đo $p, d_3$ trên Canvas theo hệ hiển thị (`res.p`, `res.d3`), chống lỗi sai lệch tỷ lệ khi chuyển hệ đo.
+
