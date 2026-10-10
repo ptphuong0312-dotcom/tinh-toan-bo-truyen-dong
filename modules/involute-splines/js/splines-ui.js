@@ -226,10 +226,10 @@ export class SplinesUI {
                 if (this.elHa2) this.elHa2.value = (std.ha2 || 0.50).toFixed(4);
                 if (this.elHf0) this.elHf0.value = (std.hf0 || 0.75).toFixed(4);
                 if (this.elHf2) this.elHf2.value = (std.hf2 || 0.75).toFixed(4);
-                if (this.elRa0) this.elRa0.value = (std.ra0 || 0.00).toFixed(4);
-                if (this.elRa2) this.elRa2.value = (std.ra2 || 0.20).toFixed(4);
-                if (this.elRf0) this.elRf0.value = (std.rf0 || 0.00).toFixed(4);
-                if (this.elRf2) this.elRf2.value = (std.rf2 || 0.00).toFixed(4);
+                if (this.elRa0) this.elRa0.value = (std.ra0 !== undefined ? std.ra0 : 0.00).toFixed(4);
+                if (this.elRa2) this.elRa2.value = (std.ra2 !== undefined ? std.ra2 : 0.20).toFixed(4);
+                if (this.elRf0) this.elRf0.value = (std.rf0 !== undefined ? std.rf0 : 0.00).toFixed(4);
+                if (this.elRf2) this.elRf2.value = (std.rf2 !== undefined ? std.rf2 : 0.00).toFixed(4);
             }
             resetAllOverrideFlags();
             this.recalculate();
@@ -278,6 +278,7 @@ export class SplinesUI {
                 pInputs.forEach(inp => {
                     if (inp) inp.disabled = isStd;
                 });
+                resetGeometryOverrideFlags();
                 if (isStd) {
                     const stdId = parseInt(this.elStdType?.value || 6);
                     const std = SplinesData.std_types.find(st => st.id === stdId);
@@ -286,15 +287,21 @@ export class SplinesUI {
                         if (this.elHa2) this.elHa2.value = (std.ha2 || 0.50).toFixed(4);
                         if (this.elHf0) this.elHf0.value = (std.hf0 || 0.75).toFixed(4);
                         if (this.elHf2) this.elHf2.value = (std.hf2 || 0.75).toFixed(4);
-                        if (this.elRa0) this.elRa0.value = (std.ra0 || 0.00).toFixed(4);
-                        if (this.elRa2) this.elRa2.value = (std.ra2 || 0.20).toFixed(4);
-                        if (this.elRf0) this.elRf0.value = (std.rf0 || 0.00).toFixed(4);
-                        if (this.elRf2) this.elRf2.value = (std.rf2 || 0.00).toFixed(4);
+                        if (this.elRa0) this.elRa0.value = (std.ra0 !== undefined ? std.ra0 : 0.00).toFixed(4);
+                        if (this.elRa2) this.elRa2.value = (std.ra2 !== undefined ? std.ra2 : 0.20).toFixed(4);
+                        if (this.elRf0) this.elRf0.value = (std.rf0 !== undefined ? std.rf0 : 0.00).toFixed(4);
+                        if (this.elRf2) this.elRf2.value = (std.rf2 !== undefined ? std.rf2 : 0.00).toFixed(4);
                     }
                 }
                 this.recalculate();
             });
         }
+
+        // Khi người dùng chỉnh sửa Mục 2.0: Tự động xóa cờ ghi đè đường kính để công thức biên dạng phản ứng ngay
+        this.elHa0?.addEventListener('input', () => { delete this.elDa0?.dataset.userEdited; });
+        this.elHf0?.addEventListener('input', () => { delete this.elDf0?.dataset.userEdited; });
+        this.elHa2?.addEventListener('input', () => { delete this.elDi2?.dataset.userEdited; });
+        this.elHf2?.addEventListener('input', () => { delete this.elDri2?.dataset.userEdited; });
 
         // Xử lý menu dropdown luân chuyển module bên cạnh nút "Trang Chủ"
         if (this.btnModuleMenuToggle && this.moduleDropdownMenu) {

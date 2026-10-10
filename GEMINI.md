@@ -2914,4 +2914,27 @@ ho_{f0} / \cos\gamma$.
      * Tự động gán $r_{f\_nominal} = 0.38m$ cho Fillet Root ($0.25m$ cho DIN 5480) và $0.18m$ cho Flat Root.
      * Kiểm tra góc quét cho phép Fillet Root chạm tới sát $\tau$ (`tau * 0.999`), thể hiện chân lượn tròn cong mềm mại hoàn hảo trên Canvas 2D và CAD DXF.
 
+---
+
+### Quy Tắc 120: Quy Chuẩn Bo Tròn Chân Then Lỗ (Hub Root Fillet) & Liên Thông Hai Chiều Toàn Diện Thông Số Biên Dạng Răng Mục 2.0 (Full Dynamic Linking & Custom Profile Protocol)
+**Ngày áp dụng**: 10/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Giải thuật Bo Tròn Chân Then Lỗ (Hub Root Fillet Algorithm)**:
+   - Trong mối ghép then hoa thân khai chân lượn tròn (Fillet Root): Chân then của lỗ moay-ơ (đáy rãnh tại đường kính ngoài $D_{ri}$, bán kính $r_{\text{root}} = D_{ri} / 2$) phải được bo tròn với bán kính lượn $r_{f2} = r_{f2}^* \cdot m$ tiếp tuyến $C^1$ trơn tru từ sườn thân khai vào đáy rãnh, triệt tiêu 100% góc sắc nhọn gây tập trung ứng suất uốn.
+   - **Tọa độ tâm cung bo**: Tâm cung bo chân $C_{\text{root}}$ nằm tại khoảng cách $\|C_{\text{root}}\| = r_{\text{root}} - r_{f2}$.
+   - **Tìm điểm tiếp xúc giải tích bằng Bisection**: Thuật toán chia đôi (45 vòng lặp) tìm góc pháp tuyến thân khai $\alpha_{\tan\_\text{root}}$ sao cho khoảng cách từ điểm trên sườn đến tâm $C_{\text{root}}$ đúng bằng bán kính $r_{f2}$.
+   - **Bộ bảo vệ thích ứng độ rộng rãnh (Adaptive Width Guard)**: Với các biên dạng góc ăn khớp lớn ($\alpha = 45^\circ$) hoặc module nhỏ khi rãnh đáy hẹp, thuật toán tự động co bán kính $r_{f2} \le P_{\text{root}\_x}$ qua điều kiện góc tiếp xúc đáy $\theta_{\text{root}\_\tan} \ge 0.0001\text{ rad}$, bảo đảm cung bo luôn tiếp xúc mượt mà với cung đáy rãnh mà không bao giờ bị đan chéo hay tự giao nhau.
+2. **Cơ chế liên thông hai chiều toàn diện Mục 2.0 (Section 2.0 Dynamic Interlocking)**:
+   - **Tự động điền theo tiêu chuẩn (Auto-population by Standard)**: Khi người dùng chọn bất kỳ tiêu chuẩn nào trong 17 tiêu chuẩn tại Mục 1.2 (`elStdType`), toàn bộ 8 thông số thanh răng Mục 2.0 ($h_{a0}^*, h_{f0}^*, r_{a0}^*, r_{f0}^*$ của trục và $h_{a2}^*, h_{f2}^*, r_{a2}^*, r_{f2}^*$ của lỗ) tự động cập nhật đúng chuẩn thiết kế quốc tế (ISO 4156 Fillet/Flat, ANSI B92.1, DIN 5480, CSN 4950).
+   - **Khởi đầu từ gốc tiêu chuẩn khi bỏ tích (Zero-Jump on Uncheck)**: Khi người dùng bỏ tích Checkbox "Tiêu chuẩn" Mục 2.0, các ô nhập liệu được mở khóa với giá trị xuất phát từ chính tiêu chuẩn đã chọn. Do $\Delta h = 0$, các đường kính danh nghĩa không bị nhảy số đột ngột ($\Delta = 0$).
+   - **Liên thông động khi người dùng hiệu chỉnh tùy biến (Real-Time Propagation on Custom Edit)**:
+     * Khi người dùng thay đổi $h_{a0}^*, h_{f0}^*, h_{a2}^*, h_{f2}^*$ theo nhu cầu gia công chế tạo riêng:
+       $$d_{a0} = d_{a0\_\text{std}} + 2 (h_{a0}^* - h_{a0\_\text{std}}^*) m$$
+       $$d_{f0} = d_{f0\_\text{std}} - 2 (h_{f0}^* - h_{f0\_\text{std}}^*) m$$
+       $$D_{i} = D_{i\_\text{std}} - 2 (h_{a2}^* - h_{a2\_\text{std}}^*) m$$
+       $$D_{ri} = D_{ri\_\text{std}} + 2 (h_{f2}^* - h_{f2\_\text{std}}^*) m$$
+     * Các đường kính này ngay lập tức kích hoạt tính toán lại toàn bộ Section 3.0 (chiều cao răng $h$, chiều dày đỉnh $s_a$, khe hở hướng tâm đỉnh - đáy $c$), cập nhật tức thì đồ họa ăn khớp 2D Canvas và các lớp hình học xuất file CAD DXF Release 12.
+     * Khi người dùng thay đổi bán kính lượn tương đối ($r_{a0}^*, r_{f0}^*, r_{a2}^*, r_{f2}^*$), Canvas 2D và CAD DXF tự động bo cung tròn bán kính thực $r = r^* \cdot m$ tại đỉnh và chân răng tương ứng.
+
+
 

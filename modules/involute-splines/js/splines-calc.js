@@ -241,31 +241,64 @@ export const SplinesCalc = {
         // Tool profile defaults from standard or custom inputs (Section 2.0)
         const std = SplinesData.std_types.find(t => t.id === stdTypeId) || SplinesData.std_types[5];
         const profileStandard = params.profile_standard !== false;
-        const ha0_tool = parseFloat(params.ha0_tool !== undefined && !isNaN(params.ha0_tool) ? params.ha0_tool : (std.ha0 || 0.50));
-        const hf0_tool = parseFloat(params.hf0_tool !== undefined && !isNaN(params.hf0_tool) ? params.hf0_tool : (std.hf0 || 0.75));
-        const ra0_tool = parseFloat(params.ra0_tool !== undefined && !isNaN(params.ra0_tool) ? params.ra0_tool : (std.ra0 || 0.0));
-        const rf0_tool = parseFloat(params.rf0_tool !== undefined && !isNaN(params.rf0_tool) ? params.rf0_tool : (std.rf0 || 0.0));
+        const std_ha0 = std.ha0 || 0.50;
+        const std_hf0 = std.hf0 || 0.75;
+        const std_ra0 = std.ra0 !== undefined ? std.ra0 : 0.0;
+        const std_rf0 = std.rf0 !== undefined ? std.rf0 : (std.hf0 >= 0.85 ? 0.40 : 0.20);
+        const std_ha2 = std.ha2 || 0.50;
+        const std_hf2 = std.hf2 || 0.75;
+        const std_ra2 = std.ra2 !== undefined ? std.ra2 : 0.20;
+        const std_rf2 = std.rf2 !== undefined ? std.rf2 : (std.hf2 >= 0.85 ? 0.40 : 0.20);
 
-        const ha2_tool = parseFloat(params.ha2_tool !== undefined && !isNaN(params.ha2_tool) ? params.ha2_tool : (std.ha2 || 0.50));
-        const hf2_tool = parseFloat(params.hf2_tool !== undefined && !isNaN(params.hf2_tool) ? params.hf2_tool : (std.hf2 || 0.75));
-        const ra2_tool = parseFloat(params.ra2_tool !== undefined && !isNaN(params.ra2_tool) ? params.ra2_tool : (std.ra2 || 0.20));
-        const rf2_tool = parseFloat(params.rf2_tool !== undefined && !isNaN(params.rf2_tool) ? params.rf2_tool : (std.rf2 || 0.0));
+        const ha0_tool = parseFloat(params.ha0_tool !== undefined && !isNaN(params.ha0_tool) ? params.ha0_tool : std_ha0);
+        const hf0_tool = parseFloat(params.hf0_tool !== undefined && !isNaN(params.hf0_tool) ? params.hf0_tool : std_hf0);
+        const ra0_tool = parseFloat(params.ra0_tool !== undefined && !isNaN(params.ra0_tool) ? params.ra0_tool : std_ra0);
+        const rf0_tool = parseFloat(params.rf0_tool !== undefined && !isNaN(params.rf0_tool) ? params.rf0_tool : std_rf0);
+
+        const ha2_tool = parseFloat(params.ha2_tool !== undefined && !isNaN(params.ha2_tool) ? params.ha2_tool : std_ha2);
+        const hf2_tool = parseFloat(params.hf2_tool !== undefined && !isNaN(params.hf2_tool) ? params.hf2_tool : std_hf2);
+        const ra2_tool = parseFloat(params.ra2_tool !== undefined && !isNaN(params.ra2_tool) ? params.ra2_tool : std_ra2);
+        const rf2_tool = parseFloat(params.rf2_tool !== undefined && !isNaN(params.rf2_tool) ? params.rf2_tool : std_rf2);
 
         // AutoFill standard defaults or calculate from custom tooth profile
-        let da0 = parseFloat(params.da0);
-        let df0 = parseFloat(params.df0);
-        let di2 = parseFloat(params.di2);
-        let dri2 = parseFloat(params.dri2);
-
-        // Chuẩn 1-to-1 MITCalc 1.74: Kích thước đường kính theo chuẩn quốc tế (T_spl2_Name)
-        // Việc bật/tắt Checkbox "Tiêu chuẩn" Mục 2.0 chỉ mở khóa chỉnh sửa dao cắt, tuyệt đối KHÔNG tự ý tính lại làm nhảy số đường kính da0, df0, di2, dri2
         const defs = this.getStandardSplineDefaults(stdTypeId, m, z0, units);
         if (!params.customAlfa) alfa = defs.alfa;
 
-        da0 = (params.da0_custom && !isNaN(parseFloat(params.da0))) ? parseFloat(params.da0) : defs.da0;
-        df0 = (params.df0_custom && !isNaN(parseFloat(params.df0))) ? parseFloat(params.df0) : defs.df0;
-        di2 = (params.di2_custom && !isNaN(parseFloat(params.di2))) ? parseFloat(params.di2) : defs.di2;
-        dri2 = (params.dri2_custom && !isNaN(parseFloat(params.dri2))) ? parseFloat(params.dri2) : defs.dri2;
+        let da0 = defs.da0;
+        let df0 = defs.df0;
+        let di2 = defs.di2;
+        let dri2 = defs.dri2;
+
+        if (!profileStandard) {
+            // Khi người dùng bỏ tích "Tiêu chuẩn" Mục 2.0 để hiệu chỉnh dao cắt / biên dạng:
+            // Liên thông tự động: thay đổi ha0*, hf0*, ha2*, hf2* sẽ cập nhật trực tiếp da0, df0, di2, dri2
+            if (!params.da0_custom) {
+                da0 = defs.da0 + 2.0 * (ha0_tool - std_ha0) * m;
+            } else if (!isNaN(parseFloat(params.da0))) {
+                da0 = parseFloat(params.da0);
+            }
+            if (!params.df0_custom) {
+                df0 = defs.df0 - 2.0 * (hf0_tool - std_hf0) * m;
+            } else if (!isNaN(parseFloat(params.df0))) {
+                df0 = parseFloat(params.df0);
+            }
+            if (!params.di2_custom) {
+                di2 = defs.di2 - 2.0 * (ha2_tool - std_ha2) * m;
+            } else if (!isNaN(parseFloat(params.di2))) {
+                di2 = parseFloat(params.di2);
+            }
+            if (!params.dri2_custom) {
+                dri2 = defs.dri2 + 2.0 * (hf2_tool - std_hf2) * m;
+            } else if (!isNaN(parseFloat(params.dri2))) {
+                dri2 = parseFloat(params.dri2);
+            }
+        } else {
+            // Khi tích "Tiêu chuẩn": dùng giá trị chuẩn (trừ khi gõ đè trực tiếp ở 1.8/1.9)
+            if (params.da0_custom && !isNaN(parseFloat(params.da0))) da0 = parseFloat(params.da0);
+            if (params.df0_custom && !isNaN(parseFloat(params.df0))) df0 = parseFloat(params.df0);
+            if (params.di2_custom && !isNaN(parseFloat(params.di2))) di2 = parseFloat(params.di2);
+            if (params.dri2_custom && !isNaN(parseFloat(params.dri2))) dri2 = parseFloat(params.dri2);
+        }
 
         if (params.autoFill && !params.x0_custom) {
             x0 = defs.x0;
@@ -611,9 +644,7 @@ export const SplinesCalc = {
         const isDIN5480 = (g.stdName && g.stdName.toLowerCase().includes('din 5480')) || (g.stdTypeId === 14);
 
         let rf_nominal = 0.20 * m;
-        if (g.ra0_tool !== undefined && g.ra0_tool > 0) {
-            rf_nominal = g.ra0_tool * m;
-        } else if (g.rf0_tool !== undefined && g.rf0_tool > 0) {
+        if (g.rf0_tool !== undefined && g.rf0_tool > 0) {
             rf_nominal = g.rf0_tool * m;
         } else if (isFilletRoot) {
             // ISO 4156 / ANSI B92.1 Fillet Root: Bán kính chân lượn tròn danh nghĩa c*=0.4m -> rf = 0.38m
@@ -688,6 +719,47 @@ export const SplinesCalc = {
         const P_root_x = Cx_r * (r_root / R_C_r);
         const P_root_y = Cy_r * (r_root / R_C_r);
 
+        // Bo đỉnh răng trục (Shaft Tip Fillet) khi ra0_tool > 0
+        const ra0_val = (g.ra0_tool !== undefined && g.ra0_tool > 0) ? g.ra0_tool * m : 0.0;
+        let hasTipFillet = ra0_val > 0.005 * m;
+        let alfa_tip_tan = alfa_tip;
+        let th_tip_tan = psi + invAlfa - (Math.tan(alfa_tip) - alfa_tip);
+        let Cx_tip = 0, Cy_tip = 0, Px_tip = 0, Py_tip = 0;
+
+        if (hasTipFillet) {
+            const target_R_tip = r_tip - ra0_val;
+            function getTipFlank(a) {
+                const r_t = r_base / Math.cos(a);
+                const inv_t = Math.tan(a) - a;
+                const th_t = psi + invAlfa - inv_t;
+                const Px = r_t * Math.sin(th_t);
+                const Py = r_t * Math.cos(th_t);
+                const phi = a - th_t;
+                const Cx = Px - ra0_val * Math.cos(phi);
+                const Cy = Py - ra0_val * Math.sin(phi);
+                return { Px, Py, Cx, Cy, R_C: Math.hypot(Cx, Cy), th_t };
+            }
+            let low = alfa_tan;
+            let high = alfa_tip;
+            for (let iter = 0; iter < 45; iter++) {
+                const mid = (low + high) / 2.0;
+                if (getTipFlank(mid).R_C < target_R_tip) low = mid;
+                else high = mid;
+            }
+            alfa_tip_tan = (low + high) / 2.0;
+            const tf = getTipFlank(alfa_tip_tan);
+            Px_tip = tf.Px; Py_tip = tf.Py;
+            Cx_tip = tf.Cx; Cy_tip = tf.Cy;
+            const P_tip_x = Cx_tip * (r_tip / tf.R_C);
+            const P_tip_y = Cy_tip * (r_tip / tf.R_C);
+            th_tip_tan = Math.atan2(P_tip_x, P_tip_y);
+            if (th_tip_tan <= 0.0001 || th_tip_tan >= tau) {
+                hasTipFillet = false;
+                alfa_tip_tan = alfa_tip;
+                th_tip_tan = psi + invAlfa - (Math.tan(alfa_tip) - alfa_tip);
+            }
+        }
+
         const pts = [];
 
         // 1. Cung đáy rãnh chân răng bên trái: từ -tau đến -th_root_r
@@ -710,10 +782,10 @@ export const SplinesCalc = {
             pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
         }
 
-        // 3. Sườn thân khai bên trái: từ alfa_tan lên alfa_tip
+        // 3. Sườn thân khai bên trái: từ alfa_tan lên alfa_tip_tan
         for (let i = 0; i < numFlank; i++) {
             const frac = i / numFlank;
-            const a = alfa_tan + (alfa_tip - alfa_tan) * frac;
+            const a = alfa_tan + (alfa_tip_tan - alfa_tan) * frac;
             const r_t = r_base / Math.cos(a);
             const inv_t = Math.tan(a) - a;
             const th_t = -(psi + invAlfa - inv_t);
@@ -722,21 +794,58 @@ export const SplinesCalc = {
             pts.push({ x, y, r: r_t, theta: th_t });
         }
 
-        // 4. Cung đỉnh răng: từ -th_tip đến +th_tip (ra0* = 0 theo chuẩn, cung đỉnh tròn r_tip nối thẳng sườn)
-        const inv_tip = Math.tan(alfa_tip) - alfa_tip;
-        const th_tip = psi + invAlfa - inv_tip;
-        for (let i = 0; i <= numArc; i++) {
-            const frac = i / numArc;
-            const th = -th_tip + (2.0 * th_tip) * frac;
-            const x = r_tip * Math.sin(th);
-            const y = r_tip * Math.cos(th);
-            pts.push({ x, y, r: r_tip, theta: th });
+        if (hasTipFillet) {
+            // Cung bo đỉnh răng bên trái (Fillet ra0): từ tiếp xúc thân khai sang đỉnh răng
+            const ang_flank_tip_l = Math.atan2(-Px_tip - (-Cx_tip), Py_tip - Cy_tip);
+            const ang_crest_tip_l = Math.atan2(-Px_tip - (-Cx_tip), Py_tip - Cy_tip); // will interpolate to crest
+            const P_crest_l_x = -Cx_tip * (r_tip / Math.hypot(Cx_tip, Cy_tip));
+            const P_crest_l_y = Cy_tip * (r_tip / Math.hypot(Cx_tip, Cy_tip));
+            const a_c1 = Math.atan2(-Px_tip - (-Cx_tip), Py_tip - Cy_tip);
+            const a_c2 = Math.atan2(P_crest_l_x - (-Cx_tip), P_crest_l_y - Cy_tip);
+            for (let i = 0; i < numFillet; i++) {
+                const frac = i / numFillet;
+                const ang = a_c1 + (a_c2 - a_c1) * frac;
+                const x = -Cx_tip + ra0_val * Math.sin(ang);
+                const y = Cy_tip + ra0_val * Math.cos(ang);
+                pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
+            }
+            // Cung đỉnh phẳng/tròn từ -th_tip_tan đến +th_tip_tan
+            for (let i = 0; i <= numArc; i++) {
+                const frac = i / numArc;
+                const th = -th_tip_tan + (2.0 * th_tip_tan) * frac;
+                const x = r_tip * Math.sin(th);
+                const y = r_tip * Math.cos(th);
+                pts.push({ x, y, r: r_tip, theta: th });
+            }
+            // Cung bo đỉnh răng bên phải (Fillet ra0): từ đỉnh răng xuống thân khai
+            const P_crest_r_x = Cx_tip * (r_tip / Math.hypot(Cx_tip, Cy_tip));
+            const P_crest_r_y = Cy_tip * (r_tip / Math.hypot(Cx_tip, Cy_tip));
+            const a_r1 = Math.atan2(P_crest_r_x - Cx_tip, P_crest_r_y - Cy_tip);
+            const a_r2 = Math.atan2(Px_tip - Cx_tip, Py_tip - Cy_tip);
+            for (let i = 0; i < numFillet; i++) {
+                const frac = i / numFillet;
+                const ang = a_r1 + (a_r2 - a_r1) * frac;
+                const x = Cx_tip + ra0_val * Math.sin(ang);
+                const y = Cy_tip + ra0_val * Math.cos(ang);
+                pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
+            }
+        } else {
+            // 4. Cung đỉnh răng tiêu chuẩn: từ -th_tip đến +th_tip tại r_tip
+            const inv_tip = Math.tan(alfa_tip) - alfa_tip;
+            const th_tip = psi + invAlfa - inv_tip;
+            for (let i = 0; i <= numArc; i++) {
+                const frac = i / numArc;
+                const th = -th_tip + (2.0 * th_tip) * frac;
+                const x = r_tip * Math.sin(th);
+                const y = r_tip * Math.cos(th);
+                pts.push({ x, y, r: r_tip, theta: th });
+            }
         }
 
-        // 5. Sườn thân khai bên phải: từ alfa_tip xuống alfa_tan
+        // 5. Sườn thân khai bên phải: từ alfa_tip_tan xuống alfa_tan
         for (let i = 0; i < numFlank; i++) {
             const frac = i / numFlank;
-            const a = alfa_tip - (alfa_tip - alfa_tan) * frac;
+            const a = alfa_tip_tan - (alfa_tip_tan - alfa_tan) * frac;
             const r_t = r_base / Math.cos(a);
             const inv_t = Math.tan(a) - a;
             const th_t = +(psi + invAlfa - inv_t);
@@ -772,6 +881,7 @@ export const SplinesCalc = {
      * Compute analytical profile points for internal hub tooth sector (Internal Spline Tooth)
      * Răng hướng vào trong, chân dày ở r_root (Dri/2), đỉnh mỏng ở r_tip (Di/2), bo tròn C1 đỉnh răng ra
      * Khe rãnh (Tooth space) tại tâm theta = 0, đỉnh răng tại +/- tau
+     * Tích hợp bo tròn chân then lỗ (Hub Root Fillet) chuẩn C1 tiếp tuyến mượt mà từ sườn thân khai vào cung đáy Dri/2
      */
     generateHubSpacePoints(g, resLevel = 6) {
         const z = g.z0;
@@ -797,16 +907,17 @@ export const SplinesCalc = {
         const numArc = resInfo.numArc;
         const numFillet = resInfo.numFillet;
 
+        // 1. Tip fillet ra (đỉnh then lỗ ở r_tip = Di/2)
         let ra = 0.20 * m;
-        if (g.ra2_tool && g.ra2_tool > 0) ra = g.ra2_tool * m;
-        else if (g.ra2 && g.ra2 > 0) ra = g.ra2;
-        ra = Math.max(0.08 * m, Math.min(0.35 * m, ra));
-        const target_R = r_tip + ra;
+        if (g.ra2_tool !== undefined && g.ra2_tool > 0) ra = g.ra2_tool * m;
+        else if (g.ra2 !== undefined && g.ra2 > 0) ra = g.ra2;
+        ra = Math.max(0.01 * m, Math.min(0.35 * m, ra));
+        const target_R_tip = r_tip + ra;
 
         const alfa_tip = Math.acos(Math.min(1.0, r_base / r_tip));
         const alfa_root = Math.acos(Math.min(1.0, r_base / r_root));
 
-        function getRightFlank(alfa_t) {
+        function getRightFlankTip(alfa_t) {
             const r_t = r_base / Math.cos(alfa_t);
             const inv_t = Math.tan(alfa_t) - alfa_t;
             const th_t = psi_space + invAlfa - inv_t;
@@ -820,24 +931,87 @@ export const SplinesCalc = {
             return { Px, Py, Cx, Cy, R_C: Math.hypot(Cx, Cy), th_t, r_t };
         }
 
-        let low = alfa_tip;
-        let high = Math.min(alfa_root, alfa_tip + 0.35);
+        let low_tip = alfa_tip;
+        let high_tip = Math.min(alfa_root, alfa_tip + 0.35);
         for (let iter = 0; iter < 45; iter++) {
-            const mid = (low + high) / 2.0;
-            if (getRightFlank(mid).R_C < target_R) low = mid;
-            else high = mid;
+            const mid = (low_tip + high_tip) / 2.0;
+            if (getRightFlankTip(mid).R_C < target_R_tip) low_tip = mid;
+            else high_tip = mid;
         }
-        const alfa_tan = (low + high) / 2.0;
-        const { Px: Px_r, Py: Py_r, Cx: Cx_r, Cy: Cy_r, R_C: R_C_r } = getRightFlank(alfa_tan);
+        const alfa_tan_tip = (low_tip + high_tip) / 2.0;
+        const { Px: Px_tip, Py: Py_tip, Cx: Cx_tip, Cy: Cy_tip, R_C: RC_tip } = getRightFlankTip(alfa_tan_tip);
 
-        const P_tip_x = Cx_r * (r_tip / R_C_r);
-        const P_tip_y = Cy_r * (r_tip / R_C_r);
+        const P_tip_x = Cx_tip * (r_tip / RC_tip);
+        const P_tip_y = Cy_tip * (r_tip / RC_tip);
         const th_tip_tan = Math.atan2(P_tip_x, P_tip_y);
         const th_tip_tan_clamped = Math.min(tau - 0.0005, Math.max(0.0001, th_tip_tan));
         const d_th_crest = Math.max(0.0, tau - th_tip_tan_clamped);
 
-        const inv_root = Math.tan(alfa_root) - alfa_root;
-        const th_space_root = psi_space + invAlfa - inv_root;
+        // 2. Root fillet rf2 (chân then lỗ ở r_root = Dri/2) - Fillet Root / Flat Root / Custom rf2
+        const isFilletRoot = (g.stdName && g.stdName.toLowerCase().includes('fillet')) ||
+                             (g.stdTypeId && [2, 3, 4, 7, 8, 9, 11, 12, 13, 17].includes(g.stdTypeId));
+        const isDIN5480 = (g.stdName && g.stdName.toLowerCase().includes('din 5480')) || (g.stdTypeId === 14);
+
+        let rf2_nominal = 0.20 * m;
+        if (g.rf2_tool !== undefined && g.rf2_tool > 0) {
+            rf2_nominal = g.rf2_tool * m;
+        } else if (isFilletRoot) {
+            rf2_nominal = 0.38 * m;
+        } else if (isDIN5480) {
+            rf2_nominal = 0.16 * m;
+        } else {
+            rf2_nominal = 0.18 * m;
+        }
+
+        let cur_rf2 = rf2_nominal;
+        let alfa_tan_root = alfa_root;
+        let Px_root = 0, Py_root = 0, Cx_root = 0, Cy_root = 0, RC_root = 0;
+        let th_root_tan = 0;
+
+        for (let attempt = 0; attempt < 25; attempt++) {
+            const target_R_root = r_root - cur_rf2;
+            function getRightFlankRoot(alfa_t) {
+                const r_t = r_base / Math.cos(alfa_t);
+                const inv_t = Math.tan(alfa_t) - alfa_t;
+                const th_t = psi_space + invAlfa - inv_t;
+                const Px = r_t * Math.sin(th_t);
+                const Py = r_t * Math.cos(th_t);
+                const phi = alfa_t - th_t;
+                const Cx = Px - cur_rf2 * Math.cos(phi);
+                const Cy = Py - cur_rf2 * Math.sin(phi);
+                return { Px, Py, Cx, Cy, R_C: Math.hypot(Cx, Cy), th_t, r_t };
+            }
+
+            let low_root = alfa_tan_tip;
+            let high_root = alfa_root;
+            for (let iter = 0; iter < 45; iter++) {
+                const mid = (low_root + high_root) / 2.0;
+                if (getRightFlankRoot(mid).R_C < target_R_root) low_root = mid;
+                else high_root = mid;
+            }
+            alfa_tan_root = (low_root + high_root) / 2.0;
+            const rFlank = getRightFlankRoot(alfa_tan_root);
+            Px_root = rFlank.Px; Py_root = rFlank.Py;
+            Cx_root = rFlank.Cx; Cy_root = rFlank.Cy;
+            RC_root = rFlank.R_C;
+
+            const P_root_x_tmp = Cx_root * (r_root / RC_root);
+            const P_root_y_tmp = Cy_root * (r_root / RC_root);
+            th_root_tan = Math.atan2(P_root_x_tmp, P_root_y_tmp);
+
+            if (th_root_tan >= 0.0001 && alfa_tan_root < alfa_root - 0.0005) {
+                break;
+            }
+            cur_rf2 *= 0.85;
+            if (cur_rf2 < 0.01 * m) {
+                cur_rf2 = 0.01 * m;
+                break;
+            }
+        }
+
+        th_root_tan = Math.max(0.0, Math.min(tau * 0.95, th_root_tan));
+        const P_root_x = Cx_root * (r_root / RC_root);
+        const P_root_y = Cy_root * (r_root / RC_root);
 
         const pts = [];
         const numCrest = Math.max(6, Math.floor(numArc / 2));
@@ -852,20 +1026,20 @@ export const SplinesCalc = {
         }
 
         // 2. Cung bo đỉnh răng bên trái (Fillet ra): từ tiếp xúc đỉnh sang tiếp xúc thân khai
-        const ang_tip_l = Math.atan2(-P_tip_x - (-Cx_r), P_tip_y - Cy_r);
-        const ang_flank_l = Math.atan2(-Px_r - (-Cx_r), Py_r - Cy_r);
+        const ang_tip_l = Math.atan2(-P_tip_x - (-Cx_tip), P_tip_y - Cy_tip);
+        const ang_flank_l = Math.atan2(-Px_tip - (-Cx_tip), Py_tip - Cy_tip);
         for (let i = 0; i < numFillet; i++) {
             const frac = i / numFillet;
             const ang = ang_tip_l + (ang_flank_l - ang_tip_l) * frac;
-            const x = -Cx_r + ra * Math.sin(ang);
-            const y = Cy_r + ra * Math.cos(ang);
+            const x = -Cx_tip + ra * Math.sin(ang);
+            const y = Cy_tip + ra * Math.cos(ang);
             pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
         }
 
-        // 3. Sườn thân khai bên trái: từ alfa_tan lên alfa_root
+        // 3. Sườn thân khai bên trái: từ alfa_tan_tip lên alfa_tan_root
         for (let i = 0; i < numFlank; i++) {
             const frac = i / numFlank;
-            const a = alfa_tan + (alfa_root - alfa_tan) * frac;
+            const a = alfa_tan_tip + (alfa_tan_root - alfa_tan_tip) * frac;
             const r_t = r_base / Math.cos(a);
             const inv_t = Math.tan(a) - a;
             const th_t = -(psi_space + invAlfa - inv_t);
@@ -874,19 +1048,42 @@ export const SplinesCalc = {
             pts.push({ x, y, r: r_t, theta: th_t });
         }
 
-        // 4. Cung đáy rãnh của lỗ: từ -th_space_root đến +th_space_root tại r_root
-        for (let i = 0; i < numArc; i++) {
-            const frac = i / numArc;
-            const th = -th_space_root + (2.0 * th_space_root) * frac;
+        // 4. Cung bo chân răng bên trái (Fillet rf2): từ tiếp xúc thân khai đến tiếp xúc đáy rãnh
+        const ang_flank_root_l = Math.atan2(-Px_root - (-Cx_root), Py_root - Cy_root);
+        const ang_root_l = Math.atan2(-P_root_x - (-Cx_root), P_root_y - Cy_root);
+        for (let i = 0; i < numFillet; i++) {
+            const frac = i / numFillet;
+            const ang = ang_flank_root_l + (ang_root_l - ang_flank_root_l) * frac;
+            const x = -Cx_root + cur_rf2 * Math.sin(ang);
+            const y = Cy_root + cur_rf2 * Math.cos(ang);
+            pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
+        }
+
+        // 5. Cung đáy rãnh của lỗ: từ -th_root_tan đến +th_root_tan tại r_root
+        const numRootArc = Math.max(4, Math.floor(numArc / 2));
+        for (let i = 0; i <= numRootArc; i++) {
+            const frac = i / numRootArc;
+            const th = -th_root_tan + (2.0 * th_root_tan) * frac;
             const x = r_root * Math.sin(th);
             const y = r_root * Math.cos(th);
             pts.push({ x, y, r: r_root, theta: th });
         }
 
-        // 5. Sườn thân khai bên phải: từ alfa_root xuống alfa_tan
+        // 6. Cung bo chân răng bên phải (Fillet rf2): từ tiếp xúc đáy rãnh lên tiếp xúc thân khai
+        const ang_root_r = Math.atan2(P_root_x - Cx_root, P_root_y - Cy_root);
+        const ang_flank_root_r = Math.atan2(Px_root - Cx_root, Py_root - Cy_root);
+        for (let i = 0; i < numFillet; i++) {
+            const frac = i / numFillet;
+            const ang = ang_root_r + (ang_flank_root_r - ang_root_r) * frac;
+            const x = Cx_root + cur_rf2 * Math.sin(ang);
+            const y = Cy_root + cur_rf2 * Math.cos(ang);
+            pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
+        }
+
+        // 7. Sườn thân khai bên phải: từ alfa_tan_root xuống alfa_tan_tip
         for (let i = 0; i < numFlank; i++) {
             const frac = i / numFlank;
-            const a = alfa_root - (alfa_root - alfa_tan) * frac;
+            const a = alfa_tan_root - (alfa_tan_root - alfa_tan_tip) * frac;
             const r_t = r_base / Math.cos(a);
             const inv_t = Math.tan(a) - a;
             const th_t = +(psi_space + invAlfa - inv_t);
@@ -895,18 +1092,18 @@ export const SplinesCalc = {
             pts.push({ x, y, r: r_t, theta: th_t });
         }
 
-        // 6. Cung bo đỉnh răng bên phải (Fillet ra): từ tiếp xúc thân khai sang tiếp xúc cung đỉnh
-        const ang_flank_r = Math.atan2(Px_r - Cx_r, Py_r - Cy_r);
-        const ang_tip_r = Math.atan2(P_tip_x - Cx_r, P_tip_y - Cy_r);
+        // 8. Cung bo đỉnh răng bên phải (Fillet ra): từ tiếp xúc thân khai sang tiếp xúc cung đỉnh
+        const ang_flank_tip_r = Math.atan2(Px_tip - Cx_tip, Py_tip - Cy_tip);
+        const ang_tip_r = Math.atan2(P_tip_x - Cx_tip, P_tip_y - Cy_tip);
         for (let i = 0; i < numFillet; i++) {
             const frac = i / numFillet;
-            const ang = ang_flank_r + (ang_tip_r - ang_flank_r) * frac;
-            const x = Cx_r + ra * Math.sin(ang);
-            const y = Cy_r + ra * Math.cos(ang);
+            const ang = ang_flank_tip_r + (ang_tip_r - ang_flank_tip_r) * frac;
+            const x = Cx_tip + ra * Math.sin(ang);
+            const y = Cy_tip + ra * Math.cos(ang);
             pts.push({ x, y, r: Math.hypot(x, y), theta: Math.atan2(x, y) });
         }
 
-        // 7. Cung đỉnh răng bên phải: từ +th_tip_tan đến +tau tại r_tip
+        // 9. Cung đỉnh răng bên phải: từ +th_tip_tan đến +tau tại r_tip
         for (let i = 0; i <= numCrest; i++) {
             const frac = i / numCrest;
             const th = th_tip_tan_clamped + d_th_crest * frac;

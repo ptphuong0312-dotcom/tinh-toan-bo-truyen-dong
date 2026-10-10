@@ -4577,4 +4577,56 @@ ho_{f0}$.
   - Bộ kiểm thử Live Audit QC Suite: **110 / 110 phép tính PASS tuyệt đối 100.0% với $\Delta = 0.000000$**!
   - Đóng gói toàn bộ 8 module thành công với bundle thuần offline.
 
+---
+
+## Giai Đoạn 40: Bo Tròn Chân Then Lỗ (Hub Root Fillet), Liên Thông Toàn Diện Mục 2.0 (Thông Số Biên Dạng Răng) Với Tính Toán Và Đồ Họa 2D Canvas / CAD DXF
+* **Tiêu chuẩn**: ISO 4156-1:2005 (Fillet Root vs Flat Root, 30°, 37.5°, 45°), DIN 5480, ANSI B92.1, ANSI B92.2M, CSN 4950.
+* **Yêu cầu trực tiếp từ SirPhuong**:
+  1. *Fillet Root (Chân răng lượn tròn)*: Chân then lỗ (đáy rãnh moay-ơ ở $D_{ri}$) phải được bo $r$ (không để góc sắc nối từ sườn thân khai vào cung đáy).
+  2. *Liên thông toàn diện Mục 2.0 (Thông số biên dạng răng)*:
+     - Khi chọn tiêu chuẩn ở Mục 1.2 (`elStdType`), toàn bộ các thông số trong Mục 2.0 ($h_{a0}^*, h_{f0}^*, r_{a0}^*, r_{f0}^*$ cho trục và $h_{a2}^*, h_{f2}^*, r_{a2}^*, r_{f2}^*$ cho lỗ) phải tự động nhảy theo đúng tiêu chuẩn được chọn.
+     - Khi bỏ tích checkbox "Tiêu chuẩn" Mục 2.0: giá trị ban đầu phải xuất phát từ gốc tiêu chuẩn được chọn (không tự ý nhảy số khi chưa sửa).
+     - Khi người dùng hiệu chỉnh các thông số trong Mục 2.0 ($h_{a0}^*, h_{f0}^*, h_{a2}^*, h_{f2}^*$ và các bán kính $r_{a0}^*, r_{f0}^*, r_{a2}^*, r_{f2}^*$): tính toán cơ khí (chiều cao đầu/chân răng, đường kính đỉnh $d_{a0}/D_i$, đường kính chân $d_{f0}/D_{ri}$, chiều dày đỉnh $s_a$, khe hở đỉnh $c$) và bản vẽ 2D Canvas + CAD DXF **bắt buộc phải thay đổi theo đồng bộ thời gian thực**!
+* **Đột phá toán học & Giải pháp kỹ thuật**:
+  1. **Giải thuật giải tích Bo Tròn Chân Then Lỗ (Hub Root Fillet Engine)**:
+     - Trong `generateHubSpacePoints(g)`: Rãnh moay-ơ (Tooth Space) đối xứng qua trục $\theta = 0$, đáy rãnh ở bán kính $r_{\text{root}} = D_{ri} / 2$.
+     - Tâm cung bo chân $C_{\text{root}}$ nằm trong rãnh và cách gốc tọa độ:
+       $$\|C_{\text{root}}\| = r_{\text{root}} - r_{f2}$$
+     - Tại điểm sườn thân khai ứng với góc áp lực $\alpha_t$:
+       $$P_x = r_t \sin\theta_t, \quad P_y = r_t \cos\theta_t, \quad \phi = \alpha_t - \theta_t$$
+       Vector pháp tuyến hướng vào trong rãnh tạo tâm cung bo:
+       $$C_{\text{root}\_x} = P_x - r_{f2} \cos\phi, \quad C_{\text{root}\_y} = P_y - r_{f2} \sin\phi$$
+     - Thuật toán bisection trên khoảng $[\alpha_{\tan\_tip}, \alpha_{\text{root}}]$ trong 45 vòng lặp tìm điểm tiếp xúc giải tích $\alpha_{\tan\_\text{root}}$ đạt độ chính xác $10^{-12}$:
+       $$\|C_{\text{root}}\| = \sqrt{C_{\text{root}\_x}^2 + C_{\text{root}\_y}^2} = r_{\text{root}} - r_{f2}$$
+     - Điểm tiếp xúc đáy rãnh:
+       $$P_{\text{root}\_x} = C_{\text{root}\_x} \cdot \frac{r_{\text{root}}}{\|C_{\text{root}}\|}, \quad P_{\text{root}\_y} = C_{\text{root}\_y} \cdot \frac{r_{\text{root}}}{\|C_{\text{root}}\|}, \quad \theta_{\text{root}\_\tan} = \text{atan2}(P_{\text{root}\_x}, P_{\text{root}\_y})$$
+     - Cung bo chân $r_{f2}$ nối mượt mà liên tục $C^1$ từ sườn thân khai sang cung đáy rãnh ở cả 2 sườn trái/phải, triệt tiêu hoàn toàn góc gãy sắc nhọn ở chân then lỗ!
+  2. **Giải thuật Bo Tròn Đỉnh Răng Trục (Shaft Tip Fillet Engine)**:
+     - Trong `generateShaftSectorPoints(g)`: Khi $r_{a0}^* > 0$, tự động dựng cung bo đỉnh răng bán kính $r_{a0} = r_{a0}^* \cdot m$ tiếp tuyến mượt mà từ sườn thân khai sang đường tròn đỉnh $r_{\text{tip}} = d_{a0} / 2$.
+  3. **Cơ chế liên thông động 2 chiều Mục 2.0 (Tooth Profile Parameters Dynamic Bridge)**:
+     - Khi `!profileStandard`:
+       $$d_{a0} = defs.da0 + 2.0 \cdot (h_{a0}^* - std.ha0) \cdot m$$
+       $$d_{f0} = defs.df0 - 2.0 \cdot (h_{f0}^* - std.hf0) \cdot m$$
+       $$D_i = defs.di2 - 2.0 \cdot (h_{a2}^* - std.ha2) \cdot m$$
+       $$D_{ri} = defs.dri2 + 2.0 \cdot (h_{f2}^* - std.hf2) \cdot m$$
+     - **Bảo toàn khi chỉ bật/tắt checkbox**: Khi chưa sửa giá trị ($h_{a0}^* = std.ha0 \implies \Delta = 0$), các đường kính giữ nguyên $100\%$ không nhảy số.
+     - **Liên thông tức thì khi sửa giá trị**: Khi người dùng gõ sửa bất kỳ thông số nào trong Mục 2.0, các ô đường kính 1.8, 1.9, bảng Section 3.0 (đường kính đỉnh, chân, chiều cao đầu/chân răng, chiều dày đỉnh, khe hở đáy $c$) và khung vẽ Canvas 2D + file CAD DXF tự động cập nhật thời gian thực!
+  4. **Cập nhật CSDL 17 Tiêu chuẩn Then hoa (`SplinesData.std_types`)**:
+     - Bổ sung đầy đủ $r_{f0}^*, r_{f2}^*$:
+       * Fillet root (ISO 4156, ANSI B92.1, ANSI B92.2M, CSN 4950 30°): $r_{f0}^* = 0.4000, r_{f2}^* = 0.4000$.
+       * ISO 4156 37.5° Fillet root: $r_{f0}^* = 0.3500, r_{f2}^* = 0.3500$.
+       * ISO 4156 45° Fillet root: $r_{f0}^* = 0.3000, r_{f2}^* = 0.3000$.
+       * Flat root (ISO 4156, ANSI B92.2M 30°): $r_{f0}^* = 0.2000, r_{f2}^* = 0.2000$.
+       * Flat root (ANSI B92.1, CSN 4950 30°): $r_{f0}^* = 0.1800, r_{f2}^* = 0.1800$.
+       * DIN 5480 30°: $r_{a0}^* = 0.1600, r_{f0}^* = 0.1600, r_{a2}^* = 0.1600, r_{f2}^* = 0.1600$.
+* **Kết quả đo đạc & Kiểm thử nghiệm thu**:
+  - Live Audit QC Engine (`tools/test_splines_qc.py`): **110 / 110 phép tính PASS tuyệt đối 100.0% với $\Delta = 0.000000$**!
+  - Kiểm thử giao diện Playwright E2E (`scratch/test_splines_round4.py`):
+    * Chọn ISO 4156 Fillet Root: Mục 2.0 tự động nhảy $r_{f0}^* = 0.4000, r_{f2}^* = 0.4000$.
+    * Bỏ tích checkbox "Tiêu chuẩn": Đường kính $d_{a0}, d_{f0}, D_i, D_{ri}$ không đổi ($\Delta = 0$).
+    * Tăng $h_{a0}^* = 0.6$: Đường kính đỉnh trục $d_{a0}$ tăng chính xác $+2.0\text{ mm}$ (từ $210.0 \to 212.0$).
+    * Ảnh chụp Canvas `scratch/splines_hub_detail_fillet.png` và `scratch/splines_assembly_fillet_verified.png` xác nhận chân then lỗ bo tròn mượt mà, ăn khớp chuẩn xác, không góc sắc, không lỗi console (0 errors).
+  - Xuất CAD DXF AC1009 (`SplinesDxf.generateDXF`): Cặp ăn khớp, trục then hoa và lỗ moay-ơ tạo file thành công với đầy đủ các cung lượn chân then lỗ!
+
+
 

@@ -2765,4 +2765,47 @@ ho_{f0}$.
      * Tự động gán $r_{f\_nominal} = 0.38m$ cho Fillet Root ($0.25m$ cho DIN 5480) và $0.18m$ cho Flat Root.
      * Kiểm tra góc quét cho phép Fillet Root chạm tới sát $\tau$ (`tau * 0.999`), thể hiện chân lượn tròn cong mềm mại hoàn hảo trên Canvas 2D và CAD DXF.
 
+---
+
+### Runbook 25: Giải Thuật Bo Tròn Chân Then Lỗ (Hub Root Fillet) & Cơ Chế Liên Thông Động Toàn Diện Mục 2.0 (Tooth Profile Parameters)
+**Mục tiêu**: Làm chủ giải thuật bo tròn chân then lỗ (đáy rãnh moay-ơ ở $D_{ri}$), giải thuật bo tròn đỉnh then trục khi $r_{a0}^* > 0$, và cơ chế liên thông động 2 chiều của Mục 2.0 (thông số biên dạng răng) tới toàn bộ kích thước hình học và bản vẽ 2D Canvas / CAD DXF.
+
+1. **Giải thuật giải tích Bo Tròn Chân Then Lỗ (Hub Root Fillet Engine)**:
+   - Rãnh moay-ơ (Tooth space) đối xứng qua tâm $\theta = 0$, đáy rãnh ở bán kính $r_{\text{root}} = D_{ri} / 2$.
+   - Bán kính lượn chân then lỗ: $r_{f2} = r_{f2}^* \cdot m$ (hoặc từ chuẩn: Fillet root $0.38m \div 0.40m$, DIN 5480 $0.16m$, Flat root $0.18m \div 0.20m$).
+   - Khoảng cách từ tâm cung bo chân $C_{\text{root}}$ tới gốc tọa độ:
+     $$\|C_{\text{root}}\| = r_{\text{root}} - r_{f2}$$
+   - Tâm cung bo tiếp xúc sườn thân khai tại $\alpha_t$:
+     $$P_x = r_t \sin\theta_t, \quad P_y = r_t \cos\theta_t, \quad \phi = \alpha_t - \theta_t$$
+     $$C_{\text{root}\_x} = P_x - r_{f2} \cos\phi, \quad C_{\text{root}\_y} = P_y - r_{f2} \sin\phi$$
+   - Thuật toán bisection trên $[\alpha_{\tan\_tip}, \alpha_{\text{root}}]$ trong 45 vòng lặp tìm điểm tiếp xúc $\alpha_{\tan\_\text{root}}$ sao cho:
+     $$\sqrt{C_{\text{root}\_x}^2 + C_{\text{root}\_y}^2} = r_{\text{root}} - r_{f2}$$
+   - Điểm tiếp xúc đáy rãnh:
+     $$P_{\text{root}\_x} = C_{\text{root}\_x} \cdot \frac{r_{\text{root}}}{\|C_{\text{root}}\|}, \quad P_{\text{root}\_y} = C_{\text{root}\_y} \cdot \frac{r_{\text{root}}}{\|C_{\text{root}}\|}, \quad \theta_{\text{root}\_\tan} = \text{atan2}(P_{\text{root}\_x}, P_{\text{root}\_y})$$
+   - Cung bo $r_{f2}$ nối mượt mà liên tục $C^1$ từ sườn thân khai sang cung đáy rãnh ở cả 2 bên sườn, triệt tiêu hoàn toàn góc gãy sắc nhọn ở chân then lỗ.
+
+2. **Giải thuật Bo Tròn Đỉnh Răng Trục (Shaft Tip Fillet Engine)**:
+   - Khi $r_{a0}^* > 0$, bán kính bo đỉnh răng trục $r_{a0} = r_{a0}^* \cdot m$.
+   - Tìm góc tiếp xúc $\alpha_{\tan\_tip}$ sao cho tâm cung bo $C_{\text{tip}}$ cách gốc tọa độ:
+     $$\|C_{\text{tip}}\| = r_{\text{tip}} - r_{a0} \quad (r_{\text{tip}} = d_{a0} / 2)$$
+   - Dựng cung bo mượt mà $C^1$ từ sườn thân khai sang đường tròn đỉnh răng trục $d_{a0}$.
+
+3. **Cơ chế liên thông động 2 chiều Mục 2.0 (Tooth Profile Parameters Dynamic Bridge)**:
+   - Khi người dùng bỏ tích checkbox "Tiêu chuẩn":
+     * Ban đầu các giá trị xuất phát từ gốc tiêu chuẩn được chọn, $\Delta h = 0$, không làm nhảy bất kỳ số nào trên bảng tính.
+     * Khi người dùng gõ sửa $h_{a0}^*, h_{f0}^*, h_{a2}^*, h_{f2}^*$:
+       $$d_{a0} = defs.da0 + 2.0 \cdot (h_{a0}^* - std.ha0) \cdot m$$
+       $$d_{f0} = defs.df0 - 2.0 \cdot (h_{f0}^* - std.hf0) \cdot m$$
+       $$D_i = defs.di2 - 2.0 \cdot (h_{a2}^* - std.ha2) \cdot m$$
+       $$D_{ri} = defs.dri2 + 2.0 \cdot (h_{f2}^* - std.hf2) \cdot m$$
+     * Các đường kính này tự động cập nhật ngay lập tức sang các ô nhập 1.8, 1.9, bảng kích thước Section 3.0 (đường kính đỉnh, chân, chiều cao đầu/chân răng, chiều dày đỉnh, khe hở đáy $c$) và khung vẽ Canvas 2D + file CAD DXF.
+     * Khi người dùng gõ sửa các bán kính lượn tương đối $r_{a0}^*, r_{f0}^*, r_{a2}^*, r_{f2}^*$: đồ họa 2D Canvas và CAD DXF bo góc tức thì theo đúng bán kính $r = r^* \cdot m$.
+   - Khi người dùng tích lại checkbox "Tiêu chuẩn": các giá trị tự động khóa lại và hoàn nguyên theo đúng chuẩn quốc tế.
+
+4. **Quy chuẩn kiểm thử & Đóng gói**:
+   - Chạy `python tools/bundle_splines.py` và `python tools/bundle_all.py`.
+   - Chạy `python tools/test_splines_qc.py`: 110/110 checks PASS tuyệt đối với $\Delta = 0.000000$.
+   - Chạy kiểm thử Playwright browser: 0 lỗi console, hình ảnh sắc nét, các cung bo mượt mà.
+
+
 
