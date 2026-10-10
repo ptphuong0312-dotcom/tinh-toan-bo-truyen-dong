@@ -4876,3 +4876,40 @@ ho_{f0}$.
      - **QC Suite (`tools/test_chain_qc.py`)**: Đạt **60 / 60 phép tính PASS 100.0% với $\Delta = 0.000000$** đối chiếu MITCalc 1.74 Excel COM (`chains_01.xlsb`).
      - **Bundle Script (`tools/bundle_chain.py`, `tools/bundle_all.py`)**: Đóng gói thành công `chain-engine.bundle.js` (188.7 KB) chạy 100% offline không cần server.
      - **Playwright Test (`scratch/test_tcvn_ui.py`)**: Kiểm chứng trực quan 0 lỗi console, chuyển đổi mượt mà giữa chế độ khóa mặc định và mở khóa TCVN/tùy chỉnh.
+
+
+---
+
+## Giai Đoạn 49: Hợp Nhất Toàn Bộ Dãy B & Dãy A Vào TCVN 1785-76, Đặt TCVN Làm Mặc Định & Tính Biên Dạng TCVN, Khắc Phục Triệt Để Lỗi Chữ Đè Hình CAD DXF & Bổ Sung Mục 17.0 Cẩm Nang Kỹ Thuật
+* **Bối cảnh & Lệnh trực tiếp từ chủ sở hữu (`SirPhuong`)**:
+  1. *"- bạn chưa hiểu ý tôi rồi : TCVN chính là tổng hợp của ISO606/DIN8187 và ISO606/DIN8188 nhưng chọn theo TCVN chứ không phải lấy giá trị trung bình giống ISO, vì vậy bạn cần cho tất cả danh sách quy cách xích con lăn của cả 2 tiêu chuẩn ISO606/DIN8187 và ISO606/DIN8188 vào TCVN. ngoài ra bạn để TCVN lên đầu và để mạc định cho tôi"*.
+  2. *"- tất cả bản cad chữ bị đè lên hình"*.
+  3. *"- dưới dùng hãy thêm cho tôi 1 mục giải thích Bản Chất tính toán Hình Học TCVN Trong Dải ISO 606 / DIN 8196 thật chi tiết (phải có cả Phân tích cơ sở lý thuyết & thực tiễn chế tạo) . mục này mạc định ở trạng thái ẩn"*.
+* **Đột phá kỹ thuật & Thành quả triển khai**:
+  1. **Hợp nhất toàn bộ 81 quy cách xích Dãy B và Dãy A vào Tiêu chuẩn `TCVN_STD`, đưa lên đầu và đặt làm MẶC ĐỊNH**:
+     - `TCVN_STD` ("🇻🇳 TCVN 1785-76 / TCVN 1590-74 (Tiêu chuẩn Việt Nam - Hợp nhất Dãy B & Dãy A)") được đưa lên vị trí đầu tiên (`index 0`) trong danh mục tiêu chuẩn.
+     - Tích hợp trọn vẹn toàn bộ 48 quy cách xích Dãy B (ISO 606 / DIN 8187 từ 05B đến 72B) và 33 quy cách xích Dãy A (ISO 606 / DIN 8188 / ANSI từ 06C đến 48A / ANSI 35 đến 240) với định danh rõ ràng.
+     - Khởi tạo mặc định trang Web chọn ngay `TCVN_STD` và xích `TCVN 08B - 1` ($p = 12.7\text{ mm}$, $z_1 = 19$, $z_2 = 38$).
+  2. **Tự động áp dụng Biên dạng Hình học TCVN khi chọn `TCVN_STD`**:
+     - Khi `TCVN_STD` được chọn (mặc định), hệ thống tự động tính toán theo đúng các công thức TCVN 1785-76 ($d_{a,\max}$, $R_{1,\text{TCVN}}$, $R_{2,\min}$, $\alpha_{\max}$), không lấy giá trị trung bình giống ISO.
+     - Khi người dùng chuyển sang `EU_STD` hoặc `US_STD`, hệ thống tự động chuyển sang tính giá trị trung bình danh nghĩa chuẩn MITCalc 1.74 / ISO 606 để bảo đảm kiểm thử QC đạt $\Delta = 0.000000$.
+     - Khi bỏ tích checkbox, người dùng có thể tự do nhập số bất kỳ trong dải hoặc chọn nhanh giữa 4 presets.
+  3. **Khắc phục triệt để lỗi Chữ đè lên hình trong bản vẽ CAD DXF R12 (`chain-dxf.js`)**:
+     - Phát hiện nguyên nhân gốc rễ: `tableX` trước đó bị gán cứng cố định $150\text{ mm}$ cho `sprocket2`, trong khi các đĩa xích lớn ($z_2 = 40$, $p = 31.75\text{ mm}$ xích 20B-3) có bán kính ngoài $r_{a2} \approx 210\text{ mm}$, khiến bảng thông số và chữ bị vẽ cắt ngang qua răng đĩa xích.
+     - Tái thiết lập giải thuật tọa độ động với **vùng an toàn cách ly 40mm (40mm Clearance Envelope)**:
+       * `assembly`: `tableX = a + ra2 + 40.0; tableY = Math.max(ra1, ra2) + 20.0;`
+       * `sprocket1`: `tableX = ra1 + 40.0; tableY = ra1 + 20.0;`
+       * `sprocket2`: `tableX = ra2 + 40.0; tableY = ra2 + 20.0;`
+       * `axial`: `tableX = Math.max(80.0, ((rows - 1) * ee + bf / 2) + 40.0); tableY = ra1 + 20.0;`
+     - Bảo đảm toàn bộ bảng thông số chế tạo và chữ luôn nằm hoàn toàn bên ngoài hình học đĩa xích 100%, không bao giờ bị đè nét.
+  4. **Bổ sung Phân mục 17.0 Cẩm Nang Kỹ Thuật (Mặc định ở trạng thái ẨN)**:
+     - Tạo Section 17.0 với Accordion collapsed mặc định (không có class `active`, toggle icon `▶`).
+     - Nội dung chuyên sâu gồm 4 phần:
+       * 17.1 Bối Cảnh Lịch Sử & Sự Đồng Quy Tiêu Chuẩn Hóa (Nguồn gốc TCVN / GOST vs ISO / DIN / ANSI).
+       * 17.2 Phân Tích Cơ Sở Lý Thuyết: Miền Dung Sai Bao (Tolerance Envelope) của ISO 606 và đối chiếu 4 thông số cốt lõi ($d_a, \alpha, R_2, R_1$).
+       * 17.3 Phân Tích Thực Tiễn Chế Tạo & Công Nghệ Gia Công: So sánh phương pháp phay lăn răng hàng loạt (Hobbing) của phương Tây với phương pháp phay đĩa định hình & cắt dây CNC đơn chiếc tại xưởng Việt Nam.
+       * 17.4 Khuyến Nghị Ứng Dụng Cho Kỹ Sư Thiết Kế: Hướng dẫn khi nào nên dùng TCVN, khi nào dùng ISO Mean, và cách tùy biến dung sai theo dao sẵn có.
+  5. **Kiểm thử tự động & Đóng gói**:
+     - `test_chain_qc.py`: Đạt **60 / 60 phép tính PASS 100.0% với $\Delta = 0.000000$** đối chiếu Excel COM.
+     - `test_tcvn_full_verification.py`: E2E Playwright test kiểm chứng 100% PASS (TCVN_STD mặc định, 81 quy cách xích, biên dạng TCVN, Section 17.0 ẩn mặc định, mở khi click).
+     - Đóng gói thành công `chain-engine.bundle.js` (231.9 KB).

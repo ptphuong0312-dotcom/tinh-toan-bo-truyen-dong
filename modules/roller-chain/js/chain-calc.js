@@ -28,9 +28,9 @@ const ChainCalc = {
         const isMetric = units === 1;
 
         // 1. Get chain record from ChainData
-        let chain = null;
-        if (typeof ChainData !== 'undefined') {
-            const std = ChainData.standards.find(s => s.id === (params.stdId || 'EU_STD')) || ChainData.standards[0];
+        let chain = params.chain || null;
+        if (!chain && typeof ChainData !== 'undefined') {
+            const std = ChainData.standards.find(s => s.id === (params.stdId || 'TCVN_STD')) || ChainData.standards[0];
             if (std && std.chains) {
                 if (typeof params.chainId === 'number') {
                     chain = std.chains.find(c => c.id === params.chainId) || std.chains[0];
@@ -214,14 +214,25 @@ const ChainCalc = {
         const flank_alpha2_max = 140.0 - 90.0 / z2;
         const flank_alpha2_mean = 130.0 - 90.0 / z2;
 
+        const stdId = params.stdId || params.standardId || (chain && chain.standardId ? chain.standardId : 'TCVN_STD');
+        const isTCVN = (stdId === 'TCVN_STD' || (chain && chain.code && chain.code.startsWith('TCVN')));
+
         // Tolerance Range Selection Protocol
-        // Default: useMeanTolerance = true -> 100% identical to MITCalc 1.74!
-        // When unchecked (useMeanTolerance = false), supports 'tcvn', 'min', 'max', or 'custom'
-        const useMeanTolerance = params.useMeanTolerance !== false;
-        let profileMode = params.profileMode || (useMeanTolerance ? 'mean' : 'custom');
-        if (useMeanTolerance) {
-            profileMode = 'mean';
+        // When profileMode is explicitly passed, use it.
+        // Otherwise:
+        // - When standard is TCVN_STD, default profile is 'tcvn' (TCVN 1785-76 / GOST 591-69 extreme boundary values).
+        // - When standard is EU_STD or US_STD, default profile is 'mean' (100% identical to MITCalc 1.74 / ISO 606).
+        let profileMode = params.profileMode;
+        if (!profileMode) {
+            if (params.useMeanTolerance === true) {
+                profileMode = 'mean';
+            } else if (params.useMeanTolerance === false) {
+                profileMode = isTCVN ? 'tcvn' : 'custom';
+            } else {
+                profileMode = isTCVN ? 'tcvn' : 'mean';
+            }
         }
+        const useMeanTolerance = params.useMeanTolerance !== undefined ? params.useMeanTolerance : (profileMode === 'mean');
 
         let da1, da2, R1, R2_1, R2_2, flank_alpha1, flank_alpha2;
 
@@ -374,6 +385,7 @@ const ChainCalc = {
         return {
             units,
             isMetric,
+            standardId: stdId,
             chain,
             p,
             p_mm,

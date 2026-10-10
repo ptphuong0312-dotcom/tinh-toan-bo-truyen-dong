@@ -3036,3 +3036,60 @@ Tích hợp toàn diện tiêu chuẩn thiết kế đĩa xích con lăn Việt 
    - `python tools/test_chain_qc.py`: Đạt **60 / 60 phép tính PASS 100.0% với $\Delta = 0.000000$** đối chiếu MITCalc 1.74 Excel COM (`chains_01.xlsb`).
    - `python tools/bundle_chain.py`: Đóng gói thành công `chain-engine.bundle.js` (188.7 KB) chạy 100% offline không cần server.
    - `python scratch/test_tcvn_ui.py`: E2E Playwright test kiểm chứng chuyển đổi mượt mà giữa chế độ khóa mặc định và mở khóa TCVN/tùy chỉnh trên trình duyệt thật.
+
+
+---
+
+### Runbook 31: Quy Chuẩn TCVN 1785-76 / TCVN 1590-74 Mặc Định & Hợp Nhất Toàn Diện Dãy B/A, Triệt Tiêu 100% Chữ Đè Lên Hình CAD DXF (40mm Clearance Envelope), Và Cẩm Nang Kỹ Thuật Mục 17.0 (Module 9)
+**Mục tiêu**:
+1. Thiết lập tiêu chuẩn Việt Nam TCVN 1785-76 / TCVN 1590-74 làm tiêu chuẩn mặc định ban đầu (`stdId: 'TCVN_STD'`), hợp nhất toàn diện 81 quy cách xích con lăn của cả 2 tiêu chuẩn ISO 606 / DIN 8187 (Dãy B, 48 quy cách) và ISO 606 / DIN 8188 (Dãy A, 33 quy cách).
+2. Khi chọn TCVN_STD (mặc định), hệ thống tự động áp dụng công thức biên dạng răng theo đúng TCVN 1785-76 ($d_{a,\max}$, $R_{1,\text{TCVN}}$, $R_{2,\min}$, $\alpha_{\max}$), không lấy giá trị trung bình giống ISO.
+3. Khắc phục triệt để lỗi chữ đè lên hình trên bản vẽ AutoCAD DXF R12 bằng giải thuật tọa độ động với vùng cách ly tối thiểu 40mm (`40mm Clearance Envelope`).
+4. Bổ sung Phân mục 17.0 Cẩm nang Kỹ thuật: Bản Chất Tính Toán Hình Học TCVN Trong Dải ISO 606 / DIN 8196 (Phân tích cơ sở lý thuyết & thực tiễn chế tạo), mặc định ở trạng thái ẩn.
+
+1. **Cơ Sở Dữ Liệu Hợp Nhất TCVN 81 Quy Cách (`chain-data.js`)**:
+   - `TCVN_STD` đặt ở vị trí `index 0` trong `ChainData.standards`.
+   - Gồm 48 xích Dãy B (từ 05B đến 72B) và 33 xích Dãy A (từ 06C đến 48A / ANSI 35 đến 240).
+   - Tên xích và mã xích định danh rõ ràng theo cả 2 hệ:
+     * Dãy B: `TCVN 08B - 1 (p=12.700mm, 1 dãy - Dãy B)`
+     * Dãy A: `TCVN 10A - 1 (ANSI 50) (p=15.875mm, 1 dãy - Dãy A)`
+   - Xích mặc định khi mở app: `TCVN 08B - 1` ($p = 12.7\text{ mm}$, $z_1 = 19$, $z_2 = 38$).
+
+2. **Giải Thuật Tính Toán Biên Dạng Răng Đĩa Xích (`chain-calc.js`)**:
+   - Nhận diện tự động tiêu chuẩn:
+     ```javascript
+     const stdId = params.stdId || params.standardId || (chain && chain.standardId ? chain.standardId : 'TCVN_STD');
+     const isTCVN = (stdId === 'TCVN_STD' || (chain && chain.code && chain.code.startsWith('TCVN')));
+     if (!profileMode) {
+         if (params.useMeanTolerance === true) {
+             profileMode = 'mean';
+         } else if (params.useMeanTolerance === false) {
+             profileMode = isTCVN ? 'tcvn' : 'custom';
+         } else {
+             profileMode = isTCVN ? 'tcvn' : 'mean';
+         }
+     }
+     ```
+   - Khi `profileMode === 'tcvn'`:
+     * $d_a = d_{a,\max} = d + 1.25p - d_3$ (đỉnh cao kịch trần chống nhảy xích).
+     * $R_1 = 0.5025 d_3 + 0.05\text{ mm}$ (rãnh ôm khít con lăn).
+     * $R_2 = R_{2,\min} = 0.12 d_3(z + 2)$ (sườn răng dốc đứng chống trượt leo).
+     * $\alpha = \alpha_{\max} = 140^\circ - 90^\circ/z$ (rãnh răng mở rộng tối đa vào/nhả êm).
+
+3. **Giải Thuật Tọa Độ Động Bảng Chế Tạo CAD DXF R12 (`chain-dxf.js`)**:
+   - Loại bỏ hoàn toàn tọa độ cố định tĩnh (`tableX = 150` đã gây đè hình trước đó).
+   - Tính toán động theo bán kính đỉnh ngoài cùng của từng chi tiết:
+     * `assembly`: `tableX = a + ra2 + 40.0; tableY = Math.max(ra1, ra2) + 20.0;`
+     * `sprocket1`: `tableX = ra1 + 40.0; tableY = ra1 + 20.0;`
+     * `sprocket2`: `tableX = ra2 + 40.0; tableY = ra2 + 20.0;`
+     * `axial`: `tableX = Math.max(80.0, ((rows - 1) * ee + bf / 2) + 40.0); tableY = ra1 + 20.0;`
+   - Đảm bảo khoảng cách từ đỉnh răng ngoài cùng đến mép bảng luôn đạt tối thiểu $40\text{ mm}$, hoàn toàn không có bất kỳ điểm nào bị đè nét trong AutoCAD.
+
+4. **Phân Mục 17.0 Cẩm Nang Kỹ Thuật (`index.html`)**:
+   - Accordion collapsed mặc định (không có class `active`, toggle icon `▶`).
+   - Cung cấp kiến thức chuyên sâu 4 phần: Bối cảnh tiêu chuẩn hóa, Miền dung sai bao ISO 606, Phân tích thực tiễn chế tạo (Phay lăn răng hàng loạt vs Phay đĩa định hình & Cắt dây CNC đơn chiếc tại Việt Nam), và Khuyến nghị thiết kế cho kỹ sư.
+
+5. **Quy Trình Kiểm Thử & Đóng Gói Bundle**:
+   - `python tools/test_chain_qc.py`: Đạt **60 / 60 phép tính PASS 100.0% với $\Delta = 0.000000$** đối chiếu MITCalc 1.74 Excel COM.
+   - `python scratch/test_tcvn_full_verification.py`: Playwright test 100% PASS (TCVN_STD mặc định, 81 quy cách xích, biên dạng TCVN, Section 17.0 ẩn mặc định, mở khi click).
+   - `python tools/bundle_chain.py`: Đóng gói `chain-engine.bundle.js` (231.9 KB) chạy 100% offline.

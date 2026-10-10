@@ -637,19 +637,19 @@
                         <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
                             <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #f8fafc; cursor: pointer; user-select: none;">
                                 <input type="checkbox" id="chkUseMeanTolerance" checked style="width: 18px; height: 18px; accent-color: var(--accent-cyan); cursor: pointer;">
-                                <span>Khóa giá trị danh nghĩa trung bình chuẩn MITCalc 1.74 / ISO 606 (Mặc định)</span>
+                                <span id="lblToleranceLock">Khóa theo tiêu chuẩn thiết kế mặc định (TCVN 1785-76 / ISO 606)</span>
                             </label>
                             
                             <div id="tolerancePresetsGroup" style="display: none; align-items: center; gap: 8px; flex-wrap: wrap;">
                                 <span style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Chọn nhanh:</span>
-                                <button type="button" id="btnPresetMean" class="btn-action-small" style="background: #334155; color: #fff;" title="Đặt lại về giá trị trung bình chuẩn ISO/MITCalc">🇪🇺 ISO Trung Bình</button>
                                 <button type="button" id="btnPresetTCVN" class="btn-action-small" style="background: #e11d48; color: #fff; font-weight: 600;" title="Áp dụng chuẩn TCVN 1785-76 / GOST 591-69 (Cận biên trong dải ISO 606)">🇻🇳 Chuẩn TCVN 1785-76</button>
+                                <button type="button" id="btnPresetMean" class="btn-action-small" style="background: #334155; color: #fff;" title="Đặt lại về giá trị trung bình chuẩn ISO/MITCalc">🇪🇺 ISO Trung Bình</button>
                                 <button type="button" id="btnPresetMin" class="btn-action-small" style="background: #1e3a8a; color: #fff;" title="Đặt về cận dưới ISO 606">⬇ Cận Dưới (Min)</button>
                                 <button type="button" id="btnPresetMax" class="btn-action-small" style="background: #854d0e; color: #fff;" title="Đặt về cận trên ISO 606">⬆ Cận Trên (Max)</button>
                             </div>
                         </div>
                         <div id="toleranceHelpText" style="margin-top: 8px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
-                            ℹ <em>Đang áp dụng giá trị danh nghĩa trung bình chuẩn MITCalc 1.74 / ISO 606 (Delta = 0.000000). Khi bỏ tích, bạn có thể tự do nhập số/điều chỉnh trong dải [Min ÷ Max] hoặc chọn nhanh chuẩn TCVN 1785-76.</em>
+                            🇻🇳 <strong style="color: #f43f5e;">Chuẩn TCVN 1785-76 / GOST 591-69</strong>: <em>Đỉnh da kịch trần (chống nhảy xích), R1=0.5025*d3+0.05, sườn R2=Min (dốc), góc sườn alpha=Max (rãnh mở rộng). Khi bỏ tích, bạn có thể tự do nhập số/điều chỉnh trong dải [Min ÷ Max] hoặc chọn nhanh ISO Trung Bình.</em>
                         </div>
                     </div>
 
@@ -806,6 +806,131 @@
                         <button type="button" class="btn btn-secondary" id="btnExportDxfSp1">📥 Xuất Mặt Đầu Đĩa 1 (View 4 DXF)</button>
                         <button type="button" class="btn btn-secondary" id="btnExportDxfSp2">📥 Xuất Mặt Đầu Đĩa 2 (View 4 DXF)</button>
                         <button type="button" class="btn btn-secondary" id="btnExportDxfAxial">📥 Xuất Mặt Cắt Trục Vành Răng (View 3 DXF)</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SECTION 17.0: CẨM NANG KỸ THUẬT: BẢN CHẤT HÌNH HỌC TCVN TRONG DẢI ISO 606 (COLLAPSED BY DEFAULT) -->
+            <div class="accordion-section" id="sec170">
+                <div class="section-header engineering-guide-block" style="background: linear-gradient(90deg, #1e1b4b, #312e81); border-left: 4px solid #818cf8;">
+                    <span>17.0 CẨM NANG KỸ THUẬT: BẢN CHẤT TÍNH TOÁN HÌNH HỌC TCVN 1785-76 TRONG DẢI ISO 606 / DIN 8196 (LÝ THUYẾT & THỰC TIỄN CHẾ TẠO)</span>
+                    <span class="header-toggle">▶</span>
+                </div>
+                <div class="section-body" style="background: #0f172a; padding: 20px 24px; line-height: 1.7; color: #cbd5e1; font-size: 0.88rem;">
+                    <div style="max-width: 1000px; margin: 0 auto;">
+                        <h4 style="color: #38bdf8; font-size: 1.1rem; margin-top: 0; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span>📚</span> 17.1 Bối Cảnh Lịch Sử & Sự Đồng Quy Tiêu Chuẩn Hóa
+                        </h4>
+                        <p style="margin-bottom: 12px;">
+                            Tiêu chuẩn Việt Nam về truyền động xích con lăn gồm hai văn bản cốt lõi:
+                            <strong>TCVN 1590-74</strong> (<em>Kích thước cơ bản của xích con lăn và xích ống dẫn động</em>) và
+                            <strong>TCVN 1785-76</strong> (<em>Biên dạng răng và kích thước đĩa xích con lăn</em>).
+                            Cả hai tiêu chuẩn này được kế thừa và chuyển hóa trực tiếp từ hệ thống tiêu chuẩn Liên Xô kinh điển
+                            <strong>ГОСТ 13568-75</strong> và <strong>ГОСТ 591-69</strong>.
+                        </p>
+                        <p style="margin-bottom: 16px;">
+                            Trong khi đó, tiêu chuẩn quốc tế <strong>ISO 606</strong> (cùng các tiêu chuẩn quốc gia tương đương như <strong>DIN 8187</strong> của Đức và <strong>ASME B29.1M</strong> của Mỹ)
+                            hợp nhất hai trường phái xích công nghiệp lớn trên thế giới:
+                            <strong>Dãy B (Châu Âu / British Standard BS 228)</strong> và <strong>Dãy A (Mỹ / American Standard)</strong>.
+                            Tại Việt Nam, do đặc thù lịch sử và giao thương kỹ thuật, các nhà máy và xưởng cơ khí sử dụng song song cả hai dòng xích này:
+                            Dãy B phổ biến trong các dây chuyền Châu Âu, Nhật Bản, xe máy (08B, 10B, 12B, 16B...);
+                            Dãy A phổ biến trong thiết bị công trình, máy nông nghiệp, thiết bị khai thác mỏ chuẩn ANSI (40, 50, 60, 80, 100...).
+                            Vì vậy, <strong>TCVN trong Web App này đã hợp nhất toàn diện toàn bộ danh mục của cả hai dãy A và B</strong> để kỹ sư tự do tra cứu và thiết kế.
+                        </p>
+
+                        <h4 style="color: #38bdf8; font-size: 1.1rem; margin-top: 20px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span>📐</span> 17.2 Phân Tích Cơ Sở Lý Thuyết: Miền Dung Sai Bao (Tolerance Envelope) ISO 606
+                        </h4>
+                        <p style="margin-bottom: 12px;">
+                            Một phát hiện quan trọng về mặt giải tích cơ học là: <strong>TCVN 1785-76 / ГОСТ 591-69 thực chất là một trường hợp biên cực trị (Boundary Extreme Case) nằm trọn vẹn bên trong miền dung sai bao của ISO 606 / DIN 8196</strong>.
+                            Tiêu chuẩn ISO 606 không cố định một biên dạng duy nhất mà quy định một dải dung sai hai phía $[Min \div Max]$ cho phép các nhà chế tạo dao và đĩa xích lựa chọn. Bốn thông số hình học cốt lõi đối chiếu như sau:
+                        </p>
+
+                        <div style="overflow-x: auto; margin-bottom: 16px;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.84rem; background: #1e293b; border-radius: 6px; overflow: hidden;">
+                                <thead>
+                                    <tr style="background: #334155; color: #f8fafc; text-align: left;">
+                                        <th style="padding: 10px; border: 1px solid #475569;">Thông số</th>
+                                        <th style="padding: 10px; border: 1px solid #475569;">Dải Dung Sai ISO 606 / DIN 8196</th>
+                                        <th style="padding: 10px; border: 1px solid #475569;">Lựa Chọn MITCalc (Mean)</th>
+                                        <th style="padding: 10px; border: 1px solid #475569;">Quy Định TCVN 1785-76</th>
+                                        <th style="padding: 10px; border: 1px solid #475569;">Ý Nghĩa Cơ Học & Động Học</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td style="padding: 10px; border: 1px solid #475569; font-weight: 600; color: #38bdf8;">Đường kính đỉnh (da)</td>
+                                        <td style="padding: 10px; border: 1px solid #475569;">$[d + 1.25p - d_3 - 0.05 \div d + 1.25p - d_3]$</td>
+                                        <td style="padding: 10px; border: 1px solid #475569;">$(Min + Max) / 2$</td>
+                                        <td style="padding: 10px; border: 1px solid #475569; font-weight: 700; color: #f43f5e;">$d + 1.25p - d_3$ (Max)</td>
+                                        <td style="padding: 10px; border: 1px solid #475569;">Đỉnh răng cao kịch trần giúp tăng chiều cao ăn khớp, <strong>chống nhảy xích (tooth skipping)</strong> khi xích bị dão dài sau thời gian dài sử dụng.</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px; border: 1px solid #475569; font-weight: 600; color: #38bdf8;">Góc sườn rãnh (α)</td>
+                                        <td style="padding: 10px; border: 1px solid #475569;">$[120^\circ - 90^\circ/z \div 140^\circ - 90^\circ/z]$</td>
+                                        <td style="padding: 10px; border: 1px solid #475569;">$130^\circ - 90^\circ/z$ (Trung bình)</td>
+                                        <td style="padding: 10px; border: 1px solid #475569; font-weight: 700; color: #f43f5e;">$140^\circ - 90^\circ/z$ (Max)</td>
+                                        <td style="padding: 10px; border: 1px solid #475569;">Miệng rãnh mở rộng tối đa, con lăn <strong>thoát vào và nhả ra êm ái</strong>, triệt tiêu nguy cơ kẹt con lăn khi phân độ gia công có sai lệch góc.</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px; border: 1px solid #475569; font-weight: 600; color: #38bdf8;">Bán kính sườn (R2 / re)</td>
+                                        <td style="padding: 10px; border: 1px solid #475569;">$[0.12 d_3(z+2) \div 0.008 d_3(z^2+180)]$</td>
+                                        <td style="padding: 10px; border: 1px solid #475569;">$(Min + Max) / 2$</td>
+                                        <td style="padding: 10px; border: 1px solid #475569; font-weight: 700; color: #f43f5e;">$0.12 d_3(z+2)$ (Min)</td>
+                                        <td style="padding: 10px; border: 1px solid #475569;">Bán kính nhỏ nhất tạo <strong>độ dốc sườn đứng nhất</strong>, ôm chặt con lăn, chống trượt leo răng (roller climb) khi truyền mô-men xoắn cực đại hoặc tải va đập.</td>
+                                    </tr>
+                                    <tr>
+                                        <td style="padding: 10px; border: 1px solid #475569; font-weight: 600; color: #38bdf8;">Bán kính đáy rãnh (R1 / r)</td>
+                                        <td style="padding: 10px; border: 1px solid #475569;">$[0.505 d_3 \div 0.505 d_3 + 0.069 \sqrt[3]{d_3}]$</td>
+                                        <td style="padding: 10px; border: 1px solid #475569;">$(Min + Max) / 2$</td>
+                                        <td style="padding: 10px; border: 1px solid #475569; font-weight: 700; color: #f43f5e;">$0.5025 d_3 + 0.05$ (Sát Min)</td>
+                                        <td style="padding: 10px; border: 1px solid #475569;">Khe hở đáy rãnh khống chế siêu chặt ($0.05\text{ mm}$), con lăn tiếp xúc đáy rãnh chính xác, phân bố đều ứng suất dập bề mặt tiếp xúc.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <h4 style="color: #38bdf8; font-size: 1.1rem; margin-top: 20px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span>🏭</span> 17.3 Phân Tích Thực Tiễn Chế Tạo & Công Nghệ Gia Công
+                        </h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid #3b82f6; border-radius: 6px; padding: 14px;">
+                                <h5 style="color: #60a5fa; margin-top: 0; margin-bottom: 8px; font-size: 0.95rem;">🇪🇺 Trường Phái Phương Tây / ISO: Phay Lăn Răng (Hobbing)</h5>
+                                <ul style="padding-left: 18px; margin: 0; font-size: 0.82rem; color: #94a3b8;">
+                                    <li style="margin-bottom: 6px;"><strong>Sản xuất hàng loạt lớn</strong> trên máy phay lăn răng chuyên dùng.</li>
+                                    <li style="margin-bottom: 6px;">Dao phay lăn răng (Sprocket Hob) được thiết kế theo <strong>giá trị trung bình danh nghĩa</strong> để gia công được dải răng $z$ rộng cho cùng bước xích.</li>
+                                    <li style="margin-bottom: 6px;">Dung sai phân bố đều hai phía $(\pm)$ giúp tối ưu tuổi thọ dao khi mòn tự nhiên.</li>
+                                    <li>Phù hợp với xích công nghiệp chất lượng cao, hộp xích kín, bôi trơn tuần hoàn cưỡng bức.</li>
+                                </ul>
+                            </div>
+                            <div style="background: rgba(30, 41, 59, 0.7); border: 1px solid #f43f5e; border-radius: 6px; padding: 14px;">
+                                <h5 style="color: #fb7185; margin-top: 0; margin-bottom: 8px; font-size: 0.95rem;">🇻🇳 Trường Phái Việt Nam / Liên Xô: Phay Định Hình & Cắt Dây CNC</h5>
+                                <ul style="padding-left: 18px; margin: 0; font-size: 0.82rem; color: #94a3b8;">
+                                    <li style="margin-bottom: 6px;"><strong>Sản xuất đơn chiếc / loạt nhỏ</strong> trong các xưởng cơ khí, nhà máy chế tạo máy và trạm sửa chữa.</li>
+                                    <li style="margin-bottom: 6px;">Gia công bằng <strong>dao phay đĩa mô-đun định hình</strong> kết hợp <strong>đầu phân độ vạn năng</strong>, hoặc cắt dây CNC (Wire EDM), phay phôi CNC.</li>
+                                    <li style="margin-bottom: 6px;">Miệng rãnh mở rộng $\alpha_{\max}$ bù trừ sai số quay đầu phân độ bằng tay, chống kẹt con lăn.</li>
+                                    <li>Đỉnh răng kịch trần $d_{a,\max}$ là van an toàn chống tuột xích hiệu quả trong điều kiện xích bôi trơn định kỳ hoặc ngoài trời dễ bị dão.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <h4 style="color: #38bdf8; font-size: 1.1rem; margin-top: 20px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+                            <span>💡</span> 17.4 Khuyến Nghị Ứng Dụng Cho Kỹ Sư Thiết Kế
+                        </h4>
+                        <ul style="padding-left: 20px; margin-bottom: 0;">
+                            <li style="margin-bottom: 8px;">
+                                <strong style="color: #f43f5e;">Khi gia công tại xưởng Việt Nam (Cắt dây, phay CNC, phay đĩa định hình)</strong>:
+                                Nên chọn <strong>Mặc định TCVN 1785-76</strong>. Biên dạng răng tối ưu tuyệt đối cho dao định hình, chống nhảy xích xuất sắc và tăng tuổi thọ bộ truyền trong điều kiện làm việc thực tế tại Việt Nam.
+                            </li>
+                            <li style="margin-bottom: 8px;">
+                                <strong style="color: #38bdf8;">Khi mua đĩa xích tiêu chuẩn thương mại có sẵn (Catalog Off-the-shelf)</strong>:
+                                Chọn tiêu chuẩn <strong>ISO 606 (EU_STD)</strong> hoặc <strong>ASME (US_STD)</strong>. Các hãng xích lớn (Tsubaki, Donghua, SKF, Martin, Renold) chế tạo đĩa xích hàng loạt theo giá trị trung bình danh nghĩa ISO 606.
+                            </li>
+                            <li>
+                                <strong style="color: #fbbf24;">Khi tinh chỉnh linh hoạt theo dao có sẵn</strong>:
+                                Bỏ tích ô checkbox tại Mục 5.0, hệ thống sẽ mở khóa cho phép kỹ sư nhập trực tiếp các kích thước dao thực tế đo được tại xưởng trong khi vẫn giám sát chặt chẽ miền dung sai an toàn $[Min \div Max]$ của ISO 606.
+                            </li>
+                        </ul>
                     </div>
                 </div>
             </div>

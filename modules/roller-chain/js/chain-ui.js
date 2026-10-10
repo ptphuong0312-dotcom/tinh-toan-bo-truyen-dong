@@ -12,15 +12,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // 1. Initialize State
     const state = {
         units: 1, // 1: Metric, 2: Imperial
-        stdId: 'EU_STD',
-        chainId: 4, // 08B-1
-        presetId: 'motorcycle_secondary',
-        P: 5.0, // kW
+        stdId: 'TCVN_STD',
+        chainId: 6, // TCVN 08B-1 (p=12.7mm)
+        presetId: 'tcvn_08b1',
+        P: 5.5, // kW
         n1: 1450, // rpm
-        n2_req: 690, // rpm
+        n2_req: 725, // rpm
         z1: 19,
-        z2: 40,
-        a_req: 350.0, // mm
+        z2: 38,
+        a_req: 450.0, // mm
         linksMode: 'even',
         drivingType: 'A',
         drivenType: 'B',
@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Tolerance Range Control (ISO 606 / TCVN 1785-76)
         useMeanTolerance: true,
-        profileMode: 'mean', // 'mean', 'tcvn', 'min', 'max', 'custom'
+        profileMode: 'tcvn', // TCVN default (extreme boundary within ISO 606 envelope)
         customDa1: null,
         customDa2: null,
         customR1: null,
@@ -383,9 +383,15 @@ document.addEventListener('DOMContentLoaded', () => {
         // Help text description
         if (el.toleranceHelpText) {
             if (isMean) {
-                el.toleranceHelpText.innerHTML = 'ℹ <em>Đang áp dụng giá trị danh nghĩa trung bình chuẩn MITCalc 1.74 / ISO 606 (Delta = 0.000000). Khi bỏ tích, bạn có thể tự do nhập số/điều chỉnh trong dải [Min ÷ Max] hoặc chọn nhanh chuẩn TCVN 1785-76.</em>';
+                if (state.stdId === 'TCVN_STD' || state.profileMode === 'tcvn') {
+                    el.toleranceHelpText.innerHTML = '🇻🇳 <strong style="color: #f43f5e;">Chuẩn TCVN 1785-76 / GOST 591-69 (Mặc định)</strong>: <em>Đỉnh da kịch trần (chống nhảy xích), R1=0.5025*d3+0.05, sườn R2=Min (dốc), góc sườn alpha=Max (rãnh mở rộng). Khi bỏ tích, bạn có thể tự do nhập số/điều chỉnh trong dải [Min ÷ Max] hoặc chọn nhanh ISO Trung Bình.</em>';
+                } else {
+                    el.toleranceHelpText.innerHTML = '🇪🇺 <strong style="color: #38bdf8;">Chuẩn ISO 606 / MITCalc 1.74 (Mean Value - Mặc định)</strong>: <em>Lấy giá trị trung bình danh nghĩa chuẩn MITCalc 1.74 (Δ = 0.000000). Khi bỏ tích, bạn có thể tự do nhập số/điều chỉnh trong dải [Min ÷ Max] hoặc chọn nhanh chuẩn TCVN 1785-76.</em>';
+                }
             } else if (state.profileMode === 'tcvn') {
                 el.toleranceHelpText.innerHTML = '🇻🇳 <strong style="color: #f43f5e;">Chuẩn TCVN 1785-76 / GOST 591-69</strong>: <em>Đỉnh da kịch trần (chống nhảy xích), R1=0.5025*d3+0.05, sườn R2=Min (dốc), góc sườn alpha=Max (rãnh mở rộng).</em>';
+            } else if (state.profileMode === 'mean') {
+                el.toleranceHelpText.innerHTML = '🇪🇺 <strong style="color: #38bdf8;">Chuẩn ISO 606 / MITCalc 1.74 (Mean Value)</strong>: <em>Đang lấy giá trị trung bình danh nghĩa của dải dung sai.</em>';
             } else if (state.profileMode === 'min') {
                 el.toleranceHelpText.innerHTML = '⬇ <strong style="color: #60a5fa;">Cận Dưới ISO 606 (Min Envelope)</strong>: <em>Biên dạng rãnh nhỏ nhất của dải dung sai.</em>';
             } else if (state.profileMode === 'max') {
@@ -469,17 +475,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     state.chainId = parseInt(el.selChain.value, 10);
                 }
                 if (state.stdId === 'TCVN_STD') {
-                    state.useMeanTolerance = false;
                     state.profileMode = 'tcvn';
-                    state.customDa1 = null;
-                    state.customDa2 = null;
-                    state.customR1 = null;
-                    state.customR2_1 = null;
-                    state.customR2_2 = null;
-                    state.customAlpha1 = null;
-                    state.customAlpha2 = null;
-                    if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = false;
+                } else {
+                    state.profileMode = 'mean';
                 }
+                state.useMeanTolerance = true;
+                if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = true;
+                state.customDa1 = null;
+                state.customDa2 = null;
+                state.customR1 = null;
+                state.customR2_1 = null;
+                state.customR2_2 = null;
+                state.customAlpha1 = null;
+                state.customAlpha2 = null;
                 recalculate();
             });
         }
@@ -489,7 +497,7 @@ document.addEventListener('DOMContentLoaded', () => {
             el.chkUseMeanTolerance.addEventListener('change', () => {
                 state.useMeanTolerance = el.chkUseMeanTolerance.checked;
                 if (state.useMeanTolerance) {
-                    state.profileMode = 'mean';
+                    state.profileMode = (state.stdId === 'TCVN_STD') ? 'tcvn' : 'mean';
                     state.customDa1 = null;
                     state.customDa2 = null;
                     state.customR1 = null;
@@ -506,13 +514,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (el.btnPresetMean) {
             el.btnPresetMean.addEventListener('click', () => {
-                state.useMeanTolerance = true;
+                state.useMeanTolerance = false;
                 state.profileMode = 'mean';
                 state.customDa1 = null; state.customDa2 = null;
                 state.customR1 = null; state.customR2_1 = null;
                 state.customR2_2 = null; state.customAlpha1 = null;
                 state.customAlpha2 = null;
-                if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = true;
+                if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = false;
                 recalculate();
             });
         }

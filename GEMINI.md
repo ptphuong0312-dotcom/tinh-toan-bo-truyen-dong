@@ -3089,3 +3089,29 @@ ho_{f0} / \cos\gamma$.
    - Tích hợp nhóm tiêu chuẩn `TCVN_STD` với 27 quy cách xích con lăn công nghiệp thông dụng từ 06B đến 32B cho các dãy 1, 2, 3 (bước xích $p = 9.525 \div 50.8\text{ mm}$).
    - Bổ sung 3 Presets mẫu thiết kế chuẩn Việt Nam (`TCVN 08B-1`, `TCVN 12B-1`, `TCVN 16B-1`).
    - Tự động kích hoạt chế độ TCVN khi người dùng lựa chọn tiêu chuẩn `TCVN_STD` tại Mục 3.1.
+
+
+---
+
+### Quy Tắc 127: Quy Chuẩn TCVN 1785-76 / TCVN 1590-74 Mặc Định & Hợp Nhất Toàn Diện Dãy B/A, Triệt Tiêu 100% Chữ Đè Lên Hình CAD DXF (40mm Clearance Envelope), và Cẩm Nang Kỹ Thuật Mục 17.0 (Module 9)
+**Ngày áp dụng**: 11/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+
+1. **Quy chuẩn Đặt TCVN Làm Mặc Định & Hợp Nhất 81 Quy Cách Xích Dãy B và Dãy A**:
+   - `TCVN_STD` ("🇻🇳 TCVN 1785-76 / TCVN 1590-74 (Tiêu chuẩn Việt Nam - Hợp nhất Dãy B & Dãy A)") được đặt ở vị trí đầu tiên (`index 0`) trong danh mục tiêu chuẩn và là **tiêu chuẩn mặc định ban đầu** khi khởi chạy Web App.
+   - Danh mục xích trong `TCVN_STD` hợp nhất toàn bộ 48 quy cách xích Dãy B (ISO 606 / DIN 8187, từ 05B đến 72B) và 33 quy cách xích Dãy A (ISO 606 / DIN 8188 / ANSI, từ 06C đến 48A / ANSI 35 đến 240) với mã định danh rõ ràng.
+   - Khi `TCVN_STD` được chọn (mặc định), hệ thống tự động áp dụng giải thuật biên dạng răng đĩa xích theo đúng quy chuẩn TCVN 1785-76 ($d_{a,\max}$, $R_{1,\text{TCVN}}$, $R_{2,\min}$, $\alpha_{\max}$), **tuyệt đối không lấy giá trị trung bình giống ISO**.
+   - Khi chuyển sang `EU_STD` hoặc `US_STD`, hệ thống tự động chuyển sang tính giá trị trung bình danh nghĩa chuẩn MITCalc 1.74 / ISO 606 để bảo đảm kiểm thử QC chéo đạt chuẩn $\Delta = 0.000000$.
+
+2. **Quy chuẩn Vùng Cách Ly Bảng Chế Tạo DXF (40mm Clearance Envelope) Triệt Tiêu 100% Chữ Đè Lên Hình**:
+   - Nghiêm cấm gán tọa độ tĩnh (`tableX = constant`) trong việc đặt bảng thông số chế tạo DXFTables trên bản vẽ CAD DXF R12.
+   - Tọa độ bảng phải luôn được tính toán động dựa trên bán kính đỉnh ngoài cùng của chi tiết:
+     * Chế độ Cụm Bộ Truyền (`assembly`): `tableX = a + ra2 + 40.0; tableY = Math.max(ra1, ra2) + 20.0;`
+     * Chế độ Đĩa Dẫn 1 (`sprocket1`): `tableX = ra1 + 40.0; tableY = ra1 + 20.0;`
+     * Chế độ Đĩa Bị Dẫn 2 (`sprocket2`): `tableX = ra2 + 40.0; tableY = ra2 + 20.0;`
+     * Chế độ Mặt Cắt Trục (`axial`): `tableX = Math.max(80.0, ((rows - 1) * ee + bf / 2) + 40.0); tableY = ra1 + 20.0;`
+   - Đảm bảo khoảng cách ly tối thiểu $40\text{ mm}$ từ đỉnh răng ngoài cùng đến mép bảng trên mọi góc quay và kích thước đĩa xích.
+
+3. **Quy chuẩn Cẩm Nang Kỹ Thuật Mục 17.0 (Mặc Định Ở Trạng Thái Ẩn)**:
+   - Tích hợp Section 17.0 ở cuối bảng tính Tab 1 với Accordion collapsed mặc định (không có class `active`, toggle icon `▶`).
+   - Cung cấp phân tích toàn diện 4 khía cạnh: Bối cảnh tiêu chuẩn hóa TCVN/GOST/ISO, Cơ sở lý thuyết miền dung sai bao ISO 606 cho 4 thông số ($d_a, \alpha, R_2, R_1$), Thực tiễn chế tạo (Phay lăn răng hàng loạt vs Phay đĩa định hình & Cắt dây CNC đơn chiếc tại Việt Nam), và Khuyến nghị ứng dụng cho kỹ sư thiết kế.

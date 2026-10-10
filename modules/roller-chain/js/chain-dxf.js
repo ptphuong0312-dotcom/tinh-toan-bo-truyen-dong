@@ -292,13 +292,46 @@ const ChainDxf = {
     },
 
     addDXFTable(lines, res, target) {
-        const tableX = (target === 'axial') ? 80 : ((target === 'sprocket2') ? 150 : (res.a ? res.a + res.sprocket2.da / 2 + 60 : 250));
-        const tableY = (res.sprocket1.da ? res.sprocket1.da / 2 + 50 : 150);
+        const da1 = (res.sprocket1 && res.sprocket1.da) ? res.sprocket1.da : 100;
+        const da2 = (res.sprocket2 && res.sprocket2.da) ? res.sprocket2.da : 200;
+        const ra1 = da1 / 2;
+        const ra2 = da2 / 2;
+        const a = res.a || 300;
+        const rows = res.strands || 1;
+        const bf = (res.sprocket1 && res.sprocket1.bf1) ? res.sprocket1.bf1 : 10;
+        const ee = (res.chain && res.chain.e && res.chain.e > 0) ? res.chain.e : bf;
+
+        let tableX = 250;
+        let tableY = 150;
+
+        if (target === 'assembly') {
+            tableX = a + ra2 + 40.0;
+            tableY = Math.max(ra1, ra2) + 20.0;
+        } else if (target === 'sprocket1') {
+            tableX = ra1 + 40.0;
+            tableY = ra1 + 20.0;
+        } else if (target === 'sprocket2') {
+            tableX = ra2 + 40.0;
+            tableY = ra2 + 20.0;
+        } else if (target === 'axial') {
+            const xRimMax = (rows - 1) * ee + bf / 2;
+            tableX = Math.max(xRimMax + 40.0, 80.0);
+            tableY = ra1 + 20.0;
+        } else {
+            tableX = Math.max(ra1, ra2) + 40.0;
+            tableY = Math.max(ra1, ra2) + 20.0;
+        }
+
         const rowH = 10;
         const colW = 120;
 
+        const isTCVN = (res.standardId === 'TCVN_STD' || (res.chain && res.chain.code && res.chain.code.startsWith('TCVN')));
+        const tableTitle = isTCVN 
+            ? 'THONG SO CHE TAO BO TRUYEN XICH (TCVN 1785-76 / TCVN 1590-74)' 
+            : 'THONG SO CHE TAO BO TRUYEN XICH CON LAN (ISO 606 / DIN 8187)';
+
         const tableData = [
-            ['THONG SO CHE TAO BO TRUYEN XICH CON LAN (ISO 606 / DIN 8187)', ''],
+            [tableTitle, ''],
             ['Tieu chuan xich', res.chain ? res.chain.code : 'ISO 606 / DIN 8187'],
             ['Buoc xich p [mm]', res.chain ? res.chain.pitch.toFixed(3) : '12.700'],
             ['Duong kinh con lan d3 [mm]', res.chain ? res.chain.d3.toFixed(2) : '8.51'],
