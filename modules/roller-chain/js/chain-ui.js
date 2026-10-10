@@ -25,7 +25,18 @@ document.addEventListener('DOMContentLoaded', () => {
         drivingType: 'A',
         drivenType: 'B',
         customLinks: null,
-        calcResult: null
+        calcResult: null,
+
+        // Tolerance Range Control (ISO 606 / TCVN 1785-76)
+        useMeanTolerance: true,
+        profileMode: 'mean', // 'mean', 'tcvn', 'min', 'max', 'custom'
+        customDa1: null,
+        customDa2: null,
+        customR1: null,
+        customR2_1: null,
+        customR2_2: null,
+        customAlpha1: null,
+        customAlpha2: null
     };
 
     // 2. DOM Elements Cache
@@ -87,19 +98,43 @@ document.addEventListener('DOMContentLoaded', () => {
         outSagY: document.getElementById('outSagY'),
         outLubeType: document.getElementById('outLubeType'),
 
-        // Outputs - Sec 5.0 (Sprockets)
+        // Tolerance Control Toolbar (Sec 5.0)
+        chkUseMeanTolerance: document.getElementById('chkUseMeanTolerance'),
+        tolerancePresetsGroup: document.getElementById('tolerancePresetsGroup'),
+        toleranceHelpText: document.getElementById('toleranceHelpText'),
+        btnPresetMean: document.getElementById('btnPresetMean'),
+        btnPresetTCVN: document.getElementById('btnPresetTCVN'),
+        btnPresetMin: document.getElementById('btnPresetMin'),
+        btnPresetMax: document.getElementById('btnPresetMax'),
+
+        // Outputs & Custom Inputs - Sec 5.0 (Sprockets)
         outD1: document.getElementById('outD1'),
         outD2: document.getElementById('outD2'),
         outDa1: document.getElementById('outDa1'),
         outDa2: document.getElementById('outDa2'),
+        inputDa1: document.getElementById('inputDa1'),
+        inputDa2: document.getElementById('inputDa2'),
+        limitDa: document.getElementById('limitDa'),
+
         outDf1: document.getElementById('outDf1'),
         outDf2: document.getElementById('outDf2'),
         outR1_1: document.getElementById('outR1_1'),
         outR1_2: document.getElementById('outR1_2'),
+        inputR1: document.getElementById('inputR1'),
+        limitR1: document.getElementById('limitR1'),
+
         outR2_1: document.getElementById('outR2_1'),
         outR2_2: document.getElementById('outR2_2'),
+        inputR2_1: document.getElementById('inputR2_1'),
+        inputR2_2: document.getElementById('inputR2_2'),
+        limitR2: document.getElementById('limitR2'),
+
         outAlphaFlank1: document.getElementById('outAlphaFlank1'),
         outAlphaFlank2: document.getElementById('outAlphaFlank2'),
+        inputAlphaFlank1: document.getElementById('inputAlphaFlank1'),
+        inputAlphaFlank2: document.getElementById('inputAlphaFlank2'),
+        limitAlpha: document.getElementById('limitAlpha'),
+
         outBf1: document.getElementById('outBf1'),
         outBa: document.getElementById('outBa'),
         outRx: document.getElementById('outRx'),
@@ -218,7 +253,18 @@ document.addEventListener('DOMContentLoaded', () => {
             a_req: state.a_req,
             linksMode: state.linksMode,
             drivingType: state.drivingType,
-            drivenType: state.drivenType
+            drivenType: state.drivenType,
+
+            // Tolerance Range Options
+            useMeanTolerance: state.useMeanTolerance,
+            profileMode: state.profileMode,
+            customDa1: state.customDa1,
+            customDa2: state.customDa2,
+            customR1: state.customR1,
+            customR2_1: state.customR2_1,
+            customR2_2: state.customR2_2,
+            customAlpha1: state.customAlpha1,
+            customAlpha2: state.customAlpha2
         });
 
         state.calcResult = res;
@@ -278,17 +324,46 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el.outSagY) el.outSagY.textContent = typeof y_val === 'number' ? y_val.toFixed(1) + ' mm' : y_val;
         if (el.outLubeType) el.outLubeType.textContent = res.lubrication || 'Bôi trơn nhỏ giọt (Drip lubrication)';
 
-        // Sec 5.0 Sprocket Dimensions (ISO 606 / DIN 8187)
+        // Sec 5.0 Sprocket Dimensions & Tolerance Range Controls
         if (el.outD1 && res.d1 != null) el.outD1.textContent = res.d1.toFixed(2);
         if (el.outD2 && res.d2 != null) el.outD2.textContent = res.d2.toFixed(2);
 
-        const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, R2: res.R2_1, bf1: res.bf, rx: res.rx, Dg: res.Dg1 };
+        // Update Tolerance Bounds Limits Spans
+        if (res.limits) {
+            if (el.limitDa) el.limitDa.textContent = `[${res.limits.da1_min.toFixed(2)} ÷ ${res.limits.da1_max.toFixed(2)}]`;
+            if (el.limitR1) el.limitR1.textContent = `[${res.limits.r1_min.toFixed(2)} ÷ ${res.limits.r1_max.toFixed(2)}] (TCVN: ${res.limits.r1_tcvn.toFixed(2)})`;
+            if (el.limitR2) el.limitR2.textContent = `[${res.limits.r2_1_min.toFixed(2)} ÷ ${res.limits.r2_1_max.toFixed(2)}] (TCVN: ${res.limits.r2_1_min.toFixed(2)})`;
+            if (el.limitAlpha) el.limitAlpha.textContent = `[${res.limits.alpha1_min.toFixed(1)}° ÷ ${res.limits.alpha1_max.toFixed(1)}°] (TCVN: ${res.limits.alpha1_max.toFixed(1)}°)`;
+        }
+
+        const isMean = state.useMeanTolerance !== false;
+        if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = isMean;
+        if (el.tolerancePresetsGroup) el.tolerancePresetsGroup.style.display = isMean ? 'none' : 'flex';
+
+        // Helper to toggle between span (read-only output) and input (editable)
+        const syncValue = (spanEl, inputEl, val, isEdit) => {
+            if (spanEl) {
+                spanEl.style.display = isEdit ? 'none' : 'inline-block';
+                if (val != null) spanEl.textContent = typeof val === 'number' ? val.toFixed(2) : val;
+            }
+            if (inputEl) {
+                inputEl.style.display = isEdit ? 'block' : 'none';
+                if (val != null && document.activeElement !== inputEl) {
+                    inputEl.value = typeof val === 'number' ? val.toFixed(2) : val;
+                }
+            }
+        };
+
+        const isEditable = !isMean;
+        const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, R2: res.R2_1, bf1: res.bf, rx: res.rx, Dg: res.Dg1, alphaDeg: res.flank_alpha1 };
+        const sp2 = res.sprocket2 || { da: res.da2, df: res.df2, R1: res.R1, R2: res.R2_2, Dg: res.Dg2, alphaDeg: res.flank_alpha2 };
+
         if (sp1) {
-            if (el.outDa1 && sp1.da != null) el.outDa1.textContent = sp1.da.toFixed(2);
+            syncValue(el.outDa1, el.inputDa1, sp1.da, isEditable);
             if (el.outDf1 && sp1.df != null) el.outDf1.textContent = sp1.df.toFixed(2);
-            if (el.outR1_1 && sp1.R1 != null) el.outR1_1.textContent = sp1.R1.toFixed(2);
-            if (el.outR2_1 && res.R2_1 != null) el.outR2_1.textContent = res.R2_1.toFixed(2);
-            if (el.outAlphaFlank1 && res.flank_alpha1 != null) el.outAlphaFlank1.textContent = res.flank_alpha1.toFixed(2) + '°';
+            syncValue(el.outR1_1, el.inputR1, sp1.R1, isEditable);
+            syncValue(el.outR2_1, el.inputR2_1, sp1.R2, isEditable);
+            syncValue(el.outAlphaFlank1, el.inputAlphaFlank1, sp1.alphaDeg, isEditable);
             if (el.outBf1 && sp1.bf1 != null) el.outBf1.textContent = sp1.bf1.toFixed(2);
             if (el.outBa && res.ba != null) el.outBa.textContent = res.ba.toFixed(2);
             if (el.outRx && sp1.rx != null) el.outRx.textContent = sp1.rx.toFixed(2);
@@ -296,14 +371,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el.outDg1 && sp1.Dg != null) el.outDg1.textContent = sp1.Dg.toFixed(2);
         }
 
-        const sp2 = res.sprocket2 || { da: res.da2, df: res.df2, R1: res.R1, R2: res.R2_2, Dg: res.Dg2 };
         if (sp2) {
-            if (el.outDa2 && sp2.da != null) el.outDa2.textContent = sp2.da.toFixed(2);
+            syncValue(el.outDa2, el.inputDa2, sp2.da, isEditable);
             if (el.outDf2 && sp2.df != null) el.outDf2.textContent = sp2.df.toFixed(2);
             if (el.outR1_2 && sp2.R1 != null) el.outR1_2.textContent = sp2.R1.toFixed(2);
-            if (el.outR2_2 && res.R2_2 != null) el.outR2_2.textContent = res.R2_2.toFixed(2);
-            if (el.outAlphaFlank2 && res.flank_alpha2 != null) el.outAlphaFlank2.textContent = res.flank_alpha2.toFixed(2) + '°';
+            syncValue(el.outR2_2, el.inputR2_2, sp2.R2, isEditable);
+            syncValue(el.outAlphaFlank2, el.inputAlphaFlank2, sp2.alphaDeg, isEditable);
             if (el.outDg2 && sp2.Dg != null) el.outDg2.textContent = sp2.Dg.toFixed(2);
+        }
+
+        // Help text description
+        if (el.toleranceHelpText) {
+            if (isMean) {
+                el.toleranceHelpText.innerHTML = 'ℹ <em>Đang áp dụng giá trị danh nghĩa trung bình chuẩn MITCalc 1.74 / ISO 606 (Delta = 0.000000). Khi bỏ tích, bạn có thể tự do nhập số/điều chỉnh trong dải [Min ÷ Max] hoặc chọn nhanh chuẩn TCVN 1785-76.</em>';
+            } else if (state.profileMode === 'tcvn') {
+                el.toleranceHelpText.innerHTML = '🇻🇳 <strong style="color: #f43f5e;">Chuẩn TCVN 1785-76 / GOST 591-69</strong>: <em>Đỉnh da kịch trần (chống nhảy xích), R1=0.5025*d3+0.05, sườn R2=Min (dốc), góc sườn alpha=Max (rãnh mở rộng).</em>';
+            } else if (state.profileMode === 'min') {
+                el.toleranceHelpText.innerHTML = '⬇ <strong style="color: #60a5fa;">Cận Dưới ISO 606 (Min Envelope)</strong>: <em>Biên dạng rãnh nhỏ nhất của dải dung sai.</em>';
+            } else if (state.profileMode === 'max') {
+                el.toleranceHelpText.innerHTML = '⬆ <strong style="color: #fbbf24;">Cận Trên ISO 606 (Max Envelope)</strong>: <em>Biên dạng rãnh lớn nhất của dải dung sai.</em>';
+            } else {
+                el.toleranceHelpText.innerHTML = '✏ <strong style="color: var(--accent-cyan);">Tùy chỉnh trong dải (Custom Range)</strong>: <em>Các kích thước đã được điều chỉnh trực tiếp theo yêu cầu chế tạo xưởng.</em>';
+            }
         }
 
         // Summary Banner Cards
@@ -379,9 +468,114 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (el.selChain && el.selChain.options.length > 0) {
                     state.chainId = parseInt(el.selChain.value, 10);
                 }
+                if (state.stdId === 'TCVN_STD') {
+                    state.useMeanTolerance = false;
+                    state.profileMode = 'tcvn';
+                    state.customDa1 = null;
+                    state.customDa2 = null;
+                    state.customR1 = null;
+                    state.customR2_1 = null;
+                    state.customR2_2 = null;
+                    state.customAlpha1 = null;
+                    state.customAlpha2 = null;
+                    if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = false;
+                }
                 recalculate();
             });
         }
+
+        // Section 5.0 Tolerance Range Controls
+        if (el.chkUseMeanTolerance) {
+            el.chkUseMeanTolerance.addEventListener('change', () => {
+                state.useMeanTolerance = el.chkUseMeanTolerance.checked;
+                if (state.useMeanTolerance) {
+                    state.profileMode = 'mean';
+                    state.customDa1 = null;
+                    state.customDa2 = null;
+                    state.customR1 = null;
+                    state.customR2_1 = null;
+                    state.customR2_2 = null;
+                    state.customAlpha1 = null;
+                    state.customAlpha2 = null;
+                } else {
+                    state.profileMode = (state.stdId === 'TCVN_STD') ? 'tcvn' : 'custom';
+                }
+                recalculate();
+            });
+        }
+
+        if (el.btnPresetMean) {
+            el.btnPresetMean.addEventListener('click', () => {
+                state.useMeanTolerance = true;
+                state.profileMode = 'mean';
+                state.customDa1 = null; state.customDa2 = null;
+                state.customR1 = null; state.customR2_1 = null;
+                state.customR2_2 = null; state.customAlpha1 = null;
+                state.customAlpha2 = null;
+                if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = true;
+                recalculate();
+            });
+        }
+
+        if (el.btnPresetTCVN) {
+            el.btnPresetTCVN.addEventListener('click', () => {
+                state.useMeanTolerance = false;
+                state.profileMode = 'tcvn';
+                state.customDa1 = null; state.customDa2 = null;
+                state.customR1 = null; state.customR2_1 = null;
+                state.customR2_2 = null; state.customAlpha1 = null;
+                state.customAlpha2 = null;
+                if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = false;
+                recalculate();
+            });
+        }
+
+        if (el.btnPresetMin) {
+            el.btnPresetMin.addEventListener('click', () => {
+                state.useMeanTolerance = false;
+                state.profileMode = 'min';
+                state.customDa1 = null; state.customDa2 = null;
+                state.customR1 = null; state.customR2_1 = null;
+                state.customR2_2 = null; state.customAlpha1 = null;
+                state.customAlpha2 = null;
+                if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = false;
+                recalculate();
+            });
+        }
+
+        if (el.btnPresetMax) {
+            el.btnPresetMax.addEventListener('click', () => {
+                state.useMeanTolerance = false;
+                state.profileMode = 'max';
+                state.customDa1 = null; state.customDa2 = null;
+                state.customR1 = null; state.customR2_1 = null;
+                state.customR2_2 = null; state.customAlpha1 = null;
+                state.customAlpha2 = null;
+                if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = false;
+                recalculate();
+            });
+        }
+
+        // Section 5.0 Custom Input fields (when tolerance lock is unchecked)
+        const customToleranceInputs = [
+            el.inputDa1, el.inputDa2, el.inputR1,
+            el.inputR2_1, el.inputR2_2, el.inputAlphaFlank1, el.inputAlphaFlank2
+        ];
+        customToleranceInputs.forEach(inp => {
+            if (inp) {
+                inp.addEventListener('change', () => {
+                    state.profileMode = 'custom';
+                    if (el.inputDa1) state.customDa1 = parseFloat(el.inputDa1.value.replace(',', '.')) || null;
+                    if (el.inputDa2) state.customDa2 = parseFloat(el.inputDa2.value.replace(',', '.')) || null;
+                    if (el.inputR1) state.customR1 = parseFloat(el.inputR1.value.replace(',', '.')) || null;
+                    if (el.inputR2_1) state.customR2_1 = parseFloat(el.inputR2_1.value.replace(',', '.')) || null;
+                    if (el.inputR2_2) state.customR2_2 = parseFloat(el.inputR2_2.value.replace(',', '.')) || null;
+                    if (el.inputAlphaFlank1) state.customAlpha1 = parseFloat(el.inputAlphaFlank1.value.replace(',', '.')) || null;
+                    if (el.inputAlphaFlank2) state.customAlpha2 = parseFloat(el.inputAlphaFlank2.value.replace(',', '.')) || null;
+                    recalculate();
+                });
+            }
+        });
 
         // Chain select change
         if (el.selChain) {

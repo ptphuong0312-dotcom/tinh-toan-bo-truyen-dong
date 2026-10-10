@@ -2991,3 +2991,48 @@ ho_{f0}$.
 
 
 
+
+
+---
+
+### Runbook 30: Quy Chuẩn Tích Hợp Tiêu Chuẩn Xích Việt Nam TCVN 1785-76 / TCVN 1590-74 (ГОСТ 591-69) Và Cơ Chế Kiểm Soát Dung Sai Dải Hình Học Đĩa Xích ISO 606 / DIN 8196 (Module 9)
+**Mục tiêu**:
+Tích hợp toàn diện tiêu chuẩn thiết kế đĩa xích con lăn Việt Nam TCVN 1785-76 / TCVN 1590-74 (đồng dạng với ГОСТ 591-69) vào Web App Bộ Truyền Xích Con Lăn (Module 9). Đồng thời thiết lập cơ chế kiểm soát dung sai kép tại Mục 5.0: Mặc định bảo toàn 100% tính toán trung bình danh nghĩa chuẩn MITCalc 1.74 / ISO 606, và cho phép mở khóa linh hoạt để lựa chọn TCVN hoặc tinh chỉnh số đo thực tế trong dải dung sai bao $[Min \div Max]$ của ISO 606 / DIN 8196.
+
+1. **Bản chất Hình học Cơ khí & Quan hệ Trường Phái Thiết Kế**:
+   - Tiêu chuẩn quốc tế ISO 606 / DIN 8196 quy định một **dải dung sai bao (Tolerance Envelope)** cho biên dạng răng đĩa xích, cho phép các nhà chế tạo tự do lựa chọn hình học phù hợp với công nghệ gia công:
+     * **Trường phái Phương Tây & MITCalc 1.74**: Lấy **giá trị trung bình (Mean)** $(Min + Max)/2$ nhằm tối ưu hóa cho phương pháp phay lăn răng (Hobbing) trong sản xuất hàng loạt, giúp dao phay có tuổi thọ cao và ăn khớp mượt mà với nhiều loại xích trên thị trường thế giới.
+     * **Trường phái Liên Xô / Việt Nam (ГОСТ 591-69 / TCVN 1785-76)**: Lấy các **giá trị biên cụ thể (Boundary Extreme Values)** nhằm tối ưu hóa cho phương pháp phay định hình bằng dao phay đĩa trong sản xuất đơn chiếc và sửa chữa:
+       - $\alpha_{\text{TCVN}} = 140^\circ - 90^\circ/z \equiv \alpha_{\max}$: Góc mở sườn rộng nhất giúp con lăn dễ dàng thoát vào và nhả ra khỏi rãnh răng mà không bị kẹt.
+       - $r_{e,\text{TCVN}} = 0.12 d_3(z+2) \equiv R_{2,\min}$: Bán kính sườn nhỏ nhất tạo độ dốc lớn nhất, giữ con lăn bám chắc vào rãnh, chống trượt leo răng khi chịu mô-men xoắn lớn.
+       - $r_{\text{TCVN}} = 0.5025 d_3 + 0.05\text{ mm} \approx R_{1,\min}$: Rãnh đáy ôm sát con lăn.
+       - $d_{a,\text{TCVN}} = d + 1.25 p - d_3 \equiv d_{a,\max}$: Chiều cao răng cực đại, chống hiện tượng nhảy xích khi dây xích bị mòn dão sau thời gian dài sử dụng.
+   - Do đó, **TCVN 1785-76 hoàn toàn là một trường hợp biên hợp lệ nằm trong dải chuẩn của ISO 606 / DIN 8196**.
+
+2. **Kiến Trúc Điều Khiển Dung Sai Dải Kép Tại Section 5.0**:
+   - **Giao diện người dùng (`index.html`, `chain-ui.js`)**:
+     * Thanh công cụ `tolerance-control-panel` tích hợp Checkbox `#chkUseMeanTolerance` ("Khóa theo giá trị trung bình (Mean Value - Khuyến nghị MITCalc / ISO 606)").
+     * **Khi Checkbox = TRUE (Mặc định)**:
+       - Các ô thông số $d_a, R_1, R_2, \alpha$ mang class `.output-eng` (chỉ đọc, nền sẫm, chữ cyan nổi bật).
+       - Toàn bộ tính toán bám sát 1-to-1 MITCalc 1.74 danh nghĩa. Cụm nút preset `#tolerancePresetsGroup` bị vô hiệu hóa (disabled / opacity: 0.45).
+     * **Khi Checkbox = FALSE (Mở khóa tùy chỉnh)**:
+       - Cụm nút `#tolerancePresetsGroup` sáng rõ với 4 nút chọn nhanh:
+         1. `[ 🇪🇺 ISO Trung Bình ]`: Khôi phục giá trị $(Min + Max)/2$.
+         2. `[ 🇻🇳 Chuẩn TCVN 1785-76 ]`: Áp đặt tự động công thức biên TCVN.
+         3. `[ ⬇ Cận Dưới (Min) ]`: Lấy cận dưới ISO 606.
+         4. `[ ⬆ Cận Trên (Max) ]`: Lấy cận trên ISO 606.
+       - Chuyển 4 ô thông số thành ô nhập liệu `.user-input` (nền trắng, viền xanh bo góc 4px), cho phép kỹ sư nhập bất kỳ số đo thực tế nào.
+       - Hiển thị nhãn dải dung sai bao `[Min ÷ Max]` ngay dưới mỗi ô để kỹ sư kiểm soát độ an toàn.
+
+3. **Cơ Sở Dữ Liệu Xích Chuẩn Việt Nam (`chain-data.js`)**:
+   - Mã tiêu chuẩn: `TCVN_STD` ("TCVN 1785-76 / TCVN 1590-74 (Tiêu chuẩn Việt Nam - Vietnam Series)").
+   - Gồm 27 quy cách xích con lăn chuẩn Việt Nam từ 06B đến 32B cho các dãy 1, 2, 3.
+   - 3 Presets mẫu thiết kế:
+     * `TCVN 08B-1`: $p = 12.7\text{ mm}, d_3 = 8.51\text{ mm}, b_1 = 7.75\text{ mm}, z_1 = 17, z_2 = 38$.
+     * `TCVN 12B-1`: $p = 19.05\text{ mm}, d_3 = 12.07\text{ mm}, b_1 = 11.68\text{ mm}, z_1 = 19, z_2 = 45$.
+     * `TCVN 16B-1`: $p = 25.4\text{ mm}, d_3 = 15.88\text{ mm}, b_1 = 17.02\text{ mm}, z_1 = 21, z_2 = 52$.
+
+4. **Quy Trình Kiểm Thử Tự Động & Đóng Gói Bundle**:
+   - `python tools/test_chain_qc.py`: Đạt **60 / 60 phép tính PASS 100.0% với $\Delta = 0.000000$** đối chiếu MITCalc 1.74 Excel COM (`chains_01.xlsb`).
+   - `python tools/bundle_chain.py`: Đóng gói thành công `chain-engine.bundle.js` (188.7 KB) chạy 100% offline không cần server.
+   - `python scratch/test_tcvn_ui.py`: E2E Playwright test kiểm chứng chuyển đổi mượt mà giữa chế độ khóa mặc định và mở khóa TCVN/tùy chỉnh trên trình duyệt thật.

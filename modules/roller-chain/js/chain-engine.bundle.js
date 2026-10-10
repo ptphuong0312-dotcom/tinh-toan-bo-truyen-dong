@@ -988,6 +988,553 @@ const ChainData = {
 ]
         },
         {
+  "id": "TCVN_STD",
+  "name": "TCVN 1785-76 / TCVN 1590-74 (Tiêu chuẩn Việt Nam - Vietnam Series)",
+  "standard": "TCVN 1785-76",
+  "chains": [
+    {
+      "id": 1,
+      "name": "TCVN 06B - 1 (p=9.525mm, 1 dãy)",
+      "code": "TCVN 06B - 1",
+      "pitch": 9.525,
+      "strands": 1,
+      "fb": 9000.0,
+      "mass": 0.4,
+      "area": 28.0,
+      "b1": 5.72,
+      "b2": 8.53,
+      "d1": 3.28,
+      "d3": 6.35,
+      "l": 13.5,
+      "lc": 16.8,
+      "g": 8.2,
+      "s1": 1.3,
+      "s2": 1.3,
+      "e": 0.0
+    },
+    {
+      "id": 2,
+      "name": "TCVN 08B - 1 (p=12.7mm, 1 dãy)",
+      "code": "TCVN 08B - 1",
+      "pitch": 12.7,
+      "strands": 1,
+      "fb": 18000.0,
+      "mass": 0.7,
+      "area": 50.0,
+      "b1": 7.75,
+      "b2": 11.3,
+      "d1": 4.45,
+      "d3": 8.51,
+      "l": 17.0,
+      "lc": 20.9,
+      "g": 11.8,
+      "s1": 1.6,
+      "s2": 1.6,
+      "e": 0.0
+    },
+    {
+      "id": 3,
+      "name": "TCVN 10B - 1 (p=15.875mm, 1 dãy)",
+      "code": "TCVN 10B - 1",
+      "pitch": 15.875,
+      "strands": 1,
+      "fb": 22400.0,
+      "mass": 0.9,
+      "area": 67.0,
+      "b1": 9.65,
+      "b2": 13.28,
+      "d1": 5.08,
+      "d3": 10.16,
+      "l": 19.6,
+      "lc": 23.7,
+      "g": 14.7,
+      "s1": 1.6,
+      "s2": 1.6,
+      "e": 0.0
+    },
+    {
+      "id": 4,
+      "name": "TCVN 12B - 1 (p=19.05mm, 1 dãy)",
+      "code": "TCVN 12B - 1",
+      "pitch": 19.05,
+      "strands": 1,
+      "fb": 29000.0,
+      "mass": 1.2,
+      "area": 89.0,
+      "b1": 11.68,
+      "b2": 15.62,
+      "d1": 5.72,
+      "d3": 12.07,
+      "l": 22.7,
+      "lc": 27.3,
+      "g": 14.7,
+      "s1": 1.8,
+      "s2": 1.8,
+      "e": 0.0
+    },
+    {
+      "id": 5,
+      "name": "TCVN 16B - 1 (p=25.4mm, 1 dãy)",
+      "code": "TCVN 16B - 1",
+      "pitch": 25.4,
+      "strands": 1,
+      "fb": 60000.0,
+      "mass": 2.6,
+      "area": 210.0,
+      "b1": 17.02,
+      "b2": 25.45,
+      "d1": 8.28,
+      "d3": 15.88,
+      "l": 36.1,
+      "lc": 41.5,
+      "g": 21.0,
+      "s1": 3.5,
+      "s2": 3.0,
+      "e": 0.0
+    },
+    {
+      "id": 6,
+      "name": "TCVN 20B - 1 (p=31.75mm, 1 dãy)",
+      "code": "TCVN 20B - 1",
+      "pitch": 31.75,
+      "strands": 1,
+      "fb": 95000.0,
+      "mass": 3.8,
+      "area": 296.0,
+      "b1": 19.56,
+      "b2": 29.0,
+      "d1": 10.19,
+      "d3": 19.05,
+      "l": 41.2,
+      "lc": 46.0,
+      "g": 26.0,
+      "s1": 4.5,
+      "s2": 3.5,
+      "e": 0.0
+    },
+    {
+      "id": 7,
+      "name": "TCVN 24B - 1 (p=38.1mm, 1 dãy)",
+      "code": "TCVN 24B - 1",
+      "pitch": 38.1,
+      "strands": 1,
+      "fb": 160000.0,
+      "mass": 7.0,
+      "area": 554.0,
+      "b1": 25.4,
+      "b2": 37.9,
+      "d1": 14.63,
+      "d3": 25.4,
+      "l": 53.4,
+      "lc": 58.5,
+      "g": 33.4,
+      "s1": 6.0,
+      "s2": 5.0,
+      "e": 0.0
+    },
+    {
+      "id": 8,
+      "name": "TCVN 28B - 1 (p=44.45mm, 1 dãy)",
+      "code": "TCVN 28B - 1",
+      "pitch": 44.45,
+      "strands": 1,
+      "fb": 200000.0,
+      "mass": 9.1,
+      "area": 739.0,
+      "b1": 30.99,
+      "b2": 46.5,
+      "d1": 15.9,
+      "d3": 27.94,
+      "l": 65.0,
+      "lc": 69.6,
+      "g": 36.6,
+      "s1": 7.0,
+      "s2": 6.0,
+      "e": 0.0
+    },
+    {
+      "id": 9,
+      "name": "TCVN 32B - 1 (p=50.8mm, 1 dãy)",
+      "code": "TCVN 32B - 1",
+      "pitch": 50.8,
+      "strands": 1,
+      "fb": 250000.0,
+      "mass": 9.7,
+      "area": 810.0,
+      "b1": 30.99,
+      "b2": 45.5,
+      "d1": 17.81,
+      "d3": 29.21,
+      "l": 65.2,
+      "lc": 73.1,
+      "g": 42.2,
+      "s1": 7.0,
+      "s2": 6.0,
+      "e": 0.0
+    },
+    {
+      "id": 10,
+      "name": "TCVN 06B - 2 (p=9.525mm, 2 dãy)",
+      "code": "TCVN 06B - 2",
+      "pitch": 9.525,
+      "strands": 2,
+      "fb": 16900.0,
+      "mass": 0.8,
+      "area": 56.0,
+      "b1": 5.72,
+      "b2": 5.53,
+      "d1": 3.28,
+      "d3": 6.35,
+      "l": 23.8,
+      "lc": 27.1,
+      "g": 8.2,
+      "s1": 1.3,
+      "s2": 1.3,
+      "e": 10.24
+    },
+    {
+      "id": 11,
+      "name": "TCVN 08B - 2 (p=12.7mm, 2 dãy)",
+      "code": "TCVN 08B - 2",
+      "pitch": 12.7,
+      "strands": 2,
+      "fb": 32000.0,
+      "mass": 1.3,
+      "area": 101.0,
+      "b1": 7.75,
+      "b2": 11.3,
+      "d1": 4.45,
+      "d3": 8.51,
+      "l": 31.0,
+      "lc": 34.9,
+      "g": 11.8,
+      "s1": 1.6,
+      "s2": 1.6,
+      "e": 13.92
+    },
+    {
+      "id": 12,
+      "name": "TCVN 10B - 2 (p=15.875mm, 2 dãy)",
+      "code": "TCVN 10B - 2",
+      "pitch": 15.875,
+      "strands": 2,
+      "fb": 44500.0,
+      "mass": 1.8,
+      "area": 134.0,
+      "b1": 9.65,
+      "b2": 13.28,
+      "d1": 5.08,
+      "d3": 10.16,
+      "l": 36.2,
+      "lc": 40.3,
+      "g": 14.7,
+      "s1": 1.6,
+      "s2": 1.6,
+      "e": 16.59
+    },
+    {
+      "id": 13,
+      "name": "TCVN 12B - 2 (p=19.05mm, 2 dãy)",
+      "code": "TCVN 12B - 2",
+      "pitch": 19.05,
+      "strands": 2,
+      "fb": 57800.0,
+      "mass": 2.5,
+      "area": 179.0,
+      "b1": 11.68,
+      "b2": 15.62,
+      "d1": 5.72,
+      "d3": 12.07,
+      "l": 42.2,
+      "lc": 46.8,
+      "g": 16.1,
+      "s1": 1.8,
+      "s2": 1.8,
+      "e": 19.46
+    },
+    {
+      "id": 14,
+      "name": "TCVN 16B - 2 (p=25.4mm, 2 dãy)",
+      "code": "TCVN 16B - 2",
+      "pitch": 25.4,
+      "strands": 2,
+      "fb": 110000.0,
+      "mass": 5.2,
+      "area": 421.0,
+      "b1": 17.02,
+      "b2": 25.45,
+      "d1": 8.28,
+      "d3": 15.88,
+      "l": 68.0,
+      "lc": 73.4,
+      "g": 21.0,
+      "s1": 3.5,
+      "s2": 3.0,
+      "e": 31.88
+    },
+    {
+      "id": 15,
+      "name": "TCVN 20B - 2 (p=31.75mm, 2 dãy)",
+      "code": "TCVN 20B - 2",
+      "pitch": 31.75,
+      "strands": 2,
+      "fb": 170000.0,
+      "mass": 7.5,
+      "area": 591.0,
+      "b1": 19.56,
+      "b2": 29.0,
+      "d1": 10.19,
+      "d3": 19.05,
+      "l": 77.7,
+      "lc": 82.5,
+      "g": 26.0,
+      "s1": 4.5,
+      "s2": 3.5,
+      "e": 36.45
+    },
+    {
+      "id": 16,
+      "name": "TCVN 24B - 2 (p=38.1mm, 2 dãy)",
+      "code": "TCVN 24B - 2",
+      "pitch": 38.1,
+      "strands": 2,
+      "fb": 280000.0,
+      "mass": 13.9,
+      "area": 1109.0,
+      "b1": 25.4,
+      "b2": 37.9,
+      "d1": 14.63,
+      "d3": 25.4,
+      "l": 101.0,
+      "lc": 106.9,
+      "g": 33.4,
+      "s1": 6.0,
+      "s2": 5.0,
+      "e": 48.36
+    },
+    {
+      "id": 17,
+      "name": "TCVN 28B - 2 (p=44.45mm, 2 dãy)",
+      "code": "TCVN 28B - 2",
+      "pitch": 44.45,
+      "strands": 2,
+      "fb": 360000.0,
+      "mass": 18.0,
+      "area": 1479.0,
+      "b1": 30.99,
+      "b2": 46.5,
+      "d1": 15.9,
+      "d3": 27.94,
+      "l": 124.0,
+      "lc": 129.2,
+      "g": 36.6,
+      "s1": 7.0,
+      "s2": 6.0,
+      "e": 59.56
+    },
+    {
+      "id": 18,
+      "name": "TCVN 32B - 2 (p=50.8mm, 2 dãy)",
+      "code": "TCVN 32B - 2",
+      "pitch": 50.8,
+      "strands": 2,
+      "fb": 450000.0,
+      "mass": 19.0,
+      "area": 1621.0,
+      "b1": 30.99,
+      "b2": 45.5,
+      "d1": 17.81,
+      "d3": 29.21,
+      "l": 123.8,
+      "lc": 131.7,
+      "g": 42.2,
+      "s1": 7.0,
+      "s2": 6.0,
+      "e": 58.55
+    },
+    {
+      "id": 19,
+      "name": "TCVN 06B - 3 (p=9.525mm, 3 dãy)",
+      "code": "TCVN 06B - 3",
+      "pitch": 9.525,
+      "strands": 3,
+      "fb": 24900.0,
+      "mass": 1.2,
+      "area": 84.0,
+      "b1": 5.72,
+      "b2": 8.53,
+      "d1": 3.28,
+      "d3": 6.35,
+      "l": 34.0,
+      "lc": 37.3,
+      "g": 8.2,
+      "s1": 1.3,
+      "s2": 1.3,
+      "e": 10.24
+    },
+    {
+      "id": 20,
+      "name": "TCVN 08B - 3 (p=12.7mm, 3 dãy)",
+      "code": "TCVN 08B - 3",
+      "pitch": 12.7,
+      "strands": 3,
+      "fb": 47500.0,
+      "mass": 2.0,
+      "area": 151.0,
+      "b1": 7.75,
+      "b2": 11.3,
+      "d1": 4.45,
+      "d3": 8.51,
+      "l": 44.9,
+      "lc": 48.8,
+      "g": 11.8,
+      "s1": 1.6,
+      "s2": 1.6,
+      "e": 13.92
+    },
+    {
+      "id": 21,
+      "name": "TCVN 10B - 3 (p=15.875mm, 3 dãy)",
+      "code": "TCVN 10B - 3",
+      "pitch": 15.875,
+      "strands": 3,
+      "fb": 66700.0,
+      "mass": 2.8,
+      "area": 202.0,
+      "b1": 9.65,
+      "b2": 13.28,
+      "d1": 5.08,
+      "d3": 10.16,
+      "l": 52.6,
+      "lc": 56.9,
+      "g": 14.7,
+      "s1": 1.6,
+      "s2": 1.6,
+      "e": 16.59
+    },
+    {
+      "id": 22,
+      "name": "TCVN 12B - 3 (p=19.05mm, 3 dãy)",
+      "code": "TCVN 12B - 3",
+      "pitch": 19.05,
+      "strands": 3,
+      "fb": 86700.0,
+      "mass": 3.8,
+      "area": 268.0,
+      "b1": 11.68,
+      "b2": 15.62,
+      "d1": 5.72,
+      "d3": 12.07,
+      "l": 61.7,
+      "lc": 66.3,
+      "g": 16.1,
+      "s1": 1.8,
+      "s2": 1.8,
+      "e": 19.46
+    },
+    {
+      "id": 23,
+      "name": "TCVN 16B - 3 (p=25.4mm, 3 dãy)",
+      "code": "TCVN 16B - 3",
+      "pitch": 25.4,
+      "strands": 3,
+      "fb": 165000.0,
+      "mass": 7.7,
+      "area": 631.0,
+      "b1": 17.02,
+      "b2": 25.45,
+      "d1": 8.28,
+      "d3": 15.88,
+      "l": 99.9,
+      "lc": 105.3,
+      "g": 21.0,
+      "s1": 3.5,
+      "s2": 3.0,
+      "e": 31.88
+    },
+    {
+      "id": 24,
+      "name": "TCVN 20B - 3 (p=31.75mm, 3 dãy)",
+      "code": "TCVN 20B - 3",
+      "pitch": 31.75,
+      "strands": 3,
+      "fb": 250000.0,
+      "mass": 11.2,
+      "area": 887.0,
+      "b1": 19.56,
+      "b2": 29.0,
+      "d1": 10.19,
+      "d3": 19.05,
+      "l": 114.1,
+      "lc": 118.9,
+      "g": 26.0,
+      "s1": 4.5,
+      "s2": 3.5,
+      "e": 36.45
+    },
+    {
+      "id": 25,
+      "name": "TCVN 24B - 3 (p=38.1mm, 3 dãy)",
+      "code": "TCVN 24B - 3",
+      "pitch": 38.1,
+      "strands": 3,
+      "fb": 425000.0,
+      "mass": 20.7,
+      "area": 1663.0,
+      "b1": 25.4,
+      "b2": 37.9,
+      "d1": 14.63,
+      "d3": 25.4,
+      "l": 150.0,
+      "lc": 155.2,
+      "g": 33.4,
+      "s1": 6.0,
+      "s2": 5.0,
+      "e": 48.36
+    },
+    {
+      "id": 26,
+      "name": "TCVN 28B - 3 (p=44.45mm, 3 dãy)",
+      "code": "TCVN 28B - 3",
+      "pitch": 44.45,
+      "strands": 3,
+      "fb": 530000.0,
+      "mass": 27.0,
+      "area": 2218.0,
+      "b1": 30.99,
+      "b2": 46.5,
+      "d1": 15.9,
+      "d3": 27.94,
+      "l": 184.0,
+      "lc": 188.8,
+      "g": 36.6,
+      "s1": 7.0,
+      "s2": 6.0,
+      "e": 59.56
+    },
+    {
+      "id": 27,
+      "name": "TCVN 32B - 3 (p=50.8mm, 3 dãy)",
+      "code": "TCVN 32B - 3",
+      "pitch": 50.8,
+      "strands": 3,
+      "fb": 670000.0,
+      "mass": 28.3,
+      "area": 2431.0,
+      "b1": 30.99,
+      "b2": 45.5,
+      "d1": 17.81,
+      "d3": 29.21,
+      "l": 181.0,
+      "lc": 190.2,
+      "g": 42.2,
+      "s1": 7.0,
+      "s2": 6.0,
+      "e": 58.55
+    }
+  ]
+},
+{
             id: 'US_STD',
             name: 'ISO 606 / DIN 8188 (Tiêu chuẩn Quốc Tế / Mỹ - American Series)',
             chains: [
@@ -3565,6 +4112,42 @@ const ChainData = {
             driven: 'A'
         },
         {
+            name: '🇻🇳 TCVN 08B-1: p=12.7mm | z1=19 | z2=38 | i=2.0 | a=450mm | P=5.5kW | n1=1450 rpm',
+            stdId: 'TCVN_STD',
+            code: 'TCVN 08B - 1',
+            z1: 19,
+            z2: 38,
+            a: 450.0,
+            P: 5.5,
+            n1: 1450,
+            driving: 'A',
+            driven: 'B'
+        },
+        {
+            name: '🇻🇳 TCVN 12B-1: p=19.05mm | z1=17 | z2=42 | i=2.47 | a=650mm | P=11kW | n1=960 rpm',
+            stdId: 'TCVN_STD',
+            code: 'TCVN 12B - 1',
+            z1: 17,
+            z2: 42,
+            a: 650.0,
+            P: 11.0,
+            n1: 960,
+            driving: 'A',
+            driven: 'B'
+        },
+        {
+            name: '🇻🇳 TCVN 16B-1: p=25.4mm | z1=19 | z2=45 | i=2.37 | a=800mm | P=22kW | n1=720 rpm',
+            stdId: 'TCVN_STD',
+            code: 'TCVN 16B - 1',
+            z1: 19,
+            z2: 45,
+            a: 800.0,
+            P: 22.0,
+            n1: 720,
+            driving: 'A',
+            driven: 'B'
+        },
+        {
             name: '⚡ ANSI 50-1: p=15.875mm | z1=21 | z2=42 | i=2.0 | a=600mm | P=7.5kW | n1=1160 rpm',
             stdId: 'US_STD',
             code: '50 - 1  (0.625)',
@@ -3778,52 +4361,131 @@ const ChainCalc = {
         else if (v_metric > 7.0) rec_lub_id = 3;
         else if (v_metric > 4.0) rec_lub_id = 2;
 
-        // Section 5.0 ISO 606 / DIN 8187 Sprocket Dimensions
+        // Section 5.0 ISO 606 / DIN 8187 / DIN 8196 / TCVN 1785-76 Sprocket Dimensions
         const d3 = isMetric ? chain.d3 : chain.d3 / 25.4;
         const d1_pin = isMetric ? chain.d1 : chain.d1 / 25.4;
         const b1 = isMetric ? chain.b1 : chain.b1 / 25.4;
         const b2 = isMetric ? chain.b2 : chain.b2 / 25.4;
         const strands = chain.strands || 1;
         const e_trans = isMetric ? chain.e : chain.e / 25.4;
-
-        // Tip diameter Da (ISO 606 / DIN 8187)
         const RA = isMetric ? 2 : 3;
+
+        // 1. Tip diameter Da Limits [Min, Max]
         const da1_min = d1 + 0.5 * d3;
         const da1_max = d1 + 1.25 * p - d3;
-        const da1 = Number(((da1_min + da1_max) / 2.0).toFixed(RA));
-
         const da2_min = d2 + 0.5 * d3;
         const da2_max = d2 + 1.25 * p - d3;
-        const da2 = Number(((da2_min + da2_max) / 2.0).toFixed(RA));
 
-        // Root radius R1 (ISO 606 / MITCalc: power 0.33)
+        // 2. Root radius R1 Limits [Min, Max] (ISO 606 / DIN 8196 / TCVN 1785-76)
         const d3_mm = chain.d3;
         const r1_min_mm = 0.505 * d3_mm;
         const r1_max_mm = 0.505 * d3_mm + 0.069 * (d3_mm ** 0.33);
-        const R1_raw = (r1_min_mm + r1_max_mm) / 2.0;
-        const R1_val = isMetric ? R1_raw : R1_raw / 25.4;
-        const R1 = Number(R1_val.toFixed(RA));
+        const r1_min = isMetric ? r1_min_mm : r1_min_mm / 25.4;
+        const r1_max = isMetric ? r1_max_mm : r1_max_mm / 25.4;
+        const R1_mean = (r1_min + r1_max) / 2.0;
+
+        // TCVN 1785-76 specific root radius (0.5025 * d3 + 0.05 mm)
+        const r1_tcvn_mm = 0.5025 * d3_mm + 0.05;
+        const r1_tcvn = isMetric ? r1_tcvn_mm : r1_tcvn_mm / 25.4;
+
+        // 3. Flank radius R2 Limits [Min, Max]
+        const r2_1_min_mm = 0.12 * d3_mm * (z1 + 2);
+        const r2_1_max_mm = 0.008 * d3_mm * (z1 * z1 + 180);
+        const r2_1_min = isMetric ? r2_1_min_mm : r2_1_min_mm / 25.4;
+        const r2_1_max = isMetric ? r2_1_max_mm : r2_1_max_mm / 25.4;
+        const R2_1_mean = (r2_1_min + r2_1_max) / 2.0;
+
+        const r2_2_min_mm = 0.12 * d3_mm * (z2 + 2);
+        const r2_2_max_mm = 0.008 * d3_mm * (z2 * z2 + 180);
+        const r2_2_min = isMetric ? r2_2_min_mm : r2_2_min_mm / 25.4;
+        const r2_2_max = isMetric ? r2_2_max_mm : r2_2_max_mm / 25.4;
+        const R2_2_mean = (r2_2_min + r2_2_max) / 2.0;
+
+        // 4. Flank angle alpha Limits [Min, Max] [deg]
+        const flank_alpha1_min = 120.0 - 90.0 / z1;
+        const flank_alpha1_max = 140.0 - 90.0 / z1;
+        const flank_alpha1_mean = 130.0 - 90.0 / z1;
+
+        const flank_alpha2_min = 120.0 - 90.0 / z2;
+        const flank_alpha2_max = 140.0 - 90.0 / z2;
+        const flank_alpha2_mean = 130.0 - 90.0 / z2;
+
+        // Tolerance Range Selection Protocol
+        // Default: useMeanTolerance = true -> 100% identical to MITCalc 1.74!
+        // When unchecked (useMeanTolerance = false), supports 'tcvn', 'min', 'max', or 'custom'
+        const useMeanTolerance = params.useMeanTolerance !== false;
+        let profileMode = params.profileMode || (useMeanTolerance ? 'mean' : 'custom');
+        if (useMeanTolerance) {
+            profileMode = 'mean';
+        }
+
+        let da1, da2, R1, R2_1, R2_2, flank_alpha1, flank_alpha2;
+
+        if (profileMode === 'mean') {
+            da1 = Number(((da1_min + da1_max) / 2.0).toFixed(RA));
+            da2 = Number(((da2_min + da2_max) / 2.0).toFixed(RA));
+            R1 = Number(R1_mean.toFixed(RA));
+            R2_1 = Number(R2_1_mean.toFixed(RA));
+            R2_2 = Number(R2_2_mean.toFixed(RA));
+            flank_alpha1 = Number(flank_alpha1_mean.toFixed(2));
+            flank_alpha2 = Number(flank_alpha2_mean.toFixed(2));
+        } else if (profileMode === 'tcvn') {
+            // TCVN 1785-76 / GOST 591-69 (Extreme Boundary Case within ISO 606 envelope)
+            da1 = Number(da1_max.toFixed(RA));
+            da2 = Number(da2_max.toFixed(RA));
+            R1 = Number(r1_tcvn.toFixed(RA));
+            R2_1 = Number(r2_1_min.toFixed(RA));
+            R2_2 = Number(r2_2_min.toFixed(RA));
+            flank_alpha1 = Number(flank_alpha1_max.toFixed(2));
+            flank_alpha2 = Number(flank_alpha2_max.toFixed(2));
+        } else if (profileMode === 'min') {
+            da1 = Number(da1_min.toFixed(RA));
+            da2 = Number(da2_min.toFixed(RA));
+            R1 = Number(r1_min.toFixed(RA));
+            R2_1 = Number(r2_1_min.toFixed(RA));
+            R2_2 = Number(r2_2_min.toFixed(RA));
+            flank_alpha1 = Number(flank_alpha1_min.toFixed(2));
+            flank_alpha2 = Number(flank_alpha2_min.toFixed(2));
+        } else if (profileMode === 'max') {
+            da1 = Number(da1_max.toFixed(RA));
+            da2 = Number(da2_max.toFixed(RA));
+            R1 = Number(r1_max.toFixed(RA));
+            R2_1 = Number(r2_1_max.toFixed(RA));
+            R2_2 = Number(r2_2_max.toFixed(RA));
+            flank_alpha1 = Number(flank_alpha1_max.toFixed(2));
+            flank_alpha2 = Number(flank_alpha2_max.toFixed(2));
+        } else {
+            // Custom values within [Min, Max]
+            da1 = params.customDa1 !== undefined ? Number(Number(params.customDa1).toFixed(RA)) : Number(((da1_min + da1_max) / 2.0).toFixed(RA));
+            da2 = params.customDa2 !== undefined ? Number(Number(params.customDa2).toFixed(RA)) : Number(((da2_min + da2_max) / 2.0).toFixed(RA));
+            R1 = params.customR1 !== undefined ? Number(Number(params.customR1).toFixed(RA)) : Number(R1_mean.toFixed(RA));
+            R2_1 = params.customR2_1 !== undefined ? Number(Number(params.customR2_1).toFixed(RA)) : Number(R2_1_mean.toFixed(RA));
+            R2_2 = params.customR2_2 !== undefined ? Number(Number(params.customR2_2).toFixed(RA)) : Number(R2_2_mean.toFixed(RA));
+            flank_alpha1 = params.customAlpha1 !== undefined ? Number(Number(params.customAlpha1).toFixed(2)) : Number(flank_alpha1_mean.toFixed(2));
+            flank_alpha2 = params.customAlpha2 !== undefined ? Number(Number(params.customAlpha2).toFixed(2)) : Number(flank_alpha2_mean.toFixed(2));
+        }
 
         // Root diameter Df (Bottom of tooth gullet): Df = d - 2 * R1
         const df1 = Number((d1 - 2.0 * R1).toFixed(RA));
         const df2 = Number((d2 - 2.0 * R1).toFixed(RA));
 
-        // Flank radius R2 (ISO 606 / DIN 8196 / MITCalc)
-        const r2_1_min_mm = 0.12 * d3_mm * (z1 + 2);
-        const r2_1_max_mm = 0.008 * d3_mm * (z1 * z1 + 180);
-        const R2_1_mm = (r2_1_min_mm + r2_1_max_mm) / 2.0;
-        const R2_1_val = isMetric ? R2_1_mm : R2_1_mm / 25.4;
-        const R2_1 = Number(R2_1_val.toFixed(RA));
-
-        const r2_2_min_mm = 0.12 * d3_mm * (z2 + 2);
-        const r2_2_max_mm = 0.008 * d3_mm * (z2 * z2 + 180);
-        const R2_2_mm = (r2_2_min_mm + r2_2_max_mm) / 2.0;
-        const R2_2_val = isMetric ? R2_2_mm : R2_2_mm / 25.4;
-        const R2_2 = Number(R2_2_val.toFixed(RA));
-
-        // Flank angle alpha
-        const flank_alpha1 = Number((130.0 - 90.0 / z1).toFixed(2));
-        const flank_alpha2 = Number((130.0 - 90.0 / z2).toFixed(2));
+        const limits = {
+            da1_min: Number(da1_min.toFixed(RA)),
+            da1_max: Number(da1_max.toFixed(RA)),
+            da2_min: Number(da2_min.toFixed(RA)),
+            da2_max: Number(da2_max.toFixed(RA)),
+            r1_min: Number(r1_min.toFixed(RA)),
+            r1_max: Number(r1_max.toFixed(RA)),
+            r1_tcvn: Number(r1_tcvn.toFixed(RA)),
+            r2_1_min: Number(r2_1_min.toFixed(RA)),
+            r2_1_max: Number(r2_1_max.toFixed(RA)),
+            r2_2_min: Number(r2_2_min.toFixed(RA)),
+            r2_2_max: Number(r2_2_max.toFixed(RA)),
+            alpha1_min: Number(flank_alpha1_min.toFixed(2)),
+            alpha1_max: Number(flank_alpha1_max.toFixed(2)),
+            alpha2_min: Number(flank_alpha2_min.toFixed(2)),
+            alpha2_max: Number(flank_alpha2_max.toFixed(2))
+        };
 
         // Tooth width bf
         let bf_factor = 0.95;
@@ -3861,7 +4523,18 @@ const ChainCalc = {
             Dg: Dg1,
             p: p,
             d3: d3,
-            alphaDeg: flank_alpha1
+            alphaDeg: flank_alpha1,
+            limits: {
+                da_min: limits.da1_min,
+                da_max: limits.da1_max,
+                r1_min: limits.r1_min,
+                r1_max: limits.r1_max,
+                r1_tcvn: limits.r1_tcvn,
+                r2_min: limits.r2_1_min,
+                r2_max: limits.r2_1_max,
+                alpha_min: limits.alpha1_min,
+                alpha_max: limits.alpha1_max
+            }
         };
 
         const sprocket2 = {
@@ -3875,7 +4548,18 @@ const ChainCalc = {
             Dg: Dg2,
             p: p,
             d3: d3,
-            alphaDeg: flank_alpha2
+            alphaDeg: flank_alpha2,
+            limits: {
+                da_min: limits.da2_min,
+                da_max: limits.da2_max,
+                r1_min: limits.r1_min,
+                r1_max: limits.r1_max,
+                r1_tcvn: limits.r1_tcvn,
+                r2_min: limits.r2_2_min,
+                r2_max: limits.r2_2_max,
+                alpha_min: limits.alpha2_min,
+                alpha_max: limits.alpha2_max
+            }
         };
 
         // Recommended lubrication description string
@@ -3953,6 +4637,11 @@ const ChainCalc = {
             Dg1,
             Dg2,
             chain_weight,
+
+            // Tolerance limits & selection mode
+            limits,
+            useMeanTolerance,
+            profileMode,
 
             // Nested sprocket structures
             sprocket1,
@@ -5396,7 +6085,18 @@ document.addEventListener('DOMContentLoaded', () => {
         drivingType: 'A',
         drivenType: 'B',
         customLinks: null,
-        calcResult: null
+        calcResult: null,
+
+        // Tolerance Range Control (ISO 606 / TCVN 1785-76)
+        useMeanTolerance: true,
+        profileMode: 'mean', // 'mean', 'tcvn', 'min', 'max', 'custom'
+        customDa1: null,
+        customDa2: null,
+        customR1: null,
+        customR2_1: null,
+        customR2_2: null,
+        customAlpha1: null,
+        customAlpha2: null
     };
 
     // 2. DOM Elements Cache
@@ -5458,19 +6158,43 @@ document.addEventListener('DOMContentLoaded', () => {
         outSagY: document.getElementById('outSagY'),
         outLubeType: document.getElementById('outLubeType'),
 
-        // Outputs - Sec 5.0 (Sprockets)
+        // Tolerance Control Toolbar (Sec 5.0)
+        chkUseMeanTolerance: document.getElementById('chkUseMeanTolerance'),
+        tolerancePresetsGroup: document.getElementById('tolerancePresetsGroup'),
+        toleranceHelpText: document.getElementById('toleranceHelpText'),
+        btnPresetMean: document.getElementById('btnPresetMean'),
+        btnPresetTCVN: document.getElementById('btnPresetTCVN'),
+        btnPresetMin: document.getElementById('btnPresetMin'),
+        btnPresetMax: document.getElementById('btnPresetMax'),
+
+        // Outputs & Custom Inputs - Sec 5.0 (Sprockets)
         outD1: document.getElementById('outD1'),
         outD2: document.getElementById('outD2'),
         outDa1: document.getElementById('outDa1'),
         outDa2: document.getElementById('outDa2'),
+        inputDa1: document.getElementById('inputDa1'),
+        inputDa2: document.getElementById('inputDa2'),
+        limitDa: document.getElementById('limitDa'),
+
         outDf1: document.getElementById('outDf1'),
         outDf2: document.getElementById('outDf2'),
         outR1_1: document.getElementById('outR1_1'),
         outR1_2: document.getElementById('outR1_2'),
+        inputR1: document.getElementById('inputR1'),
+        limitR1: document.getElementById('limitR1'),
+
         outR2_1: document.getElementById('outR2_1'),
         outR2_2: document.getElementById('outR2_2'),
+        inputR2_1: document.getElementById('inputR2_1'),
+        inputR2_2: document.getElementById('inputR2_2'),
+        limitR2: document.getElementById('limitR2'),
+
         outAlphaFlank1: document.getElementById('outAlphaFlank1'),
         outAlphaFlank2: document.getElementById('outAlphaFlank2'),
+        inputAlphaFlank1: document.getElementById('inputAlphaFlank1'),
+        inputAlphaFlank2: document.getElementById('inputAlphaFlank2'),
+        limitAlpha: document.getElementById('limitAlpha'),
+
         outBf1: document.getElementById('outBf1'),
         outBa: document.getElementById('outBa'),
         outRx: document.getElementById('outRx'),
@@ -5589,7 +6313,18 @@ document.addEventListener('DOMContentLoaded', () => {
             a_req: state.a_req,
             linksMode: state.linksMode,
             drivingType: state.drivingType,
-            drivenType: state.drivenType
+            drivenType: state.drivenType,
+
+            // Tolerance Range Options
+            useMeanTolerance: state.useMeanTolerance,
+            profileMode: state.profileMode,
+            customDa1: state.customDa1,
+            customDa2: state.customDa2,
+            customR1: state.customR1,
+            customR2_1: state.customR2_1,
+            customR2_2: state.customR2_2,
+            customAlpha1: state.customAlpha1,
+            customAlpha2: state.customAlpha2
         });
 
         state.calcResult = res;
@@ -5649,17 +6384,46 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el.outSagY) el.outSagY.textContent = typeof y_val === 'number' ? y_val.toFixed(1) + ' mm' : y_val;
         if (el.outLubeType) el.outLubeType.textContent = res.lubrication || 'Bôi trơn nhỏ giọt (Drip lubrication)';
 
-        // Sec 5.0 Sprocket Dimensions (ISO 606 / DIN 8187)
+        // Sec 5.0 Sprocket Dimensions & Tolerance Range Controls
         if (el.outD1 && res.d1 != null) el.outD1.textContent = res.d1.toFixed(2);
         if (el.outD2 && res.d2 != null) el.outD2.textContent = res.d2.toFixed(2);
 
-        const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, R2: res.R2_1, bf1: res.bf, rx: res.rx, Dg: res.Dg1 };
+        // Update Tolerance Bounds Limits Spans
+        if (res.limits) {
+            if (el.limitDa) el.limitDa.textContent = `[${res.limits.da1_min.toFixed(2)} ÷ ${res.limits.da1_max.toFixed(2)}]`;
+            if (el.limitR1) el.limitR1.textContent = `[${res.limits.r1_min.toFixed(2)} ÷ ${res.limits.r1_max.toFixed(2)}] (TCVN: ${res.limits.r1_tcvn.toFixed(2)})`;
+            if (el.limitR2) el.limitR2.textContent = `[${res.limits.r2_1_min.toFixed(2)} ÷ ${res.limits.r2_1_max.toFixed(2)}] (TCVN: ${res.limits.r2_1_min.toFixed(2)})`;
+            if (el.limitAlpha) el.limitAlpha.textContent = `[${res.limits.alpha1_min.toFixed(1)}° ÷ ${res.limits.alpha1_max.toFixed(1)}°] (TCVN: ${res.limits.alpha1_max.toFixed(1)}°)`;
+        }
+
+        const isMean = state.useMeanTolerance !== false;
+        if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = isMean;
+        if (el.tolerancePresetsGroup) el.tolerancePresetsGroup.style.display = isMean ? 'none' : 'flex';
+
+        // Helper to toggle between span (read-only output) and input (editable)
+        const syncValue = (spanEl, inputEl, val, isEdit) => {
+            if (spanEl) {
+                spanEl.style.display = isEdit ? 'none' : 'inline-block';
+                if (val != null) spanEl.textContent = typeof val === 'number' ? val.toFixed(2) : val;
+            }
+            if (inputEl) {
+                inputEl.style.display = isEdit ? 'block' : 'none';
+                if (val != null && document.activeElement !== inputEl) {
+                    inputEl.value = typeof val === 'number' ? val.toFixed(2) : val;
+                }
+            }
+        };
+
+        const isEditable = !isMean;
+        const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, R2: res.R2_1, bf1: res.bf, rx: res.rx, Dg: res.Dg1, alphaDeg: res.flank_alpha1 };
+        const sp2 = res.sprocket2 || { da: res.da2, df: res.df2, R1: res.R1, R2: res.R2_2, Dg: res.Dg2, alphaDeg: res.flank_alpha2 };
+
         if (sp1) {
-            if (el.outDa1 && sp1.da != null) el.outDa1.textContent = sp1.da.toFixed(2);
+            syncValue(el.outDa1, el.inputDa1, sp1.da, isEditable);
             if (el.outDf1 && sp1.df != null) el.outDf1.textContent = sp1.df.toFixed(2);
-            if (el.outR1_1 && sp1.R1 != null) el.outR1_1.textContent = sp1.R1.toFixed(2);
-            if (el.outR2_1 && res.R2_1 != null) el.outR2_1.textContent = res.R2_1.toFixed(2);
-            if (el.outAlphaFlank1 && res.flank_alpha1 != null) el.outAlphaFlank1.textContent = res.flank_alpha1.toFixed(2) + '°';
+            syncValue(el.outR1_1, el.inputR1, sp1.R1, isEditable);
+            syncValue(el.outR2_1, el.inputR2_1, sp1.R2, isEditable);
+            syncValue(el.outAlphaFlank1, el.inputAlphaFlank1, sp1.alphaDeg, isEditable);
             if (el.outBf1 && sp1.bf1 != null) el.outBf1.textContent = sp1.bf1.toFixed(2);
             if (el.outBa && res.ba != null) el.outBa.textContent = res.ba.toFixed(2);
             if (el.outRx && sp1.rx != null) el.outRx.textContent = sp1.rx.toFixed(2);
@@ -5667,14 +6431,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (el.outDg1 && sp1.Dg != null) el.outDg1.textContent = sp1.Dg.toFixed(2);
         }
 
-        const sp2 = res.sprocket2 || { da: res.da2, df: res.df2, R1: res.R1, R2: res.R2_2, Dg: res.Dg2 };
         if (sp2) {
-            if (el.outDa2 && sp2.da != null) el.outDa2.textContent = sp2.da.toFixed(2);
+            syncValue(el.outDa2, el.inputDa2, sp2.da, isEditable);
             if (el.outDf2 && sp2.df != null) el.outDf2.textContent = sp2.df.toFixed(2);
             if (el.outR1_2 && sp2.R1 != null) el.outR1_2.textContent = sp2.R1.toFixed(2);
-            if (el.outR2_2 && res.R2_2 != null) el.outR2_2.textContent = res.R2_2.toFixed(2);
-            if (el.outAlphaFlank2 && res.flank_alpha2 != null) el.outAlphaFlank2.textContent = res.flank_alpha2.toFixed(2) + '°';
+            syncValue(el.outR2_2, el.inputR2_2, sp2.R2, isEditable);
+            syncValue(el.outAlphaFlank2, el.inputAlphaFlank2, sp2.alphaDeg, isEditable);
             if (el.outDg2 && sp2.Dg != null) el.outDg2.textContent = sp2.Dg.toFixed(2);
+        }
+
+        // Help text description
+        if (el.toleranceHelpText) {
+            if (isMean) {
+                el.toleranceHelpText.innerHTML = 'ℹ <em>Đang áp dụng giá trị danh nghĩa trung bình chuẩn MITCalc 1.74 / ISO 606 (Delta = 0.000000). Khi bỏ tích, bạn có thể tự do nhập số/điều chỉnh trong dải [Min ÷ Max] hoặc chọn nhanh chuẩn TCVN 1785-76.</em>';
+            } else if (state.profileMode === 'tcvn') {
+                el.toleranceHelpText.innerHTML = '🇻🇳 <strong style="color: #f43f5e;">Chuẩn TCVN 1785-76 / GOST 591-69</strong>: <em>Đỉnh da kịch trần (chống nhảy xích), R1=0.5025*d3+0.05, sườn R2=Min (dốc), góc sườn alpha=Max (rãnh mở rộng).</em>';
+            } else if (state.profileMode === 'min') {
+                el.toleranceHelpText.innerHTML = '⬇ <strong style="color: #60a5fa;">Cận Dưới ISO 606 (Min Envelope)</strong>: <em>Biên dạng rãnh nhỏ nhất của dải dung sai.</em>';
+            } else if (state.profileMode === 'max') {
+                el.toleranceHelpText.innerHTML = '⬆ <strong style="color: #fbbf24;">Cận Trên ISO 606 (Max Envelope)</strong>: <em>Biên dạng rãnh lớn nhất của dải dung sai.</em>';
+            } else {
+                el.toleranceHelpText.innerHTML = '✏ <strong style="color: var(--accent-cyan);">Tùy chỉnh trong dải (Custom Range)</strong>: <em>Các kích thước đã được điều chỉnh trực tiếp theo yêu cầu chế tạo xưởng.</em>';
+            }
         }
 
         // Summary Banner Cards
@@ -5750,9 +6528,114 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (el.selChain && el.selChain.options.length > 0) {
                     state.chainId = parseInt(el.selChain.value, 10);
                 }
+                if (state.stdId === 'TCVN_STD') {
+                    state.useMeanTolerance = false;
+                    state.profileMode = 'tcvn';
+                    state.customDa1 = null;
+                    state.customDa2 = null;
+                    state.customR1 = null;
+                    state.customR2_1 = null;
+                    state.customR2_2 = null;
+                    state.customAlpha1 = null;
+                    state.customAlpha2 = null;
+                    if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = false;
+                }
                 recalculate();
             });
         }
+
+        // Section 5.0 Tolerance Range Controls
+        if (el.chkUseMeanTolerance) {
+            el.chkUseMeanTolerance.addEventListener('change', () => {
+                state.useMeanTolerance = el.chkUseMeanTolerance.checked;
+                if (state.useMeanTolerance) {
+                    state.profileMode = 'mean';
+                    state.customDa1 = null;
+                    state.customDa2 = null;
+                    state.customR1 = null;
+                    state.customR2_1 = null;
+                    state.customR2_2 = null;
+                    state.customAlpha1 = null;
+                    state.customAlpha2 = null;
+                } else {
+                    state.profileMode = (state.stdId === 'TCVN_STD') ? 'tcvn' : 'custom';
+                }
+                recalculate();
+            });
+        }
+
+        if (el.btnPresetMean) {
+            el.btnPresetMean.addEventListener('click', () => {
+                state.useMeanTolerance = true;
+                state.profileMode = 'mean';
+                state.customDa1 = null; state.customDa2 = null;
+                state.customR1 = null; state.customR2_1 = null;
+                state.customR2_2 = null; state.customAlpha1 = null;
+                state.customAlpha2 = null;
+                if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = true;
+                recalculate();
+            });
+        }
+
+        if (el.btnPresetTCVN) {
+            el.btnPresetTCVN.addEventListener('click', () => {
+                state.useMeanTolerance = false;
+                state.profileMode = 'tcvn';
+                state.customDa1 = null; state.customDa2 = null;
+                state.customR1 = null; state.customR2_1 = null;
+                state.customR2_2 = null; state.customAlpha1 = null;
+                state.customAlpha2 = null;
+                if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = false;
+                recalculate();
+            });
+        }
+
+        if (el.btnPresetMin) {
+            el.btnPresetMin.addEventListener('click', () => {
+                state.useMeanTolerance = false;
+                state.profileMode = 'min';
+                state.customDa1 = null; state.customDa2 = null;
+                state.customR1 = null; state.customR2_1 = null;
+                state.customR2_2 = null; state.customAlpha1 = null;
+                state.customAlpha2 = null;
+                if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = false;
+                recalculate();
+            });
+        }
+
+        if (el.btnPresetMax) {
+            el.btnPresetMax.addEventListener('click', () => {
+                state.useMeanTolerance = false;
+                state.profileMode = 'max';
+                state.customDa1 = null; state.customDa2 = null;
+                state.customR1 = null; state.customR2_1 = null;
+                state.customR2_2 = null; state.customAlpha1 = null;
+                state.customAlpha2 = null;
+                if (el.chkUseMeanTolerance) el.chkUseMeanTolerance.checked = false;
+                recalculate();
+            });
+        }
+
+        // Section 5.0 Custom Input fields (when tolerance lock is unchecked)
+        const customToleranceInputs = [
+            el.inputDa1, el.inputDa2, el.inputR1,
+            el.inputR2_1, el.inputR2_2, el.inputAlphaFlank1, el.inputAlphaFlank2
+        ];
+        customToleranceInputs.forEach(inp => {
+            if (inp) {
+                inp.addEventListener('change', () => {
+                    state.profileMode = 'custom';
+                    if (el.inputDa1) state.customDa1 = parseFloat(el.inputDa1.value.replace(',', '.')) || null;
+                    if (el.inputDa2) state.customDa2 = parseFloat(el.inputDa2.value.replace(',', '.')) || null;
+                    if (el.inputR1) state.customR1 = parseFloat(el.inputR1.value.replace(',', '.')) || null;
+                    if (el.inputR2_1) state.customR2_1 = parseFloat(el.inputR2_1.value.replace(',', '.')) || null;
+                    if (el.inputR2_2) state.customR2_2 = parseFloat(el.inputR2_2.value.replace(',', '.')) || null;
+                    if (el.inputAlphaFlank1) state.customAlpha1 = parseFloat(el.inputAlphaFlank1.value.replace(',', '.')) || null;
+                    if (el.inputAlphaFlank2) state.customAlpha2 = parseFloat(el.inputAlphaFlank2.value.replace(',', '.')) || null;
+                    recalculate();
+                });
+            }
+        });
 
         // Chain select change
         if (el.selChain) {

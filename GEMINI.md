@@ -3054,3 +3054,38 @@ ho_{f0} / \cos\gamma$.
    - Tinh chỉnh độ trong suốt má xích (`rgba(..., 0.40)`): Giúp người dùng quan sát rõ nét toàn bộ biên dạng răng ăn khớp bên dưới mà vẫn giữ trọn hiệu ứng 3D kim loại sinh động.
    - Thống nhất đơn vị đo $p, d_3$ trên Canvas theo hệ hiển thị (`res.p`, `res.d3`), bảo đảm kích thước ăn khớp chính xác 100% trên cả hệ Mét và hệ Inch.
 
+
+
+---
+
+### Quy Tắc 126: Quy Chuẩn Tích Hợp Tiêu Chuẩn Xích Việt Nam TCVN 1785-76 / TCVN 1590-74 (ГОСТ 591-69) & Cơ Chế Kiểm Soát Dung Sai Dải Hình Học Đĩa Xích ISO 606 / DIN 8196 (Module 9 Vietnam Standard & Tolerance Envelope Protocol)
+**Ngày áp dụng**: 11/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+
+1. **Bản chất Hình học & Quan hệ Đồng dạng ISO 606 vs TCVN 1785-76 / ГОСТ 591-69**:
+   - Về mặt lý thuyết cơ khí chế tạo máy, **TCVN 1785-76 / ГОСТ 591-69 là một trường hợp biên cụ thể (Boundary Extreme Case) nằm hoàn toàn trong miền dung sai bao (Tolerance Envelope) của tiêu chuẩn quốc tế ISO 606 / DIN 8196**:
+     * **Góc sườn rãnh răng**: $\alpha_{\text{TCVN}} = 140^\circ - 90^\circ/z \equiv \alpha_{\max}$ của ISO 606. Rãnh răng mở rộng góc tối đa giúp con lăn vào/ra êm ái, hạn chế kẹt khi gia công đơn chiếc bằng dao phay đĩa định hình.
+     * **Bán kính cung sườn**: $r_{e,\text{TCVN}} = 0.12 d_3(z + 2) \equiv R_{2,\min}$ của ISO 606. Bán kính sườn nhỏ nhất tạo độ dốc lớn nhất, chống hiện tượng con lăn trượt leo răng khi chịu tải nặng.
+     * **Bán kính đáy rãnh**: $r_{\text{TCVN}} = 0.5025 d_3 + 0.05\text{ mm}$, nằm sát cận dưới $R_{1,\min} = 0.505 d_3$ của ISO 606, ôm khít con lăn.
+     * **Đường kính đỉnh đĩa**: $d_{a,\text{TCVN}} = d + 1.25 p - d_3 \equiv d_{a,\max}$ của ISO 606. Chiều cao răng cực đại chống tuột xích hoặc nhảy xích khi bước xích bị dão dài sau thời gian dài vận hành.
+   - MITCalc 1.74 và phương Tây chọn **giá trị trung bình (Mean)** $(Min + Max)/2$ nhằm tối ưu cho gia công hàng loạt bằng dao phay lăn răng (Hobbing).
+   - Thiết kế Web App dung hòa hoàn hảo hai trường phái: Vừa bảo toàn giá trị trung bình danh nghĩa chuẩn MITCalc 1.74, vừa cung cấp trường hợp biên TCVN và khả năng tinh chỉnh linh hoạt trong toàn bộ dải dung sai.
+
+2. **Cơ chế Kiểm soát Dung sai Dải Kép (Dual Tolerance Control Protocol)**:
+   - **Mặc định ban đầu (Default Lock)**:
+     * Checkbox `#chkUseMeanTolerance` ("Khóa theo giá trị trung bình (Mean Value - Khuyến nghị MITCalc / ISO 606)") luôn ở trạng thái **TÍCH CHỌN**.
+     * Toàn bộ 4 thông số hình học ($d_a, R_1, R_2, \alpha$) hiển thị dưới dạng ô chỉ đọc `.output-eng`. Cụm nút chọn nhanh `#tolerancePresetsGroup` bị làm mờ.
+     * Đảm bảo tính toán đối chiếu Excel COM `chains_01.xlsb` đạt Zero-Tolerance tuyệt đối ($\Delta = 0.000000$).
+   - **Khi Bỏ Tích (Unlocked Mode)**:
+     * Kích hoạt cụm 4 nút chọn nhanh với hiệu ứng tương tác trực quan:
+       * `[ 🇪🇺 ISO Trung Bình ]`: Khôi phục giá trị trung bình danh nghĩa $(Min + Max)/2$.
+       * `[ 🇻🇳 Chuẩn TCVN 1785-76 ]`: Áp đặt tức thì các công thức biên TCVN ($d_{a,\max}, R_{1,\text{TCVN}}, R_{2,\min}, \alpha_{\max}$).
+       * `[ ⬇ Cận Dưới (Min) ]`: Áp đặt giá trị cận dưới tối thiểu của ISO 606.
+       * `[ ⬆ Cận Trên (Max) ]`: Áp đặt giá trị cận trên tối đa của ISO 606.
+     * Mở khóa các ô nhập liệu thành `.user-input` (nền trắng viền xanh bo góc), cho phép kỹ sư nhập bất kỳ giá trị thực tế nào mong muốn.
+     * Tự động hiển thị nhãn dải giới hạn chuẩn `[Min ÷ Max]` ngay bên dưới mỗi ô nhập liệu để người thiết kế luôn kiểm soát được biên độ an toàn theo ISO 606.
+
+3. **Cơ sở Dữ liệu & Tự động Nhận diện Chuẩn Việt Nam (`chain-data.js`)**:
+   - Tích hợp nhóm tiêu chuẩn `TCVN_STD` với 27 quy cách xích con lăn công nghiệp thông dụng từ 06B đến 32B cho các dãy 1, 2, 3 (bước xích $p = 9.525 \div 50.8\text{ mm}$).
+   - Bổ sung 3 Presets mẫu thiết kế chuẩn Việt Nam (`TCVN 08B-1`, `TCVN 12B-1`, `TCVN 16B-1`).
+   - Tự động kích hoạt chế độ TCVN khi người dùng lựa chọn tiêu chuẩn `TCVN_STD` tại Mục 3.1.

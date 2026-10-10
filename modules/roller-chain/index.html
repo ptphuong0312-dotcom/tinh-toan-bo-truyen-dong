@@ -617,7 +617,7 @@
             <!-- SECTION 5.0: KÍCH THƯỚC ĐĨA XÍCH ISO 606 (ACTIVE) -->
             <div class="accordion-section active" id="sec50">
                 <div class="section-header results-block">
-                    <span>5.0 KÍCH THƯỚC HÌNH HỌC ĐĨA XÍCH ISO 606 / DIN 8187 (SPROCKET DIMENSIONS)</span>
+                    <span>5.0 KÍCH THƯỚC HÌNH HỌC ĐĨA XÍCH ISO 606 / DIN 8187 & TCVN 1785-76 (SPROCKET DIMENSIONS)</span>
                     <span class="header-toggle">▼</span>
                 </div>
                 <div class="section-body">
@@ -632,6 +632,27 @@
                         </div>
                     </details>
 
+                    <!-- TOLERANCE RANGE CONTROL PANEL (QUY CHUẨN DẢI DUNG SAI ISO / TCVN) -->
+                    <div class="tolerance-control-panel" style="background: rgba(15, 23, 42, 0.7); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                            <label style="display: flex; align-items: center; gap: 8px; font-weight: 600; color: #f8fafc; cursor: pointer; user-select: none;">
+                                <input type="checkbox" id="chkUseMeanTolerance" checked style="width: 18px; height: 18px; accent-color: var(--accent-cyan); cursor: pointer;">
+                                <span>Khóa giá trị danh nghĩa trung bình chuẩn MITCalc 1.74 / ISO 606 (Mặc định)</span>
+                            </label>
+                            
+                            <div id="tolerancePresetsGroup" style="display: none; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                <span style="font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase;">Chọn nhanh:</span>
+                                <button type="button" id="btnPresetMean" class="btn-action-small" style="background: #334155; color: #fff;" title="Đặt lại về giá trị trung bình chuẩn ISO/MITCalc">🇪🇺 ISO Trung Bình</button>
+                                <button type="button" id="btnPresetTCVN" class="btn-action-small" style="background: #e11d48; color: #fff; font-weight: 600;" title="Áp dụng chuẩn TCVN 1785-76 / GOST 591-69 (Cận biên trong dải ISO 606)">🇻🇳 Chuẩn TCVN 1785-76</button>
+                                <button type="button" id="btnPresetMin" class="btn-action-small" style="background: #1e3a8a; color: #fff;" title="Đặt về cận dưới ISO 606">⬇ Cận Dưới (Min)</button>
+                                <button type="button" id="btnPresetMax" class="btn-action-small" style="background: #854d0e; color: #fff;" title="Đặt về cận trên ISO 606">⬆ Cận Trên (Max)</button>
+                            </div>
+                        </div>
+                        <div id="toleranceHelpText" style="margin-top: 8px; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+                            ℹ <em>Đang áp dụng giá trị danh nghĩa trung bình chuẩn MITCalc 1.74 / ISO 606 (Delta = 0.000000). Khi bỏ tích, bạn có thể tự do nhập số/điều chỉnh trong dải [Min ÷ Max] hoặc chọn nhanh chuẩn TCVN 1785-76.</em>
+                        </div>
+                    </div>
+
                     <table class="calc-table">
                         <thead>
                             <tr>
@@ -641,7 +662,7 @@
                                 <th style="width: 200px;">Đĩa Dẫn 1 (Pinion)</th>
                                 <th style="width: 200px;">Đĩa Bị Dẫn 2 (Wheel)</th>
                                 <th style="width: 90px;">Đơn vị</th>
-                                <th style="width: 140px;">Quy chuẩn</th>
+                                <th style="width: 160px;">Quy chuẩn & Dải [Min ÷ Max]</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -658,10 +679,16 @@
                                 <td>5.2</td>
                                 <td>Đường kính vòng đỉnh răng</td>
                                 <td>da (Da)</td>
-                                <td><span id="outDa1" class="output-eng highlight-key-param">82.97</span></td>
-                                <td><span id="outDa2" class="output-eng highlight-key-param">159.60</span></td>
+                                <td>
+                                    <span id="outDa1" class="output-eng highlight-key-param">82.97</span>
+                                    <input type="text" id="inputDa1" class="user-input" style="display: none; width: 100%; text-align: right;" value="82.97">
+                                </td>
+                                <td>
+                                    <span id="outDa2" class="output-eng highlight-key-param">159.60</span>
+                                    <input type="text" id="inputDa2" class="user-input" style="display: none; width: 100%; text-align: right;" value="159.60">
+                                </td>
                                 <td>mm</td>
-                                <td>ISO 606 / DIN 8187</td>
+                                <td><span id="limitDa" class="cell-limit">ISO / TCVN</span></td>
                             </tr>
                             <tr>
                                 <td>5.3</td>
@@ -676,28 +703,45 @@
                                 <td>5.4</td>
                                 <td>Bán kính lượn đáy rãnh răng</td>
                                 <td>R1</td>
-                                <td><span id="outR1_1" class="output-eng">4.37</span></td>
-                                <td><span id="outR1_2" class="output-eng">4.37</span></td>
+                                <td>
+                                    <span id="outR1_1" class="output-eng">4.37</span>
+                                    <input type="text" id="inputR1" class="user-input" style="display: none; width: 100%; text-align: right;" value="4.37">
+                                </td>
+                                <td>
+                                    <span id="outR1_2" class="output-eng">4.37</span>
+                                </td>
                                 <td>mm</td>
-                                <td>R1 = 0.505*d3 + ...</td>
+                                <td><span id="limitR1" class="cell-limit">ISO / TCVN</span></td>
                             </tr>
                             <tr>
                                 <td>5.5</td>
                                 <td>Bán kính cung sườn răng</td>
                                 <td>R2</td>
-                                <td><span id="outR2_1" class="output-eng">29.14</span></td>
-                                <td><span id="outR2_2" class="output-eng">75.70</span></td>
+                                <td>
+                                    <span id="outR2_1" class="output-eng">29.14</span>
+                                    <input type="text" id="inputR2_1" class="user-input" style="display: none; width: 100%; text-align: right;" value="29.14">
+                                </td>
+                                <td>
+                                    <span id="outR2_2" class="output-eng">75.70</span>
+                                    <input type="text" id="inputR2_2" class="user-input" style="display: none; width: 100%; text-align: right;" value="75.70">
+                                </td>
                                 <td>mm</td>
-                                <td>DIN 8196 / ISO 606</td>
+                                <td><span id="limitR2" class="cell-limit">DIN 8196 / TCVN</span></td>
                             </tr>
                             <tr>
                                 <td>5.6</td>
                                 <td>Góc sườn rãnh răng</td>
                                 <td>α</td>
-                                <td><span id="outAlphaFlank1" class="output-eng">125.26°</span></td>
-                                <td><span id="outAlphaFlank2" class="output-eng">127.63°</span></td>
+                                <td>
+                                    <span id="outAlphaFlank1" class="output-eng">125.26°</span>
+                                    <input type="text" id="inputAlphaFlank1" class="user-input" style="display: none; width: 100%; text-align: right;" value="125.26">
+                                </td>
+                                <td>
+                                    <span id="outAlphaFlank2" class="output-eng">127.63°</span>
+                                    <input type="text" id="inputAlphaFlank2" class="user-input" style="display: none; width: 100%; text-align: right;" value="127.63">
+                                </td>
                                 <td>độ</td>
-                                <td>α = 130° - 90°/z</td>
+                                <td><span id="limitAlpha" class="cell-limit">ISO / TCVN</span></td>
                             </tr>
                             <tr>
                                 <td>5.7</td>

@@ -165,52 +165,131 @@ const ChainCalc = {
         else if (v_metric > 7.0) rec_lub_id = 3;
         else if (v_metric > 4.0) rec_lub_id = 2;
 
-        // Section 5.0 ISO 606 / DIN 8187 Sprocket Dimensions
+        // Section 5.0 ISO 606 / DIN 8187 / DIN 8196 / TCVN 1785-76 Sprocket Dimensions
         const d3 = isMetric ? chain.d3 : chain.d3 / 25.4;
         const d1_pin = isMetric ? chain.d1 : chain.d1 / 25.4;
         const b1 = isMetric ? chain.b1 : chain.b1 / 25.4;
         const b2 = isMetric ? chain.b2 : chain.b2 / 25.4;
         const strands = chain.strands || 1;
         const e_trans = isMetric ? chain.e : chain.e / 25.4;
-
-        // Tip diameter Da (ISO 606 / DIN 8187)
         const RA = isMetric ? 2 : 3;
+
+        // 1. Tip diameter Da Limits [Min, Max]
         const da1_min = d1 + 0.5 * d3;
         const da1_max = d1 + 1.25 * p - d3;
-        const da1 = Number(((da1_min + da1_max) / 2.0).toFixed(RA));
-
         const da2_min = d2 + 0.5 * d3;
         const da2_max = d2 + 1.25 * p - d3;
-        const da2 = Number(((da2_min + da2_max) / 2.0).toFixed(RA));
 
-        // Root radius R1 (ISO 606 / MITCalc: power 0.33)
+        // 2. Root radius R1 Limits [Min, Max] (ISO 606 / DIN 8196 / TCVN 1785-76)
         const d3_mm = chain.d3;
         const r1_min_mm = 0.505 * d3_mm;
         const r1_max_mm = 0.505 * d3_mm + 0.069 * (d3_mm ** 0.33);
-        const R1_raw = (r1_min_mm + r1_max_mm) / 2.0;
-        const R1_val = isMetric ? R1_raw : R1_raw / 25.4;
-        const R1 = Number(R1_val.toFixed(RA));
+        const r1_min = isMetric ? r1_min_mm : r1_min_mm / 25.4;
+        const r1_max = isMetric ? r1_max_mm : r1_max_mm / 25.4;
+        const R1_mean = (r1_min + r1_max) / 2.0;
+
+        // TCVN 1785-76 specific root radius (0.5025 * d3 + 0.05 mm)
+        const r1_tcvn_mm = 0.5025 * d3_mm + 0.05;
+        const r1_tcvn = isMetric ? r1_tcvn_mm : r1_tcvn_mm / 25.4;
+
+        // 3. Flank radius R2 Limits [Min, Max]
+        const r2_1_min_mm = 0.12 * d3_mm * (z1 + 2);
+        const r2_1_max_mm = 0.008 * d3_mm * (z1 * z1 + 180);
+        const r2_1_min = isMetric ? r2_1_min_mm : r2_1_min_mm / 25.4;
+        const r2_1_max = isMetric ? r2_1_max_mm : r2_1_max_mm / 25.4;
+        const R2_1_mean = (r2_1_min + r2_1_max) / 2.0;
+
+        const r2_2_min_mm = 0.12 * d3_mm * (z2 + 2);
+        const r2_2_max_mm = 0.008 * d3_mm * (z2 * z2 + 180);
+        const r2_2_min = isMetric ? r2_2_min_mm : r2_2_min_mm / 25.4;
+        const r2_2_max = isMetric ? r2_2_max_mm : r2_2_max_mm / 25.4;
+        const R2_2_mean = (r2_2_min + r2_2_max) / 2.0;
+
+        // 4. Flank angle alpha Limits [Min, Max] [deg]
+        const flank_alpha1_min = 120.0 - 90.0 / z1;
+        const flank_alpha1_max = 140.0 - 90.0 / z1;
+        const flank_alpha1_mean = 130.0 - 90.0 / z1;
+
+        const flank_alpha2_min = 120.0 - 90.0 / z2;
+        const flank_alpha2_max = 140.0 - 90.0 / z2;
+        const flank_alpha2_mean = 130.0 - 90.0 / z2;
+
+        // Tolerance Range Selection Protocol
+        // Default: useMeanTolerance = true -> 100% identical to MITCalc 1.74!
+        // When unchecked (useMeanTolerance = false), supports 'tcvn', 'min', 'max', or 'custom'
+        const useMeanTolerance = params.useMeanTolerance !== false;
+        let profileMode = params.profileMode || (useMeanTolerance ? 'mean' : 'custom');
+        if (useMeanTolerance) {
+            profileMode = 'mean';
+        }
+
+        let da1, da2, R1, R2_1, R2_2, flank_alpha1, flank_alpha2;
+
+        if (profileMode === 'mean') {
+            da1 = Number(((da1_min + da1_max) / 2.0).toFixed(RA));
+            da2 = Number(((da2_min + da2_max) / 2.0).toFixed(RA));
+            R1 = Number(R1_mean.toFixed(RA));
+            R2_1 = Number(R2_1_mean.toFixed(RA));
+            R2_2 = Number(R2_2_mean.toFixed(RA));
+            flank_alpha1 = Number(flank_alpha1_mean.toFixed(2));
+            flank_alpha2 = Number(flank_alpha2_mean.toFixed(2));
+        } else if (profileMode === 'tcvn') {
+            // TCVN 1785-76 / GOST 591-69 (Extreme Boundary Case within ISO 606 envelope)
+            da1 = Number(da1_max.toFixed(RA));
+            da2 = Number(da2_max.toFixed(RA));
+            R1 = Number(r1_tcvn.toFixed(RA));
+            R2_1 = Number(r2_1_min.toFixed(RA));
+            R2_2 = Number(r2_2_min.toFixed(RA));
+            flank_alpha1 = Number(flank_alpha1_max.toFixed(2));
+            flank_alpha2 = Number(flank_alpha2_max.toFixed(2));
+        } else if (profileMode === 'min') {
+            da1 = Number(da1_min.toFixed(RA));
+            da2 = Number(da2_min.toFixed(RA));
+            R1 = Number(r1_min.toFixed(RA));
+            R2_1 = Number(r2_1_min.toFixed(RA));
+            R2_2 = Number(r2_2_min.toFixed(RA));
+            flank_alpha1 = Number(flank_alpha1_min.toFixed(2));
+            flank_alpha2 = Number(flank_alpha2_min.toFixed(2));
+        } else if (profileMode === 'max') {
+            da1 = Number(da1_max.toFixed(RA));
+            da2 = Number(da2_max.toFixed(RA));
+            R1 = Number(r1_max.toFixed(RA));
+            R2_1 = Number(r2_1_max.toFixed(RA));
+            R2_2 = Number(r2_2_max.toFixed(RA));
+            flank_alpha1 = Number(flank_alpha1_max.toFixed(2));
+            flank_alpha2 = Number(flank_alpha2_max.toFixed(2));
+        } else {
+            // Custom values within [Min, Max]
+            da1 = params.customDa1 !== undefined ? Number(Number(params.customDa1).toFixed(RA)) : Number(((da1_min + da1_max) / 2.0).toFixed(RA));
+            da2 = params.customDa2 !== undefined ? Number(Number(params.customDa2).toFixed(RA)) : Number(((da2_min + da2_max) / 2.0).toFixed(RA));
+            R1 = params.customR1 !== undefined ? Number(Number(params.customR1).toFixed(RA)) : Number(R1_mean.toFixed(RA));
+            R2_1 = params.customR2_1 !== undefined ? Number(Number(params.customR2_1).toFixed(RA)) : Number(R2_1_mean.toFixed(RA));
+            R2_2 = params.customR2_2 !== undefined ? Number(Number(params.customR2_2).toFixed(RA)) : Number(R2_2_mean.toFixed(RA));
+            flank_alpha1 = params.customAlpha1 !== undefined ? Number(Number(params.customAlpha1).toFixed(2)) : Number(flank_alpha1_mean.toFixed(2));
+            flank_alpha2 = params.customAlpha2 !== undefined ? Number(Number(params.customAlpha2).toFixed(2)) : Number(flank_alpha2_mean.toFixed(2));
+        }
 
         // Root diameter Df (Bottom of tooth gullet): Df = d - 2 * R1
         const df1 = Number((d1 - 2.0 * R1).toFixed(RA));
         const df2 = Number((d2 - 2.0 * R1).toFixed(RA));
 
-        // Flank radius R2 (ISO 606 / DIN 8196 / MITCalc)
-        const r2_1_min_mm = 0.12 * d3_mm * (z1 + 2);
-        const r2_1_max_mm = 0.008 * d3_mm * (z1 * z1 + 180);
-        const R2_1_mm = (r2_1_min_mm + r2_1_max_mm) / 2.0;
-        const R2_1_val = isMetric ? R2_1_mm : R2_1_mm / 25.4;
-        const R2_1 = Number(R2_1_val.toFixed(RA));
-
-        const r2_2_min_mm = 0.12 * d3_mm * (z2 + 2);
-        const r2_2_max_mm = 0.008 * d3_mm * (z2 * z2 + 180);
-        const R2_2_mm = (r2_2_min_mm + r2_2_max_mm) / 2.0;
-        const R2_2_val = isMetric ? R2_2_mm : R2_2_mm / 25.4;
-        const R2_2 = Number(R2_2_val.toFixed(RA));
-
-        // Flank angle alpha
-        const flank_alpha1 = Number((130.0 - 90.0 / z1).toFixed(2));
-        const flank_alpha2 = Number((130.0 - 90.0 / z2).toFixed(2));
+        const limits = {
+            da1_min: Number(da1_min.toFixed(RA)),
+            da1_max: Number(da1_max.toFixed(RA)),
+            da2_min: Number(da2_min.toFixed(RA)),
+            da2_max: Number(da2_max.toFixed(RA)),
+            r1_min: Number(r1_min.toFixed(RA)),
+            r1_max: Number(r1_max.toFixed(RA)),
+            r1_tcvn: Number(r1_tcvn.toFixed(RA)),
+            r2_1_min: Number(r2_1_min.toFixed(RA)),
+            r2_1_max: Number(r2_1_max.toFixed(RA)),
+            r2_2_min: Number(r2_2_min.toFixed(RA)),
+            r2_2_max: Number(r2_2_max.toFixed(RA)),
+            alpha1_min: Number(flank_alpha1_min.toFixed(2)),
+            alpha1_max: Number(flank_alpha1_max.toFixed(2)),
+            alpha2_min: Number(flank_alpha2_min.toFixed(2)),
+            alpha2_max: Number(flank_alpha2_max.toFixed(2))
+        };
 
         // Tooth width bf
         let bf_factor = 0.95;
@@ -248,7 +327,18 @@ const ChainCalc = {
             Dg: Dg1,
             p: p,
             d3: d3,
-            alphaDeg: flank_alpha1
+            alphaDeg: flank_alpha1,
+            limits: {
+                da_min: limits.da1_min,
+                da_max: limits.da1_max,
+                r1_min: limits.r1_min,
+                r1_max: limits.r1_max,
+                r1_tcvn: limits.r1_tcvn,
+                r2_min: limits.r2_1_min,
+                r2_max: limits.r2_1_max,
+                alpha_min: limits.alpha1_min,
+                alpha_max: limits.alpha1_max
+            }
         };
 
         const sprocket2 = {
@@ -262,7 +352,18 @@ const ChainCalc = {
             Dg: Dg2,
             p: p,
             d3: d3,
-            alphaDeg: flank_alpha2
+            alphaDeg: flank_alpha2,
+            limits: {
+                da_min: limits.da2_min,
+                da_max: limits.da2_max,
+                r1_min: limits.r1_min,
+                r1_max: limits.r1_max,
+                r1_tcvn: limits.r1_tcvn,
+                r2_min: limits.r2_2_min,
+                r2_max: limits.r2_2_max,
+                alpha_min: limits.alpha2_min,
+                alpha_max: limits.alpha2_max
+            }
         };
 
         // Recommended lubrication description string
@@ -340,6 +441,11 @@ const ChainCalc = {
             Dg1,
             Dg2,
             chain_weight,
+
+            // Tolerance limits & selection mode
+            limits,
+            useMeanTolerance,
+            profileMode,
 
             // Nested sprocket structures
             sprocket1,

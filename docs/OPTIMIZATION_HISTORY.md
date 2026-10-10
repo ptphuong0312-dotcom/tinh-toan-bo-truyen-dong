@@ -4838,3 +4838,41 @@ ho_{f0}$.
      - **QC Suite (`tools/test_chain_qc.py`)**: Mở rộng lên **60 / 60 phép tính kỹ thuật đạt PASS 100.0% với $\Delta = 0.000000$** đối chiếu Excel COM (`chains_01.xlsb`).
      - **Đóng gói Bundle (`tools/bundle_all.py`)**: 9/9 module đóng gói trọn vẹn thành công (161.3 KB bundle).
      - **Playwright E2E Browser Test**: Chụp ảnh xác nhận Section 4.0 thu gọn mặc định, Hình 5.1 ẩn mặc định trong `<details>`, Section 5.0 hiển thị trọn vẹn 11 dòng thông số, và Canvas 2D vẽ biên dạng răng đĩa xích chuẩn công nghiệp.
+
+
+---
+
+## Giai Đoạn 48: Tích Hợp Tiêu Chuẩn Xích TCVN 1785-76 / TCVN 1590-74 & Cơ Chế Kiểm Soát Dung Sai Dải Hình Học Đĩa Xích ISO 606 / DIN 8196 (Mặc Định Trung Bình Mean, Mở Khóa Tinh Chỉnh Dải & 4 Presets)
+* **Bối cảnh & Lệnh trực tiếp từ chủ sở hữu (`SirPhuong`)**:
+  1. *"sau một hồi thảo luận bạn hãy thêm cho tôi tiêu chuẩn xích TCVN vào web app để có thêm 1 lựa chọn nữa trong thiết kế, vẫn bảo toàn mọi lựa chọn tính toán của web app hiện tại nhưng chỉ có điều nhưng thông số nào mà theo ISO 606 / DIN 8196 / MITCalc có chọn theo dải thì mạc định ban đầu vẫn như bạn đã chọn lựa trước đó là lấy giá trị trung binh nhưng khi bỏ tích đi thì có thể điều chỉnh được trong giải. và TCVN cũng chính là 1 trường hợp trong giải này"*.
+* **Bản chất kỹ thuật & Phân tích chuyên sâu (ISO 606 vs TCVN 1785-76 / ГОСТ 591-69)**:
+  - Bản chất hình học: **TCVN 1785-76 / ГОСТ 591-69 thực chất là một trường hợp biên cụ thể (Boundary Extreme Point) nằm hoàn toàn bên trong miền dung sai bao (Tolerance Envelope) của ISO 606 / DIN 8196**:
+    * Góc sườn rãnh răng: $\alpha_{\text{TCVN}} = 140^\circ - 90^\circ/z \equiv \alpha_{\max}$ của ISO 606 (rãnh răng mở rộng tối đa giúp con lăn thoát vào/ra nhẹ nhàng khi gia công đơn chiếc bằng dao phay định hình).
+    * Bán kính cung sườn: $r_{e,\text{TCVN}} = 0.12 d_3 (z+2) \equiv R_{2,\min}$ của ISO 606 (sườn răng dốc đứng nhất, giữ con lăn không bị trượt leo răng).
+    * Bán kính đáy rãnh: $r_{\text{TCVN}} = 0.5025 d_3 + 0.05\text{ mm}$ (nằm sát cận dưới $R_{1,\min} = 0.505 d_3$ của ISO 606).
+    * Đường kính đỉnh đĩa: $d_{a,\text{TCVN}} = d + 1.25 p - d_3 \equiv d_{a,\max}$ của ISO 606 (đỉnh răng cao nhất, triệt tiêu nguy cơ nhảy xích khi xích bị dão dài).
+  - MITCalc 1.74 chọn **giá trị trung bình (Mean)** giữa Cận Dưới và Cận Trên nhằm tối ưu cho phương pháp gia công hàng loạt bằng dao phay lăn răng (Hobbing).
+  - Việc tích hợp TCVN vào dải dung sai ISO 606 bảo toàn 100% tính tương thích quốc tế và mang lại giải pháp thiết kế thực tế cho ngành chế tạo máy Việt Nam.
+* **Đột phá kỹ thuật & Thành quả triển khai**:
+  1. **Bổ sung Cơ sở Dữ liệu Xích Chuẩn Việt Nam (`chain-data.js`)**:
+     - Bổ sung nhóm tiêu chuẩn `TCVN_STD` ("TCVN 1785-76 / TCVN 1590-74 (Tiêu chuẩn Việt Nam - Vietnam Series)") gồm 27 quy cách xích con lăn thông dụng từ 06B đến 32B cho cả 3 dãy 1, 2, 3.
+     - Bổ sung 3 Presets mẫu thiết kế chuẩn Việt Nam (`TCVN 08B-1`, `TCVN 12B-1`, `TCVN 16B-1`) vào Menu Presets đầu vào.
+  2. **Nâng cấp Động cơ Hình học Section 5.0 Hỗ trợ Dải & TCVN (`chain-calc.js`)**:
+     - Tính toán đồng thời cả 2 giá trị biên $[Min, Max]$ cho $d_a, R_1, R_2, \alpha$ theo ISO 606 / DIN 8196.
+     - Hỗ trợ cờ điều khiển `useMeanTolerance` (mặc định: `true`), và các chế độ profile `profileMode` (`'mean'`, `'tcvn'`, `'min'`, `'max'`, `'custom'`).
+     - Khi `profileMode === 'tcvn'`: Tự động gán đúng các công thức biên TCVN ($d_{a,\max}$, $R_{1,\text{TCVN}}$, $R_{2,\min}$, $\alpha_{\max}$).
+     - Khi người dùng nhập số tùy chỉnh: Kiểm tra và cảnh báo nếu vượt ra ngoài dải dung sai bao của ISO 606.
+  3. **Tái thiết kế Giao diện Section 5.0 với Bảng Điều khiển Dung Sai Thông Minh (`index.html`, `chain-ui.js`)**:
+     - Bổ sung thanh điều khiển dung sai `tolerance-control-panel` với Checkbox `#chkUseMeanTolerance` ("Khóa theo giá trị trung bình (Mean Value - Khuyến nghị MITCalc / ISO 606)").
+     - Khi **TÍCH CHỌN (Mặc định)**: Toàn bộ 4 thông số ($d_a, R_1, R_2, \alpha$) hiển thị dưới dạng ô chỉ đọc (`.output-eng`) với giá trị trung bình danh nghĩa chuẩn MITCalc 1.74. Cụm nút preset bị làm mờ.
+     - Khi **BỎ TÍCH**: Cụm 4 nút chọn nhanh `#tolerancePresetsGroup` được kích hoạt rực rỡ:
+       * `[ 🇪🇺 ISO Trung Bình ]`: Lấy giá trị trung bình danh nghĩa $(Min + Max)/2$.
+       * `[ 🇻🇳 Chuẩn TCVN 1785-76 ]`: Tự động áp đặt chuẩn xác các công thức biên TCVN.
+       * `[ ⬇ Cận Dưới (Min) ]`: Lấy giá trị cận dưới tối thiểu.
+       * `[ ⬆ Cận Trên (Max) ]`: Lấy giá trị cận trên tối đa.
+       * Đồng thời mở khóa các ô input (`.user-input`) cho phép người dùng gõ số bất kỳ trong dải $[Min \div Max]$ hiển thị kèm ngay bên dưới.
+     - Tự động kích hoạt chế độ TCVN khi người dùng chọn tiêu chuẩn `TCVN_STD` tại Mục 3.1.
+  4. **Kiểm thử tự động & Đóng gói**:
+     - **QC Suite (`tools/test_chain_qc.py`)**: Đạt **60 / 60 phép tính PASS 100.0% với $\Delta = 0.000000$** đối chiếu MITCalc 1.74 Excel COM (`chains_01.xlsb`).
+     - **Bundle Script (`tools/bundle_chain.py`, `tools/bundle_all.py`)**: Đóng gói thành công `chain-engine.bundle.js` (188.7 KB) chạy 100% offline không cần server.
+     - **Playwright Test (`scratch/test_tcvn_ui.py`)**: Kiểm chứng trực quan 0 lỗi console, chuyển đổi mượt mà giữa chế độ khóa mặc định và mở khóa TCVN/tùy chỉnh.
