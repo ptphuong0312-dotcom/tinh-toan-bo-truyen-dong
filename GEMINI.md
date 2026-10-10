@@ -3037,19 +3037,18 @@ ho_{f0} / \cos\gamma$.
 
 ---
 
-### Quy Tắc 125: Quy Chuẩn Biên Dạng Hình Học Răng Đĩa Xích Con Lăn Chuẩn Quốc Tế ISO 606 / ASME B29.1M & Bo Tròn Đỉnh Răng $R_t$ Liên Hợp $C^1$ (Module 9 Sprocket Profile Protocol)
+### Quy Tắc 125: Quy Chuẩn Biên Dạng Hình Học Răng Đĩa Xích Con Lăn Chuẩn 1-to-1 MITCalc 1.74 & ISO 606 / DIN 8196: Triệt Tiêu Vòm Tròn Nhân Tạo ($R_t$) & Bảo Tồn Cung Đỉnh Bằng ($d_a$) (Module 9 Sprocket Profile Protocol)
 **Ngày áp dụng**: 10/10/2026  
 **Chủ sở hữu phê duyệt**: SirPhuong  
-1. **Khắc phục Triệt để Lỗi Biên dạng Răng Đĩa Xích**:
-   - Khắc phục hiện tượng răng bị nhọn hoắt dạng sóng tam giác hoặc đầu răng bị chặt phẳng có góc vuông gãy khúc.
-   - Biên dạng mới được xây dựng theo chuẩn quốc tế ISO 606 / DIN 8196 / ASME B29.1M bao gồm 3 thành phần giải tích khép kín $C^1$:
+1. **Triệt tiêu Hoàn toàn Lỗi Đỉnh Răng "Tròn Xoe" & Trích xuất 1-to-1 Từ `chains_01.xlsb!View4`**:
+   - Nghiêm cấm sử dụng các thuật toán vương miện đỉnh nhân tạo ($R_t$) làm triệt tiêu bề rộng đỉnh răng (Top land width) và biến đỉnh răng thành đầu tròn bán nguyệt ("tròn xoe").
+   - Biên dạng chuẩn xác 1-to-1 MITCalc 1.74 và tiêu chuẩn quốc tế ISO 606 / DIN 8196 / ASME B29.1M bao gồm:
      * **Cung đáy rãnh con lăn ($R_1$)**: Bán kính $R_1 \approx 0.505 d_3$, góc ôm $\alpha = 130^\circ - 90^\circ / z$, ôm khít con lăn xích với độ chính xác tuyệt đối.
-     * **Cung sườn răng làm việc ($R_2$)**: Bán kính $R_2$ tiếp xúc trơn tru $C^1$ với $R_1$ tại góc tiếp xúc $\beta_0 = \alpha / 2$.
-     * **Cung bo đỉnh răng hình vương miện ($R_t$)**: Bo tròn đỉnh răng bằng cung tròn bán kính $R_t$ có tâm $C(x_c, 0)$ trên trục đối xứng đỉnh răng, tiệm cận chính xác bán kính đỉnh ngoài $r_a = d_a / 2$, tiếp tuyến $C^1$ hoàn hảo với cả hai sườn răng $R_2$:
-       $$\Delta = O_{2x} - r_a, \quad R_t = \frac{\Delta^2 + O_{2y}^2 - R_2^2}{2(R_2 - \Delta)}, \quad x_c = r_a - R_t$$
+     * **Cung sườn răng làm việc ($R_2$)**: Bán kính $R_2 = (R_{2,\min} + R_{2,\max})/2$ với tâm sườn $P_7$ nằm trên đường kéo dài từ tâm con lăn qua điểm chuyển tiếp $P_3$, tiếp tuyến $C^1$ hoàn hảo với $R_1$.
+     * **Cung đỉnh răng bằng phẳng-cong (Crest Land Arc trên đường tròn $d_a$)**: Nằm trực tiếp trên đường tròn ngoài danh nghĩa $d_a$ (bán kính $r_a = d_a / 2$), nối giữa điểm giao $P_5$ của sườn trái và sườn phải qua trục đối xứng đỉnh răng $P_6$ (góc $\pi / z$). Bề rộng cung đỉnh danh nghĩa $s_a = 2 \cdot (\pi/z - \theta_5) \cdot r_a$ ($\approx 0.5 \div 0.75\text{ mm}$), tạo nên dáng răng hình thang bo sườn kinh điển của cơ khí đĩa xích.
 2. **Khóa Pha Động Học Ăn Khớp Liên Hợp (Conjugate Phase Locking)**:
-   - Sector mỗi răng $k$ được xoay góc $(k + 0.5) \cdot \frac{2\pi}{z}$, đảm bảo rãnh răng số 0 luôn nằm chính xác tại góc $0.0\text{ rad}$.
-   - Khi đĩa xích quay góc $\theta_1$, mọi con lăn trong hoạt họa kinematics đều lọt khít 100% vào tâm đáy rãnh $R_1$ của cả đĩa dẫn 1 và đĩa bị dẫn 2, không bị lệch pha, triệt tiêu hoàn toàn va chạm đỉnh răng khi cuốn vào và nhả xích.
+   - Sector mỗi răng $k$ được phân chia đối xứng quanh tâm rãnh góc $0.0\text{ rad}$.
+   - Khi đĩa xích quay góc $\theta_1$, mọi con lăn trong hoạt họa kinematics đều lọt khít 100% vào tâm đáy rãnh $R_1$ của cả đĩa dẫn 1 và đĩa bị dẫn 2, không bị lệch pha, các sườn răng ôm trọn lấy con lăn.
 3. **Tiện ích Canvas 2D & Độ Trong Suốt Má Xích**:
    - Bổ sung nút công cụ "🔗 Ẩn/Hiện Xích" (`#btnToggleLinks`) trên thanh điều khiển Canvas 2D.
    - Tinh chỉnh độ trong suốt má xích (`rgba(..., 0.40)`): Giúp người dùng quan sát rõ nét toàn bộ biên dạng răng ăn khớp bên dưới mà vẫn giữ trọn hiệu ứng 3D kim loại sinh động.

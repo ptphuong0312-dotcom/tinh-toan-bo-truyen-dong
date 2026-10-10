@@ -352,145 +352,124 @@ const ChainCalc = {
      * Generate 2D Profile Points for a Sprocket Tooth (ISO 606 / DIN 8196 / ASME B29.1M)
      * Authentic closed analytical contour:
      * - Roller seating arc R1 (subtending angle alpha)
+     * Generate 2D Profile Points for a Sprocket Tooth (ISO 606 / DIN 8196 / MITCalc 1.74)
+     * Authentic analytical contour:
+     * - Roller seating arc R1 (subtending angle alpha = 130 - 90/z deg)
      * - Flank arc R2 tangent C1 to R1
-     * - Analytic topping crown arc Rt tangent C1 to both flanks and reaching ra at the apex
-     * - 100% conjugate alignment with roller meshing positions
+     * - Crest arc along tip circle da/2 (Top Land) connecting flanks across tooth centerline (NO artificial dome/topping bulb)
+     * - 100% conjugate alignment with roller meshing positions (Space 0 at 0.0 rad)
      */
     generateSprocket2DPoints(z, pOrData, d3, da, df, R1, R2, alphaDeg) {
         let p, d3_val, da_val, df_val, R1_val, R2_val, alpha_val;
         if (typeof pOrData === 'object' && pOrData !== null) {
             p = pOrData.p || 12.7;
             d3_val = pOrData.d3 || 8.51;
-            da_val = pOrData.da || (p / Math.sin(Math.PI / z) + 10);
-            df_val = pOrData.df || (p / Math.sin(Math.PI / z) - 10);
-            R1_val = pOrData.R1 || 0.505 * d3_val;
-            R2_val = pOrData.R2 || (0.12 * d3_val * (z + 2));
+            da_val = pOrData.da || (p / Math.sin(Math.PI / z) + 0.625 * p - 0.25 * d3_val);
+            df_val = pOrData.df || (p / Math.sin(Math.PI / z) - 2.0 * (0.505 * d3_val));
+            R1_val = pOrData.R1 || (0.505 * d3_val);
+            R2_val = pOrData.R2 || (0.12 * d3_val * (z + 2) + 0.008 * d3_val * (z * z + 180)) / 2.0;
             alpha_val = pOrData.alphaDeg || (130.0 - 90.0 / z);
         } else {
             p = pOrData || 12.7;
             d3_val = d3 || 8.51;
-            da_val = da || (p / Math.sin(Math.PI / z) + 10);
-            df_val = df || (p / Math.sin(Math.PI / z) - 10);
-            R1_val = R1 || 0.505 * d3_val;
-            R2_val = R2 || (0.12 * d3_val * (z + 2));
+            da_val = da || (p / Math.sin(Math.PI / z) + 0.625 * p - 0.25 * d3_val);
+            df_val = df || (p / Math.sin(Math.PI / z) - 2.0 * (0.505 * d3_val));
+            R1_val = R1 || (0.505 * d3_val);
+            R2_val = R2 || (0.12 * d3_val * (z + 2) + 0.008 * d3_val * (z * z + 180)) / 2.0;
             alpha_val = alphaDeg || (130.0 - 90.0 / z);
         }
 
         const dp = p / Math.sin(Math.PI / z);
         const rp = dp / 2.0;
         const ra = da_val / 2.0;
-
         const alpha = (alpha_val * Math.PI) / 180.0;
-        const beta0 = alpha / 2.0;
         const pitch_ang = (2.0 * Math.PI) / z;
+        const half_pitch = Math.PI / z;
 
-        // Construct 1 symmetric tooth sector in local coordinates where tooth centerline is along positive X-axis (theta = 0)
-        // Space on left is at -pitch_ang / 2
-        const th_space = -pitch_ang / 2.0;
-        const Okx = rp * Math.cos(th_space);
-        const Oky = rp * Math.sin(th_space);
+        // MITCalc analytical law of cosines geometry:
+        // mc_P3 is the contact point between R1 and R2
+        const mc_P3_x = R1_val * Math.sin(alpha / 2.0);
+        const mc_P3_y = rp - R1_val * Math.cos(alpha / 2.0);
+        const mc_P7_x = mc_P3_x + R2_val * Math.sin(alpha / 2.0);
+        const mc_P7_y = mc_P3_y - R2_val * Math.cos(alpha / 2.0);
 
-        // Basis vectors for space on left:
-        const ux = -Math.cos(th_space);
-        const uy = -Math.sin(th_space);
-        const px = -Math.sin(th_space);
-        const py = Math.cos(th_space);
+        const b = Math.hypot(mc_P7_x, mc_P7_y);
+        const c = ra;
+        const a_side = R2_val;
+        const cos_alf = (b * b + c * c - a_side * a_side) / (2.0 * b * c);
+        const alf_triangle = Math.acos(Math.min(1.0, Math.max(-1.0, cos_alf)));
 
-        // Flank contact vector towards tooth (CCW by beta0 from ux):
-        const vx = Math.cos(beta0) * ux + Math.sin(beta0) * px;
-        const vy = Math.cos(beta0) * uy + Math.sin(beta0) * py;
+        const ang_P7_native = Math.atan2(mc_P7_x, mc_P7_y);
+        const th5 = ang_P7_native - alf_triangle; // Angle from space center to flank-crest junction
 
-        // Seating curve contact point Ar and flank center O2
-        const Arx = Okx + R1_val * vx;
-        const Ary = Oky + R1_val * vy;
-        const O2x = Okx + (R1_val - R2_val) * vx;
-        const O2y = Oky + (R1_val - R2_val) * vy;
+        // In space frame along positive X (Space 0 center at (rp, 0)):
+        const p3_bot = { x: rp - R1_val * Math.cos(alpha / 2.0), y: -R1_val * Math.sin(alpha / 2.0) };
+        const p3_top = { x: rp - R1_val * Math.cos(alpha / 2.0), y: +R1_val * Math.sin(alpha / 2.0) };
 
-        // Exact analytical topping curve radius Rt and center xc on tooth centerline (y = 0)
-        // such that topping arc reaches ra at apex and is tangent C1 to both flanks of radius R2
-        const delta = O2x - ra;
-        const numer = delta * delta + O2y * O2y - R2_val * R2_val;
-        const denom = 2.0 * (R2_val - delta);
-        let Rt = denom !== 0 ? numer / denom : 0.05 * p;
-        if (Rt <= 0 || isNaN(Rt) || Rt > 0.4 * ra) {
-            Rt = 0.08 * p;
-        }
-        const xc = ra - Rt;
+        const P7_bot = { x: p3_bot.x - R2_val * Math.cos(alpha / 2.0), y: p3_bot.y - R2_val * Math.sin(alpha / 2.0) };
+        const P7_top = { x: p3_top.x - R2_val * Math.cos(alpha / 2.0), y: p3_top.y + R2_val * Math.sin(alpha / 2.0) };
 
-        // Tangent contact point between flank and topping arc
-        const dist_O2_C = Math.hypot(O2x - xc, O2y);
-        const u_tang_x = (xc - O2x) / dist_O2_C;
-        const u_tang_y = (0.0 - O2y) / dist_O2_C;
-        const Ptx = O2x + R2_val * u_tang_x;
-        const Pty = O2y + R2_val * u_tang_y;
+        const p5_bot = { x: ra * Math.cos(-th5), y: ra * Math.sin(-th5) };
+        const p5_top = { x: ra * Math.cos(th5), y: ra * Math.sin(th5) };
 
-        // Arc angles
-        const phi_flank_start = Math.atan2(Ary - O2y, Arx - O2x);
-        const phi_flank_end = Math.atan2(Pty - O2y, Ptx - O2x);
-        const phi_top_start = Math.atan2(Pty, Ptx - xc); // negative
-        const phi_top_end = -phi_top_start;              // positive
+        const phi_bot_start = Math.atan2(p5_bot.y - P7_bot.y, p5_bot.x - P7_bot.x);
+        const phi_bot_end = Math.atan2(p3_bot.y - P7_bot.y, p3_bot.x - P7_bot.x);
 
-        // Sample 1 tooth sector points:
-        // Starts at bottom of space left (b = 0), curves through seating arc, left flank, topping arc, right flank, into bottom of space right (b = 0)
-        const tooth_pts = [];
-        const n_seat = 6;
-        for (let j = 0; j <= n_seat; j++) {
-            const u = j / n_seat;
-            const b = u * beta0;
-            const v_curr_x = Math.cos(b) * ux + Math.sin(b) * px;
-            const v_curr_y = Math.cos(b) * uy + Math.sin(b) * py;
-            tooth_pts.push({ x: Okx + R1_val * v_curr_x, y: Oky + R1_val * v_curr_y });
-        }
+        const phi_top_start = Math.atan2(p3_top.y - P7_top.y, p3_top.x - P7_top.x);
+        const phi_top_end = Math.atan2(p5_top.y - P7_top.y, p5_top.x - P7_top.x);
 
+        // Discretization resolutions:
+        const n_tip = 3;
         const n_flank = 8;
-        for (let j = 1; j <= n_flank; j++) {
+        const n_seat = 6;
+
+        // Sample 1 pitch sector [-half_pitch, +half_pitch]:
+        const sector = [];
+
+        // 1. Bottom crest arc: [-half_pitch, -th5] on circle ra
+        for (let j = 0; j < n_tip; j++) {
+            const u = j / n_tip;
+            const th = -half_pitch + u * (half_pitch - th5);
+            sector.push({ x: ra * Math.cos(th), y: ra * Math.sin(th) });
+        }
+
+        // 2. Bottom flank arc: [p5_bot -> p3_bot] on circle R2
+        for (let j = 0; j < n_flank; j++) {
             const u = j / n_flank;
-            const phi = phi_flank_start + u * (phi_flank_end - phi_flank_start);
-            tooth_pts.push({ x: O2x + R2_val * Math.cos(phi), y: O2y + R2_val * Math.sin(phi) });
+            const phi = phi_bot_start + u * (phi_bot_end - phi_bot_start);
+            sector.push({ x: P7_bot.x + R2_val * Math.cos(phi), y: P7_bot.y + R2_val * Math.sin(phi) });
         }
 
-        const n_top = 8;
-        for (let j = 1; j <= n_top; j++) {
-            const u = j / n_top;
-            const phi = phi_top_start + u * (phi_top_end - phi_top_start);
-            tooth_pts.push({ x: xc + Rt * Math.cos(phi), y: Rt * Math.sin(phi) });
-        }
-
-        // Right flank (symmetric across X-axis)
-        for (let j = 1; j <= n_flank; j++) {
-            const u = j / n_flank;
-            const phi_r = -phi_flank_end + u * (-phi_flank_start - (-phi_flank_end));
-            tooth_pts.push({ x: O2x + R2_val * Math.cos(phi_r), y: -O2y + R2_val * Math.sin(phi_r) });
-        }
-
-        // Seating arc on right (space at +pitch_ang / 2)
-        const th_space_r = pitch_ang / 2.0;
-        const Okx_r = rp * Math.cos(th_space_r);
-        const Oky_r = rp * Math.sin(th_space_r);
-        const ux_r = -Math.cos(th_space_r);
-        const uy_r = -Math.sin(th_space_r);
-        const px_r = -Math.sin(th_space_r);
-        const py_r = Math.cos(th_space_r);
-
-        for (let j = 1; j <= n_seat; j++) {
+        // 3. Seating arc: [p3_bot -> p3_top] on circle R1
+        for (let j = 0; j < n_seat; j++) {
             const u = j / n_seat;
-            const b = -beta0 + u * beta0;
-            const v_curr_x = Math.cos(b) * ux_r + Math.sin(b) * px_r;
-            const v_curr_y = Math.cos(b) * uy_r + Math.sin(b) * py_r;
-            tooth_pts.push({ x: Okx_r + R1_val * v_curr_x, y: Oky_r + R1_val * v_curr_y });
+            const beta = -alpha / 2.0 + u * alpha;
+            sector.push({ x: rp - R1_val * Math.cos(beta), y: R1_val * Math.sin(beta) });
+        }
+
+        // 4. Top flank arc: [p3_top -> p5_top] on circle R2
+        for (let j = 0; j < n_flank; j++) {
+            const u = j / n_flank;
+            const phi = phi_top_start + u * (phi_top_end - phi_top_start);
+            sector.push({ x: P7_top.x + R2_val * Math.cos(phi), y: P7_top.y + R2_val * Math.sin(phi) });
+        }
+
+        // 5. Top crest arc: [th5 -> half_pitch] on circle ra
+        for (let j = 0; j < n_tip; j++) {
+            const u = j / n_tip;
+            const th = th5 + u * (half_pitch - th5);
+            sector.push({ x: ra * Math.cos(th), y: ra * Math.sin(th) });
         }
 
         // Replicate across all z teeth:
-        // Rotating tooth k by (k + 0.5) * pitch_ang ensures that space 0 is at angle 0.0 rad!
-        // This guarantees 100% conjugate alignment with roller meshing positions!
+        // Space 0 is at angle 0.0 rad, perfectly matching roller conjugate meshing!
         const pts = [];
-        const n_pts_sector = tooth_pts.length - 1; // Exclude last point to avoid duplicate with start of next tooth
         for (let k = 0; k < z; k++) {
-            const ang_k = (k + 0.5) * pitch_ang;
+            const ang_k = k * pitch_ang;
             const cos_k = Math.cos(ang_k);
             const sin_k = Math.sin(ang_k);
-            for (let j = 0; j < n_pts_sector; j++) {
-                const pt = tooth_pts[j];
+            for (let j = 0; j < sector.length; j++) {
+                const pt = sector[j];
                 pts.push({
                     x: pt.x * cos_k - pt.y * sin_k,
                     y: pt.x * sin_k + pt.y * cos_k

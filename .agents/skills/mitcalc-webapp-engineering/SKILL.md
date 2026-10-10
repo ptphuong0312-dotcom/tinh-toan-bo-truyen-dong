@@ -2920,35 +2920,41 @@ ho_{f0}$.
 
 ---
 
-### Runbook 28: Giải Thuật Giải Tích Biên Dạng Răng Đĩa Xích Con Lăn Chuẩn Quốc Tế ISO 606 / DIN 8196 / ASME B29.1M & Bo Tròn Đỉnh Răng $R_t$ Liên Hợp $C^1$
-**Mục tiêu**: Chuẩn hóa 100% hình học biên dạng răng đĩa xích con lăn (Sprocket Tooth Profile) đạt dáng vẻ cơ khí công nghiệp chuẩn xác, khắc phục triệt để hiện tượng răng nhọn dạng sóng / đầu răng bị chặt phẳng có góc vuông, đảm bảo con lăn lọt khít 100% vào đáy rãnh và ăn khớp liên hợp hoàn hảo (Conjugate Meshing).
+### Runbook 28: Giải Thuật Giải Tích Biên Dạng Răng Đĩa Xích Con Lăn Chuẩn Quốc Tế ISO 606 / DIN 8196 / MITCalc 1.74 (Trích Xuất 1-to-1 Từ `chains_01.xlsb!DXF.bas!View4`)
+**Mục tiêu**: Chuẩn hóa 100% hình học biên dạng răng đĩa xích con lăn (Sprocket Tooth Profile) đạt dáng vẻ cơ khí công nghiệp chuẩn xác theo tiêu chuẩn quốc tế và bản quyền gốc MITCalc 1.74. Triệt tiêu hoàn toàn lỗi đỉnh răng "tròn xoe" (nguyên nhân do áp đặt bán kính vòm topping nhân tạo $R_t$), bảo tồn nguyên vẹn đoạn cung đỉnh $d_a$ (Crest / Top Land Arc) phẳng-cong đặc trưng của đĩa xích, đảm bảo con lăn lọt khít 100% vào đáy rãnh và ăn khớp liên hợp hoàn hảo (Conjugate Meshing).
 
-1. **Ba thành phần hình học giải tích chuẩn xác 100%**:
-   - **Cung đáy rãnh con lăn (Seating Curve $R_1$)**:
+1. **Ba thành phần hình học giải tích chuẩn xác 1-to-1 MITCalc 1.74**:
+   - **Cung đáy rãnh con lăn (Roller Seating Arc $R_1$)**:
      * Bán kính danh nghĩa: $R_1 = (R_{1,\min} + R_{1,\max})/2 \approx 0.505 d_3$.
-     * Tâm đặt tại tâm con lăn $O_k(r_p \cos\theta_k, r_p \sin\theta_k)$ trên vòng chia $r_p = p / (2 \sin(\pi / z))$.
+     * Tâm đặt tại tâm con lăn $O_k$ trên vòng chia $d_p = p / \sin(\pi / z)$.
      * Góc ôm con lăn: $\alpha = 130^\circ - 90^\circ / z$. Quét đối xứng $\pm \alpha / 2$ quanh trục tâm rãnh.
-     * Điểm tiếp xúc chuyển tiếp $A_r = O_k + R_1 \vec{v}_r$.
-   - **Cung sườn răng làm việc (Working Flank $R_2$)**:
-     * Bán kính danh nghĩa: $R_2 = (R_{2,\min} + R_{2,\max})/2$ theo ISO 606.
-     * Tiếp tuyến mượt $C^1$ với $R_1$ tại điểm $A_r$. Tâm sườn $O_2 = O_k + (R_1 - R_2) \vec{v}_r$.
-   - **Cung bo đỉnh răng hình vương miện (Analytical Topping Crown Arc $R_t$)**:
-     * Khắc phục hoàn toàn góc gãy nhọn hoặc đường đỉnh chặt phẳng bằng cung tròn bán kính $R_t$ có tâm $C(x_c, 0)$ nằm trên đường tâm răng.
-     * Đỉnh cung tiệm cận chính xác đường kính ngoài danh nghĩa: $x_{\text{apex}} = x_c + R_t = r_a = d_a / 2$.
-     * Công thức giải tích nghiệm duy nhất bảo toàn tiếp tuyến $C^1$ với cả 2 sườn răng $R_2$:
-       $$\Delta = O_{2x} - r_a$$
-       $$R_t = \frac{\Delta^2 + O_{2y}^2 - R_2^2}{2 (R_2 - \Delta)}$$
-       $$x_c = r_a - R_t$$
-     * Tiếp điểm giải tích: $P_t = O_2 + R_2 \cdot \frac{C - O_2}{|C - O_2|}$.
+     * Điểm tiếp xúc chuyển tiếp sườn $P_3$:
+       $P_{3,x} = R_1 \sin(\alpha / 2)$, $P_{3,y} = d_p / 2 - R_1 \cos(\alpha / 2)$ (trong hệ trục rãnh đứng).
+   - **Cung sườn răng làm việc (Working Flank Arc $R_2$)**:
+     * Bán kính danh nghĩa: $R_2 = (R_{2,\min} + R_{2,\max})/2$, trong đó:
+       $R_{2,\min} = 0.12 d_3 (z + 2)$, $R_{2,\max} = 0.008 d_3 (z^2 + 180)$.
+     * Tiếp tuyến mượt mà $C^1$ với $R_1$ tại điểm $P_3$.
+     * Tâm sườn $P_7$: $P_{7,x} = P_{3,x} + R_2 \sin(\alpha / 2)$, $P_{7,y} = P_{3,y} - R_2 \cos(\alpha / 2)$.
+     * Cung sườn vươn lên cắt đường tròn đỉnh $r_a = d_a / 2$ tại điểm giao $P_5$:
+       Theo định lý hàm số cosin trong tam giác $\triangle(O, P_7, P_5)$ với 3 cạnh $a = R_2, b = |P_7|, c = r_a$:
+       $$\cos(\text{alf}) = \frac{b^2 + c^2 - a^2}{2 b c} \implies \text{alf} = \arccos\left(\frac{b^2 + c^2 - a^2}{2 b c}\right)$$
+       Góc cực của điểm giao $P_5$: $\theta_5 = \text{angle}(P_7) - \text{alf}$.
+   - **Cung đỉnh răng chuẩn xác (Crest / Top Land Arc trên đường tròn $d_a$)**:
+     * **Nguyên tắc bất biến**: Tuyệt đối KHÔNG dùng cung tròn phụ bo tròn xoe đỉnh răng. Trong thực tế chế tạo và chuẩn MITCalc 1.74, đỉnh răng đĩa xích là một đoạn cung tròn nằm trực tiếp trên đường kính ngoài danh nghĩa $d_a$ (bán kính $r_a = d_a / 2$) nối giữa điểm $P_5$ của sườn trái và sườn phải!
+     * Trục đối xứng giữa đỉnh răng tại góc $\pi / z$: $P_6 = (r_a \sin(\pi/z), r_a \cos(\pi/z))$.
+     * Bề rộng cung đỉnh danh nghĩa (Top Land Width):
+       $$s_a = 2 \cdot \left(\frac{\pi}{z} - \theta_5\right) \cdot r_a$$
+       (Ví dụ: với xích 08B $z=19$, $s_a \approx 0.50\text{ mm}$, tạo nên đầu răng phẳng-cong hình thang chuẩn mực, không bao giờ bị tròn xoe biến dạng).
 
 2. **Quy chuẩn đồng bộ pha liên hợp con lăn & rãnh răng**:
-   - Phân bố $z$ răng đối xứng: Mỗi răng $k$ được xoay góc $(k + 0.5) \cdot \frac{2\pi}{z}$.
-   - Rãnh răng 0 nằm chính xác tại góc $0.0\text{ rad}$. Khi đĩa xích quay góc $\theta_1$, rãnh răng quay tới $\theta_1$.
+   - Khóa pha hoàn hảo: Mỗi bước góc $\frac{2\pi}{z}$ được phân chia đối xứng quanh tâm rãnh góc $0.0\text{ rad}$.
+   - Khi đĩa xích quay góc $\theta_1$, rãnh răng quay tới $\theta_1$.
    - Tọa độ con lăn trong hoạt họa kinematics quay tới $\theta_{\text{roller}} = \theta_1 - i \cdot \frac{2\pi}{z_1}$.
-   - Kết quả: Con lăn luôn lọt khít 100% vào đáy rãnh $R_1$ trong mọi khung hình, không bị lệch pha, không bị chạm đỉnh răng khi cuốn vào và nhả xích.
+   - Kết quả: Con lăn luôn lọt khít 100% vào đáy rãnh $R_1$ trong mọi khung hình, không bị lệch pha, các sườn răng ôm trọn lấy con lăn.
 
 3. **Cải tiến giao diện 2D Canvas & Tiện ích**:
    - Nút công cụ "🔗 Ẩn/Hiện Xích" (`#btnToggleLinks`) cho phép kỹ sư ẩn/hiện mắt xích để quan sát trọn vẹn đĩa xích trần.
    - Độ mờ bán trong suốt má xích (`rgba(..., 0.40)`): Giúp vừa thấy cấu trúc xích 3D sinh động vừa nhìn rõ biên dạng răng ăn khớp bên dưới.
    - Thống nhất đơn vị đo $p, d_3$ trên Canvas theo hệ hiển thị (`res.p`, `res.d3`), chống lỗi sai lệch tỷ lệ khi chuyển hệ đo.
+
 
