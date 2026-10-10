@@ -146,7 +146,7 @@ class ChainCanvas {
             const margin = 1.35;
             const scale = Math.min(cw / (da2 * margin), ch / (da2 * margin));
             this.zoom = scale;
-            this.panX = cw / 2;
+            this.panX = cw / 2 - a * this.zoom;
             this.panY = ch / 2;
         } else if (this.viewMode === 'mesh') {
             // Focus on Mesh detail near top span entrance of Sprocket 1
@@ -277,29 +277,30 @@ class ChainCanvas {
         const p = res.chain ? res.chain.pitch : 12.7;
         const d3 = res.chain ? res.chain.d3 : 8.51; // roller diameter
         const b1 = res.chain ? res.chain.b1 : 7.75;
-        const X = res.X_even || res.X_exact || 100;
+        const X = res.X_even || res.X_exact || res.X || 100;
 
-        // Calculate rotation angles for sprockets (ratio z1 / z2)
-        const angle1 = this.rotationAngle;
-        const angle2 = this.rotationAngle * (z1 / z2);
-
-        const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, bf1: res.bf, rx: res.rx, Dg: res.Dg1 };
-        const sp2 = res.sprocket2 || { da: res.da2, df: res.df2, R1: res.R1, bf1: res.bf, rx: res.rx, Dg: res.Dg2 };
+        const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, bf1: res.bf, rx: res.rx, Dg: res.Dg1, p, d3 };
+        const sp2 = res.sprocket2 || { da: res.da2, df: res.df2, R1: res.R1, bf1: res.bf, rx: res.rx, Dg: res.Dg2, p, d3 };
         const da1 = sp1.da || (d1 + 10);
         const da2 = sp2.da || (d2 + 10);
+
+        // Generate full synchronized conjugate kinematics
+        const kine = (ChainCalc && ChainCalc.generateChainKinematics) 
+            ? ChainCalc.generateChainKinematics(d1, d2, a, p, X, this.rotationAngle, z1, z2)
+            : { theta1: this.rotationAngle, theta2: this.rotationAngle * (z1 / z2), rollers: [] };
 
         ctx.save();
 
         if (this.viewMode === 'full') {
             // 1. Draw Sprocket 1 at (0, 0)
-            this.drawSprocket(0, 0, d1, z1, sp1, angle1, '#38bdf8', 'Đĩa dẫn 1 (Z1=' + z1 + ')');
+            this.drawSprocket(0, 0, d1, z1, sp1, kine.theta1, '#38bdf8', 'Đĩa dẫn 1 (Z1=' + z1 + ')');
 
             // 2. Draw Sprocket 2 at (a, 0)
-            this.drawSprocket(a, 0, d2, z2, sp2, angle2, '#fbbf24', 'Đĩa bị dẫn 2 (Z2=' + z2 + ')');
+            this.drawSprocket(a, 0, d2, z2, sp2, kine.theta2, '#fbbf24', 'Đĩa bị dẫn 2 (Z2=' + z2 + ')');
 
             // 3. Draw Chain Kinematics (Loop & Rollers & Links)
             if (this.showLinks) {
-                this.drawChainLoop(d1, d2, a, p, d3, X, angle1);
+                this.drawChainLoop(kine, p, d3);
             }
 
             // 4. Center Line & Dimensions
@@ -311,20 +312,28 @@ class ChainCanvas {
             }
         } else if (this.viewMode === 'sprocket1') {
             // Focused on Sprocket 1
-            this.drawSprocket(0, 0, d1, z1, sp1, angle1, '#38bdf8', 'Đĩa xích dẫn 1 (Z1=' + z1 + ')');
+            this.drawSprocket(0, 0, d1, z1, sp1, kine.theta1, '#38bdf8', 'Đĩa xích dẫn 1 (Z1=' + z1 + ')');
+            if (this.showLinks) {
+                this.drawChainLoop(kine, p, d3);
+            }
             if (this.showDimensions) {
                 this.drawSprocketDimensions(0, 0, d1, sp1);
             }
         } else if (this.viewMode === 'sprocket2') {
             // Focused on Sprocket 2
-            this.drawSprocket(0, 0, d2, z2, sp2, angle2, '#fbbf24', 'Đĩa xích bị dẫn 2 (Z2=' + z2 + ')');
+            this.drawSprocket(a, 0, d2, z2, sp2, kine.theta2, '#fbbf24', 'Đĩa xích bị dẫn 2 (Z2=' + z2 + ')');
+            if (this.showLinks) {
+                this.drawChainLoop(kine, p, d3);
+            }
             if (this.showDimensions) {
-                this.drawSprocketDimensions(0, 0, d2, sp2);
+                this.drawSprocketDimensions(a, 0, d2, sp2);
             }
         } else if (this.viewMode === 'mesh') {
             // Zoomed Mesh Detail
-            this.drawSprocket(0, 0, d1, z1, sp1, angle1, '#38bdf8', 'Khu vực ăn khớp (Mesh Detail)');
-            this.drawChainLoop(d1, d2, a, p, d3, X, angle1, true);
+            this.drawSprocket(0, 0, d1, z1, sp1, kine.theta1, '#38bdf8', 'Khu vực ăn khớp (Mesh Detail)');
+            if (this.showLinks) {
+                this.drawChainLoop(kine, p, d3, true);
+            }
         }
 
         ctx.restore();
@@ -377,6 +386,75 @@ class ChainCanvas {
     }
 
     /**
+     * Draw authentic mechanical Figure-8 dog-bone Link Plate
+     */
+    drawFigure8LinkPlate(pA, pB, H, waistRatio, fillStyle, strokeStyle) {
+        const ctx = this.ctx;
+        const dx = pB.x - pA.x;
+        const dy = pB.y - pA.y;
+        const L = Math.hypot(dx, dy);
+        if (L < 1e-4) return;
+
+        const ux = dx / L;
+        const uy = dy / L;
+        const nx = -uy;
+        const ny = ux;
+
+        const R_end = (H / 2.0) * this.zoom;
+        const halfWaist = ((H * waistRatio) / 2.0) * this.zoom;
+        const ang_u = Math.atan2(uy, ux);
+
+        ctx.save();
+        ctx.fillStyle = fillStyle;
+        ctx.strokeStyle = strokeStyle;
+        ctx.lineWidth = Math.max(1.0, 1.2 * Math.min(2.0, this.zoom));
+
+        ctx.beginPath();
+
+        // 1. Arc around pA (from bottom around to top)
+        const n_arc = 10;
+        for (let j = 0; j <= n_arc; j++) {
+            const th = (ang_u - Math.PI / 2.0) - (Math.PI * j / n_arc);
+            const px = pA.x + R_end * Math.cos(th);
+            const py = pA.y + R_end * Math.sin(th);
+            if (j === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
+
+        // 2. Top waist curve from pA to pB
+        const n_waist = 8;
+        for (let j = 1; j < n_waist; j++) {
+            const u = j / n_waist;
+            const h_u = R_end - (R_end - halfWaist) * Math.sin(u * Math.PI);
+            const bx = pA.x + u * dx;
+            const by = pA.y + u * dy;
+            ctx.lineTo(bx + h_u * nx, by + h_u * ny);
+        }
+
+        // 3. Arc around pB (from top around to bottom)
+        for (let j = 0; j <= n_arc; j++) {
+            const th = (ang_u + Math.PI / 2.0) - (Math.PI * j / n_arc);
+            const px = pB.x + R_end * Math.cos(th);
+            const py = pB.y + R_end * Math.sin(th);
+            ctx.lineTo(px, py);
+        }
+
+        // 4. Bottom waist curve from pB to pA
+        for (let j = 1; j < n_waist; j++) {
+            const u = j / n_waist;
+            const h_u = R_end - (R_end - halfWaist) * Math.sin(u * Math.PI);
+            const bx = pB.x - u * dx;
+            const by = pB.y - u * dy;
+            ctx.lineTo(bx - h_u * nx, by - h_u * ny);
+        }
+
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    /**
      * Draw a Sprocket with ISO 606 tooth profile
      */
     drawSprocket(cx, cy, d, z, sprocketData, angle, color, label) {
@@ -387,55 +465,42 @@ class ChainCanvas {
         const r_tip = da / 2.0;
         const r_root = df / 2.0;
 
-        // 1. Tooth Contour
+        // 1. Tooth Contour (True ISO 606 Analytical Contour)
         if (this.showToothContours) {
             ctx.save();
             ctx.strokeStyle = color;
-            ctx.fillStyle = 'rgba(30, 41, 59, 0.85)'; // Dark fill body
-            ctx.lineWidth = 1.8;
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.95)'; // Deep Slate Body
+            ctx.lineWidth = Math.max(1.5, 1.8 * Math.min(2.0, this.zoom));
 
-            ctx.beginPath();
-            const totalSteps = z * 8;
-            for (let i = 0; i <= totalSteps; i++) {
-                const theta = (i / totalSteps) * Math.PI * 2.0;
-                // Modulate radius between root and tip based on tooth pitch
-                const toothPhase = (theta * z) % (Math.PI * 2.0);
-                let r;
-                if (toothPhase < Math.PI * 0.45) {
-                    // Tip land
-                    r = r_tip;
-                } else if (toothPhase < Math.PI * 0.95) {
-                    // Flank down to root
-                    const u = (toothPhase - Math.PI * 0.45) / (Math.PI * 0.5);
-                    r = r_tip - u * (r_tip - r_root);
-                } else if (toothPhase < Math.PI * 1.5) {
-                    // Root bottom arc (R1)
-                    r = r_root;
-                } else {
-                    // Flank up to tip
-                    const u = (toothPhase - Math.PI * 1.5) / (Math.PI * 0.5);
-                    r = r_root + u * (r_tip - r_root);
+            const pts = (ChainCalc && ChainCalc.generateSprocket2DPoints)
+                ? ChainCalc.generateSprocket2DPoints(z, sprocketData)
+                : null;
+
+            if (pts && pts.length > 0) {
+                ctx.beginPath();
+                const cosA = Math.cos(angle);
+                const sinA = Math.sin(angle);
+                for (let i = 0; i < pts.length; i++) {
+                    const px = pts[i].x;
+                    const py = pts[i].y;
+                    // Rotate by angle and translate by (cx, cy)
+                    const wx = cx + px * cosA - py * sinA;
+                    const wy = cy + px * sinA + py * cosA;
+                    const s = this.worldToScreen(wx, wy);
+                    if (i === 0) ctx.moveTo(s.x, s.y);
+                    else ctx.lineTo(s.x, s.y);
                 }
-
-                // Apply rotation
-                const currentAngle = theta + angle;
-                const wx = cx + r * Math.cos(currentAngle);
-                const wy = cy + r * Math.sin(currentAngle);
-                const s = this.worldToScreen(wx, wy);
-
-                if (i === 0) ctx.moveTo(s.x, s.y);
-                else ctx.lineTo(s.x, s.y);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
             }
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
             ctx.restore();
         }
 
         // 2. Pitch Circle (Đường kính chia d) - Dash-dot line
         if (this.showPitchCircles) {
             ctx.save();
-            ctx.strokeStyle = 'rgba(234, 179, 8, 0.75)'; // Amber gold
+            ctx.strokeStyle = 'rgba(234, 179, 8, 0.85)'; // Amber gold
             ctx.lineWidth = 1.2;
             ctx.setLineDash([8, 3, 2, 3]);
             ctx.beginPath();
@@ -450,7 +515,7 @@ class ChainCanvas {
         ctx.fillStyle = '#0f172a';
         ctx.strokeStyle = '#475569';
         ctx.lineWidth = 1.5;
-        const r_bore = r_root * 0.35;
+        const r_bore = r_root * 0.38;
         const scC = this.worldToScreen(cx, cy);
         ctx.beginPath();
         ctx.arc(scC.x, scC.y, r_bore * this.zoom, 0, Math.PI * 2);
@@ -474,32 +539,34 @@ class ChainCanvas {
         ctx.fillStyle = '#e2e8f0';
         ctx.font = '12px "Segoe UI", sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText(label, scC.x, scC.y + (r_tip + 18) * this.zoom);
+        ctx.fillText(label, scC.x, scC.y + (r_tip + 22) * this.zoom);
         ctx.restore();
     }
 
     /**
      * Draw the complete articulated Roller Chain Loop
      */
-    drawChainLoop(d1, d2, a, p, d3, X, rotationAngle, detailed = false) {
+    drawChainLoop(kine, p, d3, detailed = false) {
         const ctx = this.ctx;
-        if (!ChainCalc || !ChainCalc.generateChainKinematics) return;
-
-        const kine = ChainCalc.generateChainKinematics(d1, d2, a, p, X, rotationAngle);
-        if (!kine || !kine.rollers) return;
+        if (!kine || !kine.rollers || kine.rollers.length === 0) return;
 
         const rollers = kine.rollers;
         const rollerR = (d3 / 2.0);
+        const H_plate = 0.88 * p;
+        const waist = 0.78;
 
         ctx.save();
 
-        // 1. Draw Chain Pitch Path (Đường tâm ăn khớp xích)
-        ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
-        ctx.lineWidth = 1.2;
+        // Screen coordinates of all rollers
+        const screenRollers = rollers.map(r => this.worldToScreen(r.x, r.y));
+
+        // 1. Draw Pitch Path (Đường tâm ăn khớp xích)
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+        ctx.lineWidth = 1.0;
         ctx.setLineDash([4, 4]);
         ctx.beginPath();
-        for (let i = 0; i < rollers.length; i++) {
-            const s = this.worldToScreen(rollers[i].x, rollers[i].y);
+        for (let i = 0; i < screenRollers.length; i++) {
+            const s = screenRollers[i];
             if (i === 0) ctx.moveTo(s.x, s.y);
             else ctx.lineTo(s.x, s.y);
         }
@@ -507,61 +574,49 @@ class ChainCanvas {
         ctx.stroke();
         ctx.setLineDash([]);
 
-        // 2. Draw Link Plates (Má xích nối giữa các con lăn kề nhau)
-        ctx.strokeStyle = '#64748b'; // Slate-500
-        ctx.lineWidth = Math.max(1.5, rollerR * 1.8 * this.zoom);
-        ctx.lineCap = 'round';
-
-        ctx.beginPath();
-        for (let i = 0; i < rollers.length; i++) {
-            const nextIdx = (i + 1) % rollers.length;
-            const pA = this.worldToScreen(rollers[i].x, rollers[i].y);
-            const pB = this.worldToScreen(rollers[nextIdx].x, rollers[nextIdx].y);
-
-            // Alternating outer / inner plates visually
-            if (i % 2 === 0) {
-                ctx.moveTo(pA.x, pA.y);
-                ctx.lineTo(pB.x, pB.y);
+        // 2. Pass 1: Inner Link Plates (odd indices)
+        for (let i = 0; i < screenRollers.length; i++) {
+            if (i % 2 === 1) {
+                const nextIdx = (i + 1) % screenRollers.length;
+                this.drawFigure8LinkPlate(screenRollers[i], screenRollers[nextIdx], H_plate, waist, 'rgba(51, 65, 85, 0.90)', '#475569');
             }
         }
-        ctx.stroke();
 
-        // Inner link plates
-        ctx.strokeStyle = '#475569';
-        ctx.lineWidth = Math.max(1.2, rollerR * 1.4 * this.zoom);
-        ctx.beginPath();
-        for (let i = 0; i < rollers.length; i++) {
-            const nextIdx = (i + 1) % rollers.length;
-            const pA = this.worldToScreen(rollers[i].x, rollers[i].y);
-            const pB = this.worldToScreen(rollers[nextIdx].x, rollers[nextIdx].y);
-            if (i % 2 !== 0) {
-                ctx.moveTo(pA.x, pA.y);
-                ctx.lineTo(pB.x, pB.y);
-            }
-        }
-        ctx.stroke();
+        // 3. Pass 2: Rollers (Con lăn) seated in tooth gullets
+        for (let i = 0; i < screenRollers.length; i++) {
+            const s = screenRollers[i];
+            const rScreen = Math.max(2.5, rollerR * this.zoom);
 
-        // 3. Draw Rollers & Pins (Con lăn & Chốt xích)
-        for (let i = 0; i < rollers.length; i++) {
-            const pos = rollers[i];
-            const s = this.worldToScreen(pos.x, pos.y);
-            const rScreen = Math.max(2, rollerR * this.zoom);
-
-            // Roller outer body
-            ctx.fillStyle = '#38bdf8'; // Sky blue
-            ctx.strokeStyle = '#0284c7';
-            ctx.lineWidth = 1.0;
+            ctx.fillStyle = '#0284c7'; // Sky blue roller body
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.2;
             ctx.beginPath();
             ctx.arc(s.x, s.y, rScreen, 0, Math.PI * 2);
             ctx.fill();
             ctx.stroke();
+        }
 
-            // Center Pin (Chốt xích)
-            if (rScreen > 3) {
+        // 4. Pass 3: Outer Link Plates (even indices) with semi-transparent metallic styling
+        for (let i = 0; i < screenRollers.length; i++) {
+            if (i % 2 === 0) {
+                const nextIdx = (i + 1) % screenRollers.length;
+                this.drawFigure8LinkPlate(screenRollers[i], screenRollers[nextIdx], H_plate, waist, 'rgba(148, 163, 184, 0.85)', '#cbd5e1');
+            }
+        }
+
+        // 5. Pass 4: Pins (Chốt xích) with rivet heads
+        for (let i = 0; i < screenRollers.length; i++) {
+            const s = screenRollers[i];
+            const rScreen = Math.max(2.5, rollerR * this.zoom);
+            if (rScreen > 3.0) {
+                const pinR = Math.max(1.5, rScreen * 0.38);
                 ctx.fillStyle = '#0f172a';
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = 1.0;
                 ctx.beginPath();
-                ctx.arc(s.x, s.y, Math.max(1, rScreen * 0.45), 0, Math.PI * 2);
+                ctx.arc(s.x, s.y, pinR, 0, Math.PI * 2);
                 ctx.fill();
+                ctx.stroke();
             }
         }
 

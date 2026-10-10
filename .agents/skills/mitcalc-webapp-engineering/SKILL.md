@@ -2866,3 +2866,18 @@ ho_{f0}$.
 
 
 
+
+7. **Giải Thuật Giải Tích Biên Dạng Răng Đĩa Xích ISO 606 & Khóa Pha Ăn Khớp (CAD Engine Protocol)**:
+   - **Biên dạng răng giải tích C1 trơn tru**:
+     * Cung đáy rãnh R1: Bán kính R1 ~ 0.505*d3, tâm tại tâm con lăn O_k trên vòng chia r_p = p / (2*sin(pi/z)), góc ôm alpha = 130 deg - 90 deg / z.
+     * Sườn răng dẫn hướng R2: Cung tròn bán kính R2 tiếp xúc trơn tru C1 với cung đáy R1 tại góc beta0 = alpha / 2. Tâm sườn răng O2 = O_k + (R1 - R2)*v, vươn mượt mà lên cắt đường tròn đỉnh r_a = da / 2.
+     * Đỉnh răng: Cung đỉnh bán kính r_a nối hai sườn răng đối xứng, triệt tiêu 100% hiện tượng tự giao cắt hoặc sừng nhọn.
+   - **Động học ăn khớp liên hợp con lăn khít rãnh đáy (Delta = 0.000000000000)**:
+     * Trên đĩa xích, khoảng cách giữa 2 con lăn kề nhau là dây cung 2*r_p*sin(pi/z) == p, bước góc là Delta_theta = 2*pi / z.
+     * Đồng bộ pha góc quay của 2 đĩa xích theo vị trí mắt xích u_move:
+       theta_sprock1 = psi_1_bot + (2*n_top + n_sp2 - u_move) * (2*pi / z1)
+       theta_sprock2 = psi_2_top + (n_top - u_move) * (2*pi / z2)
+     * Đảm bảo sai lệch vị trí con lăn so với tâm rãnh đĩa xích đạt đúng Delta = 0.000000000000 trên mọi khung hình chuyển động.
+   - **Má xích hình số 8 cơ khí (Figure-8 Dog-bone Link Plates)**:
+     * Dựng hình học má xích số 8 thực tế: Chiều cao má H ~ 0.88*p, bán kính 2 đầu tròn ôm chốt R_end = H/2, bề rộng eo thắt giữa w_m = 0.78*H / 2.
+     * Phân lớp đồ họa: Má xích trong (Inner links, xám tôi nhiệt), Con lăn (Rollers, cyan khít đáy rãnh), Má xích ngoài (Outer links, hợp kim bạc sáng bán trong suốt), Chốt xích tán đinh (Pins).

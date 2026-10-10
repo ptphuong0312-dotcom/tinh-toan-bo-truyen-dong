@@ -2978,3 +2978,29 @@ ho_{f0} / \cos\gamma$.
    - Mô phỏng độ võng chùng xích catenary thực tế $y pprox 0.02 a \sin(u \pi)$.
    - Hỗ trợ cảm ứng đa điểm mobile theo Quy Tắc 11: 1 ngón Pan, 2 ngón Zoom, `touch-action: none`.
    - Xuất file DXF Release 12 (AC1009) độc lập không CORS kèm bảng thông số chế tạo DXFTables ISO 606.
+
+
+---
+
+### Quy Tắc 123: Quy Chuẩn Biên Dạng Đĩa Xích ISO 606 & Động Học Ăn Khớp Liên Hợp Con Lăn Khít Rãnh Đáy (Module 9 CAD Simulation Protocol)
+**Ngày áp dụng**: 10/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Biên Dạng Răng Đĩa Xích Chuẩn ISO 606 / DIN 8187 (C1 Smooth Continuity)**:
+   - Tuyệt đối KHÔNG sử dụng hàm điều chế xấp xỉ hình thang làm răng bị nhọn hoắt hoặc gãy khúc.
+   - Bắt buộc dựng biên dạng giải tích thực thể gồm 3 thành phần liên tục C1:
+     * **Cung đáy rãnh R1**: Tâm tại tâm con lăn O_k trên vòng chia (r_p = p / (2*sin(pi/z))), bán kính R1 ~ 0.505*d3, góc ôm rãnh alpha = 130 deg - 90 deg / z (nửa góc beta0 = alpha / 2).
+     * **Sườn răng dẫn hướng R2**: Cung tròn bán kính R2 tiếp xúc trơn tru C1 với cung đáy R1 tại góc beta0, tâm sườn răng O2 = O_k + (R1 - R2)*v, vươn mượt mà lên cắt đường tròn đỉnh r_a = da / 2.
+     * **Đỉnh răng**: Cung tròn bán kính r_a nối hai sườn răng đối xứng, tạo mặt đỉnh răng phẳng-cong tiêu chuẩn.
+2. **Quy Luật Đa Giác & Động Học Khóa Pha Tuyệt Đối (Delta = 0.000000000000)**:
+   - Trên đĩa xích, khoảng cách giữa 2 con lăn kề nhau là dây cung 2*r_p*sin(pi/z) == p, bước góc giữa 2 con lăn là Delta_theta = 2*pi / z.
+   - Đồng bộ góc quay của hai đĩa xích theo chuyển động dây xích:
+     * theta_sprock1 = psi_1_bot + (2*n_top + n_sp2 - u_move) * (2*pi / z1)
+     * theta_sprock2 = psi_2_top + (n_top - u_move) * (2*pi / z2)
+   - Bảo đảm 100% con lăn xích luôn lọt khít hoàn toàn vào tâm đáy rãnh R1 của cả đĩa 1 và đĩa 2 ở mọi khung hình chuyển động, triệt tiêu hoàn toàn hiện tượng con lăn trôi dạt ra ngoài đỉnh răng.
+3. **Má Xích Hình Số 8 Cơ Khí (Figure-8 Dog-bone Link Plates)**:
+   - Dựng hình học má xích số 8 thực tế: Chiều cao má H ~ 0.88*p, bán kính 2 đầu tròn ôm chốt R_end = H/2, bề rộng eo thắt giữa w_m = 0.78*H / 2.
+   - Hiển thị phân tầng trực quan:
+     * Má xích trong (Inner links): Màu xám sẫm tôi nhiệt (rgba(51, 65, 85, 0.90)).
+     * Con lăn xích (Rollers): Khối tròn màu xanh cyan (#0284c7, viền #38bdf8) đặt khít trong rãnh đĩa xích.
+     * Má xích ngoài (Outer links): Màu hợp kim bạc sáng bán trong suốt (rgba(148, 163, 184, 0.85)).
+     * Chốt xích tán đinh (Pins): Chấm đen tâm tán viền bạc (#0f172a, viền #94a3b8).
