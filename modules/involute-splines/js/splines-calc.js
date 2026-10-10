@@ -257,42 +257,25 @@ export const SplinesCalc = {
         let di2 = parseFloat(params.di2);
         let dri2 = parseFloat(params.dri2);
 
-        if (!profileStandard) {
-            // Khi người dùng tùy chỉnh thông số biên dạng răng Mục 2.0 (không theo chuẩn):
-            da0 = (z0 + 2.0 * ha0_tool) * m;
-            df0 = (z0 - 2.0 * hf0_tool) * m;
-            di2 = (z0 - 2.0 * ha2_tool) * m;
-            dri2 = (z0 + 2.0 * hf2_tool) * m;
-            if (params.da0_custom && !isNaN(parseFloat(params.da0))) da0 = parseFloat(params.da0);
-            if (params.df0_custom && !isNaN(parseFloat(params.df0))) df0 = parseFloat(params.df0);
-            if (params.di2_custom && !isNaN(parseFloat(params.di2))) di2 = parseFloat(params.di2);
-            if (params.dri2_custom && !isNaN(parseFloat(params.dri2))) dri2 = parseFloat(params.dri2);
-        } else {
-            // Chuẩn 1-to-1 MITCalc 1.74: Kích thước đường kính theo chuẩn quốc tế (T_spl2_Name)
-            // Đường kính danh nghĩa KHÔNG thay đổi khi thay đổi hệ số dịch chỉnh x0!
-            const defs = this.getStandardSplineDefaults(stdTypeId, m, z0, units);
-            if (!params.customAlfa) alfa = defs.alfa;
-            da0 = defs.da0;
-            df0 = defs.df0;
-            di2 = defs.di2;
-            dri2 = defs.dri2;
+        // Chuẩn 1-to-1 MITCalc 1.74: Kích thước đường kính theo chuẩn quốc tế (T_spl2_Name)
+        // Việc bật/tắt Checkbox "Tiêu chuẩn" Mục 2.0 chỉ mở khóa chỉnh sửa dao cắt, tuyệt đối KHÔNG tự ý tính lại làm nhảy số đường kính da0, df0, di2, dri2
+        const defs = this.getStandardSplineDefaults(stdTypeId, m, z0, units);
+        if (!params.customAlfa) alfa = defs.alfa;
 
-            if (params.autoFill && !params.x0_custom) {
-                x0 = defs.x0;
-                if (params.syncX0X2) {
-                    x2 = -x0;
-                } else if (params.x2 !== undefined && !isNaN(parseFloat(params.x2))) {
-                    x2 = parseFloat(params.x2);
-                } else {
-                    x2 = defs.x2;
-                }
+        da0 = (params.da0_custom && !isNaN(parseFloat(params.da0))) ? parseFloat(params.da0) : defs.da0;
+        df0 = (params.df0_custom && !isNaN(parseFloat(params.df0))) ? parseFloat(params.df0) : defs.df0;
+        di2 = (params.di2_custom && !isNaN(parseFloat(params.di2))) ? parseFloat(params.di2) : defs.di2;
+        dri2 = (params.dri2_custom && !isNaN(parseFloat(params.dri2))) ? parseFloat(params.dri2) : defs.dri2;
+
+        if (params.autoFill && !params.x0_custom) {
+            x0 = defs.x0;
+            if (params.syncX0X2) {
+                x2 = -x0;
+            } else if (params.x2 !== undefined && !isNaN(parseFloat(params.x2))) {
+                x2 = parseFloat(params.x2);
+            } else {
+                x2 = defs.x2;
             }
-
-            // Chỉ ghi đè khi người dùng cố tình gõ số tùy chỉnh vào ô đường kính:
-            if (params.da0_custom && !isNaN(parseFloat(params.da0))) da0 = parseFloat(params.da0);
-            if (params.df0_custom && !isNaN(parseFloat(params.df0))) df0 = parseFloat(params.df0);
-            if (params.di2_custom && !isNaN(parseFloat(params.di2))) di2 = parseFloat(params.di2);
-            if (params.dri2_custom && !isNaN(parseFloat(params.dri2))) dri2 = parseFloat(params.dri2);
         }
 
         // Sanity guard to protect tooth geometry from negative/inverted height or stale values
@@ -622,13 +605,28 @@ export const SplinesCalc = {
         const avail_dth = Math.max(0.0001, tau - th_flank_root);
         const avail_w = r_root * avail_dth;
 
-        // Bán kính góc lượn chân răng tự động thích ứng với khoảng trống thực tế
-        let rf_nominal = 0.20 * m;
-        if (g.ra0_tool !== undefined && g.ra0_tool > 0) rf_nominal = g.ra0_tool * m;
-        else if (g.rf0_tool !== undefined && g.rf0_tool > 0) rf_nominal = g.rf0_tool * m;
-        else if (g.rf0 !== undefined && g.rf0 > 0) rf_nominal = g.rf0;
+        // Bán kính góc lượn chân răng tự động thích ứng với khoảng trống thực tế & phân biệt rõ Fillet Root vs Flat Root
+        const isFilletRoot = (g.stdName && g.stdName.toLowerCase().includes('fillet')) ||
+                             (g.stdTypeId && [2, 3, 4, 7, 8, 9, 11, 12, 13, 17].includes(g.stdTypeId));
+        const isDIN5480 = (g.stdName && g.stdName.toLowerCase().includes('din 5480')) || (g.stdTypeId === 14);
 
-        let rf = Math.min(rf_nominal, Math.max(0.01 * m, avail_w * 0.85));
+        let rf_nominal = 0.20 * m;
+        if (g.ra0_tool !== undefined && g.ra0_tool > 0) {
+            rf_nominal = g.ra0_tool * m;
+        } else if (g.rf0_tool !== undefined && g.rf0_tool > 0) {
+            rf_nominal = g.rf0_tool * m;
+        } else if (isFilletRoot) {
+            // ISO 4156 / ANSI B92.1 Fillet Root: Bán kính chân lượn tròn danh nghĩa c*=0.4m -> rf = 0.38m
+            rf_nominal = 0.38 * m;
+        } else if (isDIN5480) {
+            // DIN 5480: Bán kính lượn chân tròn theo chuẩn DIN (rho_f0 = 0.16m trên dao)
+            rf_nominal = 0.25 * m;
+        } else {
+            // Flat Root: Chân đáy phẳng với góc bo nhỏ
+            rf_nominal = 0.18 * m;
+        }
+
+        let rf = Math.min(rf_nominal, Math.max(0.01 * m, avail_w * (isFilletRoot ? 0.98 : 0.85)));
 
         function getRightFlank(alfa_t, cur_rf) {
             const r_t = r_base / Math.cos(alfa_t);
@@ -673,7 +671,7 @@ export const SplinesCalc = {
             const P_root_y_tmp = Cy_r * (r_root / R_C_r);
             th_root_r = Math.atan2(P_root_x_tmp, P_root_y_tmp);
 
-            if (th_root_r <= tau * 0.98) {
+            if (th_root_r <= tau * (isFilletRoot ? 0.999 : 0.96)) {
                 break;
             }
             cur_rf *= 0.60;

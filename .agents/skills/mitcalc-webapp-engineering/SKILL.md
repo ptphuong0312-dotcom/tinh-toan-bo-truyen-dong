@@ -2735,3 +2735,34 @@ ho_{f0}$.
    - Chạy `python tools/test_splines_qc.py` kiểm tra 9 ca thử nghiệm trên 17 hệ tiêu chuẩn.
    - Yêu cầu nghiêm ngặt: 110/110 phép tính PASS 100.0% với $\Delta = 0.000000$ so với MITCalc 1.74 Excel COM.
 
+---
+
+### Runbook 24: Chuẩn Hóa Thứ Tự Section 3.0, Cơ Chế Bảo Tồn Đường Kính Khi Bật/Tắt Checkbox Mục 2.0 & Giải Thuật Phân Biệt Tuyệt Đối Fillet Root vs Flat Root
+**Mục tiêu**: Nắm vững thứ tự các kích thước hình học Section 3.0, bản chất checkbox dao cắt Mục 2.0 trong MITCalc 1.74 (không được làm nhảy đường kính danh nghĩa), và phân biệt giải tích & đồ họa giữa Fillet Root ($r_f \approx 0.38m$, triệt tiêu đáy phẳng) và Flat Root ($r_f \approx 0.18m$, bảo tồn đáy phẳng).
+
+1. **Chuẩn hóa thứ tự Section 3.0**:
+   - Dòng 3.6: Đường kính vòng cơ sở ($d_b$)
+   - Dòng 3.7: Đường kính chia danh nghĩa ($d = z \cdot m$) -> Không khoanh viền vàng (bỏ class `.highlight-key-param`).
+   - Dòng 3.8: Đường kính đỉnh răng ($d_a / D_i$) -> Giữ nguyên viền vàng hổ phách nổi bật cho xưởng gia công kiểm tra.
+   - Dòng 3.9: Đường kính chân răng (đáy rãnh) ($d_f / D_{ri}$) -> Giữ nguyên viền vàng hổ phách nổi bật.
+
+2. **Cơ chế bảo toàn đường kính danh nghĩa khi thao tác Checkbox "Tiêu chuẩn" Mục 2.0**:
+   - Trong MITCalc 1.74 Excel (`SplinesI_01.xlsb`), Checkbox Mục 2.0 (ô B137 `ROWSHIDERANGE`) chỉ có nhiệm vụ Khóa / Mở khóa chỉnh sửa các ô thông số dao cắt ($h_{a0}^*, h_{f0}^*, r_{a0}^*, r_{f0}^*$).
+   - Các đường kính danh nghĩa $d_{a0}, d_{f0}, D_i, D_{ri}$ (các ô O111, Q111, O112, Q112) tại Mục 1.8 và 1.9 là độc lập, lấy từ bảng tiêu chuẩn quốc tế `T_spl2_Name` hoặc do người dùng trực tiếp nhập tùy chỉnh.
+   - Khi người dùng bật hoặc tắt checkbox Mục 2.0 mà chưa sửa đổi thông số, hệ thống tuyệt đối KHÔNG tính lại đường kính theo công thức thanh răng bánh răng trụ $(z \pm 2h^*)m$.
+   - Bảo toàn 100% các giá trị đường kính: Khi chỉ tích hoặc bỏ tích checkbox, các con số $d_{a0}, d_{f0}, D_i, D_{ri}$ giữ nguyên vẹn không nhảy số!
+
+3. **Phân biệt bản chất cơ học & Giải thuật đồ họa Fillet Root vs Flat Root**:
+   - **Fillet Root (Chân răng lượn tròn)**:
+     * Tiêu chuẩn: ISO 4156 Fillet root, ANSI B92.1 Fillet root, DIN 5480, CSN 4950 Fillet root.
+     * Hệ số khe hở hướng tâm: $c^* = 0.40$. Bán kính góc lượn dao danh nghĩa: $r_f = 0.35m \div 0.40m$ (danh nghĩa $0.38m$).
+     * Đặc tính hình học: **HOÀN TOÀN KHÔNG CÓ ĐOẠN ĐÁY PHẲNG (Zero Flat Land)**. Cung lượn chân răng mở rộng chạm tới sát tâm rãnh răng $\tau$ ($th_{root\_r} \to \tau$, $d\theta \to 0$), hai cung lượn sườn trái và sườn phải gặp nhau tại đáy tạo thành mặt cong lòng chảo liên tục, giúp triệt tiêu góc nhọn tập trung ứng suất uốn.
+   - **Flat Root (Chân răng đáy phẳng)**:
+     * Tiêu chuẩn: ISO 4156 Flat root, ANSI B92.1 Flat root, CSN 4950 Flat root.
+     * Hệ số khe hở hướng tâm: $c^* = 0.25$. Bán kính bo góc nhỏ: $r_f \approx 0.18m$.
+     * Đặc tính hình học: Đáy rãnh có đoạn phẳng (flat land) rõ rệt theo cung tròn chân răng $d_f$ nối giữa hai góc bo nhỏ ở hai bên sườn.
+   - **Nâng cấp giải thuật trong `generateShaftSectorPoints`**:
+     * Tự động gán $r_{f\_nominal} = 0.38m$ cho Fillet Root ($0.25m$ cho DIN 5480) và $0.18m$ cho Flat Root.
+     * Kiểm tra góc quét cho phép Fillet Root chạm tới sát $\tau$ (`tau * 0.999`), thể hiện chân lượn tròn cong mềm mại hoàn hảo trên Canvas 2D và CAD DXF.
+
+

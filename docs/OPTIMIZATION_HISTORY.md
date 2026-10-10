@@ -4545,3 +4545,36 @@ ho_{f0}$.
      - Script `tools/test_splines_qc.py` mở rộng lên 9 ca thử nghiệm: ISO 4156 Flat root, ISO 4156 Fillet root, ISO 37.5°, ISO 45°, DIN 5480, ANSI B92.1 với các nấc $x_0 = 0.0, 0.2, 0.4, 0.6$.
      - **Kết quả đo đạc: 110 / 110 phép tính PASS tuyệt đối 100.0% với $\Delta = 0.000000$**!
 
+---
+
+## Giai Đoạn 39: Chuẩn Hóa Thứ Tự Section 3.0, Khắc Phục Hiện Tượng Nhảy Đường Kính Khi Bật/Tắt Checkbox "Tiêu Chuẩn" Mục 2.0, Và Hoàn Thiện Mô Phỏng Phân Biệt Tuyệt Đối Fillet Root vs Flat Root
+* **Tiêu chuẩn**: ISO 4156-1 (Fillet Root vs Flat Root), DIN 5480, ANSI B92.1, MITCalc 1.74 `SplinesI_01.xlsb`.
+* **Yêu cầu trực tiếp từ SirPhuong**:
+  1. Sắp xếp lại thứ tự Section 3.0 theo chuẩn thiết kế:
+     - Dòng 3.6: Đường kính vòng cơ sở ($d_b$)
+     - Dòng 3.7: Đường kính chia danh nghĩa ($d$) -> **Bỏ khoanh viền vàng** (xóa `.highlight-key-param`).
+     - Dòng 3.8: Đường kính đỉnh răng ($d_a / D_i$) -> Giữ nguyên viền vàng nổi bật.
+     - Dòng 3.9: Đường kính chân răng (đáy rãnh) ($d_f / D_{ri}$) -> Giữ nguyên viền vàng nổi bật.
+  2. Khắc phục triệt để hiện tượng: Khi người dùng không thay đổi bất kỳ thông số nào, chỉ đánh dấu tích hoặc bỏ dấu tích checkbox "Tiêu chuẩn" ở Mục 2.0 mà các thông số đường kính ở Section 1.8 và 1.9 bị nhảy số (DIN 5480 $m=6, z=42$ bị tụt từ $258.8 / 246.8$ xuống $257.4 / 244.2$).
+  3. Làm rõ khái niệm "Nhóm Chân Lượn Tròn (Fillet Root - 30°, $c^* = 0.4$)" và hoàn thiện giải thuật đồ họa 2D Canvas / CAD DXF thể hiện chuẩn xác chân lượn tròn.
+* **Đột phá kỹ thuật & Giải pháp chi tiết**:
+  1. **Tái cấu trúc Section 3.0 trong giao diện (`modules/involute-splines/index.html`)**:
+     - Sắp xếp chuẩn xác theo đúng thứ tự 3.6 ($d_b$) $\to$ 3.7 ($d$) $\to$ 3.8 ($d_a / D_i$) $\to$ 3.9 ($d_f / D_{ri}$).
+     - Bỏ viền vàng ở đường kính chia danh nghĩa $d$ vì đây là thông số hình học danh nghĩa ($d = z \cdot m$), giữ viền vàng xưởng gia công kiểm tra then chốt ở đường kính đỉnh $d_a / D_i$ và đường kính chân $d_f / D_{ri}$.
+  2. **Truy tìm & Triệt tiêu nguyên nhân gốc rễ lỗi nhảy số Checkbox Mục 2.0 (`splines-calc.js`)**:
+     - **Nguyên nhân gốc rễ**: Trong mã nguồn cũ, khi `profileStandard === false` (bỏ tích checkbox), hệ thống tự động chạy nhánh tính lại đường kính theo công thức thanh răng bánh răng trụ: $d_{a0} = (z_0 + 2 h_{a0}^*) m$ và $d_{f0} = (z_0 - 2 h_{f0}^*) m$. Với DIN 5480 ($m=6, z=42, h_{a0}^* = 0.45$), công thức này tính ra $(42 + 0.9) \times 6 = 257.4\text{ mm}$ (thay vì $258.8\text{ mm}$ theo phôi chuẩn DIN), làm đường kính bị tụt ngay $1.4\text{ mm}$ khi người dùng chỉ bấm bỏ tích!
+     - **Bản chất 1-to-1 MITCalc 1.74**: Trong Excel `SplinesI_01.xlsb`, Checkbox Mục 2.0 (ô B137 `ROWSHIDERANGE`) chỉ có vai trò Khóa/Mở khóa chỉnh sửa các ô dao cắt Mục 2.0 ($h_{a0}^*, h_{f0}^*, r_{a0}^*, r_{f0}^*$). Nó **HOÀN TOÀN KHÔNG LIÊN QUAN VÀ KHÔNG THAY ĐỔI ĐƯỜNG KÍNH DANH NGHĨA** $d_{a0}, d_{f0}, D_i, D_{ri}$ (các ô O111, Q111, O112, Q112) ở Mục 1.8 và 1.9.
+     - **Giải pháp xử lý**: Loại bỏ hoàn toàn khối `if (!profileStandard)` ghi đè đường kính. Các đường kính $d_{a0}, d_{f0}, D_i, D_{ri}$ luôn giữ nguyên 100% theo tiêu chuẩn quốc tế trừ khi người dùng cố ý nhập tay vào các ô tùy chỉnh Mục 1.8 và 1.9. Khi người dùng đánh dấu tích hoặc bỏ dấu tích checkbox Mục 2.0, các thông số đường kính ở 1.8, 1.9 và 3.8, 3.9 **BẢO TOÀN TUYỆT ĐỐI, KHÔNG NHẢY BẤT KỲ MỘT CON SỐ NÀO**!
+  3. **Làm rõ bản chất cơ khí & Nâng cấp đồ họa Fillet Root vs Flat Root**:
+     - **Khái niệm cơ khí**:
+       * **Fillet Root (Chân răng lượn tròn)**: Đáy rãnh giữa hai răng được nối liền hoàn toàn bằng một cung tròn bán kính lớn liên tục ($r_f \approx 0.38 \cdot m$, $c^* = 0.40$), **HOÀN TOÀN KHÔNG CÓ ĐOẠN ĐÁY PHẲNG (Zero Flat Land)**! Hai cung bo lượn từ sườn trái và sườn phải gặp nhau mượt mà ngay tại tâm rãnh răng. Thiết kế này triệt tiêu hoàn toàn góc nhọn tập trung ứng suất, nâng cao độ bền mỏi uốn khi truyền mô-men xoắn lớn, đổi chiều hoặc chịu tải va đập.
+       * **Flat Root (Chân răng đáy phẳng)**: Đáy rãnh có một đoạn phẳng (flat land) theo cung tròn đáy $d_f$, hai góc chuyển tiếp từ sườn thân khai xuống đáy là 2 góc lượn nhỏ ($r_f \approx 0.18 \cdot m$, $c^* = 0.25$). Loại này chế tạo dao đơn giản hơn nhưng có điểm tập trung ứng suất tại góc bo đáy.
+     - **Nâng cấp giải thuật đồ họa 2D Canvas & CAD DXF (`generateShaftSectorPoints`)**:
+       * Nhận diện chuẩn xác loại biên dạng: nếu là Fillet Root (ISO 4156 Fillet, ANSI B92.1 Fillet, CSN 4950 Fillet), tự động thiết lập $r_{f\_nominal} = 0.38 \cdot m$; nếu là DIN 5480, thiết lập $r_{f\_nominal} = 0.25 \cdot m$; nếu là Flat Root, thiết lập $r_{f\_nominal} = 0.18 \cdot m$.
+       * Khống chế góc tiếp xúc chân răng cho Fillet Root chạm tới sát nửa bước góc $\tau$ (`tau * 0.999`), làm đoạn đáy phẳng $d\theta \to 0$, tạo thành đáy lượn tròn cong lòng chảo mượt mà chuẩn xác 100% đồ họa kỹ thuật.
+* **Kết quả nghiệm thu**:
+  - Tích/bỏ tích checkbox Mục 2.0: $d_{a0} = 258.8000$, $d_{f0} = 246.8000$, $D_i = 248.0000$, $D_{ri} = 260.0000$ cố định hoàn hảo 100%.
+  - Bộ kiểm thử Live Audit QC Suite: **110 / 110 phép tính PASS tuyệt đối 100.0% với $\Delta = 0.000000$**!
+  - Đóng gói toàn bộ 8 module thành công với bundle thuần offline.
+
+
