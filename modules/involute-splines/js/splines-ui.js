@@ -45,6 +45,8 @@ export class SplinesUI {
         this.elRa2 = document.getElementById('ra2Input');
         this.elRf0 = document.getElementById('rf0Input');
         this.elRf2 = document.getElementById('rf2Input');
+        this.elC0 = document.getElementById('c0Input');
+        this.elC2 = document.getElementById('c2Input');
 
         // Diameters inputs
         this.elDa0 = document.getElementById('da0Input');
@@ -114,6 +116,10 @@ export class SplinesUI {
                 if (this.elRa2) this.elRa2.value = (std.ra2 || 0.16).toFixed(4);
                 if (this.elRf0) this.elRf0.value = (std.rf0 || 0.00).toFixed(4);
                 if (this.elRf2) this.elRf2.value = (std.rf2 || 0.00).toFixed(4);
+                const c0_std = (std.hf0 !== undefined && std.ha0 !== undefined) ? (std.hf0 - std.ha0) : 0.20;
+                const c2_std = (std.hf2 !== undefined && std.ha2 !== undefined) ? (std.hf2 - std.ha2) : 0.20;
+                if (this.elC0) this.elC0.value = c0_std.toFixed(4);
+                if (this.elC2) this.elC2.value = c2_std.toFixed(4);
             }
         }
 
@@ -226,6 +232,10 @@ export class SplinesUI {
                 if (this.elHa2) this.elHa2.value = (std.ha2 || 0.50).toFixed(4);
                 if (this.elHf0) this.elHf0.value = (std.hf0 || 0.75).toFixed(4);
                 if (this.elHf2) this.elHf2.value = (std.hf2 || 0.75).toFixed(4);
+                const c0_std = (std.hf0 !== undefined && std.ha0 !== undefined) ? (std.hf0 - std.ha0) : 0.25;
+                const c2_std = (std.hf2 !== undefined && std.ha2 !== undefined) ? (std.hf2 - std.ha2) : 0.25;
+                if (this.elC0) this.elC0.value = c0_std.toFixed(4);
+                if (this.elC2) this.elC2.value = c2_std.toFixed(4);
                 if (this.elRa0) this.elRa0.value = (std.ra0 !== undefined ? std.ra0 : 0.00).toFixed(4);
                 if (this.elRa2) this.elRa2.value = (std.ra2 !== undefined ? std.ra2 : 0.20).toFixed(4);
                 if (this.elRf0) this.elRf0.value = (std.rf0 !== undefined ? std.rf0 : 0.00).toFixed(4);
@@ -273,6 +283,7 @@ export class SplinesUI {
                 const isStd = this.elProfileStd.checked;
                 const pInputs = [
                     this.elHa0, this.elHa2, this.elHf0, this.elHf2,
+                    this.elC0, this.elC2,
                     this.elRa0, this.elRa2, this.elRf0, this.elRf2
                 ];
                 pInputs.forEach(inp => {
@@ -287,6 +298,10 @@ export class SplinesUI {
                         if (this.elHa2) this.elHa2.value = (std.ha2 || 0.50).toFixed(4);
                         if (this.elHf0) this.elHf0.value = (std.hf0 || 0.75).toFixed(4);
                         if (this.elHf2) this.elHf2.value = (std.hf2 || 0.75).toFixed(4);
+                        const c0_std = (std.hf0 !== undefined && std.ha0 !== undefined) ? (std.hf0 - std.ha0) : 0.25;
+                        const c2_std = (std.hf2 !== undefined && std.ha2 !== undefined) ? (std.hf2 - std.ha2) : 0.25;
+                        if (this.elC0) this.elC0.value = c0_std.toFixed(4);
+                        if (this.elC2) this.elC2.value = c2_std.toFixed(4);
                         if (this.elRa0) this.elRa0.value = (std.ra0 !== undefined ? std.ra0 : 0.00).toFixed(4);
                         if (this.elRa2) this.elRa2.value = (std.ra2 !== undefined ? std.ra2 : 0.20).toFixed(4);
                         if (this.elRf0) this.elRf0.value = (std.rf0 !== undefined ? std.rf0 : 0.00).toFixed(4);
@@ -298,10 +313,47 @@ export class SplinesUI {
         }
 
         // Khi người dùng chỉnh sửa Mục 2.0: Tự động xóa cờ ghi đè đường kính để công thức biên dạng phản ứng ngay
-        this.elHa0?.addEventListener('input', () => { delete this.elDa0?.dataset.userEdited; });
-        this.elHf0?.addEventListener('input', () => { delete this.elDf0?.dataset.userEdited; });
-        this.elHa2?.addEventListener('input', () => { delete this.elDi2?.dataset.userEdited; });
-        this.elHf2?.addEventListener('input', () => { delete this.elDri2?.dataset.userEdited; });
+        this.elHa0?.addEventListener('input', () => {
+            delete this.elDa0?.dataset.userEdited;
+            if (this.elC0 && this.elHf0) {
+                this.elC0.value = (parseFloat(this.elHf0.value || 0.75) - parseFloat(this.elHa0.value || 0.50)).toFixed(4);
+            }
+        });
+        this.elHf0?.addEventListener('input', () => {
+            delete this.elDf0?.dataset.userEdited;
+            if (this.elC0 && this.elHa0) {
+                this.elC0.value = (parseFloat(this.elHf0.value || 0.75) - parseFloat(this.elHa0.value || 0.50)).toFixed(4);
+            }
+        });
+        this.elHa2?.addEventListener('input', () => {
+            delete this.elDi2?.dataset.userEdited;
+            if (this.elC2 && this.elHf2) {
+                this.elC2.value = (parseFloat(this.elHf2.value || 0.75) - parseFloat(this.elHa2.value || 0.50)).toFixed(4);
+            }
+        });
+        this.elHf2?.addEventListener('input', () => {
+            delete this.elDri2?.dataset.userEdited;
+            if (this.elC2 && this.elHa2) {
+                this.elC2.value = (parseFloat(this.elHf2.value || 0.75) - parseFloat(this.elHa2.value || 0.50)).toFixed(4);
+            }
+        });
+        // Hai chiều: Khi người dùng chỉnh sửa trực tiếp c0*, c2* thì cập nhật hf0*, hf2*
+        this.elC0?.addEventListener('input', () => {
+            delete this.elDf0?.dataset.userEdited;
+            if (this.elHf0 && this.elHa0) {
+                const ha0Val = parseFloat(this.elHa0.value || 0.50);
+                const c0Val = parseFloat(this.elC0.value || 0.25);
+                this.elHf0.value = (ha0Val + c0Val).toFixed(4);
+            }
+        });
+        this.elC2?.addEventListener('input', () => {
+            delete this.elDri2?.dataset.userEdited;
+            if (this.elHf2 && this.elHa2) {
+                const ha2Val = parseFloat(this.elHa2.value || 0.50);
+                const c2Val = parseFloat(this.elC2.value || 0.25);
+                this.elHf2.value = (ha2Val + c2Val).toFixed(4);
+            }
+        });
 
         // Xử lý menu dropdown luân chuyển module bên cạnh nút "Trang Chủ"
         if (this.btnModuleMenuToggle && this.moduleDropdownMenu) {
@@ -376,6 +428,7 @@ export class SplinesUI {
             this.elUnits, this.elZ,
             this.elX0, this.elX2, this.elAutoFill,
             this.elHa0, this.elHa2, this.elHf0, this.elHf2,
+            this.elC0, this.elC2,
             this.elRa0, this.elRa2, this.elRf0, this.elRf2,
             this.elDa0, this.elDf0, this.elDi2, this.elDri2,
             this.elDt0, this.elDt2,
@@ -801,6 +854,10 @@ export class SplinesUI {
 
         this.setTxt('outSec3_c0', g.c0.toFixed(4));
         this.setTxt('outSec3_c2', g.c2.toFixed(4));
+        if (this.elProfileStd?.checked) {
+            if (this.elC0) this.elC0.value = g.c0_m.toFixed(4);
+            if (this.elC2) this.elC2.value = g.c2_m.toFixed(4);
+        }
         this.setTxt('outSec3_c0_m', g.c0_m.toFixed(4));
         this.setTxt('outSec3_c2_m', g.c2_m.toFixed(4));
 

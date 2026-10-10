@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Tính Toán Bộ Truyền Xích Con Lăn - MITCalc 1.74 Web App</title>
+    <link rel="stylesheet" href="css/style.css">
+<style>
+/* Navigation Module Dropdown Unified */
+.nav-module-dropdown {
+    position: relative;
+    display: inline-flex;
+    align-items: stretch;
+    vertical-align: middle;
+}
+.nav-module-dropdown .btn-home {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    border-right: none !important;
+}
+.nav-module-dropdown .btn-dropdown-toggle {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    padding: 6px 10px !important;
+    font-size: 0.75rem !important;
+    color: #38bdf8 !important;
+    background: #334155;
+    border: 1px solid #475569;
+    border-left: 1px solid rgba(255, 255, 255, 0.15) !important;
+    cursor: pointer !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+.nav-module-dropdown .btn-dropdown-toggle:hover {
+    background: #475569 !important;
+    color: #ffffff !important;
+}
+.module-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    width: 330px;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 8px 10px -6px rgba(0, 0, 0, 0.6);
+    z-index: 10000;
+    overflow: hidden;
+    text-align: left;
+}
+.module-dropdown-menu.show {
+    display: block;
+}
+.module-dropdown-menu .dropdown-header {
+    padding: 10px 14px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #94a3b8;
+    background: #1e293b;
+    border-bottom: 1px solid #334155;
+}
+.module-dropdown-menu .dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    color: #e2e8f0;
+    text-decoration: none;
+    border-bottom: 1px solid #1e293b;
+    transition: all 0.12s ease;
+}
+.module-dropdown-menu .dropdown-item:last-child {
+    border-bottom: none;
+}
+.module-dropdown-menu .dropdown-item:hover {
+    background: #1e293b;
+    color: #38bdf8;
+    padding-left: 18px;
+}
+.module-dropdown-menu .dropdown-item.active {
+    background: rgba(14, 165, 233, 0.15);
+    border-left: 3px solid #38bdf8;
+}
+.module-dropdown-menu .dropdown-item.active .item-title {
+    color: #38bdf8;
+    font-weight: 700;
+}
+.module-dropdown-menu .dropdown-item .item-icon {
+    font-size: 1.15rem;
+    flex-shrink: 0;
+}
+.module-dropdown-menu .dropdown-item .item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+.module-dropdown-menu .dropdown-item .item-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.2;
+}
+.module-dropdown-menu .dropdown-item .item-desc {
+    font-size: 0.68rem;
+    color: #94a3b8;
+    line-height: 1.2;
+}
+</style>
+</head>
+<body>
+    <div class="chain-container">
+        <!-- App Header -->
+        <header class="app-header">
+            <div class="app-title-group">
+                <h1>⚙️ TÍNH TOÁN BỘ TRUYỀN XÍCH CON LĂN (ROLLER CHAINS)</h1>
+                <p>Tiêu chuẩn: ISO 606, DIN 8187, DIN 8188, ASME B29.1M | Chuẩn MITCalc 1.74 (Δ = 0.000000)</p>
+            </div>
+            <div class="header-actions">
+                <div class="nav-module-dropdown" id="navModuleDropdown">
+                    <a href="../../index.html" class="btn btn-secondary btn-home">🏠 Trang Chủ</a>
+                    <button type="button" class="btn btn-secondary btn-dropdown-toggle" id="btnModuleMenuToggle" title="Chuyển nhanh module tính toán">▼</button>
+                    <div class="module-dropdown-menu" id="moduleDropdownMenu">
+                        <div class="dropdown-header">DANH MỤC MÔ-ĐUN TÍNH TOÁN</div>
+                        <a href="../spur-gear/index.html" class="dropdown-item">
+                            <span class="item-icon">⚙️</span>
+                            <div class="item-info">
+                                <span class="item-title">Bánh Răng Trụ</span>
+                                <span class="item-desc">Spur & Helical Gears (ISO 6336)</span>
+                            </div>
+                        </a>
+                        <a href="../bevel-gear/index.html" class="dropdown-item">
+                            <span class="item-icon">📐</span>
+                            <div class="item-info">
+                                <span class="item-title">Bánh Răng Côn</span>
+                                <span class="item-desc">Bevel Gears (ISO 23509)</span>
+                            </div>
+                        </a>
+                        <a href="../bevel-gear-advanced/index.html" class="dropdown-item">
+                            <span class="item-icon">🚀</span>
+                            <div class="item-info">
+                                <span class="item-title">Bánh Răng Côn (Chuyên Sâu)</span>
+                                <span class="item-desc">Bevel Gears Advanced (ISO 23509 / Gleason)</span>
+                            </div>
+                        </a>
+                        <a href="../worm-gear/index.html" class="dropdown-item">
+                            <span class="item-info">🌀</span>
+                            <div class="item-info">
+                                <span class="item-title">Trục Vít - Bánh Vít</span>
+                                <span class="item-desc">Worm Gears (ISO/CD 14521 / DIN 3996)</span>
+                            </div>
+                        </a>
+                        <a href="../worm-gear-advanced/index.html" class="dropdown-item">
+                            <span class="item-icon">🚀</span>
+                            <div class="item-info">
+                                <span class="item-title">Trục Vít (Chuyên Sâu)</span>
+                                <span class="item-desc">Worm Gears Advanced (Flank TCA)</span>
+                            </div>
+                        </a>
+                        <a href="../tolerances/index.html" class="dropdown-item">
+                            <span class="item-icon">🎯</span>
+                            <div class="item-info">
+                                <span class="item-title">Dung Sai & Lắp Ghép</span>
+                                <span class="item-desc">Fits & Tolerances (ISO 286 / ANSI)</span>
+                            </div>
+                        </a>
+                        <a href="../shaft-keys/index.html#secParallelKey" class="dropdown-item">
+                            <span class="item-icon">🔑</span>
+                            <div class="item-info">
+                                <span class="item-title">Then Bằng & Bán Nguyệt</span>
+                                <span class="item-desc">Parallel & Woodruff Keys (DIN 6885)</span>
+                            </div>
+                        </a>
+                        <a href="../shaft-keys/index.html#secStraightSpline" class="dropdown-item">
+                            <span class="item-icon">🛡️</span>
+                            <div class="item-info">
+                                <span class="item-title">Then Hoa Răng Chữ Nhật</span>
+                                <span class="item-desc">Straight-Sided Splines (ISO 14 / DIN 5464)</span>
+                            </div>
+                        </a>
+                        <a href="../involute-splines/index.html" class="dropdown-item">
+                            <span class="item-icon">⚙️</span>
+                            <div class="item-info">
+                                <span class="item-title">Then Hoa Thân Khai</span>
+                                <span class="item-desc">Involute Splines (DIN 5480 / ISO 4156)</span>
+                            </div>
+                        </a>
+                        <a href="index.html" class="dropdown-item active">
+                            <span class="item-icon">⛓️</span>
+                            <div class="item-info">
+                                <span class="item-title">Bộ Truyền Xích Con Lăn (Đang chọn)</span>
+                                <span class="item-desc">Roller Chains (ISO 606 / ASME B29.1M)</span>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tab Navigation (Rule 2) -->
+        <nav class="tab-navigation">
+            <button type="button" class="tab-btn active" data-tab="tabCalculator">⚙️ Bảng Tính Cơ Khí (Calculator)</button>
+            <button type="button" class="tab-btn" data-tab="tabCanvas">📐 Mô Phỏng 2D CAD (Canvas)</button>
+        </nav>
+
+        <!-- TAB 1: BẢNG TÍNH CƠ KHÍ -->
+        <div id="tabCalculator" class="tab-pane active">
+            <!-- Summary Banner -->
+            <div class="summary-banner">
+                <div class="summary-card">
+                    <span class="summary-card-title">Quy cách xích</span>
+                    <span class="summary-card-val" id="bannerPitch">12.70 mm (08B-1)</span>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-card-title">Vận tốc xích</span>
+                    <span class="summary-card-val" id="bannerSpeed">3.83 m/s</span>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-card-title">Khoảng cách trục</span>
+                    <span class="summary-card-val" id="bannerAxisDist">352.48 mm</span>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-card-title">Số mắt / Chiều dài</span>
+                    <span class="summary-card-val" id="bannerLinks">86 mắt (1092 mm)</span>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-card-title">Tiêu chuẩn ISO 606</span>
+                    <span class="status-pill status-pass" id="bannerStatus">ĐẠT TIÊU CHUẨN ISO 606</span>
+                </div>
+            </div>
+
+            <!-- Global Accordion Toolbar (Rule 3) -->
+            <div class="global-accordion-toolbar">
+                <button type="button" class="btn btn-secondary" id="btnExpandAll">📂 Mở Rộng Tất Cả</button>
+                <button type="button" class="btn btn-secondary" id="btnCollapseAll">📁 Thu Gọn Tất Cả</button>
+            </div>
+
+            <!-- MASTER BLOCK 1: ĐẦU VÀO (INPUT SECTION - GREEN) -->
+            <!-- SECTION 1.0: THÔNG SỐ TRUYỀN ĐỘNG CƠ BẢN -->
+            <div class="accordion-section" id="sec10">
+                <div class="section-header input-block">
+                    <span>1.0 CÁC THÔNG SỐ TRUYỀN ĐỘNG CƠ BẢN (BASIC TRANSMISSION PARAMETERS)</span>
+                    <span class="header-toggle">▶</span>
+                </div>
+                <div class="section-body">
+                    <table class="calc-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Thông số</th>
+                                <th style="width: 80px;">Ký hiệu</th>
+                                <th style="width: 180px;">Bánh Dẫn (Pinion 1)</th>
+                                <th style="width: 180px;">Bánh Bị Dẫn (Wheel 2)</th>
+                                <th style="width: 90px;">Đơn vị</th>
+                                <th style="width: 140px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1.1</td>
+                                <td>Công suất truyền động</td>
+                                <td>P</td>
+                                <td><input type="text" id="inputP" class="user-input" value="5.0"></td>
+                                <td>-</td>
+                                <td>kW</td>
+                                <td><button type="button" id="btnCalcPowerTorque" class="btn-action-small" title="Tính P = Mk*n/9550">[ P &lt;= Mk,n ]</button></td>
+                            </tr>
+                            <tr>
+                                <td>1.2</td>
+                                <td>Tốc độ quay</td>
+                                <td>n</td>
+                                <td><input type="text" id="inputN1" class="user-input" value="1450"></td>
+                                <td><input type="text" id="inputN2" class="user-input" value="690"></td>
+                                <td>v/ph (rpm)</td>
+                                <td><button type="button" id="btnCalcRatioSpeed" class="btn-action-small" title="Tính i = n1/n2">[ i &lt;= n1,n2 ]</button></td>
+                            </tr>
+                            <tr>
+                                <td>1.3</td>
+                                <td>Tỉ số truyền yêu cầu</td>
+                                <td>i</td>
+                                <td colspan="2">
+                                    <div class="combo-box-group">
+                                        <input type="text" id="inputRatio" class="user-input" value="2.1014">
+                                        <select id="selRatioStd" class="combo-arrow-select" title="Chọn tỉ số truyền tiêu chuẩn">
+                                            <option value="">-- Tiêu chuẩn Ti --</option>
+                                            <option value="1.0">1.00</option>
+                                            <option value="1.25">1.25</option>
+                                            <option value="1.4">1.40</option>
+                                            <option value="1.6">1.60</option>
+                                            <option value="1.8">1.80</option>
+                                            <option value="2.0">2.00</option>
+                                            <option value="2.24">2.24</option>
+                                            <option value="2.5">2.50</option>
+                                            <option value="2.8">2.80</option>
+                                            <option value="3.15">3.15</option>
+                                            <option value="3.55">3.55</option>
+                                            <option value="4.0">4.00</option>
+                                            <option value="4.5">4.50</option>
+                                            <option value="5.0">5.00</option>
+                                            <option value="5.6">5.60</option>
+                                            <option value="6.3">6.30</option>
+                                        </select>
+                                    </div>
+                                </td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>1.4</td>
+                                <td>Mô-men xoắn danh nghĩa</td>
+                                <td>Mk</td>
+                                <td><span id="outMk1" class="output-eng">32.93</span></td>
+                                <td><span id="outMk2" class="output-eng">69.20</span></td>
+                                <td>N.m</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>1.5</td>
+                                <td>Tốc độ thực tế bánh bị dẫn</td>
+                                <td>n2</td>
+                                <td>-</td>
+                                <td><span id="outActualN2" class="output-eng">688.8</span></td>
+                                <td>v/ph (rpm)</td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECTION 2.0: CHẾ ĐỘ LÀM VIỆC & MÁY TRUYỀN ĐỘNG -->
+            <div class="accordion-section" id="sec20">
+                <div class="section-header input-block">
+                    <span>2.0 CHẾ ĐỘ LÀM VIỆC & LOẠI MÁY (OPERATING CONDITIONS & SERVICE FACTOR)</span>
+                    <span class="header-toggle">▶</span>
+                </div>
+                <div class="section-body">
+                    <table class="calc-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Thông số chế độ</th>
+                                <th style="width: 80px;">Ký hiệu</th>
+                                <th style="width: 380px;">Giá trị lựa chọn</th>
+                                <th style="width: 90px;">Đơn vị</th>
+                                <th style="width: 140px;">Ghi chú</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2.1</td>
+                                <td>Loại máy dẫn (Động cơ)</td>
+                                <td>-</td>
+                                <td>
+                                    <select id="selDriving" class="combo-arrow-select" style="width: 100%;">
+                                        <option value="A">Loại A: Động cơ điện, Tuabin khí (Chạy êm)</option>
+                                        <option value="B">Loại B: Động cơ đốt trong nhiều xi lanh</option>
+                                        <option value="C">Loại C: Động cơ đốt trong 1 xi lanh (Rung giật)</option>
+                                    </select>
+                                </td>
+                                <td>-</td>
+                                <td>Máy phát lực</td>
+                            </tr>
+                            <tr>
+                                <td>2.2</td>
+                                <td>Loại máy bị dẫn (Tải trọng)</td>
+                                <td>-</td>
+                                <td>
+                                    <select id="selDriven" class="combo-arrow-select" style="width: 100%;">
+                                        <option value="A">Loại A: Tải êm (Máy phát điện, Quạt ly tâm, Bơm ly tâm)</option>
+                                        <option value="B" selected>Loại B: Va đập nhẹ (Máy công cụ, Băng tải nhẹ, Máy trộn bột)</option>
+                                        <option value="C">Loại C: Va đập vừa (Máy nén khí, Máy nghiền nhẹ, Băng tải nặng)</option>
+                                        <option value="D">Loại D: Va đập mạnh (Máy dập, Máy xúc, Máy nghiền đá)</option>
+                                    </select>
+                                </td>
+                                <td>-</td>
+                                <td>Tải làm việc</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECTION 3.0: CHỌN XÍCH & ĐĨA XÍCH (CORE INPUT - ACTIVE) -->
+            <div class="accordion-section active" id="sec30">
+                <div class="section-header input-block">
+                    <span>3.0 THIẾT KẾ XÍCH & ĐĨA XÍCH (CHAIN & SPROCKETS SELECTION)</span>
+                    <span class="header-toggle">▼</span>
+                </div>
+                <div class="section-body">
+                    <table class="calc-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Thông số xích & đĩa</th>
+                                <th style="width: 80px;">Ký hiệu</th>
+                                <th style="width: 200px;">Bánh Dẫn (Pinion 1)</th>
+                                <th style="width: 200px;">Bánh Bị Dẫn (Wheel 2)</th>
+                                <th style="width: 90px;">Đơn vị</th>
+                                <th style="width: 140px;">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>3.1</td>
+                                <td>Hệ thống tiêu chuẩn xích</td>
+                                <td>-</td>
+                                <td colspan="2">
+                                    <select id="selStandard" class="combo-arrow-select" style="width: 100%;">
+                                        <!-- Populated via chain-ui.js -->
+                                    </select>
+                                </td>
+                                <td>-</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>3.2</td>
+                                <td>Quy cách xích con lăn (CSDL)</td>
+                                <td>-</td>
+                                <td colspan="2">
+                                    <select id="selChain" class="combo-arrow-select" style="width: 100%;">
+                                        <!-- Populated via chain-ui.js -->
+                                    </select>
+                                </td>
+                                <td>-</td>
+                                <td>171 loại</td>
+                            </tr>
+                            <tr>
+                                <td>3.3</td>
+                                <td>Chọn nhanh ứng dụng mẫu (Preset)</td>
+                                <td>-</td>
+                                <td colspan="2">
+                                    <select id="selPreset" class="combo-arrow-select" style="width: 100%;">
+                                        <!-- Populated via chain-ui.js -->
+                                    </select>
+                                </td>
+                                <td>-</td>
+                                <td>1-Click</td>
+                            </tr>
+                            <tr>
+                                <td>3.4</td>
+                                <td>Số răng đĩa xích</td>
+                                <td>z</td>
+                                <td><input type="number" id="inputZ1" class="user-input" value="19" min="7" max="150"></td>
+                                <td><input type="number" id="inputZ2" class="user-input" value="40" min="7" max="150"></td>
+                                <td>răng</td>
+                                <td><button type="button" id="btnCalcRatioTeeth" class="btn-action-small" title="Tính i = z2/z1">[ i &lt;= z1,z2 ]</button></td>
+                            </tr>
+                            <tr>
+                                <td>3.5</td>
+                                <td>Bước xích danh nghĩa</td>
+                                <td>p</td>
+                                <td colspan="2"><span id="outPitch" class="output-eng highlight-key-param">12.700</span></td>
+                                <td>mm</td>
+                                <td>ISO 606</td>
+                            </tr>
+                            <tr>
+                                <td>3.6</td>
+                                <td>Đường kính con lăn</td>
+                                <td>d3</td>
+                                <td colspan="2"><span id="outRollerD" class="output-eng">8.51</span></td>
+                                <td>mm</td>
+                                <td>Max con lăn</td>
+                            </tr>
+                            <tr>
+                                <td>3.7</td>
+                                <td>Bề rộng trong mắt xích</td>
+                                <td>b1</td>
+                                <td colspan="2"><span id="outInnerW" class="output-eng">7.75</span></td>
+                                <td>mm</td>
+                                <td>Min lòng xích</td>
+                            </tr>
+                            <tr>
+                                <td>3.8</td>
+                                <td>Tải trọng phá hủy tối thiểu</td>
+                                <td>FB</td>
+                                <td colspan="2"><span id="outBreakingF" class="output-eng">18.0 kN</span></td>
+                                <td>kN</td>
+                                <td>Tiêu chuẩn</td>
+                            </tr>
+                            <tr>
+                                <td>3.9</td>
+                                <td>Khối lượng 1 mét xích</td>
+                                <td>m</td>
+                                <td colspan="2"><span id="outMass" class="output-eng">0.70</span></td>
+                                <td>kg/m</td>
+                                <td>-</td>
+                            </tr>
+                            <tr>
+                                <td>3.10</td>
+                                <td>Khoảng cách trục mong muốn</td>
+                                <td>a_req</td>
+                                <td colspan="2">
+                                    <div style="display: flex; gap: 8px; align-items: center;">
+                                        <input type="text" id="inputAReq" class="user-input" value="350.0">
+                                        <input type="range" id="rangeAReq" class="range-slider" min="100" max="1500" step="5" value="350">
+                                    </div>
+                                </td>
+                                <td>mm</td>
+                                <td>Slider kéo</td>
+                            </tr>
+                            <tr>
+                                <td>3.11</td>
+                                <td>Chế độ chọn số mắt xích</td>
+                                <td>-</td>
+                                <td colspan="2">
+                                    <select id="selLinksMode" class="combo-arrow-select" style="width: 100%;">
+                                        <option value="even" selected>Mắt xích Chẵn (Even - Không cần khoá xích bán nguyệt)</option>
+                                        <option value="odd">Mắt xích Lẻ (Odd - Dùng mắt nối chuyển bậc)</option>
+                                        <option value="auto">Tự động (Auto)</option>
+                                    </select>
+                                </td>
+                                <td>-</td>
+                                <td>Khuyên dùng chẵn</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MASTER BLOCK 2: KẾT QUẢ (RESULTS SECTION - ORANGE) -->
+            <!-- SECTION 4.0: ĐỘNG HỌC & KHOẢNG CÁCH TRỤC (ACTIVE) -->
+            <div class="accordion-section active" id="sec40">
+                <div class="section-header results-block">
+                    <span>4.0 ĐỘNG HỌC, KHOẢNG CÁCH TRỤC & CHỈ SỐ BỘ TRUYỀN (KINEMATICS & AXIS DISTANCE)</span>
+                    <span class="header-toggle">▼</span>
+                </div>
+                <div class="section-body">
+                    <table class="calc-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Thông số kỹ thuật</th>
+                                <th style="width: 80px;">Ký hiệu</th>
+                                <th style="width: 200px;">Giá trị Bánh 1</th>
+                                <th style="width: 200px;">Giá trị Bánh 2</th>
+                                <th style="width: 90px;">Đơn vị</th>
+                                <th style="width: 140px;">Đánh giá</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>4.1</td>
+                                <td>Số mắt xích lý thuyết</td>
+                                <td>X_exact</td>
+                                <td colspan="2"><span id="outXExact" class="output-eng">84.81</span></td>
+                                <td>mắt</td>
+                                <td>Chưa làm tròn</td>
+                            </tr>
+                            <tr>
+                                <td>4.2</td>
+                                <td>Số mắt xích thực tế lựa chọn</td>
+                                <td>X</td>
+                                <td colspan="2"><span id="outXActual" class="output-eng highlight-key-param">86</span></td>
+                                <td>mắt</td>
+                                <td>Chẵn mắt xích</td>
+                            </tr>
+                            <tr>
+                                <td>4.3</td>
+                                <td>Khoảng cách trục thực tế</td>
+                                <td>a</td>
+                                <td colspan="2"><span id="outAActual" class="output-eng highlight-key-param">357.65</span></td>
+                                <td>mm</td>
+                                <td><span id="outAPercent" class="cell-limit">28.2 p</span></td>
+                            </tr>
+                            <tr>
+                                <td>4.4</td>
+                                <td>Chiều dài xích thực tế</td>
+                                <td>L</td>
+                                <td colspan="2"><span id="outChainLength" class="output-eng highlight-key-param">1092.2</span></td>
+                                <td>mm</td>
+                                <td>L = X * p</td>
+                            </tr>
+                            <tr>
+                                <td>4.5</td>
+                                <td>Vận tốc chuyển động của xích</td>
+                                <td>v</td>
+                                <td colspan="2"><span id="outChainSpeed" class="output-eng">3.83</span></td>
+                                <td>m/s</td>
+                                <td>Vận tốc vòng</td>
+                            </tr>
+                            <tr>
+                                <td>4.6</td>
+                                <td>Góc ôm đĩa xích</td>
+                                <td>α</td>
+                                <td><span id="outAlpha1" class="output-eng">166.3°</span></td>
+                                <td><span id="outAlpha2" class="output-eng">193.7°</span></td>
+                                <td>độ</td>
+                                <td>α1 ≥ 120° (Đạt)</td>
+                            </tr>
+                            <tr>
+                                <td>4.7</td>
+                                <td>Độ chùng xích nhánh bị động</td>
+                                <td>y</td>
+                                <td colspan="2"><span id="outSagY" class="output-eng">7.2 mm</span></td>
+                                <td>mm</td>
+                                <td>y ≈ 0.02 * a</td>
+                            </tr>
+                            <tr>
+                                <td>4.8</td>
+                                <td>Phương pháp bôi trơn khuyến nghị</td>
+                                <td>-</td>
+                                <td colspan="2"><span id="outLubeType" class="output-eng" style="text-align: left; width: 100%;">Bôi trơn nhỏ giọt (Drip lubrication)</span></td>
+                                <td>-</td>
+                                <td>ISO 606</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SECTION 5.0: KÍCH THƯỚC ĐĨA XÍCH ISO 606 (ACTIVE) -->
+            <div class="accordion-section active" id="sec50">
+                <div class="section-header results-block">
+                    <span>5.0 KÍCH THƯỚC HÌNH HỌC ĐĨA XÍCH ISO 606 / DIN 8187 (SPROCKET DIMENSIONS)</span>
+                    <span class="header-toggle">▼</span>
+                </div>
+                <div class="section-body">
+                    <!-- Technical Dimension Diagram from MITCalc Original -->
+                    <div style="text-align: center; margin-bottom: 16px; background: #1e293b; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
+                        <img src="img/image9.png" alt="Sơ đồ kích thước hình học đĩa xích ISO 606" style="max-width: 100%; height: auto; border-radius: 4px;">
+                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px;">Hình 5.1: Định nghĩa kích thước biên dạng răng và đĩa xích con lăn theo ISO 606 / DIN 8187</p>
+                    </div>
+
+                    <table class="calc-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">#</th>
+                                <th>Kích thước hình học đĩa</th>
+                                <th style="width: 80px;">Ký hiệu</th>
+                                <th style="width: 200px;">Đĩa Dẫn 1 (Pinion)</th>
+                                <th style="width: 200px;">Đĩa Bị Dẫn 2 (Wheel)</th>
+                                <th style="width: 90px;">Đơn vị</th>
+                                <th style="width: 140px;">Quy chuẩn</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>5.1</td>
+                                <td>Đường kính vòng chia</td>
+                                <td>d</td>
+                                <td><span id="outD1" class="output-eng highlight-key-param">77.16</span></td>
+                                <td><span id="outD2" class="output-eng highlight-key-param">161.97</span></td>
+                                <td>mm</td>
+                                <td>d = p / sin(180/z)</td>
+                            </tr>
+                            <tr>
+                                <td>5.2</td>
+                                <td>Đường kính vòng đỉnh răng</td>
+                                <td>da</td>
+                                <td><span id="outDa1" class="output-eng highlight-key-param">83.00</span></td>
+                                <td><span id="outDa2" class="output-eng highlight-key-param">168.00</span></td>
+                                <td>mm</td>
+                                <td>ISO 606</td>
+                            </tr>
+                            <tr>
+                                <td>5.3</td>
+                                <td>Đường kính vòng đáy răng</td>
+                                <td>df</td>
+                                <td><span id="outDf1" class="output-eng highlight-key-param">68.65</span></td>
+                                <td><span id="outDf2" class="output-eng highlight-key-param">153.46</span></td>
+                                <td>mm</td>
+                                <td>df = d - 2*R1</td>
+                            </tr>
+                            <tr>
+                                <td>5.4</td>
+                                <td>Bán kính lượn đáy rãnh răng</td>
+                                <td>R1</td>
+                                <td><span id="outR1_1" class="output-eng">4.26</span></td>
+                                <td><span id="outR1_2" class="output-eng">4.26</span></td>
+                                <td>mm</td>
+                                <td>R1 = 0.505*d3</td>
+                            </tr>
+                            <tr>
+                                <td>5.5</td>
+                                <td>Bề rộng răng đĩa xích đơn</td>
+                                <td>bf1</td>
+                                <td><span id="outBf1" class="output-eng highlight-key-param">7.20</span></td>
+                                <td><span id="outBf1_2" class="output-eng highlight-key-param">7.20</span></td>
+                                <td>mm</td>
+                                <td>bf1 = 0.95*b1</td>
+                            </tr>
+                            <tr>
+                                <td>5.6</td>
+                                <td>Bán kính lượn sườn răng</td>
+                                <td>rx</td>
+                                <td colspan="2"><span id="outRx" class="output-eng">13.00</span></td>
+                                <td>mm</td>
+                                <td>rx = p</td>
+                            </tr>
+                            <tr>
+                                <td>5.7</td>
+                                <td>Đường kính giới hạn moay-ơ tối đa</td>
+                                <td>Dg</td>
+                                <td><span id="outDg1" class="output-eng">58.00</span></td>
+                                <td><span id="outDg2" class="output-eng">142.00</span></td>
+                                <td>mm</td>
+                                <td>Dg &lt; df - 2*c</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- MASTER BLOCK 3: BỔ SUNG & CHẾ TẠO (MANUFACTURING SECTION - BLUE) -->
+            <!-- SECTION 16.0: HỆ THỐNG CAD & XUẤT BẢN VẼ DXF (COLLAPSED BY DEFAULT) -->
+            <div class="accordion-section" id="sec160">
+                <div class="section-header manufacturing-block">
+                    <span>16.0 HỆ THỐNG CAD & BẢNG CHẾ TẠO DXFTables (CAD SYSTEM & DXF OUTPUT)</span>
+                    <span class="header-toggle">▶</span>
+                </div>
+                <div class="section-body">
+                    <p style="color: var(--text-secondary); margin-bottom: 14px; font-size: 0.88rem;">
+                        Xuất bản vẽ 2D CAD độc lập chuẩn AutoCAD Release 12 (AC1009) 100% offline (Zero-CORS). Tương thích hoàn toàn với AutoCAD, SolidWorks, Inventor, NX, LibreCAD.
+                    </p>
+                    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+                        <button type="button" class="btn btn-primary" id="btnExportDxfAssembly">📥 Xuất Toàn Bộ Bộ Truyền (DXF R12)</button>
+                        <button type="button" class="btn btn-secondary" id="btnExportDxfSp1">📥 Xuất Đĩa Dẫn 1 (DXF R12)</button>
+                        <button type="button" class="btn btn-secondary" id="btnExportDxfSp2">📥 Xuất Đĩa Bị Dẫn 2 (DXF R12)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 2: MÔ PHỎNG 2D CAD CANVAS -->
+        <div id="tabCanvas" class="tab-pane">
+            <div class="canvas-wrapper">
+                <!-- Canvas Toolbar -->
+                <div class="canvas-toolbar">
+                    <div class="toolbar-group">
+                        <button type="button" class="btn btn-secondary" id="btnViewFull">Toàn Cảnh Bộ Truyền</button>
+                        <button type="button" class="btn btn-secondary" id="btnViewSp1">Đĩa Dẫn 1</button>
+                        <button type="button" class="btn btn-secondary" id="btnViewSp2">Đĩa Bị Dẫn 2</button>
+                        <button type="button" class="btn btn-secondary" id="btnViewMesh">Vùng Ăn Khớp</button>
+                    </div>
+                    <div class="toolbar-group" style="margin-left: auto;">
+                        <button type="button" class="btn btn-success" id="btnAnimToggle">⏸ Tạm Dừng</button>
+                        <button type="button" class="btn btn-secondary" id="btnAnimReset">↺ Reset Góc</button>
+                        <button type="button" class="btn btn-secondary" id="btnFitView">⛶ Fit View</button>
+                        <span style="font-size: 0.8rem; color: var(--text-secondary); margin-left: 6px;">Tốc độ:</span>
+                        <input type="range" id="rangeAnimSpeed" min="0.1" max="3.0" step="0.1" value="1.0" style="width: 80px;">
+                        <span id="spanAnimSpeed" style="font-size: 0.8rem; color: #38bdf8; font-weight: 700; width: 35px;">1.0x</span>
+                    </div>
+                </div>
+
+                <!-- Canvas View Container -->
+                <div class="canvas-view-container">
+                    <canvas id="chainCanvas" width="1200" height="650"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts (Pure Offline, CORS-Free Single Bundle) -->
+    <script src="js/chain-engine.bundle.js"></script>
+</body>
+</html>

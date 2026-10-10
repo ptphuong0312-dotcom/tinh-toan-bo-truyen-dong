@@ -2938,3 +2938,43 @@ ho_{f0} / \cos\gamma$.
 
 
 
+
+
+---
+
+### Quy Tắc 121: Quy Chuẩn Tích Hợp Hệ Số Khe Hở Đỉnh Tương Đối ($c^*$) Vào Mục 2.0 & Chuẩn Hóa Thứ Tự Khối Section 1.0 & 2.0 (Module 7)
+**Ngày áp dụng**: 10/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Chuẩn hóa thứ tự khối logic**:
+   - Mục 1.0: "THIẾT KẾ HÌNH HỌC THEN HOA (SPLINE GEOMETRY DESIGN)" nằm trước.
+   - Mục 2.0: "THÔNG SỐ BIÊN DẠNG RĂNG (TOOTH PROFILE PARAMETERS)" nằm ngay bên dưới Mục 1.0, loại bỏ hoàn toàn hiện tượng nghịch lý Mục 2.0 nằm trên Mục 1.0.
+2. **Cơ chế liên thông hệ số khe hở đỉnh tương đối ($c_0^*, c_2^*$)**:
+   - Dòng 2.3: `Hệ số khe hở đỉnh tương đối` ($c_0^* = c_0/m, c_2^* = c_2/m$) với quan hệ giải tích $c^* = h_f^* - h_a^*$.
+   - Dòng 2.1: $h_a^*$ (Chiều cao đầu răng tương đối).
+   - Dòng 2.2: $h_f^*$ (Chiều cao chân răng tương đối).
+   - Dòng 2.3: $c^*$ (Hệ số khe hở đỉnh tương đối).
+   - Dòng 2.4: $r_a^*$ (Bán kính lượn đỉnh răng tương đối).
+   - Dòng 2.5: $r_f^*$ (Bán kính lượn chân răng tương đối).
+   - Khi chọn tiêu chuẩn hoặc sửa $h_a^*, h_f^*$: $c^*$ tự động nhảy theo; ngược lại khi người dùng sửa $c^*$, hệ thống tự động cập nhật $h_f^* = h_a^* + c^*$ và tính toán lại đường kính chân răng $d_{f0}, D_{ri}$ tương ứng.
+
+---
+
+### Quy Tắc 122: Quy Chuẩn Toàn Diện Bộ Truyền Xích Con Lăn ISO 606 / ASME B29.1M (Module 9)
+**Ngày áp dụng**: 10/10/2026  
+**Chủ sở hữu phê duyệt**: SirPhuong  
+1. **Tuân thủ Tuyệt đối Quy Tắc 1 (Zero-Force Scope Protocol)**:
+   - Lược bỏ toàn bộ các phép tính lực căng vòng, lực hướng tâm, ứng suất uốn và độ bền mỏi xích.
+   - Tập trung chuyên sâu 100% vào:
+     * CSDL 171 loại xích con lăn (ISO 606 / DIN 8187, ASME B29.1M / DIN 8188, Narrow Pitch NP/NPH).
+     * Hình học đĩa xích tiêu chuẩn ($d, d_a, d_f, R_1, b_{f1}, r_x, D_g$).
+     * Động học, tỷ số truyền $i$, vận tốc xích $v$, góc ôm đĩa dẫn $lpha_1 \ge 120^\circ$.
+     * Thuật toán lặp khoảng cách trục thực tế $a$, số mắt xích $X$ (chẵn/lẻ) và chiều dài xích $L$.
+2. **Tuân thủ Tuyệt đối Quy Tắc 6 (Zero-Tolerance Precision $\Delta = 0.000000$)**:
+   - Bán kính đáy rãnh đĩa xích: $R_1 = 	ext{ROUND}((0.505 d_3 + 0.505 d_3 + 0.069 d_3^{0.33})/2, \_RA)$. Số mũ chuẩn xác `0.33` của MITCalc.
+   - Đường kính đáy: $d_f = 	ext{ROUND}(d - 2 R_1, \_RA)$.
+   - Đối chiếu Excel COM `chains_01.xlsb` đạt chuẩn **33 / 33 thông số PASS tuyệt đối 100.0%** trên cả 3 bộ dữ liệu Metric và Imperial.
+3. **Mô phỏng 2D CAD Canvas & Xuất file CAD DXF Release 12**:
+   - 4 chế độ quan sát: Toàn cảnh (Full), Đĩa dẫn 1, Đĩa bị dẫn 2, Vùng ăn khớp (Mesh Detail).
+   - Mô phỏng độ võng chùng xích catenary thực tế $y pprox 0.02 a \sin(u \pi)$.
+   - Hỗ trợ cảm ứng đa điểm mobile theo Quy Tắc 11: 1 ngón Pan, 2 ngón Zoom, `touch-action: none`.
+   - Xuất file DXF Release 12 (AC1009) độc lập không CORS kèm bảng thông số chế tạo DXFTables ISO 606.

@@ -2807,5 +2807,62 @@ ho_{f0}$.
    - Chạy `python tools/test_splines_qc.py`: 110/110 checks PASS tuyệt đối với $\Delta = 0.000000$.
    - Chạy kiểm thử Playwright browser: 0 lỗi console, hình ảnh sắc nét, các cung bo mượt mà.
 
+---
+
+### Runbook 26: Kỹ Thuật Xây Dựng & Kiểm Thử Bộ Truyền Xích Con Lăn ISO 606 / ASME B29.1M (Module 9)
+**Mục tiêu**: Làm chủ giải thuật thiết kế, hình học đĩa xích, động học dây xích, mô phỏng 2D Canvas và đối chiếu Excel COM chuẩn Zero-Tolerance $\Delta = 0.000000$ đối với Bộ Truyền Xích Con Lăn (Module 9) theo ISO 606 / DIN 8187 / DIN 8188 / ASME B29.1M.
+
+1. **Quy chuẩn trích xuất & Cấu trúc CSDL 171 loại Xích Con Lăn**:
+   - Dữ liệu trích xuất từ `chains_01.xlsb` (sheet `Tables`):
+     * `T_RCH_STD_EU`: 48 loại xích tiêu chuẩn Châu Âu (ISO 606 / DIN 8187, từ 04B đến 72B, 1-dãy đến 3-dãy).
+     * `T_RCH_STD_US`: 33 loại xích tiêu chuẩn Mỹ (ASME B29.1M / DIN 8188, từ 25 đến 240).
+     * `T_RCH_NP_US`: 74 loại xích bước hẹp (Narrow Pitch).
+     * `T_RCH_NPH_US`: 16 loại xích bước hẹp tải nặng (Heavy Narrow Pitch).
+   - Các trường thông số cốt lõi: bước xích $p$, số dãy xích $strands$, tải trọng phá hủy tối thiểu $F_B$, khối lượng 1 mét $m$, diện tích bản lề $A$, bề rộng trong $b_1$, đường kính con lăn lớn nhất $d_3$, đường kính chốt $d_1$, chiều dài chốt $l, l_c$, chiều cao má xích $g$, chiều dày má xích $s_1, s_2$, bước ngang giữa các dãy $e$.
+
+2. **Quy luật giải tích hình học đĩa xích & Công thức làm tròn đặc trưng MITCalc 1.74 (`_RA`)**:
+   - Đường kính vòng chia:
+     $$d = \frac{p}{\sin(180^\circ / z)}$$
+   - Số chữ số làm tròn xưởng: `_RA = S_Units ? 2 : 3` (Hệ Mét 2 chữ số thập phân, Hệ Inch 3 chữ số thập phân).
+   - Bán kính đáy rãnh đĩa xích $R_1$:
+     $$R_{1,\min} = 0.505 \cdot d_3, \quad R_{1,\max} = 0.505 \cdot d_3 + 0.069 \cdot d_3^{0.33}$$
+     $$R_1 = \text{ROUND}\left(\frac{R_{1,\min} + R_{1,\max}}{2}, \_RA\right)$$
+     *(Lưu ý sống còn: Số mũ lũy thừa trong MITCalc Excel là `0.33`, tuyệt đối không dùng phân số `1/3` để tránh sai số $\Delta$)*.
+   - Đường kính đáy đĩa xích $d_f$:
+     $$d_f = \text{ROUND}(d - 2 \cdot R_1, \_RA)$$
+   - Đường kính đỉnh đĩa xích $d_a$:
+     $$d_{a,\min} = d - d_3 + p \cdot \left(1 - \frac{1.6}{z}\right), \quad d_{a,\max} = d + 1.25 \cdot p - d_3$$
+     $$d_a = \text{ROUND}\left(\frac{d_{a,\min} + d_{a,\max}}{2}, \_RA\right)$$
+   - Góc sườn rãnh răng $\alpha$:
+     $$\alpha = \text{ROUND}\left(140^\circ - \frac{90^\circ}{z}, \_RA\right)$$
+
+3. **Thuật toán lặp khoảng cách trục $a$, số mắt xích $X$ & Chiều dài dây xích $L$**:
+   - Số mắt xích lý thuyết:
+     $$X_{\text{exact}} = 2 \cdot \frac{a_{\text{req}}}{p} + \frac{z_1 + z_2}{2} + \left(\frac{z_2 - z_1}{2\pi}\right)^2 \cdot \frac{p}{a_{\text{req}}}$$
+   - Làm tròn mắt xích:
+     * Chế độ mắt chẵn (Even): $X = 2 \cdot \text{ROUNDUP}(X_{\text{exact}} / 2, 0)$ để tránh dùng khóa xích bán nguyệt gây giảm 20% độ bền mỏi.
+     * Chế độ mắt lẻ (Odd): $X = \text{ROUNDUP}(X_{\text{exact}}, 0)$.
+   - Tính ngược khoảng cách trục thực tế $a$:
+     $$F = X - \frac{z_1 + z_2}{2}$$
+     $$a = \frac{p}{4} \cdot \left( F + \sqrt{F^2 - 2 \cdot \left(\frac{z_2 - z_1}{\pi}\right)^2} \right)$$
+   - Chiều dài xích thực tế: $L = X \cdot p$.
+   - Vận tốc xích: $v = \frac{z_1 \cdot p \cdot n_1}{60000}$ [m/s].
+   - Góc ôm đĩa xích: $\alpha_1 = 180^\circ - 2 \arcsin\left(\frac{d_2 - d_1}{2a}\right) \ge 120^\circ$.
+
+4. **Engine Đồ Họa 2D Canvas Động Học Xích & Catenary Sag**:
+   - Dựng chính xác 2 đĩa xích với biên dạng răng theo ISO 606.
+   - Tính tọa độ tiếp tuyến ăn khớp $t_{1,\text{top}}, t_{2,\text{top}}, t_{1,\text{bot}}, t_{2,\text{bot}}$.
+   - Nhánh chùng phía dưới có độ võng dây xích thực tế $y \approx 0.02 a \sin(u \pi)$.
+   - Vòng lặp animation chuyển động quay đồng bộ tỷ số truyền $i = z_2 / z_1$, con lăn chạy mượt mà quanh đường bao.
+   - Hỗ trợ cảm ứng đa điểm mobile theo Quy Tắc 11: 1 ngón Pan, 2 ngón Zoom, `touch-action: none`.
+
+5. **Xuất Bản Vẽ CAD DXF R12 AC1009 Độc Lập**:
+   - Xuất 100% offline (Zero-CORS) qua Blob: Toàn bộ bộ truyền, Đĩa dẫn 1, Đĩa bị dẫn 2.
+   - Đi kèm bảng thông số chế tạo DXFTables chuẩn ISO 606 / DIN 8187.
+
+6. **Kết quả kiểm thử Live Audit Excel COM (`test_chain_qc.py`)**:
+   - 3 kịch bản: ASME B29.1 80-2 Imperial, ISO 606 08B-1 Metric, ISO 606 16B-1 Metric.
+   - **33 / 33 thông số PASS tuyệt đối 100.0% với $\Delta = 0.000000$**.
+
 
 

@@ -31,12 +31,15 @@ res6 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_tolerances.py
 print("[7/8] Dang dong goi Mo-dun Then Hoa Than Khai (Involute Splines)...")
 res7 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_splines.py")])
 
-print("[8/8] Dang dong goi Mo-dun Then & Then Hoa Rang Chu Nhat (Keys & Straight Splines)...")
+print("[8/9] Dang dong goi Mo-dun Then & Then Hoa Rang Chu Nhat (Keys & Straight Splines)...")
 res8 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_shaft_keys.py")])
 
-if res1.returncode == 0 and res2.returncode == 0 and res3.returncode == 0 and res4.returncode == 0 and res5.returncode == 0 and res6.returncode == 0 and res7.returncode == 0 and res8.returncode == 0:
+print("[9/9] Dang dong goi Mo-dun Bo Truyen Xich Con Lan (Roller Chain ISO 606)...")
+res9 = subprocess.run([python_bin, os.path.join(tools_dir, "bundle_chain.py")])
+
+if res1.returncode == 0 and res2.returncode == 0 and res3.returncode == 0 and res4.returncode == 0 and res5.returncode == 0 and res6.returncode == 0 and res7.returncode == 0 and res8.returncode == 0 and res9.returncode == 0:
     print()
-    print(">>> DONG GOI HOAN TAT 100% THANH CONG (8/8 MO-DUN)!")
+    print(">>> DONG GOI HOAN TAT 100% THANH CONG (9/9 MO-DUN)!")
 else:
     print()
     print(">>> CO LOI XAY RA TRONG QUA TRINH DONG GOI!")

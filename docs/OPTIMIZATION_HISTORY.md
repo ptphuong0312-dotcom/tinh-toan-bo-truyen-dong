@@ -4628,5 +4628,53 @@ ho_{f0}$.
     * Ảnh chụp Canvas `scratch/splines_hub_detail_fillet.png` và `scratch/splines_assembly_fillet_verified.png` xác nhận chân then lỗ bo tròn mượt mà, ăn khớp chuẩn xác, không góc sắc, không lỗi console (0 errors).
   - Xuất CAD DXF AC1009 (`SplinesDxf.generateDXF`): Cặp ăn khớp, trục then hoa và lỗ moay-ơ tạo file thành công với đầy đủ các cung lượn chân then lỗ!
 
+---
 
+## Giai Đoạn 41: Chuyển Hệ Số Khe Hở Đỉnh Tương Đối (c*) Vào Mục 2.0 (Thông Số Biên Dạng Răng) & Đánh Lại Số Thứ Tự Section 1.0 & 2.0 (Module 7)
+* **Tiêu chuẩn**: ISO 4156-1, DIN 5480, ANSI B92.1, MITCalc 1.74 `SplinesI_01.xlsb`.
+* **Yêu cầu trực tiếp từ SirPhuong**:
+  1. Chuyển thông số "Hệ số khe hở đỉnh tương đối" ($c^* = c/m$) vào mục "THÔNG SỐ BIÊN DẠNG RĂNG (TOOTH PROFILE PARAMETERS)".
+  2. Đánh lại số thứ tự các mục: khắc phục nghịch lý Mục 2.0 nằm trên, mà bên dưới nó lại là Mục 1.0.
+* **Giải pháp kỹ thuật**:
+  1. Hoán đổi vị trí: Section 1.0 (Thiết kế hình học then hoa) nằm trước, Section 2.0 (Thông số biên dạng răng) nằm ngay bên dưới.
+  2. Thêm dòng 2.3: `Hệ số khe hở đỉnh tương đối` ($c_0^* / c_2^*$) với hai ô nhập `c0Input` và `c2Input` có công thức giải thích $c^* = h_f^* - h_a^* = c/m$.
+  3. Renumbering chuẩn xác các dòng trong Section 2.0: 2.1 ($h_a^*$), 2.2 ($h_f^*$), 2.3 ($c^*$), 2.4 ($r_a^*$), 2.5 ($r_f^*$).
+  4. Bổ sung liên thông 2 chiều cho $c^*$: Chọn tiêu chuẩn thì $c^*$ tự động nhảy theo chuẩn; người dùng sửa $c^*$ thì $h_f^*$ tự động cập nhật và kích hoạt tính lại đường kính $d_{f0}, D_{ri}$ tương ứng.
+  5. Đóng gói bundle `splines-engine.bundle.js` và kiểm thử QC: **110 / 110 phép tính PASS tuyệt đối 100.0% với $\Delta = 0.000000$**.
 
+---
+
+## Giai Đoạn 42: Xây Dựng & Kiểm Thử Toàn Diện Bộ Truyền Xích Con Lăn ISO 606 / ASME B29.1M (Module 9)
+* **Tiêu chuẩn**: ISO 606, DIN 8187 (Châu Âu), DIN 8188 / ASME B29.1M (Mỹ), MITCalc 1.74 `chains_01.xlsb`.
+* **Yêu cầu & Phạm vi triển khai**:
+  - Tuân thủ Quy Tắc 1 (Zero-Force Scope Protocol): Lược bỏ toàn bộ các phép tính lực căng xích $F_t, F_r$, ứng suất uốn/mỏi; tập trung chuyên sâu 100% vào hình học xích, đĩa xích tiêu chuẩn, khoảng cách trục, số mắt xích, kiểm tra góc ôm $\alpha_1 \ge 120^\circ$, vận tốc xích $v$, độ chùng catenary sag $y$, và kích thước chế tạo ISO 606.
+  - Tuân thủ Quy Tắc 6 (Zero-Tolerance Precision): Đối chiếu trực tiếp thời gian thực với Excel COM `chains_01.xlsb` đạt chuẩn $\Delta = 0.000000$.
+  - Tuân thủ Quy Tắc 2 & 3: Cấu trúc 2 Tab (Bảng tính & Mô phỏng 2D CAD), 3 Master Blocks (Đầu vào - Xanh lá, Kết quả - Vàng cam, Chế tạo DXFTables - Xanh dương).
+  - Tuân thủ Quy Tắc 7 & 11: Đóng gói JS thuần không CORS (`chain-engine.bundle.js`), hỗ trợ cảm ứng đa điểm mobile (Pan 1 ngón, Zoom 2 ngón).
+* **Đột phá giải thuật & Thành quả kỹ thuật**:
+  1. **Cơ sở dữ liệu 171 loại xích con lăn (`chain-data.js`)**:
+     - 48 loại ISO 606 / DIN 8187 (04B-1 đến 72B-3).
+     - 33 loại ASME B29.1M / DIN 8188 (25-1 đến 240-3).
+     - 74 loại Narrow Pitch (NP) & 16 loại Heavy Narrow Pitch (NPH).
+     - 9 Presets công nghiệp 1-click (Motorcycle secondary, Motorcycle primary, Industrial conveyor, Agricultural harvester, Bicycle standard, Heavy oilfield, Precision packaging, Machine tool spindle, Escalator drive).
+  2. **Giải thuật tính toán chuẩn xưởng MITCalc 1.74 (`chain-calc.js`)**:
+     - Đường kính chia: $d = p / \sin(180^\circ / z)$.
+     - Làm tròn xưởng: `_RA = S_Units ? 2 : 3` (Hệ Mét 2 số, Hệ Inch 3 số thập phân).
+     - Bán kính đáy rãnh: $R_1 = \text{ROUND}((0.505 d_3 + 0.505 d_3 + 0.069 d_3^{0.33})/2, \_RA)$. Số mũ chuẩn xác `0.33` của MITCalc.
+     - Đường kính đáy: $d_f = \text{ROUND}(d - 2 R_1, \_RA)$.
+     - Đường kính đỉnh: $d_a = \text{ROUND}((d_{a,\min} + d_{a,\max})/2, \_RA)$.
+     - Khoảng cách trục thực tế $a$ tính ngược từ số mắt xích chẵn $X$.
+  3. **Mô phỏng 2D Canvas động học & Dây xích có độ chùng catenary (`chain-canvas.js`)**:
+     - 4 chế độ xem: Toàn cảnh (Full), Đĩa dẫn 1, Đĩa bị dẫn 2, Vùng ăn khớp (Mesh Detail).
+     - Hoạt họa chuyển động quay ăn khớp liên hợp thời gian thực, có thanh trượt tốc độ `0.1x - 3.0x`, nút tạm dừng, reset góc.
+     - Mô phỏng độ võng chùng catenary $y = 0.02 a \sin(u \pi)$ ở nhánh dưới.
+  4. **Xuất bản vẽ 2D CAD DXF R12 AC1009 (`chain-dxf.js`)**:
+     - Xuất 100% offline không CORS qua Blob: Toàn bộ bộ truyền, Đĩa dẫn 1, Đĩa bị dẫn 2.
+     - Đầy đủ các layer kỹ thuật, đường tâm, vòng chia, kích thước và bảng thông số chế tạo DXFTables ISO 606.
+  5. **Bộ kiểm thử Live Audit QC Suite (`test_chain_qc.py`)**:
+     - Đối chiếu 33 thông số then chốt trên cả 3 trường hợp đại diện (ASME B29.1 80-2 Imperial, ISO 606 08B-1 Metric, ISO 606 16B-1 Metric).
+     - **33 / 33 phép tính PASS tuyệt đối 100.0% với $\Delta = 0.000000$**!
+  6. **Đóng gói Bundle & Tích hợp Cổng Portal**:
+     - `tools/bundle_chain.py` tạo `modules/roller-chain/js/chain-engine.bundle.js` (145.9 KB).
+     - Cập nhật `tools/bundle_all.py` đóng gói tự động cả 9/9 module.
+     - Cập nhật thẻ Mô-đun 9 trên Cổng Trung Tâm `index.html` và đồng bộ menu điều hướng trên toàn bộ hệ thống.

@@ -1,0 +1,497 @@
+/* ==========================================================================
+   MITCalc Web App - Roller Chain Styling (Module 9)
+   Standards: ISO 606 / DIN 8187 / DIN 8188 / ASME B29.1M
+   Rules:
+     - Rule 1: Zero-Force Scope
+     - Rule 2 & 3: Master Blocks & Excel-Style Controls
+     - Rule 11: Mobile Touch Support
+     - Rule 12: Combo-Box Protocol
+   ========================================================================== */
+
+:root {
+    --bg-dark: #0f172a;
+    --bg-panel: #1e293b;
+    --bg-table: #1e293b;
+    --border-color: #334155;
+    --border-light: #475569;
+    --text-primary: #f8fafc;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --accent-blue: #38bdf8;
+    --accent-cyan: #06b6d4;
+    --accent-green: #22c55e;
+    --accent-amber: #f59e0b;
+    --accent-orange: #ea580c;
+    --accent-purple: #a855f7;
+    --input-bg: #ffffff;
+    --input-text: #0f172a;
+    --input-border: #2563eb;
+    --font-mono: 'Consolas', 'Courier New', monospace;
+    --font-sans: 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    padding: 16px;
+    -webkit-font-smoothing: antialiased;
+}
+
+.chain-container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* App Header */
+.app-header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 18px 24px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.app-title-group h1 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #38bdf8;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.app-title-group p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-decoration: none;
+}
+
+.btn-secondary {
+    background: #334155;
+    color: #e2e8f0;
+    border-color: #475569;
+}
+
+.btn-secondary:hover {
+    background: #475569;
+    color: #ffffff;
+}
+
+.btn-primary {
+    background: #2563eb;
+    color: #ffffff;
+}
+
+.btn-primary:hover {
+    background: #1d4ed8;
+}
+
+.btn-success {
+    background: #16a34a;
+    color: #ffffff;
+}
+
+.btn-success:hover {
+    background: #15803d;
+}
+
+/* Tab Navigation */
+.tab-navigation {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    background: #1e293b;
+    padding: 6px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.tab-btn {
+    flex: 1;
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.tab-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.tab-btn.active {
+    background: #0284c7;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.4);
+}
+
+.tab-pane {
+    display: none;
+}
+
+.tab-pane.active {
+    display: block;
+}
+
+/* Summary Banner Cards */
+.summary-banner {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.summary-card {
+    background: #1e293b;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summary-card-title {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.summary-card-val {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #38bdf8;
+    font-family: var(--font-mono);
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.status-pass {
+    background: rgba(34, 197, 94, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-warn {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+/* Global Accordion Toolbar */
+.global-accordion-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+}
+
+/* Accordion Sections & Master Blocks */
+.accordion-section {
+    background: #1e293b;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.section-header {
+    padding: 12px 18px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: background 0.15s ease;
+}
+
+/* Master Blocks Colors (Rule 3) */
+.section-header.input-block {
+    background: linear-gradient(90deg, #107c41 0%, #15803d 100%);
+    color: #ffffff;
+}
+
+.section-header.results-block {
+    background: linear-gradient(90deg, #c55a11 0%, #d97706 100%);
+    color: #ffffff;
+}
+
+.section-header.manufacturing-block {
+    background: linear-gradient(90deg, #1e3a8a 0%, #1d4ed8 100%);
+    color: #ffffff;
+}
+
+.section-header .header-toggle {
+    font-size: 0.8rem;
+    transition: transform 0.2s ease;
+}
+
+.accordion-section .section-body {
+    display: none;
+    padding: 16px;
+    background: #0f172a;
+    border-top: 1px solid var(--border-color);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.accordion-section.active .section-body {
+    display: block;
+}
+
+.accordion-section.active .section-header .header-toggle {
+    transform: rotate(90deg);
+}
+
+/* Engineering Table */
+.calc-table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+    font-size: 0.86rem;
+}
+
+.calc-table th {
+    background: #1e293b;
+    color: #94a3b8;
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.calc-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+    vertical-align: middle;
+}
+
+.calc-table tr:hover {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Input & Output Cells (Rule 3) */
+.user-input {
+    background-color: var(--input-bg);
+    color: var(--input-text);
+    border: 1.5px solid var(--input-border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 600;
+    width: 100%;
+    max-width: 150px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.user-input:focus {
+    outline: none;
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+}
+
+.output-eng {
+    background-color: #1e293b;
+    color: #38bdf8;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: inline-block;
+    min-width: 100px;
+    text-align: right;
+}
+
+/* Highlight Key Manufacturing Parameters (Rule 3) */
+.highlight-key-param {
+    border: 1.5px solid var(--accent-amber) !important;
+    color: #00f0ff !important;
+    background-color: rgba(245, 158, 11, 0.08) !important;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.3) !important;
+    font-weight: 800 !important;
+}
+
+/* Combo-Box Group (Rule 12) */
+.combo-box-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    max-width: 180px;
+}
+
+.combo-box-group .user-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.combo-arrow-select {
+    background: #334155;
+    color: #e2e8f0;
+    border: 1.5px solid var(--input-border);
+    border-radius: 4px;
+    padding: 6px 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+
+/* Action button inside table row */
+.btn-action-small {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    background: #334155;
+    color: #38bdf8;
+    border: 1px solid #475569;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-action-small:hover {
+    background: #475569;
+    color: #ffffff;
+}
+
+/* Sliders */
+.range-slider {
+    width: 100%;
+    max-width: 150px;
+    vertical-align: middle;
+}
+
+/* 2D Canvas Container (Rule 11) */
+.canvas-wrapper {
+    background: #0f172a;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.canvas-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    background: #1e293b;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+.canvas-toolbar .toolbar-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.canvas-view-container {
+    width: 100%;
+    aspect-ratio: 1200 / 650;
+    background: #090d16;
+    border-radius: 6px;
+    border: 1px solid #1e293b;
+    position: relative;
+    overflow: hidden;
+    touch-action: none; /* Rule 11 */
+}
+
+.canvas-view-container canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+/* Responsive Styles (Rule 11) */
+@media (max-width: 768px) {
+    body {
+        padding: 8px;
+    }
+
+    .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 14px;
+        position: static;
+    }
+
+    .tab-navigation {
+        margin-bottom: 12px;
+    }
+
+    .tab-btn {
+        min-height: 42px;
+        font-size: 0.85rem;
+    }
+
+    .summary-banner {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .user-input, .combo-arrow-select {
+        font-size: 16px; /* Prevent iOS Safari auto-zoom */
+        min-height: 36px;
+    }
+
+    .calc-table {
+        min-width: 580px;
+    }
+}

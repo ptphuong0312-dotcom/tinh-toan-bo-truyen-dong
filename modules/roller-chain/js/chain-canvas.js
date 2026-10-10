@@ -1,0 +1,694 @@
+/**
+ * MITCalc Web App - Roller Chain 2D CAD Canvas Visualization Engine
+ * Standards: ISO 606 / DIN 8187 / ASME B29.1M
+ * Features:
+ *   - 2D Canvas rendering of full transmission, sprockets, and articulated roller links.
+ *   - 4 View Modes: 'full' (Assembly), 'sprocket1' (Pinion), 'sprocket2' (Wheel), 'mesh' (Mesh Detail).
+ *   - Interactive Animation Loop (0.1x to 3.0x speed, pause, reset).
+ *   - Rule 11: Mobile Touch Support (1-finger Pan, 2-finger Pinch Zoom, touch-action: none).
+ *   - Desktop Mouse Pan (Drag), Wheel Zoom, Double-click auto-fit.
+ */
+
+class ChainCanvas {
+    constructor(canvasId, options = {}) {
+        this.canvas = document.getElementById(canvasId);
+        if (!this.canvas) {
+            console.error(`Canvas with id "${canvasId}" not found.`);
+            return;
+        }
+        this.ctx = this.canvas.getContext('2d');
+
+        // View options
+        this.viewMode = options.viewMode || 'full'; // 'full', 'sprocket1', 'sprocket2', 'mesh'
+        this.showPitchCircles = options.showPitchCircles !== false;
+        this.showDimensions = options.showDimensions !== false;
+        this.showCenterLine = options.showCenterLine !== false;
+        this.showLinks = options.showLinks !== false;
+        this.showToothContours = options.showToothContours !== false;
+
+        // View transform (Pan & Zoom)
+        this.zoom = 1.0;
+        this.panX = 0;
+        this.panY = 0;
+        this.isDragging = false;
+        this.dragStartX = 0;
+        this.dragStartY = 0;
+
+        // Multi-touch tracking
+        this.touches = [];
+        this.initialPinchDistance = 0;
+        this.initialPinchZoom = 1.0;
+
+        // Animation state
+        this.isRunning = true;
+        this.speedMultiplier = 1.0;
+        this.rotationAngle = 0.0; // Current rotation in radians
+        this.lastTimestamp = 0;
+        this.animFrameId = null;
+
+        // Current calculation data
+        this.calcData = null;
+
+        // Bind events & start loop
+        this.initEvents();
+        this.startAnimation();
+    }
+
+    setData(calcData) {
+        this.calcData = calcData;
+        this.autoFit();
+        this.render();
+    }
+
+    setViewMode(mode) {
+        this.viewMode = mode;
+        this.autoFit();
+        this.render();
+    }
+
+    setSpeed(speed) {
+        this.speedMultiplier = Math.max(0.1, Math.min(3.0, speed));
+    }
+
+    toggleAnimation() {
+        this.isRunning = !this.isRunning;
+        return this.isRunning;
+    }
+
+    resetRotation() {
+        this.rotationAngle = 0.0;
+        this.render();
+    }
+
+    startAnimation() {
+        const loop = (timestamp) => {
+            if (!this.lastTimestamp) this.lastTimestamp = timestamp;
+            const dt = (timestamp - this.lastTimestamp) / 1000.0;
+            this.lastTimestamp = timestamp;
+
+            if (this.isRunning && this.calcData) {
+                // Angular velocity: omega1 = n1 * 2 * PI / 60 [rad/s]
+                // Scale animation speed to visually smooth rotation (approx 0.5 - 1.5 rad/s visually)
+                const visualSpeed = 0.75 * this.speedMultiplier;
+                this.rotationAngle += visualSpeed * dt;
+                if (this.rotationAngle > Math.PI * 2.0 * 100) {
+                    this.rotationAngle %= (Math.PI * 2.0);
+                }
+                this.render();
+            }
+
+            this.animFrameId = requestAnimationFrame(loop);
+        };
+        this.animFrameId = requestAnimationFrame(loop);
+    }
+
+    stopAnimation() {
+        if (this.animFrameId) {
+            cancelAnimationFrame(this.animFrameId);
+            this.animFrameId = null;
+        }
+    }
+
+    autoFit() {
+        if (!this.calcData || !this.canvas) return;
+
+        const cw = this.canvas.width;
+        const ch = this.canvas.height;
+        const res = this.calcData;
+        const a = res.a || 300;
+        const d1 = res.d1 || 100;
+        const d2 = res.d2 || 200;
+        const da1 = (res.sprocket1 && res.sprocket1.da) || (d1 + 10);
+        const da2 = (res.sprocket2 && res.sprocket2.da) || (d2 + 10);
+
+        if (this.viewMode === 'full') {
+            // Full transmission: Sprocket 1 at (0, 0), Sprocket 2 at (a, 0)
+            const margin = 1.25;
+            const bboxWidth = (a + da1 / 2 + da2 / 2) * margin;
+            const bboxHeight = Math.max(da1, da2) * 1.5;
+
+            const scaleX = cw / bboxWidth;
+            const scaleY = ch / bboxHeight;
+            this.zoom = Math.min(scaleX, scaleY);
+
+            // Center of transmission is at (a / 2, 0)
+            this.panX = cw / 2 - (a / 2) * this.zoom;
+            this.panY = ch / 2;
+        } else if (this.viewMode === 'sprocket1') {
+            // Focus on Sprocket 1 (Pinion)
+            const margin = 1.35;
+            const scale = Math.min(cw / (da1 * margin), ch / (da1 * margin));
+            this.zoom = scale;
+            this.panX = cw / 2;
+            this.panY = ch / 2;
+        } else if (this.viewMode === 'sprocket2') {
+            // Focus on Sprocket 2 (Wheel)
+            const margin = 1.35;
+            const scale = Math.min(cw / (da2 * margin), ch / (da2 * margin));
+            this.zoom = scale;
+            this.panX = cw / 2;
+            this.panY = ch / 2;
+        } else if (this.viewMode === 'mesh') {
+            // Focus on Mesh detail near top span entrance of Sprocket 1
+            const p = res.chain ? res.chain.pitch : 12.7;
+            const scale = (ch / (p * 8));
+            this.zoom = scale;
+            this.panX = cw * 0.45;
+            this.panY = ch * 0.55;
+        }
+    }
+
+    initEvents() {
+        // Desktop Mouse Events
+        this.canvas.addEventListener('mousedown', (e) => {
+            this.isDragging = true;
+            this.dragStartX = e.clientX - this.panX;
+            this.dragStartY = e.clientY - this.panY;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (!this.isDragging) return;
+            this.panX = e.clientX - this.dragStartX;
+            this.panY = e.clientY - this.dragStartY;
+            if (!this.isRunning) this.render();
+        });
+
+        window.addEventListener('mouseup', () => {
+            this.isDragging = false;
+        });
+
+        this.canvas.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const rect = this.canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+            const newZoom = Math.max(0.05, Math.min(25.0, this.zoom * zoomFactor));
+
+            // Zoom centered at mouse position
+            this.panX = mouseX - (mouseX - this.panX) * (newZoom / this.zoom);
+            this.panY = mouseY - (mouseY - this.panY) * (newZoom / this.zoom);
+            this.zoom = newZoom;
+
+            if (!this.isRunning) this.render();
+        }, { passive: false });
+
+        this.canvas.addEventListener('dblclick', () => {
+            this.autoFit();
+            if (!this.isRunning) this.render();
+        });
+
+        // Mobile Multi-Touch Events (Rule 11)
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (e.touches.length === 1) {
+                this.isDragging = true;
+                this.dragStartX = e.touches[0].clientX - this.panX;
+                this.dragStartY = e.touches[0].clientY - this.panY;
+            } else if (e.touches.length === 2) {
+                this.isDragging = false;
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                this.initialPinchDistance = Math.hypot(dx, dy);
+                this.initialPinchZoom = this.zoom;
+            }
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches.length === 1 && this.isDragging) {
+                this.panX = e.touches[0].clientX - this.dragStartX;
+                this.panY = e.touches[0].clientY - this.dragStartY;
+                if (!this.isRunning) this.render();
+            } else if (e.touches.length === 2 && this.initialPinchDistance > 0) {
+                const dx = e.touches[0].clientX - e.touches[1].clientX;
+                const dy = e.touches[0].clientY - e.touches[1].clientY;
+                const currentDist = Math.hypot(dx, dy);
+                const scale = currentDist / this.initialPinchDistance;
+                this.zoom = Math.max(0.05, Math.min(25.0, this.initialPinchZoom * scale));
+                if (!this.isRunning) this.render();
+            }
+        }, { passive: false });
+
+        this.canvas.addEventListener('touchend', (e) => {
+            if (e.touches.length === 0) {
+                this.isDragging = false;
+                this.initialPinchDistance = 0;
+            } else if (e.touches.length === 1) {
+                this.isDragging = true;
+                this.dragStartX = e.touches[0].clientX - this.panX;
+                this.dragStartY = e.touches[0].clientY - this.panY;
+            }
+        });
+    }
+
+    // World to Screen coordinates
+    worldToScreen(x, y) {
+        return {
+            x: this.panX + x * this.zoom,
+            y: this.panY - y * this.zoom // Invert Y for engineering coordinate system
+        };
+    }
+
+    render() {
+        const ctx = this.ctx;
+        const cw = this.canvas.width;
+        const ch = this.canvas.height;
+
+        // Clear canvas
+        ctx.fillStyle = '#0f172a'; // Deep slate dark background
+        ctx.fillRect(0, 0, cw, ch);
+
+        // Draw engineering grid
+        this.drawGrid();
+
+        if (!this.calcData) {
+            this.drawNoData();
+            return;
+        }
+
+        const res = this.calcData;
+        const a = res.a || 300;
+        const d1 = res.d1 || 100;
+        const d2 = res.d2 || 200;
+        const z1 = res.z1 || 19;
+        const z2 = res.z2 || 40;
+        const p = res.chain ? res.chain.pitch : 12.7;
+        const d3 = res.chain ? res.chain.d3 : 8.51; // roller diameter
+        const b1 = res.chain ? res.chain.b1 : 7.75;
+        const X = res.X_even || res.X_exact || 100;
+
+        // Calculate rotation angles for sprockets (ratio z1 / z2)
+        const angle1 = this.rotationAngle;
+        const angle2 = this.rotationAngle * (z1 / z2);
+
+        ctx.save();
+
+        if (this.viewMode === 'full') {
+            // 1. Draw Sprocket 1 at (0, 0)
+            this.drawSprocket(0, 0, d1, z1, res.sprocket1, angle1, '#38bdf8', 'Đĩa dẫn 1 (Z1=' + z1 + ')');
+
+            // 2. Draw Sprocket 2 at (a, 0)
+            this.drawSprocket(a, 0, d2, z2, res.sprocket2, angle2, '#fbbf24', 'Đĩa bị dẫn 2 (Z2=' + z2 + ')');
+
+            // 3. Draw Chain Kinematics (Loop & Rollers & Links)
+            if (this.showLinks) {
+                this.drawChainLoop(d1, d2, a, p, d3, X, angle1);
+            }
+
+            // 4. Center Line & Dimensions
+            if (this.showCenterLine) {
+                this.drawCenterLine(0, 0, a, 0);
+            }
+            if (this.showDimensions) {
+                this.drawTransmissionDimensions(0, 0, a, 0, d1, d2, res.sprocket1.da, res.sprocket2.da, a);
+            }
+        } else if (this.viewMode === 'sprocket1') {
+            // Focused on Sprocket 1
+            this.drawSprocket(0, 0, d1, z1, res.sprocket1, angle1, '#38bdf8', 'Đĩa xích dẫn 1 (Z1=' + z1 + ')');
+            if (this.showDimensions) {
+                this.drawSprocketDimensions(0, 0, d1, res.sprocket1);
+            }
+        } else if (this.viewMode === 'sprocket2') {
+            // Focused on Sprocket 2
+            this.drawSprocket(0, 0, d2, z2, res.sprocket2, angle2, '#fbbf24', 'Đĩa xích bị dẫn 2 (Z2=' + z2 + ')');
+            if (this.showDimensions) {
+                this.drawSprocketDimensions(0, 0, d2, res.sprocket2);
+            }
+        } else if (this.viewMode === 'mesh') {
+            // Zoomed Mesh Detail
+            this.drawSprocket(0, 0, d1, z1, res.sprocket1, angle1, '#38bdf8', 'Khu vực ăn khớp (Mesh Detail)');
+            this.drawChainLoop(d1, d2, a, p, d3, X, angle1, true);
+        }
+
+        ctx.restore();
+
+        // Overlay status info
+        this.drawOverlayInfo();
+    }
+
+    drawGrid() {
+        const ctx = this.ctx;
+        const cw = this.canvas.width;
+        const ch = this.canvas.height;
+
+        ctx.save();
+        ctx.strokeStyle = 'rgba(51, 65, 85, 0.4)'; // slate-700
+        ctx.lineWidth = 1;
+
+        const gridSize = 50 * this.zoom;
+        const minGrid = 30;
+        let step = 50;
+        while (step * this.zoom < minGrid) step *= 2;
+        while (step * this.zoom > minGrid * 4) step /= 2;
+
+        const effectiveStep = step * this.zoom;
+        const startX = (this.panX % effectiveStep);
+        const startY = (this.panY % effectiveStep);
+
+        ctx.beginPath();
+        for (let x = startX; x < cw; x += effectiveStep) {
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, ch);
+        }
+        for (let y = startY; y < ch; y += effectiveStep) {
+            ctx.moveTo(0, y);
+            ctx.lineTo(cw, y);
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    drawNoData() {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '16px "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('Đang chờ nạp dữ liệu tính toán bộ truyền xích con lăn...', this.canvas.width / 2, this.canvas.height / 2);
+        ctx.restore();
+    }
+
+    /**
+     * Draw a Sprocket with ISO 606 tooth profile
+     */
+    drawSprocket(cx, cy, d, z, sprocketData, angle, color, label) {
+        const ctx = this.ctx;
+        const da = sprocketData ? sprocketData.da : (d + 10);
+        const df = sprocketData ? sprocketData.df : (d - 10);
+        const r_pitch = d / 2.0;
+        const r_tip = da / 2.0;
+        const r_root = df / 2.0;
+
+        // 1. Tooth Contour
+        if (this.showToothContours) {
+            ctx.save();
+            ctx.strokeStyle = color;
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.85)'; // Dark fill body
+            ctx.lineWidth = 1.8;
+
+            ctx.beginPath();
+            const totalSteps = z * 8;
+            for (let i = 0; i <= totalSteps; i++) {
+                const theta = (i / totalSteps) * Math.PI * 2.0;
+                // Modulate radius between root and tip based on tooth pitch
+                const toothPhase = (theta * z) % (Math.PI * 2.0);
+                let r;
+                if (toothPhase < Math.PI * 0.45) {
+                    // Tip land
+                    r = r_tip;
+                } else if (toothPhase < Math.PI * 0.95) {
+                    // Flank down to root
+                    const u = (toothPhase - Math.PI * 0.45) / (Math.PI * 0.5);
+                    r = r_tip - u * (r_tip - r_root);
+                } else if (toothPhase < Math.PI * 1.5) {
+                    // Root bottom arc (R1)
+                    r = r_root;
+                } else {
+                    // Flank up to tip
+                    const u = (toothPhase - Math.PI * 1.5) / (Math.PI * 0.5);
+                    r = r_root + u * (r_tip - r_root);
+                }
+
+                // Apply rotation
+                const currentAngle = theta + angle;
+                const wx = cx + r * Math.cos(currentAngle);
+                const wy = cy + r * Math.sin(currentAngle);
+                const s = this.worldToScreen(wx, wy);
+
+                if (i === 0) ctx.moveTo(s.x, s.y);
+                else ctx.lineTo(s.x, s.y);
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // 2. Pitch Circle (Đường kính chia d) - Dash-dot line
+        if (this.showPitchCircles) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(234, 179, 8, 0.75)'; // Amber gold
+            ctx.lineWidth = 1.2;
+            ctx.setLineDash([8, 3, 2, 3]);
+            ctx.beginPath();
+            const scCenter = this.worldToScreen(cx, cy);
+            ctx.arc(scCenter.x, scCenter.y, r_pitch * this.zoom, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // 3. Bore hole & Hub representation
+        ctx.save();
+        ctx.fillStyle = '#0f172a';
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = 1.5;
+        const r_bore = r_root * 0.35;
+        const scC = this.worldToScreen(cx, cy);
+        ctx.beginPath();
+        ctx.arc(scC.x, scC.y, r_bore * this.zoom, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        // Center cross mark
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 1;
+        const crossL = Math.max(8, r_bore * 0.7 * this.zoom);
+        ctx.beginPath();
+        ctx.moveTo(scC.x - crossL, scC.y);
+        ctx.lineTo(scC.x + crossL, scC.y);
+        ctx.moveTo(scC.x, scC.y - crossL);
+        ctx.lineTo(scC.x, scC.y + crossL);
+        ctx.stroke();
+        ctx.restore();
+
+        // 4. Label
+        ctx.save();
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = '12px "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(label, scC.x, scC.y + (r_tip + 18) * this.zoom);
+        ctx.restore();
+    }
+
+    /**
+     * Draw the complete articulated Roller Chain Loop
+     */
+    drawChainLoop(d1, d2, a, p, d3, X, rotationAngle, detailed = false) {
+        const ctx = this.ctx;
+        if (!ChainCalc || !ChainCalc.generateChainKinematics) return;
+
+        const kine = ChainCalc.generateChainKinematics(d1, d2, a, p, X, rotationAngle);
+        if (!kine || !kine.rollers) return;
+
+        const rollers = kine.rollers;
+        const rollerR = (d3 / 2.0);
+
+        ctx.save();
+
+        // 1. Draw Chain Pitch Path (Đường tâm ăn khớp xích)
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.45)';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        for (let i = 0; i < rollers.length; i++) {
+            const s = this.worldToScreen(rollers[i].x, rollers[i].y);
+            if (i === 0) ctx.moveTo(s.x, s.y);
+            else ctx.lineTo(s.x, s.y);
+        }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // 2. Draw Link Plates (Má xích nối giữa các con lăn kề nhau)
+        ctx.strokeStyle = '#64748b'; // Slate-500
+        ctx.lineWidth = Math.max(1.5, rollerR * 1.8 * this.zoom);
+        ctx.lineCap = 'round';
+
+        ctx.beginPath();
+        for (let i = 0; i < rollers.length; i++) {
+            const nextIdx = (i + 1) % rollers.length;
+            const pA = this.worldToScreen(rollers[i].x, rollers[i].y);
+            const pB = this.worldToScreen(rollers[nextIdx].x, rollers[nextIdx].y);
+
+            // Alternating outer / inner plates visually
+            if (i % 2 === 0) {
+                ctx.moveTo(pA.x, pA.y);
+                ctx.lineTo(pB.x, pB.y);
+            }
+        }
+        ctx.stroke();
+
+        // Inner link plates
+        ctx.strokeStyle = '#475569';
+        ctx.lineWidth = Math.max(1.2, rollerR * 1.4 * this.zoom);
+        ctx.beginPath();
+        for (let i = 0; i < rollers.length; i++) {
+            const nextIdx = (i + 1) % rollers.length;
+            const pA = this.worldToScreen(rollers[i].x, rollers[i].y);
+            const pB = this.worldToScreen(rollers[nextIdx].x, rollers[nextIdx].y);
+            if (i % 2 !== 0) {
+                ctx.moveTo(pA.x, pA.y);
+                ctx.lineTo(pB.x, pB.y);
+            }
+        }
+        ctx.stroke();
+
+        // 3. Draw Rollers & Pins (Con lăn & Chốt xích)
+        for (let i = 0; i < rollers.length; i++) {
+            const pos = rollers[i];
+            const s = this.worldToScreen(pos.x, pos.y);
+            const rScreen = Math.max(2, rollerR * this.zoom);
+
+            // Roller outer body
+            ctx.fillStyle = '#38bdf8'; // Sky blue
+            ctx.strokeStyle = '#0284c7';
+            ctx.lineWidth = 1.0;
+            ctx.beginPath();
+            ctx.arc(s.x, s.y, rScreen, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            // Center Pin (Chốt xích)
+            if (rScreen > 3) {
+                ctx.fillStyle = '#0f172a';
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, Math.max(1, rScreen * 0.45), 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        ctx.restore();
+    }
+
+    /**
+     * Draw Center Line connecting axes
+     */
+    drawCenterLine(x1, y1, x2, y2) {
+        const ctx = this.ctx;
+        ctx.save();
+        ctx.strokeStyle = '#ef4444'; // Red center line
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([12, 4, 3, 4]);
+
+        const s1 = this.worldToScreen(x1, y1);
+        const s2 = this.worldToScreen(x2, y2);
+
+        // Extend slightly beyond sprockets
+        const ext = 40;
+        ctx.beginPath();
+        ctx.moveTo(s1.x - ext, s1.y);
+        ctx.lineTo(s2.x + ext, s2.y);
+        ctx.stroke();
+
+        ctx.restore();
+    }
+
+    /**
+     * Draw Transmission Dimensions (Axis distance a, tip diameters)
+     */
+    drawTransmissionDimensions(x1, y1, x2, y2, d1, d2, da1, da2, a) {
+        const ctx = this.ctx;
+        ctx.save();
+
+        const s1 = this.worldToScreen(x1, y1);
+        const s2 = this.worldToScreen(x2, y2);
+
+        // Dimension: Axis distance a [mm]
+        const dimY = s1.y + Math.max(da1, da2) * 0.65 * this.zoom + 25;
+        ctx.strokeStyle = '#a855f7'; // Purple dimension line
+        ctx.fillStyle = '#c084fc';
+        ctx.lineWidth = 1.0;
+
+        // Extension lines
+        ctx.beginPath();
+        ctx.moveTo(s1.x, s1.y + 10);
+        ctx.lineTo(s1.x, dimY + 8);
+        ctx.moveTo(s2.x, s2.y + 10);
+        ctx.lineTo(s2.x, dimY + 8);
+        ctx.stroke();
+
+        // Dimension line with arrows
+        ctx.beginPath();
+        ctx.moveTo(s1.x, dimY);
+        ctx.lineTo(s2.x, dimY);
+        ctx.stroke();
+        this.drawArrow(s1.x, dimY, 1, 0);
+        this.drawArrow(s2.x, dimY, -1, 0);
+
+        // Text
+        ctx.font = '12px "Segoe UI", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(`a = ${a.toFixed(2)} mm`, (s1.x + s2.x) / 2, dimY - 6);
+
+        ctx.restore();
+    }
+
+    /**
+     * Draw Sprocket specific dimensions
+     */
+    drawSprocketDimensions(cx, cy, d, sprocketData) {
+        const ctx = this.ctx;
+        if (!sprocketData) return;
+        ctx.save();
+
+        const da = sprocketData.da;
+        const df = sprocketData.df;
+        const s = this.worldToScreen(cx, cy);
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '12px "Segoe UI", sans-serif';
+        ctx.textAlign = 'left';
+
+        const infoX = s.x + (da / 2 + 15) * this.zoom;
+        const infoY = s.y - 40;
+
+        ctx.fillText(`d  = ${d.toFixed(2)} mm (Vòng chia)`, infoX, infoY);
+        ctx.fillText(`da = ${da.toFixed(2)} mm (Vòng đỉnh)`, infoX, infoY + 18);
+        ctx.fillText(`df = ${df.toFixed(2)} mm (Vòng đáy)`, infoX, infoY + 36);
+        ctx.fillText(`R1 = ${sprocketData.R1.toFixed(2)} mm (Lượn đáy)`, infoX, infoY + 54);
+        ctx.fillText(`bf1 = ${sprocketData.bf1.toFixed(2)} mm (Rộng răng)`, infoX, infoY + 72);
+
+        ctx.restore();
+    }
+
+    drawArrow(x, y, dirX, dirY, size = 6) {
+        const ctx = this.ctx;
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.lineTo(x + dirX * size - dirY * (size / 2), y + dirY * size + dirX * (size / 2));
+        ctx.lineTo(x + dirX * size + dirY * (size / 2), y + dirY * size - dirX * (size / 2));
+        ctx.closePath();
+        ctx.fill();
+    }
+
+    drawOverlayInfo() {
+        const ctx = this.ctx;
+        const cw = this.canvas.width;
+
+        ctx.save();
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.75)';
+        ctx.fillRect(10, 10, 240, 75);
+        ctx.strokeStyle = '#334155';
+        ctx.strokeRect(10, 10, 240, 75);
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 12px "Segoe UI", sans-serif';
+        ctx.fillText('MÔ PHỎNG 2D BỘ TRUYỀN XÍCH', 20, 28);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '11px "Segoe UI", sans-serif';
+        ctx.fillText(`Thu phóng: ${(this.zoom * 100).toFixed(0)}%`, 20, 46);
+        ctx.fillText(`Chế độ: ${this.viewMode.toUpperCase()} | Tốc độ: ${this.speedMultiplier}x`, 20, 62);
+        ctx.fillText(this.isRunning ? '▶ Đang chạy mô phỏng' : '⏸ Đang tạm dừng', 20, 78);
+
+        ctx.restore();
+    }
+}
+
+// Global expose
+if (typeof window !== 'undefined') {
+    window.ChainCanvas = ChainCanvas;
+}

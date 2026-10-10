@@ -192,6 +192,13 @@
                 <span class="item-desc">Involute Splines (DIN 5480 / ISO 4156)</span>
             </div>
         </a>
+        <a href="../roller-chain/index.html" class="dropdown-item">
+            <span class="item-icon">⛓️</span>
+            <div class="item-info">
+                <span class="item-title">Bộ Truyền Xích Con Lăn</span>
+                <span class="item-desc">Roller Chains (ISO 606 / ASME B29.1M)</span>
+            </div>
+        </a>
     </div>
 </div>
             </div>
@@ -212,71 +219,6 @@
                 <span class="block-header-toggle">▼</span>
             </div>
             <div class="block-content">
-                <!-- Mục 2.0: Thông số biên dạng răng (Đặt lên đầu, mặc định ẩn) -->
-                <div class="calc-section" id="sec20">
-                    <div class="section-header">
-                        <span>2.0 THÔNG SỐ BIÊN DẠNG RĂNG (TOOTH PROFILE PARAMETERS)</span>
-                        <span class="toggle-icon">▶</span>
-                    </div>
-                    <div class="section-body">
-                        <table class="calc-table">
-                            <thead>
-                                <tr>
-                                    <th class="col-idx">#</th>
-                                    <th class="col-param">Thông Số Biên Dạng Răng</th>
-                                    <th class="col-sym">Ký Hiệu</th>
-                                    <th class="col-val1">Trục (Shaft)</th>
-                                    <th class="col-val2">Lỗ (Hub)</th>
-                                    <th class="col-unit">Đơn Vị</th>
-                                    <th class="col-action">
-                                        <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer;" title="Tích để khóa theo tiêu chuẩn Mục 1.2, bỏ tích để tùy chỉnh tự do">
-                                            <input type="checkbox" id="profileStdCheck" checked> Tiêu chuẩn
-                                        </label>
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td class="col-idx">2.1</td>
-                                    <td class="col-param">Chiều cao đầu răng tương đối</td>
-                                    <td class="col-sym">h<sub>a0</sub><sup>*</sup> / h<sub>a2</sub><sup>*</sup></td>
-                                    <td class="col-val1"><input type="number" id="ha0Input" class="user-input" value="0.5000" step="0.05" disabled></td>
-                                    <td class="col-val2"><input type="number" id="ha2Input" class="user-input output-hub" value="0.5000" step="0.05" disabled></td>
-                                    <td class="col-unit">[m]</td>
-                                    <td class="col-action">ha = ha* &middot; m</td>
-                                </tr>
-                                <tr>
-                                    <td class="col-idx">2.2</td>
-                                    <td class="col-param">Chiều cao chân răng tương đối</td>
-                                    <td class="col-sym">h<sub>f0</sub><sup>*</sup> / h<sub>f2</sub><sup>*</sup></td>
-                                    <td class="col-val1"><input type="number" id="hf0Input" class="user-input" value="0.7500" step="0.05" disabled></td>
-                                    <td class="col-val2"><input type="number" id="hf2Input" class="user-input output-hub" value="0.7500" step="0.05" disabled></td>
-                                    <td class="col-unit">[m]</td>
-                                    <td class="col-action">hf = hf* &middot; m</td>
-                                </tr>
-                                <tr>
-                                    <td class="col-idx">2.3</td>
-                                    <td class="col-param">Bán kính lượn đỉnh răng tương đối</td>
-                                    <td class="col-sym">r<sub>a0</sub><sup>*</sup> / r<sub>a2</sub><sup>*</sup></td>
-                                    <td class="col-val1"><input type="number" id="ra0Input" class="user-input" value="0.0000" step="0.05" disabled></td>
-                                    <td class="col-val2"><input type="number" id="ra2Input" class="user-input output-hub" value="0.2000" step="0.05" disabled></td>
-                                    <td class="col-unit">[m]</td>
-                                    <td class="col-action">ra = ra* &middot; m</td>
-                                </tr>
-                                <tr>
-                                    <td class="col-idx">2.4</td>
-                                    <td class="col-param">Bán kính lượn chân răng tương đối</td>
-                                    <td class="col-sym">r<sub>f0</sub><sup>*</sup> / r<sub>f2</sub><sup>*</sup></td>
-                                    <td class="col-val1"><input type="number" id="rf0Input" class="user-input" value="0.0000" step="0.05" disabled></td>
-                                    <td class="col-val2"><input type="number" id="rf2Input" class="user-input output-hub" value="0.0000" step="0.05" disabled></td>
-                                    <td class="col-unit">[m]</td>
-                                    <td class="col-action">rf = rf* &middot; m</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
                 <!-- Mục 1.0: Thiết kế hình học then hoa thân khai -->
                 <div class="calc-section open" id="sec10">
                     <div class="section-header">
@@ -480,6 +422,80 @@
                         </table>
                     </div>
                 </div>
+
+                <!-- Mục 2.0: Thông số biên dạng răng (Đặt dưới Mục 1.0, mặc định ẩn) -->
+                <div class="calc-section" id="sec20">
+                    <div class="section-header">
+                        <span>2.0 THÔNG SỐ BIÊN DẠNG RĂNG (TOOTH PROFILE PARAMETERS)</span>
+                        <span class="toggle-icon">▶</span>
+                    </div>
+                    <div class="section-body">
+                        <table class="calc-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-idx">#</th>
+                                    <th class="col-param">Thông Số Biên Dạng Răng</th>
+                                    <th class="col-sym">Ký Hiệu</th>
+                                    <th class="col-val1">Trục (Shaft)</th>
+                                    <th class="col-val2">Lỗ (Hub)</th>
+                                    <th class="col-unit">Đơn Vị</th>
+                                    <th class="col-action">
+                                        <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; cursor: pointer;" title="Tích để khóa theo tiêu chuẩn Mục 1.2, bỏ tích để tùy chỉnh tự do">
+                                            <input type="checkbox" id="profileStdCheck" checked> Tiêu chuẩn
+                                        </label>
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td class="col-idx">2.1</td>
+                                    <td class="col-param">Chiều cao đầu răng tương đối</td>
+                                    <td class="col-sym">h<sub>a0</sub><sup>*</sup> / h<sub>a2</sub><sup>*</sup></td>
+                                    <td class="col-val1"><input type="number" id="ha0Input" class="user-input" value="0.5000" step="0.05" disabled></td>
+                                    <td class="col-val2"><input type="number" id="ha2Input" class="user-input output-hub" value="0.5000" step="0.05" disabled></td>
+                                    <td class="col-unit">[m]</td>
+                                    <td class="col-action">ha = ha* &middot; m</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">2.2</td>
+                                    <td class="col-param">Chiều cao chân răng tương đối</td>
+                                    <td class="col-sym">h<sub>f0</sub><sup>*</sup> / h<sub>f2</sub><sup>*</sup></td>
+                                    <td class="col-val1"><input type="number" id="hf0Input" class="user-input" value="0.7500" step="0.05" disabled></td>
+                                    <td class="col-val2"><input type="number" id="hf2Input" class="user-input output-hub" value="0.7500" step="0.05" disabled></td>
+                                    <td class="col-unit">[m]</td>
+                                    <td class="col-action">hf = hf* &middot; m</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">2.3</td>
+                                    <td class="col-param">Hệ số khe hở đỉnh tương đối</td>
+                                    <td class="col-sym">c<sub>0</sub><sup>*</sup> / c<sub>2</sub><sup>*</sup></td>
+                                    <td class="col-val1"><input type="number" id="c0Input" class="user-input" value="0.2500" step="0.05" disabled></td>
+                                    <td class="col-val2"><input type="number" id="c2Input" class="user-input output-hub" value="0.2500" step="0.05" disabled></td>
+                                    <td class="col-unit">[m]</td>
+                                    <td class="col-action">c<sup>*</sup> = h<sub>f</sub><sup>*</sup> - h<sub>a</sub><sup>*</sup> = c/m</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">2.4</td>
+                                    <td class="col-param">Bán kính lượn đỉnh răng tương đối</td>
+                                    <td class="col-sym">r<sub>a0</sub><sup>*</sup> / r<sub>a2</sub><sup>*</sup></td>
+                                    <td class="col-val1"><input type="number" id="ra0Input" class="user-input" value="0.0000" step="0.05" disabled></td>
+                                    <td class="col-val2"><input type="number" id="ra2Input" class="user-input output-hub" value="0.2000" step="0.05" disabled></td>
+                                    <td class="col-unit">[m]</td>
+                                    <td class="col-action">ra = ra* &middot; m</td>
+                                </tr>
+                                <tr>
+                                    <td class="col-idx">2.5</td>
+                                    <td class="col-param">Bán kính lượn chân răng tương đối</td>
+                                    <td class="col-sym">r<sub>f0</sub><sup>*</sup> / r<sub>f2</sub><sup>*</sup></td>
+                                    <td class="col-val1"><input type="number" id="rf0Input" class="user-input" value="0.0000" step="0.05" disabled></td>
+                                    <td class="col-val2"><input type="number" id="rf2Input" class="user-input output-hub" value="0.0000" step="0.05" disabled></td>
+                                    <td class="col-unit">[m]</td>
+                                    <td class="col-action">rf = rf* &middot; m</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -644,16 +660,7 @@
                                     <td class="col-val1"><div class="output-eng" id="outSec3_c0">2.5000</div></td>
                                     <td class="col-val2"><div class="output-eng output-hub" id="outSec3_c2">3.0727</div></td>
                                     <td class="col-unit">[mm]</td>
-                                    <td class="col-action">Khe hở lắp ghép</td>
-                                </tr>
-                                <tr>
-                                    <td class="col-idx">3.16</td>
-                                    <td class="col-param">Hệ số khe hở đỉnh tương đối</td>
-                                    <td class="col-sym">c<sup>*</sup></td>
-                                    <td class="col-val1"><div class="output-eng" id="outSec3_c0_m">0.2500</div></td>
-                                    <td class="col-val2"><div class="output-eng output-hub" id="outSec3_c2_m">0.3073</div></td>
-                                    <td class="col-unit">[m]</td>
-                                    <td class="col-action">c / m</td>
+                                    <td class="col-action">Khe hở lắp ghép (c = c* &middot; m)</td>
                                 </tr>
                             </tbody>
                         </table>
