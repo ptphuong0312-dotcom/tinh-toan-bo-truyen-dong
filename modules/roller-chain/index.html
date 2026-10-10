@@ -524,11 +524,11 @@
             </div>
 
             <!-- MASTER BLOCK 2: KẾT QUẢ (RESULTS SECTION - ORANGE) -->
-            <!-- SECTION 4.0: ĐỘNG HỌC & KHOẢNG CÁCH TRỤC (ACTIVE) -->
-            <div class="accordion-section active" id="sec40">
+            <!-- SECTION 4.0: ĐỘNG HỌC & KHOẢNG CÁCH TRỤC (COLLAPSED BY DEFAULT) -->
+            <div class="accordion-section" id="sec40">
                 <div class="section-header results-block">
                     <span>4.0 ĐỘNG HỌC, KHOẢNG CÁCH TRỤC & CHỈ SỐ BỘ TRUYỀN (KINEMATICS & AXIS DISTANCE)</span>
-                    <span class="header-toggle">▼</span>
+                    <span class="header-toggle">▶</span>
                 </div>
                 <div class="section-body">
                     <table class="calc-table">
@@ -621,17 +621,22 @@
                     <span class="header-toggle">▼</span>
                 </div>
                 <div class="section-body">
-                    <!-- Technical Dimension Diagram from MITCalc Original -->
-                    <div style="text-align: center; margin-bottom: 16px; background: #1e293b; padding: 12px; border-radius: 6px; border: 1px solid var(--border-color);">
-                        <img src="img/image9.png" alt="Sơ đồ kích thước hình học đĩa xích ISO 606" style="max-width: 100%; height: auto; border-radius: 4px;">
-                        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px;">Hình 5.1: Định nghĩa kích thước biên dạng răng và đĩa xích con lăn theo ISO 606 / DIN 8187</p>
-                    </div>
+                    <!-- Technical Dimension Diagram from MITCalc Original (Hidden by default) -->
+                    <details class="tech-diagram-details" style="margin-bottom: 16px; background: #1e293b; border-radius: 6px; border: 1px solid var(--border-color); overflow: hidden;">
+                        <summary style="padding: 10px 14px; font-size: 0.85rem; font-weight: 600; color: var(--accent-cyan); cursor: pointer; user-select: none; background: rgba(0,0,0,0.25);">
+                            📐 Xem sơ đồ minh họa kích thước ISO 606 / DIN 8187 (Hình 5.1)
+                        </summary>
+                        <div style="text-align: center; padding: 12px;">
+                            <img src="img/image9.png" alt="Sơ đồ kích thước hình học đĩa xích ISO 606" style="max-width: 100%; height: auto; border-radius: 4px;">
+                            <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px;">Hình 5.1: Định nghĩa kích thước biên dạng răng và đĩa xích con lăn theo ISO 606 / DIN 8187</p>
+                        </div>
+                    </details>
 
                     <table class="calc-table">
                         <thead>
                             <tr>
                                 <th style="width: 50px;">#</th>
-                                <th>Kích thước hình học đĩa</th>
+                                <th>Kích thước hình học đĩa (Sprocket)</th>
                                 <th style="width: 80px;">Ký hiệu</th>
                                 <th style="width: 200px;">Đĩa Dẫn 1 (Pinion)</th>
                                 <th style="width: 200px;">Đĩa Bị Dẫn 2 (Wheel)</th>
@@ -643,27 +648,27 @@
                             <tr>
                                 <td>5.1</td>
                                 <td>Đường kính vòng chia</td>
-                                <td>d</td>
+                                <td>d (Dp)</td>
                                 <td><span id="outD1" class="output-eng highlight-key-param">77.16</span></td>
-                                <td><span id="outD2" class="output-eng highlight-key-param">161.97</span></td>
+                                <td><span id="outD2" class="output-eng highlight-key-param">153.79</span></td>
                                 <td>mm</td>
-                                <td>d = p / sin(180/z)</td>
+                                <td>d = p / sin(180°/z)</td>
                             </tr>
                             <tr>
                                 <td>5.2</td>
                                 <td>Đường kính vòng đỉnh răng</td>
-                                <td>da</td>
-                                <td><span id="outDa1" class="output-eng highlight-key-param">83.00</span></td>
-                                <td><span id="outDa2" class="output-eng highlight-key-param">168.00</span></td>
+                                <td>da (Da)</td>
+                                <td><span id="outDa1" class="output-eng highlight-key-param">82.97</span></td>
+                                <td><span id="outDa2" class="output-eng highlight-key-param">159.60</span></td>
                                 <td>mm</td>
-                                <td>ISO 606</td>
+                                <td>ISO 606 / DIN 8187</td>
                             </tr>
                             <tr>
                                 <td>5.3</td>
                                 <td>Đường kính vòng đáy răng</td>
-                                <td>df</td>
-                                <td><span id="outDf1" class="output-eng highlight-key-param">68.65</span></td>
-                                <td><span id="outDf2" class="output-eng highlight-key-param">153.46</span></td>
+                                <td>df (Df)</td>
+                                <td><span id="outDf1" class="output-eng highlight-key-param">68.42</span></td>
+                                <td><span id="outDf2" class="output-eng highlight-key-param">145.05</span></td>
                                 <td>mm</td>
                                 <td>df = d - 2*R1</td>
                             </tr>
@@ -671,36 +676,70 @@
                                 <td>5.4</td>
                                 <td>Bán kính lượn đáy rãnh răng</td>
                                 <td>R1</td>
-                                <td><span id="outR1_1" class="output-eng">4.26</span></td>
-                                <td><span id="outR1_2" class="output-eng">4.26</span></td>
+                                <td><span id="outR1_1" class="output-eng">4.37</span></td>
+                                <td><span id="outR1_2" class="output-eng">4.37</span></td>
                                 <td>mm</td>
-                                <td>R1 = 0.505*d3</td>
+                                <td>R1 = 0.505*d3 + ...</td>
                             </tr>
                             <tr>
                                 <td>5.5</td>
-                                <td>Bề rộng răng đĩa xích đơn</td>
-                                <td>bf1</td>
-                                <td><span id="outBf1" class="output-eng highlight-key-param">7.20</span></td>
-                                <td><span id="outBf1_2" class="output-eng highlight-key-param">7.20</span></td>
+                                <td>Bán kính cung sườn răng</td>
+                                <td>R2</td>
+                                <td><span id="outR2_1" class="output-eng">29.14</span></td>
+                                <td><span id="outR2_2" class="output-eng">75.70</span></td>
                                 <td>mm</td>
-                                <td>bf1 = 0.95*b1</td>
+                                <td>DIN 8196 / ISO 606</td>
                             </tr>
                             <tr>
                                 <td>5.6</td>
-                                <td>Bán kính lượn sườn răng</td>
-                                <td>rx</td>
-                                <td colspan="2"><span id="outRx" class="output-eng">13.00</span></td>
-                                <td>mm</td>
-                                <td>rx = p</td>
+                                <td>Góc sườn rãnh răng</td>
+                                <td>α</td>
+                                <td><span id="outAlphaFlank1" class="output-eng">125.26°</span></td>
+                                <td><span id="outAlphaFlank2" class="output-eng">127.63°</span></td>
+                                <td>độ</td>
+                                <td>α = 130° - 90°/z</td>
                             </tr>
                             <tr>
                                 <td>5.7</td>
-                                <td>Đường kính giới hạn moay-ơ tối đa</td>
-                                <td>Dg</td>
-                                <td><span id="outDg1" class="output-eng">58.00</span></td>
-                                <td><span id="outDg2" class="output-eng">142.00</span></td>
+                                <td>Bề rộng vành răng đĩa xích</td>
+                                <td>bf</td>
+                                <td><span id="outBf1" class="output-eng highlight-key-param">7.36</span></td>
+                                <td><span id="outBf1_2" class="output-eng highlight-key-param">7.36</span></td>
                                 <td>mm</td>
-                                <td>Dg &lt; df - 2*c</td>
+                                <td>bf = W208 * b1</td>
+                            </tr>
+                            <tr>
+                                <td>5.8</td>
+                                <td>Chiều rộng vát đỉnh răng</td>
+                                <td>ba</td>
+                                <td colspan="2"><span id="outBa" class="output-eng">1.06</span></td>
+                                <td>mm</td>
+                                <td>ba = 0.125 * d3</td>
+                            </tr>
+                            <tr>
+                                <td>5.9</td>
+                                <td>Bán kính lượn vát sườn răng</td>
+                                <td>rx</td>
+                                <td colspan="2"><span id="outRx" class="output-eng">6.68</span></td>
+                                <td>mm</td>
+                                <td>rx = 1.5 * d1 (chốt)</td>
+                            </tr>
+                            <tr>
+                                <td>5.10</td>
+                                <td>Chiều sâu rãnh răng danh nghĩa</td>
+                                <td>f</td>
+                                <td colspan="2"><span id="outToothF" class="output-eng">8.89</span></td>
+                                <td>mm</td>
+                                <td>f = 0.7 * p</td>
+                            </tr>
+                            <tr>
+                                <td>5.11</td>
+                                <td>Đường kính giới hạn gờ moay-ơ</td>
+                                <td>Dg</td>
+                                <td><span id="outDg1" class="output-eng">59.38</span></td>
+                                <td><span id="outDg2" class="output-eng">136.01</span></td>
+                                <td>mm</td>
+                                <td>Dg = d - 2*f</td>
                             </tr>
                         </tbody>
                     </table>
@@ -720,8 +759,9 @@
                     </p>
                     <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
                         <button type="button" class="btn btn-primary" id="btnExportDxfAssembly">📥 Xuất Toàn Bộ Bộ Truyền (DXF R12)</button>
-                        <button type="button" class="btn btn-secondary" id="btnExportDxfSp1">📥 Xuất Đĩa Dẫn 1 (DXF R12)</button>
-                        <button type="button" class="btn btn-secondary" id="btnExportDxfSp2">📥 Xuất Đĩa Bị Dẫn 2 (DXF R12)</button>
+                        <button type="button" class="btn btn-secondary" id="btnExportDxfSp1">📥 Xuất Mặt Đầu Đĩa 1 (View 4 DXF)</button>
+                        <button type="button" class="btn btn-secondary" id="btnExportDxfSp2">📥 Xuất Mặt Đầu Đĩa 2 (View 4 DXF)</button>
+                        <button type="button" class="btn btn-secondary" id="btnExportDxfAxial">📥 Xuất Mặt Cắt Trục Vành Răng (View 3 DXF)</button>
                     </div>
                 </div>
             </div>

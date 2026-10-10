@@ -96,8 +96,14 @@ document.addEventListener('DOMContentLoaded', () => {
         outDf2: document.getElementById('outDf2'),
         outR1_1: document.getElementById('outR1_1'),
         outR1_2: document.getElementById('outR1_2'),
+        outR2_1: document.getElementById('outR2_1'),
+        outR2_2: document.getElementById('outR2_2'),
+        outAlphaFlank1: document.getElementById('outAlphaFlank1'),
+        outAlphaFlank2: document.getElementById('outAlphaFlank2'),
         outBf1: document.getElementById('outBf1'),
+        outBa: document.getElementById('outBa'),
         outRx: document.getElementById('outRx'),
+        outToothF: document.getElementById('outToothF'),
         outDg1: document.getElementById('outDg1'),
         outDg2: document.getElementById('outDg2'),
 
@@ -124,7 +130,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // DXF export
         btnExportDxfAssembly: document.getElementById('btnExportDxfAssembly'),
         btnExportDxfSp1: document.getElementById('btnExportDxfSp1'),
-        btnExportDxfSp2: document.getElementById('btnExportDxfSp2')
+        btnExportDxfSp2: document.getElementById('btnExportDxfSp2'),
+        btnExportDxfAxial: document.getElementById('btnExportDxfAxial')
     };
 
     // 3. Initialize 2D Canvas Engine
@@ -271,25 +278,31 @@ document.addEventListener('DOMContentLoaded', () => {
         if (el.outSagY) el.outSagY.textContent = typeof y_val === 'number' ? y_val.toFixed(1) + ' mm' : y_val;
         if (el.outLubeType) el.outLubeType.textContent = res.lubrication || 'Bôi trơn nhỏ giọt (Drip lubrication)';
 
-        // Sec 5.0 Sprocket Dimensions (ISO 606)
+        // Sec 5.0 Sprocket Dimensions (ISO 606 / DIN 8187)
         if (el.outD1 && res.d1 != null) el.outD1.textContent = res.d1.toFixed(2);
         if (el.outD2 && res.d2 != null) el.outD2.textContent = res.d2.toFixed(2);
 
-        const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, bf1: res.bf, rx: res.rx, Dg: res.Dg1 };
+        const sp1 = res.sprocket1 || { da: res.da1, df: res.df1, R1: res.R1, R2: res.R2_1, bf1: res.bf, rx: res.rx, Dg: res.Dg1 };
         if (sp1) {
             if (el.outDa1 && sp1.da != null) el.outDa1.textContent = sp1.da.toFixed(2);
             if (el.outDf1 && sp1.df != null) el.outDf1.textContent = sp1.df.toFixed(2);
             if (el.outR1_1 && sp1.R1 != null) el.outR1_1.textContent = sp1.R1.toFixed(2);
+            if (el.outR2_1 && res.R2_1 != null) el.outR2_1.textContent = res.R2_1.toFixed(2);
+            if (el.outAlphaFlank1 && res.flank_alpha1 != null) el.outAlphaFlank1.textContent = res.flank_alpha1.toFixed(2) + '°';
             if (el.outBf1 && sp1.bf1 != null) el.outBf1.textContent = sp1.bf1.toFixed(2);
+            if (el.outBa && res.ba != null) el.outBa.textContent = res.ba.toFixed(2);
             if (el.outRx && sp1.rx != null) el.outRx.textContent = sp1.rx.toFixed(2);
+            if (el.outToothF && res.f != null) el.outToothF.textContent = res.f.toFixed(2);
             if (el.outDg1 && sp1.Dg != null) el.outDg1.textContent = sp1.Dg.toFixed(2);
         }
 
-        const sp2 = res.sprocket2 || { da: res.da2, df: res.df2, R1: res.R1, Dg: res.Dg2 };
+        const sp2 = res.sprocket2 || { da: res.da2, df: res.df2, R1: res.R1, R2: res.R2_2, Dg: res.Dg2 };
         if (sp2) {
             if (el.outDa2 && sp2.da != null) el.outDa2.textContent = sp2.da.toFixed(2);
             if (el.outDf2 && sp2.df != null) el.outDf2.textContent = sp2.df.toFixed(2);
             if (el.outR1_2 && sp2.R1 != null) el.outR1_2.textContent = sp2.R1.toFixed(2);
+            if (el.outR2_2 && res.R2_2 != null) el.outR2_2.textContent = res.R2_2.toFixed(2);
+            if (el.outAlphaFlank2 && res.flank_alpha2 != null) el.outAlphaFlank2.textContent = res.flank_alpha2.toFixed(2) + '°';
             if (el.outDg2 && sp2.Dg != null) el.outDg2.textContent = sp2.Dg.toFixed(2);
         }
 
@@ -531,6 +544,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!state.calcResult) return;
                 const dxfStr = ChainDxf.generateDXF(state.calcResult, 'sprocket2');
                 ChainDxf.download(dxfStr, `DiaXichBiDan2_Z${state.z2}_${state.calcResult.chain.code}.dxf`);
+            });
+        }
+
+        if (el.btnExportDxfAxial && typeof ChainDxf !== 'undefined') {
+            el.btnExportDxfAxial.addEventListener('click', () => {
+                if (!state.calcResult) return;
+                const dxfStr = ChainDxf.generateDXF(state.calcResult, 'axial');
+                ChainDxf.download(dxfStr, `MatCatTruc_DiaXich_${state.calcResult.chain.code}_View3.dxf`);
             });
         }
     }

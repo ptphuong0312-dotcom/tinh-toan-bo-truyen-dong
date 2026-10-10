@@ -2953,8 +2953,41 @@ ho_{f0}$.
    - Kết quả: Con lăn luôn lọt khít 100% vào đáy rãnh $R_1$ trong mọi khung hình, không bị lệch pha, các sườn răng ôm trọn lấy con lăn.
 
 3. **Cải tiến giao diện 2D Canvas & Tiện ích**:
-   - Nút công cụ "🔗 Ẩn/Hiện Xích" (`#btnToggleLinks`) cho phép kỹ sư ẩn/hiện mắt xích để quan sát trọn vẹn đĩa xích trần.
-   - Độ mờ bán trong suốt má xích (`rgba(..., 0.40)`): Giúp vừa thấy cấu trúc xích 3D sinh động vừa nhìn rõ biên dạng răng ăn khớp bên dưới.
-   - Thống nhất đơn vị đo $p, d_3$ trên Canvas theo hệ hiển thị (`res.p`, `res.d3`), chống lỗi sai lệch tỷ lệ khi chuyển hệ đo.
+
+---
+
+### Runbook 29: Chuẩn Hóa Toàn Diện Biên Dạng Đĩa Xích 1-to-1 MITCalc 1.74 (Section 5.0, Mặc Định Thu Gọn Mục 4.0, Ẩn Hình 5.1 & Xuất DXF Mặt Cắt Trục View 3)
+**Mục tiêu**: Hoàn thiện toàn diện Module 9 Tính Toán Bộ Truyền Xích Con Lăn theo chuẩn 1-to-1 gốc MITCalc 1.74 (`chains_01.xlsb`), đáp ứng toàn bộ các yêu cầu của chủ sở hữu (`SirPhuong`):
+1. **Mặc định thu gọn phân mục 4.0**:
+   - Section 4.0 (Động học, khoảng cách trục & chỉ số bộ truyền) mặc định đóng (`id="sec40"`, không có class `active`, toggle icon `▶`) để màn hình thoáng đãng, tập trung ngay vào kích thước đĩa xích Section 5.0.
+2. **Mặc định ẩn sơ đồ kỹ thuật Hình 5.1**:
+   - Sử dụng thẻ HTML5 `<details class="tech-diagram-details">` bọc toàn bộ khối ảnh sơ đồ `img/image9.png`. Mặc định ở trạng thái đóng (ẩn), chỉ chiếm một hàng tóm tắt tinh gọn `📐 Xem sơ đồ minh họa kích thước ISO 606 / DIN 8187 (Hình 5.1)`, giúp tiết kiệm 350px chiều cao màn hình. Kỹ sư click vào để mở ra khi cần tra cứu.
+3. **Mở rộng bảng kích thước đĩa xích Section 5.0 chuẩn 1-to-1 MITCalc (11 thông số)**:
+   - Đối chiếu trực tiếp với `chains_01.xlsb` `Calculation` sheet rows 201–212:
+     * 5.1: Đường kính vòng chia $d$ ($D_p = p / \sin(180^\circ / z)$).
+     * 5.2: Đường kính vòng đỉnh răng $d_a$ ($D_a = \text{ROUND}((d_{a,\min} + d_{a,\max})/2, \text{RA})$).
+     * 5.3: Đường kính vòng đáy răng $d_f$ ($D_f = \text{ROUND}(d - 2 R_1, \text{RA})$).
+     * 5.4: Bán kính lượn đáy rãnh răng $R_1$ ($R_1 = \text{ROUND}((R_{1,\min} + R_{1,\max})/2, \text{RA})$).
+     * 5.5: Bán kính cung sườn răng $R_2$ ($R_2 = \text{ROUND}((R_{2,\min} + R_{2,\max})/2, \text{RA})$).
+     * 5.6: Góc sườn rãnh răng $\alpha$ ($\alpha = \text{ROUND}(130^\circ - 90^\circ / z, 2)$).
+     * 5.7: Bề rộng vành răng đĩa xích $b_f$ ($b_f = W_{208} \cdot b_1$).
+     * 5.8: Chiều rộng vát đỉnh răng $b_a$ ($b_a = 0.125 \cdot d_3$).
+     * 5.9: Bán kính lượn vát sườn răng $r_x$ ($r_x = 1.5 \cdot d_1$, đường kính chốt xích).
+     * 5.10: Chiều sâu rãnh răng danh nghĩa $f$ ($f = 0.7 \cdot p$).
+     * 5.11: Đường kính giới hạn gờ moay-ơ $D_g$ ($D_g = d - 2 \cdot f$).
+4. **Giải thuật phân đoạn 5 cung giải tích đơn điệu tuyệt đối (Monotonic 5-Segment Contour)**:
+   - Trích xuất trực tiếp từ mã nguồn VBA `DXF.bas!Sub View4` của MITCalc 1.74:
+     * Trong hệ không gian rãnh răng tâm $P_1(r_p, 0)$, điểm tiếp xúc $P_3$:
+       $P_{3,x} = r_p - R_1 \cos(\alpha / 2)$, $P_{3,y} = R_1 \sin(\alpha / 2)$.
+     * Tâm sườn $P_7$: $P_{7,x} = P_{3,x} - R_2 \cos(\alpha / 2)$, $P_{7,y} = P_{3,y} + R_2 \sin(\alpha / 2)$.
+     * Góc cực điểm giao sườn - đỉnh $\theta_5$: $\theta_5 = \text{atan2}(P_{7,y}, P_{7,x}) - \arccos\left(\frac{|P_7|^2 + r_a^2 - R_2^2}{2 |P_7| r_a}\right)$.
+     * Khi $\theta_5 < \pi / z$: Cung đỉnh răng (Crest Land Arc) chạy dọc theo vòng tròn danh nghĩa $r_a = d_a / 2$ từ $\theta_5$ đến $\pi / z$. Tuyệt đối không thêm vòm tròn topping dome nhân tạo.
+     * Khi $\theta_5 \ge \pi / z$: Sườn răng cắt trực tiếp tại trục tâm $\pi / z$ tại bán kính $r \le r_a$, loại bỏ hoàn toàn hiện tượng góc quay nhảy lùi và chồng lấn sừng răng (horn elimination).
+5. **Hệ thống xuất CAD DXF 4 chế độ (bổ sung Mặt Cắt Trục Vành Răng View 3)**:
+   - Bên cạnh 3 chế độ xuất mặt đầu (Toàn bộ bộ truyền, Đĩa 1, Đĩa 2), bổ sung chế độ:
+     * **Xuất Mặt Cắt Trục Vành Răng (View 3 DXF)**: Tái tạo trung thực `DXF.bas!Sub View3` của MITCalc 1.74. Vẽ mặt cắt bổ dọc vành răng đối xứng 4 phía qua mặt phẳng tâm răng và trục quay $Y = 0$, thể hiện $b_f, b_a, r_x, d_a, d_p, d_f, D_g$, bước ngang $e$ cho nhiều dãy (multi-strand) và bảng thông số chế tạo DXFTables.
+6. **Bộ công cụ kiểm thử Live Audit QC mở rộng 60/60 PASS ($\Delta = 0.000000$)**:
+   - `test_chain_qc.py`: Đo đạc chéo 20 thông số hình học và động học trên 3 bộ truyền tiêu chuẩn (ASME B29.1 80-2 Imperial, ISO 606 08B-1 Metric, ISO 606 16B-1 Metric), đạt 100.0% PASS với sai số tuyệt đối $\Delta = 0.000000$.
+
 
 

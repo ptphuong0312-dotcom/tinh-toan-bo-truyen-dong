@@ -4800,3 +4800,41 @@ ho_{f0}$.
      - **QC Suite (`tools/test_chain_qc.py`)**: Toàn bộ **33 / 33 phép tính kỹ thuật đạt PASS 100.0% với $\Delta = 0.000000$** đối chiếu MITCalc 1.74 Excel COM (`chains_01.xlsb`).
      - **Pillow & Playwright Zoom Inspection**: Xác nhận trực quan đỉnh răng có cung đỉnh bằng phẳng $d_a$, sườn răng $R_2$ ôm trọn con lăn và các con lăn lọt khít 100% vào đáy rãnh $R_1$ khi truyền động.
      - **CORS-Free Single Bundler (`tools/bundle_all.py`)**: 9/9 module đóng gói trọn vẹn thành công.
+
+---
+
+## Giai Đoạn 47: Chuẩn Hóa Toàn Diện Biên Dạng Đĩa Xích 1-to-1 MITCalc 1.74 (Section 5.0, Mặc Định Thu Gọn Mục 4.0, Ẩn Hình 5.1 & Xuất DXF Mặt Cắt Trục View 3)
+* **Bối cảnh & Yêu cầu từ người dùng (`SirPhuong`)**:
+  1. *"về các công thức tính toán thông số hình học đĩa xích bạn cũng đã học app mitcalc 1.74 chứ, tôi thấy profile xích vẫn chưa chuẩn nên tôi yêu cầu bạn đối chiếu với app mitcalc 1.74 từ tính toán hình học cho đến vẽ mô phỏng và vẽ xuất file"*.
+  2. *"'Hình 5.1: Định nghĩa kích thước biên dạng răng và đĩa xích con lăn theo ISO 606 / DIN 8187' bạn có thể để hình này ở trạng thái mạc định ẩn không"*.
+  3. *"mục 4.0 tôi cung muốn mạc định ẩn"*.
+* **Đột phá kỹ thuật & Thành quả triển khai**:
+  1. **Mặc định thu gọn phân mục 4.0 & Ẩn mặc định Hình 5.1 (`index.html`)**:
+     - Phân mục 4.0: Xóa class `active` và cập nhật biểu tượng trạng thái `▶` tại `#sec40`, giúp màn hình thoáng đãng, người dùng mở ra khi cần.
+     - Hình 5.1: Bọc khối ảnh kỹ thuật trong thẻ HTML5 `<details class="tech-diagram-details">` với tiêu đề `📐 Xem sơ đồ minh họa kích thước ISO 606 / DIN 8187 (Hình 5.1)`. Mặc định ở trạng thái thu gọn, tiết kiệm 350px chiều cao màn hình.
+  2. **Chuẩn hóa & Mở rộng Bảng Kích Thước Đĩa Xích Section 5.0 chuẩn 1-to-1 MITCalc 1.74 (11 thông số)**:
+     - Đối chiếu trực tiếp với `chains_01.xlsb` `Calculation` sheet rows 201–212:
+       * 5.1: Đường kính vòng chia $d$ ($D_p = p / \sin(180^\circ / z)$).
+       * 5.2: Đường kính vòng đỉnh răng $d_a$ ($D_a = \text{ROUND}((d_{a,\min} + d_{a,\max})/2, \text{RA})$).
+       * 5.3: Đường kính vòng đáy răng $d_f$ ($D_f = \text{ROUND}(d - 2 R_1, \text{RA})$).
+       * 5.4: Bán kính lượn đáy rãnh $R_1$ ($R_1 = \text{ROUND}((R_{1,\min} + R_{1,\max})/2, \text{RA})$).
+       * 5.5: Bán kính cung sườn răng $R_2$ ($R_2 = \text{ROUND}((R_{2,\min} + R_{2,\max})/2, \text{RA})$).
+       * 5.6: Góc sườn rãnh răng $\alpha$ ($\alpha = \text{ROUND}(130^\circ - 90^\circ / z, 2)$).
+       * 5.7: Bề rộng vành răng đĩa xích $b_f$ ($b_f = W_{208} \cdot b_1$).
+       * 5.8: Chiều rộng vát đỉnh răng $b_a$ ($b_a = 0.125 \cdot d_3$).
+       * 5.9: Bán kính lượn vát sườn răng $r_x$ ($r_x = 1.5 \cdot d_1$, đường kính chốt xích).
+       * 5.10: Chiều sâu rãnh răng danh nghĩa $f$ ($f = 0.7 \cdot p$).
+       * 5.11: Đường kính giới hạn gờ moay-ơ $D_g$ ($D_g = d - 2 \cdot f$).
+  3. **Tái thiết lập giải thuật biên dạng răng đĩa xích giải tích đơn điệu (`chain-calc.js`)**:
+     - Đồng bộ hóa hoàn hảo với mã nguồn VBA `DXF.bas!Sub View4`:
+       * Cung đáy rãnh $R_1$ ôm con lăn đối xứng $\pm \alpha / 2$ quanh trục rãnh.
+       * Cung sườn răng $R_2$ tiếp xúc trơn $C^1$ tại $P_3$, tâm $P_7$.
+       * Góc cực điểm giao cắt sườn - đỉnh $\theta_5$ tính theo định lý hàm cosin trong tam giác $\triangle(O, P_7, P_5)$.
+       * Cung đỉnh (Crest Land Arc) chạy dọc theo đường kính danh nghĩa $d_a$ từ $\theta_5$ đến $\pi / z$.
+       * Triệt tiêu 100% hiện tượng góc quay nhảy giật ngược, loại bỏ hoàn toàn sừng nhọn (horn elimination) và đỉnh tròn vo nhân tạo.
+  4. **Nâng cấp bộ xuất CAD DXF 4 chế độ & Mặt Cắt Trục Vành Răng View 3 (`chain-dxf.js`)**:
+     - Bổ sung tùy chọn xuất Mặt Cắt Trục Vành Răng (`target === 'axial'`, View 3 DXF): Tái tạo trung thực bản vẽ bổ dọc vành răng trong `DXF.bas!Sub View3` của MITCalc 1.74, vẽ đối xứng 4 phía qua mặt phẳng tâm răng và trục quay $Y = 0$, thể hiện rõ nét $b_f, b_a, r_x, d_a, d_p, d_f, D_g$, bước ngang $e$ cho nhiều dãy và bảng chế tạo DXFTables.
+  5. **Kiểm thử tự động đa tầng & Đo đạc thực tế**:
+     - **QC Suite (`tools/test_chain_qc.py`)**: Mở rộng lên **60 / 60 phép tính kỹ thuật đạt PASS 100.0% với $\Delta = 0.000000$** đối chiếu Excel COM (`chains_01.xlsb`).
+     - **Đóng gói Bundle (`tools/bundle_all.py`)**: 9/9 module đóng gói trọn vẹn thành công (161.3 KB bundle).
+     - **Playwright E2E Browser Test**: Chụp ảnh xác nhận Section 4.0 thu gọn mặc định, Hình 5.1 ẩn mặc định trong `<details>`, Section 5.0 hiển thị trọn vẹn 11 dòng thông số, và Canvas 2D vẽ biên dạng răng đĩa xích chuẩn công nghiệp.

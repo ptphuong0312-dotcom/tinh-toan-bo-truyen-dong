@@ -128,6 +128,51 @@ const ChainDxf = {
             this.addDimension(lines, 0, 0, a, 0, dimY, `a = ${a.toFixed(2)}`, 'DIMENSIONS');
         }
 
+        if (target === 'axial') {
+            // Authentic MITCalc Sub View3 Axial Rim Cross-Section (ISO 606 / DIN 8187)
+            const sp = res.sprocket1;
+            const da = sp.da;
+            const dp = res.d1;
+            const df = sp.df;
+            const dg = sp.Dg;
+            const bf = sp.bf1;
+            const rx = sp.rx;
+            const ba = Math.max(0, rx - Math.sqrt(Math.max(0, rx * rx - Math.pow((da - dp) / 2, 2))));
+            const ee = (res.chain && res.chain.e && res.chain.e > 0) ? res.chain.e : bf;
+            const rows = res.strands || 1;
+            let BPx = 0;
+
+            for (let i = 0; i < rows; i++) {
+                const px1 = BPx - ee / 2, py1 = dg / 2;
+                const px2 = BPx - bf / 2, py2 = py1;
+                const px3 = px2, py3 = df / 2;
+                const px4 = BPx, py4 = py3;
+                const px5 = px3, py5 = dp / 2;
+                const px6 = BPx - (bf - ba) / 2, py6 = da / 2;
+                const px7 = BPx, py7 = py6;
+
+                // 4-way symmetry lines: left/right of BPx, top/bottom of Y=0
+                this.addMirroredAxialLine(lines, px1, py1, px2, py2, BPx, 'SPROCKET1_CONTOUR');
+                this.addMirroredAxialLine(lines, px2, py2, px3, py3, BPx, 'SPROCKET1_CONTOUR');
+                this.addMirroredAxialLine(lines, px3, py3, px4, py4, BPx, 'SPROCKET1_CONTOUR');
+                this.addMirroredAxialLine(lines, px3, py3, px5, py5, BPx, 'SPROCKET1_CONTOUR');
+                this.addMirroredAxialLine(lines, px5, py5, px6, py6, BPx, 'SPROCKET1_CONTOUR');
+                this.addMirroredAxialLine(lines, px6, py6, px7, py7, BPx, 'SPROCKET1_CONTOUR');
+
+                // Row tooth centerline
+                this.addLine(lines, BPx, -da / 2 - 12, BPx, da / 2 + 12, 'CENTER_LINES');
+                BPx += ee;
+            }
+
+            BPx -= ee;
+            const lap = 20;
+            // Horizontal rotation axis Y = 0
+            this.addLine(lines, -ee / 2 - lap, 0, BPx + ee / 2 + lap, 0, 'CENTER_LINES');
+            // Pitch line Y = +/- dp/2
+            this.addLine(lines, -ee / 2 - 8, dp / 2, BPx + ee / 2 + 8, dp / 2, 'PITCH_CIRCLES');
+            this.addLine(lines, -ee / 2 - 8, -dp / 2, BPx + ee / 2 + 8, -dp / 2, 'PITCH_CIRCLES');
+        }
+
         // Add Manufacturing Table (DXFTables)
         this.addDXFTable(lines, res, target);
 
@@ -212,6 +257,17 @@ const ChainDxf = {
         lines.push('0', 'SEQEND');
     },
 
+    addMirroredAxialLine(lines, x1, y1, x2, y2, xc, layer) {
+        // Upper left
+        this.addLine(lines, x1, y1, x2, y2, layer);
+        // Upper right (mirrored across xc)
+        this.addLine(lines, xc + (xc - x1), y1, xc + (xc - x2), y2, layer);
+        // Lower left (mirrored across rotation axis Y = 0)
+        this.addLine(lines, x1, -y1, x2, -y2, layer);
+        // Lower right
+        this.addLine(lines, xc + (xc - x1), -y1, xc + (xc - x2), -y2, layer);
+    },
+
     addDimension(lines, x1, y1, x2, y2, dimY, text, layer) {
         // Simple linear dimension representation in R12
         this.addLine(lines, x1, y1, x1, dimY, layer);
@@ -236,7 +292,7 @@ const ChainDxf = {
     },
 
     addDXFTable(lines, res, target) {
-        const tableX = (target === 'sprocket2') ? 150 : (res.a ? res.a + res.sprocket2.da / 2 + 60 : 250);
+        const tableX = (target === 'axial') ? 80 : ((target === 'sprocket2') ? 150 : (res.a ? res.a + res.sprocket2.da / 2 + 60 : 250));
         const tableY = (res.sprocket1.da ? res.sprocket1.da / 2 + 50 : 150);
         const rowH = 10;
         const colW = 120;
@@ -327,4 +383,8 @@ const ChainDxf = {
 
 if (typeof window !== 'undefined') {
     window.ChainDxf = ChainDxf;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { ChainDxf };
 }

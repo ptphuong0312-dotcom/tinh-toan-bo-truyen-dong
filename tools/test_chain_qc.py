@@ -126,11 +126,20 @@ try:
             ('Duong kinh dinh dia 2 (da2)', float(ws.Range('Calculation!$P$201').Value), js_res['da2'], dec),
             ('Duong kinh day dia 1 (df1)', float(ws.Range('Calculation!$N$203').Value), js_res['df1'], dec),
             ('Duong kinh day dia 2 (df2)', float(ws.Range('Calculation!$P$203').Value), js_res['df2'], dec),
+            ('Ban kinh luon day (R1)', float(ws.Range('Calculation!$N$204').Value), js_res['R1'], dec),
+            ('Ban kinh suon dia 1 (R2_1)', float(ws.Range('Calculation!$N$205').Value), js_res['R2_1'], dec),
+            ('Ban kinh suon dia 2 (R2_2)', float(ws.Range('Calculation!$P$205').Value), js_res['R2_2'], dec),
+            ('Goc suon dia 1 (alpha1)', float(ws.Range('Calculation!$N$206').Value), js_res['flank_alpha1'], 2),
+            ('Goc suon dia 2 (alpha2)', float(ws.Range('Calculation!$P$206').Value), js_res['flank_alpha2'], 2),
+            ('Be rong rang dia (bf)', float(ws.Range('Calculation!$N$208').Value), js_res['bf'], dec),
+            ('Vat rang dia (ba)', float(ws.Range('Calculation!$N$209').Value), js_res['ba'], dec),
+            ('Ban kinh vat dia (rx)', float(ws.Range('Calculation!$N$210').Value), js_res['rx'], dec),
+            ('Chieu sau rang (f)', float(ws.Range('Calculation!$N$211').Value), js_res['f'], dec),
+            ('Duong kinh go dia 1 (Dg1)', float(ws.Range('Calculation!$N$212').Value), js_res['Dg1'], dec),
+            ('Duong kinh go dia 2 (Dg2)', float(ws.Range('Calculation!$P$212').Value), js_res['Dg2'], dec),
             ('Khoang cach truc thuc te (a)', float(ws.Range('_C').Value), js_res['a'], 2),
             ('So mat xich (X)', int(ws.Range('_ChLinks').Value), js_res['X'], 0),
-            ('Chieu dai day xich (L)', float(ws.Range('_L').Value), js_res['L'], 2),
-            ('Goc suon dia 1 (alpha1)', float(ws.Range('Calculation!$N$206').Value), js_res['flank_alpha1'], 2),
-            ('Goc suon dia 2 (alpha2)', float(ws.Range('Calculation!$P$206').Value), js_res['flank_alpha2'], 2)
+            ('Chieu dai day xich (L)', float(ws.Range('_L').Value), js_res['L'], 2)
         ]
 
         for label, val_xl, val_js, precision in checks:
